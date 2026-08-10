@@ -1,5 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowRight, Phone, Mail, MapPin, Sparkles } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowRight, LayoutDashboard, Mail, MapPin, Phone, Sparkles } from 'lucide-react';
 import React from 'react';
 import Button from '../components/ui/Button';
 
@@ -12,6 +12,9 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     children,
     title = 'Hệ thống Quản lý Giáo dục Sam',
 }) => {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans text-gray-900">
             <Head title={title} />
@@ -45,16 +48,26 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
 
                     {/* Right Action Buttons */}
                     <div className="flex items-center gap-3">
-                        <Link href="/login">
-                            <Button variant="secondary" size="sm">
-                                Đăng nhập
-                            </Button>
-                        </Link>
-                        <Link href="/contact">
-                            <Button variant="success" size="sm" icon={<Sparkles className="w-4 h-4" />}>
-                                Dùng thử miễn phí
-                            </Button>
-                        </Link>
+                        {user ? (
+                            <Link href="/dashboard">
+                                <Button variant="success" size="sm" icon={<LayoutDashboard className="w-4 h-4" />}>
+                                    Trang của tôi
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/login">
+                                    <Button variant="secondary" size="sm">
+                                        Đăng nhập
+                                    </Button>
+                                </Link>
+                                <Link href="/contact">
+                                    <Button variant="success" size="sm" icon={<Sparkles className="w-4 h-4" />}>
+                                        Dùng thử miễn phí
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
