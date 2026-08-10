@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+
+class ClassChatMessageSent implements ShouldBroadcastNow
+{
+    use Dispatchable, InteractsWithSockets;
+
+    /**
+     * @param  array<string, mixed>  $messageData
+     */
+    public function __construct(
+        public int $classId,
+        public array $messageData
+    ) {}
+
+    public function broadcastOn(): Channel
+    {
+        return new Channel("class-chat.{$this->classId}");
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'message.sent';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return $this->messageData;
+    }
+}
