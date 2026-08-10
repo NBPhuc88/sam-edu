@@ -18,14 +18,18 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         {label}
                     </label>
                 )}
-                <div className="relative flex items-center">
-                    {icon && <div className="absolute left-3 text-gray-400 pointer-events-none">{icon}</div>}
+                <div className="relative flex items-center w-full">
+                    {icon && (
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 flex items-center justify-center">
+                            {icon}
+                        </div>
+                    )}
                     <input
                         id={inputId}
                         ref={ref}
                         className={clsx(
                             'ui-input',
-                            icon && 'pl-10',
+                            icon && '!pl-10 has-icon',
                             error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
                             className
                         )}
