@@ -101,10 +101,10 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
     const sampleTableData: ClassData[] = (recentClasses && recentClasses.length > 0)
         ? recentClasses
         : [
-              { id: 1, code: 'TQ-01', name: 'Tiếng Trung Sơ cấp K1', max_students: 25, status: 'active', created_at: '2026-08-01' },
-              { id: 2, code: 'ENG-10', name: 'Tiếng Anh Giao tiếp B1', max_students: 30, status: 'active', created_at: '2026-08-03' },
-              { id: 3, code: 'MATH-12', name: 'Toán Học Lớp 12 Nâng Cao', max_students: 20, status: 'active', created_at: '2026-08-05' },
-          ];
+            { id: 1, code: 'TQ-01', name: 'Tiếng Trung Sơ cấp K1', max_students: 25, status: 'active', created_at: '2026-08-01' },
+            { id: 2, code: 'ENG-10', name: 'Tiếng Anh Giao tiếp B1', max_students: 30, status: 'active', created_at: '2026-08-03' },
+            { id: 3, code: 'MATH-12', name: 'Toán Học Lớp 12 Nâng Cao', max_students: 20, status: 'active', created_at: '2026-08-05' },
+        ];
 
     return (
         <AppLayout title="Dashboard Quan Tri">
@@ -290,7 +290,7 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                                 handleSuccessClick();
                             }}
                         >
-                            Lưu Lớp Học (Success Green)
+                            Lưu Lớp Học
                         </Button>
                     </>
                 }

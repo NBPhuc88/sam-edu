@@ -192,7 +192,7 @@ export const Contact: React.FC<any> = ({ contactInfo }) => {
                                             icon={<Send className="w-4 h-4" />}
                                             className="w-full sm:w-auto px-8"
                                         >
-                                            Gửi Yêu Cầu Tư Vấn (Success Green)
+                                            Gửi Yêu Cầu Tư Vấn
                                         </Button>
                                     </div>
                                 </form>
