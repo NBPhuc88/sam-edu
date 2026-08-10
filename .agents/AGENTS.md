@@ -9,9 +9,9 @@ Tài liệu này cung cấp toàn bộ bối cảnh kiến trúc, quy tắc thi�
 - **Tên dự án**: **sam-edu** - Hệ thống Quản lý Giáo dục Sam (Multi-Center Student Management System / SaaS).
 - **Mô hình kinh doanh**: Cho thuê phần mềm đa trung tâm đào tạo (SaaS Leasing). Hỗ trợ dùng thử 14 ngày, tự động quản lý thời hạn hết hạn (`expires_at`) và tích hợp cổng thanh toán **ZaloPay QR Code v2** để tự động gia hạn.
 - **Tech Stack chính**:
-  - **Backend**: Laravel 11, PHP 8.2+, MySQL (Kết nối `DB_CONNECTION=mysql`).
+  - **Backend**: Laravel 13, PHP 8.3+, MySQL (Kết nối `DB_CONNECTION=mysql`).
   - **Frontend**: React 19 + Vite 6 + Inertia.js v3 (`@inertiajs/react`).
-  - **CSS Engine**: Tailwind CSS v4 + file CSS thành phần riêng [`resources/css/components.css`](file:///home/phuc/Desktop/php/projects/lopso/resources/css/components.css).
+  - **CSS Engine**: Tailwind CSS v4 + file CSS thành phần riêng [`resources/css/components.css`](file:///home/phuc/Desktop/php/projects/sam-edu/resources/css/components.css).
 
 ---
 
@@ -93,7 +93,7 @@ $this->app->bind(
 
 1. **Màu nền chủ đạo**: Màu Trắng (`#ffffff`, `bg-white`, `bg-slate-50`)
 2. **Màu chữ chủ đạo**: Màu Đen (`#111827`, `text-gray-900`)
-3. **File CSS riêng**: Custom component styles được tổ chức gọn gàng tại [`resources/css/components.css`](file:///home/phuc/Desktop/php/projects/lopso/resources/css/components.css).
+3. **File CSS riêng**: Custom component styles được tổ chức gọn gàng tại [`resources/css/components.css`](file:///home/phuc/Desktop/php/projects/sam-edu/resources/css/components.css).
 4. **Quy chuẩn Button Tái sử dụng (`<Button>`)**:
    - `variant="success"` (Lưu / Tạo mới / Đăng nhập / Thanh toán ZaloPay / Gửi form): **Xanh lá chữ trắng** (`bg-emerald-600 hover:bg-emerald-700 text-white`)
    - `variant="edit"` (Sửa / Cập nhật): **Cam chữ trắng** (`bg-amber-500 hover:bg-amber-600 text-white`)
