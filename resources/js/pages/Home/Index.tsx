@@ -50,7 +50,7 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                     </div>
 
                     <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight max-w-4xl mx-auto">
-                        {hero?.title || 'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm Toàn Diện'}
+                        {hero?.title || 'Giải Pháp Quản Lý Giáo Dục'}
                     </h1>
 
                     <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -163,9 +163,8 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                         {plans && plans.map((plan: Plan) => (
                             <div
                                 key={plan.id}
-                                className={`ui-card p-6 flex flex-col justify-between relative transition-all ${
-                                    plan.is_featured ? 'border-2 border-emerald-600 shadow-md ring-2 ring-emerald-500/20' : 'border-gray-200'
-                                }`}
+                                className={`ui-card p-6 flex flex-col justify-between relative transition-all ${plan.is_featured ? 'border-2 border-emerald-600 shadow-md ring-2 ring-emerald-500/20' : 'border-gray-200'
+                                    }`}
                             >
                                 {plan.badge_text && (
                                     <div className="absolute -top-3 right-4">
