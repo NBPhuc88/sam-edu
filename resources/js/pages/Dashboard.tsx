@@ -33,18 +33,18 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
     const [actionMessage, setActionMessage] = useState<string | null>(null);
 
     const handleSuccessClick = () => {
-        setActionMessage('Bạn vừa bấm nút THÊM MỚI (Success Button - Màu Xanh Lá)');
+        setActionMessage('Đã thực hiện thao tác thành công.');
         setTimeout(() => setActionMessage(null), 4000);
     };
 
     const handleEditClick = (className: string) => {
-        setActionMessage(`Bạn vừa bấm CHỈNH SỬA lớp "${className}" (Edit Button - Màu Cam)`);
+        setActionMessage(`Đã cập nhật thông tin lớp "${className}".`);
         setTimeout(() => setActionMessage(null), 4000);
     };
 
     const handleDeleteClick = (className: string) => {
         if (confirm(`Bạn có chắc chắn muốn XÓA lớp "${className}"?`)) {
-            setActionMessage(`Đã thực hiện XÓA lớp "${className}" (Danger Button - Màu Đỏ)`);
+            setActionMessage(`Đã xóa lớp "${className}" thành công.`);
             setTimeout(() => setActionMessage(null), 4000);
         }
     };
