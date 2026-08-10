@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ClassChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
@@ -48,6 +49,12 @@ Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.ind
 Route::get('/teachers/export', [TeacherController::class, 'export'])->name('teachers.export');
 Route::post('/teachers/import', [TeacherController::class, 'import'])->name('teachers.import');
 Route::get('/teachers/sample-csv', [TeacherController::class, 'downloadSample'])->name('teachers.sample-csv');
+
+// Real-time Class Group Chat Routes (Redis + Reverb)
+Route::get('/classes/{classId}/chat', [ClassChatController::class, 'index'])->name('classes.chat.index');
+Route::get('/classes/{classId}/chat/messages', [ClassChatController::class, 'getMessages'])->name('classes.chat.messages');
+Route::post('/classes/{classId}/chat/messages', [ClassChatController::class, 'sendMessage'])->name('classes.chat.send');
+Route::post('/classes/{classId}/chat/messages/{messageId}/pin', [ClassChatController::class, 'togglePin'])->name('classes.chat.pin');
 
 // Fallback Route for 404 Not Found Screen
 Route::fallback(function () {
