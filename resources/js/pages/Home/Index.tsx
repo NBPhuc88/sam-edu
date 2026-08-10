@@ -8,6 +8,8 @@ import {
     Check,
     ArrowRight,
     Tag,
+    MessageSquare,
+    Search,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';
@@ -80,8 +82,8 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <Card className="p-6 space-y-3 border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Card className="p-6 space-y-3 border-gray-200 hover:border-emerald-300 transition-all">
                             <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
                                 <Building2 className="w-6 h-6" />
                             </div>
@@ -91,33 +93,56 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                             </p>
                         </Card>
 
-                        <Card className="p-6 space-y-3 border-gray-200">
+                        <Card className="p-6 space-y-3 border-emerald-200 bg-emerald-50/30 hover:border-emerald-400 transition-all relative">
+                            <div className="absolute top-3 right-3">
+                                <Badge variant="active">Tính Năng Nổi Bật</Badge>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                                <MessageSquare className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900">Nhóm Chat Lớp Trực Tuyến</h3>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Trao đổi thông tin tức thì giữa Quản lý, Giáo viên và Học sinh trong từng lớp học với tính năng ghim thông báo quan trọng.
+                            </p>
+                        </Card>
+
+                        <Card className="p-6 space-y-3 border-gray-200 hover:border-blue-300 transition-all">
                             <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
                                 <GraduationCap className="w-6 h-6" />
                             </div>
                             <h3 className="text-base font-bold text-gray-900">Điểm Danh & Học Sinh</h3>
                             <p className="text-xs text-gray-500 leading-relaxed">
-                                Theo dõi sĩ số học sinh từng lớp, lưu thông tin phụ huynh và lịch sử điểm danh.
+                                Theo dõi sĩ số học sinh từng lớp, lưu thông tin phụ huynh và xuất nhập danh sách dễ dàng qua file Excel/CSV.
                             </p>
                         </Card>
 
-                        <Card className="p-6 space-y-3 border-gray-200">
+                        <Card className="p-6 space-y-3 border-gray-200 hover:border-amber-300 transition-all">
                             <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
                                 <CreditCard className="w-6 h-6" />
                             </div>
                             <h3 className="text-base font-bold text-gray-900">Thanh Toán ZaloPay</h3>
                             <p className="text-xs text-gray-500 leading-relaxed">
-                                Tích hợp sẵn cổng ZaloPay QR Code v2 tự động gia hạn gói cước trung tâm.
+                                Thanh toán và tự động gia hạn dịch vụ nhanh chóng qua cổng quét mã ZaloPay QR Code tiện lợi.
                             </p>
                         </Card>
 
-                        <Card className="p-6 space-y-3 border-gray-200">
+                        <Card className="p-6 space-y-3 border-gray-200 hover:border-purple-300 transition-all">
                             <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
                                 <BarChart3 className="w-6 h-6" />
                             </div>
                             <h3 className="text-base font-bold text-gray-900">Biểu Đồ Thống Kê</h3>
                             <p className="text-xs text-gray-500 leading-relaxed">
-                                Báo cáo Recharts trực quan phân tích số lượng học sinh theo lớp và trung tâm.
+                                Báo cáo biểu đồ trực quan phân tích số lượng học sinh, hiệu quả giảng dạy và biểu đồ tăng trưởng trung tâm.
+                            </p>
+                        </Card>
+
+                        <Card className="p-6 space-y-3 border-gray-200 hover:border-rose-300 transition-all">
+                            <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+                                <Search className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900">Tìm Kiếm Thông Minh Siêu Tốc</h3>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Tra cứu thông tin học sinh, giáo viên, phụ huynh và lịch học tức thì chỉ với một từ khóa.
                             </p>
                         </Card>
                     </div>
@@ -128,7 +153,7 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
             <section className="py-16 bg-slate-50 border-t border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
                     <div className="text-center space-y-2">
-                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Gói Cước & Dịch Vụ SaaS</h2>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Gói Cước & Dịch Vụ Phần Mềm</h2>
                         <p className="text-sm text-gray-500 max-w-xl mx-auto">
                             Lựa chọn gói phù hợp với quy mô trung tâm của bạn với chi phí tối ưu nhất
                         </p>
