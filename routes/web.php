@@ -3,7 +3,9 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SchoolClassStudentController;
 use App\Http\Controllers\StatisticController;
+use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -27,6 +29,18 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Dashboard & Statistics Routes
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
+
+// Student Management Routes (Export & Import)
+Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
+Route::post('/students/import', [StudentController::class, 'import'])->name('students.import');
+Route::get('/students/sample-csv', [StudentController::class, 'downloadSample'])->name('students.sample-csv');
+
+// Class Student Management Routes (Export & Import)
+Route::get('/classes/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('classes.students.index');
+Route::get('/classes/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('classes.students.export');
+Route::post('/classes/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('classes.students.import');
+Route::get('/classes/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('classes.students.sample-csv');
 
 // Fallback Route for 404 Not Found Screen
 Route::fallback(function () {

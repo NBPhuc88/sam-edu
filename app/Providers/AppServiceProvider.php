@@ -4,12 +4,18 @@ namespace App\Providers;
 
 use App\Repositories\Admin\AdminRepository;
 use App\Repositories\Admin\AdminRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepository;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepository;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepository;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Auth\AuthServiceInterface;
+use App\Services\Class\ClassStudentExportImportService;
+use App\Services\Class\ClassStudentExportImportServiceInterface;
+use App\Services\Student\StudentExportImportService;
+use App\Services\Student\StudentExportImportServiceInterface;
 use App\Services\Zalo\ZaloService;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\CarbonImmutable;
@@ -28,11 +34,23 @@ class AppServiceProvider extends ServiceProvider
         // Service Bindings
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
+        $this->app->bind(
+            StudentExportImportServiceInterface::class,
+            StudentExportImportService::class
+        );
+        $this->app->bind(
+            ClassStudentExportImportServiceInterface::class,
+            ClassStudentExportImportService::class
+        );
 
         // Repository Bindings
         $this->app->bind(AdminRepositoryInterface::class, AdminRepository::class);
         $this->app->bind(TeacherRepositoryInterface::class, TeacherRepository::class);
         $this->app->bind(StudentRepositoryInterface::class, StudentRepository::class);
+        $this->app->bind(
+            SchoolClassRepositoryInterface::class,
+            SchoolClassRepository::class
+        );
     }
 
     /**
