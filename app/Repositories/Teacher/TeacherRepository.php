@@ -13,4 +13,43 @@ class TeacherRepository implements TeacherRepositoryInterface
 
         return $teacher;
     }
+
+    /**
+     * @return \Generator<int, Teacher>
+     */
+    public function getTeachersCursor(?int $centerId = null): \Generator
+    {
+        $query = Teacher::query()->orderBy('id', 'asc');
+
+        if ($centerId !== null) {
+            $query->where('center_id', $centerId);
+        }
+
+        foreach ($query->cursor() as $teacher) {
+            /** @var Teacher $teacher */
+            yield $teacher;
+        }
+    }
+
+    public function findByCode(string $teacherCode): ?Teacher
+    {
+        /** @var Teacher|null $teacher */
+        $teacher = Teacher::where('teacher_code', $teacherCode)->first();
+
+        return $teacher;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateOrCreateByCode(string $teacherCode, array $data): Teacher
+    {
+        /** @var Teacher $teacher */
+        $teacher = Teacher::updateOrCreate(
+            ['teacher_code' => $teacherCode],
+            $data
+        );
+
+        return $teacher;
+    }
 }

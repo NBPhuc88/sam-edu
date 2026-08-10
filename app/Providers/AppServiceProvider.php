@@ -16,6 +16,8 @@ use App\Services\Class\ClassStudentExportImportService;
 use App\Services\Class\ClassStudentExportImportServiceInterface;
 use App\Services\Student\StudentExportImportService;
 use App\Services\Student\StudentExportImportServiceInterface;
+use App\Services\Teacher\TeacherExportImportService;
+use App\Services\Teacher\TeacherExportImportServiceInterface;
 use App\Services\Zalo\ZaloService;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\CarbonImmutable;
@@ -41,6 +43,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ClassStudentExportImportServiceInterface::class,
             ClassStudentExportImportService::class
+        );
+        $this->app->bind(
+            TeacherExportImportServiceInterface::class,
+            TeacherExportImportService::class
         );
 
         // Repository Bindings

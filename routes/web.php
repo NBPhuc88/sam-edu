@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,6 +42,12 @@ Route::get('/classes/{classId}/students', [SchoolClassStudentController::class, 
 Route::get('/classes/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('classes.students.export');
 Route::post('/classes/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('classes.students.import');
 Route::get('/classes/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('classes.students.sample-csv');
+
+// Teacher Management Routes (Export & Import)
+Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
+Route::get('/teachers/export', [TeacherController::class, 'export'])->name('teachers.export');
+Route::post('/teachers/import', [TeacherController::class, 'import'])->name('teachers.import');
+Route::get('/teachers/sample-csv', [TeacherController::class, 'downloadSample'])->name('teachers.sample-csv');
 
 // Fallback Route for 404 Not Found Screen
 Route::fallback(function () {
