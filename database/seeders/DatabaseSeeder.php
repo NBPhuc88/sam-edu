@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeders can be added here.
+        $this->call([
+            SystemContentSeeder::class,
+        ]);
     }
 }

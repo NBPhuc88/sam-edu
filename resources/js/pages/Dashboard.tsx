@@ -98,16 +98,10 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
         },
     ];
 
-    const sampleTableData: ClassData[] = (recentClasses && recentClasses.length > 0)
-        ? recentClasses
-        : [
-            { id: 1, code: 'TQ-01', name: 'Tiếng Trung Sơ cấp K1', max_students: 25, status: 'active', created_at: '2026-08-01' },
-            { id: 2, code: 'ENG-10', name: 'Tiếng Anh Giao tiếp B1', max_students: 30, status: 'active', created_at: '2026-08-03' },
-            { id: 3, code: 'MATH-12', name: 'Toán Học Lớp 12 Nâng Cao', max_students: 20, status: 'active', created_at: '2026-08-05' },
-        ];
+    const tableData: ClassData[] = recentClasses || [];
 
     return (
-        <AppLayout title="Dashboard Quan Tri">
+        <AppLayout title="Dashboard Quản Trị">
             <div className="space-y-8">
                 {/* User Notification Toast */}
                 {actionMessage && (
@@ -118,42 +112,43 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                 )}
 
                 {/* Dashboard Action Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900">Tổng quan Hệ thống Quản lý Giáo dục Sam</h2>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Báo cáo tình hình học sinh, lớp học và gia hạn dịch vụ trung tâm.
-                        </p>
-                    </div>
+                <Card className="bg-white border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">Tổng quan Hệ thống Quản lý Giáo dục Sam</h2>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Báo cáo tình hình học sinh, lớp học và gia hạn dịch vụ trung tâm.
+                            </p>
+                        </div>
 
-                    {/* Button Demo Group: Green Success, Orange Edit, Red Danger */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Button
-                            variant="success"
-                            icon={<Plus className="w-4 h-4" />}
-                            onClick={() => setIsCreateModalOpen(true)}
-                        >
-                            Tạo Lớp Học Mới
-                        </Button>
-                        <Button
-                            variant="edit"
-                            icon={<Edit className="w-4 h-4" />}
-                            onClick={handleSuccessClick}
-                        >
-                            Cập Nhật Hệ Thống
-                        </Button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Button
+                                variant="success"
+                                icon={<Plus className="w-4 h-4" />}
+                                onClick={() => setIsCreateModalOpen(true)}
+                            >
+                                Tạo Lớp Học Mới
+                            </Button>
+                            <Button
+                                variant="edit"
+                                icon={<Edit className="w-4 h-4" />}
+                                onClick={handleSuccessClick}
+                            >
+                                Cập Nhật Hệ Thống
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Top Metrics Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <Card className="bg-white hover:border-gray-300 transition-all">
                         <div className="flex items-center justify-between">
-                            <div>
+                            <div className="space-y-1">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Trung Tâm</p>
-                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats?.centers || 1}</h4>
+                                <h4 className="text-2xl font-bold text-gray-900">{stats?.centers ?? 0}</h4>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                 <Building2 className="w-6 h-6" />
                             </div>
                         </div>
@@ -161,11 +156,11 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
 
                     <Card className="bg-white hover:border-gray-300 transition-all">
                         <div className="flex items-center justify-between">
-                            <div>
+                            <div className="space-y-1">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Học Sinh</p>
-                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats?.students || 128}</h4>
+                                <h4 className="text-2xl font-bold text-gray-900">{stats?.students ?? 0}</h4>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                                 <GraduationCap className="w-6 h-6" />
                             </div>
                         </div>
@@ -173,11 +168,11 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
 
                     <Card className="bg-white hover:border-gray-300 transition-all">
                         <div className="flex items-center justify-between">
-                            <div>
+                            <div className="space-y-1">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Giáo Viên</p>
-                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats?.teachers || 18}</h4>
+                                <h4 className="text-2xl font-bold text-gray-900">{stats?.teachers ?? 0}</h4>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
                                 <Users className="w-6 h-6" />
                             </div>
                         </div>
@@ -185,11 +180,11 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
 
                     <Card className="bg-white hover:border-gray-300 transition-all">
                         <div className="flex items-center justify-between">
-                            <div>
+                            <div className="space-y-1">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Lớp Học Active</p>
-                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats?.classes || 12}</h4>
+                                <h4 className="text-2xl font-bold text-gray-900">{stats?.classes ?? 0}</h4>
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                                 <BookOpen className="w-6 h-6" />
                             </div>
                         </div>
@@ -200,7 +195,7 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Recharts Area Chart */}
                     <Card title="Thống Kê Nhập Học Theo Tháng" className="lg:col-span-2">
-                        <div className="h-64 w-full">
+                        <div className="h-64 w-full pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={monthlyEnrollments || []}>
                                     <defs>
@@ -257,7 +252,7 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
 
                 {/* TanStack Data Table for Recent Classes */}
                 <Card
-                    title="Danh Sách Lớp Học Mới Nhất (DataTable)"
+                    title="Danh Sách Lớp Học Mới Nhất"
                     headerAction={
                         <Button
                             variant="success"
@@ -269,7 +264,7 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                         </Button>
                     }
                 >
-                    <DataTable columns={columns} data={sampleTableData} />
+                    <DataTable columns={columns} data={tableData} />
                 </Card>
             </div>
 

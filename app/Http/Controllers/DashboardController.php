@@ -47,14 +47,21 @@ class DashboardController extends Controller
         /** @var Center|null $center */
         $center = Center::first();
 
-        $monthlyEnrollments = [
-            ['month' => 'Thg 1', 'students' => 45],
-            ['month' => 'Thg 2', 'students' => 52],
-            ['month' => 'Thg 3', 'students' => 61],
-            ['month' => 'Thg 4', 'students' => 75],
-            ['month' => 'Thg 5', 'students' => 90],
-            ['month' => 'Thg 6', 'students' => 110],
-        ];
+        // Tính toán thống kê nhập học thực tế theo 6 tháng gần nhất từ CSDL
+        $monthlyEnrollments = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $targetDate = now()->subMonths($i);
+            $monthLabel = 'Thg '.$targetDate->format('n');
+
+            $count = Student::whereYear('created_at', $targetDate->year)
+                ->whereMonth('created_at', $targetDate->month)
+                ->count();
+
+            $monthlyEnrollments[] = [
+                'month' => $monthLabel,
+                'students' => $count,
+            ];
+        }
 
         $recentClasses = SchoolClass::with('center')->latest()->take(5)->get();
 
