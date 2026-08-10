@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Lock, User, ShieldCheck, GraduationCap, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -46,12 +46,16 @@ export const Login: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans text-gray-900">
             <div className="w-full max-w-md space-y-6">
-                {/* Brand Header */}
+                {/* Brand Header with Link to Homepage */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center px-3 py-2 rounded-2xl bg-emerald-600 text-white font-black text-xl shadow-md">
-                        SAM
-                    </div>
-                    <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Hệ thống Quản lý Giáo dục Sam</h1>
+                    <Link href="/" title="Về trang chủ Sam Edu" className="inline-flex flex-col items-center gap-2 group">
+                        <div className="inline-flex items-center justify-center px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-black text-xl shadow-md group-hover:scale-105 transition-transform">
+                            SAM
+                        </div>
+                        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 group-hover:text-emerald-700 transition-colors">
+                            Hệ thống Quản lý Giáo dục Sam
+                        </h1>
+                    </Link>
                     <p className="text-xs text-gray-500">Đăng nhập tài khoản quản trị, giáo viên hoặc học sinh</p>
                 </div>
 
