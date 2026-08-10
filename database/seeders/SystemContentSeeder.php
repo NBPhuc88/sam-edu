@@ -167,8 +167,8 @@ class SystemContentSeeder extends Seeder
         Admin::updateOrCreate(['username' => 'admin'], [
             'admin_code' => 'ADM-001',
             'username' => 'admin',
-            'email' => 'admin@giaoducsam.vn',
-            'password' => bcrypt('123456'),
+            'email' => 'phuc.nb140198@gmail.com',
+            'password' => bcrypt('admin140198'),
             'full_name' => 'Quản trị viên Hệ thống Sam',
             'status' => 'active',
         ]);
