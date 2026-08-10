@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
@@ -163,8 +164,29 @@ class SystemContentSeeder extends Seeder
             'expires_at' => now()->addMonths(6),
         ]);
 
+        // Seed Default Roles
+        $superAdminRole = Role::updateOrCreate(['code' => 'super_admin'], [
+            'name' => 'Super Admin',
+            'description' => 'Quản trị viên tối cao hệ thống Sam Edu',
+        ]);
+
+        Role::updateOrCreate(['code' => 'center_admin'], [
+            'name' => 'Center Admin',
+            'description' => 'Quản trị viên Trung tâm đào tạo',
+        ]);
+
+        Role::updateOrCreate(['code' => 'teacher'], [
+            'name' => 'Giáo viên',
+            'description' => 'Giáo viên giảng dạy',
+        ]);
+
+        Role::updateOrCreate(['code' => 'student'], [
+            'name' => 'Học sinh',
+            'description' => 'Học sinh trung tâm',
+        ]);
+
         // Sample Super Admin
-        Admin::updateOrCreate(['username' => 'admin'], [
+        $admin = Admin::updateOrCreate(['username' => 'admin'], [
             'admin_code' => 'ADM-001',
             'username' => 'admin',
             'email' => 'phuc.nb140198@gmail.com',
@@ -172,6 +194,9 @@ class SystemContentSeeder extends Seeder
             'full_name' => 'Quản trị viên Hệ thống Sam',
             'status' => 'active',
         ]);
+
+        // Assign Super Admin Role to Admin
+        $admin->roles()->sync([$superAdminRole->id]);
 
         // Sample Classes
         SchoolClass::updateOrCreate(['code' => 'TQ-01'], [

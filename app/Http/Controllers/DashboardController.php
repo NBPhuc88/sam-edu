@@ -44,8 +44,33 @@ class DashboardController extends Controller
         $classCount = SchoolClass::count();
         $roomCount = Room::count();
 
-        /** @var Center|null $center */
-        $center = Center::first();
+        // Determine assigned center for current user role
+        $center = null;
+        if ($role === 'admin' && $user instanceof Admin) {
+            // Super Admin managing all centers has no specific single center, Center Admin has assigned centers
+            $center = $user->centers()->first();
+        } elseif ($role === 'teacher' && isset($user->center_id)) {
+            $center = Center::find($user->center_id);
+        } elseif ($role === 'student' && isset($user->center_id)) {
+            $center = Center::find($user->center_id);
+        }
+
+        $centerData = null;
+        if ($center) {
+            $expiresAt = $center->expires_at;
+            $isExpired = $expiresAt ? $expiresAt->isPast() : false;
+            $expiringSoon = $expiresAt ? (! $isExpired && $expiresAt->diffInDays(now()) <= 14) : false;
+
+            $centerData = [
+                'id' => $center->id,
+                'code' => $center->code,
+                'name' => $center->name,
+                'subscription_plan' => $center->subscription_plan,
+                'expires_at' => $expiresAt ? $expiresAt->toIso8601String() : null,
+                'is_expired' => $isExpired,
+                'expiring_soon' => $expiringSoon,
+            ];
+        }
 
         // Tính toán thống kê nhập học thực tế theo 6 tháng gần nhất từ CSDL
         $monthlyEnrollments = [];
@@ -77,14 +102,7 @@ class DashboardController extends Controller
                 ] : null,
                 'role' => $role,
             ],
-            'center' => $center ? [
-                'id' => $center->id,
-                'code' => $center->code,
-                'name' => $center->name,
-                'subscription_plan' => $center->subscription_plan,
-                'expires_at' => $center->expires_at ? $center->expires_at->toIso8601String() : null,
-                'is_expired' => $center->expires_at ? $center->expires_at->isPast() : false,
-            ] : null,
+            'center' => $centerData,
             'stats' => [
                 'centers' => $centerCount,
                 'students' => $studentCount,

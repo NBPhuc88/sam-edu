@@ -62,7 +62,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title = 'Hệ th
             <Head title={title} />
 
             {/* Top Banner Alert if Center Expired / Expiring Soon */}
-            {center && (
+            {center && (center.is_expired || center.expiring_soon) && (
                 <div className="bg-amber-500 text-white px-4 py-2 text-xs sm:text-sm font-medium flex items-center justify-between shadow-xs">
                     <div className="flex items-center gap-2 container mx-auto">
                         <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -70,6 +70,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title = 'Hệ th
                             Trung tâm <strong>{center.name}</strong> ({center.code}) - Gói:{' '}
                             <span className="uppercase font-bold">{center.subscription_plan || 'Basic'}</span>
                             {center.expires_at ? ` (Hạn dùng: ${new Date(center.expires_at).toLocaleDateString('vi-VN')})` : ''}
+                            {center.is_expired ? ' - ĐÃ HẾT HẠN DỊCH VỤ!' : ' - SẮP HẾT HẠN DÙNG THỬ (CẦN GIA HẠN)'}
                         </span>
                     </div>
                     <Button
