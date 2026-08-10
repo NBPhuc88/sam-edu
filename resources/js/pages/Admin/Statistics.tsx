@@ -1,0 +1,219 @@
+import { router } from '@inertiajs/react';
+import {
+    Building2,
+    BookOpen,
+    GraduationCap,
+    Filter,
+} from 'lucide-react';
+import React from 'react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import Badge from '../../components/ui/Badge';
+import Card from '../../components/ui/Card';
+import type { Column } from '../../components/ui/DataTable';
+import DataTable from '../../components/ui/DataTable';
+import AppLayout from '../../layouts/AppLayout';
+
+interface ClassStat {
+    id: number;
+    code: string;
+    name: string;
+    center_name: string;
+    center_code: string;
+    student_count: number;
+    max_capacity: number;
+    occupancy_rate: number;
+    status: string;
+}
+
+export const Statistics: React.FC<any> = ({
+    role,
+    isSuperAdmin,
+    allowedCenters,
+    centerStats,
+    classStats,
+    selectedCenterId,
+}) => {
+    const handleCenterFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+
+        if (val) {
+            router.get('/statistics', { center_id: val }, { preserveState: true });
+        } else {
+            router.get('/statistics', {}, { preserveState: true });
+        }
+    };
+
+    // Columns definition for Class Statistics Table
+    const classColumns: Column<ClassStat>[] = [
+        {
+            header: 'Mã Lớp',
+            accessorKey: 'code',
+            cell: (row) => <span className="font-bold text-gray-900">{row.code}</span>,
+        },
+        {
+            header: 'Tên Lớp Học',
+            accessorKey: 'name',
+            cell: (row) => <span className="text-gray-800 font-medium">{row.name}</span>,
+        },
+        {
+            header: 'Trung Tâm',
+            cell: (row) => (
+                <span className="text-xs bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md font-semibold">
+                    {row.center_name} ({row.center_code})
+                </span>
+            ),
+        },
+        {
+            header: 'Sĩ Số Thực Tế / Tối Đa',
+            cell: (row) => (
+                <span className="font-semibold text-gray-900">
+                    {row.student_count} / {row.max_capacity} học sinh
+                </span>
+            ),
+        },
+        {
+            header: 'Tỷ Lệ Lấp Đầy',
+            cell: (row) => {
+                const rate = row.occupancy_rate;
+                const badgeVariant = rate >= 80 ? 'active' : rate >= 50 ? 'pending' : 'info';
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <Badge variant={badgeVariant}>{rate}% Tải Lớp</Badge>
+                        <div className="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                            <div
+                                className={`h-1.5 rounded-full ${
+                                    rate >= 80 ? 'bg-emerald-600' : rate >= 50 ? 'bg-blue-600' : 'bg-amber-500'
+                                }`}
+                                style={{ width: `${rate}%` }}
+                            />
+                        </div>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    return (
+        <AppLayout title="Thống Kê Học Sinh Theo Lớp & Trung Tâm">
+            <div className="space-y-8">
+                {/* Header Action Bar with Role Badge & Center Scope Filter */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-gray-900">Thống Kê Sĩ Số Học Sinh</h2>
+                            <Badge variant={role === 'admin' ? 'active' : 'pending'}>
+                                Quyền: {role.toUpperCase()} {isSuperAdmin ? '(Super Admin)' : ''}
+                            </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Báo cáo phân tích lượng học sinh cho từng lớp và từng trung tâm được phân quyền.
+                        </p>
+                    </div>
+
+                    {/* Scope Filter Dropdown */}
+                    {allowedCenters && allowedCenters.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-gray-500" />
+                            <select
+                                value={selectedCenterId || ''}
+                                onChange={handleCenterFilterChange}
+                                className="ui-input py-1.5 text-xs rounded-lg min-w-[200px]"
+                            >
+                                <option value="">Tất cả Trung tâm được phép</option>
+                                {allowedCenters.map((c: any) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name} ({c.code})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+
+                {/* Summary Metrics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <Card className="bg-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Trung Tâm Trong Phạm Vi</p>
+                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{centerStats?.length || 0}</h4>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <Building2 className="w-6 h-6" />
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="bg-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Lớp Học Phạm Vi</p>
+                                <h4 className="text-2xl font-bold text-gray-900 mt-1">{classStats?.length || 0}</h4>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <BookOpen className="w-6 h-6" />
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="bg-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Học Sinh Quản Lý</p>
+                                <h4 className="text-2xl font-bold text-gray-900 mt-1">
+                                    {centerStats
+                                        ? centerStats.reduce((sum: number, c: any) => sum + (c.student_count || 0), 0)
+                                        : 0}
+                                </h4>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                                <GraduationCap className="w-6 h-6" />
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Recharts Bar Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Chart 1: Students per Center */}
+                    <Card title="Thống Kê Học Sinh Theo Trung Tâm">
+                        <div className="h-64 w-full pt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={centerStats || []}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="code" tick={{ fontSize: 12, fill: '#6b7280' }} />
+                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+                                    <Tooltip />
+                                    <Bar dataKey="student_count" name="Học sinh" fill="#059669" radius={[6, 6, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+
+                    {/* Chart 2: Students per Class */}
+                    <Card title="Thống Kê Học Sinh Theo Lớp Học">
+                        <div className="h-64 w-full pt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={classStats || []}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="code" tick={{ fontSize: 12, fill: '#6b7280' }} />
+                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+                                    <Tooltip />
+                                    <Bar dataKey="student_count" name="Học sinh" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+                </div>
+
+                {/* TanStack Table: Detailed Class Occupancy */}
+                <Card title="Bảng Chi Tiết Sĩ Số Học Sinh Cho Từng Lớp Học">
+                    <DataTable columns={classColumns} data={classStats || []} />
+                </Card>
+            </div>
+        </AppLayout>
+    );
+};
+
+export default Statistics;

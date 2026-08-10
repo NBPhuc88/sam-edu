@@ -1,0 +1,141 @@
+/* Custom UI Components Styling - White Theme, Dark Text, Button Palette */
+
+:root {
+    --color-bg-primary: #ffffff;
+    --color-text-primary: #111827;
+    --color-text-secondary: #4b5563;
+    --color-border: #e5e7eb;
+
+    /* Button Colors */
+    --btn-success-bg: #059669;
+    --btn-success-hover: #047857;
+    --btn-edit-bg: #f59e0b;
+    --btn-edit-hover: #d97706;
+    --btn-danger-bg: #dc2626;
+    --btn-danger-hover: #b91c1c;
+}
+
+body {
+    background-color: #f9fafb;
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+}
+
+/* Custom Card & Container Classes */
+.ui-card {
+    background-color: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Button Variants */
+.btn-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    border: 1px solid transparent;
+    outline: none;
+}
+
+.btn-base:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-success {
+    background-color: var(--btn-success-bg);
+    color: #ffffff;
+}
+.btn-success:hover:not(:disabled) {
+    background-color: var(--btn-success-hover);
+}
+
+.btn-edit {
+    background-color: var(--btn-edit-bg);
+    color: #ffffff;
+}
+.btn-edit:hover:not(:disabled) {
+    background-color: var(--btn-edit-hover);
+}
+
+.btn-danger {
+    background-color: var(--btn-danger-bg);
+    color: #ffffff;
+}
+.btn-danger:hover:not(:disabled) {
+    background-color: var(--btn-danger-hover);
+}
+
+.btn-secondary {
+    background-color: #ffffff;
+    color: #111827;
+    border-color: #d1d5db;
+}
+.btn-secondary:hover:not(:disabled) {
+    background-color: #f3f4f6;
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: #111827;
+    border-color: #e5e7eb;
+}
+.btn-outline:hover:not(:disabled) {
+    background-color: #f9fafb;
+}
+
+/* Form Inputs */
+.ui-input {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #111827;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ui-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* Data Table Custom Styling */
+.ui-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+
+.ui-table th {
+    background-color: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ui-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #111827;
+    font-size: 0.875rem;
+}
+
+.ui-table tr:hover td {
+    background-color: #f9fafb;
+}

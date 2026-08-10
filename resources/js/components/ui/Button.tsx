@@ -1,0 +1,54 @@
+import React from 'react';
+import { clsx } from 'clsx';
+import { Loader2 } from 'lucide-react';
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: 'success' | 'edit' | 'danger' | 'secondary' | 'outline';
+    size?: 'sm' | 'md' | 'lg';
+    isLoading?: boolean;
+    icon?: React.ReactNode;
+}
+
+export const Button: React.FC<ButtonProps> = ({
+    children,
+    className,
+    variant = 'success',
+    size = 'md',
+    isLoading = false,
+    disabled,
+    icon,
+    type = 'button',
+    ...props
+}) => {
+    const sizeClasses = {
+        sm: 'px-3 py-1.5 text-xs',
+        md: 'px-4 py-2 text-sm',
+        lg: 'px-5 py-2.5 text-base',
+    };
+
+    const variantClasses = {
+        success: 'btn-success',
+        edit: 'btn-edit',
+        danger: 'btn-danger',
+        secondary: 'btn-secondary',
+        outline: 'btn-outline',
+    };
+
+    return (
+        <button
+            type={type}
+            disabled={disabled || isLoading}
+            className={clsx('btn-base', variantClasses[variant], sizeClasses[size], className)}
+            {...props}
+        >
+            {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+            ) : icon ? (
+                <span className="shrink-0">{icon}</span>
+            ) : null}
+            <span>{children}</span>
+        </button>
+    );
+};
+
+export default Button;
