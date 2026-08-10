@@ -194,7 +194,7 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                 {/* Chart & Activity Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Recharts Area Chart */}
-                    <Card title="Thống Kê Nhập Học Theo Tháng" className="lg:col-span-2">
+                    <Card title="Thống Kê Nhập Học Theo Tháng" className={center ? 'lg:col-span-2' : 'lg:col-span-3'}>
                         <div className="h-64 w-full pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={monthlyEnrollments || []}>
@@ -221,33 +221,35 @@ export const Dashboard: React.FC<any> = ({ stats, monthlyEnrollments, recentClas
                         </div>
                     </Card>
 
-                    {/* Quick Overview Card */}
-                    <Card title="Gói Dịch Vụ SaaS Trung Tâm">
-                        <div className="space-y-4 text-sm">
-                            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-                                <div className="text-xs text-gray-500 uppercase font-semibold">Trung tâm hiện tại</div>
-                                <div className="font-bold text-gray-900 text-base">{center?.name || 'Trung tâm Đào tạo Demo'}</div>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="active">Đang hoạt động</Badge>
-                                    <span className="text-xs text-gray-500">Gói: {center?.subscription_plan || 'Basic'}</span>
+                    {/* Quick Overview Card (Only for Center Admins with an assigned Center) */}
+                    {center && (
+                        <Card title="Gói Dịch Vụ SaaS Trung Tâm">
+                            <div className="space-y-4 text-sm">
+                                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+                                    <div className="text-xs text-gray-500 uppercase font-semibold">Trung tâm hiện tại</div>
+                                    <div className="font-bold text-gray-900 text-base">{center.name}</div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="active">Đang hoạt động</Badge>
+                                        <span className="text-xs text-gray-500">Gói: {center.subscription_plan || 'Basic'}</span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-100">
-                                <span>Thanh toán gia hạn:</span>
-                                <span className="font-bold text-emerald-700">ZaloPay QR Code v2</span>
-                            </div>
+                                <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-100">
+                                    <span>Thanh toán gia hạn:</span>
+                                    <span className="font-bold text-emerald-700">ZaloPay QR Code v2</span>
+                                </div>
 
-                            <Button
-                                variant="success"
-                                className="w-full justify-center mt-2"
-                                icon={<CreditCard className="w-4 h-4" />}
-                                onClick={handleSuccessClick}
-                            >
-                                Gia Hạn Qua ZaloPay
-                            </Button>
-                        </div>
-                    </Card>
+                                <Button
+                                    variant="success"
+                                    className="w-full justify-center mt-2"
+                                    icon={<CreditCard className="w-4 h-4" />}
+                                    onClick={handleSuccessClick}
+                                >
+                                    Gia Hạn Qua ZaloPay
+                                </Button>
+                            </div>
+                        </Card>
+                    )}
                 </div>
 
                 {/* TanStack Data Table for Recent Classes */}
