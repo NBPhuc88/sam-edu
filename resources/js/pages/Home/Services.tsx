@@ -182,7 +182,7 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                 </Button>
                                             </Link>
                                         ) : (
-                                            <Link href="/contact">
+                                            <Link href={`/register-center?plan=${plan.code}`}>
                                                 <Button
                                                     variant={
                                                         plan.is_featured
@@ -190,8 +190,11 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                             : 'secondary'
                                                     }
                                                     className="w-full justify-center py-2.5"
+                                                    icon={<Sparkles className="h-4 w-4" />}
                                                 >
-                                                    Đăng ký gói ngay
+                                                    {plan.price === 0
+                                                        ? 'Đăng ký dùng thử 14 ngày'
+                                                        : 'Đăng ký gói này'}
                                                 </Button>
                                             </Link>
                                         )}

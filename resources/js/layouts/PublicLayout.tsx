@@ -115,7 +115,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </Link>
 
                     {/* Nav Links */}
-                    <nav className="hidden items-center gap-7 text-sm font-medium text-gray-700 md:flex">
+                    <nav className="hidden items-center gap-8 text-sm font-medium text-gray-700 md:flex">
                         <Link
                             href="/"
                             className="transition-colors hover:text-emerald-700"
@@ -139,12 +139,6 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                             className="transition-colors hover:text-emerald-700"
                         >
                             Liên hệ tư vấn
-                        </Link>
-                        <Link
-                            href="/register-center"
-                            className="font-bold text-emerald-800 transition-colors hover:text-emerald-900"
-                        >
-                            Đăng ký Trung tâm
                         </Link>
                     </nav>
 
@@ -170,7 +164,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                     </Button>
                                 </Link>
                                 <Link
-                                    href="/register-center"
+                                    href="/register-center?plan=trial_14d"
                                     className="hidden sm:inline-flex"
                                 >
                                     <Button

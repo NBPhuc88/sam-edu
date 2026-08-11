@@ -44,7 +44,21 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     const [address, setAddress] = useState('');
     const [selectedPlan, setSelectedPlan] = useState<
         'trial_14d' | 'monthly' | 'yearly'
-    >('trial_14d');
+    >(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const planParam = params.get('plan');
+
+            if (
+                planParam &&
+                ['trial_14d', 'monthly', 'yearly'].includes(planParam)
+            ) {
+                return planParam as 'trial_14d' | 'monthly' | 'yearly';
+            }
+        }
+
+        return 'trial_14d';
+    });
     const [paymentMethod, setPaymentMethod] = useState<
         'zalopay' | 'bank_transfer' | 'momo' | 'vnpay'
     >('zalopay');
