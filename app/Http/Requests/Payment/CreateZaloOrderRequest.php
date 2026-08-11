@@ -27,7 +27,8 @@ class CreateZaloOrderRequest extends FormRequest
             'plan_code'       => 'required|string',
             'plan_name'       => 'required|string',
             'amount'          => 'required|numeric|min:10000',
-            'duration_months' => 'required|integer|min:1',
+            'duration_days'   => 'nullable|integer|min:1',
+            'duration_months' => 'nullable|integer|min:1',
             'redirect_url'    => 'nullable|url',
         ];
     }

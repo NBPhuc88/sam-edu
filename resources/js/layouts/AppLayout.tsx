@@ -34,11 +34,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         const targetPlan = plans.find((p: any) => p.code === planCode) ?? plans[0];
 
         const response = await apiClient.post('/api/payments/zalopay/create', {
-            center_id:       center?.id ?? 1,
-            plan_code:       targetPlan?.code ?? 'yearly',
-            plan_name:       targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
-            amount:          targetPlan?.price ?? 4800000,
-            duration_months: targetPlan?.duration_months ?? 12,
+            center_id:     center?.id ?? 1,
+            plan_code:     targetPlan?.code ?? 'yearly',
+            plan_name:     targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
+            amount:        targetPlan?.price ?? 4800000,
+            duration_days: targetPlan?.duration_days ?? 365,
         });
 
         if (response.data?.order_url) {

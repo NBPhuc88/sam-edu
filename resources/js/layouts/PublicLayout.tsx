@@ -53,6 +53,12 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                             Trang chủ
                         </Link>
                         <Link
+                            href="/services"
+                            className="transition-colors hover:text-emerald-700"
+                        >
+                            Gói cước &amp; Dịch vụ
+                        </Link>
+                        <Link
                             href="/about"
                             className="transition-colors hover:text-emerald-700"
                         >

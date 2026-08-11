@@ -23,7 +23,7 @@ interface Plan {
     code: string;
     name: string;
     price: number;
-    duration_months: number;
+    duration_days: number;
     max_students: number | null;
     max_classes: number | null;
     features: string[] | null;
@@ -253,10 +253,11 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-medium text-gray-500">
-                                                        {plan.duration_months ===
-                                                        12
+                                                        {plan.duration_days >= 365
                                                             ? '/ năm'
-                                                            : '/ tháng'}
+                                                            : plan.duration_days >= 30
+                                                              ? '/ tháng'
+                                                              : `/${plan.duration_days} ngày`}
                                                     </span>
                                                 )}
                                             </div>

@@ -1,0 +1,500 @@
+import { Link, usePage } from '@inertiajs/react';
+import {
+    ArrowRight,
+    Check,
+    CreditCard,
+    HelpCircle,
+    LayoutDashboard,
+    ShieldCheck,
+    Sparkles,
+    Zap,
+} from 'lucide-react';
+import React from 'react';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import PublicLayout from '../../layouts/PublicLayout';
+
+interface Plan {
+    id: number;
+    code: string;
+    name: string;
+    price: number;
+    duration_days: number;
+    max_students: number | null;
+    max_classes: number | null;
+    features: string[] | null;
+    badge_text: string | null;
+    is_featured: boolean;
+}
+
+interface ServicesProps {
+    plans: Plan[];
+}
+
+export const Services: React.FC<ServicesProps> = ({ plans }) => {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
+    const faqs = [
+        {
+            q: 'Gói 14 ngày dùng thử miễn phí có giới hạn tính năng không?',
+            a: 'Không, gói dùng thử 14 ngày cho phép bạn trải nghiệm đầy đủ các tính năng cơ bản của hệ thống như quản lý 3 lớp học, điểm danh, lưu trữ học sinh và theo dõi học phí.',
+        },
+        {
+            q: 'Hình thức thanh toán và gia hạn dịch vụ như thế nào?',
+            a: 'Hệ thống tích hợp thanh toán trực tiếp qua ZaloPay QR Code v2. Bạn có thể quét mã QR thanh toán nhanh và hệ thống sẽ tự động kích hoạt/gia hạn dịch vụ ngay lập tức.',
+        },
+        {
+            q: 'Tôi có thể nâng cấp từ gói Hàng Tháng lên gói Theo Năm được không?',
+            a: 'Hoàn toàn được! Bạn có thể chủ động chuyển sang Gói Theo Năm bất kỳ lúc nào để hưởng mức ưu đãi tiết kiệm 20% chi phí.',
+        },
+        {
+            q: 'Hệ thống có hỗ trợ sao lưu dữ liệu và bảo mật không?',
+            a: 'Dữ liệu trung tâm của bạn được lưu trữ trên nền tảng điện toán đám mây bảo mật cao, tự động sao lưu hàng ngày và mã hóa mật khẩu theo chuẩn mã hóa hiện đại.',
+        },
+    ];
+
+    return (
+        <PublicLayout title="Gói Cước & Dịch Vụ Phần Mềm - Giáo dục Sam">
+            {/* Header Hero Section */}
+            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/60 via-white to-white py-16 sm:py-20">
+                <div className="mx-auto max-w-7xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-semibold text-emerald-800">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Bảng Giá Minh Bạch &amp; Tiết Kiệm</span>
+                    </div>
+
+                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                        Gói Cước &amp; Dịch Vụ Phần Mềm
+                    </h1>
+
+                    <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
+                        Lựa chọn giải pháp phù hợp với quy mô trung tâm của bạn. Hỗ trợ 14 ngày dùng thử miễn phí không rủi ro, thanh toán linh hoạt qua ZaloPay QR Code.
+                    </p>
+                </div>
+            </section>
+
+            {/* Pricing Cards Grid */}
+            <section className="bg-white py-16">
+                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                        {plans &&
+                            plans.map((plan) => (
+                                <Card
+                                    key={plan.id}
+                                    className={`relative flex flex-col justify-between p-6 transition-all sm:p-8 ${
+                                        plan.is_featured
+                                            ? 'border-2 border-emerald-600 shadow-xl ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 shadow-sm hover:border-gray-300'
+                                    }`}
+                                >
+                                    {plan.badge_text && (
+                                        <div className="absolute -top-3.5 right-6">
+                                            <Badge
+                                                variant={
+                                                    plan.is_featured
+                                                        ? 'active'
+                                                        : 'info'
+                                                }
+                                            >
+                                                {plan.badge_text}
+                                            </Badge>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900">
+                                                {plan.name}
+                                            </h3>
+                                            <div className="mt-3 flex flex-wrap items-baseline gap-1">
+                                                <span className="text-3xl font-black text-gray-900 sm:text-4xl">
+                                                    {plan.price === 0
+                                                        ? 'Miễn phí'
+                                                        : `${plan.price.toLocaleString('vi-VN')}đ`}
+                                                </span>
+                                                {plan.price > 0 && (
+                                                    <span className="text-xs font-semibold text-gray-500">
+                                                        {plan.duration_days >= 365
+                                                            ? '/ năm'
+                                                            : plan.duration_days >= 30
+                                                              ? '/ tháng'
+                                                              : `/${plan.duration_days} ngày`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600 space-y-1 border border-gray-100">
+                                            <div>
+                                                • Sĩ số tối đa:{' '}
+                                                <strong>
+                                                    {plan.max_students ?? 'Không giới hạn'}
+                                                </strong>{' '}
+                                                học sinh
+                                            </div>
+                                            <div>
+                                                • Lớp học tối đa:{' '}
+                                                <strong>
+                                                    {plan.max_classes ?? 'Không giới hạn'}
+                                                </strong>{' '}
+                                                lớp
+                                            </div>
+                                        </div>
+
+                                        <ul className="space-y-3 border-t border-gray-100 pt-4 text-xs leading-relaxed text-gray-700">
+                                            {plan.features &&
+                                                plan.features.map(
+                                                    (feature, idx) => (
+                                                        <li
+                                                            key={idx}
+                                                            className="flex items-start gap-2.5"
+                                                        >
+                                                            <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                                                            <span>{feature}</span>
+                                                        </li>
+                                                    ),
+                                                )}
+                                        </ul>
+                                    </div>
+
+                                    <div className="pt-8">
+                                        {user ? (
+                                            <Link href="/dashboard">
+                                                <Button
+                                                    variant={
+                                                        plan.is_featured
+                                                            ? 'success'
+                                                            : 'secondary'
+                                                    }
+                                                    className="w-full justify-center py-2.5"
+                                                >
+                                                    Vào Dashboard Gia Hạn
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <Link href="/contact">
+                                                <Button
+                                                    variant={
+                                                        plan.is_featured
+                                                            ? 'success'
+                                                            : 'secondary'
+                                                    }
+                                                    className="w-full justify-center py-2.5"
+                                                >
+                                                    Đăng ký gói ngay
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
+                                </Card>
+                            ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ZaloPay Banner Section */}
+            <section className="bg-slate-900 py-12 text-white">
+                <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 lg:flex-row lg:px-8">
+                    <div className="flex items-center gap-4 text-center lg:text-left">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
+                            <CreditCard className="h-7 w-7" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-white sm:text-xl">
+                                Tự Động Gia Hạn Qua ZaloPay QR Code v2
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
+                                Quét mã QR tiện lợi, xử lý giao dịch tức thì 24/7 không cần chờ duyệt thủ công.
+                            </p>
+                        </div>
+                    </div>
+                    {user ? (
+                        <Link href="/dashboard">
+                            <Button
+                                variant="success"
+                                size="lg"
+                                icon={<LayoutDashboard className="h-5 w-5" />}
+                            >
+                                Gia hạn ngay
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Link href="/contact">
+                            <Button
+                                variant="success"
+                                size="lg"
+                                icon={<ArrowRight className="h-5 w-5" />}
+                            >
+                                Liên hệ tư vấn ZaloPay
+                            </Button>
+                        </Link>
+                    )}
+                </div>
+            </section>
+
+            {/* Feature Comparison Table */}
+            <section className="bg-slate-50 py-16 border-t border-gray-200">
+                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    <div className="text-center space-y-2">
+                        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                            So Sánh Chi Tiết Tính Năng
+                        </h2>
+                        <p className="text-xs text-gray-500">
+                            Đối chiếu chi tiết tính năng hỗ trợ giữa các gói phần mềm
+                        </p>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs">
+                        <table className="w-full text-left text-xs">
+                            <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
+                                <tr>
+                                    <th className="p-4 sm:w-1/3">TÍNH NĂNG HỆ THỐNG</th>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <th
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/80 font-bold text-emerald-900'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <div className="font-extrabold uppercase">
+                                                    {plan.name}
+                                                </div>
+                                                <div className="mt-1 text-xs font-bold text-emerald-700">
+                                                    {plan.price === 0
+                                                        ? 'Miễn phí'
+                                                        : `${plan.price.toLocaleString('vi-VN')}đ / ${
+                                                              plan.duration_days >= 365
+                                                                  ? 'năm'
+                                                                  : plan.duration_days >= 30
+                                                                    ? 'tháng'
+                                                                    : `${plan.duration_days} ngày`
+                                                          }`}
+                                                </div>
+                                            </th>
+                                        ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 text-gray-700">
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Quản lý trung tâm
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {plan.code === 'yearly'
+                                                    ? 'Đa trung tâm'
+                                                    : '1 Trung tâm'}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Giới hạn Học sinh &amp; Lớp học
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {plan.max_students
+                                                    ? `${plan.max_students} HS`
+                                                    : 'Không GH'}{' '}
+                                                /{' '}
+                                                {plan.max_classes
+                                                    ? `${plan.max_classes} Lớp`
+                                                    : 'Không GH'}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Điểm danh &amp; Hồ sơ học sinh
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Nhóm Chat Lớp Trực Tuyến
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {plan.price > 0 ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Thanh toán ZaloPay QR Code v2
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {plan.price > 0 ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Biểu đồ thống kê Recharts
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {plan.code === 'yearly' ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Hỗ trợ kỹ thuật
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                                        : 'text-gray-500'
+                                                }`}
+                                            >
+                                                {plan.price === 0
+                                                    ? 'Email'
+                                                    : plan.code === 'yearly'
+                                                      ? 'Ưu tiên VIP 24/7'
+                                                      : 'Hotline 24/7'}
+                                            </td>
+                                        ))}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="bg-white py-16">
+                <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    <div className="text-center space-y-2">
+                        <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+                            <HelpCircle className="h-7 w-7 text-emerald-600" />
+                            Câu Hỏi Thường Gặp
+                        </h2>
+                        <p className="text-xs text-gray-500">
+                            Giải đáp những thắc mắc phổ biến về gói cước và phương thức vận hành
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {faqs.map((faq, idx) => (
+                            <Card key={idx} className="border-gray-200 p-5 space-y-2">
+                                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                    <Zap className="h-4 w-4 text-emerald-600 shrink-0" />
+                                    {faq.q}
+                                </h3>
+                                <p className="text-xs text-gray-600 leading-relaxed pl-6">
+                                    {faq.a}
+                                </p>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Final Call to Action */}
+            <section className="bg-emerald-600 py-12 text-white">
+                <div className="mx-auto max-w-5xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
+                    <h2 className="text-2xl font-extrabold sm:text-3xl">
+                        Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
+                    </h2>
+                    <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
+                        Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn lộ trình phù hợp nhất.
+                    </p>
+                    <div className="pt-2 flex justify-center gap-4">
+                        <Link href="/contact">
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                icon={<ShieldCheck className="h-5 w-5" />}
+                            >
+                                Đăng ký tư vấn ngay
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        </PublicLayout>
+    );
+};
+
+export default Services;

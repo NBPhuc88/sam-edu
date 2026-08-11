@@ -70,16 +70,16 @@ class SystemContentSeeder extends Seeder
         // Clean old subscription plans to ensure exact 3 plans
         SubscriptionPlan::query()->delete();
 
-        // 3 Subscription Plans: Trial 14 Days, Monthly, Yearly (20% Off)
+        // 3 Subscription Plans: Trial 14 Days, Monthly (30 Days), Yearly (365 Days - 20% Off)
         $plans = [
             [
-                'code'            => 'trial_14d',
-                'name'            => 'Gói Dùng Thử 14 Ngày',
-                'price'           => 0,
-                'duration_months' => 1,
-                'max_students'    => 30,
-                'max_classes'     => 3,
-                'features'        => [
+                'code'          => 'trial_14d',
+                'name'          => 'Gói Dùng Thử 14 Ngày',
+                'price'         => 0,
+                'duration_days' => 14,
+                'max_students'  => 30,
+                'max_classes'   => 3,
+                'features'      => [
                     'Trải nghiệm 14 ngày dùng thử miễn phí từ ngày tạo',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 30 học sinh & 3 lớp học',
@@ -90,13 +90,13 @@ class SystemContentSeeder extends Seeder
                 'is_featured' => false,
             ],
             [
-                'code'            => 'monthly',
-                'name'            => 'Gói Hàng Tháng (Standard)',
-                'price'           => 500000,
-                'duration_months' => 1,
-                'max_students'    => 200,
-                'max_classes'     => 15,
-                'features'        => [
+                'code'          => 'monthly',
+                'name'          => 'Gói Hàng Tháng (Standard)',
+                'price'         => 500000,
+                'duration_days' => 30,
+                'max_students'  => 200,
+                'max_classes'   => 15,
+                'features'      => [
                     'Thanh toán linh hoạt từng tháng (500.000đ/tháng)',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 200 học sinh & 15 lớp học',
@@ -107,13 +107,13 @@ class SystemContentSeeder extends Seeder
                 'is_featured' => false,
             ],
             [
-                'code'            => 'yearly',
-                'name'            => 'Gói Theo Năm (Tiết kiêm 20%)',
-                'price'           => 4800000,
-                'duration_months' => 12,
-                'max_students'    => 500,
-                'max_classes'     => 40,
-                'features'        => [
+                'code'          => 'yearly',
+                'name'          => 'Gói Theo Năm (Tiết kiêm 20%)',
+                'price'         => 4800000,
+                'duration_days' => 365,
+                'max_students'  => 500,
+                'max_classes'   => 40,
+                'features'      => [
                     'Tiết kiệm 20% so với mua lẻ hàng tháng (chỉ 400.000đ/tháng)',
                     'Thời hạn 1 năm (365 ngày)',
                     'Quản lý đa trung tâm đào tạo',

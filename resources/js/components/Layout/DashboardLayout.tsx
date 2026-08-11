@@ -29,7 +29,7 @@ interface SubscriptionPlan {
     code: string;
     name: string;
     price: number;
-    duration_months: number;
+    duration_days: number;
     max_students: number;
     max_classes: number;
     badge_text?: string | null;
@@ -234,9 +234,11 @@ return;
                                             {plan.price.toLocaleString('vi-VN')}đ{' '}
                                             <span className="text-[10px] font-normal text-gray-500">
                                                 /{' '}
-                                                {plan.duration_months === 12
+                                                {plan.duration_days >= 365
                                                     ? 'năm'
-                                                    : 'tháng'}
+                                                    : plan.duration_days >= 30
+                                                      ? 'tháng'
+                                                      : `${plan.duration_days} ngày`}
                                             </span>
                                         </div>
                                         <div className="mt-1 text-[11px] text-gray-500">

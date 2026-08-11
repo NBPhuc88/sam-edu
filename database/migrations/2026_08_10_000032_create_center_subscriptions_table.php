@@ -16,7 +16,7 @@ return new class () extends Migration {
             $table->string('plan_code', 50);
             $table->string('plan_name', 255);
             $table->decimal('price', 12, 2);
-            $table->integer('duration_months');
+            $table->integer('duration_days');
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');
             $table->enum('status', ['active', 'expired', 'cancelled', 'pending'])->default('pending');

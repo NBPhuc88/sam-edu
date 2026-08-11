@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
  * @property string                  $code
  * @property string                  $name
  * @property float                   $price
- * @property int                     $duration_months
+ * @property int                     $duration_days
  * @property int|null                $max_students
  * @property int|null                $max_classes
  * @property array<int, string>|null $features
@@ -28,7 +28,7 @@ class SubscriptionPlan extends Model
         'code',
         'name',
         'price',
-        'duration_months',
+        'duration_days',
         'max_students',
         'max_classes',
         'features',
@@ -39,12 +39,12 @@ class SubscriptionPlan extends Model
     protected function casts(): array
     {
         return [
-            'price'           => 'float',
-            'duration_months' => 'integer',
-            'max_students'    => 'integer',
-            'max_classes'     => 'integer',
-            'features'        => 'array',
-            'is_featured'     => 'boolean',
+            'price'         => 'float',
+            'duration_days' => 'integer',
+            'max_students'  => 'integer',
+            'max_classes'   => 'integer',
+            'features'      => 'array',
+            'is_featured'   => 'boolean',
         ];
     }
 }

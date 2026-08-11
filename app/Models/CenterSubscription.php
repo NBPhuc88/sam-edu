@@ -18,7 +18,7 @@ class CenterSubscription extends Model
         'plan_code',
         'plan_name',
         'price',
-        'duration_months',
+        'duration_days',
         'starts_at',
         'ends_at',
         'status',
@@ -27,10 +27,10 @@ class CenterSubscription extends Model
     protected function casts(): array
     {
         return [
-            'price'           => 'decimal:2',
-            'duration_months' => 'integer',
-            'starts_at'       => 'datetime',
-            'ends_at'         => 'datetime',
+            'price'         => 'decimal:2',
+            'duration_days' => 'integer',
+            'starts_at'     => 'datetime',
+            'ends_at'       => 'datetime',
         ];
     }
 
