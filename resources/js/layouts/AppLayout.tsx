@@ -164,7 +164,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         </Link>
                         {role === 'admin' && (
                             <Link
-                                href="/statistics"
+                                href="/centers"
                                 className="flex items-center gap-2 transition-colors hover:text-emerald-700"
                             >
                                 <Building2 className="h-4 w-4" />
