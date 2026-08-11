@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CenterSubscription extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'center_id',
@@ -26,10 +27,10 @@ class CenterSubscription extends Model
     protected function casts(): array
     {
         return [
-            'price' => 'decimal:2',
+            'price'           => 'decimal:2',
             'duration_months' => 'integer',
-            'starts_at' => 'datetime',
-            'ends_at' => 'datetime',
+            'starts_at'       => 'datetime',
+            'ends_at'         => 'datetime',
         ];
     }
 

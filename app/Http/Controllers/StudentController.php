@@ -15,11 +15,12 @@ class StudentController extends Controller
 {
     public function __construct(
         protected StudentExportImportServiceInterface $studentExportImportService
-    ) {}
+    ) {
+    }
 
     public function index(Request $request): InertiaResponse
     {
-        $search = $request->input('search');
+        $search   = $request->input('search');
         $centerId = $request->input('center_id');
 
         $query = Student::with('center')
@@ -42,8 +43,8 @@ class StudentController extends Controller
 
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
-            'filters' => [
-                'search' => $search,
+            'filters'  => [
+                'search'    => $search,
                 'center_id' => $centerId,
             ],
         ]);
@@ -52,15 +53,16 @@ class StudentController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $fileName = 'danh_sach_hoc_sinh_'.date('Y-m-d_H-i-s').'.csv';
+        $fileName = 'danh_sach_hoc_sinh_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
         return response()->stream(function () use ($centerId) {
             $handle = fopen('php://output', 'w');
+
             if ($handle === false) {
                 return;
             }
@@ -79,16 +81,18 @@ class StudentController extends Controller
     public function import(ImportCsvRequest $request): RedirectResponse
     {
         $file = $request->file('file');
+
         if (! $file) {
             return back()->with('error', 'Vui lòng chọn tệp CSV.');
         }
 
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $result = $this->studentExportImportService->importStudentsCsv($file->getPathname(), $centerId);
+        $result   = $this->studentExportImportService->importStudentsCsv($file->getPathname(), $centerId);
 
         $msg = "Import thành công: {$result['imported']} học sinh mới, cập nhật: {$result['updated']} học sinh.";
+
         if (! empty($result['errors'])) {
-            $msg .= ' Lỗi ở các dòng: '.implode('; ', array_slice($result['errors'], 0, 5));
+            $msg .= ' Lỗi ở các dòng: ' . implode('; ', array_slice($result['errors'], 0, 5));
         }
 
         return back()->with('success', $msg);
@@ -97,13 +101,14 @@ class StudentController extends Controller
     public function downloadSample(): StreamedResponse
     {
         $fileName = 'mau_import_hoc_sinh.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        $headers  = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
+
             if ($handle === false) {
                 return;
             }

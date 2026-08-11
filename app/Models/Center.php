@@ -10,25 +10,26 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
- * @property string $code
- * @property string $name
+ * @property int         $id
+ * @property string      $code
+ * @property string      $name
  * @property string|null $phone
  * @property string|null $email
  * @property string|null $address
- * @property string $status
- * @property string $subscription_plan
+ * @property string      $status
+ * @property string      $subscription_plan
  * @property Carbon|null $expires_at
  * @property Carbon|null $trial_ends_at
- * @property int|null $max_students
- * @property int|null $max_classes
+ * @property int|null    $max_students
+ * @property int|null    $max_classes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  */
 class Center extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'code',
@@ -47,10 +48,10 @@ class Center extends Model
     protected function casts(): array
     {
         return [
-            'expires_at' => 'datetime',
+            'expires_at'    => 'datetime',
             'trial_ends_at' => 'datetime',
-            'max_students' => 'integer',
-            'max_classes' => 'integer',
+            'max_students'  => 'integer',
+            'max_classes'   => 'integer',
         ];
     }
 

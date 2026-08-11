@@ -12,7 +12,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Student extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'username',
@@ -44,10 +45,10 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
-            'last_login_at' => 'datetime',
-            'date_of_birth' => 'date',
+            'last_login_at'  => 'datetime',
+            'date_of_birth'  => 'date',
             'admission_date' => 'date',
-            'password' => 'hashed',
+            'password'       => 'hashed',
         ];
     }
 

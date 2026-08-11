@@ -18,6 +18,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
 
     /**
      * @return \Generator<int, Student>
+     * @param  int                      $classId
      */
     public function getClassStudentsCursor(int $classId): \Generator
     {
@@ -38,13 +39,13 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     {
         ClassStudent::updateOrCreate(
             [
-                'class_id' => $classId,
+                'class_id'   => $classId,
                 'student_id' => $studentId,
             ],
             [
-                'status' => 'active',
+                'status'      => 'active',
                 'enrolled_at' => now(),
-                'note' => $note,
+                'note'        => $note,
             ]
         );
 

@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClassSubject extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'class_id',
@@ -26,7 +27,7 @@ class ClassSubject extends Model
     {
         return [
             'start_date' => 'date',
-            'end_date' => 'date',
+            'end_date'   => 'date',
         ];
     }
 

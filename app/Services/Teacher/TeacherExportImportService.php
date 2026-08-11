@@ -10,10 +10,12 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 {
     public function __construct(
         protected TeacherRepositoryInterface $teacherRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @return \Generator<int, array<int, string>>
+     * @param  ?int                                $centerId
      */
     public function exportTeachersCsv(?int $centerId = null): \Generator
     {
@@ -54,6 +56,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
     /**
      * @return \Generator<int, array<string, string>>
+     * @param  string                                 $filePath
      */
     public function readCsvStream(string $filePath): \Generator
     {
@@ -62,11 +65,13 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
         }
 
         $bom = fread($handle, 3);
+
         if ($bom !== "\xEF\xBB\xBF") {
             rewind($handle);
         }
 
         $headerRow = fgetcsv($handle);
+
         if (! $headerRow) {
             fclose($handle);
 
@@ -83,6 +88,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             }
 
             $mapped = [];
+
             foreach ($header as $index => $key) {
                 $mapped[$key] = isset($row[$index]) ? trim($row[$index]) : '';
             }
@@ -95,22 +101,24 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
     /**
      * @return array{imported: int, updated: int, errors: array<int, string>}
+     * @param  string                                                         $filePath
+     * @param  ?int                                                           $centerId
      */
     public function importTeachersCsv(string $filePath, ?int $centerId = null): array
     {
         $importedCount = 0;
-        $updatedCount = 0;
-        $errors = [];
-        $lineIndex = 1;
+        $updatedCount  = 0;
+        $errors        = [];
+        $lineIndex     = 1;
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
             $teacherCode = $row['mã giáo viên'] ?? $row['teacher_code'] ?? $row['code'] ?? '';
-            $username = $row['tên đăng nhập'] ?? $row['username'] ?? '';
-            $email = $row['email'] ?? '';
-            $firstName = $row['họ'] ?? $row['first_name'] ?? '';
-            $lastName = $row['tên'] ?? $row['last_name'] ?? '';
-            $fullName = $row['họ và tên'] ?? $row['full_name'] ?? trim("{$firstName} {$lastName}");
+            $username    = $row['tên đăng nhập'] ?? $row['username'] ?? '';
+            $email       = $row['email'] ?? '';
+            $firstName   = $row['họ'] ?? $row['first_name'] ?? '';
+            $lastName    = $row['tên'] ?? $row['last_name'] ?? '';
+            $fullName    = $row['họ và tên'] ?? $row['full_name'] ?? trim("{$firstName} {$lastName}");
 
             if (empty($username) && empty($teacherCode) && empty($email)) {
                 $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã giáo viên, Tên đăng nhập hoặc Email.";
@@ -119,7 +127,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             }
 
             if (empty($teacherCode)) {
-                $teacherCode = 'TCH'.strtoupper(Str::random(6));
+                $teacherCode = 'TCH' . strtoupper(Str::random(6));
             }
 
             if (empty($username)) {
@@ -127,27 +135,27 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             }
 
             if (empty($email)) {
-                $email = strtolower($username).'@sam-edu.local';
+                $email = strtolower($username) . '@sam-edu.local';
             }
 
             $existingTeacher = $this->teacherRepository->findByCode($teacherCode)
                 ?? $this->teacherRepository->findByUsernameOrEmail($username);
 
             $data = [
-                'teacher_code' => $teacherCode,
-                'username' => $username,
-                'email' => $email,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'full_name' => $fullName,
-                'phone' => $row['số điện thoại'] ?? $row['phone'] ?? null,
-                'date_of_birth' => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
-                'gender' => $row['giới tính'] ?? $row['gender'] ?? 'male',
-                'hire_date' => ! empty($row['ngày vào làm'] ?? $row['hire_date']) ? $row['ngày vào làm'] ?? $row['hire_date'] : null,
+                'teacher_code'   => $teacherCode,
+                'username'       => $username,
+                'email'          => $email,
+                'first_name'     => $firstName,
+                'last_name'      => $lastName,
+                'full_name'      => $fullName,
+                'phone'          => $row['số điện thoại'] ?? $row['phone'] ?? null,
+                'date_of_birth'  => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
+                'gender'         => $row['giới tính'] ?? $row['gender'] ?? 'male',
+                'hire_date'      => ! empty($row['ngày vào làm'] ?? $row['hire_date']) ? $row['ngày vào làm'] ?? $row['hire_date'] : null,
                 'specialization' => $row['chuyên môn'] ?? $row['specialization'] ?? null,
-                'note' => $row['ghi chú'] ?? $row['note'] ?? null,
-                'status' => $row['trạng thái'] ?? $row['status'] ?? 'active',
-                'center_id' => $centerId ?? 1,
+                'note'           => $row['ghi chú'] ?? $row['note'] ?? null,
+                'status'         => $row['trạng thái'] ?? $row['status'] ?? 'active',
+                'center_id'      => $centerId ?? 1,
             ];
 
             if ($existingTeacher) {
@@ -162,8 +170,8 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
         return [
             'imported' => $importedCount,
-            'updated' => $updatedCount,
-            'errors' => $errors,
+            'updated'  => $updatedCount,
+            'errors'   => $errors,
         ];
     }
 

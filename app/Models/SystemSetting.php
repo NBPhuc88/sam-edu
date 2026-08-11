@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
- * @property string $key
+ * @property int         $id
+ * @property string      $key
  * @property string|null $value
- * @property string $group
+ * @property string      $group
  * @property string|null $description
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -28,6 +28,8 @@ class SystemSetting extends Model
 
     /**
      * Get a setting value by key with default fallback.
+     * @param string  $key
+     * @param ?string $default
      */
     public static function getByKey(string $key, ?string $default = null): ?string
     {

@@ -15,11 +15,12 @@ class TeacherController extends Controller
 {
     public function __construct(
         protected TeacherExportImportServiceInterface $teacherExportImportService
-    ) {}
+    ) {
+    }
 
     public function index(Request $request): InertiaResponse
     {
-        $search = $request->input('search');
+        $search   = $request->input('search');
         $centerId = $request->input('center_id');
 
         $query = Teacher::with('center')
@@ -43,8 +44,8 @@ class TeacherController extends Controller
 
         return Inertia::render('Admin/Teachers/Index', [
             'teachers' => $teachers,
-            'filters' => [
-                'search' => $search,
+            'filters'  => [
+                'search'    => $search,
                 'center_id' => $centerId,
             ],
         ]);
@@ -53,15 +54,16 @@ class TeacherController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $fileName = 'danh_sach_giao_vien_'.date('Y-m-d_H-i-s').'.csv';
+        $fileName = 'danh_sach_giao_vien_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
         return response()->stream(function () use ($centerId) {
             $handle = fopen('php://output', 'w');
+
             if ($handle === false) {
                 return;
             }
@@ -80,16 +82,18 @@ class TeacherController extends Controller
     public function import(ImportCsvRequest $request): RedirectResponse
     {
         $file = $request->file('file');
+
         if (! $file) {
             return back()->with('error', 'Vui lòng chọn tệp CSV.');
         }
 
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $result = $this->teacherExportImportService->importTeachersCsv($file->getPathname(), $centerId);
+        $result   = $this->teacherExportImportService->importTeachersCsv($file->getPathname(), $centerId);
 
         $msg = "Import thành công: {$result['imported']} giáo viên mới, cập nhật: {$result['updated']} giáo viên.";
+
         if (! empty($result['errors'])) {
-            $msg .= ' Lỗi ở các dòng: '.implode('; ', array_slice($result['errors'], 0, 5));
+            $msg .= ' Lỗi ở các dòng: ' . implode('; ', array_slice($result['errors'], 0, 5));
         }
 
         return back()->with('success', $msg);
@@ -98,13 +102,14 @@ class TeacherController extends Controller
     public function downloadSample(): StreamedResponse
     {
         $fileName = 'mau_import_giao_vien.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        $headers  = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
+
             if ($handle === false) {
                 return;
             }

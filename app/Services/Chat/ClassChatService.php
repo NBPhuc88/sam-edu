@@ -12,10 +12,12 @@ class ClassChatService implements ClassChatServiceInterface
 {
     public function __construct(
         protected ClassChatRepositoryInterface $classChatRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @return array<int, array<string, mixed>>
+     * @param  int                              $classId
      */
     public function getRecentMessages(int $classId): array
     {
@@ -24,10 +26,13 @@ class ClassChatService implements ClassChatServiceInterface
         try {
             /** @var array<int, string> $cached */
             $cached = Redis::lrange($redisKey, 0, -1);
+
             if (! empty($cached)) {
                 $messages = [];
+
                 foreach ($cached as $jsonString) {
                     $decoded = json_decode($jsonString, true);
+
                     if (is_array($decoded)) {
                         /** @var array<string, mixed> $decoded */
                         $messages[] = $decoded;
@@ -43,7 +48,7 @@ class ClassChatService implements ClassChatServiceInterface
         }
 
         $dbMessages = $this->classChatRepository->getRecentMessages($classId);
-        $formatted = [];
+        $formatted  = [];
 
         foreach ($dbMessages as $msg) {
             $formatted[] = $this->formatMessageArray($msg);
@@ -52,6 +57,7 @@ class ClassChatService implements ClassChatServiceInterface
         // Cache back to Redis
         try {
             Redis::del($redisKey);
+
             foreach ($formatted as $msgArray) {
                 Redis::rpush($redisKey, json_encode($msgArray));
             }
@@ -65,6 +71,7 @@ class ClassChatService implements ClassChatServiceInterface
 
     /**
      * @return array<string, mixed>|null
+     * @param  int                       $classId
      */
     public function getPinnedMessage(int $classId): ?array
     {
@@ -73,8 +80,10 @@ class ClassChatService implements ClassChatServiceInterface
         try {
             /** @var string|null $cached */
             $cached = Redis::get($redisKey);
+
             if ($cached) {
                 $decoded = json_decode($cached, true);
+
                 if (is_array($decoded)) {
                     /** @var array<string, mixed> $decoded */
                     return $decoded;
@@ -85,6 +94,7 @@ class ClassChatService implements ClassChatServiceInterface
         }
 
         $pinnedMsg = $this->classChatRepository->getPinnedMessage($classId);
+
         if (! $pinnedMsg) {
             return null;
         }
@@ -101,19 +111,21 @@ class ClassChatService implements ClassChatServiceInterface
     }
 
     /**
-     * @param  array<string, mixed>  $senderInfo
+     * @param  array<string, mixed> $senderInfo
+     * @param  int                  $classId
+     * @param  string               $message
      * @return array<string, mixed>
      */
     public function sendMessage(int $classId, array $senderInfo, string $message): array
     {
         $created = $this->classChatRepository->createMessage([
-            'class_id' => $classId,
-            'sender_type' => $senderInfo['sender_type'] ?? 'student',
-            'sender_id' => $senderInfo['sender_id'] ?? 0,
-            'sender_name' => $senderInfo['sender_name'] ?? 'Thành viên',
+            'class_id'      => $classId,
+            'sender_type'   => $senderInfo['sender_type'] ?? 'student',
+            'sender_id'     => $senderInfo['sender_id'] ?? 0,
+            'sender_name'   => $senderInfo['sender_name'] ?? 'Thành viên',
             'sender_avatar' => $senderInfo['sender_avatar'] ?? null,
-            'message' => $message,
-            'is_pinned' => false,
+            'message'       => $message,
+            'is_pinned'     => false,
         ]);
 
         $formatted = $this->formatMessageArray($created);
@@ -135,10 +147,13 @@ class ClassChatService implements ClassChatServiceInterface
 
     /**
      * @return array<string, mixed>|null
+     * @param  int                       $classId
+     * @param  int                       $messageId
+     * @param  string                    $pinnedByName
      */
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?array
     {
-        $updated = $this->classChatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
+        $updated        = $this->classChatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
         $redisPinnedKey = "chat:class:{$classId}:pinned";
 
         if (! $updated || ! $updated->is_pinned) {
@@ -169,21 +184,22 @@ class ClassChatService implements ClassChatServiceInterface
 
     /**
      * @return array<string, mixed>
+     * @param  ClassChatMessage     $msg
      */
     protected function formatMessageArray(ClassChatMessage $msg): array
     {
         return [
-            'id' => $msg->id,
-            'class_id' => $msg->class_id,
-            'sender_type' => $msg->sender_type,
-            'sender_id' => $msg->sender_id,
-            'sender_name' => $msg->sender_name,
-            'sender_avatar' => $msg->sender_avatar,
-            'message' => $msg->message,
-            'is_pinned' => (bool) $msg->is_pinned,
-            'pinned_at' => $msg->pinned_at ? (string) $msg->pinned_at : null,
+            'id'             => $msg->id,
+            'class_id'       => $msg->class_id,
+            'sender_type'    => $msg->sender_type,
+            'sender_id'      => $msg->sender_id,
+            'sender_name'    => $msg->sender_name,
+            'sender_avatar'  => $msg->sender_avatar,
+            'message'        => $msg->message,
+            'is_pinned'      => (bool) $msg->is_pinned,
+            'pinned_at'      => $msg->pinned_at ? (string) $msg->pinned_at : null,
             'pinned_by_name' => $msg->pinned_by_name,
-            'created_at' => (string) ($msg->created_at ?? now()->toIso8601String()),
+            'created_at'     => (string) ($msg->created_at ?? now()->toIso8601String()),
             'time_formatted' => (string) ($msg->created_at ?? date('H:i, d/m')),
         ];
     }

@@ -59,7 +59,7 @@ Route::post('/classes/{classId}/chat/messages/{messageId}/pin', [ClassChatContro
 // Fallback Route for 404 Not Found Screen
 Route::fallback(function () {
     return Inertia::render('Error', [
-        'status' => 404,
+        'status'  => 404,
         'message' => 'Trang bạn đang tìm kiếm không tồn tại hoặc đường dẫn không đúng.',
     ]);
 });

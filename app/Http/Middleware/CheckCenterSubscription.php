@@ -15,7 +15,8 @@ class CheckCenterSubscription
     /**
      * Handle an incoming request.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param Closure(Request): (Response) $next
+     * @param Request                      $request
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -37,9 +38,9 @@ class CheckCenterSubscription
 
         if ($center && $center->expires_at && $center->expires_at->isPast()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Center subscription has expired. Please renew to continue.',
-                'code' => 'CENTER_SUBSCRIPTION_EXPIRED',
+                'success'    => false,
+                'message'    => 'Center subscription has expired. Please renew to continue.',
+                'code'       => 'CENTER_SUBSCRIPTION_EXPIRED',
                 'expires_at' => $center->expires_at->toIso8601String(),
             ], Response::HTTP_FORBIDDEN);
         }

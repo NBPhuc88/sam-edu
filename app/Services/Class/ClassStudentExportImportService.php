@@ -11,10 +11,12 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
     public function __construct(
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected StudentRepositoryInterface $studentRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @return \Generator<int, array<int, string>>
+     * @param  int                                 $classId
      */
     public function exportClassStudentsCsv(int $classId): \Generator
     {
@@ -43,6 +45,7 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
 
     /**
      * @return \Generator<int, array<string, string>>
+     * @param  string                                 $filePath
      */
     public function readCsvStream(string $filePath): \Generator
     {
@@ -51,11 +54,13 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
         }
 
         $bom = fread($handle, 3);
+
         if ($bom !== "\xEF\xBB\xBF") {
             rewind($handle);
         }
 
         $headerRow = fgetcsv($handle);
+
         if (! $headerRow) {
             fclose($handle);
 
@@ -72,6 +77,7 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
             }
 
             $mapped = [];
+
             foreach ($header as $index => $key) {
                 $mapped[$key] = isset($row[$index]) ? trim($row[$index]) : '';
             }
@@ -84,26 +90,29 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
 
     /**
      * @return array{imported: int, errors: array<int, string>}
+     * @param  int                                              $classId
+     * @param  string                                           $filePath
      */
     public function importClassStudentsCsv(int $classId, string $filePath): array
     {
         $schoolClass = $this->schoolClassRepository->findById($classId);
+
         if (! $schoolClass) {
             return [
                 'imported' => 0,
-                'errors' => ['Không tìm thấy lớp học.'],
+                'errors'   => ['Không tìm thấy lớp học.'],
             ];
         }
 
         $importedCount = 0;
-        $errors = [];
-        $lineIndex = 1;
+        $errors        = [];
+        $lineIndex     = 1;
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
             $studentCode = $row['mã học sinh'] ?? $row['student_code'] ?? $row['code'] ?? '';
-            $username = $row['tên đăng nhập'] ?? $row['username'] ?? '';
-            $email = $row['email'] ?? '';
+            $username    = $row['tên đăng nhập'] ?? $row['username'] ?? '';
+            $email       = $row['email'] ?? '';
 
             if (empty($studentCode) && empty($username) && empty($email)) {
                 $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã học sinh hoặc Username/Email.";
@@ -113,35 +122,38 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
 
             // Tìm kiếm học sinh có sẵn
             $student = null;
+
             if (! empty($studentCode)) {
                 $student = $this->studentRepository->findByCode($studentCode);
             }
+
             if (! $student && ! empty($username)) {
                 $student = $this->studentRepository->findByUsernameOrEmail($username);
             }
+
             if (! $student && ! empty($email)) {
                 $student = $this->studentRepository->findByUsernameOrEmail($email);
             }
 
             // Nếu học sinh chưa tồn tại, tạo mới học sinh từ dữ liệu dòng CSV
             if (! $student) {
-                $fullName = $row['họ và tên'] ?? $row['full_name'] ?? 'Học sinh mới';
-                $codeToUse = ! empty($studentCode) ? $studentCode : 'STD'.strtoupper(Str::random(6));
+                $fullName      = $row['họ và tên'] ?? $row['full_name'] ?? 'Học sinh mới';
+                $codeToUse     = ! empty($studentCode) ? $studentCode : 'STD' . strtoupper(Str::random(6));
                 $usernameToUse = ! empty($username) ? $username : strtolower($codeToUse);
 
                 $student = $this->studentRepository->updateOrCreateByCode($codeToUse, [
                     'student_code' => $codeToUse,
-                    'username' => $usernameToUse,
-                    'email' => ! empty($email) ? $email : "{$usernameToUse}@sam-edu.local",
-                    'full_name' => $fullName,
-                    'first_name' => $row['họ'] ?? $row['first_name'] ?? '',
-                    'last_name' => $row['tên'] ?? $row['last_name'] ?? $fullName,
-                    'phone' => $row['số điện thoại'] ?? $row['phone'] ?? null,
-                    'parent_name' => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
+                    'username'     => $usernameToUse,
+                    'email'        => ! empty($email) ? $email : "{$usernameToUse}@sam-edu.local",
+                    'full_name'    => $fullName,
+                    'first_name'   => $row['họ'] ?? $row['first_name'] ?? '',
+                    'last_name'    => $row['tên'] ?? $row['last_name'] ?? $fullName,
+                    'phone'        => $row['số điện thoại'] ?? $row['phone'] ?? null,
+                    'parent_name'  => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                     'parent_phone' => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
-                    'center_id' => $schoolClass->center_id,
-                    'status' => 'active',
-                    'password' => bcrypt('12345678'),
+                    'center_id'    => $schoolClass->center_id,
+                    'status'       => 'active',
+                    'password'     => bcrypt('12345678'),
                 ]);
             }
 
@@ -151,7 +163,7 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
 
         return [
             'imported' => $importedCount,
-            'errors' => $errors,
+            'errors'   => $errors,
         ];
     }
 

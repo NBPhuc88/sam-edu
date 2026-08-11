@@ -27,8 +27,8 @@ class ExamResultHistory extends Model
     protected function casts(): array
     {
         return [
-            'old_score' => 'decimal:2',
-            'new_score' => 'decimal:2',
+            'old_score'  => 'decimal:2',
+            'new_score'  => 'decimal:2',
             'created_at' => 'datetime',
         ];
     }

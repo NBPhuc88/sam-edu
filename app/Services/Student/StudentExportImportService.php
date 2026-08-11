@@ -10,10 +10,12 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 {
     public function __construct(
         protected StudentRepositoryInterface $studentRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @return \Generator<int, array<int, string>>
+     * @param  ?int                                $centerId
      */
     public function exportStudentsCsv(?int $centerId = null): \Generator
     {
@@ -57,6 +59,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
     /**
      * @return \Generator<int, array<string, string>>
+     * @param  string                                 $filePath
      */
     public function readCsvStream(string $filePath): \Generator
     {
@@ -66,11 +69,13 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
         // Bỏ qua UTF-8 BOM nếu có
         $bom = fread($handle, 3);
+
         if ($bom !== "\xEF\xBB\xBF") {
             rewind($handle);
         }
 
         $headerRow = fgetcsv($handle);
+
         if (! $headerRow) {
             fclose($handle);
 
@@ -87,6 +92,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             }
 
             $mapped = [];
+
             foreach ($header as $index => $key) {
                 $mapped[$key] = isset($row[$index]) ? trim($row[$index]) : '';
             }
@@ -99,22 +105,24 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
     /**
      * @return array{imported: int, updated: int, errors: array<int, string>}
+     * @param  string                                                         $filePath
+     * @param  ?int                                                           $centerId
      */
     public function importStudentsCsv(string $filePath, ?int $centerId = null): array
     {
         $importedCount = 0;
-        $updatedCount = 0;
-        $errors = [];
-        $lineIndex = 1;
+        $updatedCount  = 0;
+        $errors        = [];
+        $lineIndex     = 1;
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
             $studentCode = $row['mã học sinh'] ?? $row['student_code'] ?? $row['code'] ?? '';
-            $username = $row['tên đăng nhập'] ?? $row['username'] ?? '';
-            $email = $row['email'] ?? '';
-            $firstName = $row['họ'] ?? $row['first_name'] ?? '';
-            $lastName = $row['tên'] ?? $row['last_name'] ?? '';
-            $fullName = $row['họ và tên'] ?? $row['full_name'] ?? trim("{$firstName} {$lastName}");
+            $username    = $row['tên đăng nhập'] ?? $row['username'] ?? '';
+            $email       = $row['email'] ?? '';
+            $firstName   = $row['họ'] ?? $row['first_name'] ?? '';
+            $lastName    = $row['tên'] ?? $row['last_name'] ?? '';
+            $fullName    = $row['họ và tên'] ?? $row['full_name'] ?? trim("{$firstName} {$lastName}");
 
             if (empty($username) && empty($studentCode) && empty($email)) {
                 $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã học sinh, Tên đăng nhập hoặc Email.";
@@ -123,7 +131,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             }
 
             if (empty($studentCode)) {
-                $studentCode = 'STD'.strtoupper(Str::random(6));
+                $studentCode = 'STD' . strtoupper(Str::random(6));
             }
 
             if (empty($username)) {
@@ -131,28 +139,28 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             }
 
             if (empty($email)) {
-                $email = strtolower($username).'@sam-edu.local';
+                $email = strtolower($username) . '@sam-edu.local';
             }
 
             $existingStudent = $this->studentRepository->findByCode($studentCode)
                 ?? $this->studentRepository->findByUsernameOrEmail($username);
 
             $data = [
-                'student_code' => $studentCode,
-                'username' => $username,
-                'email' => $email,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'full_name' => $fullName,
-                'phone' => $row['số điện thoại'] ?? $row['phone'] ?? null,
-                'date_of_birth' => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
-                'gender' => $row['giới tính'] ?? $row['gender'] ?? 'male',
-                'address' => $row['địa chỉ'] ?? $row['address'] ?? null,
-                'parent_name' => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
-                'parent_phone' => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
+                'student_code'        => $studentCode,
+                'username'            => $username,
+                'email'               => $email,
+                'first_name'          => $firstName,
+                'last_name'           => $lastName,
+                'full_name'           => $fullName,
+                'phone'               => $row['số điện thoại'] ?? $row['phone'] ?? null,
+                'date_of_birth'       => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
+                'gender'              => $row['giới tính'] ?? $row['gender'] ?? 'male',
+                'address'             => $row['địa chỉ'] ?? $row['address'] ?? null,
+                'parent_name'         => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
+                'parent_phone'        => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                 'parent_relationship' => $row['mối quan hệ phụ huynh'] ?? $row['parent_relationship'] ?? 'bố',
-                'status' => $row['trạng thái'] ?? $row['status'] ?? 'active',
-                'center_id' => $centerId ?? 1,
+                'status'              => $row['trạng thái'] ?? $row['status'] ?? 'active',
+                'center_id'           => $centerId ?? 1,
             ];
 
             if ($existingStudent) {
@@ -167,8 +175,8 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
         return [
             'imported' => $importedCount,
-            'updated' => $updatedCount,
-            'errors' => $errors,
+            'updated'  => $updatedCount,
+            'errors'   => $errors,
         ];
     }
 

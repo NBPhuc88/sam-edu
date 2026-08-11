@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SchoolClass extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'classes';
 
@@ -30,8 +31,8 @@ class SchoolClass extends Model
     {
         return [
             'max_students' => 'integer',
-            'start_date' => 'date',
-            'end_date' => 'date',
+            'start_date'   => 'date',
+            'end_date'     => 'date',
         ];
     }
 

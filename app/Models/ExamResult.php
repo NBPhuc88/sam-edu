@@ -27,7 +27,7 @@ class ExamResult extends Model
     protected function casts(): array
     {
         return [
-            'score' => 'decimal:2',
+            'score'      => 'decimal:2',
             'entered_at' => 'datetime',
         ];
     }

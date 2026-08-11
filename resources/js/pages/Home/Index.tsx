@@ -159,16 +159,16 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {plans && plans.map((plan: Plan) => (
                             <div
                                 key={plan.id}
                                 className={`ui-card p-6 flex flex-col justify-between relative transition-all ${
-                                    plan.is_featured ? 'border-2 border-emerald-600 shadow-md ring-2 ring-emerald-500/20' : 'border-gray-200'
+                                    plan.is_featured ? 'border-2 border-emerald-600 shadow-lg ring-2 ring-emerald-500/20 bg-white' : 'border-gray-200 bg-white'
                                 }`}
                             >
                                 {plan.badge_text && (
-                                    <div className="absolute -top-3 right-4">
+                                    <div className="absolute -top-3.5 right-4">
                                         <Badge variant={plan.is_featured ? 'active' : 'info'}>{plan.badge_text}</Badge>
                                     </div>
                                 )}
@@ -176,11 +176,15 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                 <div className="space-y-4">
                                     <div>
                                         <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-                                        <div className="mt-2 flex items-baseline">
-                                            <span className="text-2xl font-extrabold text-gray-900">
+                                        <div className="mt-2 flex items-baseline flex-wrap gap-1">
+                                            <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                                                 {plan.price === 0 ? 'Miễn phí' : `${plan.price.toLocaleString('vi-VN')}đ`}
                                             </span>
-                                            {plan.price > 0 && <span className="text-xs text-gray-500 ml-1">/tháng</span>}
+                                            {plan.price > 0 && (
+                                                <span className="text-xs text-gray-500 font-medium">
+                                                    {plan.duration_months === 12 ? '/ năm' : '/ tháng'}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 

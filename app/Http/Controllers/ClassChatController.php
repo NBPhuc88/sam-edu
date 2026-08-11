@@ -18,31 +18,32 @@ class ClassChatController extends Controller
 {
     public function __construct(
         protected ClassChatServiceInterface $classChatService
-    ) {}
+    ) {
+    }
 
     public function index(Request $request, int $classId): InertiaResponse
     {
         $schoolClass = SchoolClass::with('center')->findOrFail($classId);
 
-        $currentUser = $this->getCurrentUserSenderInfo();
-        $messages = $this->classChatService->getRecentMessages($classId);
+        $currentUser   = $this->getCurrentUserSenderInfo();
+        $messages      = $this->classChatService->getRecentMessages($classId);
         $pinnedMessage = $this->classChatService->getPinnedMessage($classId);
 
         return Inertia::render('Admin/Classes/Chat', [
-            'schoolClass' => $schoolClass,
-            'currentUser' => $currentUser,
-            'initialMessages' => $messages,
+            'schoolClass'          => $schoolClass,
+            'currentUser'          => $currentUser,
+            'initialMessages'      => $messages,
             'initialPinnedMessage' => $pinnedMessage,
         ]);
     }
 
     public function getMessages(int $classId): JsonResponse
     {
-        $messages = $this->classChatService->getRecentMessages($classId);
+        $messages      = $this->classChatService->getRecentMessages($classId);
         $pinnedMessage = $this->classChatService->getPinnedMessage($classId);
 
         return response()->json([
-            'messages' => $messages,
+            'messages'       => $messages,
             'pinned_message' => $pinnedMessage,
         ]);
     }
@@ -50,7 +51,7 @@ class ClassChatController extends Controller
     public function sendMessage(SendClassChatMessageRequest $request, int $classId): JsonResponse
     {
         $schoolClass = SchoolClass::findOrFail($classId);
-        $senderInfo = $this->getCurrentUserSenderInfo();
+        $senderInfo  = $this->getCurrentUserSenderInfo();
         $messageText = (string) $request->input('message');
 
         $sentMessage = $this->classChatService->sendMessage($schoolClass->id, $senderInfo, $messageText);
@@ -76,7 +77,7 @@ class ClassChatController extends Controller
         $pinnedResult = $this->classChatService->togglePinMessage($classId, $messageId, $senderInfo['sender_name']);
 
         return response()->json([
-            'success' => true,
+            'success'        => true,
             'pinned_message' => $pinnedResult,
         ]);
     }
@@ -90,47 +91,50 @@ class ClassChatController extends Controller
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
+
         if ($admin) {
             return [
-                'sender_type' => 'admin',
-                'sender_id' => $admin->id,
-                'sender_name' => $admin->full_name ?? $admin->name ?? 'Admin',
+                'sender_type'   => 'admin',
+                'sender_id'     => $admin->id,
+                'sender_name'   => $admin->full_name ?? $admin->name ?? 'Admin',
                 'sender_avatar' => $admin->avatar ?? null,
-                'can_pin' => true,
+                'can_pin'       => true,
             ];
         }
 
         /** @var Teacher|null $teacher */
         $teacher = Auth::guard('teacher')->user();
+
         if ($teacher) {
             return [
-                'sender_type' => 'teacher',
-                'sender_id' => $teacher->id,
-                'sender_name' => $teacher->full_name ?? 'Giáo viên',
+                'sender_type'   => 'teacher',
+                'sender_id'     => $teacher->id,
+                'sender_name'   => $teacher->full_name ?? 'Giáo viên',
                 'sender_avatar' => $teacher->avatar ?? null,
-                'can_pin' => true,
+                'can_pin'       => true,
             ];
         }
 
         /** @var Student|null $student */
         $student = Auth::guard('student')->user();
+
         if ($student) {
             return [
-                'sender_type' => 'student',
-                'sender_id' => $student->id,
-                'sender_name' => $student->full_name ?? 'Học sinh',
+                'sender_type'   => 'student',
+                'sender_id'     => $student->id,
+                'sender_name'   => $student->full_name ?? 'Học sinh',
                 'sender_avatar' => $student->avatar ?? null,
-                'can_pin' => false,
+                'can_pin'       => false,
             ];
         }
 
         // Mặc định cho thử nghiệm Admin
         return [
-            'sender_type' => 'admin',
-            'sender_id' => 1,
-            'sender_name' => 'Quản trị viên Trung tâm',
+            'sender_type'   => 'admin',
+            'sender_id'     => 1,
+            'sender_name'   => 'Quản trị viên Trung tâm',
             'sender_avatar' => null,
-            'can_pin' => true,
+            'can_pin'       => true,
         ];
     }
 }

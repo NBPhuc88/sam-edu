@@ -13,7 +13,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'admin'),
+        'guard'     => env('AUTH_GUARD', 'admin'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'admins'),
     ],
 
@@ -25,15 +25,15 @@ return [
 
     'guards' => [
         'admin' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'admins',
         ],
         'teacher' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'teachers',
         ],
         'student' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'students',
         ],
     ],
@@ -47,15 +47,15 @@ return [
     'providers' => [
         'admins' => [
             'driver' => 'eloquent',
-            'model' => Admin::class,
+            'model'  => Admin::class,
         ],
         'teachers' => [
             'driver' => 'eloquent',
-            'model' => Teacher::class,
+            'model'  => Teacher::class,
         ],
         'students' => [
             'driver' => 'eloquent',
-            'model' => Student::class,
+            'model'  => Student::class,
         ],
     ],
 
@@ -68,20 +68,20 @@ return [
     'passwords' => [
         'admins' => [
             'provider' => 'admins',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
+            'table'    => 'password_reset_tokens',
+            'expire'   => 60,
             'throttle' => 60,
         ],
         'teachers' => [
             'provider' => 'teachers',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
+            'table'    => 'password_reset_tokens',
+            'expire'   => 60,
             'throttle' => 60,
         ],
         'students' => [
             'provider' => 'students',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
+            'table'    => 'password_reset_tokens',
+            'expire'   => 60,
             'throttle' => 60,
         ],
     ],

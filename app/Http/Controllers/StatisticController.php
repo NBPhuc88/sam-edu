@@ -15,6 +15,7 @@ class StatisticController extends Controller
 {
     /**
      * Display role-scoped student statistics page (by Center & by Class).
+     * @param Request $request
      */
     public function index(Request $request): Response
     {
@@ -32,23 +33,22 @@ class StatisticController extends Controller
         } elseif (Auth::guard('student')->check()) {
             // Block student access with 403 Forbidden
             return Inertia::render('Error', [
-                'status' => 403,
+                'status'  => 403,
                 'message' => 'Bạn không có quyền truy cập vào trang thống kê báo cáo quản trị.',
             ]);
         }
 
         // Determine Allowed Center IDs based on role & permissions
         $allowedCenterIds = [];
-        $isSuperAdmin = false;
+        $isSuperAdmin     = false;
 
         if ($role === 'admin' && $user instanceof Admin) {
-            $centerIds = $user->centers()->pluck('centers.id')->toArray();
-            if (empty($centerIds)) {
-                // If super admin not restricted by admin_centers, allow all centers
-                $isSuperAdmin = true;
+            $isSuperAdmin = $user->roles()->where('code', 'super_admin')->exists() || $user->centers()->count() === 0;
+
+            if ($isSuperAdmin) {
                 $allowedCenterIds = Center::pluck('id')->toArray();
             } else {
-                $allowedCenterIds = $centerIds;
+                $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
             }
         } elseif ($user instanceof Teacher) {
             $allowedCenterIds = [$user->center_id];
@@ -56,6 +56,7 @@ class StatisticController extends Controller
 
         // Selected Center Filter from Query String
         $selectedCenterId = $request->query('center_id');
+
         if ($selectedCenterId && in_array((int) $selectedCenterId, $allowedCenterIds)) {
             $activeCenterIds = [(int) $selectedCenterId];
         } else {
@@ -64,15 +65,15 @@ class StatisticController extends Controller
 
         // 1. Center Level Statistics
         $centersQuery = Center::whereIn('id', $activeCenterIds)->withCount(['students', 'classes', 'teachers']);
-        $centers = $centersQuery->get();
+        $centers      = $centersQuery->get();
 
         $centerStats = $centers->map(function (Center $center) {
             return [
-                'id' => $center->id,
-                'code' => $center->code,
-                'name' => $center->name,
+                'id'            => $center->id,
+                'code'          => $center->code,
+                'name'          => $center->name,
                 'student_count' => $center->students_count,
-                'class_count' => $center->classes_count,
+                'class_count'   => $center->classes_count,
                 'teacher_count' => $center->teachers_count,
             ];
         });
@@ -89,29 +90,29 @@ class StatisticController extends Controller
         $classes = $classesQuery->get();
 
         $classStats = $classes->map(function (SchoolClass $schoolClass) {
-            $studentCount = (int) $schoolClass->students_count;
-            $maxCapacity = (int) ($schoolClass->max_students ?: 30);
+            $studentCount  = (int) $schoolClass->students_count;
+            $maxCapacity   = (int) ($schoolClass->max_students ?: 30);
             $occupancyRate = min(100, (int) round(($studentCount / $maxCapacity) * 100));
 
             return [
-                'id' => $schoolClass->id,
-                'code' => $schoolClass->code,
-                'name' => $schoolClass->name,
-                'center_name' => $schoolClass->center->name ?? 'N/A',
-                'center_code' => $schoolClass->center->code ?? 'N/A',
-                'student_count' => $studentCount,
-                'max_capacity' => $maxCapacity,
+                'id'             => $schoolClass->id,
+                'code'           => $schoolClass->code,
+                'name'           => $schoolClass->name,
+                'center_name'    => $schoolClass->center->name ?? 'N/A',
+                'center_code'    => $schoolClass->center->code ?? 'N/A',
+                'student_count'  => $studentCount,
+                'max_capacity'   => $maxCapacity,
                 'occupancy_rate' => $occupancyRate,
-                'status' => $schoolClass->status,
+                'status'         => $schoolClass->status,
             ];
         });
 
         return Inertia::render('Admin/Statistics', [
-            'role' => $role,
-            'isSuperAdmin' => $isSuperAdmin,
-            'allowedCenters' => Center::whereIn('id', $allowedCenterIds)->get(['id', 'code', 'name']),
-            'centerStats' => $centerStats,
-            'classStats' => $classStats,
+            'role'             => $role,
+            'isSuperAdmin'     => $isSuperAdmin,
+            'allowedCenters'   => Center::whereIn('id', $allowedCenterIds)->get(['id', 'code', 'name']),
+            'centerStats'      => $centerStats,
+            'classStats'       => $classStats,
             'selectedCenterId' => $selectedCenterId ? (int) $selectedCenterId : null,
         ]);
     }

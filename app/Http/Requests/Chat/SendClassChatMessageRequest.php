@@ -28,7 +28,7 @@ class SendClassChatMessageRequest extends FormRequest
     {
         return [
             'message.required' => 'Vui lòng nhập nội dung tin nhắn.',
-            'message.max' => 'Nội dung tin nhắn không được vượt quá 1000 ký tự.',
+            'message.max'      => 'Nội dung tin nhắn không được vượt quá 1000 ký tự.',
         ];
     }
 }

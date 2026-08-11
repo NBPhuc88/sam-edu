@@ -21,7 +21,7 @@ class AuthService implements AuthServiceInterface
         TeacherRepositoryInterface $teacherRepository,
         StudentRepositoryInterface $studentRepository
     ) {
-        $this->adminRepository = $adminRepository;
+        $this->adminRepository   = $adminRepository;
         $this->teacherRepository = $teacherRepository;
         $this->studentRepository = $studentRepository;
     }
@@ -30,6 +30,9 @@ class AuthService implements AuthServiceInterface
      * Authenticate account credentials for specified role.
      *
      * @return array{success: bool, account: mixed, error: string|null}
+     * @param  string                                                   $role
+     * @param  string                                                   $username
+     * @param  string                                                   $password
      */
     public function authenticate(string $role, string $username, string $password): array
     {
@@ -47,7 +50,7 @@ class AuthService implements AuthServiceInterface
             return [
                 'success' => false,
                 'account' => null,
-                'error' => 'Tên đăng nhập hoặc mật khẩu không chính xác.',
+                'error'   => 'Tên đăng nhập hoặc mật khẩu không chính xác.',
             ];
         }
 
@@ -55,7 +58,7 @@ class AuthService implements AuthServiceInterface
             return [
                 'success' => false,
                 'account' => null,
-                'error' => 'Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.',
+                'error'   => 'Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.',
             ];
         }
 
@@ -69,7 +72,7 @@ class AuthService implements AuthServiceInterface
         return [
             'success' => true,
             'account' => $account,
-            'error' => null,
+            'error'   => null,
         ];
     }
 

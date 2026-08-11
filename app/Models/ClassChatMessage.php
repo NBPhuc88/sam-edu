@@ -25,8 +25,8 @@ class ClassChatMessage extends Model
     protected function casts(): array
     {
         return [
-            'is_pinned' => 'boolean',
-            'pinned_at' => 'datetime',
+            'is_pinned'  => 'boolean',
+            'pinned_at'  => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

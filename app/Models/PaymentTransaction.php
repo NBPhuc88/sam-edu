@@ -25,7 +25,7 @@ class PaymentTransaction extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
+            'amount'  => 'decimal:2',
             'payload' => 'array',
             'paid_at' => 'datetime',
         ];

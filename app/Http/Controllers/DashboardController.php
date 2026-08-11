@@ -17,6 +17,7 @@ class DashboardController extends Controller
 {
     /**
      * Display the main dashboard based on authenticated role.
+     * @param Request $request
      */
     public function index(Request $request): Response
     {
@@ -38,17 +39,22 @@ class DashboardController extends Controller
         }
 
         // Get center statistics
-        $centerCount = Center::count();
+        $centerCount  = Center::count();
         $studentCount = Student::count();
         $teacherCount = Teacher::count();
-        $classCount = SchoolClass::count();
-        $roomCount = Room::count();
+        $classCount   = SchoolClass::count();
+        $roomCount    = Room::count();
 
         // Determine assigned center for current user role
         $center = null;
+
         if ($role === 'admin' && $user instanceof Admin) {
-            // Super Admin managing all centers has no specific single center, Center Admin has assigned centers
-            $center = $user->centers()->first();
+            // Check if user is Super Admin (has super_admin role or no assigned centers)
+            $isSuperAdmin = $user->roles()->where('code', 'super_admin')->exists() || $user->centers()->count() === 0;
+
+            if (! $isSuperAdmin) {
+                $center = $user->centers()->first();
+            }
         } elseif ($role === 'teacher' && isset($user->center_id)) {
             $center = Center::find($user->center_id);
         } elseif ($role === 'student' && isset($user->center_id)) {
@@ -56,34 +62,36 @@ class DashboardController extends Controller
         }
 
         $centerData = null;
+
         if ($center) {
-            $expiresAt = $center->expires_at;
-            $isExpired = $expiresAt ? $expiresAt->isPast() : false;
+            $expiresAt    = $center->expires_at;
+            $isExpired    = $expiresAt ? $expiresAt->isPast() : false;
             $expiringSoon = $expiresAt ? (! $isExpired && $expiresAt->diffInDays(now()) <= 14) : false;
 
             $centerData = [
-                'id' => $center->id,
-                'code' => $center->code,
-                'name' => $center->name,
+                'id'                => $center->id,
+                'code'              => $center->code,
+                'name'              => $center->name,
                 'subscription_plan' => $center->subscription_plan,
-                'expires_at' => $expiresAt ? $expiresAt->toIso8601String() : null,
-                'is_expired' => $isExpired,
-                'expiring_soon' => $expiringSoon,
+                'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
+                'is_expired'        => $isExpired,
+                'expiring_soon'     => $expiringSoon,
             ];
         }
 
         // Tính toán thống kê nhập học thực tế theo 6 tháng gần nhất từ CSDL
         $monthlyEnrollments = [];
+
         for ($i = 5; $i >= 0; $i--) {
             $targetDate = now()->subMonths($i);
-            $monthLabel = 'Thg '.$targetDate->format('n');
+            $monthLabel = 'Thg ' . $targetDate->format('n');
 
             $count = Student::whereYear('created_at', $targetDate->year)
                 ->whereMonth('created_at', $targetDate->month)
                 ->count();
 
             $monthlyEnrollments[] = [
-                'month' => $monthLabel,
+                'month'    => $monthLabel,
                 'students' => $count,
             ];
         }
@@ -93,25 +101,25 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'auth' => [
                 'user' => $user ? [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'email' => $user->email,
+                    'id'        => $user->id,
+                    'username'  => $user->username,
+                    'email'     => $user->email,
                     'full_name' => $user->full_name ?? $user->username,
-                    'role' => $role,
-                    'avatar' => $user->avatar ?? null,
+                    'role'      => $role,
+                    'avatar'    => $user->avatar ?? null,
                 ] : null,
                 'role' => $role,
             ],
             'center' => $centerData,
-            'stats' => [
-                'centers' => $centerCount,
+            'stats'  => [
+                'centers'  => $centerCount,
                 'students' => $studentCount,
                 'teachers' => $teacherCount,
-                'classes' => $classCount,
-                'rooms' => $roomCount,
+                'classes'  => $classCount,
+                'rooms'    => $roomCount,
             ],
             'monthlyEnrollments' => $monthlyEnrollments,
-            'recentClasses' => $recentClasses,
+            'recentClasses'      => $recentClasses,
         ]);
     }
 }

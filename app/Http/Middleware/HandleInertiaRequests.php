@@ -21,6 +21,7 @@ class HandleInertiaRequests extends Middleware
      * Determines the current asset version.
      *
      * @see https://inertiajs.com/asset-versioning
+     * @param Request $request
      */
     public function version(Request $request): ?string
     {
@@ -33,6 +34,7 @@ class HandleInertiaRequests extends Middleware
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
+     * @param  Request              $request
      */
     public function share(Request $request): array
     {
@@ -55,11 +57,11 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user ? [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'email' => $user->email ?? null,
+                    'id'        => $user->id,
+                    'username'  => $user->username,
+                    'email'     => $user->email ?? null,
                     'full_name' => $user->full_name ?? $user->username,
-                    'role' => $role,
+                    'role'      => $role,
                 ] : null,
                 'role' => $role,
             ],

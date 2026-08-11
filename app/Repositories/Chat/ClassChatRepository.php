@@ -9,6 +9,8 @@ class ClassChatRepository implements ClassChatRepositoryInterface
 {
     /**
      * @return Collection<int, ClassChatMessage>
+     * @param  int                               $classId
+     * @param  int                               $limit
      */
     public function getRecentMessages(int $classId, int $limit = 50): Collection
     {
@@ -35,7 +37,7 @@ class ClassChatRepository implements ClassChatRepositoryInterface
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
      */
     public function createMessage(array $data): ClassChatMessage
     {
@@ -49,6 +51,7 @@ class ClassChatRepository implements ClassChatRepositoryInterface
     {
         /** @var ClassChatMessage|null $targetMessage */
         $targetMessage = ClassChatMessage::where('class_id', $classId)->find($messageId);
+
         if (! $targetMessage) {
             return null;
         }
@@ -58,20 +61,20 @@ class ClassChatRepository implements ClassChatRepositoryInterface
         // Nếu ghim tin nhắn mới, hủy ghim tất cả các tin nhắn cũ trong lớp
         if ($newPinnedState) {
             ClassChatMessage::where('class_id', $classId)->update([
-                'is_pinned' => false,
-                'pinned_at' => null,
+                'is_pinned'      => false,
+                'pinned_at'      => null,
                 'pinned_by_name' => null,
             ]);
 
             $targetMessage->update([
-                'is_pinned' => true,
-                'pinned_at' => now(),
+                'is_pinned'      => true,
+                'pinned_at'      => now(),
                 'pinned_by_name' => $pinnedByName,
             ]);
         } else {
             $targetMessage->update([
-                'is_pinned' => false,
-                'pinned_at' => null,
+                'is_pinned'      => false,
+                'pinned_at'      => null,
                 'pinned_by_name' => null,
             ]);
         }
