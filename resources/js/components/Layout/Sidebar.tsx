@@ -1,10 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
-import {
-    getAccountLabel,
-    getNavigationItems,
-} from '../../config/navigation';
+import { getAccountLabel, getNavigationItems } from '../../config/navigation';
 import type { NavItem } from '../../config/navigation';
 
 interface SidebarProps {
@@ -25,10 +22,11 @@ function isActivePath(path: string, currentUrl: string): boolean {
 }
 
 /** Single nav link */
-const NavLink: React.FC<{ item: NavItem; currentUrl: string }> = ({
-    item,
-    currentUrl,
-}) => {
+const NavLink: React.FC<{
+    item: NavItem;
+    currentUrl: string;
+    onClose?: () => void;
+}> = ({ item, currentUrl, onClose }) => {
     const active = item.path ? isActivePath(item.path, currentUrl) : false;
     const Icon = item.icon;
 
@@ -36,9 +34,20 @@ const NavLink: React.FC<{ item: NavItem; currentUrl: string }> = ({
         return null;
     }
 
+    const handleClick = () => {
+        if (
+            typeof window !== 'undefined' &&
+            window.innerWidth < 768 &&
+            onClose
+        ) {
+            onClose();
+        }
+    };
+
     return (
         <Link
             href={item.path}
+            onClick={handleClick}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                 active
                     ? 'bg-emerald-600 text-white shadow-xs'
@@ -52,10 +61,11 @@ const NavLink: React.FC<{ item: NavItem; currentUrl: string }> = ({
 };
 
 /** Expandable nav group */
-const NavGroup: React.FC<{ item: NavItem; currentUrl: string }> = ({
-    item,
-    currentUrl,
-}) => {
+const NavGroup: React.FC<{
+    item: NavItem;
+    currentUrl: string;
+    onClose?: () => void;
+}> = ({ item, currentUrl, onClose }) => {
     const groupActive =
         item.children?.some(
             (child) => child.path && isActivePath(child.path, currentUrl),
@@ -76,12 +86,16 @@ const NavGroup: React.FC<{ item: NavItem; currentUrl: string }> = ({
                 }`}
             >
                 <div className="flex items-center gap-3">
-                    {Icon && <Icon className="h-4 w-4 shrink-0 text-gray-500" />}
+                    {Icon && (
+                        <Icon className="h-4 w-4 shrink-0 text-gray-500" />
+                    )}
                     <span>{item.label}</span>
                 </div>
                 <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                        expanded ? 'rotate-180 text-emerald-700' : 'text-gray-400'
+                        expanded
+                            ? 'rotate-180 text-emerald-700'
+                            : 'text-gray-400'
                     }`}
                 />
             </button>
@@ -93,6 +107,7 @@ const NavGroup: React.FC<{ item: NavItem; currentUrl: string }> = ({
                             key={child.path ?? child.label}
                             item={child}
                             currentUrl={currentUrl}
+                            onClose={onClose}
                         />
                     ))}
                 </div>
@@ -132,9 +147,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`shrink-0 border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${
                     open
                         ? 'w-64 opacity-100'
-                        : 'w-0 overflow-hidden border-r-0 border-transparent opacity-0 pointer-events-none'
+                        : 'pointer-events-none w-0 overflow-hidden border-r-0 border-transparent opacity-0'
                 } fixed inset-y-0 left-0 z-40 h-full shadow-xl md:static md:z-auto md:shadow-none ${
-                    open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                    open
+                        ? 'translate-x-0'
+                        : '-translate-x-full md:translate-x-0'
                 }`}
             >
                 {/* Fixed width container to prevent text warping during transition */}
@@ -145,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             SAM
                         </div>
                         <div>
-                            <div className="text-sm font-bold leading-tight text-gray-900">
+                            <div className="text-sm leading-tight font-bold text-gray-900">
                                 Giáo dục Sam
                             </div>
                             <div className="text-[11px] text-gray-400">
@@ -189,12 +206,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     key={item.label}
                                     item={item}
                                     currentUrl={url}
+                                    onClose={onClose}
                                 />
                             ) : (
                                 <NavLink
                                     key={item.path ?? item.label}
                                     item={item}
                                     currentUrl={url}
+                                    onClose={onClose}
                                 />
                             ),
                         )}

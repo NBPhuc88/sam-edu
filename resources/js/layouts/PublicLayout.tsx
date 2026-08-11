@@ -97,15 +97,18 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-2xs">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     {/* Brand Logo */}
-                    <Link href="/" className="flex items-center gap-2.5 shrink-0">
+                    <Link
+                        href="/"
+                        className="flex shrink-0 items-center gap-2.5"
+                    >
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-base font-black text-white shadow-xs">
                             SAM
                         </div>
                         <div>
-                            <span className="block text-sm sm:text-base leading-tight font-extrabold text-gray-900">
+                            <span className="block text-sm leading-tight font-extrabold text-gray-900 sm:text-base">
                                 Giáo dục Sam
                             </span>
-                            <span className="hidden sm:block text-[11px] text-gray-500">
+                            <span className="hidden text-[11px] text-gray-500 sm:block">
                                 Hệ thống Quản lý Giáo dục Sam
                             </span>
                         </div>
@@ -160,7 +163,10 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         Đăng nhập
                                     </Button>
                                 </Link>
-                                <Link href="/contact" className="hidden sm:inline-flex">
+                                <Link
+                                    href="/contact"
+                                    className="hidden sm:inline-flex"
+                                >
                                     <Button
                                         variant="success"
                                         size="sm"
@@ -190,7 +196,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
 
                 {/* Mobile Dropdown Navigation Drawer */}
                 {mobileMenuOpen && (
-                    <div className="border-b border-gray-100 bg-white px-4 pt-3 pb-6 space-y-3 md:hidden shadow-lg animate-in slide-in-from-top-2">
+                    <div className="animate-in slide-in-from-top-2 space-y-3 border-b border-gray-100 bg-white px-4 pt-3 pb-6 shadow-lg md:hidden">
                         <nav className="flex flex-col space-y-2 text-sm font-semibold text-gray-700">
                             <Link
                                 href="/"

@@ -70,7 +70,9 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                     </h1>
 
                     <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
-                        Lựa chọn giải pháp phù hợp với quy mô trung tâm của bạn. Hỗ trợ 14 ngày dùng thử miễn phí không rủi ro, thanh toán linh hoạt qua ZaloPay QR Code.
+                        Lựa chọn giải pháp phù hợp với quy mô trung tâm của bạn.
+                        Hỗ trợ 14 ngày dùng thử miễn phí không rủi ro, thanh
+                        toán linh hoạt qua ZaloPay QR Code.
                     </p>
                 </div>
             </section>
@@ -116,9 +118,11 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-semibold text-gray-500">
-                                                        {plan.duration_days >= 365
+                                                        {plan.duration_days >=
+                                                        365
                                                             ? '/ năm'
-                                                            : plan.duration_days >= 30
+                                                            : plan.duration_days >=
+                                                                30
                                                               ? '/ tháng'
                                                               : `/${plan.duration_days} ngày`}
                                                     </span>
@@ -126,18 +130,20 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                             </div>
                                         </div>
 
-                                        <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600 space-y-1 border border-gray-100">
+                                        <div className="space-y-1 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600">
                                             <div>
                                                 • Sĩ số tối đa:{' '}
                                                 <strong>
-                                                    {plan.max_students ?? 'Không giới hạn'}
+                                                    {plan.max_students ??
+                                                        'Không giới hạn'}
                                                 </strong>{' '}
                                                 học sinh
                                             </div>
                                             <div>
                                                 • Lớp học tối đa:{' '}
                                                 <strong>
-                                                    {plan.max_classes ?? 'Không giới hạn'}
+                                                    {plan.max_classes ??
+                                                        'Không giới hạn'}
                                                 </strong>{' '}
                                                 lớp
                                             </div>
@@ -151,8 +157,10 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                             key={idx}
                                                             className="flex items-start gap-2.5"
                                                         >
-                                                            <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
-                                                            <span>{feature}</span>
+                                                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                                                            <span>
+                                                                {feature}
+                                                            </span>
                                                         </li>
                                                     ),
                                                 )}
@@ -206,7 +214,8 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                 Tự Động Gia Hạn Qua ZaloPay QR Code v2
                             </h3>
                             <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                                Quét mã QR tiện lợi, xử lý giao dịch tức thì 24/7 không cần chờ duyệt thủ công.
+                                Quét mã QR tiện lợi, xử lý giao dịch tức thì
+                                24/7 không cần chờ duyệt thủ công.
                             </p>
                         </div>
                     </div>
@@ -235,14 +244,15 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
             </section>
 
             {/* Feature Comparison Table */}
-            <section className="bg-slate-50 py-16 border-t border-gray-200">
+            <section className="border-t border-gray-200 bg-slate-50 py-16">
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-2">
+                    <div className="space-y-2 text-center">
                         <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
                             So Sánh Chi Tiết Tính Năng
                         </h2>
                         <p className="text-xs text-gray-500">
-                            Đối chiếu chi tiết tính năng hỗ trợ giữa các gói phần mềm
+                            Đối chiếu chi tiết tính năng hỗ trợ giữa các gói
+                            phần mềm
                         </p>
                     </div>
 
@@ -250,7 +260,9 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                         <table className="w-full text-left text-xs">
                             <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                                 <tr>
-                                    <th className="p-4 sm:w-1/3">TÍNH NĂNG HỆ THỐNG</th>
+                                    <th className="p-4 sm:w-1/3">
+                                        TÍNH NĂNG HỆ THỐNG
+                                    </th>
                                     {plans &&
                                         plans.map((plan) => (
                                             <th
@@ -268,9 +280,11 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                     {plan.price === 0
                                                         ? 'Miễn phí'
                                                         : `${plan.price.toLocaleString('vi-VN')}đ / ${
-                                                              plan.duration_days >= 365
+                                                              plan.duration_days >=
+                                                              365
                                                                   ? 'năm'
-                                                                  : plan.duration_days >= 30
+                                                                  : plan.duration_days >=
+                                                                      30
                                                                     ? 'tháng'
                                                                     : `${plan.duration_days} ngày`
                                                           }`}
@@ -445,24 +459,28 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
             {/* FAQ Section */}
             <section className="bg-white py-16">
                 <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-2">
+                    <div className="space-y-2 text-center">
                         <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
                             <HelpCircle className="h-7 w-7 text-emerald-600" />
                             Câu Hỏi Thường Gặp
                         </h2>
                         <p className="text-xs text-gray-500">
-                            Giải đáp những thắc mắc phổ biến về gói cước và phương thức vận hành
+                            Giải đáp những thắc mắc phổ biến về gói cước và
+                            phương thức vận hành
                         </p>
                     </div>
 
                     <div className="space-y-4">
                         {faqs.map((faq, idx) => (
-                            <Card key={idx} className="border-gray-200 p-5 space-y-2">
-                                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                    <Zap className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <Card
+                                key={idx}
+                                className="space-y-2 border-gray-200 p-5"
+                            >
+                                <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                                    <Zap className="h-4 w-4 shrink-0 text-emerald-600" />
                                     {faq.q}
                                 </h3>
-                                <p className="text-xs text-gray-600 leading-relaxed pl-6">
+                                <p className="pl-6 text-xs leading-relaxed text-gray-600">
                                     {faq.a}
                                 </p>
                             </Card>
@@ -478,9 +496,11 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                         Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
                     </h2>
                     <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
-                        Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn lộ trình phù hợp nhất.
+                        Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc
+                        liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn
+                        lộ trình phù hợp nhất.
                     </p>
-                    <div className="pt-2 flex justify-center gap-4">
+                    <div className="flex justify-center gap-4 pt-2">
                         <Link href="/contact">
                             <Button
                                 variant="secondary"

@@ -1,6 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Lock, User, ShieldCheck, GraduationCap, Users, Building2 } from 'lucide-react';
+import {
+    Lock,
+    User,
+    ShieldCheck,
+    GraduationCap,
+    Users,
+    Building2,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -36,7 +43,9 @@ export const Login: React.FC = () => {
         },
     });
 
-    const handleRoleChange = (role: 'admin' | 'center' | 'teacher' | 'student') => {
+    const handleRoleChange = (
+        role: 'admin' | 'center' | 'teacher' | 'student',
+    ) => {
         setSelectedRole(role);
         setValue('role', role);
     };
@@ -63,7 +72,8 @@ export const Login: React.FC = () => {
                         </h1>
                     </Link>
                     <p className="text-xs text-gray-500">
-                        Đăng nhập tài khoản quản trị, trung tâm, giáo viên hoặc học sinh
+                        Đăng nhập tài khoản quản trị, trung tâm, giáo viên hoặc
+                        học sinh
                     </p>
                 </div>
 
