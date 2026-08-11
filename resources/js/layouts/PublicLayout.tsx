@@ -29,19 +29,19 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const user = auth?.user;
 
     const pageTitle =
-        title ||
         seo?.title ||
+        title ||
         'Giải Pháp Quản Lý Giáo Dục - Hệ thống Quản lý Giáo dục Sam';
     const pageDescription =
-        description ||
         seo?.description ||
+        description ||
         'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học và tự động gia hạn gói dịch vụ qua ZaloPay QR Code v2.';
     const pageKeywords =
-        keywords ||
         seo?.keywords ||
+        keywords ||
         'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, Giáo dục Sam, Sam Edu, ZaloPay';
     const pageCanonical =
-        canonicalUrl || seo?.canonical_url || 'https://sam-edu.test';
+        seo?.canonical_url || canonicalUrl || 'https://sam-edu.test';
 
     // JSON-LD Structured Data for Google Search Engine Optimization
     const schemaData = {

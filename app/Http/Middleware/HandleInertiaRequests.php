@@ -84,7 +84,19 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
-        $routeName   = $request->route()?->getName();
+        $routeName = $request->route()?->getName();
+
+        if (! $routeName || ! in_array($routeName, ['home', 'services', 'about', 'contact'], true)) {
+            $path      = trim($request->getPathInfo(), '/');
+            $routeName = match ($path) {
+                '', 'home' => 'home',
+                'services' => 'services',
+                'about'    => 'about',
+                'contact'  => 'contact',
+                default    => null,
+            };
+        }
+
         $seoMetadata = \App\Models\SeoMetadata::getByRouteName($routeName);
 
         return [
