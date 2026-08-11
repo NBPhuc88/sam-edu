@@ -294,6 +294,9 @@ $this->app->bind(
    - `variant="edit"` (Sửa / Cập nhật): **Cam chữ trắng** (`bg-amber-500 hover:bg-amber-600 text-white`)
    - `variant="danger"` (Xóa / Hủy): **Đỏ chữ trắng** (`bg-red-600 hover:bg-red-700 text-white`)
    - `variant="secondary"` (Đóng / Quay lại): **Nền trắng viền xám chữ đen** (`bg-white border-gray-300 text-gray-900 hover:bg-gray-50`)
+5. **Nghiêm cấm sử dụng Browser Alert/Confirm/Prompt Mặc Định**:
+   - **Tuyệt đối KHÔNG sử dụng `alert()`, `confirm()`, hay `prompt()` mặc định của trình duyệt**.
+   - Tất cả các thông báo, phản hồi hành động (thành công, cảnh báo, lỗi, xác nhận xóa/hủy) **bắt buộc phải sử dụng UI component thiết kế bằng Tailwind CSS** (như `<Toast />`, `<Modal />` hoặc Flash Banner).
 
 ---
 

@@ -45,6 +45,7 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
+            'status'         => \App\Enums\EntityStatus::class,
             'last_login_at'  => 'datetime',
             'date_of_birth'  => 'date',
             'admission_date' => 'date',

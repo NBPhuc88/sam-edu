@@ -71,10 +71,7 @@ export const Login: React.FC = () => {
                             Hệ thống Quản lý Giáo dục Sam
                         </h1>
                     </Link>
-                    <p className="text-xs text-gray-500">
-                        Đăng nhập tài khoản quản trị, trung tâm, giáo viên hoặc
-                        học sinh
-                    </p>
+                    <p className="text-xs text-gray-500">Đăng nhập</p>
                 </div>
 
                 {/* Main Login Card */}

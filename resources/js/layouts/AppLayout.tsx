@@ -10,8 +10,9 @@
  */
 
 import { Head, usePage } from '@inertiajs/react';
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
+import Toast from '../components/ui/Toast';
 import apiClient from '../lib/axios';
 
 interface AppLayoutProps {
@@ -28,29 +29,53 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     const user = auth?.user ?? null;
     const role = auth?.role ?? null;
 
+    const [toast, setToast] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info',
+    });
+
     /** Handle ZaloPay renewal */
     const handleZaloPayRenew = async (planCode: string): Promise<void> => {
         const plans: any[] = subscription_plans ?? [];
         const targetPlan = plans.find((p: any) => p.code === planCode) ?? plans[0];
 
-        const response = await apiClient.post('/api/payments/zalopay/create', {
-            center_id:     center?.id ?? 1,
-            plan_code:     targetPlan?.code ?? 'yearly',
-            plan_name:     targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
-            amount:        targetPlan?.price ?? 4800000,
-            duration_days: targetPlan?.duration_days ?? 365,
-        });
+        try {
+            const response = await apiClient.post('/api/payments/zalopay/create', {
+                center_id:     center?.id ?? 1,
+                plan_code:     targetPlan?.code ?? 'yearly',
+                plan_name:     targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
+                amount:        targetPlan?.price ?? 4800000,
+                duration_days: targetPlan?.duration_days ?? 365,
+            });
 
-        if (response.data?.order_url) {
-            window.location.assign(response.data.order_url);
-        } else {
-            alert('Tạo đơn hàng ZaloPay thất bại. Vui lòng thử lại!');
+            if (response.data?.order_url) {
+                window.location.assign(response.data.order_url);
+            } else {
+                setToast({
+                    isOpen: true,
+                    message: 'Tạo đơn hàng ZaloPay thất bại. Vui lòng thử lại!',
+                    type: 'error',
+                });
+            }
+        } catch (error) {
+            setToast({
+                isOpen: true,
+                message: 'Có lỗi xảy ra khi tạo đơn hàng ZaloPay.',
+                type: 'error',
+            });
         }
     };
 
     return (
         <>
             <Head title={title} />
+            <Toast
+                isOpen={toast.isOpen}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+            />
             <DashboardLayout
                 user={user}
                 role={role}

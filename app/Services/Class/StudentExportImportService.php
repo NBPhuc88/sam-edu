@@ -150,7 +150,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                     'parent_name'  => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                     'parent_phone' => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                     'center_id'    => $schoolClass->center_id,
-                    'status'       => 'active',
+                    'status'       => 1,
                     'password'     => bcrypt('12345678'),
                 ]);
             }

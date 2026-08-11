@@ -85,7 +85,7 @@ class SystemContentSeeder extends Seeder
                 'features'      => [
                     'Trải nghiệm 14 ngày dùng thử miễn phí từ ngày tạo',
                     'Quản lý 1 trung tâm đào tạo',
-                    'Tối đa 30 học sinh & 3 lớp học',
+                    'Tối đa 30 học sinh cùng lúc & 3 lớp học cùng lúc',
                     'Điểm danh & Quản lý lớp học cơ bản',
                     'Hỗ trợ kỹ thuật qua Email',
                 ],
@@ -103,7 +103,7 @@ class SystemContentSeeder extends Seeder
                     'Thanh toán linh hoạt từng tháng (500.000đ/tháng)',
                     'Thời hạn 1 tháng (30 ngày)',
                     'Quản lý 1 trung tâm đào tạo',
-                    'Tối đa 200 học sinh & 15 lớp học',
+                    'Tối đa 200 học sinh cùng lúc & 15 lớp học cùng lúc',
                     'Điểm danh & Quản lý sĩ số thông minh',
                     'Hỗ trợ hotline 24/7',
                 ],
@@ -121,7 +121,7 @@ class SystemContentSeeder extends Seeder
                     'Tiết kiệm 20% so với mua lẻ hàng tháng (chỉ 400.000đ/tháng)',
                     'Thời hạn 1 năm (365 ngày)',
                     'Quản lý đa trung tâm đào tạo',
-                    'Tối đa 500 học sinh & 40 lớp học',
+                    'Tối đa 500 học sinh cùng lúc & 40 lớp học cùng lúc',
                     'Gia hạn tự động qua ZaloPay QR Code v2',
                     'Biểu đồ thống kê Recharts nâng cao',
                 ],
@@ -183,21 +183,21 @@ class SystemContentSeeder extends Seeder
             'center_id'    => $center1->id,
             'name'         => 'Tiếng Trung Sơ Cấp K1',
             'max_students' => 25,
-            'status'       => 'active',
+            'status'       => 1,
         ]);
 
         SchoolClass::updateOrCreate(['code' => 'ENG-10'], [
             'center_id'    => $center1->id,
             'name'         => 'Tiếng Anh Giao Tiếp B1',
             'max_students' => 30,
-            'status'       => 'active',
+            'status'       => 1,
         ]);
 
         SchoolClass::updateOrCreate(['code' => 'MATH-12'], [
             'center_id'    => $center2->id,
             'name'         => 'Toán Học Lớp 12 Nâng Cao',
             'max_students' => 20,
-            'status'       => 'active',
+            'status'       => 1,
         ]);
     }
 }
