@@ -22,6 +22,8 @@ use App\Services\Chat\ClassChatService;
 use App\Services\Chat\ClassChatServiceInterface;
 use App\Services\Class\ClassStudentExportImportService;
 use App\Services\Class\ClassStudentExportImportServiceInterface;
+use App\Services\Payment\PaymentGatewayInterface;
+use App\Services\Payment\ZaloPayGateway;
 use App\Services\Student\StudentExportImportService;
 use App\Services\Student\StudentExportImportServiceInterface;
 use App\Services\Teacher\TeacherExportImportService;
@@ -44,8 +46,8 @@ class AppServiceProvider extends ServiceProvider
         // Service Bindings
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
         $this->app->bind(
-            \App\Services\Payment\PaymentGatewayInterface::class,
-            \App\Services\Payment\ZaloPayGateway::class
+            PaymentGatewayInterface::class,
+            ZaloPayGateway::class
         );
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
         $this->app->bind(

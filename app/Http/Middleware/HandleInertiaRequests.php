@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SeoMetadata;
 use App\Models\SubscriptionPlan;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -97,7 +99,7 @@ class HandleInertiaRequests extends Middleware
             };
         }
 
-        $seoMetadata = \App\Models\SeoMetadata::getByRouteName($routeName);
+        $seoMetadata = SeoMetadata::getByRouteName($routeName);
 
         return [
             ...parent::share($request),
@@ -106,6 +108,12 @@ class HandleInertiaRequests extends Middleware
             'auth'               => [
                 'user' => $userData,
                 'role' => $role,
+            ],
+            'contactInfo' => [
+                'company_name' => SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam'),
+                'address'      => SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội'),
+                'phone'        => SystemSetting::getByKey('contact_phone', '0988.123.456'),
+                'email'        => SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com'),
             ],
             'seo' => $seoMetadata ? [
                 'title'         => $seoMetadata->title,

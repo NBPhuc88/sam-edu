@@ -7,6 +7,7 @@ use App\Models\Center;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
+use App\Services\Payment\PaymentGatewayFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class CenterRegisterController extends Controller
         $companyName = SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
         $address     = SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Hà Nội');
         $phone       = SystemSetting::getByKey('contact_phone', '0988.123.456');
-        $email       = SystemSetting::getByKey('contact_email', 'hotro@giaoducsam.vn');
+        $email       = SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com');
 
         return Inertia::render('Home/RegisterCenter', [
             'contactInfo' => [
@@ -154,7 +155,7 @@ class CenterRegisterController extends Controller
 
         $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
 
-        $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
+        $gateway       = PaymentGatewayFactory::make($paymentMethod);
         $gatewayResult = $gateway->createOrder([
             'amount'       => $amount,
             'app_trans_id' => $appTransId,
@@ -233,7 +234,7 @@ class CenterRegisterController extends Controller
         }
 
         $paymentMethod = $transaction->payment_method ?? 'zalopay';
-        $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
+        $gateway       = PaymentGatewayFactory::make($paymentMethod);
         $statusCheck   = $gateway->checkStatus($appTransId);
 
         if (! empty($statusCheck['success']) && $statusCheck['status'] === 'paid') {

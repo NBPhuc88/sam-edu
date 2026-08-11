@@ -70,7 +70,7 @@ class HomeController extends Controller
         $companyName = SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
         $address     = SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội');
         $phone       = SystemSetting::getByKey('contact_phone', '0988.123.456');
-        $email       = SystemSetting::getByKey('contact_email', 'hotro@giaoducsam.vn');
+        $email       = SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com');
 
         return Inertia::render('Home/Contact', [
             'contactInfo' => [
