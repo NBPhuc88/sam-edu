@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CenterController;
+use App\Http\Controllers\CenterRegisterController;
 use App\Http\Controllers\ClassChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -25,6 +26,13 @@ Route::get('/services', [HomeController::class, 'services'])->name('services');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
+
+// Real Center Onboarding Routes
+Route::prefix('register-center')->name('register-center.')->group(function () {
+    Route::post('/step1', [CenterRegisterController::class, 'registerStep1'])->name('step1');
+    Route::get('/check-payment/{appTransId}', [CenterRegisterController::class, 'checkPaymentStatus'])->name('check-payment');
+    Route::post('/complete-account', [CenterRegisterController::class, 'completeAccount'])->name('complete-account');
+});
 
 // ─── Authentication Routes (Public) ──────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

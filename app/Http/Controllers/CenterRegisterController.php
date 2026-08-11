@@ -1,0 +1,223 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Center;
+use App\Models\PaymentTransaction;
+use App\Models\SubscriptionPlan;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+class CenterRegisterController extends Controller
+{
+    /**
+     * Bước 1: Khởi tạo thông tin Trung tâm & xử lý theo Gói dịch vụ.
+     * @param Request $request
+     */
+    public function registerStep1(Request $request): JsonResponse
+    {
+        $paymentMethod = $request->input('payment_method', 'zalopay');
+
+        $validated = $request->validate([
+            'name'              => ['required', 'string', 'max:255'],
+            'phone'             => ['required', 'string', 'max:30'],
+            'email'             => ['required', 'email', 'max:255'],
+            'address'           => ['nullable', 'string', 'max:500'],
+            'subscription_plan' => ['required', 'string', 'in:trial_14d,monthly,yearly'],
+            'payment_method'    => ['nullable', 'string', 'in:zalopay,bank_transfer,momo,vnpay'],
+        ]);
+
+        $planCode = $validated['subscription_plan'];
+        $plan     = SubscriptionPlan::where('code', $planCode)->first();
+
+        // Tự động sinh mã Trung tâm duy nhất
+        $code = 'CENTER-' . strtoupper(Str::random(5));
+        while (Center::where('code', $code)->exists()) {
+            $code = 'CENTER-' . strtoupper(Str::random(5));
+        }
+
+        // Tên đăng nhập tạm thời
+        $tempUsername = strtolower(Str::slug($validated['name'])) . '_' . Str::random(4);
+
+        if ($planCode === 'trial_14d') {
+            // Gói Dùng Thử 14 Ngày (Miễn phí 0đ) -> Kích hoạt ngay
+            $center = Center::create([
+                'code'              => $code,
+                'name'              => $validated['name'],
+                'username'          => $tempUsername,
+                'phone'             => $validated['phone'],
+                'email'             => $validated['email'],
+                'address'           => $validated['address'] ?? null,
+                'status'            => 'active',
+                'subscription_plan' => 'trial_14d',
+                'expires_at'        => now()->addDays(14),
+                'trial_ends_at'     => now()->addDays(14),
+                'max_students'      => $plan->max_students ?? 30,
+                'max_classes'       => $plan->max_classes ?? 3,
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'step'      => 'complete_account',
+                'center_id' => $center->id,
+                'plan'      => 'trial_14d',
+                'message'   => 'Đăng ký dùng thử 14 ngày thành công! Vui lòng tạo tài khoản và mật khẩu.',
+            ]);
+        }
+
+        // Gói trả phí (monthly / yearly) -> Tạo trung tâm trạng thái pending_payment
+        $amount       = $plan ? $plan->price : ($planCode === 'yearly' ? 4800000 : 500000);
+        $durationDays = $plan ? $plan->duration_days : ($planCode === 'yearly' ? 365 : 30);
+
+        $center = Center::create([
+            'code'              => $code,
+            'name'              => $validated['name'],
+            'username'          => $tempUsername,
+            'phone'             => $validated['phone'],
+            'email'             => $validated['email'],
+            'address'           => $validated['address'] ?? null,
+            'status'            => 'pending_payment',
+            'subscription_plan' => $planCode,
+            'expires_at'        => null,
+            'max_students'      => $plan->max_students ?? null,
+            'max_classes'       => $plan->max_classes ?? null,
+        ]);
+
+        $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
+
+        // Khởi tạo Gateway qua PaymentGatewayFactory
+        $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
+        $gatewayResult = $gateway->createOrder([
+            'amount'       => $amount,
+            'app_trans_id' => $appTransId,
+            'center_id'    => $center->id,
+            'plan_code'    => $planCode,
+            'center_name'  => $center->name,
+            'plan_name'    => $plan ? $plan->name : 'Gói dịch vụ',
+        ]);
+
+        // Lưu vết giao dịch
+        PaymentTransaction::create([
+            'transaction_code' => $appTransId,
+            'center_id'        => $center->id,
+            'amount'           => $amount,
+            'payment_method'   => $paymentMethod,
+            'status'           => 'pending',
+            'note'             => "Đăng ký mới gói {$planCode} qua " . strtoupper($paymentMethod),
+            'metadata'         => array_merge([
+                'plan_code'     => $planCode,
+                'duration_days' => $durationDays,
+                'app_trans_id'  => $appTransId,
+            ], $gatewayResult),
+        ]);
+
+        return response()->json([
+            'success'        => true,
+            'step'           => 'payment_gateway',
+            'payment_method' => $paymentMethod,
+            'center_id'      => $center->id,
+            'app_trans_id'   => $appTransId,
+            'order_url'      => $gatewayResult['order_url'] ?? null,
+            'qr_code'        => $gatewayResult['qr_code'] ?? null,
+            'bank_name'      => $gatewayResult['bank_name'] ?? null,
+            'account_no'     => $gatewayResult['account_no'] ?? null,
+            'account_name'   => $gatewayResult['account_name'] ?? null,
+            'transfer_memo'  => $gatewayResult['transfer_memo'] ?? null,
+            'amount'         => $amount,
+            'plan_name'      => $plan ? $plan->name : 'Gói dịch vụ',
+            'message'        => 'Khởi tạo thông tin thanh toán thành công!',
+        ]);
+    }
+
+    /**
+     * Kiểm tra trạng thái thanh toán ZaloPay real-time từ Client.
+     * @param string $appTransId
+     */
+    public function checkPaymentStatus(string $appTransId): JsonResponse
+    {
+        $transaction = PaymentTransaction::where('transaction_code', $appTransId)->first();
+
+        if (! $transaction) {
+            return response()->json(['success' => false, 'status' => 'not_found'], 444);
+        }
+
+        if ($transaction->status === 'success') {
+            return response()->json([
+                'success'   => true,
+                'status'    => 'paid',
+                'center_id' => $transaction->center_id,
+            ]);
+        }
+
+        // Tự động kiểm tra trạng thái qua Gateway tương ứng (ZaloPay, VietQR,...)
+        $paymentMethod = $transaction->payment_method ?? 'zalopay';
+        $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
+        $statusCheck   = $gateway->checkStatus($appTransId);
+
+        if (! empty($statusCheck['success']) && $statusCheck['status'] === 'paid') {
+            $transaction->update(['status' => 'success']);
+
+            /** @var Center|null $center */
+            $center = Center::find($transaction->center_id);
+
+            if ($center) {
+                $metadata     = $transaction->metadata ?? [];
+                $durationDays = (int) ($metadata['duration_days'] ?? 365);
+
+                $center->update([
+                    'status'            => 'active',
+                    'subscription_plan' => $metadata['plan_code'] ?? 'yearly',
+                    'expires_at'        => now()->addDays($durationDays),
+                ]);
+            }
+
+            return response()->json([
+                'success'   => true,
+                'status'    => 'paid',
+                'center_id' => $transaction->center_id,
+            ]);
+        }
+
+        return response()->json([
+            'success'   => false,
+            'status'    => 'pending',
+            'center_id' => $transaction->center_id,
+        ]);
+    }
+
+    /**
+     * Bước 3: Khởi tạo Tên đăng nhập & Mật khẩu cho Trung tâm -> Tự động Đăng nhập vào Dashboard.
+     * @param Request $request
+     */
+    public function completeAccount(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'center_id' => ['required', 'integer', 'exists:centers,id'],
+            'username'  => ['required', 'string', 'max:50', 'unique:centers,username'],
+            'password'  => ['required', 'string', 'min:6'],
+        ]);
+
+        /** @var Center $center */
+        $center = Center::query()->findOrFail((int) $validated['center_id']);
+
+        // Cập nhật username và mật khẩu chính thức
+        $center->update([
+            'username' => $validated['username'],
+            'password' => Hash::make($validated['password']),
+            'status'   => $center->status === 'pending_payment' ? 'active' : $center->status,
+        ]);
+
+        // Đăng nhập tự động cho Trung tâm
+        Auth::guard('center')->login($center);
+        $request->session()->regenerate();
+
+        return response()->json([
+            'success'      => true,
+            'redirect_url' => route('dashboard'),
+            'message'      => 'Tạo tài khoản thành công! Đang chuyển hướng vào bảng điều khiển...',
+        ]);
+    }
+}

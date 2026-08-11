@@ -43,6 +43,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Service Bindings
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
+        $this->app->bind(
+            \App\Services\Payment\PaymentGatewayInterface::class,
+            \App\Services\Payment\ZaloPayGateway::class
+        );
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
         $this->app->bind(
             StudentExportImportServiceInterface::class,
