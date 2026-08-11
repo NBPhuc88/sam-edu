@@ -2,19 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewCenterRegisteredMail;
 use App\Models\Center;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
+use App\Models\SystemSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CenterRegisterController extends Controller
 {
     /**
-     * Bước 1: Khởi tạo thông tin Trung tâm & xử lý theo Gói dịch vụ.
+     * Hiển thị trang Đăng ký Trung tâm & Gói dịch vụ.
+     */
+    public function showRegisterForm(): Response
+    {
+        $companyName = SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
+        $address     = SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Hà Nội');
+        $phone       = SystemSetting::getByKey('contact_phone', '0988.123.456');
+        $email       = SystemSetting::getByKey('contact_email', 'hotro@giaoducsam.vn');
+
+        return Inertia::render('Home/RegisterCenter', [
+            'contactInfo' => [
+                'company_name' => $companyName,
+                'address'      => $address,
+                'phone'        => $phone,
+                'email'        => $email,
+            ],
+            'enableOnlinePayment' => (bool) config('payment.enable_online_payment', false),
+            'paymentGateways'     => config('payment.gateways', []),
+        ]);
+    }
+
+    /**
+     * Khởi tạo thông tin Trung tâm mới (Xử lý linh hoạt theo cờ ENABLE_ONLINE_PAYMENT trong config).
      * @param Request $request
      */
     public function registerStep1(Request $request): JsonResponse
@@ -39,11 +67,52 @@ class CenterRegisterController extends Controller
             $code = 'CENTER-' . strtoupper(Str::random(5));
         }
 
-        // Tên đăng nhập tạm thời
+        // Tên đăng nhập tạm thời (dùng khi mở luồng tạo tài khoản ngay)
         $tempUsername = strtolower(Str::slug($validated['name'])) . '_' . Str::random(4);
 
+        // KIỂM TRA CỜ BẬT/TẮT LUỒNG THANH TOÁN TRỰC TUYẾN
+        $isOnlinePaymentEnabled = (bool) config('payment.enable_online_payment', false);
+
+        // LUỒNG 1: TẮT THANH TOÁN ONLINE -> Tạo trước Center chưa có account & Queue Mail cho Admin
+        if (! $isOnlinePaymentEnabled) {
+            $center = Center::create([
+                'code'              => $code,
+                'name'              => $validated['name'],
+                'username'          => null,
+                'password'          => null,
+                'phone'             => $validated['phone'],
+                'email'             => $validated['email'],
+                'address'           => $validated['address'] ?? null,
+                'status'            => $planCode === 'trial_14d' ? 'active' : 'pending_payment',
+                'subscription_plan' => $planCode,
+                'expires_at'        => $planCode === 'trial_14d' ? now()->addDays(14) : null,
+                'trial_ends_at'     => $planCode === 'trial_14d' ? now()->addDays(14) : null,
+                'max_students'      => $plan->max_students ?? 30,
+                'max_classes'       => $plan->max_classes ?? 3,
+            ]);
+
+            $adminEmail = SystemSetting::where('key', 'contact_email')->value('value')
+                ?? config('mail.from.address', 'phuc.nb140198@gmail.com');
+
+            try {
+                Mail::to($adminEmail)->queue(new NewCenterRegisteredMail($center));
+            } catch (\Throwable $e) {
+                // Ignore mail queue error if mailer is not configured locally
+            }
+
+            return response()->json([
+                'success'   => true,
+                'step'      => 'contact_notification',
+                'center_id' => $center->id,
+                'code'      => $center->code,
+                'name'      => $center->name,
+                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị Sam Edu sẽ liên hệ hỗ trợ kích hoạt tài khoản trong thời gian sớm nhất.',
+            ]);
+        }
+
+        // LUỒNG 2: BẬT THANH TOÁN ONLINE
         if ($planCode === 'trial_14d') {
-            // Gói Dùng Thử 14 Ngày (Miễn phí 0đ) -> Kích hoạt ngay
+            // Gói 0đ dùng thử 14 ngày -> Sang luôn Bước 3 tạo username & password
             $center = Center::create([
                 'code'              => $code,
                 'name'              => $validated['name'],
@@ -68,7 +137,7 @@ class CenterRegisterController extends Controller
             ]);
         }
 
-        // Gói trả phí (monthly / yearly) -> Tạo trung tâm trạng thái pending_payment
+        // Gói trả phí -> Tạo đơn thanh toán trực tuyến
         $amount       = $plan ? $plan->price : ($planCode === 'yearly' ? 4800000 : 500000);
         $durationDays = $plan ? $plan->duration_days : ($planCode === 'yearly' ? 365 : 30);
 
@@ -88,7 +157,6 @@ class CenterRegisterController extends Controller
 
         $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
 
-        // Khởi tạo Gateway qua PaymentGatewayFactory
         $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
         $gatewayResult = $gateway->createOrder([
             'amount'       => $amount,
@@ -99,7 +167,6 @@ class CenterRegisterController extends Controller
             'plan_name'    => $plan ? $plan->name : 'Gói dịch vụ',
         ]);
 
-        // Lưu vết giao dịch
         PaymentTransaction::create([
             'transaction_code' => $appTransId,
             'center_id'        => $center->id,
@@ -133,7 +200,7 @@ class CenterRegisterController extends Controller
     }
 
     /**
-     * Kiểm tra trạng thái thanh toán ZaloPay real-time từ Client.
+     * Kiểm tra trạng thái thanh toán real-time từ Client.
      * @param string $appTransId
      */
     public function checkPaymentStatus(string $appTransId): JsonResponse
@@ -152,7 +219,6 @@ class CenterRegisterController extends Controller
             ]);
         }
 
-        // Tự động kiểm tra trạng thái qua Gateway tương ứng (ZaloPay, VietQR,...)
         $paymentMethod = $transaction->payment_method ?? 'zalopay';
         $gateway       = \App\Services\Payment\PaymentGatewayFactory::make($paymentMethod);
         $statusCheck   = $gateway->checkStatus($appTransId);
@@ -203,14 +269,12 @@ class CenterRegisterController extends Controller
         /** @var Center $center */
         $center = Center::query()->findOrFail((int) $validated['center_id']);
 
-        // Cập nhật username và mật khẩu chính thức
         $center->update([
             'username' => $validated['username'],
             'password' => Hash::make($validated['password']),
             'status'   => $center->status === 'pending_payment' ? 'active' : $center->status,
         ]);
 
-        // Đăng nhập tự động cho Trung tâm
         Auth::guard('center')->login($center);
         $request->session()->regenerate();
 

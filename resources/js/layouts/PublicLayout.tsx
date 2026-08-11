@@ -115,7 +115,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </Link>
 
                     {/* Nav Links */}
-                    <nav className="hidden items-center gap-8 text-sm font-medium text-gray-700 md:flex">
+                    <nav className="hidden items-center gap-7 text-sm font-medium text-gray-700 md:flex">
                         <Link
                             href="/"
                             className="transition-colors hover:text-emerald-700"
@@ -139,6 +139,12 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                             className="transition-colors hover:text-emerald-700"
                         >
                             Liên hệ tư vấn
+                        </Link>
+                        <Link
+                            href="/register-center"
+                            className="font-bold text-emerald-800 transition-colors hover:text-emerald-900"
+                        >
+                            Đăng ký Trung tâm
                         </Link>
                     </nav>
 
@@ -164,7 +170,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                     </Button>
                                 </Link>
                                 <Link
-                                    href="/contact"
+                                    href="/register-center"
                                     className="hidden sm:inline-flex"
                                 >
                                     <Button
@@ -172,7 +178,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         size="sm"
                                         icon={<Sparkles className="h-4 w-4" />}
                                     >
-                                        Dùng thử miễn phí
+                                        Dùng thử 14 ngày
                                     </Button>
                                 </Link>
                             </>

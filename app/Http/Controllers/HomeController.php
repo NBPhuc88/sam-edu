@@ -79,6 +79,8 @@ class HomeController extends Controller
                 'phone'        => $phone,
                 'email'        => $email,
             ],
+            'enableOnlinePayment' => (bool) config('payment.enable_online_payment', false),
+            'paymentGateways'     => config('payment.gateways', []),
         ]);
     }
 
