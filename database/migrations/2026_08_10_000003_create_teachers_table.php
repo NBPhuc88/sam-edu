@@ -33,10 +33,6 @@ return new class () extends Migration {
             $table->softDeletes();
 
             $table->unique(['center_id', 'teacher_code']);
-            $table->index('phone', 'idx_teachers_phone');
-            $table->index('email', 'idx_teachers_email');
-            $table->index('full_name', 'idx_teachers_full_name');
-            $table->index('specialization', 'idx_teachers_specialization');
         });
     }
 

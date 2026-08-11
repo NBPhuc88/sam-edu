@@ -10,11 +10,24 @@ return new class () extends Migration {
      */
     public function up(): void
     {
-        Schema::table('centers', function (Blueprint $table) {
-            $table->index('phone', 'idx_centers_phone');
-            $table->index('email', 'idx_centers_email');
-            $table->index('name', 'idx_centers_name');
-            $table->fullText('address', 'ft_centers_address');
+        $existing = array_column(Schema::getIndexes('centers'), 'name');
+
+        Schema::table('centers', function (Blueprint $table) use ($existing) {
+            if (! in_array('idx_centers_phone', $existing, true)) {
+                $table->index('phone', 'idx_centers_phone');
+            }
+
+            if (! in_array('idx_centers_email', $existing, true)) {
+                $table->index('email', 'idx_centers_email');
+            }
+
+            if (! in_array('idx_centers_name', $existing, true)) {
+                $table->index('name', 'idx_centers_name');
+            }
+
+            if (! in_array('ft_centers_address', $existing, true)) {
+                $table->fullText('address', 'ft_centers_address');
+            }
         });
     }
 
@@ -23,11 +36,24 @@ return new class () extends Migration {
      */
     public function down(): void
     {
-        Schema::table('centers', function (Blueprint $table) {
-            $table->dropIndex('idx_centers_phone');
-            $table->dropIndex('idx_centers_email');
-            $table->dropIndex('idx_centers_name');
-            $table->dropFullText('ft_centers_address');
+        $existing = array_column(Schema::getIndexes('centers'), 'name');
+
+        Schema::table('centers', function (Blueprint $table) use ($existing) {
+            if (in_array('idx_centers_phone', $existing, true)) {
+                $table->dropIndex('idx_centers_phone');
+            }
+
+            if (in_array('idx_centers_email', $existing, true)) {
+                $table->dropIndex('idx_centers_email');
+            }
+
+            if (in_array('idx_centers_name', $existing, true)) {
+                $table->dropIndex('idx_centers_name');
+            }
+
+            if (in_array('ft_centers_address', $existing, true)) {
+                $table->dropFullText('ft_centers_address');
+            }
         });
     }
 };
