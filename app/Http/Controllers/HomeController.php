@@ -18,7 +18,7 @@ class HomeController extends Controller
      */
     public function index(): Response
     {
-        $heroTitle       = SystemSetting::getByKey('hero_title', 'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm Toàn Diện');
+        $heroTitle       = SystemSetting::getByKey('hero_title', 'Giải Pháp Quản Lý Giáo Dục');
         $heroSubtitle    = SystemSetting::getByKey('hero_subtitle', 'Hệ thống tối ưu hóa quy trình quản lý học sinh, sắp xếp lịch học, điểm danh thông minh và tự động gia hạn dịch vụ.');
         $promoBannerText = SystemSetting::getByKey('promo_banner_text', 'Chương trình Khuyến Mãi 2026 - Giảm 30% khi đăng ký gói 1 năm + 14 ngày dùng thử miễn phí');
 
