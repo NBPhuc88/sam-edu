@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Admin;
 use App\Models\Center;
-use App\Models\Role;
+
 use App\Models\SchoolClass;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
@@ -151,42 +151,27 @@ class SystemContentSeeder extends Seeder
             'expires_at'        => now()->addDays(14),
         ]);
 
-        // Seed Roles ONLY for Admin (Super Admin & Center Admin)
-        Role::query()->delete();
-
-        $superAdminRole = Role::create([
-            'code'        => 'super_admin',
-            'name'        => 'Super Admin',
-            'description' => 'Quản trị viên tối cao - Full tất cả quyền hệ thống',
-        ]);
-
-        $centerAdminRole = Role::create([
-            'code'        => 'center_admin',
-            'name'        => 'Quản lý Trung tâm',
-            'description' => 'Quản lý trung tâm được phân công',
-        ]);
-
-        // Sample 1: Super Admin (Full system access)
+        // Admin 1: Super Admin (Quyền cao nhất - quản lý toàn hệ thống)
         $superAdmin = Admin::updateOrCreate(['username' => 'admin'], [
             'admin_code' => 'ADM-001',
             'username'   => 'admin',
             'email'      => 'phuc.nb140198@gmail.com',
             'password'   => bcrypt('admin140198'),
             'full_name'  => 'Super Admin Quản trị Tối cao',
+            'role'       => 'super_admin', // Lưu trực tiếp vào cột role - không dùng RBAC
             'status'     => 'active',
         ]);
-        $superAdmin->roles()->sync([$superAdminRole->id]);
 
-        // Sample 2: Center Admin (Assigned to Center 1 with Subscribed Plan)
+        // Admin 2: Center Admin (Quyền vừa - được phân công quản lý trung tâm)
         $centerAdmin = Admin::updateOrCreate(['username' => 'centeradmin'], [
             'admin_code' => 'ADM-002',
             'username'   => 'centeradmin',
             'email'      => 'admin.caugiay@giaoducsam.vn',
             'password'   => bcrypt('admin140198'),
             'full_name'  => 'Quản lý Trung tâm Cầu Giấy',
+            'role'       => 'admin', // Lưu trực tiếp vào cột role
             'status'     => 'active',
         ]);
-        $centerAdmin->roles()->sync([$centerAdminRole->id]);
         $centerAdmin->centers()->sync([$center1->id]);
 
         // Sample Classes

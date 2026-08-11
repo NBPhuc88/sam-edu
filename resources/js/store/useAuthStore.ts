@@ -1,47 +1,34 @@
+/**
+ * Auth Store - Zustand
+ *
+ * Quản lý trạng thái đăng nhập theo kiến trúc Account thay vì User.
+ * Hệ thống có 4 loại tài khoản: admin, center, teacher, student.
+ *
+ * Xem: .agents/AGENTS.md - Mục 6.1 Auth Store (Zustand)
+ */
+
 import { create } from 'zustand';
-
-export type UserRole = 'admin' | 'teacher' | 'student';
-
-export interface UserProfile {
-    id: number;
-    username: string;
-    email: string | null;
-    full_name: string;
-    role: UserRole;
-    avatar?: string | null;
-    center_id?: number | null;
-    center_name?: string | null;
-}
-
-interface AuthState {
-    user: UserProfile | null;
-    role: UserRole;
-    accessToken: string | null;
-    setAuth: (user: UserProfile, token: string) => void;
-    setRole: (role: UserRole) => void;
-    logout: () => void;
-}
+import type { Account, AuthState } from '@/types/auth';
 
 export const useAuthStore = create<AuthState>((set) => ({
-    user: null,
-    role: 'admin',
-    accessToken:
-        typeof window !== 'undefined'
-            ? localStorage.getItem('access_token')
-            : null,
-    setAuth: (user, token) => {
+    account: null,
+    isAuthenticated: false,
+
+    login: (account: Account, token: string) => {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('access_token', token);
+            localStorage.setItem('auth_token', token);
+            localStorage.setItem('account', JSON.stringify(account));
         }
 
-        set({ user, role: user.role, accessToken: token });
+        set({ account, isAuthenticated: true });
     },
-    setRole: (role) => set({ role }),
+
     logout: () => {
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('account');
         }
 
-        set({ user: null, accessToken: null });
+        set({ account: null, isAuthenticated: false });
     },
 }));
