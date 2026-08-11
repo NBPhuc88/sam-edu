@@ -14,18 +14,41 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator
     {
-        $query = Center::query()->withCount(['students', 'classes', 'teachers']);
+        $query = Center::query();
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            });
+            $words = array_filter(explode(' ', trim($search)));
+
+            if (! empty($words)) {
+                $booleanWords = array_map(fn ($word) => '+' . rtrim($word, '*') . '*', $words);
+                $booleanQuery = implode(' ', $booleanWords);
+
+                $query->whereRaw('MATCH(name, code, email, phone) AGAINST(? IN BOOLEAN MODE)', [$booleanQuery]);
+            }
         }
 
-        return $query->latest()->paginate($perPage);
+        // Optimized pagination with Deferred Join Subquery Pattern
+        $page   = request()->integer('page', 1);
+        $offset = max(0, ($page - 1) * $perPage);
+
+        $idQuery = (clone $query)->select('id')->latest('id');
+
+        if ($offset > 0) {
+            $idQuery->offset($offset)->limit($perPage);
+            $targetIds = $idQuery->pluck('id')->toArray();
+
+            if (! empty($targetIds)) {
+                return Center::query()
+                    ->whereIn('id', $targetIds)
+                    ->withCount(['students', 'classes', 'teachers'])
+                    ->latest('id')
+                    ->paginate($perPage);
+            }
+        }
+
+        return $query->withCount(['students', 'classes', 'teachers'])
+            ->latest('id')
+            ->paginate($perPage);
     }
 
     /**

@@ -30,6 +30,8 @@ return new class () extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->fullText(['name', 'code', 'email', 'phone'], 'centers_fulltext');
         });
     }
 

@@ -161,3 +161,57 @@ vendor/bin/pint
 # 4. Kiểm tra kiểu tĩnh PHPStan Level 7
 composer types:check
 ```
+
+---
+
+## 9. Quy tắc Tối ưu hóa MySQL cho Phân trang & Tìm kiếm (MySQL Optimization Rules)
+
+> [!IMPORTANT]
+> Toàn bộ các chức năng Phân trang (Pagination) và Tìm kiếm (Search) trong hệ thống BẮT BUỘC tuân thủ 2 cấu trúc tối ưu hóa MySQL sau:
+
+### 1. Tối ưu hóa Phân trang (Deferred Join / Subquery SELECT)
+Đối với phân trang dữ liệu lớn hoặc truy vấn với `LIMIT / OFFSET`, không `SELECT *` trực tiếp mà sử dụng Subquery chỉ lấy danh sách `id` khóa chính trước, sau đó `INNER JOIN` lại bảng chính để nạp chi tiết các cột:
+
+```sql
+SELECT pre.usr_id, usr_email, usr_phone, usr_username, usr_created_at, usr_status
+FROM (
+    SELECT usr_id
+    FROM pre_go_crm_user
+    WHERE usr_created_at > '2024-07-23 00:00:00' AND usr_created_at < '2024-08-22 23:59:59'
+    ORDER BY usr_created_at ASC, usr_id ASC
+    LIMIT 9000000, 50
+) AS temp
+INNER JOIN pre_go_crm_user AS pre ON temp.usr_id = pre.usr_id
+ORDER BY usr_created_at ASC, usr_id ASC;
+```
+
+Trong Eloquent / Query Builder Laravel:
+```php
+$idSubquery = (clone $query)->select('id')->offset($offset)->limit($perPage);
+$query->whereIn('id', $idSubquery);
+```
+
+---
+
+### 2. Tối ưu hóa Tìm kiếm (FULLTEXT Match / Against Boolean Mode)
+> [!IMPORTANT]
+> **Quy tắc bắt buộc**:
+> 1. **Kiểm tra / Tạo Migration FULLTEXT INDEX**: Trước khi sử dụng `MATCH(...) AGAINST(...)`, BẮT BUỘC kiểm tra bảng đã có chỉ mục FULLTEXT chưa. Nếu chưa có, tạo Migration bổ sung: `$table->fullText(['column1', 'column2'], 'table_fulltext');`.
+> 2. **KHÔNG KẾT HỢP VỚI `LIKE '%...%'`**: Tuyệt đối KHÔNG sử dụng `orWhere LIKE '%search%'` cùng với `MATCH` vì sẽ làm MySQL không thể sử dụng index FULLTEXT và gây ra Full Table Scan.
+
+Cú pháp SQL chuẩn:
+```sql
+-- Tìm kiếm nhiều từ cách nhau bởi khoảng trắng:
+SELECT SQL_NO_CACHE * FROM products 
+WHERE MATCH(productName) AGAINST('+1900s +Vintage' IN BOOLEAN MODE);
+```
+
+Trong Eloquent / Query Builder Laravel:
+```php
+$words = array_filter(explode(' ', trim($search)));
+$booleanWords = array_map(fn ($word) => '+' . rtrim($word, '*') . '*', $words);
+$booleanQuery = implode(' ', $booleanWords);
+
+$query->whereRaw("MATCH(name, code, email, phone) AGAINST(? IN BOOLEAN MODE)", [$booleanQuery]);
+```
+
