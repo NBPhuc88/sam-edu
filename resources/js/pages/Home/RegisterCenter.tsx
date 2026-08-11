@@ -3,6 +3,7 @@ import {
     CheckCircle2,
     Clock,
     Lock,
+    Mail,
     MapPin,
     Phone,
     RefreshCw,
@@ -242,7 +243,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                     </h1>
                     <p className="mx-auto max-w-xl text-sm text-gray-600">
                         Khởi tạo thông tin trung tâm đào tạo, chọn gói dịch vụ
-                        phù hợp và trải nghiệm ngay giải pháp quản lý giáo dục 2026.
+                        phù hợp và trải nghiệm ngay giải pháp quản lý giáo dục
+                        2026.
                     </p>
                 </div>
             </section>
@@ -303,22 +305,46 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                                            <Mail className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-gray-900">
+                                                Email hỗ trợ
+                                            </div>
+                                            <div>
+                                                {contactInfo?.email ||
+                                                    'phucstt01@gmail.com'}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </Card>
 
                             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-6 text-xs text-emerald-900">
-                                <h4 className="font-bold">Quyền lợi đăng ký:</h4>
-                                <ul className="mt-2 space-y-1.5 list-disc pl-4 text-emerald-800">
-                                    <li>Khởi tạo mã quản lý trung tâm tức thì</li>
-                                    <li>14 ngày dùng thử miễn phí đầy đủ tính năng</li>
-                                    <li>Được hỗ trợ chuyển đổi dữ liệu học sinh</li>
+                                <h4 className="font-bold">
+                                    Quyền lợi đăng ký:
+                                </h4>
+                                <ul className="mt-2 list-disc space-y-1.5 pl-4 text-emerald-800">
+                                    <li>
+                                        Khởi tạo mã quản lý trung tâm tức thì
+                                    </li>
+                                    <li>
+                                        14 ngày dùng thử miễn phí đầy đủ tính
+                                        năng
+                                    </li>
+                                    <li>
+                                        Được hỗ trợ chuyển đổi dữ liệu học sinh
+                                    </li>
                                 </ul>
                             </div>
                         </div>
 
                         {/* Onboarding Wizard Container */}
                         <div className="lg:col-span-2">
-                            <Card className="border-gray-200 p-6 sm:p-8 shadow-sm">
+                            <Card className="border-gray-200 p-6 shadow-sm sm:p-8">
                                 {errorMessage && (
                                     <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700">
                                         {errorMessage}
@@ -336,7 +362,9 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 Thông tin Đăng ký Trung tâm
                                             </h2>
                                             <p className="mt-1 text-xs text-gray-500">
-                                                Điền thông tin cơ bản để khởi tạo trung tâm của bạn trên hệ thống
+                                                Điền thông tin cơ bản để khởi
+                                                tạo trung tâm của bạn trên hệ
+                                                thống
                                             </p>
                                         </div>
 
@@ -421,7 +449,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         Miễn phí 0đ
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-gray-500">
-                                                        Trải nghiệm 14 ngày full tính năng
+                                                        Trải nghiệm 14 ngày full
+                                                        tính năng
                                                     </p>
                                                 </div>
 
@@ -458,7 +487,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         </span>
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-gray-500">
-                                                        Linh hoạt 30 ngày sử dụng
+                                                        Linh hoạt 30 ngày sử
+                                                        dụng
                                                     </p>
                                                 </div>
 
@@ -502,36 +532,52 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                         </div>
 
                                         {/* Payment Method Selection (Khi bật thanh toán trực tuyến) */}
-                                        {enableOnlinePayment && selectedPlan !== 'trial_14d' && (
-                                            <div className="space-y-3 pt-2">
-                                                <label className="block text-xs font-bold text-gray-800">
-                                                    Chọn phương thức thanh toán (*):
-                                                </label>
-                                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                                    <div
-                                                        onClick={() => setPaymentMethod('zalopay')}
-                                                        className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
-                                                            paymentMethod === 'zalopay'
-                                                                ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                    >
-                                                        <div className="text-xs font-bold text-gray-900">ZaloPay QR</div>
-                                                    </div>
+                                        {enableOnlinePayment &&
+                                            selectedPlan !== 'trial_14d' && (
+                                                <div className="space-y-3 pt-2">
+                                                    <label className="block text-xs font-bold text-gray-800">
+                                                        Chọn phương thức thanh
+                                                        toán (*):
+                                                    </label>
+                                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                                        <div
+                                                            onClick={() =>
+                                                                setPaymentMethod(
+                                                                    'zalopay',
+                                                                )
+                                                            }
+                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
+                                                                paymentMethod ===
+                                                                'zalopay'
+                                                                    ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <div className="text-xs font-bold text-gray-900">
+                                                                ZaloPay QR
+                                                            </div>
+                                                        </div>
 
-                                                    <div
-                                                        onClick={() => setPaymentMethod('bank_transfer')}
-                                                        className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
-                                                            paymentMethod === 'bank_transfer'
-                                                                ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                    >
-                                                        <div className="text-xs font-bold text-gray-900">VietQR Ngân hàng</div>
+                                                        <div
+                                                            onClick={() =>
+                                                                setPaymentMethod(
+                                                                    'bank_transfer',
+                                                                )
+                                                            }
+                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
+                                                                paymentMethod ===
+                                                                'bank_transfer'
+                                                                    ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <div className="text-xs font-bold text-gray-900">
+                                                                VietQR Ngân hàng
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
                                         <Button
                                             type="submit"
@@ -551,50 +597,105 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                     <div className="space-y-6 text-center">
                                         <div>
                                             <h2 className="text-xl font-bold text-gray-900">
-                                                Bước 2: Thanh Toán Kích Hoạt Gói {planName}
+                                                Bước 2: Thanh Toán Kích Hoạt Gói{' '}
+                                                {planName}
                                             </h2>
                                             <p className="mt-1 text-xs text-gray-500">
-                                                Phương thức: <span className="font-bold text-emerald-800 uppercase">{paymentMethod === 'bank_transfer' ? 'Chuyển khoản VietQR' : paymentMethod}</span>
+                                                Phương thức:{' '}
+                                                <span className="font-bold text-emerald-800 uppercase">
+                                                    {paymentMethod ===
+                                                    'bank_transfer'
+                                                        ? 'Chuyển khoản VietQR'
+                                                        : paymentMethod}
+                                                </span>
                                             </p>
                                         </div>
 
                                         <div className="mx-auto max-w-md space-y-4 rounded-2xl border border-emerald-200 bg-slate-50 p-6 shadow-sm">
-                                            <div className="text-xs text-gray-600">Số tiền thanh toán:</div>
+                                            <div className="text-xs text-gray-600">
+                                                Số tiền thanh toán:
+                                            </div>
                                             <div className="text-3xl font-black text-emerald-700">
-                                                {paymentAmount.toLocaleString('vi-VN')}đ
+                                                {paymentAmount.toLocaleString(
+                                                    'vi-VN',
+                                                )}
+                                                đ
                                             </div>
 
-                                            <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 shadow-inner">
+                                            <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-4 shadow-inner">
                                                 {qrCode && (
                                                     <img
-                                                        src={qrCode.startsWith('http') ? qrCode : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
+                                                        src={
+                                                            qrCode.startsWith(
+                                                                'http',
+                                                            )
+                                                                ? qrCode
+                                                                : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`
+                                                        }
                                                         alt="Payment QR Code"
                                                         className="h-48 w-48 object-contain"
                                                     />
                                                 )}
                                             </div>
 
-                                            {paymentMethod === 'bank_transfer' && (
-                                                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-left text-xs space-y-2 text-gray-800">
-                                                    <div><span className="font-semibold text-gray-600">Ngân hàng:</span> <strong className="text-blue-900">{bankName || 'VietinBank'}</strong></div>
-                                                    <div><span className="font-semibold text-gray-600">Số tài khoản:</span> <strong className="text-blue-900 select-all font-mono text-sm">{accountNo || '1008889999'}</strong></div>
-                                                    <div><span className="font-semibold text-gray-600">Chủ tài khoản:</span> <strong className="text-blue-900">{accountName || 'CONG TY CP GIAO DUC SAM'}</strong></div>
-                                                    <div><span className="font-semibold text-gray-600">Nội dung:</span> <strong className="text-emerald-800 select-all font-mono text-sm">{transferMemo || `SAM ${appTransId}`}</strong></div>
+                                            {paymentMethod ===
+                                                'bank_transfer' && (
+                                                <div className="space-y-2 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-left text-xs text-gray-800">
+                                                    <div>
+                                                        <span className="font-semibold text-gray-600">
+                                                            Ngân hàng:
+                                                        </span>{' '}
+                                                        <strong className="text-blue-900">
+                                                            {bankName ||
+                                                                'VietinBank'}
+                                                        </strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-gray-600">
+                                                            Số tài khoản:
+                                                        </span>{' '}
+                                                        <strong className="font-mono text-sm text-blue-900 select-all">
+                                                            {accountNo ||
+                                                                '1008889999'}
+                                                        </strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-gray-600">
+                                                            Chủ tài khoản:
+                                                        </span>{' '}
+                                                        <strong className="text-blue-900">
+                                                            {accountName ||
+                                                                'CONG TY CP GIAO DUC SAM'}
+                                                        </strong>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-gray-600">
+                                                            Nội dung:
+                                                        </span>{' '}
+                                                        <strong className="font-mono text-sm text-emerald-800 select-all">
+                                                            {transferMemo ||
+                                                                `SAM ${appTransId}`}
+                                                        </strong>
+                                                    </div>
                                                 </div>
                                             )}
 
                                             <Button
                                                 variant="success"
                                                 size="md"
-                                                className="w-full justify-center mt-2"
-                                                onClick={() => setCurrentStep(3)}
+                                                className="mt-2 w-full justify-center"
+                                                onClick={() =>
+                                                    setCurrentStep(3)
+                                                }
                                             >
-                                                Tôi đã hoàn tất chuyển khoản / thanh toán
+                                                Tôi đã hoàn tất chuyển khoản /
+                                                thanh toán
                                             </Button>
 
-                                            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 animate-pulse pt-1">
+                                            <div className="flex animate-pulse items-center justify-center gap-2 pt-1 text-xs font-semibold text-emerald-800">
                                                 <RefreshCw className="h-4 w-4 animate-spin" />
-                                                Đang kiểm tra kết quả thanh toán tự động...
+                                                Đang kiểm tra kết quả thanh toán
+                                                tự động...
                                             </div>
                                         </div>
                                     </div>
@@ -602,13 +703,17 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
                                 {/* ── STEP 3: Tạo Mật Khẩu Đăng Nhập ────────────────────────── */}
                                 {currentStep === 3 && (
-                                    <form onSubmit={handleStep3Submit} className="space-y-6">
+                                    <form
+                                        onSubmit={handleStep3Submit}
+                                        className="space-y-6"
+                                    >
                                         <div>
                                             <h2 className="text-xl font-bold text-gray-900">
                                                 Bước 3: Tạo Mật Khẩu Đăng Nhập
                                             </h2>
                                             <p className="mt-1 text-xs text-gray-500">
-                                                Thiết lập tên đăng nhập và mật khẩu để quản lý trung tâm
+                                                Thiết lập tên đăng nhập và mật
+                                                khẩu để quản lý trung tâm
                                             </p>
                                         </div>
 
@@ -616,27 +721,41 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             <Input
                                                 label="Tên đăng nhập (Username) (*)"
                                                 placeholder="VD: hanoicenter01"
-                                                icon={<User className="h-4 w-4" />}
+                                                icon={
+                                                    <User className="h-4 w-4" />
+                                                }
                                                 value={username}
-                                                onChange={(e) => setUsername(e.target.value)}
+                                                onChange={(e) =>
+                                                    setUsername(e.target.value)
+                                                }
                                                 required
                                             />
                                             <Input
                                                 label="Mật khẩu đăng nhập (*)"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                icon={<Lock className="h-4 w-4" />}
+                                                icon={
+                                                    <Lock className="h-4 w-4" />
+                                                }
                                                 value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
+                                                onChange={(e) =>
+                                                    setPassword(e.target.value)
+                                                }
                                                 required
                                             />
                                             <Input
                                                 label="Xác nhận mật khẩu (*)"
                                                 type="password"
                                                 placeholder="••••••••"
-                                                icon={<Lock className="h-4 w-4" />}
+                                                icon={
+                                                    <Lock className="h-4 w-4" />
+                                                }
                                                 value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                onChange={(e) =>
+                                                    setConfirmPassword(
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 required
                                             />
                                         </div>
@@ -647,7 +766,9 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             size="lg"
                                             isLoading={loading}
                                             className="w-full justify-center py-3"
-                                            icon={<Sparkles className="h-5 w-5" />}
+                                            icon={
+                                                <Sparkles className="h-5 w-5" />
+                                            }
                                         >
                                             Hoàn tất & Đăng nhập Trang Quản trị
                                         </Button>
@@ -665,32 +786,40 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             <h2 className="text-2xl font-extrabold text-gray-900">
                                                 Đăng Ký Trung Tâm Thành Công!
                                             </h2>
-                                            <p className="mx-auto max-w-md text-xs text-gray-600 leading-relaxed">
+                                            <p className="mx-auto max-w-md text-xs leading-relaxed text-gray-600">
                                                 Cảm ơn bạn đã đăng ký trung tâm{' '}
                                                 <strong className="text-gray-900">
                                                     "{registeredCenter?.name}"
                                                 </strong>
-                                                . Ban Quản trị Sam Edu đã nhận được thông tin đăng ký của bạn.
+                                                . Ban Quản trị Sam Edu đã nhận
+                                                được thông tin đăng ký của bạn.
                                             </p>
                                         </div>
 
-                                        <div className="mx-auto max-w-sm rounded-xl border border-emerald-200 bg-slate-50 p-4 text-left text-xs space-y-2 text-gray-800 shadow-xs">
+                                        <div className="mx-auto max-w-sm space-y-2 rounded-xl border border-emerald-200 bg-slate-50 p-4 text-left text-xs text-gray-800 shadow-xs">
                                             <div className="flex justify-between border-b border-gray-200 pb-2">
-                                                <span className="text-gray-500">Mã trung tâm:</span>
-                                                <span className="font-bold text-emerald-800 font-mono">
+                                                <span className="text-gray-500">
+                                                    Mã trung tâm:
+                                                </span>
+                                                <span className="font-mono font-bold text-emerald-800">
                                                     {registeredCenter?.code}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between border-b border-gray-200 pb-2">
-                                                <span className="text-gray-500">Gói cước đã chọn:</span>
+                                                <span className="text-gray-500">
+                                                    Gói cước đã chọn:
+                                                </span>
                                                 <span className="font-bold text-gray-900 uppercase">
                                                     {registeredCenter?.plan}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-500">Trạng thái:</span>
-                                                <span className="font-bold text-amber-700 flex items-center gap-1">
-                                                    <Clock className="h-3.5 w-3.5" /> Chờ Ban quản trị kích hoạt
+                                                <span className="text-gray-500">
+                                                    Trạng thái:
+                                                </span>
+                                                <span className="flex items-center gap-1 font-bold text-amber-700">
+                                                    <Clock className="h-3.5 w-3.5" />{' '}
+                                                    Chờ Ban quản trị kích hoạt
                                                 </span>
                                             </div>
                                         </div>

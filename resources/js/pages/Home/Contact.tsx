@@ -150,7 +150,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
                                             </div>
                                             <div>
                                                 {contactInfo?.email ||
-                                                    'hotro@giaoducsam.vn'}
+                                                    'phucstt01@gmail.com'}
                                             </div>
                                         </div>
                                     </div>

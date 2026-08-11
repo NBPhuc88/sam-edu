@@ -27,7 +27,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     keywords,
     canonicalUrl,
 }) => {
-    const { auth, seo } = usePage().props as any;
+    const { auth, seo, contactInfo } = usePage().props as any;
     const user = auth?.user;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -285,7 +285,11 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 shrink-0 text-emerald-400" />
-                                    <span>Email: hotro@giaoducsam.vn</span>
+                                    <span>
+                                        Email:{' '}
+                                        {contactInfo?.email ||
+                                            'phucstt01@gmail.com'}
+                                    </span>
                                 </div>
                             </div>
                         </div>

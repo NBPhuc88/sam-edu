@@ -57,7 +57,7 @@ class SystemContentSeeder extends Seeder
             ],
             [
                 'key'         => 'contact_email',
-                'value'       => 'hotro@giaoducsam.vn',
+                'value'       => 'phucstt01@gmail.com',
                 'group'       => 'contact',
                 'description' => 'Email hỗ trợ',
             ],
