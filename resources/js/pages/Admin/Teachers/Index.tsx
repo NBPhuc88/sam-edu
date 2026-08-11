@@ -1,5 +1,11 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Download, Upload, Search, FileSpreadsheet, UserCheck } from 'lucide-react';
+import {
+    Download,
+    Upload,
+    Search,
+    FileSpreadsheet,
+    UserCheck,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -44,7 +50,8 @@ interface Props {
 }
 
 export default function TeacherIndex({ teachers, filters }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
+    const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
+        .props;
     const [search, setSearch] = useState(filters.search || '');
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -95,7 +102,9 @@ export default function TeacherIndex({ teachers, filters }: Props) {
                 setIsUploading(false);
             },
             onError: (err) => {
-                setErrorMessage(err.file || 'Có lỗi xảy ra khi tải tệp CSV lên.');
+                setErrorMessage(
+                    err.file || 'Có lỗi xảy ra khi tải tệp CSV lên.',
+                );
                 setIsUploading(false);
             },
             onFinish: () => {
@@ -108,14 +117,20 @@ export default function TeacherIndex({ teachers, filters }: Props) {
         {
             header: 'Mã GV',
             accessorKey: 'teacher_code',
-            cell: (row) => <span className="font-mono text-xs font-semibold text-gray-800">{row.teacher_code}</span>,
+            cell: (row) => (
+                <span className="font-mono text-xs font-semibold text-gray-800">
+                    {row.teacher_code}
+                </span>
+            ),
         },
         {
             header: 'Họ và tên',
             accessorKey: 'full_name',
             cell: (row) => (
                 <div>
-                    <div className="font-medium text-gray-900">{row.full_name}</div>
+                    <div className="font-medium text-gray-900">
+                        {row.full_name}
+                    </div>
                     <div className="text-xs text-gray-500">{row.email}</div>
                 </div>
             ),
@@ -123,12 +138,18 @@ export default function TeacherIndex({ teachers, filters }: Props) {
         {
             header: 'Số điện thoại',
             accessorKey: 'phone',
-            cell: (row) => row.phone || <span className="text-gray-400 italic">Chưa có</span>,
+            cell: (row) =>
+                row.phone || (
+                    <span className="text-gray-400 italic">Chưa có</span>
+                ),
         },
         {
             header: 'Chuyên môn',
             accessorKey: 'specialization',
-            cell: (row) => row.specialization || <span className="text-gray-400 italic">Chưa có</span>,
+            cell: (row) =>
+                row.specialization || (
+                    <span className="text-gray-400 italic">Chưa có</span>
+                ),
         },
         {
             header: 'Trạng thái',
@@ -147,24 +168,33 @@ export default function TeacherIndex({ teachers, filters }: Props) {
 
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            <UserCheck className="w-7 h-7 text-emerald-600" />
+                        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                            <UserCheck className="h-7 w-7 text-emerald-600" />
                             Quản lý Giáo viên
                         </h1>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Quản lý danh sách giáo viên, xuất và nhập thông tin giáo viên qua file CSV stream.
+                        <p className="mt-1 text-sm text-gray-600">
+                            Quản lý danh sách giáo viên, xuất và nhập thông tin
+                            giáo viên qua file CSV stream.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Button variant="secondary" onClick={handleExport} className="flex items-center gap-2">
-                            <Download className="w-4 h-4 text-gray-600" />
+                        <Button
+                            variant="secondary"
+                            onClick={handleExport}
+                            className="flex items-center gap-2"
+                        >
+                            <Download className="h-4 w-4 text-gray-600" />
                             Export CSV
                         </Button>
-                        <Button variant="success" onClick={() => setIsImportModalOpen(true)} className="flex items-center gap-2">
-                            <Upload className="w-4 h-4" />
+                        <Button
+                            variant="success"
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center gap-2"
+                        >
+                            <Upload className="h-4 w-4" />
                             Import CSV
                         </Button>
                     </div>
@@ -172,12 +202,12 @@ export default function TeacherIndex({ teachers, filters }: Props) {
 
                 {/* Notifications */}
                 {flash.success && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm">
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                         {flash.success}
                     </div>
                 )}
                 {flash.error && (
-                    <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                         {flash.error}
                     </div>
                 )}
@@ -185,48 +215,67 @@ export default function TeacherIndex({ teachers, filters }: Props) {
                 {/* Content Card */}
                 <Card>
                     {/* Search & Action Bar */}
-                    <div className="p-4 border-b border-gray-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <form onSubmit={handleSearch} className="flex items-center gap-2 max-w-md w-full">
+                    <div className="flex flex-col justify-between gap-4 border-b border-gray-100 bg-slate-50/50 p-4 sm:flex-row sm:items-center">
+                        <form
+                            onSubmit={handleSearch}
+                            className="flex w-full max-w-md items-center gap-2"
+                        >
                             <Input
                                 placeholder="Tìm kiếm theo Tên, Mã GV, Email, Chuyên môn..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
-                            <Button type="submit" variant="secondary" className="px-3">
-                                <Search className="w-4 h-4" />
+                            <Button
+                                type="submit"
+                                variant="secondary"
+                                className="px-3"
+                            >
+                                <Search className="h-4 w-4" />
                             </Button>
                         </form>
 
-                        <div className="text-xs text-gray-500 font-medium">
-                            Tổng số giáo viên: <span className="font-bold text-gray-900">{teachers.total}</span>
+                        <div className="text-xs font-medium text-gray-500">
+                            Tổng số giáo viên:{' '}
+                            <span className="font-bold text-gray-900">
+                                {teachers.total}
+                            </span>
                         </div>
                     </div>
 
                     {/* Table */}
                     <div className="p-4">
-                        <DataTable columns={columns} data={teachers.data} emptyMessage="Không tìm thấy giáo viên nào" />
+                        <DataTable
+                            columns={columns}
+                            data={teachers.data}
+                            emptyMessage="Không tìm thấy giáo viên nào"
+                        />
                     </div>
 
                     {/* Pagination */}
                     {teachers.last_page > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 text-sm">
+                        <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4 text-sm">
                             <div className="text-gray-500">
-                                Trang {teachers.current_page} / {teachers.last_page}
+                                Trang {teachers.current_page} /{' '}
+                                {teachers.last_page}
                             </div>
                             <div className="flex items-center gap-1">
                                 {teachers.links.map((link, idx) => (
                                     <button
                                         key={idx}
                                         disabled={!link.url}
-                                        onClick={() => link.url && router.get(link.url)}
-                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                        onClick={() =>
+                                            link.url && router.get(link.url)
+                                        }
+                                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                             link.active
                                                 ? 'bg-emerald-600 text-white'
                                                 : link.url
-                                                  ? 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                  ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                  : 'cursor-not-allowed bg-gray-100 text-gray-400'
                                         }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ))}
                             </div>
@@ -242,45 +291,76 @@ export default function TeacherIndex({ teachers, filters }: Props) {
                 title="Import Thông tin Giáo viên từ CSV"
                 footer={
                     <>
-                        <Button variant="secondary" onClick={() => setIsImportModalOpen(false)} disabled={isUploading}>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setIsImportModalOpen(false)}
+                            disabled={isUploading}
+                        >
                             Hủy bỏ
                         </Button>
-                        <Button variant="success" onClick={handleImportSubmit} disabled={isUploading || !selectedFile}>
-                            {isUploading ? 'Đang tải lên...' : 'Tải lên & Import'}
+                        <Button
+                            variant="success"
+                            onClick={handleImportSubmit}
+                            disabled={isUploading || !selectedFile}
+                        >
+                            {isUploading
+                                ? 'Đang tải lên...'
+                                : 'Tải lên & Import'}
                         </Button>
                     </>
                 }
             >
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
-                        Chọn tệp CSV chứa danh sách giáo viên để nhập vào hệ thống. Hệ thống tự động tạo mới hoặc cập nhật thông tin nếu mã giáo viên đã tồn tại.
+                        Chọn tệp CSV chứa danh sách giáo viên để nhập vào hệ
+                        thống. Hệ thống tự động tạo mới hoặc cập nhật thông tin
+                        nếu mã giáo viên đã tồn tại.
                     </p>
 
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 space-y-1">
-                        <div className="font-semibold flex items-center gap-1">
-                            <FileSpreadsheet className="w-4 h-4 text-amber-600" />
+                    <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                        <div className="flex items-center gap-1 font-semibold">
+                            <FileSpreadsheet className="h-4 w-4 text-amber-600" />
                             Lưu ý định dạng file CSV:
                         </div>
-                        <div>- Các cột hỗ trợ: Mã giáo viên, Tên đăng nhập, Họ, Tên, Họ và tên, Email, Số điện thoại, Ngày sinh (YYYY-MM-DD), Giới tính, Ngày vào làm (YYYY-MM-DD), Chuyên môn, Ghi chú.</div>
-                        <div>- Bạn có thể tải tệp mẫu chuẩn bên dưới để xem định dạng chi tiết.</div>
+                        <div>
+                            - Các cột hỗ trợ: Mã giáo viên, Tên đăng nhập, Họ,
+                            Tên, Họ và tên, Email, Số điện thoại, Ngày sinh
+                            (YYYY-MM-DD), Giới tính, Ngày vào làm (YYYY-MM-DD),
+                            Chuyên môn, Ghi chú.
+                        </div>
+                        <div>
+                            - Bạn có thể tải tệp mẫu chuẩn bên dưới để xem định
+                            dạng chi tiết.
+                        </div>
                     </div>
 
                     <div className="pt-2">
-                        <Button variant="secondary" onClick={handleDownloadSample} type="button" className="w-full text-xs py-2 flex items-center justify-center gap-2">
-                            <Download className="w-4 h-4 text-emerald-600" />
+                        <Button
+                            variant="secondary"
+                            onClick={handleDownloadSample}
+                            type="button"
+                            className="flex w-full items-center justify-center gap-2 py-2 text-xs"
+                        >
+                            <Download className="h-4 w-4 text-emerald-600" />
                             Tải tệp CSV mẫu giáo viên (.csv)
                         </Button>
                     </div>
 
                     <div className="space-y-1 pt-2">
-                        <label className="block text-xs font-semibold text-gray-700">Chọn tệp CSV từ máy tính</label>
+                        <label className="block text-xs font-semibold text-gray-700">
+                            Chọn tệp CSV từ máy tính
+                        </label>
                         <input
                             type="file"
                             accept=".csv,text/csv"
                             onChange={handleFileChange}
-                            className="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-gray-200 rounded-md p-1"
+                            className="block w-full cursor-pointer rounded-md border border-gray-200 p-1 text-xs text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
                         />
-                        {errorMessage && <p className="text-xs text-red-600 mt-1 font-medium">{errorMessage}</p>}
+                        {errorMessage && (
+                            <p className="mt-1 text-xs font-medium text-red-600">
+                                {errorMessage}
+                            </p>
+                        )}
                     </div>
                 </div>
             </Modal>

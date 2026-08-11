@@ -25,7 +25,10 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     role: 'admin',
-    accessToken: typeof window !== 'undefined' ? localStorage.getItem('access_token') : null,
+    accessToken:
+        typeof window !== 'undefined'
+            ? localStorage.getItem('access_token')
+            : null,
     setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
             localStorage.setItem('access_token', token);

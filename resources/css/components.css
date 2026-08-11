@@ -103,7 +103,9 @@ body {
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
     outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .ui-input.has-icon {

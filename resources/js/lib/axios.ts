@@ -3,7 +3,7 @@ import axios from 'axios';
 const apiClient = axios.create({
     headers: {
         'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
+        Accept: 'application/json',
     },
     withCredentials: true,
 });
