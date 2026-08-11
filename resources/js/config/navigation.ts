@@ -273,8 +273,11 @@ export function getNavigationItems(
     adminRole?: string | null,
 ): NavItem[] {
     if (!role) {
-return [];
-}
+        return [];
+    }
+
+    console.log('role', role);
+    console.log('adminRole', adminRole);
 
     switch (role) {
         case 'admin':

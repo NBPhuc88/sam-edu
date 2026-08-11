@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\ClassChatController;
@@ -36,6 +37,12 @@ Route::middleware('auth.any')->group(function () {
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
+
+    // Admin Management Routes (Super Admin)
+    Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
+    Route::post('/admins', [AdminController::class, 'store'])->name('admins.store');
+    Route::patch('/admins/{id}', [AdminController::class, 'update'])->name('admins.update');
+    Route::delete('/admins/{id}', [AdminController::class, 'destroy'])->name('admins.destroy');
 
     // Center Management Routes
     Route::get('/centers', [CenterController::class, 'index'])->name('centers.index');

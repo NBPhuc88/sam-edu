@@ -105,17 +105,6 @@ class DashboardController extends Controller
         $recentClasses = SchoolClass::with('center')->latest()->take(5)->get();
 
         return Inertia::render('Dashboard', [
-            'auth' => [
-                'user' => $user ? [
-                    'id'        => $user->id,
-                    'username'  => $user->username,
-                    'email'     => $user->email,
-                    'full_name' => $user->full_name ?? $user->username,
-                    'role'      => $role,
-                    'avatar'    => $user->avatar ?? null,
-                ] : null,
-                'role' => $role,
-            ],
             'center' => $centerData,
             'stats'  => [
                 'centers'  => $centerCount,
