@@ -91,14 +91,7 @@ class CenterRegisterController extends Controller
                 'max_classes'       => $plan->max_classes ?? 3,
             ]);
 
-            $adminEmail = SystemSetting::where('key', 'contact_email')->value('value')
-                ?? config('mail.from.address', 'phuc.nb140198@gmail.com');
-
-            try {
-                Mail::to($adminEmail)->queue(new NewCenterRegisteredMail($center));
-            } catch (\Throwable $e) {
-                // Ignore mail queue error if mailer is not configured locally
-            }
+            $this->sendAdminNotificationMail($center);
 
             return response()->json([
                 'success'   => true,
@@ -128,6 +121,8 @@ class CenterRegisterController extends Controller
                 'max_classes'       => $plan->max_classes ?? 3,
             ]);
 
+            $this->sendAdminNotificationMail($center);
+
             return response()->json([
                 'success'   => true,
                 'step'      => 'complete_account',
@@ -154,6 +149,8 @@ class CenterRegisterController extends Controller
             'max_students'      => $plan->max_students ?? null,
             'max_classes'       => $plan->max_classes ?? null,
         ]);
+
+        $this->sendAdminNotificationMail($center);
 
         $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
 
@@ -197,6 +194,22 @@ class CenterRegisterController extends Controller
             'plan_name'      => $plan ? $plan->name : 'Gói dịch vụ',
             'message'        => 'Khởi tạo thông tin thanh toán thành công!',
         ]);
+    }
+
+    /**
+     * Gửi email thông báo cho Ban quản trị khi có Trung tâm đăng ký mới.
+     * @param Center $center
+     */
+    private function sendAdminNotificationMail(Center $center): void
+    {
+        $adminEmail = SystemSetting::where('key', 'contact_email')->value('value')
+            ?? config('mail.from.address', 'phucstt01@gmail.com');
+
+        try {
+            Mail::to($adminEmail)->queue(new NewCenterRegisteredMail($center));
+        } catch (\Throwable $e) {
+            // Ignore mail queue error if mailer is not configured locally
+        }
     }
 
     /**
