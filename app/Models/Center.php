@@ -13,9 +13,10 @@ use Illuminate\Support\Carbon;
  * @property int         $id
  * @property string      $code
  * @property string      $name
+ * @property string|null $username
+ * @property string|null $password
  * @property string|null $phone
  * @property string|null $email
- * @property string|null $address
  * @property string      $status
  * @property string      $subscription_plan
  * @property Carbon|null $expires_at
@@ -34,6 +35,8 @@ class Center extends Model
     protected $fillable = [
         'code',
         'name',
+        'username',
+        'password',
         'phone',
         'email',
         'address',
@@ -43,6 +46,10 @@ class Center extends Model
         'trial_ends_at',
         'max_students',
         'max_classes',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     protected function casts(): array

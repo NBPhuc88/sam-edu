@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Save, Building2 } from 'lucide-react';
+import { ArrowLeft, Save, Building2, KeyRound, UserCheck } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -9,6 +9,8 @@ export interface CenterFormData {
     id?: number;
     code: string;
     name: string;
+    username: string;
+    password?: string;
     phone: string;
     email: string;
     address: string;
@@ -40,6 +42,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     const [formData, setFormData] = useState<CenterFormData>({
         code: initialValues?.code || '',
         name: initialValues?.name || '',
+        username: initialValues?.username || '',
+        password: '',
         phone: initialValues?.phone || '',
         email: initialValues?.email || '',
         address: initialValues?.address || '',
@@ -185,7 +189,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                     {/* Email */}
                     <div>
                         <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Email Quản Lý
+                            Email Liên Hệ / Quản Lý
                         </label>
                         <Input
                             name="email"
@@ -199,6 +203,57 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 {errors.email}
                             </p>
                         )}
+                    </div>
+
+                    {/* Account Section: Username & Password */}
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 md:col-span-2">
+                        <h3 className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wider text-emerald-800 uppercase">
+                            <KeyRound className="h-4 w-4 text-emerald-600" />
+                            Thông Tin Đăng Nhập Tài Khoản Trung Tâm
+                        </h3>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label className="mb-1 block text-xs font-semibold text-gray-700">
+                                    Tên Đăng Nhập (Username)
+                                </label>
+                                <Input
+                                    name="username"
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    placeholder="Tên đăng nhập (ví dụ: center_caugiay)"
+                                    icon={
+                                        <UserCheck className="h-4 w-4 text-gray-400" />
+                                    }
+                                />
+                                {errors.username && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {errors.username}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-semibold text-gray-700">
+                                    Mật Khẩu Đăng Nhập
+                                </label>
+                                <Input
+                                    name="password"
+                                    type="password"
+                                    value={formData.password || ''}
+                                    onChange={handleChange}
+                                    placeholder={
+                                        mode === 'create'
+                                            ? 'Nhập mật khẩu tài khoản'
+                                            : 'Bỏ trống nếu giữ nguyên mật khẩu cũ'
+                                    }
+                                />
+                                {errors.password && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {errors.password}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Address */}

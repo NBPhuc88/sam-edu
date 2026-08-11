@@ -132,7 +132,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     {/* Brand */}
-                    <div className="flex items-center gap-3">
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 transition-opacity hover:opacity-90"
+                    >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-lg font-bold text-white shadow-sm">
                             SAM
                         </div>
@@ -144,7 +147,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                                 Hệ thống Quản lý Giáo dục Sam
                             </p>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Nav Links */}
                     <nav className="hidden items-center gap-6 text-sm font-medium text-gray-700 md:flex">

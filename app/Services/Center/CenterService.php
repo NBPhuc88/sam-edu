@@ -5,6 +5,7 @@ namespace App\Services\Center;
 use App\Models\Center;
 use App\Repositories\Center\CenterRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Hash;
 
 class CenterService implements CenterServiceInterface
 {
@@ -50,6 +51,11 @@ class CenterService implements CenterServiceInterface
             $data['trial_ends_at'] = now()->addDays(14);
         }
 
+        // Hash password if provided
+        if (! empty($data['password'])) {
+            $data['password'] = Hash::make((string) $data['password']);
+        }
+
         return $this->centerRepository->create($data);
     }
 
@@ -61,6 +67,15 @@ class CenterService implements CenterServiceInterface
      */
     public function updateCenter(int $id, array $data): Center
     {
+        // Hash password if updating password
+        if (array_key_exists('password', $data)) {
+            if (! empty($data['password'])) {
+                $data['password'] = Hash::make((string) $data['password']);
+            } else {
+                unset($data['password']);
+            }
+        }
+
         return $this->centerRepository->update($id, $data);
     }
 
