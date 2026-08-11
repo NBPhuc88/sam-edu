@@ -1,8 +1,6 @@
 import { router } from '@inertiajs/react';
 import { CreditCard, LogOut, Menu, X } from 'lucide-react';
 import React from 'react';
-import { getAccountLabel } from '../../config/navigation';
-import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 interface AuthUser {
@@ -17,7 +15,6 @@ interface AuthUser {
 
 interface HeaderProps {
     user: AuthUser | null;
-    role: string | null;
     sidebarOpen: boolean;
     onToggleSidebar: () => void;
     onOpenPayment?: () => void;
@@ -26,7 +23,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
     user,
-    role,
     sidebarOpen,
     onToggleSidebar,
     onOpenPayment,
@@ -35,17 +31,6 @@ export const Header: React.FC<HeaderProps> = ({
     const handleLogout = () => {
         router.post('/logout');
     };
-
-    const accountLabel = getAccountLabel(role, user?.admin_role);
-
-    const badgeVariant: 'active' | 'expired' | 'pending' | 'danger' | 'info' =
-        user?.admin_role === 'super_admin'
-            ? 'active'
-            : role === 'admin'
-              ? 'pending'
-              : role === 'center'
-                ? 'info'
-                : 'info';
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm">
@@ -91,21 +76,14 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* User info */}
                 {user && (
-                    <div className="hidden items-center gap-3 sm:flex">
+                    <div className="hidden items-center gap-2.5 sm:flex">
                         {/* Avatar */}
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 ring-2 ring-emerald-500/20 shadow-xs">
                             {user.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
                         </div>
-                        <div className="text-right">
-                            <div className="text-sm font-semibold leading-tight text-gray-900">
-                                {user.full_name}
-                            </div>
-                            <div className="mt-0.5">
-                                <Badge variant={badgeVariant}>
-                                    {accountLabel}
-                                </Badge>
-                            </div>
-                        </div>
+                        <span className="text-xs font-bold text-gray-900">
+                            {user.full_name ?? user.username}
+                        </span>
                     </div>
                 )}
 

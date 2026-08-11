@@ -164,7 +164,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 {/* Header */}
                 <Header
                     user={user}
-                    role={role}
                     sidebarOpen={sidebarOpen}
                     onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
                     onOpenPayment={

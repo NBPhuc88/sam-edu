@@ -161,7 +161,7 @@ class SystemContentSeeder extends Seeder
             'username'   => 'admin',
             'email'      => 'phuc.nb140198@gmail.com',
             'password'   => bcrypt('admin140198'),
-            'full_name'  => 'Super Admin Quản trị Tối cao',
+            'full_name'  => 'Ban Quản trị Tối cao',
             'role'       => 'super_admin', // Lưu trực tiếp vào cột role - không dùng RBAC
             'status'     => 'active',
         ]);

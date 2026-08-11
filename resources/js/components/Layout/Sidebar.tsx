@@ -188,8 +188,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {avatarChar}
                             </div>
                             <div className="min-w-0">
-                                <div className="truncate text-sm font-semibold text-gray-900">
-                                    {fullName ?? 'Người dùng'}
+                                <div className="truncate text-xs font-bold text-gray-900">
+                                    {fullName && fullName !== 'Admin'
+                                        ? fullName
+                                        : (adminRole === 'super_admin' ? 'Quản trị Tối cao' : 'Quản trị viên')}
                                 </div>
                                 <div className="text-[11px] text-gray-500">
                                     {accountLabel}
