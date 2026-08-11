@@ -1,2 +1,13 @@
 User-agent: *
-Disallow:
+Allow: /
+Allow: /services
+Allow: /about
+Allow: /contact
+
+Disallow: /admin/
+Disallow: /center/
+Disallow: /teacher/
+Disallow: /student/
+Disallow: /api/
+
+Sitemap: https://sam-edu.test/sitemap.xml

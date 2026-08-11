@@ -15,7 +15,7 @@ return new class () extends Migration {
             $table->string('code')->unique();
             $table->string('name');
             $table->decimal('price', 12, 2)->default(0);
-            $table->integer('duration_months')->default(1);
+            $table->integer('duration_days')->default(30);
             $table->integer('max_students')->nullable();
             $table->integer('max_classes')->nullable();
             $table->json('features')->nullable();

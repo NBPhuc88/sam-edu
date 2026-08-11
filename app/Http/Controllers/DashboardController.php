@@ -49,8 +49,8 @@ class DashboardController extends Controller
         $center = null;
 
         if ($role === 'admin' && $user instanceof Admin) {
-            // Check if user is Super Admin (has super_admin role or no assigned centers)
-            $isSuperAdmin = $user->roles()->where('code', 'super_admin')->exists() || $user->centers()->count() === 0;
+            // Super Admin: role = 'super_admin' (column trực tiếp, không qua RBAC)
+            $isSuperAdmin = $user->role === 'super_admin';
 
             if (! $isSuperAdmin) {
                 $center = $user->centers()->first();

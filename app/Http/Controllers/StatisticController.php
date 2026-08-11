@@ -43,7 +43,8 @@ class StatisticController extends Controller
         $isSuperAdmin     = false;
 
         if ($role === 'admin' && $user instanceof Admin) {
-            $isSuperAdmin = $user->roles()->where('code', 'super_admin')->exists() || $user->centers()->count() === 0;
+            // Super Admin: role = 'super_admin' (column trực tiếp, không qua RBAC)
+            $isSuperAdmin = $user->role === 'super_admin';
 
             if ($isSuperAdmin) {
                 $allowedCenterIds = Center::pluck('id')->toArray();

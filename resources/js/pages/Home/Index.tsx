@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     Sparkles,
     Building2,
@@ -10,6 +10,7 @@ import {
     Tag,
     MessageSquare,
     Search,
+    LayoutDashboard,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';
@@ -22,7 +23,7 @@ interface Plan {
     code: string;
     name: string;
     price: number;
-    duration_months: number;
+    duration_days: number;
     max_students: number | null;
     max_classes: number | null;
     features: string[] | null;
@@ -31,8 +32,15 @@ interface Plan {
 }
 
 export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
     return (
-        <PublicLayout title="Trang Chủ - Hệ thống Quản lý Giáo dục Sam">
+        <PublicLayout
+            title="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - Giáo Dục Sam"
+            description="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh và tự động gia hạn gói dịch vụ qua ZaloPay QR Code v2."
+            keywords="Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, Sam Edu, Giáo dục Sam, ZaloPay"
+        >
             {/* Promotion Alert Banner */}
             {promotionBanner && (
                 <div className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-xs sm:text-sm">
@@ -59,24 +67,38 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                     </p>
 
                     <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-                        <Link href="/contact">
-                            <Button
-                                variant="success"
-                                size="lg"
-                                icon={<Sparkles className="h-5 w-5" />}
-                            >
-                                Dùng thử miễn phí 14 ngày
-                            </Button>
-                        </Link>
-                        <Link href="/login">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowRight className="h-5 w-5" />}
-                            >
-                                Đăng nhập Hệ thống
-                            </Button>
-                        </Link>
+                        {user ? (
+                            <Link href="/dashboard">
+                                <Button
+                                    variant="success"
+                                    size="lg"
+                                    icon={<LayoutDashboard className="h-5 w-5" />}
+                                >
+                                    Truy cập Trang Quản trị (Dashboard)
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/contact">
+                                    <Button
+                                        variant="success"
+                                        size="lg"
+                                        icon={<Sparkles className="h-5 w-5" />}
+                                    >
+                                        Dùng thử miễn phí 14 ngày
+                                    </Button>
+                                </Link>
+                                <Link href="/login">
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        icon={<ArrowRight className="h-5 w-5" />}
+                                    >
+                                        Đăng nhập Hệ thống
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </section>
@@ -235,10 +257,11 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-medium text-gray-500">
-                                                        {plan.duration_months ===
-                                                        12
+                                                        {plan.duration_days >= 365
                                                             ? '/ năm'
-                                                            : '/ tháng'}
+                                                            : plan.duration_days >= 30
+                                                              ? '/ tháng'
+                                                              : `/${plan.duration_days} ngày`}
                                                     </span>
                                                 )}
                                             </div>

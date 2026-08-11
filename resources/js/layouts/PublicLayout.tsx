@@ -13,18 +13,82 @@ import Button from '../components/ui/Button';
 interface PublicLayoutProps {
     children: React.ReactNode;
     title?: string;
+    description?: string;
+    keywords?: string;
+    canonicalUrl?: string;
 }
 
 export const PublicLayout: React.FC<PublicLayoutProps> = ({
     children,
-    title = 'Hệ thống Quản lý Giáo dục Sam',
+    title,
+    description,
+    keywords,
+    canonicalUrl,
 }) => {
-    const { auth } = usePage().props as any;
+    const { auth, seo } = usePage().props as any;
     const user = auth?.user;
+
+    const pageTitle =
+        title ||
+        seo?.title ||
+        'Giải Pháp Quản Lý Giáo Dục - Hệ thống Quản lý Giáo dục Sam';
+    const pageDescription =
+        description ||
+        seo?.description ||
+        'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học và tự động gia hạn gói dịch vụ qua ZaloPay QR Code v2.';
+    const pageKeywords =
+        keywords ||
+        seo?.keywords ||
+        'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, Giáo dục Sam, Sam Edu, ZaloPay';
+    const pageCanonical =
+        canonicalUrl || seo?.canonical_url || 'https://sam-edu.test';
+
+    // JSON-LD Structured Data for Google Search Engine Optimization
+    const schemaData = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'Hệ thống Quản lý Giáo dục Sam',
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'Web',
+        description: pageDescription,
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'VND',
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Công ty Cổ phần Giáo dục Sam',
+            url: pageCanonical,
+        },
+    };
 
     return (
         <div className="flex min-h-screen flex-col bg-white font-sans text-gray-900">
-            <Head title={title} />
+            <Head>
+                <title>{pageTitle}</title>
+                <meta name="description" content={pageDescription} />
+                <meta name="keywords" content={pageKeywords} />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={pageCanonical} />
+
+                {/* Open Graph Tags */}
+                <meta property="og:title" content={pageTitle} />
+                <meta property="og:description" content={pageDescription} />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={pageCanonical} />
+                <meta property="og:site_name" content="Giáo dục Sam" />
+
+                {/* Twitter Cards */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={pageTitle} />
+                <meta name="twitter:description" content={pageDescription} />
+
+                {/* Structured Data JSON-LD */}
+                <script type="application/ld+json">
+                    {JSON.stringify(schemaData)}
+                </script>
+            </Head>
 
             {/* Top Navigation Bar */}
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-2xs">
@@ -51,6 +115,12 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                             className="transition-colors hover:text-emerald-700"
                         >
                             Trang chủ
+                        </Link>
+                        <Link
+                            href="/services"
+                            className="transition-colors hover:text-emerald-700"
+                        >
+                            Gói cước &amp; Dịch vụ
                         </Link>
                         <Link
                             href="/about"

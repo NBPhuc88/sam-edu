@@ -17,6 +17,7 @@ class Admin extends Authenticatable
         'username',
         'email',
         'password',
+        'role',
         'status',
         'last_login_at',
         'admin_code',
@@ -34,23 +35,27 @@ class Admin extends Authenticatable
         return [
             'last_login_at' => 'datetime',
             'password'      => 'hashed',
+            'role'          => 'string',
         ];
     }
 
     /**
+     * Kiểm tra admin có phải super_admin hay không.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Danh sách Center mà Admin được phân công quản lý.
+     * Lưu ý: Super Admin quản lý tất cả Center (không cần record trong admin_centers).
+     *
      * @return BelongsToMany<Center, $this>
      */
     public function centers(): BelongsToMany
     {
         return $this->belongsToMany(Center::class, 'admin_centers');
-    }
-
-    /**
-     * @return BelongsToMany<Role, $this>
-     */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'admin_roles');
     }
 
     /**

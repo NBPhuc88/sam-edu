@@ -35,6 +35,18 @@ class HomeController extends Controller
     }
 
     /**
+     * Display software subscription plans and services page.
+     */
+    public function services(): Response
+    {
+        $plans = SubscriptionPlan::orderBy('price', 'asc')->get();
+
+        return Inertia::render('Home/Services', [
+            'plans' => $plans,
+        ]);
+    }
+
+    /**
      * Display about company page.
      */
     public function about(): Response

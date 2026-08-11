@@ -45,9 +45,9 @@ class PaymentController extends Controller
         $validated = $request->validated();
 
         /** @var Center $center */
-        $center         = Center::findOrFail($validated['center_id']);
-        $amount         = (int) $validated['amount'];
-        $durationMonths = (int) $validated['duration_months'];
+        $center       = Center::findOrFail($validated['center_id']);
+        $amount       = (int) $validated['amount'];
+        $durationDays = (int) ($validated['duration_days'] ?? (($validated['duration_months'] ?? 1) * 30));
 
         // Generate app_trans_id format: YYMMDD_random6
         $appTransId = date('ymd') . '_' . time() . rand(100, 999);
@@ -62,10 +62,10 @@ class PaymentController extends Controller
         ]);
 
         $embedData = [
-            'redirecturl'     => $validated['redirect_url'] ?? config('app.url'),
-            'center_id'       => $center->id,
-            'plan_code'       => $validated['plan_code'],
-            'duration_months' => $durationMonths,
+            'redirecturl'   => $validated['redirect_url'] ?? config('app.url'),
+            'center_id'     => $center->id,
+            'plan_code'     => $validated['plan_code'],
+            'duration_days' => $durationDays,
         ];
 
         $items = [
@@ -158,11 +158,11 @@ class PaymentController extends Controller
         }
 
         /** @var array<string, mixed> $embedData */
-        $embedData      = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
-        $durationMonths = (int) ($embedData['duration_months'] ?? 1);
-        $planCode       = (string) ($embedData['plan_code'] ?? 'standard');
+        $embedData    = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
+        $durationDays = (int) ($embedData['duration_days'] ?? (($embedData['duration_months'] ?? 1) * 30));
+        $planCode     = (string) ($embedData['plan_code'] ?? 'standard');
 
-        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationMonths, $planCode) {
+        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planCode) {
             $transaction->update([
                 'status'      => 'success',
                 'zp_trans_id' => $zpTransId,
@@ -179,17 +179,17 @@ class PaymentController extends Controller
                 ? $currentExpires->copy()
                 : Carbon::now();
 
-            $endsAt = $startsAt->copy()->addMonths($durationMonths);
+            $endsAt = $startsAt->copy()->addDays($durationDays);
 
             $subscription = CenterSubscription::create([
-                'center_id'       => $center->id,
-                'plan_code'       => $planCode,
-                'plan_name'       => "Goi subscription {$planCode}",
-                'price'           => $transaction->amount,
-                'duration_months' => $durationMonths,
-                'starts_at'       => $startsAt,
-                'ends_at'         => $endsAt,
-                'status'          => 'active',
+                'center_id'     => $center->id,
+                'plan_code'     => $planCode,
+                'plan_name'     => "Goi subscription {$planCode}",
+                'price'         => $transaction->amount,
+                'duration_days' => $durationDays,
+                'starts_at'     => $startsAt,
+                'ends_at'       => $endsAt,
+                'status'        => 'active',
             ]);
 
             $transaction->update([

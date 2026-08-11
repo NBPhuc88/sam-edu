@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Admin;
 use App\Models\Center;
-use App\Models\Role;
+
 use App\Models\SchoolClass;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
@@ -67,19 +67,22 @@ class SystemContentSeeder extends Seeder
             SystemSetting::updateOrCreate(['key' => $setting['key']], $setting);
         }
 
+        // Seed Default SEO Metadata using dedicated Seeder
+        $this->call(SeoMetadataSeeder::class);
+
         // Clean old subscription plans to ensure exact 3 plans
         SubscriptionPlan::query()->delete();
 
-        // 3 Subscription Plans: Trial 14 Days, Monthly, Yearly (20% Off)
+        // 3 Subscription Plans: Trial 14 Days, Monthly (30 Days), Yearly (365 Days - 20% Off)
         $plans = [
             [
-                'code'            => 'trial_14d',
-                'name'            => 'Gói Dùng Thử 14 Ngày',
-                'price'           => 0,
-                'duration_months' => 1,
-                'max_students'    => 30,
-                'max_classes'     => 3,
-                'features'        => [
+                'code'          => 'trial_14d',
+                'name'          => 'Gói Dùng Thử 14 Ngày',
+                'price'         => 0,
+                'duration_days' => 14,
+                'max_students'  => 30,
+                'max_classes'   => 3,
+                'features'      => [
                     'Trải nghiệm 14 ngày dùng thử miễn phí từ ngày tạo',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 30 học sinh & 3 lớp học',
@@ -90,14 +93,15 @@ class SystemContentSeeder extends Seeder
                 'is_featured' => false,
             ],
             [
-                'code'            => 'monthly',
-                'name'            => 'Gói Hàng Tháng (Standard)',
-                'price'           => 500000,
-                'duration_months' => 1,
-                'max_students'    => 200,
-                'max_classes'     => 15,
-                'features'        => [
+                'code'          => 'monthly',
+                'name'          => 'Gói Hàng Tháng (Standard)',
+                'price'         => 500000,
+                'duration_days' => 30,
+                'max_students'  => 200,
+                'max_classes'   => 15,
+                'features'      => [
                     'Thanh toán linh hoạt từng tháng (500.000đ/tháng)',
+                    'Thời hạn 1 tháng (30 ngày)',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 200 học sinh & 15 lớp học',
                     'Điểm danh & Quản lý sĩ số thông minh',
@@ -107,13 +111,13 @@ class SystemContentSeeder extends Seeder
                 'is_featured' => false,
             ],
             [
-                'code'            => 'yearly',
-                'name'            => 'Gói Theo Năm (Tiết kiêm 20%)',
-                'price'           => 4800000,
-                'duration_months' => 12,
-                'max_students'    => 500,
-                'max_classes'     => 40,
-                'features'        => [
+                'code'          => 'yearly',
+                'name'          => 'Gói Theo Năm (Tiết kiêm 20%)',
+                'price'         => 4800000,
+                'duration_days' => 365,
+                'max_students'  => 500,
+                'max_classes'   => 40,
+                'features'      => [
                     'Tiết kiệm 20% so với mua lẻ hàng tháng (chỉ 400.000đ/tháng)',
                     'Thời hạn 1 năm (365 ngày)',
                     'Quản lý đa trung tâm đào tạo',
@@ -151,42 +155,27 @@ class SystemContentSeeder extends Seeder
             'expires_at'        => now()->addDays(14),
         ]);
 
-        // Seed Roles ONLY for Admin (Super Admin & Center Admin)
-        Role::query()->delete();
-
-        $superAdminRole = Role::create([
-            'code'        => 'super_admin',
-            'name'        => 'Super Admin',
-            'description' => 'Quản trị viên tối cao - Full tất cả quyền hệ thống',
-        ]);
-
-        $centerAdminRole = Role::create([
-            'code'        => 'center_admin',
-            'name'        => 'Quản lý Trung tâm',
-            'description' => 'Quản lý trung tâm được phân công',
-        ]);
-
-        // Sample 1: Super Admin (Full system access)
+        // Admin 1: Super Admin (Quyền cao nhất - quản lý toàn hệ thống)
         $superAdmin = Admin::updateOrCreate(['username' => 'admin'], [
             'admin_code' => 'ADM-001',
             'username'   => 'admin',
             'email'      => 'phuc.nb140198@gmail.com',
             'password'   => bcrypt('admin140198'),
             'full_name'  => 'Super Admin Quản trị Tối cao',
+            'role'       => 'super_admin', // Lưu trực tiếp vào cột role - không dùng RBAC
             'status'     => 'active',
         ]);
-        $superAdmin->roles()->sync([$superAdminRole->id]);
 
-        // Sample 2: Center Admin (Assigned to Center 1 with Subscribed Plan)
+        // Admin 2: Center Admin (Quyền vừa - được phân công quản lý trung tâm)
         $centerAdmin = Admin::updateOrCreate(['username' => 'centeradmin'], [
             'admin_code' => 'ADM-002',
             'username'   => 'centeradmin',
             'email'      => 'admin.caugiay@giaoducsam.vn',
             'password'   => bcrypt('admin140198'),
             'full_name'  => 'Quản lý Trung tâm Cầu Giấy',
+            'role'       => 'admin', // Lưu trực tiếp vào cột role
             'status'     => 'active',
         ]);
-        $centerAdmin->roles()->sync([$centerAdminRole->id]);
         $centerAdmin->centers()->sync([$center1->id]);
 
         // Sample Classes

@@ -79,8 +79,13 @@ class HandleInertiaRequests extends Middleware
                 'email'     => $user->email ?? null,
                 'full_name' => $fullName,
                 'role'      => $role,
+                // admin_role chỉ tồn tại khi role = 'admin': 'super_admin' | 'admin'
+                'admin_role' => $role === 'admin' ? ($user->role ?? 'admin') : null,
             ];
         }
+
+        $routeName   = $request->route()?->getName();
+        $seoMetadata = \App\Models\SeoMetadata::getByRouteName($routeName);
 
         return [
             ...parent::share($request),
@@ -90,6 +95,13 @@ class HandleInertiaRequests extends Middleware
                 'user' => $userData,
                 'role' => $role,
             ],
+            'seo' => $seoMetadata ? [
+                'title'         => $seoMetadata->title,
+                'description'   => $seoMetadata->description,
+                'keywords'      => $seoMetadata->keywords,
+                'og_image'      => $seoMetadata->og_image,
+                'canonical_url' => $seoMetadata->canonical_url,
+            ] : null,
         ];
     }
 }

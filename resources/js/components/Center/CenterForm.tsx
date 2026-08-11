@@ -44,16 +44,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
         );
         const date = new Date();
 
-        if (planCode === 'trial_14d') {
+        if (selectedPlan?.duration_days) {
+            date.setDate(date.getDate() + Number(selectedPlan.duration_days));
+        } else if (planCode === 'trial_14d') {
             date.setDate(date.getDate() + 14);
-        } else if (selectedPlan?.duration_months) {
-            date.setMonth(
-                date.getMonth() + Number(selectedPlan.duration_months),
-            );
         } else if (planCode === 'yearly') {
-            date.setFullYear(date.getFullYear() + 1);
+            date.setDate(date.getDate() + 365);
         } else {
-            date.setMonth(date.getMonth() + 1);
+            date.setDate(date.getDate() + 30);
         }
 
         return date.toISOString().split('T')[0];
