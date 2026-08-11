@@ -67,6 +67,9 @@ class SystemContentSeeder extends Seeder
             SystemSetting::updateOrCreate(['key' => $setting['key']], $setting);
         }
 
+        // Seed Default SEO Metadata using dedicated Seeder
+        $this->call(SeoMetadataSeeder::class);
+
         // Clean old subscription plans to ensure exact 3 plans
         SubscriptionPlan::query()->delete();
 

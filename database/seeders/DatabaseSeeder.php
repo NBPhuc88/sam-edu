@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             SystemContentSeeder::class,
+            SeoMetadataSeeder::class,
         ]);
     }
 }

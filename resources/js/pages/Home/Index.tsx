@@ -36,7 +36,11 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
     const user = auth?.user;
 
     return (
-        <PublicLayout title="Trang Chủ - Hệ thống Quản lý Giáo dục Sam">
+        <PublicLayout
+            title="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - Giáo Dục Sam"
+            description="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh và tự động gia hạn gói dịch vụ qua ZaloPay QR Code v2."
+            keywords="Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, Sam Edu, Giáo dục Sam, ZaloPay"
+        >
             {/* Promotion Alert Banner */}
             {promotionBanner && (
                 <div className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-xs sm:text-sm">

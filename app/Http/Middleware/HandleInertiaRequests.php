@@ -84,6 +84,9 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        $routeName   = $request->route()?->getName();
+        $seoMetadata = \App\Models\SeoMetadata::getByRouteName($routeName);
+
         return [
             ...parent::share($request),
             'name'               => config('app.name'),
@@ -92,6 +95,13 @@ class HandleInertiaRequests extends Middleware
                 'user' => $userData,
                 'role' => $role,
             ],
+            'seo' => $seoMetadata ? [
+                'title'         => $seoMetadata->title,
+                'description'   => $seoMetadata->description,
+                'keywords'      => $seoMetadata->keywords,
+                'og_image'      => $seoMetadata->og_image,
+                'canonical_url' => $seoMetadata->canonical_url,
+            ] : null,
         ];
     }
 }
