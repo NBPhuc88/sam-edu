@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // Alias cho middleware kiểm tra đăng nhập bất kỳ guard (admin|center|teacher|student)
+        $middleware->alias([
+            'auth.any' => \App\Http\Middleware\RequireAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

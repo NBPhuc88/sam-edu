@@ -79,6 +79,8 @@ class HandleInertiaRequests extends Middleware
                 'email'     => $user->email ?? null,
                 'full_name' => $fullName,
                 'role'      => $role,
+                // admin_role chỉ tồn tại khi role = 'admin': 'super_admin' | 'admin'
+                'admin_role' => $role === 'admin' ? ($user->role ?? 'admin') : null,
             ];
         }
 
