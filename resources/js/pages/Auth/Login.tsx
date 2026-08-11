@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Lock, User, ShieldCheck, GraduationCap, Users } from 'lucide-react';
+import { Lock, User, ShieldCheck, GraduationCap, Users, Building2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 
 const loginSchema = z.object({
-    role: z.enum(['admin', 'teacher', 'student']),
+    role: z.enum(['admin', 'center', 'teacher', 'student']),
     username: z.string().min(1, 'Vui lòng nhập tên đăng nhập hoặc email'),
     password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
@@ -19,7 +19,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const Login: React.FC = () => {
     const { errors: serverErrors } = usePage().props as any;
     const [selectedRole, setSelectedRole] = useState<
-        'admin' | 'teacher' | 'student'
+        'admin' | 'center' | 'teacher' | 'student'
     >('admin');
 
     const {
@@ -36,7 +36,7 @@ export const Login: React.FC = () => {
         },
     });
 
-    const handleRoleChange = (role: 'admin' | 'teacher' | 'student') => {
+    const handleRoleChange = (role: 'admin' | 'center' | 'teacher' | 'student') => {
         setSelectedRole(role);
         setValue('role', role);
     };
@@ -47,7 +47,7 @@ export const Login: React.FC = () => {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 font-sans text-gray-900">
-            <div className="w-full max-w-md space-y-6">
+            <div className="w-full max-w-lg space-y-6">
                 {/* Brand Header with Link to Homepage */}
                 <div className="space-y-2 text-center">
                     <Link
@@ -63,7 +63,7 @@ export const Login: React.FC = () => {
                         </h1>
                     </Link>
                     <p className="text-xs text-gray-500">
-                        Đăng nhập tài khoản quản trị, giáo viên hoặc học sinh
+                        Đăng nhập tài khoản quản trị, trung tâm, giáo viên hoặc học sinh
                     </p>
                 </div>
 
@@ -74,7 +74,7 @@ export const Login: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => handleRoleChange('admin')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
                                 selectedRole === 'admin'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
@@ -86,8 +86,21 @@ export const Login: React.FC = () => {
 
                         <button
                             type="button"
+                            onClick={() => handleRoleChange('center')}
+                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
+                                selectedRole === 'center'
+                                    ? 'bg-white text-emerald-800 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <Building2 className="h-3.5 w-3.5" />
+                            Trung tâm
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => handleRoleChange('teacher')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
                                 selectedRole === 'teacher'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
@@ -100,7 +113,7 @@ export const Login: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => handleRoleChange('student')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
                                 selectedRole === 'student'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'

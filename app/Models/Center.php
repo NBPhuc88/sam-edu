@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,7 +27,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  */
-class Center extends Model
+class Center extends Authenticatable
 {
     use HasFactory;
     use SoftDeletes;
@@ -59,6 +59,7 @@ class Center extends Model
             'trial_ends_at' => 'datetime',
             'max_students'  => 'integer',
             'max_classes'   => 'integer',
+            'password'      => 'hashed',
         ];
     }
 

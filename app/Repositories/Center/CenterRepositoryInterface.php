@@ -15,6 +15,12 @@ interface CenterRepositoryInterface
     public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator;
 
     /**
+     * Find a center by username, center code or email.
+     * @param string $username
+     */
+    public function findByUsernameOrEmail(string $username): ?Center;
+
+    /**
      * Find a center by ID.
      * @param int $id
      */

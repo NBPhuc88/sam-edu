@@ -75,11 +75,12 @@ $this->app->bind(
 
 ### Authenticatable Guards (`config/auth.php`)
 - `admin` -> Model `App\Models\Admin`
+- `center` -> Model `App\Models\Center`
 - `teacher` -> Model `App\Models\Teacher`
 - `student` -> Model `App\Models\Student`
 
 ### Đăng nhập Đa thiết bị (Multi-Device Auth)
-- Các session/token đăng nhập đa thiết bị được quản lý qua bảng `refresh_tokens` với polymorphic relation: `tokenable_type` (`admin`, `teacher`, `student`) và `tokenable_id`. Token được lưu dưới dạng hash SHA-256 (`token_hash`).
+- Các session/token đăng nhập đa thiết bị được quản lý qua bảng `refresh_tokens` với polymorphic relation: `tokenable_type` (`admin`, `center`, `teacher`, `student`) và `tokenable_id`. Token được lưu dưới dạng hash SHA-256 (`token_hash`).
 
 ### Quy tắc Phân quyền Xem Thống kê (`StatisticController.php`)
 - **Super Admin**: Xem thống kê TẤT CẢ các trung tâm & toàn bộ lớp học.
