@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     Sparkles,
     Building2,
@@ -10,6 +10,7 @@ import {
     Tag,
     MessageSquare,
     Search,
+    LayoutDashboard,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';
@@ -31,6 +32,9 @@ interface Plan {
 }
 
 export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
     return (
         <PublicLayout title="Trang Chủ - Hệ thống Quản lý Giáo dục Sam">
             {/* Promotion Alert Banner */}
@@ -59,24 +63,38 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                     </p>
 
                     <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-                        <Link href="/contact">
-                            <Button
-                                variant="success"
-                                size="lg"
-                                icon={<Sparkles className="h-5 w-5" />}
-                            >
-                                Dùng thử miễn phí 14 ngày
-                            </Button>
-                        </Link>
-                        <Link href="/login">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowRight className="h-5 w-5" />}
-                            >
-                                Đăng nhập Hệ thống
-                            </Button>
-                        </Link>
+                        {user ? (
+                            <Link href="/dashboard">
+                                <Button
+                                    variant="success"
+                                    size="lg"
+                                    icon={<LayoutDashboard className="h-5 w-5" />}
+                                >
+                                    Truy cập Trang Quản trị (Dashboard)
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/contact">
+                                    <Button
+                                        variant="success"
+                                        size="lg"
+                                        icon={<Sparkles className="h-5 w-5" />}
+                                    >
+                                        Dùng thử miễn phí 14 ngày
+                                    </Button>
+                                </Link>
+                                <Link href="/login">
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        icon={<ArrowRight className="h-5 w-5" />}
+                                    >
+                                        Đăng nhập Hệ thống
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </section>
