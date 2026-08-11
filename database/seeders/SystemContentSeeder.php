@@ -98,6 +98,7 @@ class SystemContentSeeder extends Seeder
                 'max_classes'   => 15,
                 'features'      => [
                     'Thanh toán linh hoạt từng tháng (500.000đ/tháng)',
+                    'Thời hạn 1 tháng (30 ngày)',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 200 học sinh & 15 lớp học',
                     'Điểm danh & Quản lý sĩ số thông minh',
