@@ -38,22 +38,50 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     isLoading = false,
     errors = {},
 }) => {
+    const calculateExpirationDate = (planCode: string): string => {
+        const selectedPlan = subscriptionPlans.find(
+            (p: any) => p.code === planCode,
+        );
+        const date = new Date();
+
+        if (planCode === 'trial_14d') {
+            date.setDate(date.getDate() + 14);
+        } else if (selectedPlan?.duration_months) {
+            date.setMonth(
+                date.getMonth() + Number(selectedPlan.duration_months),
+            );
+        } else if (planCode === 'yearly') {
+            date.setFullYear(date.getFullYear() + 1);
+        } else {
+            date.setMonth(date.getMonth() + 1);
+        }
+
+        return date.toISOString().split('T')[0];
+    };
+
     // Form state initialized with initial values or defaults
-    const [formData, setFormData] = useState<CenterFormData>({
-        code: initialValues?.code || '',
-        name: initialValues?.name || '',
-        username: initialValues?.username || '',
-        password: '',
-        phone: initialValues?.phone || '',
-        email: initialValues?.email || '',
-        address: initialValues?.address || '',
-        status: initialValues?.status || 'active',
-        subscription_plan: initialValues?.subscription_plan || 'monthly',
-        expires_at: initialValues?.expires_at
+    const [formData, setFormData] = useState<CenterFormData>(() => {
+        const defaultPlan = initialValues?.subscription_plan || 'monthly';
+        const defaultExpires = initialValues?.expires_at
             ? new Date(initialValues.expires_at).toISOString().split('T')[0]
-            : '',
-        max_students: initialValues?.max_students ?? 200,
-        max_classes: initialValues?.max_classes ?? 15,
+            : mode === 'create'
+              ? calculateExpirationDate(defaultPlan)
+              : '';
+
+        return {
+            code: initialValues?.code || '',
+            name: initialValues?.name || '',
+            username: initialValues?.username || '',
+            password: '',
+            phone: initialValues?.phone || '',
+            email: initialValues?.email || '',
+            address: initialValues?.address || '',
+            status: initialValues?.status || 'active',
+            subscription_plan: defaultPlan,
+            expires_at: defaultExpires,
+            max_students: initialValues?.max_students ?? 200,
+            max_classes: initialValues?.max_classes ?? 15,
+        };
     });
 
     const handleChange = (
@@ -62,6 +90,24 @@ export const CenterForm: React.FC<CenterFormProps> = ({
         >,
     ) => {
         const { name, value } = e.target;
+
+        if (name === 'subscription_plan') {
+            const selectedPlan = subscriptionPlans.find(
+                (p: any) => p.code === value,
+            );
+            const autoExpiresAt = calculateExpirationDate(value);
+
+            setFormData((prev) => ({
+                ...prev,
+                subscription_plan: value,
+                expires_at: autoExpiresAt,
+                max_students: selectedPlan?.max_students ?? prev.max_students,
+                max_classes: selectedPlan?.max_classes ?? prev.max_classes,
+            }));
+
+            return;
+        }
+
         setFormData((prev) => ({
             ...prev,
             [name]: value,
