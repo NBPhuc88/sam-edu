@@ -64,9 +64,13 @@ class DashboardController extends Controller
         $centerData = null;
 
         if ($center) {
-            $expiresAt    = $center->expires_at;
-            $isExpired    = $expiresAt ? $expiresAt->isPast() : false;
-            $expiringSoon = $expiresAt ? (! $isExpired && $expiresAt->diffInDays(now()) <= 14) : false;
+            $expiresAt = $center->expires_at;
+            $isExpired = $expiresAt ? $expiresAt->isPast() : false;
+
+            // Tính số ngày còn lại (nếu còn dưới 24h coi như 1 ngày)
+            $daysRemaining     = $expiresAt ? (int) max(0, ceil(now()->diffInHours($expiresAt, false) / 24)) : 999;
+            $expiringSoon      = $expiresAt ? (! $isExpired && $daysRemaining <= 7) : false;
+            $expiring1DayAlert = $expiresAt ? (! $isExpired && $daysRemaining <= 1) : false;
 
             $centerData = [
                 'id'                => $center->id,
@@ -76,6 +80,8 @@ class DashboardController extends Controller
                 'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
                 'is_expired'        => $isExpired,
                 'expiring_soon'     => $expiringSoon,
+                'expiring_1day'     => $expiring1DayAlert,
+                'days_remaining'    => $daysRemaining,
             ];
         }
 

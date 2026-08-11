@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/subscription-plans', [PaymentController::class, 'getSubscriptionPlans']);
+
 Route::prefix('payments/zalopay')->group(function () {
     Route::post('/create', [PaymentController::class, 'createZaloPayOrder']);
     Route::post('/callback', [PaymentController::class, 'handleZaloPayCallback']);

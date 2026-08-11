@@ -7,6 +7,7 @@ use App\Http\Requests\Payment\CreateZaloOrderRequest;
 use App\Models\Center;
 use App\Models\CenterSubscription;
 use App\Models\PaymentTransaction;
+use App\Models\SubscriptionPlan;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,19 @@ class PaymentController extends Controller
     public function __construct(ZaloServiceInterface $zaloPayService)
     {
         $this->zaloPayService = $zaloPayService;
+    }
+
+    /**
+     * Get all active subscription plans from database.
+     */
+    public function getSubscriptionPlans(): JsonResponse
+    {
+        $plans = SubscriptionPlan::orderBy('price', 'asc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $plans,
+        ]);
     }
 
     /**
