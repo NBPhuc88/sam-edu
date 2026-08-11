@@ -6,7 +6,7 @@ use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Support\Str;
 
-class ClassStudentExportImportService implements ClassStudentExportImportServiceInterface
+class StudentExportImportService implements StudentExportImportServiceInterface
 {
     public function __construct(
         protected SchoolClassRepositoryInterface $schoolClassRepository,
@@ -15,8 +15,8 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
     }
 
     /**
-     * @return \Generator<int, array<int, string>>
      * @param  int                                 $classId
+     * @return \Generator<int, array<int, string>>
      */
     public function exportClassStudentsCsv(int $classId): \Generator
     {
@@ -44,8 +44,8 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
     }
 
     /**
-     * @return \Generator<int, array<string, string>>
      * @param  string                                 $filePath
+     * @return \Generator<int, array<string, string>>
      */
     public function readCsvStream(string $filePath): \Generator
     {
@@ -89,9 +89,9 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
     }
 
     /**
-     * @return array{imported: int, errors: array<int, string>}
      * @param  int                                              $classId
      * @param  string                                           $filePath
+     * @return array{imported: int, errors: array<int, string>}
      */
     public function importClassStudentsCsv(int $classId, string $filePath): array
     {
@@ -120,7 +120,6 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
                 continue;
             }
 
-            // Tìm kiếm học sinh có sẵn
             $student = null;
 
             if (! empty($studentCode)) {
@@ -135,7 +134,6 @@ class ClassStudentExportImportService implements ClassStudentExportImportService
                 $student = $this->studentRepository->findByUsernameOrEmail($email);
             }
 
-            // Nếu học sinh chưa tồn tại, tạo mới học sinh từ dữ liệu dòng CSV
             if (! $student) {
                 $fullName      = $row['họ và tên'] ?? $row['full_name'] ?? 'Học sinh mới';
                 $codeToUse     = ! empty($studentCode) ? $studentCode : 'STD' . strtoupper(Str::random(6));

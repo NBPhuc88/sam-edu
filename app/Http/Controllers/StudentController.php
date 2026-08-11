@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Student\ImportCsvRequest;
-use App\Models\Student;
 use App\Services\Student\StudentExportImportServiceInterface;
+use App\Services\Student\StudentServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class StudentController extends Controller
 {
     public function __construct(
+        protected StudentServiceInterface $studentService,
         protected StudentExportImportServiceInterface $studentExportImportService
     ) {
     }
@@ -21,57 +22,20 @@ class StudentController extends Controller
     public function index(Request $request): InertiaResponse
     {
         $search   = $request->input('search');
-        $centerId = $request->input('center_id');
-        $perPage  = 15;
+        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $page     = $request->integer('page', 1);
-        $offset   = max(0, ($page - 1) * $perPage);
 
-        $query = Student::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('student_code', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        if ($centerId) {
-            $query->where('center_id', $centerId);
-        }
-
-        // Deferred Join Subquery Pattern for pagination optimization
-        if ($offset > 0) {
-            $idQuery   = (clone $query)->select('id')->latest('id')->offset($offset)->limit($perPage);
-            $targetIds = $idQuery->pluck('id')->toArray();
-
-            if (! empty($targetIds)) {
-                $students = Student::with('center')
-                    ->whereIn('id', $targetIds)
-                    ->latest('id')
-                    ->paginate($perPage)
-                    ->withQueryString();
-
-                return Inertia::render('Admin/Students/Index', [
-                    'students' => $students,
-                    'filters'  => [
-                        'search'    => $search,
-                        'center_id' => $centerId,
-                    ],
-                ]);
-            }
-        }
-
-        $students = $query->with('center')
-            ->latest('id')
-            ->paginate($perPage)
-            ->withQueryString();
+        $students = $this->studentService->getPaginatedStudents(
+            is_string($search) ? $search : null,
+            $centerId,
+            15,
+            $page
+        );
 
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
             'filters'  => [
-                'search'    => $search,
+                'search'    => $search ?? '',
                 'center_id' => $centerId,
             ],
         ]);
@@ -94,7 +58,6 @@ class StudentController extends Controller
                 return;
             }
 
-            // UTF-8 BOM cho Excel
             fwrite($handle, "\xEF\xBB\xBF");
 
             foreach ($this->studentExportImportService->exportStudentsCsv($centerId) as $row) {

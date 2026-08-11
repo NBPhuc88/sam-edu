@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Home\SubmitContactRequest;
-use App\Models\ContactRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
+use App\Services\Home\ContactRequestServiceInterface;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        protected ContactRequestServiceInterface $contactRequestService
+    ) {
+    }
+
     /**
      * Display official marketing landing page.
      */
@@ -90,16 +94,7 @@ class HomeController extends Controller
      */
     public function submitContact(SubmitContactRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
-
-        ContactRequest::create([
-            'full_name'   => $validated['full_name'],
-            'phone'       => $validated['phone'],
-            'email'       => $validated['email'] ?? null,
-            'center_name' => $validated['center_name'] ?? null,
-            'message'     => $validated['message'] ?? null,
-            'status'      => 'pending',
-        ]);
+        $this->contactRequestService->submitContact($request->validated());
 
         return back()->with('success', 'Yêu cầu tư vấn của bạn đã được gửi thành công. Đội ngũ Giáo Dục Sam sẽ liên hệ lại trong thời gian sớm nhất!');
     }

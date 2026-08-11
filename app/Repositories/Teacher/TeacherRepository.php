@@ -3,6 +3,7 @@
 namespace App\Repositories\Teacher;
 
 use App\Models\Teacher;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class TeacherRepository implements TeacherRepositoryInterface
 {
@@ -15,8 +16,8 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @return \Generator<int, Teacher>
      * @param  ?int                     $centerId
+     * @return \Generator<int, Teacher>
      */
     public function getTeachersCursor(?int $centerId = null): \Generator
     {
@@ -41,8 +42,8 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param array<string, mixed> $data
      * @param string               $teacherCode
+     * @param array<string, mixed> $data
      */
     public function updateOrCreateByCode(string $teacherCode, array $data): Teacher
     {
@@ -53,5 +54,43 @@ class TeacherRepository implements TeacherRepositoryInterface
         );
 
         return $teacher;
+    }
+
+    public function paginate(?string $search = null, ?int $centerId = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+        $query  = Teacher::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('teacher_code', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('specialization', 'like', "%{$search}%");
+            });
+        }
+
+        if ($centerId) {
+            $query->where('center_id', $centerId);
+        }
+
+        if ($offset > 0) {
+            $idQuery   = (clone $query)->select('id')->latest('id')->offset($offset)->limit($perPage);
+            $targetIds = $idQuery->pluck('id')->toArray();
+
+            if (! empty($targetIds)) {
+                return Teacher::with('center')
+                    ->whereIn('id', $targetIds)
+                    ->latest('id')
+                    ->paginate($perPage)
+                    ->withQueryString();
+            }
+        }
+
+        return $query->with('center')
+            ->latest('id')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 }

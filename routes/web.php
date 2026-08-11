@@ -4,7 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\CenterRegisterController;
-use App\Http\Controllers\ClassChatController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
@@ -89,10 +89,10 @@ Route::middleware('auth.any')->group(function () {
         Route::post('/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('students.import');
 
         Route::prefix('{classId}/chat')->name('chat.')->group(function () {
-            Route::get('/', [ClassChatController::class, 'index'])->name('index');
-            Route::get('/messages', [ClassChatController::class, 'getMessages'])->name('messages');
-            Route::post('/messages', [ClassChatController::class, 'sendMessage'])->name('send');
-            Route::post('/messages/{messageId}/pin', [ClassChatController::class, 'togglePin'])->name('pin');
+            Route::get('/', [ChatController::class, 'index'])->name('index');
+            Route::get('/messages', [ChatController::class, 'getMessages'])->name('messages');
+            Route::post('/messages', [ChatController::class, 'sendMessage'])->name('send');
+            Route::post('/messages/{messageId}/pin', [ChatController::class, 'togglePin'])->name('pin');
         });
     });
 });

@@ -5,12 +5,12 @@ namespace App\Repositories\Chat;
 use App\Models\ClassChatMessage;
 use Illuminate\Database\Eloquent\Collection;
 
-class ClassChatRepository implements ClassChatRepositoryInterface
+class ChatRepository implements ChatRepositoryInterface
 {
     /**
-     * @return Collection<int, ClassChatMessage>
      * @param  int                               $classId
      * @param  int                               $limit
+     * @return Collection<int, ClassChatMessage>
      */
     public function getRecentMessages(int $classId, int $limit = 50): Collection
     {
@@ -58,7 +58,6 @@ class ClassChatRepository implements ClassChatRepositoryInterface
 
         $newPinnedState = ! $targetMessage->is_pinned;
 
-        // Nếu ghim tin nhắn mới, hủy ghim tất cả các tin nhắn cũ trong lớp
         if ($newPinnedState) {
             ClassChatMessage::where('class_id', $classId)->update([
                 'is_pinned'      => false,

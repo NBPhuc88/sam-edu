@@ -5,12 +5,12 @@ namespace App\Repositories\Chat;
 use App\Models\ClassChatMessage;
 use Illuminate\Database\Eloquent\Collection;
 
-interface ClassChatRepositoryInterface
+interface ChatRepositoryInterface
 {
     /**
-     * @return Collection<int, ClassChatMessage>
      * @param  int                               $classId
      * @param  int                               $limit
+     * @return Collection<int, ClassChatMessage>
      */
     public function getRecentMessages(int $classId, int $limit = 50): Collection;
 
