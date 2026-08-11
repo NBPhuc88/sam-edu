@@ -47,14 +47,6 @@ class SeoMetadataSeeder extends Seeder
                 'og_image'      => "{$appUrl}/images/og-contact-banner.jpg",
                 'canonical_url' => "{$appUrl}/contact",
             ],
-            [
-                'route_name'    => 'login',
-                'title'         => 'Đăng Nhập Hệ Thống Quản Lý Giáo Dục Sam - Sam Edu Portal',
-                'description'   => 'Cổng đăng nhập hệ thống dành cho Quản trị viên, Quản lý Trung tâm, Giáo viên và Học sinh. Truy cập an toàn và bảo mật.',
-                'keywords'      => 'đăng nhập giáo dục sam, sam edu login, portal quản lý trung tâm, đăng nhập giáo viên, đăng nhập học sinh',
-                'og_image'      => "{$appUrl}/images/og-login-banner.jpg",
-                'canonical_url' => "{$appUrl}/login",
-            ],
         ];
 
         foreach ($seoEntries as $seo) {
