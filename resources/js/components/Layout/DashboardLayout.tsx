@@ -95,6 +95,7 @@ return;
                 adminRole={user?.admin_role}
                 fullName={user?.full_name}
                 open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
             />
 
             {/* ── Main Column ──────────────────────────────────────────── */}
