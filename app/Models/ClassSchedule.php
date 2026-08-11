@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClassSchedule extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'class_subject_id',
@@ -26,9 +27,9 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
-            'weekday' => 'integer',
+            'weekday'        => 'integer',
             'effective_from' => 'date',
-            'effective_to' => 'date',
+            'effective_to'   => 'date',
         ];
     }
 

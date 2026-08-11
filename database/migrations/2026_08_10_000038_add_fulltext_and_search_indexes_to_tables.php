@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // 1. Table: students
@@ -80,7 +79,9 @@ return new class extends Migration
     }
 
     /**
-     * @param  array<int, string>  $columns
+     * @param array<int, string> $columns
+     * @param string             $tableName
+     * @param string             $indexName
      */
     protected function addFulltext(string $tableName, array $columns, string $indexName): void
     {
@@ -94,7 +95,9 @@ return new class extends Migration
     }
 
     /**
-     * @param  array<int, string>  $columns
+     * @param array<int, string> $columns
+     * @param string             $tableName
+     * @param string             $indexName
      */
     protected function addIndex(string $tableName, array $columns, string $indexName): void
     {

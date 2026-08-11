@@ -23,11 +23,11 @@ class SubmitContactRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:30',
-            'email' => 'nullable|email|max:255',
+            'full_name'   => 'required|string|max:255',
+            'phone'       => 'required|string|max:30',
+            'email'       => 'nullable|email|max:255',
             'center_name' => 'nullable|string|max:255',
-            'message' => 'nullable|string|max:2000',
+            'message'     => 'nullable|string|max:2000',
         ];
     }
 }

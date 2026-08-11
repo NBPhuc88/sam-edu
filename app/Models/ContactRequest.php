@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
- * @property string $full_name
- * @property string $phone
+ * @property int         $id
+ * @property string      $full_name
+ * @property string      $phone
  * @property string|null $email
  * @property string|null $center_name
  * @property string|null $message
- * @property string $status
+ * @property string      $status
  * @property string|null $admin_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

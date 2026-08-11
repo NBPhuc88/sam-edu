@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CenterSubject extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'center_id',
@@ -27,9 +28,9 @@ class CenterSubject extends Model
     protected function casts(): array
     {
         return [
-            'total_sessions' => 'integer',
+            'total_sessions'   => 'integer',
             'duration_minutes' => 'integer',
-            'tuition_fee' => 'decimal:2',
+            'tuition_fee'      => 'decimal:2',
         ];
     }
 

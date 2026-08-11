@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -21,6 +22,7 @@ class HandleInertiaRequests extends Middleware
      * Determines the current asset version.
      *
      * @see https://inertiajs.com/asset-versioning
+     * @param Request $request
      */
     public function version(Request $request): ?string
     {
@@ -33,6 +35,7 @@ class HandleInertiaRequests extends Middleware
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
+     * @param  Request              $request
      */
     public function share(Request $request): array
     {
@@ -42,6 +45,9 @@ class HandleInertiaRequests extends Middleware
         if (Auth::guard('admin')->check()) {
             $user = Auth::guard('admin')->user();
             $role = 'admin';
+        } elseif (Auth::guard('center')->check()) {
+            $user = Auth::guard('center')->user();
+            $role = 'center';
         } elseif (Auth::guard('teacher')->check()) {
             $user = Auth::guard('teacher')->user();
             $role = 'teacher';
@@ -50,17 +56,38 @@ class HandleInertiaRequests extends Middleware
             $role = 'student';
         }
 
+        $userData = null;
+
+        if ($user && $role) {
+            $username = match ($role) {
+                'admin'   => $user->username,
+                'center'  => $user->username ?? $user->code,
+                'teacher' => $user->username ?? $user->teacher_code,
+                'student' => $user->username ?? $user->student_code,
+            };
+
+            $fullName = match ($role) {
+                'admin'   => $user->full_name,
+                'center'  => $user->name,
+                'teacher' => $user->full_name,
+                'student' => $user->full_name,
+            };
+
+            $userData = [
+                'id'        => $user->id,
+                'username'  => $username,
+                'email'     => $user->email ?? null,
+                'full_name' => $fullName,
+                'role'      => $role,
+            ];
+        }
+
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
-            'auth' => [
-                'user' => $user ? [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'email' => $user->email ?? null,
-                    'full_name' => $user->full_name ?? $user->username,
-                    'role' => $role,
-                ] : null,
+            'name'               => config('app.name'),
+            'subscription_plans' => SubscriptionPlan::orderBy('price', 'asc')->get(),
+            'auth'               => [
+                'user' => $userData,
                 'role' => $role,
             ],
         ];

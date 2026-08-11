@@ -23,7 +23,7 @@ class ClassStudent extends Model
     {
         return [
             'enrolled_at' => 'datetime',
-            'left_at' => 'datetime',
+            'left_at'     => 'datetime',
         ];
     }
 

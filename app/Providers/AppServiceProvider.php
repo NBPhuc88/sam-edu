@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Repositories\Admin\AdminRepository;
 use App\Repositories\Admin\AdminRepositoryInterface;
+use App\Repositories\Center\CenterRepository;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Chat\ClassChatRepository;
 use App\Repositories\Chat\ClassChatRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepository;
@@ -14,6 +16,8 @@ use App\Repositories\Teacher\TeacherRepository;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Auth\AuthServiceInterface;
+use App\Services\Center\CenterService;
+use App\Services\Center\CenterServiceInterface;
 use App\Services\Chat\ClassChatService;
 use App\Services\Chat\ClassChatServiceInterface;
 use App\Services\Class\ClassStudentExportImportService;
@@ -56,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
             ClassChatServiceInterface::class,
             ClassChatService::class
         );
+        $this->app->bind(CenterServiceInterface::class, CenterService::class);
 
         // Repository Bindings
         $this->app->bind(AdminRepositoryInterface::class, AdminRepository::class);
@@ -69,6 +74,7 @@ class AppServiceProvider extends ServiceProvider
             ClassChatRepositoryInterface::class,
             ClassChatRepository::class
         );
+        $this->app->bind(CenterRepositoryInterface::class, CenterRepository::class);
     }
 
     /**
@@ -90,7 +96,8 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
+        Password::defaults(
+            fn (): ?Password => app()->isProduction()
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()

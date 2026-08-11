@@ -21,23 +21,23 @@ class ZaloService implements ZaloServiceInterface
 
     public function __construct()
     {
-        $this->appId = (string) config('services.zalopay.app_id');
-        $this->key1 = (string) config('services.zalopay.key1');
-        $this->key2 = (string) config('services.zalopay.key2');
-        $this->endpoint = (string) config('services.zalopay.endpoint');
+        $this->appId         = (string) config('services.zalopay.app_id');
+        $this->key1          = (string) config('services.zalopay.key1');
+        $this->key2          = (string) config('services.zalopay.key2');
+        $this->endpoint      = (string) config('services.zalopay.endpoint');
         $this->queryEndpoint = (string) config('services.zalopay.query_endpoint');
-        $this->callbackUrl = (string) config('services.zalopay.callback_url');
+        $this->callbackUrl   = (string) config('services.zalopay.callback_url');
     }
 
     /**
      * Create a ZaloPay payment order.
      *
-     * @param  string  $appTransId  Format: YYMMDD_xxxxx
-     * @param  string  $appUser  Username or ID
-     * @param  int  $amount  Amount in VND
-     * @param  string  $description  Order description
-     * @param  array<string, mixed>  $embedData  Embed data (redirecturl, etc.)
-     * @param  array<int, mixed>  $items  Items list
+     * @param  string               $appTransId  Format: YYMMDD_xxxxx
+     * @param  string               $appUser     Username or ID
+     * @param  int                  $amount      Amount in VND
+     * @param  string               $description Order description
+     * @param  array<string, mixed> $embedData   Embed data (redirecturl, etc.)
+     * @param  array<int, mixed>    $items       Items list
      * @return array<string, mixed>
      */
     public function createOrder(
@@ -48,9 +48,9 @@ class ZaloService implements ZaloServiceInterface
         array $embedData = [],
         array $items = []
     ): array {
-        $appTime = (int) round(microtime(true) * 1000);
+        $appTime       = (int) round(microtime(true) * 1000);
         $embedDataJson = json_encode($embedData, JSON_UNESCAPED_UNICODE) ?: '{}';
-        $itemsJson = json_encode($items, JSON_UNESCAPED_UNICODE) ?: '[]';
+        $itemsJson     = json_encode($items, JSON_UNESCAPED_UNICODE) ?: '[]';
 
         $dataToSign = implode('|', [
             $this->appId,
@@ -65,16 +65,16 @@ class ZaloService implements ZaloServiceInterface
         $mac = hash_hmac('sha256', $dataToSign, $this->key1);
 
         $orderPayload = [
-            'app_id' => (int) $this->appId,
-            'app_user' => $appUser,
-            'app_time' => $appTime,
-            'amount' => $amount,
+            'app_id'       => (int) $this->appId,
+            'app_user'     => $appUser,
+            'app_time'     => $appTime,
+            'amount'       => $amount,
             'app_trans_id' => $appTransId,
-            'embed_data' => $embedDataJson,
-            'item' => $itemsJson,
-            'description' => $description,
-            'bank_code' => '',
-            'mac' => $mac,
+            'embed_data'   => $embedDataJson,
+            'item'         => $itemsJson,
+            'description'  => $description,
+            'bank_code'    => '',
+            'mac'          => $mac,
             'callback_url' => $this->callbackUrl,
         ];
 
@@ -90,8 +90,8 @@ class ZaloService implements ZaloServiceInterface
     /**
      * Verify callback signature from ZaloPay.
      *
-     * @param  string  $data  Json string data from callback
-     * @param  string  $mac  Mac signature from callback
+     * @param string $data Json string data from callback
+     * @param string $mac  Mac signature from callback
      */
     public function verifyCallback(string $data, string $mac): bool
     {
@@ -104,18 +104,19 @@ class ZaloService implements ZaloServiceInterface
      * Query ZaloPay payment status.
      *
      * @return array<string, mixed>
+     * @param  string               $appTransId
      */
     public function queryStatus(string $appTransId): array
     {
-        $timestamp = (int) round(microtime(true) * 1000);
-        $dataToSign = $this->appId.'|'.$appTransId.'|'.$this->key1;
-        $mac = hash_hmac('sha256', $dataToSign, $this->key1);
+        $timestamp  = (int) round(microtime(true) * 1000);
+        $dataToSign = $this->appId . '|' . $appTransId . '|' . $this->key1;
+        $mac        = hash_hmac('sha256', $dataToSign, $this->key1);
 
         $params = [
-            'app_id' => (int) $this->appId,
+            'app_id'       => (int) $this->appId,
             'app_trans_id' => $appTransId,
-            'timestamp' => $timestamp,
-            'mac' => $mac,
+            'timestamp'    => $timestamp,
+            'mac'          => $mac,
         ];
 
         /** @var Response $response */

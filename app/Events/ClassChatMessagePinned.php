@@ -9,15 +9,18 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 class ClassChatMessagePinned implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable;
+    use InteractsWithSockets;
 
     /**
-     * @param  array<string, mixed>|null  $pinnedMessageData
+     * @param array<string, mixed>|null $pinnedMessageData
+     * @param int                       $classId
      */
     public function __construct(
         public int $classId,
         public ?array $pinnedMessageData
-    ) {}
+    ) {
+    }
 
     public function broadcastOn(): Channel
     {
@@ -35,7 +38,7 @@ class ClassChatMessagePinned implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'class_id' => $this->classId,
+            'class_id'       => $this->classId,
             'pinned_message' => $this->pinnedMessageData,
         ];
     }

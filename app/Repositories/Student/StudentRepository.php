@@ -16,6 +16,7 @@ class StudentRepository implements StudentRepositoryInterface
 
     /**
      * @return \Generator<int, Student>
+     * @param  ?int                     $centerId
      */
     public function getStudentsCursor(?int $centerId = null): \Generator
     {
@@ -40,7 +41,8 @@ class StudentRepository implements StudentRepositoryInterface
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
+     * @param string               $studentCode
      */
     public function updateOrCreateByCode(string $studentCode, array $data): Student
     {

@@ -28,9 +28,9 @@ class ImportCsvRequest extends FormRequest
     {
         return [
             'file.required' => 'Vui lòng chọn tệp CSV để tải lên.',
-            'file.file' => 'Tệp tải lên không hợp lệ.',
-            'file.mimes' => 'Định dạng tệp phải là .csv hoặc .txt',
-            'file.max' => 'Dung lượng tệp vượt quá giới hạn cho phép (10MB).',
+            'file.file'     => 'Tệp tải lên không hợp lệ.',
+            'file.mimes'    => 'Định dạng tệp phải là .csv hoặc .txt',
+            'file.max'      => 'Dung lượng tệp vượt quá giới hạn cho phép (10MB).',
         ];
     }
 }

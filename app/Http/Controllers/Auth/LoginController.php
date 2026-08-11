@@ -29,6 +29,7 @@ class LoginController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     * @param LoginRequest $request
      */
     public function login(LoginRequest $request): RedirectResponse
     {
@@ -51,6 +52,7 @@ class LoginController extends Controller
 
     /**
      * Destroy an authenticated session.
+     * @param Request $request
      */
     public function logout(Request $request): RedirectResponse
     {

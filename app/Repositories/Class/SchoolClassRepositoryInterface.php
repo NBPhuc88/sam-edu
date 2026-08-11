@@ -11,6 +11,7 @@ interface SchoolClassRepositoryInterface
 
     /**
      * @return \Generator<int, Student>
+     * @param  int                      $classId
      */
     public function getClassStudentsCursor(int $classId): \Generator;
 

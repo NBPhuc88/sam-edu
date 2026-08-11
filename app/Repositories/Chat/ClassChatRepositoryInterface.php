@@ -9,13 +9,15 @@ interface ClassChatRepositoryInterface
 {
     /**
      * @return Collection<int, ClassChatMessage>
+     * @param  int                               $classId
+     * @param  int                               $limit
      */
     public function getRecentMessages(int $classId, int $limit = 50): Collection;
 
     public function getPinnedMessage(int $classId): ?ClassChatMessage;
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
      */
     public function createMessage(array $data): ClassChatMessage;
 

@@ -3,36 +3,40 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
- * @property string $code
- * @property string $name
+ * @property int         $id
+ * @property string      $code
+ * @property string      $name
+ * @property string|null $username
+ * @property string|null $password
  * @property string|null $phone
  * @property string|null $email
- * @property string|null $address
- * @property string $status
- * @property string $subscription_plan
+ * @property string      $status
+ * @property string      $subscription_plan
  * @property Carbon|null $expires_at
  * @property Carbon|null $trial_ends_at
- * @property int|null $max_students
- * @property int|null $max_classes
+ * @property int|null    $max_students
+ * @property int|null    $max_classes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  */
-class Center extends Model
+class Center extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'code',
         'name',
+        'username',
+        'password',
         'phone',
         'email',
         'address',
@@ -44,13 +48,18 @@ class Center extends Model
         'max_classes',
     ];
 
+    protected $hidden = [
+        'password',
+    ];
+
     protected function casts(): array
     {
         return [
-            'expires_at' => 'datetime',
+            'expires_at'    => 'datetime',
             'trial_ends_at' => 'datetime',
-            'max_students' => 'integer',
-            'max_classes' => 'integer',
+            'max_students'  => 'integer',
+            'max_classes'   => 'integer',
+            'password'      => 'hashed',
         ];
     }
 

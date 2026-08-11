@@ -75,11 +75,12 @@ $this->app->bind(
 
 ### Authenticatable Guards (`config/auth.php`)
 - `admin` -> Model `App\Models\Admin`
+- `center` -> Model `App\Models\Center`
 - `teacher` -> Model `App\Models\Teacher`
 - `student` -> Model `App\Models\Student`
 
 ### Đăng nhập Đa thiết bị (Multi-Device Auth)
-- Các session/token đăng nhập đa thiết bị được quản lý qua bảng `refresh_tokens` với polymorphic relation: `tokenable_type` (`admin`, `teacher`, `student`) và `tokenable_id`. Token được lưu dưới dạng hash SHA-256 (`token_hash`).
+- Các session/token đăng nhập đa thiết bị được quản lý qua bảng `refresh_tokens` với polymorphic relation: `tokenable_type` (`admin`, `center`, `teacher`, `student`) và `tokenable_id`. Token được lưu dưới dạng hash SHA-256 (`token_hash`).
 
 ### Quy tắc Phân quyền Xem Thống kê (`StatisticController.php`)
 - **Super Admin**: Xem thống kê TẤT CẢ các trung tâm & toàn bộ lớp học.
@@ -161,3 +162,61 @@ vendor/bin/pint
 # 4. Kiểm tra kiểu tĩnh PHPStan Level 7
 composer types:check
 ```
+
+---
+
+## 9. Quy tắc Tối ưu hóa MySQL cho Phân trang & Tìm kiếm (MySQL Optimization Rules)
+
+> [!IMPORTANT]
+> Toàn bộ các chức năng Phân trang (Pagination) và Tìm kiếm (Search) trong hệ thống BẮT BUỘC tuân thủ 2 cấu trúc tối ưu hóa MySQL sau:
+
+### 1. Tối ưu hóa Phân trang (Deferred Join / Subquery SELECT)
+Đối với phân trang dữ liệu lớn hoặc truy vấn với `LIMIT / OFFSET`, không `SELECT *` trực tiếp mà sử dụng Subquery chỉ lấy danh sách `id` khóa chính trước, sau đó `INNER JOIN` lại bảng chính để nạp chi tiết các cột:
+
+```sql
+SELECT pre.usr_id, usr_email, usr_phone, usr_username, usr_created_at, usr_status
+FROM (
+    SELECT usr_id
+    FROM pre_go_crm_user
+    WHERE usr_created_at > '2024-07-23 00:00:00' AND usr_created_at < '2024-08-22 23:59:59'
+    ORDER BY usr_created_at ASC, usr_id ASC
+    LIMIT 9000000, 50
+) AS temp
+INNER JOIN pre_go_crm_user AS pre ON temp.usr_id = pre.usr_id
+ORDER BY usr_created_at ASC, usr_id ASC;
+```
+
+Trong Eloquent / Query Builder Laravel:
+```php
+$idSubquery = (clone $query)->select('id')->offset($offset)->limit($perPage);
+$query->whereIn('id', $idSubquery);
+```
+
+---
+
+### 2. Quy tắc Phân loại Index & Tìm kiếm (B-Tree Index vs FULLTEXT INDEX)
+> [!IMPORTANT]
+> **QUY TẮC CỐT LÕI VỀ INDEX TRONG DỰ ÁN**:
+> 1. **KHÔNG DÙNG FULLTEXT CHO TRƯỜNG NGẮN (`VARCHAR` / `STRING`)**:
+>    - Tuyệt đối KHÔNG đánh `FULLTEXT INDEX` cho các trường ngắn như `name`, `full_name`, `code`, `student_code`, `teacher_code`, `phone`, `email`, `specialization`.
+>    - Các trường ngắn bắt buộc sử dụng **B-Tree Index** (`$table->index(...)` hoặc `$table->unique(...)`) kết hợp tìm kiếm chính xác hoặc `LIKE '%keyword%'` trên các cột có index để hỗ trợ Tiếng Việt chuẩn xác 100% (không bị bỏ sót từ ngắn tiếng Việt như *Văn*, *Phúc*, *K1*).
+> 
+> 2. **CHỈ DÙNG FULLTEXT INDEX CHO TRƯỜNG TEXT DÀI (`TEXT` / `LONGTEXT`)**:
+>    - Chỉ sử dụng `FULLTEXT INDEX` (`$table->fullText(...)`) đối với các trường văn bản dài như `description`, `note`, `content`, `address` khi cần tìm kiếm cụm từ trong đoạn văn bản dài.
+
+Ví dụ Migration B-Tree Index cho trường ngắn:
+```php
+Schema::table('students', function (Blueprint $table) {
+    $table->index('phone', 'idx_students_phone');
+    $table->index('email', 'idx_students_email');
+    $table->index('full_name', 'idx_students_full_name');
+});
+```
+
+Ví dụ Migration FULLTEXT INDEX cho trường text dài:
+```php
+Schema::table('students', function (Blueprint $table) {
+    $table->fullText(['address', 'note'], 'ft_students_longtext');
+});
+```
+

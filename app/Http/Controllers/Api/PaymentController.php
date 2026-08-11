@@ -7,6 +7,7 @@ use App\Http\Requests\Payment\CreateZaloOrderRequest;
 use App\Models\Center;
 use App\Models\CenterSubscription;
 use App\Models\PaymentTransaction;
+use App\Models\SubscriptionPlan;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -23,41 +24,55 @@ class PaymentController extends Controller
     }
 
     /**
+     * Get all active subscription plans from database.
+     */
+    public function getSubscriptionPlans(): JsonResponse
+    {
+        $plans = SubscriptionPlan::orderBy('price', 'asc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $plans,
+        ]);
+    }
+
+    /**
      * Create a ZaloPay payment order for center subscription renewal.
+     * @param CreateZaloOrderRequest $request
      */
     public function createZaloPayOrder(CreateZaloOrderRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         /** @var Center $center */
-        $center = Center::findOrFail($validated['center_id']);
-        $amount = (int) $validated['amount'];
+        $center         = Center::findOrFail($validated['center_id']);
+        $amount         = (int) $validated['amount'];
         $durationMonths = (int) $validated['duration_months'];
 
         // Generate app_trans_id format: YYMMDD_random6
-        $appTransId = date('ymd').'_'.time().rand(100, 999);
+        $appTransId = date('ymd') . '_' . time() . rand(100, 999);
 
         // Create pending payment transaction
         $transaction = PaymentTransaction::create([
-            'center_id' => $center->id,
-            'app_trans_id' => $appTransId,
+            'center_id'      => $center->id,
+            'app_trans_id'   => $appTransId,
             'payment_method' => 'zalopay',
-            'amount' => $amount,
-            'status' => 'pending',
+            'amount'         => $amount,
+            'status'         => 'pending',
         ]);
 
         $embedData = [
-            'redirecturl' => $validated['redirect_url'] ?? config('app.url'),
-            'center_id' => $center->id,
-            'plan_code' => $validated['plan_code'],
+            'redirecturl'     => $validated['redirect_url'] ?? config('app.url'),
+            'center_id'       => $center->id,
+            'plan_code'       => $validated['plan_code'],
             'duration_months' => $durationMonths,
         ];
 
         $items = [
             [
-                'itemid' => $validated['plan_code'],
-                'itemname' => $validated['plan_name'],
-                'itemprice' => $amount,
+                'itemid'       => $validated['plan_code'],
+                'itemname'     => $validated['plan_name'],
+                'itemprice'    => $amount,
                 'itemquantity' => 1,
             ],
         ];
@@ -79,16 +94,16 @@ class PaymentController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
-                'app_trans_id' => $appTransId,
-                'order_url' => $result['order_url'] ?? null,
-                'qr_code' => $result['qr_code'] ?? null,
+                'success'        => true,
+                'app_trans_id'   => $appTransId,
+                'order_url'      => $result['order_url'] ?? null,
+                'qr_code'        => $result['qr_code'] ?? null,
                 'zp_trans_token' => $result['zp_trans_token'] ?? null,
             ]);
         }
 
         $transaction->update([
-            'status' => 'failed',
+            'status'  => 'failed',
             'payload' => $result,
         ]);
 
@@ -101,6 +116,7 @@ class PaymentController extends Controller
 
     /**
      * Callback Webhook handler for ZaloPay IPN.
+     * @param Request $request
      */
     public function handleZaloPayCallback(Request $request): JsonResponse
     {
@@ -111,7 +127,7 @@ class PaymentController extends Controller
 
         if (! $this->zaloPayService->verifyCallback($data, $mac)) {
             return response()->json([
-                'return_code' => -1,
+                'return_code'    => -1,
                 'return_message' => 'mac not equal',
             ]);
         }
@@ -129,29 +145,29 @@ class PaymentController extends Controller
 
         if (! $transaction) {
             return response()->json([
-                'return_code' => -1,
+                'return_code'    => -1,
                 'return_message' => 'transaction not found',
             ]);
         }
 
         if ($transaction->status === 'success') {
             return response()->json([
-                'return_code' => 1,
+                'return_code'    => 1,
                 'return_message' => 'success (already processed)',
             ]);
         }
 
         /** @var array<string, mixed> $embedData */
-        $embedData = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
+        $embedData      = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
         $durationMonths = (int) ($embedData['duration_months'] ?? 1);
-        $planCode = (string) ($embedData['plan_code'] ?? 'standard');
+        $planCode       = (string) ($embedData['plan_code'] ?? 'standard');
 
         DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationMonths, $planCode) {
             $transaction->update([
-                'status' => 'success',
+                'status'      => 'success',
                 'zp_trans_id' => $zpTransId,
-                'payload' => $dataJson,
-                'paid_at' => now(),
+                'payload'     => $dataJson,
+                'paid_at'     => now(),
             ]);
 
             /** @var Center $center */
@@ -166,14 +182,14 @@ class PaymentController extends Controller
             $endsAt = $startsAt->copy()->addMonths($durationMonths);
 
             $subscription = CenterSubscription::create([
-                'center_id' => $center->id,
-                'plan_code' => $planCode,
-                'plan_name' => "Goi subscription {$planCode}",
-                'price' => $transaction->amount,
+                'center_id'       => $center->id,
+                'plan_code'       => $planCode,
+                'plan_name'       => "Goi subscription {$planCode}",
+                'price'           => $transaction->amount,
                 'duration_months' => $durationMonths,
-                'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
-                'status' => 'active',
+                'starts_at'       => $startsAt,
+                'ends_at'         => $endsAt,
+                'status'          => 'active',
             ]);
 
             $transaction->update([
@@ -182,20 +198,21 @@ class PaymentController extends Controller
 
             // Extend center expiration
             $center->update([
-                'status' => 'active',
+                'status'            => 'active',
                 'subscription_plan' => $planCode,
-                'expires_at' => $endsAt,
+                'expires_at'        => $endsAt,
             ]);
         });
 
         return response()->json([
-            'return_code' => 1,
+            'return_code'    => 1,
             'return_message' => 'success',
         ]);
     }
 
     /**
      * Query order status from ZaloPay.
+     * @param string $appTransId
      */
     public function checkOrderStatus(string $appTransId): JsonResponse
     {
@@ -211,8 +228,8 @@ class PaymentController extends Controller
 
         if ($transaction->status === 'success') {
             return response()->json([
-                'success' => true,
-                'status' => 'success',
+                'success'     => true,
+                'status'      => 'success',
                 'transaction' => $transaction,
             ]);
         }
@@ -221,16 +238,16 @@ class PaymentController extends Controller
 
         if (isset($result['return_code']) && (int) $result['return_code'] === 1) {
             $transaction->update([
-                'status' => 'success',
+                'status'      => 'success',
                 'zp_trans_id' => (string) ($result['zp_trans_id'] ?? ''),
-                'payload' => $result,
-                'paid_at' => now(),
+                'payload'     => $result,
+                'paid_at'     => now(),
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'status' => $transaction->fresh()->status,
+            'status'  => $transaction->fresh()->status,
             'details' => $result,
         ]);
     }

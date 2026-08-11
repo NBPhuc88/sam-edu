@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CenterController;
 use App\Http\Controllers\ClassChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -32,6 +33,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
 
+// Center Management Routes
+Route::get('/centers', [CenterController::class, 'index'])->name('centers.index');
+Route::get('/centers/create', [CenterController::class, 'create'])->name('centers.create');
+Route::post('/centers', [CenterController::class, 'store'])->name('centers.store');
+Route::get('/centers/{id}/edit', [CenterController::class, 'edit'])->name('centers.edit');
+Route::patch('/centers/{id}', [CenterController::class, 'update'])->name('centers.update');
+Route::delete('/centers/{id}', [CenterController::class, 'destroy'])->name('centers.destroy');
+
 // Student Management Routes (Export & Import)
 Route::get('/students', [StudentController::class, 'index'])->name('students.index');
 Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
@@ -59,7 +68,7 @@ Route::post('/classes/{classId}/chat/messages/{messageId}/pin', [ClassChatContro
 // Fallback Route for 404 Not Found Screen
 Route::fallback(function () {
     return Inertia::render('Error', [
-        'status' => 404,
+        'status'  => 404,
         'message' => 'Trang bạn đang tìm kiếm không tồn tại hoặc đường dẫn không đúng.',
     ]);
 });

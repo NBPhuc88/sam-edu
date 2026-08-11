@@ -10,7 +10,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Admin extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'username',
@@ -32,7 +33,7 @@ class Admin extends Authenticatable
     {
         return [
             'last_login_at' => 'datetime',
-            'password' => 'hashed',
+            'password'      => 'hashed',
         ];
     }
 

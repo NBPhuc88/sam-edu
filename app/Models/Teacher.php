@@ -12,7 +12,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Teacher extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'username',
@@ -43,8 +44,8 @@ class Teacher extends Authenticatable
         return [
             'last_login_at' => 'datetime',
             'date_of_birth' => 'date',
-            'hire_date' => 'date',
-            'password' => 'hashed',
+            'hire_date'     => 'date',
+            'password'      => 'hashed',
         ];
     }
 

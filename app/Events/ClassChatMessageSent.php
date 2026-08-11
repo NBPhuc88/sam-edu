@@ -9,15 +9,18 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 class ClassChatMessageSent implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable;
+    use InteractsWithSockets;
 
     /**
-     * @param  array<string, mixed>  $messageData
+     * @param array<string, mixed> $messageData
+     * @param int                  $classId
      */
     public function __construct(
         public int $classId,
         public array $messageData
-    ) {}
+    ) {
+    }
 
     public function broadcastOn(): Channel
     {

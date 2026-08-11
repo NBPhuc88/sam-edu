@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Repositories\Admin\AdminRepositoryInterface;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
@@ -12,16 +13,20 @@ class AuthService implements AuthServiceInterface
 {
     protected AdminRepositoryInterface $adminRepository;
 
+    protected CenterRepositoryInterface $centerRepository;
+
     protected TeacherRepositoryInterface $teacherRepository;
 
     protected StudentRepositoryInterface $studentRepository;
 
     public function __construct(
         AdminRepositoryInterface $adminRepository,
+        CenterRepositoryInterface $centerRepository,
         TeacherRepositoryInterface $teacherRepository,
         StudentRepositoryInterface $studentRepository
     ) {
-        $this->adminRepository = $adminRepository;
+        $this->adminRepository   = $adminRepository;
+        $this->centerRepository  = $centerRepository;
         $this->teacherRepository = $teacherRepository;
         $this->studentRepository = $studentRepository;
     }
@@ -30,6 +35,9 @@ class AuthService implements AuthServiceInterface
      * Authenticate account credentials for specified role.
      *
      * @return array{success: bool, account: mixed, error: string|null}
+     * @param  string                                                   $role
+     * @param  string                                                   $username
+     * @param  string                                                   $password
      */
     public function authenticate(string $role, string $username, string $password): array
     {
@@ -37,30 +45,34 @@ class AuthService implements AuthServiceInterface
 
         if ($role === 'admin') {
             $account = $this->adminRepository->findByUsernameOrEmail($username);
+        } elseif ($role === 'center') {
+            $account = $this->centerRepository->findByUsernameOrEmail($username);
         } elseif ($role === 'teacher') {
             $account = $this->teacherRepository->findByUsernameOrEmail($username);
         } elseif ($role === 'student') {
             $account = $this->studentRepository->findByUsernameOrEmail($username);
         }
 
-        if (! $account || ! Hash::check($password, $account->password)) {
+        if (! $account || ! Hash::check($password, (string) $account->password)) {
             return [
                 'success' => false,
                 'account' => null,
-                'error' => 'Tên đăng nhập hoặc mật khẩu không chính xác.',
+                'error'   => 'Tên đăng nhập hoặc mật khẩu không chính xác.',
             ];
         }
 
-        if (isset($account->status) && in_array($account->status, ['inactive', 'locked', 'suspended'])) {
+        if (isset($account->status) && in_array($account->status, ['inactive', 'locked', 'suspended', 'expired'])) {
             return [
                 'success' => false,
                 'account' => null,
-                'error' => 'Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.',
+                'error'   => 'Tài khoản của bạn đã bị khóa, hết hạn hoặc chưa kích hoạt.',
             ];
         }
 
-        // Update last login
-        $account->update(['last_login_at' => now()]);
+        // Update last login if column exists
+        if (\Illuminate\Support\Facades\Schema::hasColumn($account->getTable(), 'last_login_at')) {
+            $account->update(['last_login_at' => now()]);
+        }
 
         // Login with specified guard
         Auth::guard($role)->login($account);
@@ -69,7 +81,7 @@ class AuthService implements AuthServiceInterface
         return [
             'success' => true,
             'account' => $account,
-            'error' => null,
+            'error'   => null,
         ];
     }
 
@@ -79,6 +91,7 @@ class AuthService implements AuthServiceInterface
     public function logout(): void
     {
         Auth::guard('admin')->logout();
+        Auth::guard('center')->logout();
         Auth::guard('teacher')->logout();
         Auth::guard('student')->logout();
 
