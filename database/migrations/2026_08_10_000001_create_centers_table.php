@@ -31,7 +31,9 @@ return new class () extends Migration {
             $table->timestamps();
             $table->softDeletes();
 
-            $table->fullText(['name', 'code', 'email', 'phone'], 'centers_fulltext');
+            $table->index('phone', 'idx_centers_phone');
+            $table->index('email', 'idx_centers_email');
+            $table->index('name', 'idx_centers_name');
         });
     }
 

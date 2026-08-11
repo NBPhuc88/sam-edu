@@ -17,14 +17,12 @@ class CenterRepository implements CenterRepositoryInterface
         $query = Center::query();
 
         if ($search) {
-            $words = array_filter(explode(' ', trim($search)));
-
-            if (! empty($words)) {
-                $booleanWords = array_map(fn ($word) => '+' . rtrim($word, '*') . '*', $words);
-                $booleanQuery = implode(' ', $booleanWords);
-
-                $query->whereRaw('MATCH(name, code, email, phone) AGAINST(? IN BOOLEAN MODE)', [$booleanQuery]);
-            }
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
         }
 
         // Optimized pagination with Deferred Join Subquery Pattern

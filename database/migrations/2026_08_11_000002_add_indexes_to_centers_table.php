@@ -11,7 +11,10 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('centers', function (Blueprint $table) {
-            $table->fullText(['name', 'code', 'email', 'phone'], 'centers_fulltext');
+            $table->index('phone', 'idx_centers_phone');
+            $table->index('email', 'idx_centers_email');
+            $table->index('name', 'idx_centers_name');
+            $table->fullText('address', 'ft_centers_address');
         });
     }
 
@@ -21,7 +24,10 @@ return new class () extends Migration {
     public function down(): void
     {
         Schema::table('centers', function (Blueprint $table) {
-            $table->dropFullText('centers_fulltext');
+            $table->dropIndex('idx_centers_phone');
+            $table->dropIndex('idx_centers_email');
+            $table->dropIndex('idx_centers_name');
+            $table->dropFullText('ft_centers_address');
         });
     }
 };

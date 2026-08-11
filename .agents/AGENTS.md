@@ -193,25 +193,29 @@ $query->whereIn('id', $idSubquery);
 
 ---
 
-### 2. Tối ưu hóa Tìm kiếm (FULLTEXT Match / Against Boolean Mode)
+### 2. Quy tắc Phân loại Index & Tìm kiếm (B-Tree Index vs FULLTEXT INDEX)
 > [!IMPORTANT]
-> **Quy tắc bắt buộc**:
-> 1. **Kiểm tra / Tạo Migration FULLTEXT INDEX**: Trước khi sử dụng `MATCH(...) AGAINST(...)`, BẮT BUỘC kiểm tra bảng đã có chỉ mục FULLTEXT chưa. Nếu chưa có, tạo Migration bổ sung: `$table->fullText(['column1', 'column2'], 'table_fulltext');`.
-> 2. **KHÔNG KẾT HỢP VỚI `LIKE '%...%'`**: Tuyệt đối KHÔNG sử dụng `orWhere LIKE '%search%'` cùng với `MATCH` vì sẽ làm MySQL không thể sử dụng index FULLTEXT và gây ra Full Table Scan.
+> **QUY TẮC CỐT LÕI VỀ INDEX TRONG DỰ ÁN**:
+> 1. **KHÔNG DÙNG FULLTEXT CHO TRƯỜNG NGẮN (`VARCHAR` / `STRING`)**:
+>    - Tuyệt đối KHÔNG đánh `FULLTEXT INDEX` cho các trường ngắn như `name`, `full_name`, `code`, `student_code`, `teacher_code`, `phone`, `email`, `specialization`.
+>    - Các trường ngắn bắt buộc sử dụng **B-Tree Index** (`$table->index(...)` hoặc `$table->unique(...)`) kết hợp tìm kiếm chính xác hoặc `LIKE '%keyword%'` trên các cột có index để hỗ trợ Tiếng Việt chuẩn xác 100% (không bị bỏ sót từ ngắn tiếng Việt như *Văn*, *Phúc*, *K1*).
+> 
+> 2. **CHỈ DÙNG FULLTEXT INDEX CHO TRƯỜNG TEXT DÀI (`TEXT` / `LONGTEXT`)**:
+>    - Chỉ sử dụng `FULLTEXT INDEX` (`$table->fullText(...)`) đối với các trường văn bản dài như `description`, `note`, `content`, `address` khi cần tìm kiếm cụm từ trong đoạn văn bản dài.
 
-Cú pháp SQL chuẩn:
-```sql
--- Tìm kiếm nhiều từ cách nhau bởi khoảng trắng:
-SELECT SQL_NO_CACHE * FROM products 
-WHERE MATCH(productName) AGAINST('+1900s +Vintage' IN BOOLEAN MODE);
+Ví dụ Migration B-Tree Index cho trường ngắn:
+```php
+Schema::table('students', function (Blueprint $table) {
+    $table->index('phone', 'idx_students_phone');
+    $table->index('email', 'idx_students_email');
+    $table->index('full_name', 'idx_students_full_name');
+});
 ```
 
-Trong Eloquent / Query Builder Laravel:
+Ví dụ Migration FULLTEXT INDEX cho trường text dài:
 ```php
-$words = array_filter(explode(' ', trim($search)));
-$booleanWords = array_map(fn ($word) => '+' . rtrim($word, '*') . '*', $words);
-$booleanQuery = implode(' ', $booleanWords);
-
-$query->whereRaw("MATCH(name, code, email, phone) AGAINST(? IN BOOLEAN MODE)", [$booleanQuery]);
+Schema::table('students', function (Blueprint $table) {
+    $table->fullText(['address', 'note'], 'ft_students_longtext');
+});
 ```
 

@@ -22,9 +22,11 @@ class TeacherController extends Controller
     {
         $search   = $request->input('search');
         $centerId = $request->input('center_id');
+        $perPage  = 15;
+        $page     = $request->integer('page', 1);
+        $offset   = max(0, ($page - 1) * $perPage);
 
-        $query = Teacher::with('center')
-            ->orderBy('id', 'desc');
+        $query = Teacher::query();
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -40,7 +42,32 @@ class TeacherController extends Controller
             $query->where('center_id', $centerId);
         }
 
-        $teachers = $query->paginate(15)->withQueryString();
+        // Deferred Join Subquery Pattern for pagination optimization
+        if ($offset > 0) {
+            $idQuery   = (clone $query)->select('id')->latest('id')->offset($offset)->limit($perPage);
+            $targetIds = $idQuery->pluck('id')->toArray();
+
+            if (! empty($targetIds)) {
+                $teachers = Teacher::with('center')
+                    ->whereIn('id', $targetIds)
+                    ->latest('id')
+                    ->paginate($perPage)
+                    ->withQueryString();
+
+                return Inertia::render('Admin/Teachers/Index', [
+                    'teachers' => $teachers,
+                    'filters'  => [
+                        'search'    => $search,
+                        'center_id' => $centerId,
+                    ],
+                ]);
+            }
+        }
+
+        $teachers = $query->with('center')
+            ->latest('id')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('Admin/Teachers/Index', [
             'teachers' => $teachers,

@@ -23,11 +23,12 @@ class SchoolClassStudentController extends Controller
     {
         $schoolClass = SchoolClass::with('center')->findOrFail($classId);
 
-        $search = $request->input('search');
+        $search  = $request->input('search');
+        $perPage = 15;
+        $page    = $request->integer('page', 1);
+        $offset  = max(0, ($page - 1) * $perPage);
 
-        $query = $schoolClass->students()
-            ->withPivot('enrolled_at', 'status', 'note')
-            ->orderBy('id', 'desc');
+        $query = $schoolClass->students();
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -38,7 +39,33 @@ class SchoolClassStudentController extends Controller
             });
         }
 
-        $students = $query->paginate(15)->withQueryString();
+        // Deferred Join Subquery Pattern for pagination optimization
+        if ($offset > 0) {
+            $idQuery   = (clone $query)->select('students.id')->latest('students.id')->offset($offset)->limit($perPage);
+            $targetIds = $idQuery->pluck('students.id')->toArray();
+
+            if (! empty($targetIds)) {
+                $students = $schoolClass->students()
+                    ->withPivot('enrolled_at', 'status', 'note')
+                    ->whereIn('students.id', $targetIds)
+                    ->latest('students.id')
+                    ->paginate($perPage)
+                    ->withQueryString();
+
+                return Inertia::render('Admin/Classes/Students', [
+                    'schoolClass' => $schoolClass,
+                    'students'    => $students,
+                    'filters'     => [
+                        'search' => $search,
+                    ],
+                ]);
+            }
+        }
+
+        $students = $query->withPivot('enrolled_at', 'status', 'note')
+            ->latest('students.id')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('Admin/Classes/Students', [
             'schoolClass' => $schoolClass,
