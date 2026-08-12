@@ -41,13 +41,14 @@ interface IndexProps {
         total: number;
     };
     centers: Center[];
+    hasSuperAdmin?: boolean;
     filters: {
         search: string;
         role: string;
     };
 }
 
-export default function AdminsIndex({ admins, centers, filters }: IndexProps) {
+export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, filters }: IndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || '');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -319,18 +320,27 @@ export default function AdminsIndex({ admins, centers, filters }: IndexProps) {
                                                     >
                                                         Sửa
                                                     </Button>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        }
-                                                        onClick={() =>
-                                                            handleDelete(admin)
-                                                        }
-                                                    >
-                                                        Xóa
-                                                    </Button>
+                                                    {admin.role === 'super_admin' ? (
+                                                        <span
+                                                            className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400 cursor-not-allowed select-none"
+                                                            title="Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa"
+                                                        >
+                                                            Không thể xóa
+                                                        </span>
+                                                    ) : (
+                                                        <Button
+                                                            variant="danger"
+                                                            size="sm"
+                                                            icon={
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            }
+                                                            onClick={() =>
+                                                                handleDelete(admin)
+                                                            }
+                                                        >
+                                                            Xóa
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -416,35 +426,53 @@ export default function AdminsIndex({ admins, centers, filters }: IndexProps) {
                             <label className="block text-xs font-bold text-gray-700">
                                 Vai trò Admin (*)
                             </label>
-                            <div className="mt-1 flex gap-4">
-                                <label className="flex items-center gap-2 text-xs font-semibold text-gray-800">
-                                    <input
-                                        type="radio"
-                                        name="role"
-                                        value="admin"
-                                        checked={form.data.role === 'admin'}
-                                        onChange={() =>
-                                            form.setData('role', 'admin')
-                                        }
-                                        className="text-emerald-600 focus:ring-emerald-500"
-                                    />
-                                    Admin (Phân công theo Trung tâm)
-                                </label>
-                                <label className="flex items-center gap-2 text-xs font-semibold text-gray-800">
-                                    <input
-                                        type="radio"
-                                        name="role"
-                                        value="super_admin"
-                                        checked={
-                                            form.data.role === 'super_admin'
-                                        }
-                                        onChange={() =>
-                                            form.setData('role', 'super_admin')
-                                        }
-                                        className="text-emerald-600 focus:ring-emerald-500"
-                                    />
-                                    Super Admin (Toàn hệ thống)
-                                </label>
+                            <div className="mt-1 flex flex-col gap-2">
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="admin"
+                                            checked={form.data.role === 'admin'}
+                                            disabled={editingAdmin?.role === 'super_admin'}
+                                            onChange={() =>
+                                                form.setData('role', 'admin')
+                                            }
+                                            className="text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
+                                        />
+                                        Admin (Phân công theo Trung tâm)
+                                    </label>
+                                    <label className={`flex items-center gap-2 text-xs font-semibold ${
+                                        (hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin'
+                                            ? 'text-gray-400 cursor-not-allowed'
+                                            : 'text-gray-800'
+                                    }`}>
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="super_admin"
+                                            checked={
+                                                form.data.role === 'super_admin'
+                                            }
+                                            disabled={(hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin'}
+                                            onChange={() =>
+                                                form.setData('role', 'super_admin')
+                                            }
+                                            className="text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
+                                        />
+                                        Super Admin (Toàn hệ thống)
+                                    </label>
+                                </div>
+                                {((hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin') && (
+                                    <p className="text-[11px] text-amber-600 italic">
+                                        * Hệ thống đã có 1 Super Admin. Chỉ duy nhất 1 Super Admin được tồn tại.
+                                    </p>
+                                )}
+                                {editingAdmin?.role === 'super_admin' && (
+                                    <p className="text-[11px] text-emerald-600 italic">
+                                        * Tài khoản Quản trị viên tối cao (Super Admin) không thể bị hạ cấp hoặc xóa.
+                                    </p>
+                                )}
                             </div>
                         </div>
 

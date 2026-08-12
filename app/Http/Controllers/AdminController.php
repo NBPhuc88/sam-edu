@@ -38,9 +38,10 @@ class AdminController extends Controller
         $centers = Center::select('id', 'name', 'code')->orderBy('name')->get();
 
         return Inertia::render('Admin/Admins/Index', [
-            'admins'  => $admins,
-            'centers' => $centers,
-            'filters' => [
+            'admins'        => $admins,
+            'centers'       => $centers,
+            'hasSuperAdmin' => Admin::where('role', 'super_admin')->exists(),
+            'filters'       => [
                 'search' => $search,
                 'role'   => $role,
             ],
@@ -71,7 +72,11 @@ class AdminController extends Controller
             'center_ids.*' => ['exists:centers,id'],
         ]);
 
-        $this->adminService->createAdmin($validated);
+        try {
+            $this->adminService->createAdmin($validated);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Tạo tài khoản Quản trị viên thành công!');
     }
@@ -100,7 +105,11 @@ class AdminController extends Controller
             'center_ids.*' => ['exists:centers,id'],
         ]);
 
-        $this->adminService->updateAdmin($id, $validated);
+        try {
+            $this->adminService->updateAdmin($id, $validated);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Cập nhật tài khoản Quản trị viên thành công!');
     }

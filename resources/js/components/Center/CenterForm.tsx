@@ -164,11 +164,6 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 ? 'Thông Tin Trung Tâm Mới'
                                 : `Chỉnh Sửa Trung Tâm: ${initialValues?.name || ''}`}
                         </h2>
-                        <p className="text-xs text-gray-500">
-                            {mode === 'create'
-                                ? 'Điền các thông tin để khởi tạo trung tâm đào tạo mới'
-                                : 'Chỉ các trường thông tin thay đổi mới được cập nhật vào cơ sở dữ liệu'}
-                        </p>
                     </div>
                 </div>
 
@@ -258,7 +253,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="mb-1 block text-xs font-semibold text-gray-700">
-                                    Tên Đăng Nhập (Username)
+                                    Tên Đăng Nhập
                                 </label>
                                 <Input
                                     name="username"

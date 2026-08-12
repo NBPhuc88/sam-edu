@@ -2,10 +2,13 @@
 
 namespace App\Services\Center;
 
+use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
 use App\Repositories\Center\CenterRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class CenterService implements CenterServiceInterface
 {
@@ -60,23 +63,39 @@ class CenterService implements CenterServiceInterface
     }
 
     /**
-     * Update an existing center with only modified/changed fields.
+     * Update an existing center with only modified/changed fields and send notification email.
      *
      * @param array<string, mixed> $data
      * @param int                  $id
      */
     public function updateCenter(int $id, array $data): Center
     {
+        $isPasswordUpdated = false;
+        $newPassword       = null;
+
         // Hash password if updating password
         if (array_key_exists('password', $data)) {
             if (! empty($data['password'])) {
-                $data['password'] = Hash::make((string) $data['password']);
+                $isPasswordUpdated = true;
+                $newPassword       = (string) $data['password'];
+                $data['password']  = Hash::make($newPassword);
             } else {
                 unset($data['password']);
             }
         }
 
-        return $this->centerRepository->update($id, $data);
+        $center = $this->centerRepository->update($id, $data);
+
+        // Gửi mail thông báo qua Queue về email của trung tâm
+        if (! empty($center->email)) {
+            try {
+                Mail::to($center->email)->queue(new CenterUpdatedMail($center, $isPasswordUpdated, $newPassword));
+            } catch (\Throwable $e) {
+                Log::error('Lỗi khi đưa mail thông báo vào Queue cho Trung tâm (ID: ' . $center->id . '): ' . $e->getMessage());
+            }
+        }
+
+        return $center;
     }
 
     /**
