@@ -7,8 +7,9 @@
  * Xem: .agents/AGENTS.md - Mục 6.1 DashboardLayout Component
  */
 
+import { router } from '@inertiajs/react';
 import { AlertTriangle, CreditCard } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Header from './Header';
@@ -64,19 +65,41 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     subscriptionPlans = [],
     onZaloPayRenew,
 }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    // Default sidebar to closed on Mobile (< 768px), open on Desktop (>= 768px)
+    const [sidebarOpen, setSidebarOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 768;
+        }
+
+        return true;
+    });
+
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isLoadingPayment, setIsLoadingPayment] = useState(false);
     const [selectedPlanCode, setSelectedPlanCode] = useState<string>('yearly');
 
+    // Auto close sidebar on Mobile (< 768px) whenever an Inertia page navigation completes
+    useEffect(() => {
+        const removeListener = router.on('navigate', () => {
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setSidebarOpen(false);
+            }
+        });
+
+        return () => {
+            removeListener();
+        };
+    }, []);
+
     const paidPlans = subscriptionPlans.filter((p) => p.price > 0);
     const showBanner =
-        center && (center.is_expired || center.expiring_soon || center.expiring_1day);
+        center &&
+        (center.is_expired || center.expiring_soon || center.expiring_1day);
 
     const handleZaloPayRenew = async () => {
         if (!onZaloPayRenew) {
-return;
-}
+            return;
+        }
 
         setIsLoadingPayment(true);
 
@@ -95,11 +118,11 @@ return;
                 adminRole={user?.admin_role}
                 fullName={user?.full_name}
                 open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
             />
 
             {/* ── Main Column ──────────────────────────────────────────── */}
             <div className="flex min-h-screen flex-1 flex-col overflow-hidden">
-
                 {/* Subscription Expiry Banner */}
                 {showBanner && (
                     <div
@@ -141,11 +164,12 @@ return;
                 {/* Header */}
                 <Header
                     user={user}
-                    role={role}
                     sidebarOpen={sidebarOpen}
                     onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
                     onOpenPayment={
-                        showBanner ? () => setIsPaymentModalOpen(true) : undefined
+                        showBanner
+                            ? () => setIsPaymentModalOpen(true)
+                            : undefined
                     }
                     centerExpired={center?.is_expired}
                 />
@@ -231,7 +255,8 @@ return;
                                             )}
                                         </div>
                                         <div className="mt-1 text-sm font-extrabold text-emerald-700">
-                                            {plan.price.toLocaleString('vi-VN')}đ{' '}
+                                            {plan.price.toLocaleString('vi-VN')}
+                                            đ{' '}
                                             <span className="text-[10px] font-normal text-gray-500">
                                                 /{' '}
                                                 {plan.duration_days >= 365
@@ -250,7 +275,7 @@ return;
                             </div>
                         </div>
 
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 space-y-1">
+                        <div className="space-y-1 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800">
                             <div className="font-semibold text-emerald-900">
                                 Chi tiết thanh toán ZaloPay:
                             </div>

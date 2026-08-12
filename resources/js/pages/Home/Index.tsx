@@ -72,7 +72,9 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                 <Button
                                     variant="success"
                                     size="lg"
-                                    icon={<LayoutDashboard className="h-5 w-5" />}
+                                    icon={
+                                        <LayoutDashboard className="h-5 w-5" />
+                                    }
                                 >
                                     Truy cập Trang Quản trị (Dashboard)
                                 </Button>
@@ -92,7 +94,9 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                     <Button
                                         variant="secondary"
                                         size="lg"
-                                        icon={<ArrowRight className="h-5 w-5" />}
+                                        icon={
+                                            <ArrowRight className="h-5 w-5" />
+                                        }
                                     >
                                         Đăng nhập Hệ thống
                                     </Button>
@@ -257,9 +261,11 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-medium text-gray-500">
-                                                        {plan.duration_days >= 365
+                                                        {plan.duration_days >=
+                                                        365
                                                             ? '/ năm'
-                                                            : plan.duration_days >= 30
+                                                            : plan.duration_days >=
+                                                                30
                                                               ? '/ tháng'
                                                               : `/${plan.duration_days} ngày`}
                                                     </span>

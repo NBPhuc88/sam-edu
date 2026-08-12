@@ -2,24 +2,24 @@
 
 namespace App\Services\Class;
 
-interface ClassStudentExportImportServiceInterface
+interface StudentExportImportServiceInterface
 {
     /**
-     * @return \Generator<int, array<int, string>>
      * @param  int                                 $classId
+     * @return \Generator<int, array<int, string>>
      */
     public function exportClassStudentsCsv(int $classId): \Generator;
 
     /**
-     * @return \Generator<int, array<string, string>>
      * @param  string                                 $filePath
+     * @return \Generator<int, array<string, string>>
      */
     public function readCsvStream(string $filePath): \Generator;
 
     /**
-     * @return array{imported: int, errors: array<int, string>}
      * @param  int                                              $classId
      * @param  string                                           $filePath
+     * @return array{imported: int, errors: array<int, string>}
      */
     public function importClassStudentsCsv(int $classId, string $filePath): array;
 

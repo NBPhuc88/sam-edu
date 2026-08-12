@@ -1,0 +1,27 @@
+<x-mail::message>
+# 🔔 Thông báo: Trung tâm mới vừa đăng ký!
+
+Hệ thống Quản lý Giáo dục **Sam Edu** vừa nhận được thông tin đăng ký trung tâm mới từ website:
+
+<x-mail::table>
+| Thông tin | Chi tiết |
+| :--- | :--- |
+| **Mã trung tâm** | `{{ $center->code }}` |
+| **Tên trung tâm** | **{{ $center->name }}** |
+| **Số điện thoại** | {{ $center->phone ?? 'N/A' }} |
+| **Email liên hệ** | {{ $center->email ?? 'N/A' }} |
+| **Địa chỉ** | {{ $center->address ?? 'Chưa cập nhật' }} |
+| **Gói dịch vụ** | **{{ strtoupper($center->subscription_plan) }}** |
+| **Trạng thái** | {{ $center->status }} |
+| **Thời gian đăng ký** | {{ $center->created_at ? $center->created_at->format('H:i:s d/m/Y') : now()->format('H:i:s d/m/Y') }} |
+</x-mail::table>
+
+Vui lòng truy cập trang Quản trị Admin để kiểm tra và liên hệ kích hoạt tài khoản cho trung tâm.
+
+<x-mail::button :url="config('app.url') . '/admins'">
+Truy cập Quản Trị Admin
+</x-mail::button>
+
+Trân trọng,<br>
+**{{ config('app.name') }} System Notification**
+</x-mail::message>

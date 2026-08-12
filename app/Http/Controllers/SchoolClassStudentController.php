@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Student\ImportCsvRequest;
 use App\Models\SchoolClass;
-use App\Services\Class\ClassStudentExportImportServiceInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Services\Class\StudentExportImportServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,7 +16,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class SchoolClassStudentController extends Controller
 {
     public function __construct(
-        protected ClassStudentExportImportServiceInterface $classStudentExportImportService
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected StudentExportImportServiceInterface $studentExportImportService
     ) {
     }
 
@@ -23,55 +25,21 @@ class SchoolClassStudentController extends Controller
     {
         $schoolClass = SchoolClass::with('center')->findOrFail($classId);
 
-        $search  = $request->input('search');
-        $perPage = 15;
-        $page    = $request->integer('page', 1);
-        $offset  = max(0, ($page - 1) * $perPage);
+        $search = $request->input('search');
+        $page   = $request->integer('page', 1);
 
-        $query = $schoolClass->students();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('student_code', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        // Deferred Join Subquery Pattern for pagination optimization
-        if ($offset > 0) {
-            $idQuery   = (clone $query)->select('students.id')->latest('students.id')->offset($offset)->limit($perPage);
-            $targetIds = $idQuery->pluck('students.id')->toArray();
-
-            if (! empty($targetIds)) {
-                $students = $schoolClass->students()
-                    ->withPivot('enrolled_at', 'status', 'note')
-                    ->whereIn('students.id', $targetIds)
-                    ->latest('students.id')
-                    ->paginate($perPage)
-                    ->withQueryString();
-
-                return Inertia::render('Admin/Classes/Students', [
-                    'schoolClass' => $schoolClass,
-                    'students'    => $students,
-                    'filters'     => [
-                        'search' => $search,
-                    ],
-                ]);
-            }
-        }
-
-        $students = $query->withPivot('enrolled_at', 'status', 'note')
-            ->latest('students.id')
-            ->paginate($perPage)
-            ->withQueryString();
+        $students = $this->schoolClassRepository->getPaginatedClassStudents(
+            $schoolClass,
+            is_string($search) ? $search : null,
+            15,
+            $page
+        );
 
         return Inertia::render('Admin/Classes/Students', [
             'schoolClass' => $schoolClass,
             'students'    => $students,
             'filters'     => [
-                'search' => $search,
+                'search' => $search ?? '',
             ],
         ]);
     }
@@ -95,7 +63,7 @@ class SchoolClassStudentController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
 
-            foreach ($this->classStudentExportImportService->exportClassStudentsCsv($classId) as $row) {
+            foreach ($this->studentExportImportService->exportClassStudentsCsv($classId) as $row) {
                 fputcsv($handle, $row);
             }
 
@@ -111,7 +79,7 @@ class SchoolClassStudentController extends Controller
             return back()->with('error', 'Vui lòng chọn tệp CSV.');
         }
 
-        $result = $this->classStudentExportImportService->importClassStudentsCsv($classId, $file->getPathname());
+        $result = $this->studentExportImportService->importClassStudentsCsv($classId, $file->getPathname());
 
         $msg = "Ghi danh thành công {$result['imported']} học sinh vào lớp.";
 
@@ -139,7 +107,7 @@ class SchoolClassStudentController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
 
-            foreach ($this->classStudentExportImportService->getSampleCsvRows() as $row) {
+            foreach ($this->studentExportImportService->getSampleCsvRows() as $row) {
                 fputcsv($handle, $row);
             }
 

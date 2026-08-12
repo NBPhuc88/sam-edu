@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Home\SubmitContactRequest;
-use App\Models\ContactRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
+use App\Services\Home\ContactRequestServiceInterface;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        protected ContactRequestServiceInterface $contactRequestService
+    ) {
+    }
+
     /**
      * Display official marketing landing page.
      */
@@ -70,7 +74,7 @@ class HomeController extends Controller
         $companyName = SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
         $address     = SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội');
         $phone       = SystemSetting::getByKey('contact_phone', '0988.123.456');
-        $email       = SystemSetting::getByKey('contact_email', 'hotro@giaoducsam.vn');
+        $email       = SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com');
 
         return Inertia::render('Home/Contact', [
             'contactInfo' => [
@@ -79,6 +83,8 @@ class HomeController extends Controller
                 'phone'        => $phone,
                 'email'        => $email,
             ],
+            'enableOnlinePayment' => (bool) config('payment.enable_online_payment', false),
+            'paymentGateways'     => config('payment.gateways', []),
         ]);
     }
 
@@ -88,16 +94,7 @@ class HomeController extends Controller
      */
     public function submitContact(SubmitContactRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
-
-        ContactRequest::create([
-            'full_name'   => $validated['full_name'],
-            'phone'       => $validated['phone'],
-            'email'       => $validated['email'] ?? null,
-            'center_name' => $validated['center_name'] ?? null,
-            'message'     => $validated['message'] ?? null,
-            'status'      => 'pending',
-        ]);
+        $this->contactRequestService->submitContact($request->validated());
 
         return back()->with('success', 'Yêu cầu tư vấn của bạn đã được gửi thành công. Đội ngũ Giáo Dục Sam sẽ liên hệ lại trong thời gian sớm nhất!');
     }

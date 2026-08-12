@@ -5,19 +5,19 @@ namespace App\Services\Chat;
 use App\Events\ClassChatMessagePinned;
 use App\Events\ClassChatMessageSent;
 use App\Models\ClassChatMessage;
-use App\Repositories\Chat\ClassChatRepositoryInterface;
+use App\Repositories\Chat\ChatRepositoryInterface;
 use Illuminate\Support\Facades\Redis;
 
-class ClassChatService implements ClassChatServiceInterface
+class ChatService implements ChatServiceInterface
 {
     public function __construct(
-        protected ClassChatRepositoryInterface $classChatRepository
+        protected ChatRepositoryInterface $chatRepository
     ) {
     }
 
     /**
-     * @return array<int, array<string, mixed>>
      * @param  int                              $classId
+     * @return array<int, array<string, mixed>>
      */
     public function getRecentMessages(int $classId): array
     {
@@ -47,21 +47,20 @@ class ClassChatService implements ClassChatServiceInterface
             // Redis error fallback to DB
         }
 
-        $dbMessages = $this->classChatRepository->getRecentMessages($classId);
+        $dbMessages = $this->chatRepository->getRecentMessages($classId);
         $formatted  = [];
 
         foreach ($dbMessages as $msg) {
             $formatted[] = $this->formatMessageArray($msg);
         }
 
-        // Cache back to Redis
         try {
             Redis::del($redisKey);
 
             foreach ($formatted as $msgArray) {
                 Redis::rpush($redisKey, json_encode($msgArray));
             }
-            Redis::expire($redisKey, 86400); // 1 ngày
+            Redis::expire($redisKey, 86400);
         } catch (\Throwable $e) {
             // Fallback
         }
@@ -70,8 +69,8 @@ class ClassChatService implements ClassChatServiceInterface
     }
 
     /**
-     * @return array<string, mixed>|null
      * @param  int                       $classId
+     * @return array<string, mixed>|null
      */
     public function getPinnedMessage(int $classId): ?array
     {
@@ -93,7 +92,7 @@ class ClassChatService implements ClassChatServiceInterface
             // Fallback
         }
 
-        $pinnedMsg = $this->classChatRepository->getPinnedMessage($classId);
+        $pinnedMsg = $this->chatRepository->getPinnedMessage($classId);
 
         if (! $pinnedMsg) {
             return null;
@@ -111,14 +110,14 @@ class ClassChatService implements ClassChatServiceInterface
     }
 
     /**
-     * @param  array<string, mixed> $senderInfo
      * @param  int                  $classId
+     * @param  array<string, mixed> $senderInfo
      * @param  string               $message
      * @return array<string, mixed>
      */
     public function sendMessage(int $classId, array $senderInfo, string $message): array
     {
-        $created = $this->classChatRepository->createMessage([
+        $created = $this->chatRepository->createMessage([
             'class_id'      => $classId,
             'sender_type'   => $senderInfo['sender_type'] ?? 'student',
             'sender_id'     => $senderInfo['sender_id'] ?? 0,
@@ -130,34 +129,31 @@ class ClassChatService implements ClassChatServiceInterface
 
         $formatted = $this->formatMessageArray($created);
 
-        // Lưu vào Redis List Cache
         try {
             $redisKey = "chat:class:{$classId}:messages";
             Redis::rpush($redisKey, json_encode($formatted));
-            Redis::ltrim($redisKey, -50, -1); // Giữ tối đa 50 tin nhắn mới nhất
+            Redis::ltrim($redisKey, -50, -1);
         } catch (\Throwable $e) {
             // Fallback
         }
 
-        // Broadcast Event Reverb WebSockets
         event(new ClassChatMessageSent($classId, $formatted));
 
         return $formatted;
     }
 
     /**
-     * @return array<string, mixed>|null
      * @param  int                       $classId
      * @param  int                       $messageId
      * @param  string                    $pinnedByName
+     * @return array<string, mixed>|null
      */
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?array
     {
-        $updated        = $this->classChatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
+        $updated        = $this->chatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
         $redisPinnedKey = "chat:class:{$classId}:pinned";
 
         if (! $updated || ! $updated->is_pinned) {
-            // Unpinned
             try {
                 Redis::del($redisPinnedKey);
             } catch (\Throwable $e) {
@@ -183,8 +179,8 @@ class ClassChatService implements ClassChatServiceInterface
     }
 
     /**
-     * @return array<string, mixed>
      * @param  ClassChatMessage     $msg
+     * @return array<string, mixed>
      */
     protected function formatMessageArray(ClassChatMessage $msg): array
     {

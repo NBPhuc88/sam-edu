@@ -4,10 +4,12 @@ import {
     LayoutDashboard,
     Mail,
     MapPin,
+    Menu,
     Phone,
     Sparkles,
+    X,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '../components/ui/Button';
 
 interface PublicLayoutProps {
@@ -25,8 +27,9 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     keywords,
     canonicalUrl,
 }) => {
-    const { auth, seo } = usePage().props as any;
+    const { auth, seo, contactInfo } = usePage().props as any;
     const user = auth?.user;
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const pageTitle =
         seo?.title ||
@@ -94,15 +97,18 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-2xs">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     {/* Brand Logo */}
-                    <Link href="/" className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-lg font-black text-white shadow-xs">
+                    <Link
+                        href="/"
+                        className="flex shrink-0 items-center gap-2.5"
+                    >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-base font-black text-white shadow-xs">
                             SAM
                         </div>
                         <div>
-                            <span className="block text-base leading-tight font-extrabold text-gray-900">
+                            <span className="block text-sm leading-tight font-extrabold text-gray-900 sm:text-base">
                                 Giáo dục Sam
                             </span>
-                            <span className="block text-xs text-gray-500">
+                            <span className="hidden text-[11px] text-gray-500 sm:block">
                                 Hệ thống Quản lý Giáo dục Sam
                             </span>
                         </div>
@@ -137,7 +143,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </nav>
 
                     {/* Right Action Buttons */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {user ? (
                             <Link href="/dashboard">
                                 <Button
@@ -157,19 +163,89 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         Đăng nhập
                                     </Button>
                                 </Link>
-                                <Link href="/contact">
+                                <Link
+                                    href="/register-center?plan=trial_14d"
+                                    className="hidden sm:inline-flex"
+                                >
                                     <Button
                                         variant="success"
                                         size="sm"
                                         icon={<Sparkles className="h-4 w-4" />}
                                     >
-                                        Dùng thử miễn phí
+                                        Dùng thử 14 ngày
                                     </Button>
                                 </Link>
                             </>
                         )}
+
+                        {/* Hamburger Mobile Toggle Icon */}
+                        <button
+                            type="button"
+                            onClick={() => setMobileMenuOpen((prev) => !prev)}
+                            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+                            aria-label="Toggle Navigation Menu"
+                        >
+                            {mobileMenuOpen ? (
+                                <X className="h-6 w-6" />
+                            ) : (
+                                <Menu className="h-6 w-6" />
+                            )}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Dropdown Navigation Drawer */}
+                {mobileMenuOpen && (
+                    <div className="animate-in slide-in-from-top-2 space-y-3 border-b border-gray-100 bg-white px-4 pt-3 pb-6 shadow-lg md:hidden">
+                        <nav className="flex flex-col space-y-2 text-sm font-semibold text-gray-700">
+                            <Link
+                                href="/"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                                Trang chủ
+                            </Link>
+                            <Link
+                                href="/services"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                                Gói cước &amp; Dịch vụ
+                            </Link>
+                            <Link
+                                href="/about"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                                Về chúng tôi
+                            </Link>
+                            <Link
+                                href="/contact"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                                Liên hệ tư vấn
+                            </Link>
+                        </nav>
+                        {!user && (
+                            <div className="pt-2">
+                                <Link
+                                    href="/contact"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <Button
+                                        variant="success"
+                                        size="sm"
+                                        className="w-full justify-center"
+                                        icon={<Sparkles className="h-4 w-4" />}
+                                    >
+                                        Dùng thử miễn phí 14 ngày
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                )}
             </header>
 
             {/* Main Content Body */}
@@ -209,7 +285,11 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 shrink-0 text-emerald-400" />
-                                    <span>Email: hotro@giaoducsam.vn</span>
+                                    <span>
+                                        Email:{' '}
+                                        {contactInfo?.email ||
+                                            'phucstt01@gmail.com'}
+                                    </span>
                                 </div>
                             </div>
                         </div>

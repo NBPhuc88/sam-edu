@@ -7,17 +7,17 @@ use App\Models\Admin;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Services\Chat\ClassChatServiceInterface;
+use App\Services\Chat\ChatServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
-class ClassChatController extends Controller
+class ChatController extends Controller
 {
     public function __construct(
-        protected ClassChatServiceInterface $classChatService
+        protected ChatServiceInterface $chatService
     ) {
     }
 
@@ -26,8 +26,8 @@ class ClassChatController extends Controller
         $schoolClass = SchoolClass::with('center')->findOrFail($classId);
 
         $currentUser   = $this->getCurrentUserSenderInfo();
-        $messages      = $this->classChatService->getRecentMessages($classId);
-        $pinnedMessage = $this->classChatService->getPinnedMessage($classId);
+        $messages      = $this->chatService->getRecentMessages($classId);
+        $pinnedMessage = $this->chatService->getPinnedMessage($classId);
 
         return Inertia::render('Admin/Classes/Chat', [
             'schoolClass'          => $schoolClass,
@@ -39,8 +39,8 @@ class ClassChatController extends Controller
 
     public function getMessages(int $classId): JsonResponse
     {
-        $messages      = $this->classChatService->getRecentMessages($classId);
-        $pinnedMessage = $this->classChatService->getPinnedMessage($classId);
+        $messages      = $this->chatService->getRecentMessages($classId);
+        $pinnedMessage = $this->chatService->getPinnedMessage($classId);
 
         return response()->json([
             'messages'       => $messages,
@@ -54,7 +54,7 @@ class ClassChatController extends Controller
         $senderInfo  = $this->getCurrentUserSenderInfo();
         $messageText = (string) $request->input('message');
 
-        $sentMessage = $this->classChatService->sendMessage($schoolClass->id, $senderInfo, $messageText);
+        $sentMessage = $this->chatService->sendMessage($schoolClass->id, $senderInfo, $messageText);
 
         return response()->json([
             'success' => true,
@@ -66,7 +66,6 @@ class ClassChatController extends Controller
     {
         $senderInfo = $this->getCurrentUserSenderInfo();
 
-        // Chỉ Admin và Giáo viên mới có quyền ghim tin nhắn
         if (! in_array($senderInfo['sender_type'], ['admin', 'teacher'])) {
             return response()->json([
                 'success' => false,
@@ -74,7 +73,7 @@ class ClassChatController extends Controller
             ], 403);
         }
 
-        $pinnedResult = $this->classChatService->togglePinMessage($classId, $messageId, $senderInfo['sender_name']);
+        $pinnedResult = $this->chatService->togglePinMessage($classId, $messageId, $senderInfo['sender_name']);
 
         return response()->json([
             'success'        => true,
@@ -83,8 +82,6 @@ class ClassChatController extends Controller
     }
 
     /**
-     * Lấy thông tin người dùng hiện tại theo Guard (admin, teacher, student)
-     *
      * @return array{sender_type: string, sender_id: int, sender_name: string, sender_avatar: string|null, can_pin: bool}
      */
     protected function getCurrentUserSenderInfo(): array
@@ -128,7 +125,6 @@ class ClassChatController extends Controller
             ];
         }
 
-        // Mặc định cho thử nghiệm Admin
         return [
             'sender_type'   => 'admin',
             'sender_id'     => 1,

@@ -3,8 +3,32 @@
 namespace App\Repositories\Admin;
 
 use App\Models\Admin;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface AdminRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Admin;
+
+    public function find(int $id): Admin;
+
+    public function paginate(int $perPage = 15, ?string $search = null, ?string $role = null): LengthAwarePaginator;
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function create(array $data): Admin;
+
+    /**
+     * @param int                  $id
+     * @param array<string, mixed> $data
+     */
+    public function update(int $id, array $data): Admin;
+
+    public function delete(int $id): bool;
+
+    /**
+     * @param Admin           $admin
+     * @param array<int, int> $centerIds
+     */
+    public function syncCenters(Admin $admin, array $centerIds): void;
 }

@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CenterController;
-use App\Http\Controllers\ClassChatController;
+use App\Http\Controllers\CenterRegisterController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
@@ -25,6 +27,14 @@ Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
 
+// Real Center Onboarding Routes
+Route::prefix('register-center')->name('register-center.')->group(function () {
+    Route::get('/', [CenterRegisterController::class, 'showRegisterForm'])->name('index');
+    Route::post('/step1', [CenterRegisterController::class, 'registerStep1'])->name('step1');
+    Route::get('/check-payment/{appTransId}', [CenterRegisterController::class, 'checkPaymentStatus'])->name('check-payment');
+    Route::post('/complete-account', [CenterRegisterController::class, 'completeAccount'])->name('complete-account');
+});
+
 // ─── Authentication Routes (Public) ──────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -37,37 +47,54 @@ Route::middleware('auth.any')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
 
+    // Admin Management Routes (Super Admin)
+    Route::prefix('admins')->name('admins.')->group(function () {
+        Route::get('/', [AdminController::class, 'index'])->name('index');
+        Route::post('/', [AdminController::class, 'store'])->name('store');
+        Route::patch('/{id}', [AdminController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminController::class, 'destroy'])->name('destroy');
+    });
+
     // Center Management Routes
-    Route::get('/centers', [CenterController::class, 'index'])->name('centers.index');
-    Route::get('/centers/create', [CenterController::class, 'create'])->name('centers.create');
-    Route::post('/centers', [CenterController::class, 'store'])->name('centers.store');
-    Route::get('/centers/{id}/edit', [CenterController::class, 'edit'])->name('centers.edit');
-    Route::patch('/centers/{id}', [CenterController::class, 'update'])->name('centers.update');
-    Route::delete('/centers/{id}', [CenterController::class, 'destroy'])->name('centers.destroy');
+    Route::prefix('centers')->name('centers.')->group(function () {
+        Route::get('/', [CenterController::class, 'index'])->name('index');
+        Route::get('/create', [CenterController::class, 'create'])->name('create');
+        Route::post('/', [CenterController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [CenterController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [CenterController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CenterController::class, 'destroy'])->name('destroy');
+    });
 
     // Student Management Routes (Export & Import)
-    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-    Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
-    Route::post('/students/import', [StudentController::class, 'import'])->name('students.import');
-    Route::get('/students/sample-csv', [StudentController::class, 'downloadSample'])->name('students.sample-csv');
-
-    // Class Student Management Routes (Export & Import)
-    Route::get('/classes/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('classes.students.index');
-    Route::get('/classes/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('classes.students.export');
-    Route::post('/classes/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('classes.students.import');
-    Route::get('/classes/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('classes.students.sample-csv');
+    Route::prefix('students')->name('students.')->group(function () {
+        Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/export', [StudentController::class, 'export'])->name('export');
+        Route::post('/import', [StudentController::class, 'import'])->name('import');
+        Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');
+    });
 
     // Teacher Management Routes (Export & Import)
-    Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
-    Route::get('/teachers/export', [TeacherController::class, 'export'])->name('teachers.export');
-    Route::post('/teachers/import', [TeacherController::class, 'import'])->name('teachers.import');
-    Route::get('/teachers/sample-csv', [TeacherController::class, 'downloadSample'])->name('teachers.sample-csv');
+    Route::prefix('teachers')->name('teachers.')->group(function () {
+        Route::get('/', [TeacherController::class, 'index'])->name('index');
+        Route::get('/export', [TeacherController::class, 'export'])->name('export');
+        Route::post('/import', [TeacherController::class, 'import'])->name('import');
+        Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');
+    });
 
-    // Real-time Class Group Chat Routes (Redis + Reverb)
-    Route::get('/classes/{classId}/chat', [ClassChatController::class, 'index'])->name('classes.chat.index');
-    Route::get('/classes/{classId}/chat/messages', [ClassChatController::class, 'getMessages'])->name('classes.chat.messages');
-    Route::post('/classes/{classId}/chat/messages', [ClassChatController::class, 'sendMessage'])->name('classes.chat.send');
-    Route::post('/classes/{classId}/chat/messages/{messageId}/pin', [ClassChatController::class, 'togglePin'])->name('classes.chat.pin');
+    // Class Student & Real-time Group Chat Routes
+    Route::prefix('classes')->name('classes.')->group(function () {
+        Route::get('/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('students.sample-csv');
+        Route::get('/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('students.index');
+        Route::get('/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('students.export');
+        Route::post('/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('students.import');
+
+        Route::prefix('{classId}/chat')->name('chat.')->group(function () {
+            Route::get('/', [ChatController::class, 'index'])->name('index');
+            Route::get('/messages', [ChatController::class, 'getMessages'])->name('messages');
+            Route::post('/messages', [ChatController::class, 'sendMessage'])->name('send');
+            Route::post('/messages/{messageId}/pin', [ChatController::class, 'togglePin'])->name('pin');
+        });
+    });
 });
 
 // ─── Fallback Route for 404 Not Found ────────────────────────────────────────

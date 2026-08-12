@@ -30,6 +30,7 @@ class SchoolClass extends Model
     protected function casts(): array
     {
         return [
+            'status'       => \App\Enums\EntityStatus::class,
             'max_students' => 'integer',
             'start_date'   => 'date',
             'end_date'     => 'date',

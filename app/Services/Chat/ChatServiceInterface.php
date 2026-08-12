@@ -2,33 +2,33 @@
 
 namespace App\Services\Chat;
 
-interface ClassChatServiceInterface
+interface ChatServiceInterface
 {
     /**
-     * @return array<int, array<string, mixed>>
      * @param  int                              $classId
+     * @return array<int, array<string, mixed>>
      */
     public function getRecentMessages(int $classId): array;
 
     /**
-     * @return array<string, mixed>|null
      * @param  int                       $classId
+     * @return array<string, mixed>|null
      */
     public function getPinnedMessage(int $classId): ?array;
 
     /**
-     * @param  array<string, mixed> $senderInfo
      * @param  int                  $classId
+     * @param  array<string, mixed> $senderInfo
      * @param  string               $message
      * @return array<string, mixed>
      */
     public function sendMessage(int $classId, array $senderInfo, string $message): array;
 
     /**
-     * @return array<string, mixed>|null
      * @param  int                       $classId
      * @param  int                       $messageId
      * @param  string                    $pinnedByName
+     * @return array<string, mixed>|null
      */
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?array;
 }

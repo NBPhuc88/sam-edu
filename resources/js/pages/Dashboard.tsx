@@ -3,404 +3,466 @@ import {
     Users,
     GraduationCap,
     BookOpen,
-    Plus,
-    Edit,
-    Trash2,
-    CheckCircle2,
+    Search,
+    Calendar,
+    Award,
     CreditCard,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import {
     ResponsiveContainer,
-    AreaChart,
-    Area,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
     XAxis,
     YAxis,
     Tooltip,
+    Legend,
     CartesianGrid,
 } from 'recharts';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import CustomPieChart from '../components/ui/CustomPieChart';
 import type { Column } from '../components/ui/DataTable';
 import DataTable from '../components/ui/DataTable';
-import Modal from '../components/ui/Modal';
 import AppLayout from '../layouts/AppLayout';
 
-interface ClassData {
-    id: number;
-    code: string;
-    name: string;
-    max_students: number;
-    status: string;
-    created_at: string;
-}
+export const Dashboard: React.FC<any> = (props) => {
+    const role = props.role || 'super_admin';
+    const stats = props.stats || {};
+    const center = props.center || null;
 
-export const Dashboard: React.FC<any> = ({
-    stats,
-    monthlyEnrollments,
-    recentClasses,
-    center,
-}) => {
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [actionMessage, setActionMessage] = useState<string | null>(null);
+    const [examSearch, setExamSearch] = useState('');
 
-    const handleSuccessClick = () => {
-        setActionMessage('Đã thực hiện thao tác thành công.');
-        setTimeout(() => setActionMessage(null), 4000);
-    };
+    // Render Super Admin Dashboard
+    if (role === 'super_admin') {
+        const regPieData = props.registration_pie_chart || [];
+        const regBarData = props.monthly_registrations_bar_chart || [];
+        const nonRenewedPieData = props.non_renewed_pie_chart || [];
+        const recentCenters = props.recent_centers || [];
 
-    const handleEditClick = (className: string) => {
-        setActionMessage(`Đã cập nhật thông tin lớp "${className}".`);
-        setTimeout(() => setActionMessage(null), 4000);
-    };
+        const centerColumns: Column<any>[] = [
+            {
+                header: 'Mã Trung Tâm',
+                accessorKey: 'code',
+                cell: (row) => <span className="font-semibold text-gray-900">{row.code}</span>,
+            },
+            {
+                header: 'Tên Trung Tâm',
+                accessorKey: 'name',
+                cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
+            },
+            {
+                header: 'Gói Dịch Vụ',
+                cell: (row) => (
+                    <Badge variant={row.subscription_plan === 'yearly' ? 'active' : 'pending'}>
+                        {row.subscription_plan === 'yearly' ? 'Gói Theo Năm' : row.subscription_plan === 'monthly' ? 'Gói Hàng Tháng' : 'Dùng Thử 14 Ngày'}
+                    </Badge>
+                ),
+            },
+            {
+                header: 'Số Điện Thoại',
+                accessorKey: 'phone',
+            },
+            {
+                header: 'Trạng Thái',
+                cell: (row) => (
+                    <Badge variant={row.status === 'active' ? 'active' : 'expired'}>
+                        {row.status === 'active' ? 'Đang hoạt động' : 'Chờ kích hoạt'}
+                    </Badge>
+                ),
+            },
+        ];
 
-    const handleDeleteClick = (className: string) => {
-        if (confirm(`Bạn có chắc chắn muốn XÓA lớp "${className}"?`)) {
-            setActionMessage(`Đã xóa lớp "${className}" thành công.`);
-            setTimeout(() => setActionMessage(null), 4000);
-        }
-    };
+        return (
+            <AppLayout title="Bảng Điều Khiển - Super Admin">
+                <div className="space-y-8">
+                    <Card className="border-gray-200 bg-white">
+                        <h2 className="text-xl font-bold text-gray-900">Tổng Quan Hệ Thống (Super Admin)</h2>
+                        <p className="mt-1 text-xs text-gray-500">
+                            Thống kê toàn bộ các trung tâm đào tạo, tình hình đăng ký mới và gia hạn gói dịch vụ.
+                        </p>
+                    </Card>
 
-    // Columns definition for DataTable
-    const columns: Column<ClassData>[] = [
-        {
-            header: 'Mã Lớp',
-            accessorKey: 'code',
-            cell: (row) => (
-                <span className="font-semibold text-gray-900">{row.code}</span>
-            ),
-        },
-        {
-            header: 'Tên Lớp Học',
-            accessorKey: 'name',
-            cell: (row) => <span className="text-gray-800">{row.name}</span>,
-        },
-        {
-            header: 'Sĩ Số Tối Đa',
-            cell: (row) =>
-                row.max_students
-                    ? `${row.max_students} học sinh`
-                    : 'Không giới hạn',
-        },
-        {
-            header: 'Trạng Thái',
-            cell: (row) => (
-                <Badge variant={row.status === 'active' ? 'active' : 'info'}>
-                    {row.status === 'active' ? 'Đang mở' : row.status}
-                </Badge>
-            ),
-        },
-        {
-            header: 'Thao Tác Nút Bấm',
-            cell: (row) => (
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="edit"
-                        size="sm"
-                        icon={<Edit className="h-3.5 w-3.5" />}
-                        onClick={() => handleEditClick(row.name)}
-                    >
-                        Sửa
-                    </Button>
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                        onClick={() => handleDeleteClick(row.name)}
-                    >
-                        Xóa
-                    </Button>
-                </div>
-            ),
-        },
-    ];
-
-    const tableData: ClassData[] = recentClasses || [];
-
-    return (
-        <AppLayout title="Dashboard Quản Trị">
-            <div className="space-y-8">
-                {/* User Notification Toast */}
-                {actionMessage && (
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 shadow-xs">
-                        <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-                        <span>{actionMessage}</span>
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        <Card className="bg-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Trung Tâm</p>
+                                    <h4 className="text-2xl font-bold text-gray-900">{stats.centers ?? 0}</h4>
+                                </div>
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                    <Building2 className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="bg-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Học Sinh</p>
+                                    <h4 className="text-2xl font-bold text-gray-900">{stats.students ?? 0}</h4>
+                                </div>
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                    <GraduationCap className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="bg-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Giáo Viên</p>
+                                    <h4 className="text-2xl font-bold text-gray-900">{stats.teachers ?? 0}</h4>
+                                </div>
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                                    <Users className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="bg-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Lớp Học</p>
+                                    <h4 className="text-2xl font-bold text-gray-900">{stats.classes ?? 0}</h4>
+                                </div>
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                                    <BookOpen className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
                     </div>
-                )}
 
-                {/* Dashboard Action Header */}
-                <Card className="border-gray-200 bg-white">
-                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900">
-                                Tổng quan Hệ thống Quản lý Giáo dục Sam
-                            </h2>
-                            <p className="mt-1 text-xs text-gray-500">
-                                Báo cáo tình hình học sinh, lớp học và gia hạn
-                                dịch vụ trung tâm.
-                            </p>
-                        </div>
+                    {/* Super Admin Charts Grid */}
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        {/* Biểu đồ tròn: Lượt đăng ký mới trong tháng theo gói */}
+                        <Card title="Lượt Đăng Ký Mới Trong Tháng (Theo Gói Dịch Vụ)" className="lg:col-span-1">
+                            <CustomPieChart data={regPieData} height={260} />
+                        </Card>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                variant="success"
-                                icon={<Plus className="h-4 w-4" />}
-                                onClick={() => setIsCreateModalOpen(true)}
-                            >
-                                Tạo Lớp Học Mới
-                            </Button>
-                            <Button
-                                variant="edit"
-                                icon={<Edit className="h-4 w-4" />}
-                                onClick={handleSuccessClick}
-                            >
-                                Cập Nhật Hệ Thống
-                            </Button>
-                        </div>
+                        {/* Biểu đồ cột: Thống kê số lượng trung tâm đăng ký mới 6 tháng gần nhất */}
+                        <Card title="Trung Tâm Đăng Ký Mới (6 Tháng Gần Nhất)" className="lg:col-span-2">
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={regBarData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="centers" name="Số trung tâm" fill="#059669" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
                     </div>
-                </Card>
 
-                {/* Top Metrics Grid */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="bg-white transition-all hover:border-gray-300">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                                    Trung Tâm
-                                </p>
-                                <h4 className="text-2xl font-bold text-gray-900">
-                                    {stats?.centers ?? 0}
-                                </h4>
-                            </div>
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                                <Building2 className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </Card>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        {/* Biểu đồ tròn: Trung tâm đến kỳ gia hạn tháng này mà không gia hạn */}
+                        <Card title="Tình Hình Gia Hạn Kỳ Tháng Này (Không Gia Hạn)" className="lg:col-span-1">
+                            <CustomPieChart data={nonRenewedPieData} height={260} />
+                        </Card>
 
-                    <Card className="bg-white transition-all hover:border-gray-300">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                                    Tổng Học Sinh
-                                </p>
-                                <h4 className="text-2xl font-bold text-gray-900">
-                                    {stats?.students ?? 0}
-                                </h4>
-                            </div>
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <GraduationCap className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="bg-white transition-all hover:border-gray-300">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                                    Giáo Viên
-                                </p>
-                                <h4 className="text-2xl font-bold text-gray-900">
-                                    {stats?.teachers ?? 0}
-                                </h4>
-                            </div>
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                                <Users className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="bg-white transition-all hover:border-gray-300">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                                    Lớp Học Active
-                                </p>
-                                <h4 className="text-2xl font-bold text-gray-900">
-                                    {stats?.classes ?? 0}
-                                </h4>
-                            </div>
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                                <BookOpen className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </Card>
+                        {/* Danh sách các trung tâm mới đăng ký */}
+                        <Card title="Danh Sách Trung Tâm Mới Đăng Ký Gần Đây" className="lg:col-span-2">
+                            <DataTable columns={centerColumns} data={recentCenters} />
+                        </Card>
+                    </div>
                 </div>
+            </AppLayout>
+        );
+    }
 
-                {/* Chart & Activity Grid */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Recharts Area Chart */}
-                    <Card
-                        title="Thống Kê Nhập Học Theo Tháng"
-                        className={center ? 'lg:col-span-2' : 'lg:col-span-3'}
-                    >
-                        <div className="h-64 w-full pt-2">
+    // Render Admin Center Dashboard
+    if (role === 'admin') {
+        const teachersBar = props.teachers_bar_chart || [];
+        const studentsBar = props.students_bar_chart || [];
+        const classesBar = props.classes_bar_chart || [];
+
+        return (
+            <AppLayout title="Bảng Điều Khiển - Admin Quản Lý">
+                <div className="space-y-8">
+                    <Card className="border-gray-200 bg-white">
+                        <h2 className="text-xl font-bold text-gray-900">Thống Kê Trung Tâm Được Quản Lý</h2>
+                        <p className="mt-1 text-xs text-gray-500">
+                            Theo dõi tăng trưởng Giáo viên, Học sinh và Lớp học mới trong 6 tháng gần nhất.
+                        </p>
+                    </Card>
+
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.centers ?? 0}</h4>
+                        </Card>
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.students ?? 0}</h4>
+                        </Card>
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.teachers ?? 0}</h4>
+                        </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <Card title="Số Lượng Giáo Viên Mới Đăng Ký (6 Tháng)">
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={teachersBar}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="teachers" name="Giáo viên mới" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
+
+                        <Card title="Số Lượng Học Sinh Mới Đăng Ký (6 Tháng)">
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={studentsBar}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="students" name="Học sinh mới" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
+                    </div>
+
+                    <Card title="Số Lượng Lớp Học Thêm Mới (6 Tháng)">
+                        <div className="h-64 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={monthlyEnrollments || []}>
-                                    <defs>
-                                        <linearGradient
-                                            id="colorStudents"
-                                            x1="0"
-                                            y1="0"
-                                            x2="0"
-                                            y2="1"
-                                        >
-                                            <stop
-                                                offset="5%"
-                                                stopColor="#059669"
-                                                stopOpacity={0.25}
-                                            />
-                                            <stop
-                                                offset="95%"
-                                                stopColor="#059669"
-                                                stopOpacity={0}
-                                            />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        vertical={false}
-                                        stroke="#e5e7eb"
-                                    />
-                                    <XAxis
-                                        dataKey="month"
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                                    />
-                                    <YAxis
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                                    />
+                                <BarChart data={classesBar}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="month" />
+                                    <YAxis />
                                     <Tooltip />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="students"
-                                        stroke="#059669"
-                                        strokeWidth={3}
-                                        fillOpacity={1}
-                                        fill="url(#colorStudents)"
-                                    />
-                                </AreaChart>
+                                    <Bar dataKey="classes" name="Lớp mới" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </Card>
+                </div>
+            </AppLayout>
+        );
+    }
 
-                    {/* Quick Overview Card (Only for Center Admins with an assigned Center) */}
-                    {center && (
-                        <Card title="Gói Dịch Vụ SaaS Trung Tâm">
-                            <div className="space-y-4 text-sm">
-                                <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                    <div className="text-xs font-semibold text-gray-500 uppercase">
-                                        Trung tâm hiện tại
-                                    </div>
-                                    <div className="text-base font-bold text-gray-900">
-                                        {center.name}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="active">
-                                            Đang hoạt động
-                                        </Badge>
-                                        <span className="text-xs text-gray-500">
-                                            Gói:{' '}
-                                            {center.subscription_plan ||
-                                                'Basic'}
-                                        </span>
-                                    </div>
-                                </div>
+    // Render Center Manager Dashboard
+    if (role === 'center') {
+        const studentsBar = props.students_bar_chart || [];
+        const classesBar = props.classes_bar_chart || [];
 
-                                <div className="flex items-center justify-between border-t border-gray-100 pt-2 text-xs text-gray-600">
-                                    <span>Thanh toán gia hạn:</span>
-                                    <span className="font-bold text-emerald-700">
-                                        ZaloPay QR Code v2
-                                    </span>
-                                </div>
-
-                                <Button
-                                    variant="success"
-                                    className="mt-2 w-full justify-center"
-                                    icon={<CreditCard className="h-4 w-4" />}
-                                    onClick={handleSuccessClick}
-                                >
-                                    Gia Hạn Qua ZaloPay
+        return (
+            <AppLayout title="Bảng Điều Khiển Trung Tâm">
+                <div className="space-y-8">
+                    <Card className="border-gray-200 bg-white">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">{center?.name ?? 'Trung Tâm Giáo Dục'}</h2>
+                                <p className="mt-1 text-xs text-gray-500">Mã trung tâm: {center?.code}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Badge variant="active">Đang hoạt động</Badge>
+                                <Button variant="success" size="sm" icon={<CreditCard className="w-4 h-4" />}>
+                                    Gia Hạn ZaloPay
                                 </Button>
                             </div>
+                        </div>
+                    </Card>
+
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Học Sinh Đang Hoạt Động (Cùng Lúc)</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.students ?? 0}</h4>
                         </Card>
-                    )}
-                </div>
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Lớp Học Đang Mở (Cùng Lúc)</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.classes ?? 0}</h4>
+                        </Card>
+                        <Card className="bg-white">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Số Giáo Viên</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.teachers ?? 0}</h4>
+                        </Card>
+                    </div>
 
-                {/* TanStack Data Table for Recent Classes */}
-                <Card
-                    title="Danh Sách Lớp Học Mới Nhất"
-                    headerAction={
-                        <Button
-                            variant="success"
-                            size="sm"
-                            icon={<Plus className="h-3.5 w-3.5" />}
-                            onClick={() => setIsCreateModalOpen(true)}
-                        >
-                            Thêm Lớp Mới
-                        </Button>
-                    }
-                >
-                    <DataTable columns={columns} data={tableData} />
-                </Card>
-            </div>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <Card title="Số Học Sinh Đăng Ký Mới (6 Tháng Gần Nhất)">
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={studentsBar}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="students" name="Học sinh mới" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
 
-            {/* Create Class Modal Demo */}
-            <Modal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Tạo Lớp Học Mới"
-                footer={
-                    <>
-                        <Button
-                            variant="secondary"
-                            onClick={() => setIsCreateModalOpen(false)}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            variant="success"
-                            onClick={() => {
-                                setIsCreateModalOpen(false);
-                                handleSuccessClick();
-                            }}
-                        >
-                            Lưu Lớp Học
-                        </Button>
-                    </>
-                }
-            >
-                <div className="space-y-4 text-sm text-gray-700">
-                    <p>
-                        Nhập thông tin tên lớp học và mã lớp mới để thêm vào
-                        trung tâm:
-                    </p>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="mb-1 block text-xs font-semibold text-gray-900">
-                                Mã Lớp
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="VD: TQ-05"
-                                className="ui-input"
-                                defaultValue="TQ-05"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-xs font-semibold text-gray-900">
-                                Tên Lớp Học
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="VD: Tiếng Trung Nâng Cao"
-                                className="ui-input"
-                                defaultValue="Tiếng Trung Nâng Cao"
-                            />
-                        </div>
+                        <Card title="Số Lớp Học Mới Khởi Tạo (6 Tháng Gần Nhất)">
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={classesBar}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="classes" name="Lớp mới" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
                     </div>
                 </div>
-            </Modal>
+            </AppLayout>
+        );
+    }
+
+    // Render Teacher Dashboard
+    if (role === 'teacher') {
+        const weeklySchedule = props.weekly_schedule || [];
+
+        return (
+            <AppLayout title="Bảng Điều Khiển - Giáo Viên">
+                <div className="space-y-8">
+                    <Card className="border-gray-200 bg-white">
+                        <h2 className="text-xl font-bold text-gray-900">Lịch Giảng Dạy Trong Tuần</h2>
+                        <p className="mt-1 text-xs text-gray-500">Danh sách các ca dạy theo lớp và môn học được phân công.</p>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {weeklySchedule.map((dayItem: any) => (
+                            <Card key={dayItem.weekday} title={dayItem.day_name} className="bg-white border-gray-200">
+                                {dayItem.schedules && dayItem.schedules.length > 0 ? (
+                                    <div className="space-y-3 pt-2">
+                                        {dayItem.schedules.map((s: any) => (
+                                            <div key={s.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                                                <div className="font-bold text-gray-900 text-sm">{s.class_name}</div>
+                                                <div className="text-xs font-semibold text-emerald-700">{s.subject_name}</div>
+                                                <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
+                                                    <span>{s.room_name}</span>
+                                                    <span className="font-medium text-gray-700">{s.time}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic pt-2">Không có lịch dạy.</p>
+                                )}
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
+    // Render Student Dashboard
+    const weeklySchedule = props.weekly_schedule || [];
+    const examResults = props.exam_results || [];
+
+    const filteredExamResults = examResults.filter((item: any) => {
+        if (!examSearch) return true;
+        const q = examSearch.toLowerCase();
+        return (
+            item.exam_name?.toLowerCase().includes(q) ||
+            item.subject_name?.toLowerCase().includes(q) ||
+            item.class_name?.toLowerCase().includes(q)
+        );
+    });
+
+    const examColumns: Column<any>[] = [
+        {
+            header: 'Tên Bài Thi',
+            accessorKey: 'exam_name',
+            cell: (row) => <span className="font-semibold text-gray-900">{row.exam_name}</span>,
+        },
+        {
+            header: 'Môn Học',
+            accessorKey: 'subject_name',
+        },
+        {
+            header: 'Lớp Học',
+            accessorKey: 'class_name',
+        },
+        {
+            header: 'Điểm Số',
+            cell: (row) => <span className="font-bold text-emerald-600 text-base">{row.score}</span>,
+        },
+        {
+            header: 'Đánh Giá / Thăng Hạng',
+            cell: (row) => <Badge variant={row.score >= 8 ? 'active' : row.score >= 5 ? 'pending' : 'expired'}>{row.grade}</Badge>,
+        },
+        {
+            header: 'Ngày Thi',
+            accessorKey: 'exam_date',
+        },
+    ];
+
+    return (
+        <AppLayout title="Bảng Điều Khiển - Học Sinh">
+            <div className="space-y-8">
+                <Card className="border-gray-200 bg-white">
+                    <h2 className="text-xl font-bold text-gray-900">Góc Học Tập Của Tôi</h2>
+                    <p className="mt-1 text-xs text-gray-500">Xem lịch học trong tuần và bảng kết quả học tập kỳ thi.</p>
+                </Card>
+
+                {/* Lịch học trong tuần */}
+                <div>
+                    <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-emerald-600" />
+                        <span>Lịch Học Trong Tuần</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {weeklySchedule.map((dayItem: any) => (
+                            <Card key={dayItem.weekday} title={dayItem.day_name} className="bg-white border-gray-200">
+                                {dayItem.schedules && dayItem.schedules.length > 0 ? (
+                                    <div className="space-y-3 pt-2">
+                                        {dayItem.schedules.map((s: any) => (
+                                            <div key={s.id} className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-lg space-y-1">
+                                                <div className="font-bold text-gray-900 text-sm">{s.class_name}</div>
+                                                <div className="text-xs font-semibold text-emerald-700">{s.subject_name}</div>
+                                                <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
+                                                    <span>{s.room_name}</span>
+                                                    <span className="font-medium text-gray-700">{s.time}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic pt-2">Không có lịch học.</p>
+                                )}
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Kết quả thi có thanh tìm kiếm */}
+                <Card
+                    title="Bảng Kết Quả Kỳ Thi"
+                    headerAction={
+                        <div className="relative w-64">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Tìm bài thi, môn học..."
+                                value={examSearch}
+                                onChange={(e) => setExamSearch(e.target.value)}
+                                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                        </div>
+                    }
+                >
+                    <DataTable columns={examColumns} data={filteredExamResults} />
+                </Card>
+            </div>
         </AppLayout>
     );
 };

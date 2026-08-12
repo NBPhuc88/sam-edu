@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, usePage } from '@inertiajs/react';
 import {
+    Building,
+    CheckCircle2,
+    Mail,
     MapPin,
     Phone,
-    Mail,
-    CheckCircle2,
     Send,
-    Building,
+    User,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -30,7 +31,16 @@ const contactSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
-export const Contact: React.FC<any> = ({ contactInfo }) => {
+interface ContactProps {
+    contactInfo?: {
+        company_name?: string;
+        address?: string;
+        phone?: string;
+        email?: string;
+    };
+}
+
+export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
     const { flash } = usePage().props as any;
     const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -60,26 +70,24 @@ export const Contact: React.FC<any> = ({ contactInfo }) => {
     };
 
     return (
-        <PublicLayout title="Liên Hệ Tư Vấn - Hệ thống Quản lý Giáo dục Sam">
+        <PublicLayout title="Liên Hệ Tư Vấn Giải Pháp - Giáo Dục Sam">
             {/* Header */}
             <section className="border-b border-gray-200 bg-slate-50 py-12">
                 <div className="mx-auto max-w-7xl space-y-3 px-4 text-center sm:px-6 lg:px-8">
                     <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                        Liên Hệ Tư Vấn & Dùng Thử
+                        Liên Hệ Tư Vấn Giải Pháp
                     </h1>
                     <p className="mx-auto max-w-xl text-sm text-gray-600">
-                        Điền thông tin vào form bên dưới để đăng ký tư vấn giải
-                        pháp quản lý trung tâm hoặc nhận 14 ngày dùng thử miễn
-                        phí.
+                        Gửi câu hỏi hoặc yêu cầu tư vấn giải pháp quản lý cho trung tâm đào tạo của bạn. Đội ngũ chuyên viên Sam Edu sẽ hỗ trợ bạn 24/7.
                     </p>
                 </div>
             </section>
 
-            {/* Main Contact Content */}
+            {/* Main Contact Section */}
             <section className="bg-white py-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                        {/* Contact Information Cards (Loaded from Database) */}
+                        {/* Information Sidebar */}
                         <div className="space-y-6">
                             <Card className="space-y-4 border-gray-200 p-6">
                                 <h3 className="border-b border-gray-100 pb-3 text-base font-bold text-gray-900">
@@ -108,11 +116,11 @@ export const Contact: React.FC<any> = ({ contactInfo }) => {
                                         </div>
                                         <div>
                                             <div className="font-semibold text-gray-900">
-                                                Địa chỉ văn phòng
+                                                Địa chỉ trụ sở
                                             </div>
                                             <div>
                                                 {contactInfo?.address ||
-                                                    'Tòa nhà Sam Tower, Hà Nội'}
+                                                    'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội'}
                                             </div>
                                         </div>
                                     </div>
@@ -123,7 +131,7 @@ export const Contact: React.FC<any> = ({ contactInfo }) => {
                                         </div>
                                         <div>
                                             <div className="font-semibold text-gray-900">
-                                                Hotline hỗ trợ 24/7
+                                                Hotline tư vấn 24/7
                                             </div>
                                             <div className="font-bold text-emerald-700">
                                                 {contactInfo?.phone ||
@@ -138,109 +146,128 @@ export const Contact: React.FC<any> = ({ contactInfo }) => {
                                         </div>
                                         <div>
                                             <div className="font-semibold text-gray-900">
-                                                Email tư vấn
+                                                Email hỗ trợ
                                             </div>
                                             <div>
                                                 {contactInfo?.email ||
-                                                    'hotro@giaoducsam.vn'}
+                                                    'phucstt01@gmail.com'}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </Card>
 
-                            <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-xs text-emerald-900">
-                                <div className="font-bold text-emerald-950">
-                                    Cam kết tư vấn:
-                                </div>
-                                <div>
-                                    • Phản hồi yêu cầu trong vòng 30 phút.
-                                </div>
-                                <div>
-                                    • Hướng dẫn khởi tạo trung tâm dùng thử 14
-                                    ngày miễn phí.
-                                </div>
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-6 text-xs text-emerald-900">
+                                <h4 className="font-bold">Bạn đã sẵn sàng đăng ký trung tâm?</h4>
+                                <p className="mt-1 text-emerald-800">
+                                    Truy cập trang Đăng Ký Trung Tâm để khởi tạo mã trung tâm và chọn gói trải nghiệm ngay lập tức.
+                                </p>
+                                <a
+                                    href="/register-center"
+                                    className="mt-3 inline-flex items-center gap-1 font-bold text-emerald-700 hover:underline"
+                                >
+                                    Đăng ký trung tâm ngay →
+                                </a>
                             </div>
                         </div>
 
-                        {/* Consultation Form Card */}
+                        {/* Contact Consultation Form */}
                         <div className="lg:col-span-2">
-                            <Card className="border-gray-200 p-6 sm:p-8">
-                                <h3 className="mb-6 text-lg font-bold text-gray-900">
-                                    Đăng Ký Tư Vấn / Nhận Dùng Thử
-                                </h3>
-
-                                {/* Success Banner notification */}
-                                {(isSubmitted || flash?.success) && (
-                                    <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">
-                                        <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-                                        <span>
-                                            {flash?.success ||
-                                                'Cảm ơn bạn! Yêu cầu tư vấn đã được lưu vào hệ thống. Đội ngũ Giáo Dục Sam sẽ liên hệ lại ngay!'}
-                                        </span>
+                            <Card className="border-gray-200 p-6 sm:p-8 shadow-sm">
+                                {isSubmitted || flash?.success ? (
+                                    <div className="space-y-4 py-8 text-center">
+                                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                            <CheckCircle2 className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900">
+                                            Gửi Yêu Cầu Tư Vấn Thành Công!
+                                        </h3>
+                                        <p className="mx-auto max-w-md text-xs text-gray-600 leading-relaxed">
+                                            Cảm ơn bạn đã liên hệ với Sam Edu. Đội ngũ chuyên viên tư vấn sẽ phản hồi lại bạn trong thời gian sớm nhất.
+                                        </p>
+                                        <div className="pt-4">
+                                            <Button
+                                                variant="secondary"
+                                                size="md"
+                                                onClick={() => setIsSubmitted(false)}
+                                            >
+                                                Gửi câu hỏi khác
+                                            </Button>
+                                        </div>
                                     </div>
-                                )}
+                                ) : (
+                                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-900">
+                                                Form Gửi Yêu Cầu Tư Vấn
+                                            </h2>
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Vui lòng điền thông tin bên dưới để nhận tư vấn chuyên sâu
+                                            </p>
+                                        </div>
 
-                                <form
-                                    onSubmit={handleSubmit(onSubmit)}
-                                    className="space-y-4"
-                                >
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <Input
-                                            label="Họ và tên *"
-                                            placeholder="VD: Nguyễn Văn A"
-                                            error={errors.full_name?.message}
-                                            {...register('full_name')}
-                                        />
+                                        <div className="space-y-4">
+                                            <Input
+                                                label="Họ và tên người liên hệ (*)"
+                                                placeholder="VD: Nguyễn Văn An"
+                                                icon={<User className="h-4 w-4" />}
+                                                error={errors.full_name?.message}
+                                                {...register('full_name')}
+                                            />
 
-                                        <Input
-                                            label="Số điện thoại liên hệ *"
-                                            placeholder="VD: 0912345678"
-                                            error={errors.phone?.message}
-                                            {...register('phone')}
-                                        />
-                                    </div>
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                <Input
+                                                    label="Số điện thoại liên hệ (*)"
+                                                    placeholder="VD: 0988123456"
+                                                    icon={<Phone className="h-4 w-4" />}
+                                                    error={errors.phone?.message}
+                                                    {...register('phone')}
+                                                />
+                                                <Input
+                                                    label="Email liên hệ"
+                                                    type="email"
+                                                    placeholder="VD: an.nguyen@email.com"
+                                                    icon={<Mail className="h-4 w-4" />}
+                                                    error={errors.email?.message}
+                                                    {...register('email')}
+                                                />
+                                            </div>
 
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <Input
-                                            label="Email nhận thông tin"
-                                            placeholder="VD: nguyenvana@gmail.com"
-                                            error={errors.email?.message}
-                                            {...register('email')}
-                                        />
+                                            <Input
+                                                label="Tên trung tâm đào tạo (Nếu có)"
+                                                placeholder="VD: Trung tâm Ngoại ngữ Sam Cầu Giấy"
+                                                icon={<Building className="h-4 w-4" />}
+                                                error={errors.center_name?.message}
+                                                {...register('center_name')}
+                                            />
 
-                                        <Input
-                                            label="Tên trung tâm / Cơ sở"
-                                            placeholder="VD: Trung tâm Anh ngữ Sam"
-                                            error={errors.center_name?.message}
-                                            {...register('center_name')}
-                                        />
-                                    </div>
+                                            <div className="space-y-1.5">
+                                                <label className="block text-xs font-semibold text-gray-700">
+                                                    Nội dung cần tư vấn / Câu hỏi:
+                                                </label>
+                                                <div className="relative">
+                                                    <textarea
+                                                        rows={4}
+                                                        placeholder="Nhập nội dung thắc mắc hoặc yêu cầu tư vấn..."
+                                                        className="w-full rounded-lg border border-gray-300 p-3 text-xs text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                        {...register('message')}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-gray-900">
-                                            Nội dung yêu cầu / Ghi chú
-                                        </label>
-                                        <textarea
-                                            rows={4}
-                                            placeholder="Nhập nhu cầu quản lý hoặc câu hỏi của bạn..."
-                                            className="ui-input"
-                                            {...register('message')}
-                                        />
-                                    </div>
-
-                                    <div className="pt-3">
                                         <Button
                                             type="submit"
                                             variant="success"
+                                            size="lg"
                                             isLoading={isSubmitting}
-                                            icon={<Send className="h-4 w-4" />}
-                                            className="w-full px-8 sm:w-auto"
+                                            className="w-full justify-center py-3"
+                                            icon={<Send className="h-5 w-5" />}
                                         >
                                             Gửi Yêu Cầu Tư Vấn
                                         </Button>
-                                    </div>
-                                </form>
+                                    </form>
+                                )}
                             </Card>
                         </div>
                     </div>

@@ -1,18 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
-import {
-    getAccountLabel,
-    getNavigationItems
-    
-} from '../../config/navigation';
-import type {NavItem} from '../../config/navigation';
+import { getAccountLabel, getNavigationItems } from '../../config/navigation';
+import type { NavItem } from '../../config/navigation';
 
 interface SidebarProps {
     role: string | null;
     adminRole?: string | null;
     fullName?: string | null;
     open: boolean;
+    onClose?: () => void;
 }
 
 /** Active path detection */
@@ -25,97 +22,94 @@ function isActivePath(path: string, currentUrl: string): boolean {
 }
 
 /** Single nav link */
-const NavLink: React.FC<{ item: NavItem; currentUrl: string }> = ({
-    item,
-    currentUrl,
-}) => {
-    if (!item.path) {
-return null;
-}
+const NavLink: React.FC<{
+    item: NavItem;
+    currentUrl: string;
+    onClose?: () => void;
+}> = ({ item, currentUrl, onClose }) => {
+    const active = item.path ? isActivePath(item.path, currentUrl) : false;
+    const Icon = item.icon;
 
-    const isActive = isActivePath(item.path, currentUrl);
+    if (!item.path) {
+        return null;
+    }
+
+    const handleClick = () => {
+        if (
+            typeof window !== 'undefined' &&
+            window.innerWidth < 768 &&
+            onClose
+        ) {
+            onClose();
+        }
+    };
 
     return (
         <Link
             href={item.path}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                isActive
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            onClick={handleClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                active
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }`}
         >
-            {item.icon && (
-                <item.icon
-                    className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
-                />
-            )}
-            <span>{item.label}</span>
-            {isActive && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            )}
+            {Icon && <Icon className="h-4 w-4 shrink-0" />}
+            <span className="truncate">{item.label}</span>
         </Link>
     );
 };
 
-/** Group nav item (có children — expandable) */
-const NavGroup: React.FC<{ item: NavItem; currentUrl: string }> = ({
-    item,
-    currentUrl,
-}) => {
-    const isAnyChildActive = item.children?.some(
-        (child) => child.path && isActivePath(child.path, currentUrl),
-    );
-    const [open, setOpen] = useState(isAnyChildActive ?? false);
+/** Expandable nav group */
+const NavGroup: React.FC<{
+    item: NavItem;
+    currentUrl: string;
+    onClose?: () => void;
+}> = ({ item, currentUrl, onClose }) => {
+    const groupActive =
+        item.children?.some(
+            (child) => child.path && isActivePath(child.path, currentUrl),
+        ) ?? false;
+
+    const [expanded, setExpanded] = useState(groupActive);
+    const Icon = item.icon;
 
     return (
         <div>
             <button
                 type="button"
-                onClick={() => setOpen((prev) => !prev)}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                    isAnyChildActive
-                        ? 'text-emerald-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                onClick={() => setExpanded((prev) => !prev)}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                    groupActive
+                        ? 'bg-emerald-50 text-emerald-900'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
             >
-                {item.icon && (
-                    <item.icon
-                        className={`h-4 w-4 shrink-0 ${isAnyChildActive ? 'text-emerald-600' : 'text-gray-400'}`}
-                    />
-                )}
-                <span className="flex-1 text-left">{item.label}</span>
+                <div className="flex items-center gap-3">
+                    {Icon && (
+                        <Icon className="h-4 w-4 shrink-0 text-gray-500" />
+                    )}
+                    <span>{item.label}</span>
+                </div>
                 <ChevronDown
-                    className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                        expanded
+                            ? 'rotate-180 text-emerald-700'
+                            : 'text-gray-400'
+                    }`}
                 />
             </button>
 
-            {/* Children list */}
-            {open && (
-                <div className="mt-0.5 ml-4 space-y-0.5 border-l border-gray-100 pl-3">
-                    {item.children?.map((child) => {
-                        if (!child.path) {
-return null;
-}
-
-                        const isActive = isActivePath(child.path, currentUrl);
-
-                        return (
-                            <Link
-                                key={child.path}
-                                href={child.path}
-                                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all ${
-                                    isActive
-                                        ? 'font-semibold text-emerald-700'
-                                        : 'text-gray-500 hover:text-gray-900'
-                                }`}
-                            >
-                                <span
-                                    className={`h-1 w-1 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                                />
-                                {child.label}
-                            </Link>
-                        );
-                    })}
+            {expanded && item.children && (
+                <div className="mt-1 space-y-1 pl-7">
+                    {item.children.map((child) => (
+                        <NavLink
+                            key={child.path ?? child.label}
+                            item={child}
+                            currentUrl={currentUrl}
+                            onClose={onClose}
+                        />
+                    ))}
                 </div>
             )}
         </div>
@@ -128,6 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     adminRole,
     fullName,
     open,
+    onClose,
 }) => {
     const { url } = usePage();
     const navItems = getNavigationItems(role, adminRole);
@@ -141,81 +136,95 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Overlay for mobile */}
             {open && (
                 <div
-                    className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm md:hidden"
+                    onClick={onClose}
+                    className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
                     aria-hidden="true"
                 />
             )}
 
             {/* Sidebar panel */}
             <aside
-                className={`fixed inset-y-0 left-0 z-20 flex w-64 flex-col bg-white shadow-lg transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:shadow-none ${
-                    open ? 'translate-x-0' : '-translate-x-full'
+                className={`shrink-0 border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${
+                    open
+                        ? 'w-64 opacity-100'
+                        : 'pointer-events-none w-0 overflow-hidden border-r-0 border-transparent opacity-0'
+                } fixed inset-y-0 left-0 z-40 h-full shadow-xl md:static md:z-auto md:shadow-none ${
+                    open
+                        ? 'translate-x-0'
+                        : '-translate-x-full md:translate-x-0'
                 }`}
             >
-                {/* Brand header */}
-                <div className="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-sm">
-                        SAM
-                    </div>
-                    <div>
-                        <div className="text-sm font-bold leading-tight text-gray-900">
-                            Giáo dục Sam
+                {/* Fixed width container to prevent text warping during transition */}
+                <div className="flex h-full w-64 flex-col">
+                    {/* Brand header */}
+                    <div className="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-sm">
+                            SAM
                         </div>
-                        <div className="text-[11px] text-gray-400">
-                            Quản lý Giáo dục
-                        </div>
-                    </div>
-                </div>
-
-                {/* Account info block */}
-                <div className="border-b border-gray-100 px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                        <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                                role === 'admin'
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : role === 'center'
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : role === 'teacher'
-                                        ? 'bg-violet-100 text-violet-700'
-                                        : 'bg-amber-100 text-amber-700'
-                            }`}
-                        >
-                            {avatarChar}
-                        </div>
-                        <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-gray-900">
-                                {fullName ?? 'Người dùng'}
+                        <div>
+                            <div className="text-sm leading-tight font-bold text-gray-900">
+                                Giáo dục Sam
                             </div>
-                            <div className="text-[11px] text-gray-500">
-                                {accountLabel}
+                            <div className="text-[11px] text-gray-400">
+                                Quản lý Giáo dục
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-                    {navItems.map((item) =>
-                        item.children ? (
-                            <NavGroup
-                                key={item.label}
-                                item={item}
-                                currentUrl={url}
-                            />
-                        ) : (
-                            <NavLink
-                                key={item.path ?? item.label}
-                                item={item}
-                                currentUrl={url}
-                            />
-                        ),
-                    )}
-                </nav>
+                    {/* Account info block */}
+                    <div className="border-b border-gray-100 px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                            <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                                    role === 'admin'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : role === 'center'
+                                          ? 'bg-blue-100 text-blue-700'
+                                          : role === 'teacher'
+                                            ? 'bg-violet-100 text-violet-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                }`}
+                            >
+                                {avatarChar}
+                            </div>
+                            <div className="min-w-0">
+                                <div className="truncate text-xs font-bold text-gray-900">
+                                    {fullName && fullName !== 'Admin'
+                                        ? fullName
+                                        : (adminRole === 'super_admin' ? 'Quản trị Tối cao' : 'Quản trị viên')}
+                                </div>
+                                <div className="text-[11px] text-gray-500">
+                                    {accountLabel}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Footer */}
-                <div className="border-t border-gray-100 px-4 py-3 text-[10px] text-gray-400">
-                    © 2026 Giáo dục Sam · v1.0
+                    {/* Navigation */}
+                    <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+                        {navItems.map((item) =>
+                            item.children ? (
+                                <NavGroup
+                                    key={item.label}
+                                    item={item}
+                                    currentUrl={url}
+                                    onClose={onClose}
+                                />
+                            ) : (
+                                <NavLink
+                                    key={item.path ?? item.label}
+                                    item={item}
+                                    currentUrl={url}
+                                    onClose={onClose}
+                                />
+                            ),
+                        )}
+                    </nav>
+
+                    {/* Footer */}
+                    <div className="border-t border-gray-100 px-4 py-3 text-[10px] text-gray-400">
+                        © 2026 Giáo dục Sam · v1.0
+                    </div>
                 </div>
             </aside>
         </>

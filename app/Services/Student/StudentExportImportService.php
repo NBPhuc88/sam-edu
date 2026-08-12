@@ -159,7 +159,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'parent_name'         => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                 'parent_phone'        => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                 'parent_relationship' => $row['mối quan hệ phụ huynh'] ?? $row['parent_relationship'] ?? 'bố',
-                'status'              => $row['trạng thái'] ?? $row['status'] ?? 'active',
+                'status'              => isset($row['trạng thái']) ? (int) $row['trạng thái'] : 1,
                 'center_id'           => $centerId ?? 1,
             ];
 
