@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Repositories\Admin\AdminRepository;
 use App\Repositories\Admin\AdminRepositoryInterface;
+use App\Repositories\Auth\PasswordResetRepository;
+use App\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Repositories\Center\CenterRepository;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Chat\ChatRepository;
@@ -22,6 +24,8 @@ use App\Services\Admin\AdminService;
 use App\Services\Admin\AdminServiceInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Auth\AuthServiceInterface;
+use App\Services\Auth\PasswordResetService;
+use App\Services\Auth\PasswordResetServiceInterface;
 use App\Services\Center\CenterRegisterService;
 use App\Services\Center\CenterRegisterServiceInterface;
 use App\Services\Center\CenterService;
@@ -61,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Service Bindings
+        $this->app->bind(PasswordResetServiceInterface::class, PasswordResetService::class);
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
         $this->app->bind(PaymentGatewayInterface::class, ZaloPayGateway::class);
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
@@ -79,6 +83,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StatisticServiceInterface::class, StatisticService::class);
 
         // Repository Bindings
+        $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
         $this->app->bind(AdminRepositoryInterface::class, AdminRepository::class);
         $this->app->bind(TeacherRepositoryInterface::class, TeacherRepository::class);
         $this->app->bind(StudentRepositoryInterface::class, StudentRepository::class);

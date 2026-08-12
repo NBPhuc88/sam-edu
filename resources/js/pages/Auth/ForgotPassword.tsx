@@ -1,63 +1,43 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Lock,
-    User,
+    Mail,
     ShieldCheck,
-    GraduationCap,
-    Users,
     Building2,
+    Users,
+    GraduationCap,
+    ArrowLeft,
+    KeyRound,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 
-const loginSchema = z.object({
-    role: z.enum(['admin', 'center', 'teacher', 'student']),
-    username: z.string().min(1, 'Vui lòng nhập tên đăng nhập hoặc email'),
-    password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
-export const Login: React.FC = () => {
-    const { errors: serverErrors } = usePage().props as any;
-    const [selectedRole, setSelectedRole] = useState<
+export const ForgotPassword: React.FC = () => {
+    const { errors: serverErrors, flash } = usePage().props as any;
+    const [accountType, setAccountType] = useState<
         'admin' | 'center' | 'teacher' | 'student'
     >('admin');
+    const [email, setEmail] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        formState: { errors, isSubmitting },
-    } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-        defaultValues: {
-            role: 'admin',
-            username: '',
-            password: '',
-        },
-    });
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
 
-    const handleRoleChange = (
-        role: 'admin' | 'center' | 'teacher' | 'student',
-    ) => {
-        setSelectedRole(role);
-        setValue('role', role);
-    };
-
-    const onSubmit = (data: LoginFormValues) => {
-        router.post('/login', data);
+        router.post(
+            '/forgot-password/send-otp',
+            { account_type: accountType, email },
+            {
+                onFinish: () => setIsSubmitting(false),
+            },
+        );
     };
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 font-sans text-gray-900">
             <div className="w-full max-w-lg space-y-6">
-                {/* Brand Header with Link to Homepage */}
+                {/* Brand Header */}
                 <div className="space-y-2 text-center">
                     <Link
                         href="/"
@@ -71,18 +51,34 @@ export const Login: React.FC = () => {
                             Hệ thống Quản lý Giáo dục Sam
                         </h1>
                     </Link>
-                    <p className="text-xs text-gray-500">Đăng nhập</p>
+                    <p className="text-xs text-gray-500">
+                        Quên mật khẩu & Gửi mã OTP xác thực
+                    </p>
                 </div>
 
-                {/* Main Login Card */}
+                {/* Main Card */}
                 <Card className="border-gray-200 bg-white p-6 shadow-lg sm:p-8">
+                    <div className="mb-6 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <KeyRound className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-gray-900">
+                                Yêu cầu Mã OTP Đăng nhập
+                            </h2>
+                            <p className="text-xs text-gray-500">
+                                Chọn loại tài khoản và nhập email để nhận OTP 6 số
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Role Selection Tabs */}
                     <div className="mb-6 flex rounded-xl bg-gray-100 p-1">
                         <button
                             type="button"
-                            onClick={() => handleRoleChange('admin')}
+                            onClick={() => setAccountType('admin')}
                             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                selectedRole === 'admin'
+                                accountType === 'admin'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
@@ -93,9 +89,9 @@ export const Login: React.FC = () => {
 
                         <button
                             type="button"
-                            onClick={() => handleRoleChange('center')}
+                            onClick={() => setAccountType('center')}
                             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                selectedRole === 'center'
+                                accountType === 'center'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
@@ -106,9 +102,9 @@ export const Login: React.FC = () => {
 
                         <button
                             type="button"
-                            onClick={() => handleRoleChange('teacher')}
+                            onClick={() => setAccountType('teacher')}
                             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                selectedRole === 'teacher'
+                                accountType === 'teacher'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
@@ -119,9 +115,9 @@ export const Login: React.FC = () => {
 
                         <button
                             type="button"
-                            onClick={() => handleRoleChange('student')}
+                            onClick={() => setAccountType('student')}
                             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                selectedRole === 'student'
+                                accountType === 'student'
                                     ? 'bg-white text-emerald-800 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
@@ -131,66 +127,55 @@ export const Login: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Server Error Notification */}
-                    {(serverErrors?.username || serverErrors?.email) && (
+                    {/* Server Messages */}
+                    {serverErrors?.email && (
                         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
-                            {serverErrors.username || serverErrors.email}
+                            {serverErrors.email}
+                        </div>
+                    )}
+                    {flash?.success && (
+                        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-800">
+                            {flash.success}
                         </div>
                     )}
 
-                    {/* Login Form */}
-                    <form
-                        onSubmit={handleSubmit(onSubmit)}
-                        className="space-y-5"
-                    >
-                        <input type="hidden" {...register('role')} />
-
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <Input
-                            label="Tên đăng nhập / Email"
-                            placeholder="Nhập username hoặc email..."
-                            icon={<User className="h-4 w-4" />}
-                            error={errors.username?.message}
-                            {...register('username')}
+                            label="Email đăng ký tài khoản (*)"
+                            type="email"
+                            placeholder="Nhập email của bạn..."
+                            icon={<Mail className="h-4 w-4" />}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
                         />
-
-                        <Input
-                            label="Mật khẩu"
-                            type="password"
-                            placeholder="••••••••"
-                            icon={<Lock className="h-4 w-4" />}
-                            error={errors.password?.message}
-                            {...register('password')}
-                        />
-
-                        <div className="flex items-center justify-end text-xs">
-                            <Link
-                                href="/forgot-password"
-                                className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-                            >
-                                Quên mật khẩu? (Đăng nhập OTP)
-                            </Link>
-                        </div>
 
                         <div className="pt-2">
                             <Button
                                 type="submit"
                                 variant="success"
                                 isLoading={isSubmitting}
-                                className="w-full justify-center py-3 text-base shadow-sm"
+                                className="w-full justify-center py-3 text-sm font-bold shadow-sm"
                             >
-                                Đăng nhập hệ thống
+                                Gửi Mã OTP 6 Số Qua Email
                             </Button>
                         </div>
                     </form>
-                </Card>
 
-                {/* Footer Info */}
-                <div className="text-center text-xs text-gray-500">
-                    Gặp sự cố đăng nhập? Liên hệ Ban quản trị trung tâm.
-                </div>
+                    <div className="mt-6 border-t border-gray-100 pt-4 text-center">
+                        <Link
+                            href="/login"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900"
+                        >
+                            <ArrowLeft className="h-3.5 w-3.5" />
+                            Quay lại đăng nhập
+                        </Link>
+                    </div>
+                </Card>
             </div>
         </div>
     );
 };
 
-export default Login;
+export default ForgotPassword;

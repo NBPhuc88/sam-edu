@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\CenterRegisterController;
 use App\Http\Controllers\ChatController;
@@ -39,6 +40,16 @@ Route::prefix('register-center')->name('register-center.')->group(function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// ─── Forgot Password & OTP Login Routes ──────────────────────────────────────
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password/send-otp', [PasswordResetController::class, 'sendOtp'])->name('password.send_otp');
+Route::get('/verify-otp', [PasswordResetController::class, 'showVerifyOtpForm'])->name('password.verify_otp.show');
+Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp'])->name('password.verify_otp');
+
+// ─── Mandatory Password Change Route (Protected & Force Change) ─────────────
+Route::get('/force-change-password', [PasswordResetController::class, 'showForceChangePasswordForm'])->name('password.force_change.show');
+Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update');
 
 // ─── Protected Routes (Bất kỳ guard nào: admin | center | teacher | student) ──
 Route::middleware('auth.any')->group(function () {
