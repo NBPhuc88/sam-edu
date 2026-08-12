@@ -25,6 +25,7 @@ import {
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import CustomPieChart from '../components/ui/CustomPieChart';
 import type { Column } from '../components/ui/DataTable';
 import DataTable from '../components/ui/DataTable';
 import AppLayout from '../layouts/AppLayout';
@@ -138,19 +139,7 @@ export const Dashboard: React.FC<any> = (props) => {
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Biểu đồ tròn: Lượt đăng ký mới trong tháng theo gói */}
                         <Card title="Lượt Đăng Ký Mới Trong Tháng (Theo Gói Dịch Vụ)" className="lg:col-span-1">
-                            <div className="h-64 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={regPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                                            {regPieData.map((entry: any, index: number) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color || '#3b82f6'} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <CustomPieChart data={regPieData} height={260} />
                         </Card>
 
                         {/* Biểu đồ cột: Thống kê số lượng trung tâm đăng ký mới 6 tháng gần nhất */}
@@ -172,19 +161,7 @@ export const Dashboard: React.FC<any> = (props) => {
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Biểu đồ tròn: Trung tâm đến kỳ gia hạn tháng này mà không gia hạn */}
                         <Card title="Tình Hình Gia Hạn Kỳ Tháng Này (Không Gia Hạn)" className="lg:col-span-1">
-                            <div className="h-64 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={nonRenewedPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={80} label>
-                                            {nonRenewedPieData.map((entry: any, index: number) => (
-                                                <Cell key={`cell-nr-${index}`} fill={entry.color || '#ef4444'} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <CustomPieChart data={nonRenewedPieData} height={260} />
                         </Card>
 
                         {/* Danh sách các trung tâm mới đăng ký */}
