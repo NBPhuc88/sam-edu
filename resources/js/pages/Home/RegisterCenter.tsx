@@ -7,7 +7,6 @@ import {
     Phone,
     RefreshCw,
     Send,
-    Sparkles,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import Button from '../../components/ui/Button';
@@ -63,7 +62,6 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     >('zalopay');
 
     // Step 2 / Notification Info State
-    const [centerId, setCenterId] = useState<number | null>(null);
     const [appTransId, setAppTransId] = useState<string | null>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [bankName, setBankName] = useState<string | null>(null);
@@ -105,7 +103,6 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
             });
 
             if (res.data?.success) {
-                setCenterId(res.data.center_id);
 
                 if (res.data.step === 'contact_notification') {
                     // Thành công ngay (Dùng thử hoặc phương thức khác)

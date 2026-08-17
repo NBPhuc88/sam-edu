@@ -1,18 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Calendar,
-    Clock,
     Plus,
     Search,
     Edit2,
     Trash2,
-    Building2,
-    GraduationCap,
-    BookOpen,
-    UserCheck,
     AlertCircle,
     Filter,
-    Layers,
     DoorOpen,
     Eye,
 } from 'lucide-react';
@@ -127,7 +121,6 @@ export default function ScheduleIndex({
     centers = [],
     classes = [],
     subjects = [],
-    teachers = [],
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
@@ -185,7 +178,10 @@ export default function ScheduleIndex({
     };
 
     const confirmDelete = () => {
-        if (!deletingSchedule) return;
+        if (!deletingSchedule) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/schedules/${deletingSchedule.id}`, {
             onFinish: () => {
@@ -285,6 +281,40 @@ export default function ScheduleIndex({
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {classes && classes.length > 0 && (
+                                <div>
+                                    <select
+                                        value={selectedClassId}
+                                        onChange={(e) => setSelectedClassId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="">Tất cả Lớp học</option>
+                                        {classes.map((cls) => (
+                                            <option key={cls.id} value={cls.id}>
+                                                {cls.name} ({cls.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {subjects && subjects.length > 0 && (
+                                <div>
+                                    <select
+                                        value={selectedSubjectId}
+                                        onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="">Tất cả Môn học</option>
+                                        {subjects.map((sub) => (
+                                            <option key={sub.id} value={sub.id}>
+                                                {sub.name} ({sub.code})
                                             </option>
                                         ))}
                                     </select>

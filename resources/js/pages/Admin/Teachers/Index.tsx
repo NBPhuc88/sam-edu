@@ -1,19 +1,14 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Download,
     Upload,
     Search,
     FileSpreadsheet,
-    UserCheck,
     Plus,
     Edit2,
     Trash2,
     GraduationCap,
-    Building2,
-    Phone,
-    Mail,
     AlertCircle,
-    Calendar,
     Filter,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -65,8 +60,6 @@ interface Props {
 }
 
 export default function TeacherIndex({ teachers, centers = [], filters }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
-
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
@@ -108,7 +101,11 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
 
     const handleExport = () => {
         const queryParams = new URLSearchParams();
-        if (selectedCenterId) queryParams.append('center_id', selectedCenterId);
+
+        if (selectedCenterId) {
+queryParams.append('center_id', selectedCenterId);
+}
+
         window.location.href = `/teachers/export?${queryParams.toString()}`;
     };
 
@@ -125,8 +122,10 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
 
     const handleImportSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!selectedFile) {
             setErrorMessage('Vui lòng chọn tệp CSV để tải lên.');
+
             return;
         }
 
@@ -158,7 +157,10 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
     };
 
     const confirmDelete = () => {
-        if (!deletingTeacher) return;
+        if (!deletingTeacher) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/teachers/${deletingTeacher.id}`, {
             onFinish: () => {

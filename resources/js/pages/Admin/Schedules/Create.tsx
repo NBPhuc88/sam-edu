@@ -2,17 +2,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Save,
-    Calendar,
     Clock,
     GraduationCap,
-    BookOpen,
-    UserCheck,
-    DoorOpen,
     Plus,
     Trash2,
     CheckSquare,
     Square,
-    AlertCircle,
     Coffee,
     CalendarPlus,
 } from 'lucide-react';
@@ -94,7 +89,6 @@ const WEEKDAYS = [
 ];
 
 export default function ScheduleCreate({
-    centers = [],
     classes = [],
     subjects = [],
     teachers = [],
@@ -109,7 +103,7 @@ export default function ScheduleCreate({
     const [selectedRoomId, setSelectedRoomId] = useState<string>('');
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState<string>('');
-    const [status, setStatus] = useState<string>('active');
+    const [status] = useState<string>('active');
 
     // Weekly schedules: Map of weekday -> { enabled: boolean, start_time: string, end_time: string }
     const [weeklyTimes, setWeeklyTimes] = useState<
@@ -148,10 +142,17 @@ export default function ScheduleCreate({
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
         const cls = classes.find((c) => String(c.id) === newClassId);
+
         if (cls?.class_subjects && cls.class_subjects.length > 0) {
             const firstCs = cls.class_subjects[0];
-            if (firstCs.subject?.id) setSelectedSubjectId(String(firstCs.subject.id));
-            if (firstCs.teacher?.id) setSelectedTeacherId(String(firstCs.teacher.id));
+
+            if (firstCs.subject?.id) {
+setSelectedSubjectId(String(firstCs.subject.id));
+}
+
+            if (firstCs.teacher?.id) {
+setSelectedTeacherId(String(firstCs.teacher.id));
+}
         }
     };
 
@@ -224,7 +225,7 @@ export default function ScheduleCreate({
         setIsSubmitting(true);
 
         const weeklySchedulesPayload = Object.entries(weeklyTimes)
-            .filter(([_, conf]) => conf.enabled)
+            .filter(([, conf]) => conf.enabled)
             .map(([dayStr, conf]) => ({
                 weekday: Number(dayStr),
                 start_time: conf.start_time,
@@ -414,6 +415,7 @@ export default function ScheduleCreate({
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
                                 const conf = weeklyTimes[day.id];
+
                                 return (
                                     <div
                                         key={day.id}

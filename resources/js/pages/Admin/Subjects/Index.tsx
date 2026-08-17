@@ -5,9 +5,6 @@ import {
     Search,
     Edit2,
     Trash2,
-    Building2,
-    Clock,
-    DollarSign,
     AlertCircle,
     Filter,
 } from 'lucide-react';
@@ -71,7 +68,10 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
     const [isDeleting, setIsDeleting] = useState(false);
 
     const formatCurrency = (amount: number | string | null) => {
-        if (amount === null || amount === undefined) return 'Chưa thiết lập';
+        if (amount === null || amount === undefined) {
+return 'Chưa thiết lập';
+}
+
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
@@ -104,7 +104,10 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
     };
 
     const confirmDelete = () => {
-        if (!deletingSubject) return;
+        if (!deletingSubject) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/subjects/${deletingSubject.id}`, {
             onFinish: () => {

@@ -5,25 +5,18 @@ import {
     BookOpen,
     Search,
     Calendar,
-    Award,
-    CreditCard,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import {
     ResponsiveContainer,
     BarChart,
     Bar,
-    PieChart,
-    Pie,
-    Cell,
     XAxis,
     YAxis,
     Tooltip,
-    Legend,
     CartesianGrid,
 } from 'recharts';
 import Badge from '../components/ui/Badge';
-import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import CustomPieChart from '../components/ui/CustomPieChart';
 import type { Column } from '../components/ui/DataTable';
@@ -33,7 +26,6 @@ import AppLayout from '../layouts/AppLayout';
 export const Dashboard: React.FC<any> = (props) => {
     const role = props.role || 'super_admin';
     const stats = props.stats || {};
-    const center = props.center || null;
 
     const [examSearch, setExamSearch] = useState('');
 
@@ -297,8 +289,12 @@ export const Dashboard: React.FC<any> = (props) => {
     const examResults = props.exam_results || [];
 
     const filteredExamResults = examResults.filter((item: any) => {
-        if (!examSearch) return true;
+        if (!examSearch) {
+return true;
+}
+
         const q = examSearch.toLowerCase();
+
         return (
             item.exam_name?.toLowerCase().includes(q) ||
             item.subject_name?.toLowerCase().includes(q) ||

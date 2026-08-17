@@ -3,14 +3,9 @@ import {
     ArrowLeft,
     Save,
     DollarSign,
-    Building2,
-    BookOpen,
-    Users,
-    Calendar,
     Receipt,
-    CreditCard,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
@@ -92,6 +87,7 @@ export const Create: React.FC<CreateProps> = ({
     const handleClassChange = (newClassId: string) => {
         setClassId(newClassId);
         const selectedCls = filteredClasses.find((c) => String(c.id) === String(newClassId));
+
         if (selectedCls && !title) {
             setTitle(`Học phí ${selectedCls.name}`);
         }
@@ -309,6 +305,7 @@ export const Create: React.FC<CreateProps> = ({
                                     checked={hasInitialPayment}
                                     onChange={(e) => {
                                         setHasInitialPayment(e.target.checked);
+
                                         if (e.target.checked && !initialAmount && totalAmount) {
                                             setInitialAmount(totalAmount);
                                         }

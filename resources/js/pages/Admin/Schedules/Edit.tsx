@@ -2,17 +2,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Save,
-    Calendar,
     Clock,
     GraduationCap,
-    BookOpen,
-    UserCheck,
-    DoorOpen,
     Plus,
     Trash2,
     CheckSquare,
     Square,
-    AlertCircle,
     Coffee,
     CalendarPlus,
 } from 'lucide-react';
@@ -126,12 +121,8 @@ const WEEKDAYS = [
 
 export default function ScheduleEdit({
     schedule,
-    centers = [],
-    classes = [],
-    subjects = [],
     teachers = [],
     rooms = [],
-    errors = {},
 }: EditProps) {
     const classSubject = schedule.class_subject;
     const centerId = classSubject?.school_class?.center_id;
@@ -144,7 +135,7 @@ export default function ScheduleEdit({
     );
     const [startDate, setStartDate] = useState<string>(schedule.effective_from || '');
     const [endDate, setEndDate] = useState<string>(schedule.effective_to || '');
-    const [status, setStatus] = useState<string>(schedule.status || 'active');
+    const [status] = useState<string>(schedule.status || 'active');
 
     // Setup initial weekday
     const [weeklyTimes, setWeeklyTimes] = useState<
@@ -237,7 +228,7 @@ export default function ScheduleEdit({
         setIsSubmitting(true);
 
         const weeklySchedulesPayload = Object.entries(weeklyTimes)
-            .filter(([_, conf]) => conf.enabled)
+            .filter(([, conf]) => conf.enabled)
             .map(([dayStr, conf]) => ({
                 weekday: Number(dayStr),
                 start_time: conf.start_time,
@@ -394,6 +385,7 @@ export default function ScheduleEdit({
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
                                 const conf = weeklyTimes[day.id];
+
                                 return (
                                     <div
                                         key={day.id}

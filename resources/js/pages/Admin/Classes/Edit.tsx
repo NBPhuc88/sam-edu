@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, GraduationCap, Building2, BookOpen, UserCheck, Plus, Trash2, Calendar, FileText, Users } from 'lucide-react';
+import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -99,8 +99,10 @@ export default function ClassEdit({
     const handleRemoveSubjectRow = (index: number) => {
         if (subjectRows.length === 1) {
             setSubjectRows([{ subject_id: '', teacher_id: '' }]);
+
             return;
         }
+
         setSubjectRows(subjectRows.filter((_, idx) => idx !== index));
     };
 

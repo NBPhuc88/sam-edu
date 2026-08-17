@@ -1,19 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
-    DollarSign,
     Plus,
     Edit2,
     Trash2,
-    Calendar,
     Receipt,
-    CreditCard,
     CheckCircle2,
-    Clock,
     AlertCircle,
-    User,
-    BookOpen,
-    Building2,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '../../../components/ui/Badge';
@@ -192,7 +185,11 @@ export const Show: React.FC<ShowProps> = ({ tuition }) => {
     // Handle submit Edit Payment
     const handleEditPayment = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingPayment) return;
+
+        if (!editingPayment) {
+return;
+}
+
         setIsEditing(true);
 
         router.patch(
@@ -222,7 +219,10 @@ export const Show: React.FC<ShowProps> = ({ tuition }) => {
 
     // Handle confirm Delete Payment
     const handleConfirmDeletePayment = () => {
-        if (!deletingPayment) return;
+        if (!deletingPayment) {
+return;
+}
+
         setIsDeleting(true);
 
         router.delete(`/tuitions/payments/${deletingPayment.id}`, {

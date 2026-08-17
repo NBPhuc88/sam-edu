@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, Users, Building2, User, Mail, Phone, Lock, Calendar, Home, HeartHandshake } from 'lucide-react';
+import { ArrowLeft, Save, User, HeartHandshake, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -40,6 +40,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
     // Auto generate username from full name
     const handleFullNameChange = (val: string) => {
         setFullName(val);
+
         if (!username) {
             const clean = val
                 .normalize('NFD')
@@ -48,6 +49,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                 .replace(/Đ/g, 'd')
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, '');
+
             if (clean) {
                 setUsername(clean);
             }

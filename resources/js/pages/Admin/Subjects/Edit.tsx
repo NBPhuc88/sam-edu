@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, BookOpen, Building2, Clock, DollarSign, FileText } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';

@@ -5,14 +5,10 @@ import {
     Search,
     Edit2,
     Trash2,
-    Building2,
     Users,
     MessageSquare,
-    Calendar,
     AlertCircle,
     Filter,
-    BookOpen,
-    UserCheck,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -121,7 +117,10 @@ export default function ClassIndex({ classes, centers = [], filters }: Props) {
     };
 
     const confirmDelete = () => {
-        if (!deletingClass) return;
+        if (!deletingClass) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/classes/${deletingClass.id}`, {
             onFinish: () => {
@@ -134,12 +133,15 @@ export default function ClassIndex({ classes, centers = [], filters }: Props) {
 
     const getStatusBadge = (status: number | string) => {
         const num = Number(status);
+
         if (num === 1 || status === 'active') {
             return <Badge variant="active">Đang mở lớp</Badge>;
         }
+
         if (num === 2 || status === 'completed') {
             return <Badge variant="pending">Đã hoàn thành</Badge>;
         }
+
         return <Badge variant="expired">Tạm dừng / Đóng</Badge>;
     };
 

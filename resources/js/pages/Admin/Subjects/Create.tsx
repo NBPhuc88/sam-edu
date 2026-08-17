@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, BookOpen, Building2, Clock, DollarSign, FileText } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -32,6 +32,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
     // Auto generate code from name
     const handleNameChange = (val: string) => {
         setName(val);
+
         if (!code) {
             const clean = val
                 .normalize('NFD')
@@ -41,6 +42,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                 .toUpperCase()
                 .replace(/[^A-Z0-9]/g, '')
                 .slice(0, 10);
+
             if (clean) {
                 setCode(clean);
             }

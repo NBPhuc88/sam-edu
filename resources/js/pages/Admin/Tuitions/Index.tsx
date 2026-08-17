@@ -10,8 +10,6 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    Building2,
-    BookOpen,
     Filter,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -138,7 +136,10 @@ export const Index: React.FC<IndexProps> = ({
     };
 
     const confirmDelete = () => {
-        if (!deletingTuition) return;
+        if (!deletingTuition) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/tuitions/${deletingTuition.id}`, {
             onFinish: () => {

@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Download,
     Upload,
@@ -8,13 +8,8 @@ import {
     Plus,
     Edit2,
     Trash2,
-    Building2,
-    Phone,
-    Mail,
     AlertCircle,
-    Calendar,
     Filter,
-    UserCheck,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -67,8 +62,6 @@ interface Props {
 }
 
 export default function StudentIndex({ students, centers = [], filters }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
-
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
@@ -110,7 +103,11 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
 
     const handleExport = () => {
         const queryParams = new URLSearchParams();
-        if (selectedCenterId) queryParams.append('center_id', selectedCenterId);
+
+        if (selectedCenterId) {
+queryParams.append('center_id', selectedCenterId);
+}
+
         window.location.href = `/students/export?${queryParams.toString()}`;
     };
 
@@ -127,8 +124,10 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
 
     const handleImportSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!selectedFile) {
             setErrorMessage('Vui lòng chọn tệp CSV để tải lên.');
+
             return;
         }
 
@@ -160,7 +159,10 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
     };
 
     const confirmDelete = () => {
-        if (!deletingStudent) return;
+        if (!deletingStudent) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/students/${deletingStudent.id}`, {
             onFinish: () => {

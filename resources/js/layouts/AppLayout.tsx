@@ -58,7 +58,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                     type: 'error',
                 });
             }
-        } catch (error) {
+        } catch {
             setToast({
                 isOpen: true,
                 message: 'Có lỗi xảy ra khi tạo đơn hàng ZaloPay.',
