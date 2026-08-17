@@ -38,8 +38,7 @@ class UpdateTeacherRequest extends FormRequest
             'password'     => ['nullable', 'string', 'min:6'],
             'phone'        => ['nullable', 'string', 'max:30'],
             'teacher_code' => [
-                'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 Rule::unique('teachers', 'teacher_code')

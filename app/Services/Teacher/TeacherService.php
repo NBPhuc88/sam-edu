@@ -144,6 +144,11 @@ class TeacherService implements TeacherServiceInterface
         if (empty($teacherCode)) {
             $count       = Teacher::withTrashed()->where('center_id', $centerId)->count() + 1;
             $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+
+            while (Teacher::where('center_id', $centerId)->where('teacher_code', $teacherCode)->exists()) {
+                $count++;
+                $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            }
         }
 
         $password = ! empty($data['password']) ? Hash::make($data['password']) : Hash::make('12345678');

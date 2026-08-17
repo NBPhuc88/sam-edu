@@ -41,7 +41,6 @@ interface SubjectTeacherRow {
 export default function ClassCreate({ centers = [], subjects = [], teachers = [], errors = {} }: CreateProps) {
     const [centerId, setCenterId] = useState<string>(centers[0]?.id ? String(centers[0].id) : '');
     const [name, setName] = useState<string>('');
-    const [code, setCode] = useState<string>('');
     const [maxStudents, setMaxStudents] = useState<string>('30');
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState<string>('');
@@ -58,26 +57,6 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     // Filter available subjects and teachers by selected center
     const availableSubjects = subjects.filter((s) => !centerId || String(s.center_id) === centerId);
     const availableTeachers = teachers.filter((t) => !centerId || String(t.center_id) === centerId);
-
-    // Auto generate code from class name
-    const handleNameChange = (val: string) => {
-        setName(val);
-
-        if (!code) {
-            const clean = val
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd')
-                .replace(/Đ/g, 'd')
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '')
-                .slice(0, 10);
-
-            if (clean) {
-                setCode(clean);
-            }
-        }
-    };
 
     const handleAddSubjectRow = () => {
         setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '' }]);
@@ -113,9 +92,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         router.post(
             '/classes',
             {
-                center_id: Number(centerId),
+                center_id: centerId ? Number(centerId) : undefined,
                 name,
-                code: code || undefined,
                 max_students: maxStudents ? Number(maxStudents) : undefined,
                 start_date: startDate || undefined,
                 end_date: endDate || undefined,
@@ -190,11 +168,11 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                             {/* Class Name */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Tên Lớp Học (*)
+                                    Tên Lớp Học <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     value={name}
-                                    onChange={(e) => handleNameChange(e.target.value)}
+                                    onChange={(e) => setName(e.target.value)}
                                     placeholder="Ví dụ: Lớp Ôn Thi THPT Quốc Gia 12A1"
                                     required
                                 />
@@ -203,19 +181,16 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                 )}
                             </div>
 
-                            {/* Class Code */}
+                            {/* Class Code (Auto Generated) */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Lớp Học (Để trống để tự sinh mã)
+                                    Mã Lớp Học
                                 </label>
                                 <Input
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    placeholder="Ví dụ: LH_12A1"
+                                    value="Hệ thống tự động sinh mã (VD: LH001)"
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 text-gray-500 italic"
                                 />
-                                {errors.code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.code}</p>
-                                )}
                             </div>
 
                             {/* Max Students */}

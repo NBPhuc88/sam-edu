@@ -38,8 +38,7 @@ class UpdateStudentRequest extends FormRequest
             'password'     => ['nullable', 'string', 'min:6'],
             'phone'        => ['nullable', 'string', 'max:30'],
             'student_code' => [
-                'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 Rule::unique('students', 'student_code')

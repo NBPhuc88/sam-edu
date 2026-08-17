@@ -144,6 +144,11 @@ class StudentService implements StudentServiceInterface
         if (empty($studentCode)) {
             $count       = Student::withTrashed()->where('center_id', $centerId)->count() + 1;
             $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+
+            while (Student::where('center_id', $centerId)->where('student_code', $studentCode)->exists()) {
+                $count++;
+                $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+            }
         }
 
         $password = ! empty($data['password']) ? Hash::make($data['password']) : Hash::make('12345678');

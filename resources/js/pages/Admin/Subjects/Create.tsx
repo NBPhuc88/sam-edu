@@ -20,7 +20,6 @@ interface CreateProps {
 export default function SubjectCreate({ centers = [], errors = {} }: CreateProps) {
     const [centerId, setCenterId] = useState<string>(centers[0]?.id ? String(centers[0].id) : '');
     const [name, setName] = useState<string>('');
-    const [code, setCode] = useState<string>('');
     const [totalSessions, setTotalSessions] = useState<string>('24');
     const [durationMinutes, setDurationMinutes] = useState<string>('90');
     const [tuitionFee, setTuitionFee] = useState<string>('');
@@ -28,26 +27,6 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
     const [description, setDescription] = useState<string>('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Auto generate code from name
-    const handleNameChange = (val: string) => {
-        setName(val);
-
-        if (!code) {
-            const clean = val
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd')
-                .replace(/Đ/g, 'd')
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, '')
-                .slice(0, 10);
-
-            if (clean) {
-                setCode(clean);
-            }
-        }
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,7 +37,6 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
             {
                 center_id: centerId ? Number(centerId) : undefined,
                 name,
-                code: code || undefined,
                 total_sessions: totalSessions ? Number(totalSessions) : undefined,
                 duration_minutes: durationMinutes ? Number(durationMinutes) : undefined,
                 tuition_fee: tuitionFee ? Number(tuitionFee) : undefined,
@@ -128,11 +106,11 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                             {/* Subject Name */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Tên Môn Học / Khóa Học (*)
+                                    Tên Môn Học / Khóa Học <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     value={name}
-                                    onChange={(e) => handleNameChange(e.target.value)}
+                                    onChange={(e) => setName(e.target.value)}
                                     placeholder="Ví dụ: Toán 12 Nâng Cao"
                                     required
                                 />
@@ -141,19 +119,16 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                                 )}
                             </div>
 
-                            {/* Subject Code */}
+                            {/* Subject Code (Auto Generated) */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Môn Học (Để trống để tự sinh mã)
+                                    Mã Môn Học
                                 </label>
                                 <Input
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    placeholder="Ví dụ: TOAN12NC"
+                                    value="Hệ thống tự động sinh mã (VD: MH001)"
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 text-gray-500 italic"
                                 />
-                                {errors.code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.code}</p>
-                                )}
                             </div>
 
                             {/* Total Sessions */}

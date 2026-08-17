@@ -130,6 +130,11 @@ class SubjectService implements SubjectServiceInterface
         if (empty($code)) {
             $count = Subject::withTrashed()->where('center_id', $centerId)->count() + 1;
             $code  = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+
+            while (Subject::where('center_id', $centerId)->where('code', $code)->exists()) {
+                $count++;
+                $code = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            }
         }
 
         return $this->subjectRepository->create([

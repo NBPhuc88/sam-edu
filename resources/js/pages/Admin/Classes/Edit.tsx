@@ -215,16 +215,13 @@ export default function ClassEdit({
                             {/* Class Code */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Lớp Học (*)
+                                    Mã Lớp Học
                                 </label>
                                 <Input
                                     value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    required
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 font-mono text-gray-600"
                                 />
-                                {errors.code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.code}</p>
-                                )}
                             </div>
 
                             {/* Max Students */}

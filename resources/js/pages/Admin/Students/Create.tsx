@@ -23,7 +23,6 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
     const [username, setUsername] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('12345678');
-    const [studentCode, setStudentCode] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
     const [gender, setGender] = useState<string>('male');
@@ -63,12 +62,11 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
         router.post(
             '/students',
             {
-                center_id: Number(centerId),
+                center_id: centerId ? Number(centerId) : undefined,
                 full_name: fullName,
                 username,
                 email: email || undefined,
                 password: password || undefined,
-                student_code: studentCode || undefined,
                 phone: phone || undefined,
                 date_of_birth: dateOfBirth || undefined,
                 gender: gender || undefined,
@@ -156,19 +154,16 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                                 )}
                             </div>
 
-                            {/* Student Code */}
+                            {/* Student Code (Auto Generated) */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Học Sinh (Để trống để tự sinh mã)
+                                    Mã Học Sinh
                                 </label>
                                 <Input
-                                    value={studentCode}
-                                    onChange={(e) => setStudentCode(e.target.value)}
-                                    placeholder="Ví dụ: HS0001"
+                                    value="Hệ thống tự động sinh mã (VD: HS0001)"
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 text-gray-500 italic"
                                 />
-                                {errors.student_code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.student_code}</p>
-                                )}
                             </div>
 
                             {/* Username */}

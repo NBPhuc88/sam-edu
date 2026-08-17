@@ -153,16 +153,13 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                             {/* Teacher Code */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Giáo Viên (*)
+                                    Mã Giáo Viên
                                 </label>
                                 <Input
                                     value={teacherCode}
-                                    onChange={(e) => setTeacherCode(e.target.value)}
-                                    required
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 font-mono text-gray-600"
                                 />
-                                {errors.teacher_code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.teacher_code}</p>
-                                )}
                             </div>
 
                             {/* Username */}

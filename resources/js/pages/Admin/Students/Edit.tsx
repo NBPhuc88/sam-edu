@@ -162,16 +162,13 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                             {/* Student Code */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Học Sinh (*)
+                                    Mã Học Sinh
                                 </label>
                                 <Input
                                     value={studentCode}
-                                    onChange={(e) => setStudentCode(e.target.value)}
-                                    required
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 font-mono text-gray-600"
                                 />
-                                {errors.student_code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.student_code}</p>
-                                )}
                             </div>
 
                             {/* Username */}

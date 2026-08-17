@@ -23,8 +23,7 @@ class UpdateSchoolClassRequest extends FormRequest
             'center_id' => ['sometimes', 'required', 'integer', 'exists:centers,id'],
             'name'      => ['sometimes', 'required', 'string', 'max:255'],
             'code'      => [
-                'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 Rule::unique('classes', 'code')

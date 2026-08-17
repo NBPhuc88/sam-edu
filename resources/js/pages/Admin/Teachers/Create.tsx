@@ -23,7 +23,6 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
     const [username, setUsername] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('12345678');
-    const [teacherCode, setTeacherCode] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
     const [gender, setGender] = useState<string>('male');
@@ -60,12 +59,11 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
         router.post(
             '/teachers',
             {
-                center_id: Number(centerId),
+                center_id: centerId ? Number(centerId) : undefined,
                 full_name: fullName,
                 username,
                 email: email || undefined,
                 password: password || undefined,
-                teacher_code: teacherCode || undefined,
                 phone: phone || undefined,
                 date_of_birth: dateOfBirth || undefined,
                 gender: gender || undefined,
@@ -150,19 +148,16 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 )}
                             </div>
 
-                            {/* Teacher Code */}
+                            {/* Teacher Code (Auto Generated) */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Mã Giáo Viên (Để trống để tự sinh mã)
+                                    Mã Giáo Viên
                                 </label>
                                 <Input
-                                    value={teacherCode}
-                                    onChange={(e) => setTeacherCode(e.target.value)}
-                                    placeholder="Ví dụ: GV001"
+                                    value="Hệ thống tự động sinh mã (VD: GV001)"
+                                    disabled
+                                    className="cursor-not-allowed bg-slate-50 text-gray-500 italic"
                                 />
-                                {errors.teacher_code && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.teacher_code}</p>
-                                )}
                             </div>
 
                             {/* Username */}

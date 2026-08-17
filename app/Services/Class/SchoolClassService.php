@@ -141,6 +141,11 @@ class SchoolClassService implements SchoolClassServiceInterface
         if (empty($code)) {
             $count = SchoolClass::withTrashed()->where('center_id', $centerId)->count() + 1;
             $code  = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+
+            while (SchoolClass::where('center_id', $centerId)->where('code', $code)->exists()) {
+                $count++;
+                $code = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            }
         }
 
         $status = 1;
