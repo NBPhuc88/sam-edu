@@ -79,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StudentServiceInterface::class, StudentService::class);
         $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
         $this->app->bind(StudentTuitionServiceInterface::class, \App\Services\Tuition\StudentTuitionService::class);
+        $this->app->bind(\App\Services\Subject\SubjectServiceInterface::class, \App\Services\Subject\SubjectService::class);
         $this->app->bind(ContactRequestServiceInterface::class, ContactRequestService::class);
         $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
         $this->app->bind(StatisticServiceInterface::class, StatisticService::class);
@@ -91,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SchoolClassRepositoryInterface::class, SchoolClassRepository::class);
         $this->app->bind(\App\Repositories\Tuition\StudentTuitionRepositoryInterface::class, \App\Repositories\Tuition\StudentTuitionRepository::class);
         $this->app->bind(\App\Repositories\Tuition\TuitionPaymentRepositoryInterface::class, \App\Repositories\Tuition\TuitionPaymentRepository::class);
+        $this->app->bind(\App\Repositories\Subject\SubjectRepositoryInterface::class, \App\Repositories\Subject\SubjectRepository::class);
         $this->app->bind(ChatRepositoryInterface::class, ChatRepository::class);
         $this->app->bind(CenterRepositoryInterface::class, CenterRepository::class);
         $this->app->bind(PaymentTransactionRepositoryInterface::class, PaymentTransactionRepository::class);

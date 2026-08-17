@@ -15,7 +15,7 @@ class ClassSubject extends Model
 
     protected $fillable = [
         'class_id',
-        'center_subject_id',
+        'subject_id',
         'teacher_id',
         'start_date',
         'end_date',
@@ -40,11 +40,11 @@ class ClassSubject extends Model
     }
 
     /**
-     * @return BelongsTo<CenterSubject, $this>
+     * @return BelongsTo<Subject, $this>
      */
-    public function centerSubject(): BelongsTo
+    public function subject(): BelongsTo
     {
-        return $this->belongsTo(CenterSubject::class);
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
     /**

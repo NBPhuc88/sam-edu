@@ -101,6 +101,16 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');
     });
 
+    // Subject Management Routes (Center Scope CRUD)
+    Route::prefix('subjects')->name('subjects.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SubjectController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\SubjectController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\SubjectController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\SubjectController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\SubjectController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\SubjectController::class, 'destroy'])->name('destroy');
+    });
+
     // Class Student & Real-time Group Chat Routes
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('students.sample-csv');

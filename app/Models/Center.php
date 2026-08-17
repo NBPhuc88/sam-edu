@@ -88,11 +88,11 @@ class Center extends Model
     }
 
     /**
-     * @return HasMany<CenterSubject, $this>
+     * @return HasMany<Subject, $this>
      */
-    public function centerSubjects(): HasMany
+    public function subjects(): HasMany
     {
-        return $this->hasMany(CenterSubject::class);
+        return $this->hasMany(Subject::class);
     }
 
     /**

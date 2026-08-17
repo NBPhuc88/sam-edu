@@ -284,7 +284,7 @@ class DashboardService implements DashboardServiceInterface
             7 => 'Chủ Nhật',
         ];
 
-        $teacherSchedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.centerSubject.subject', 'room'])
+        $teacherSchedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
             ->whereHas('classSubject', function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId);
             })
@@ -301,7 +301,7 @@ class DashboardService implements DashboardServiceInterface
                 $mapped[] = [
                     'id'           => $sched->id,
                     'class_name'   => $sched->classSubject->schoolClass->name ?? 'Lớp học',
-                    'subject_name' => $sched->classSubject->centerSubject->subject->name ?? 'Môn học',
+                    'subject_name' => $sched->classSubject->subject->name ?? 'Môn học',
                     'room_name'    => $sched->room->name ?? 'Phòng học',
                     'time'         => "{$sched->start_time} - {$sched->end_time}",
                 ];
@@ -342,7 +342,7 @@ class DashboardService implements DashboardServiceInterface
             7 => 'Chủ Nhật',
         ];
 
-        $schedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.centerSubject.subject', 'room'])
+        $schedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
             ->whereHas('classSubject', function ($q) use ($classIds) {
                 $q->whereIn('class_id', $classIds);
             })
@@ -358,7 +358,7 @@ class DashboardService implements DashboardServiceInterface
                 $mapped[] = [
                     'id'           => $sched->id,
                     'class_name'   => $sched->classSubject->schoolClass->name ?? 'Lớp học',
-                    'subject_name' => $sched->classSubject->centerSubject->subject->name ?? 'Môn học',
+                    'subject_name' => $sched->classSubject->subject->name ?? 'Môn học',
                     'room_name'    => $sched->room->name ?? 'Phòng học',
                     'time'         => "{$sched->start_time} - {$sched->end_time}",
                 ];
