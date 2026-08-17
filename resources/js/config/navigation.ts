@@ -75,6 +75,7 @@ const superAdminNav: NavItem[] = [
         label: 'Tài Chính',
         icon: DollarSign,
         children: [
+            { label: 'Học Phí Học Sinh', path: '/tuitions' },
             { label: 'Gói Dịch Vụ', path: '/subscriptions' },
             { label: 'Giao Dịch Thanh Toán', path: '/payments' },
             { label: 'Cấu Hình Gói', path: '/plans' },
@@ -132,6 +133,7 @@ const adminNav: NavItem[] = [
         label: 'Tài Chính',
         icon: DollarSign,
         children: [
+            { label: 'Học Phí Học Sinh', path: '/tuitions' },
             { label: 'Thanh Toán', path: '/payments' },
             { label: 'Gói Dịch Vụ', path: '/subscriptions' },
         ],

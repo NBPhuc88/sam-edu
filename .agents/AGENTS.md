@@ -118,6 +118,8 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 | **28** | `system_settings`         | Cấu hình cài đặt hệ thống toàn cục (key-value: logo, tên hệ thống, email liên hệ, hotline...).                                                                                                            |
 | **29** | `contact_requests`        | Yêu cầu tư vấn / liên hệ từ khách hàng gửi qua Landing Page (`name`, `phone`, `email`, `message`, `status`).                                                                                              |
 | **30** | `class_chat_messages`     | Tin nhắn trao đổi trong nhóm chat thời gian thực của từng lớp học (`class_id`, `sender_type`, `sender_id`, `message`, `is_pinned`).                                                                       |
+| **31** | `student_tuitions`        | Quản lý khoản học phí theo học sinh và lớp học (`center_id`, `student_id`, `class_id`, `title`, `total_amount`, `paid_amount`, `remaining_amount`, `status`, `due_date`, `deleted_at`).                   |
+| **32** | `tuition_payments`        | Lịch sử các đợt đóng tiền học phí từng phần của học sinh (`student_tuition_id`, `amount`, `payment_date`, `payment_method`, `transaction_code`, `received_by`, `deleted_at`).                               |
 
 ---
 

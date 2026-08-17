@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Repositories\Tuition;
+
+use App\Models\TuitionPayment;
+
+interface TuitionPaymentRepositoryInterface
+{
+    /**
+     * @param  int                 $id
+     * @return TuitionPayment|null
+     */
+    public function find(int $id): ?TuitionPayment;
+
+    /**
+     * @param  array<string, mixed> $data
+     * @return TuitionPayment
+     */
+    public function create(array $data): TuitionPayment;
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return TuitionPayment
+     */
+    public function update(int $id, array $data): TuitionPayment;
+
+    /**
+     * @param  int  $id
+     * @return bool
+     */
+    public function delete(int $id): bool;
+}

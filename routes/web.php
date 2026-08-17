@@ -105,6 +105,22 @@ Route::middleware('auth.any')->group(function () {
             Route::post('/messages/{messageId}/pin', [ChatController::class, 'togglePin'])->name('pin');
         });
     });
+
+    // Student Tuition & Course Fee Management Routes
+    Route::prefix('tuitions')->name('tuitions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StudentTuitionController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\StudentTuitionController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\StudentTuitionController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\StudentTuitionController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\StudentTuitionController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\StudentTuitionController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\StudentTuitionController::class, 'destroy'])->name('destroy');
+
+        // Payment Installments
+        Route::post('/{tuitionId}/payments', [\App\Http\Controllers\StudentTuitionController::class, 'storePayment'])->name('payments.store');
+        Route::patch('/payments/{paymentId}', [\App\Http\Controllers\StudentTuitionController::class, 'updatePayment'])->name('payments.update');
+        Route::delete('/payments/{paymentId}', [\App\Http\Controllers\StudentTuitionController::class, 'destroyPayment'])->name('payments.destroy');
+    });
 });
 
 // ─── Fallback Route for 404 Not Found ────────────────────────────────────────

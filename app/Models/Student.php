@@ -102,6 +102,14 @@ class Student extends Authenticatable
     }
 
     /**
+     * @return HasMany<StudentTuition, $this>
+     */
+    public function tuitions(): HasMany
+    {
+        return $this->hasMany(StudentTuition::class, 'student_id');
+    }
+
+    /**
      * @return MorphMany<RefreshToken, $this>
      */
     public function refreshTokens(): MorphMany
