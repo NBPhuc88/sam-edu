@@ -6,6 +6,7 @@ import {
     Shield,
     Trash2,
     UserCheck,
+    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '../../../components/ui/Badge';
@@ -53,6 +54,11 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
     const [roleFilter, setRoleFilter] = useState(filters.role || '');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<AdminItem | null>(null);
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletingAdmin, setDeletingAdmin] = useState<AdminItem | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Form cho tạo mới & cập nhật
     const form = useForm({
@@ -114,14 +120,21 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         }
     };
 
-    const handleDelete = (admin: AdminItem) => {
-        if (
-            confirm(
-                `Bạn có chắc chắn muốn xóa tài khoản Quản trị viên "${admin.full_name}" không?`,
-            )
-        ) {
-            router.delete(`/admins/${admin.id}`);
-        }
+    const openDeleteModal = (admin: AdminItem) => {
+        setDeletingAdmin(admin);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (!deletingAdmin) return;
+        setIsDeleting(true);
+        router.delete(`/admins/${deletingAdmin.id}`, {
+            onFinish: () => {
+                setIsDeleting(false);
+                setDeleteModalOpen(false);
+                setDeletingAdmin(null);
+            },
+        });
     };
 
     const toggleCenterSelection = (centerId: number) => {
@@ -143,20 +156,19 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                 {/* Header Title */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-black text-gray-900">
+                        <h1 className="flex items-center gap-2.5 text-2xl font-black text-gray-900">
                             <Shield className="h-7 w-7 text-emerald-600" />
                             Quản lý Tài khoản Quản trị viên
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
-                            Quản lý toàn bộ tài khoản Super Admin và Admin phân
-                            công quản lý trung tâm.
+                        <p className="mt-1 text-sm text-gray-500">
+                            Quản lý toàn bộ tài khoản Super Admin và Admin phân công quản lý trung tâm.
                         </p>
                     </div>
 
                     <Button
                         variant="success"
                         size="md"
-                        icon={<Plus className="h-4 w-4" />}
+                        icon={<Plus className="h-4.5 w-4.5" />}
                         onClick={handleOpenCreateModal}
                     >
                         Tạo Admin Mới
@@ -164,32 +176,32 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                 </div>
 
                 {/* Filter & Search Bar */}
-                <Card className="border-gray-200 p-4">
+                <Card className="border-gray-200 p-5">
                     <form
                         onSubmit={handleSearch}
                         className="flex flex-col gap-3 sm:flex-row sm:items-center"
                     >
                         <div className="relative flex-1">
-                            <Search className="absolute top-2.5 left-3 h-4 w-4 text-gray-400" />
                             <Input
                                 placeholder="Tìm kiếm theo tên, username, email, sđt..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 text-xs"
+                                icon={<Search className="h-5 w-5 text-gray-400" />}
+                                className="!py-2.5 !text-sm"
                             />
                         </div>
 
                         <select
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
-                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-2xs focus:border-emerald-500 focus:outline-hidden"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-2xs focus:border-emerald-500 focus:outline-hidden"
                         >
                             <option value="">-- Tất cả vai trò --</option>
                             <option value="super_admin">Super Admin</option>
                             <option value="admin">Admin Trung tâm</option>
                         </select>
 
-                        <Button variant="secondary" size="sm" type="submit">
+                        <Button variant="secondary" size="md" type="submit" className="px-5">
                             Lọc danh sách
                         </Button>
                     </form>
@@ -198,16 +210,16 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                 {/* Admins Data Table */}
                 <Card className="overflow-hidden border-gray-200">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                            <thead className="border-b border-gray-200 bg-slate-50 font-bold text-gray-700 uppercase">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <tr>
-                                    <th className="p-3.5">Quản trị viên</th>
-                                    <th className="p-3.5">Vai trò</th>
-                                    <th className="p-3.5">Liên hệ</th>
-                                    <th className="p-3.5">
+                                    <th className="px-6 py-4">Quản trị viên</th>
+                                    <th className="px-6 py-4">Vai trò</th>
+                                    <th className="px-6 py-4">Liên hệ</th>
+                                    <th className="px-6 py-4">
                                         Trung tâm Phân công
                                     </th>
-                                    <th className="p-3.5 text-right">
+                                    <th className="px-6 py-4 text-right">
                                         Thao tác
                                     </th>
                                 </tr>
@@ -217,7 +229,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                     <tr>
                                         <td
                                             colSpan={5}
-                                            className="p-8 text-center text-gray-400"
+                                            className="p-8 text-center text-sm text-gray-400"
                                         >
                                             Chưa có tài khoản Quản trị viên nào.
                                         </td>
@@ -228,10 +240,10 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                             key={admin.id}
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
-                                            <td className="p-3.5">
+                                            <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div
-                                                        className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
+                                                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                                                             admin.role ===
                                                             'super_admin'
                                                                 ? 'bg-emerald-100 text-emerald-700'
@@ -246,7 +258,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                         <div className="font-bold text-gray-900">
                                                             {admin.full_name}
                                                         </div>
-                                                        <div className="text-[11px] text-gray-400">
+                                                        <div className="text-xs font-mono text-gray-400">
                                                             @{admin.username} ·{' '}
                                                             {admin.admin_code}
                                                         </div>
@@ -254,7 +266,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                 </div>
                                             </td>
 
-                                            <td className="p-3.5">
+                                            <td className="px-6 py-4">
                                                 {admin.role ===
                                                 'super_admin' ? (
                                                     <Badge variant="active">
@@ -267,25 +279,25 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                 )}
                                             </td>
 
-                                            <td className="p-3.5">
-                                                <div className="text-gray-900">
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm font-semibold text-gray-900">
                                                     {admin.email ?? '---'}
                                                 </div>
-                                                <div className="text-[11px] text-gray-400">
+                                                <div className="text-xs text-gray-400">
                                                     {admin.phone ?? '---'}
                                                 </div>
                                             </td>
 
-                                            <td className="p-3.5">
+                                            <td className="px-6 py-4">
                                                 {admin.role ===
                                                 'super_admin' ? (
-                                                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
-                                                        <UserCheck className="h-3.5 w-3.5" />
+                                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
+                                                        <UserCheck className="h-4 w-4" />
                                                         Tất cả Trung tâm
                                                     </span>
                                                 ) : admin.centers.length ===
                                                   0 ? (
-                                                    <span className="text-gray-400 italic">
+                                                    <span className="text-sm text-gray-400 italic">
                                                         Chưa phân công
                                                     </span>
                                                 ) : (
@@ -294,7 +306,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                             (c) => (
                                                                 <span
                                                                     key={c.id}
-                                                                    className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+                                                                    className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
                                                                 >
                                                                     {c.name}
                                                                 </span>
@@ -304,13 +316,13 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                 )}
                                             </td>
 
-                                            <td className="p-3.5 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <Button
                                                         variant="edit"
                                                         size="sm"
                                                         icon={
-                                                            <Edit className="h-3.5 w-3.5" />
+                                                            <Edit className="h-4 w-4" />
                                                         }
                                                         onClick={() =>
                                                             handleOpenEditModal(
@@ -322,7 +334,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                     </Button>
                                                     {admin.role === 'super_admin' ? (
                                                         <span
-                                                            className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-400 cursor-not-allowed select-none"
+                                                            className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-400 cursor-not-allowed select-none"
                                                             title="Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa"
                                                         >
                                                             Không thể xóa
@@ -332,10 +344,10 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                                             variant="danger"
                                                             size="sm"
                                                             icon={
-                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                <Trash2 className="h-4 w-4" />
                                                             }
                                                             onClick={() =>
-                                                                handleDelete(admin)
+                                                                openDeleteModal(admin)
                                                             }
                                                         >
                                                             Xóa
@@ -362,73 +374,96 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                     }
                 >
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <Input
-                            label="Họ và Tên (*)"
-                            placeholder="Nhập họ và tên đầy đủ"
-                            value={form.data.full_name}
-                            onChange={(e) =>
-                                form.setData('full_name', e.target.value)
-                            }
-                            error={form.errors.full_name}
-                        />
-
-                        {!editingAdmin && (
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                Họ và Tên (*)
+                            </label>
                             <Input
-                                label="Tên đăng nhập (Username) (*)"
-                                placeholder="Nhập username"
-                                value={form.data.username}
+                                placeholder="Nhập họ và tên đầy đủ"
+                                value={form.data.full_name}
                                 onChange={(e) =>
-                                    form.setData('username', e.target.value)
+                                    form.setData('full_name', e.target.value)
                                 }
-                                error={form.errors.username}
-                            />
-                        )}
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <Input
-                                label="Email"
-                                type="email"
-                                placeholder="admin@example.com"
-                                value={form.data.email}
-                                onChange={(e) =>
-                                    form.setData('email', e.target.value)
-                                }
-                                error={form.errors.email}
-                            />
-                            <Input
-                                label="Số điện thoại"
-                                placeholder="0912..."
-                                value={form.data.phone}
-                                onChange={(e) =>
-                                    form.setData('phone', e.target.value)
-                                }
-                                error={form.errors.phone}
+                                error={form.errors.full_name}
+                                className="!py-3 !text-sm"
                             />
                         </div>
 
-                        <Input
-                            label={
-                                editingAdmin
+                        {!editingAdmin && (
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Tên đăng nhập (Username) (*)
+                                </label>
+                                <Input
+                                    placeholder="Nhập username"
+                                    value={form.data.username}
+                                    onChange={(e) =>
+                                        form.setData('username', e.target.value)
+                                    }
+                                    error={form.errors.username}
+                                    className="!py-3 !text-sm"
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Email
+                                </label>
+                                <Input
+                                    type="email"
+                                    placeholder="admin@example.com"
+                                    value={form.data.email}
+                                    onChange={(e) =>
+                                        form.setData('email', e.target.value)
+                                    }
+                                    error={form.errors.email}
+                                    className="!py-3 !text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Số điện thoại
+                                </label>
+                                <Input
+                                    placeholder="0912..."
+                                    value={form.data.phone}
+                                    onChange={(e) =>
+                                        form.setData('phone', e.target.value)
+                                    }
+                                    error={form.errors.phone}
+                                    className="!py-3 !text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                {editingAdmin
                                     ? 'Mật khẩu mới (Bỏ trống nếu giữ nguyên)'
-                                    : 'Mật khẩu (*)'
-                            }
-                            type="password"
-                            placeholder="••••••••"
-                            value={form.data.password}
-                            onChange={(e) =>
-                                form.setData('password', e.target.value)
-                            }
-                            error={form.errors.password}
-                        />
+                                    : 'Mật khẩu (*)'}
+                            </label>
+                            <Input
+                                type="password"
+                                placeholder="••••••••"
+                                value={form.data.password}
+                                onChange={(e) =>
+                                    form.setData('password', e.target.value)
+                                }
+                                error={form.errors.password}
+                                className="!py-3 !text-sm"
+                            />
+                        </div>
 
                         {/* Vai trò */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700">
+                            <label className="block text-sm font-bold text-gray-700">
                                 Vai trò Admin (*)
                             </label>
-                            <div className="mt-1 flex flex-col gap-2">
+                            <div className="mt-2 flex flex-col gap-2">
                                 <div className="flex items-center gap-4">
-                                    <label className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+                                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
                                         <input
                                             type="radio"
                                             name="role"
@@ -442,7 +477,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                         />
                                         Admin (Phân công theo Trung tâm)
                                     </label>
-                                    <label className={`flex items-center gap-2 text-xs font-semibold ${
+                                    <label className={`flex items-center gap-2 text-sm font-semibold cursor-pointer ${
                                         (hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin'
                                             ? 'text-gray-400 cursor-not-allowed'
                                             : 'text-gray-800'
@@ -464,12 +499,12 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                                     </label>
                                 </div>
                                 {((hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin') && (
-                                    <p className="text-[11px] text-amber-600 italic">
+                                    <p className="text-xs text-amber-600 italic">
                                         * Hệ thống đã có 1 Super Admin. Chỉ duy nhất 1 Super Admin được tồn tại.
                                     </p>
                                 )}
                                 {editingAdmin?.role === 'super_admin' && (
-                                    <p className="text-[11px] text-emerald-600 italic">
+                                    <p className="text-xs text-emerald-600 italic">
                                         * Tài khoản Quản trị viên tối cao (Super Admin) không thể bị hạ cấp hoặc xóa.
                                     </p>
                                 )}
@@ -479,14 +514,14 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                         {/* Phân công Trung tâm (Chỉ chọn khi role = admin) */}
                         {form.data.role === 'admin' && (
                             <div className="space-y-2 pt-2">
-                                <label className="block text-xs font-bold text-gray-700">
+                                <label className="block text-sm font-bold text-gray-700">
                                     Phân công Trung tâm quản lý:
                                 </label>
-                                <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-200 p-3 space-y-1.5">
+                                <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 p-3.5 space-y-2">
                                     {centers.map((center) => (
                                         <label
                                             key={center.id}
-                                            className="flex items-center gap-2 text-xs text-gray-800"
+                                            className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer"
                                         >
                                             <input
                                                 type="checkbox"
@@ -509,10 +544,10 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                             </div>
                         )}
 
-                        <div className="flex justify-end gap-2 pt-4">
+                        <div className="flex justify-end gap-2.5 pt-4">
                             <Button
                                 variant="secondary"
-                                size="sm"
+                                size="md"
                                 type="button"
                                 onClick={() => setIsCreateModalOpen(false)}
                             >
@@ -520,7 +555,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                             </Button>
                             <Button
                                 variant="success"
-                                size="sm"
+                                size="md"
                                 type="submit"
                                 disabled={form.processing}
                             >
@@ -530,6 +565,46 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                             </Button>
                         </div>
                     </form>
+                </Modal>
+
+                {/* Modal Xác nhận Xóa Admin */}
+                <Modal
+                    isOpen={deleteModalOpen}
+                    onClose={() => setDeleteModalOpen(false)}
+                    title="Xác Nhận Xóa Quản Trị Viên"
+                    footer={
+                        <>
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                onClick={() => setDeleteModalOpen(false)}
+                                disabled={isDeleting}
+                            >
+                                Hủy Bỏ
+                            </Button>
+                            <Button
+                                variant="danger"
+                                size="md"
+                                onClick={confirmDelete}
+                                isLoading={isDeleting}
+                                icon={<Trash2 className="h-5 w-5" />}
+                            >
+                                Xác Nhận Xóa
+                            </Button>
+                        </>
+                    }
+                >
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-red-600">
+                            <AlertCircle className="h-6 w-6 shrink-0" />
+                            <p className="text-base font-semibold">
+                                Bạn có chắc chắn muốn xóa tài khoản Quản trị viên "{deletingAdmin?.full_name}" (@{deletingAdmin?.username})?
+                            </p>
+                        </div>
+                        <p className="text-sm text-gray-500">
+                            Tài khoản này sẽ mất quyền truy cập vào hệ thống quản trị ngay lập tức.
+                        </p>
+                    </div>
                 </Modal>
             </div>
         </AppLayout>

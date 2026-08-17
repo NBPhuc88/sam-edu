@@ -71,7 +71,7 @@ export const Statistics: React.FC<any> = ({
         {
             header: 'Trung Tâm',
             cell: (row) => (
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">
+                <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-800">
                     {row.center_name} ({row.center_code})
                 </span>
             ),
@@ -92,11 +92,11 @@ export const Statistics: React.FC<any> = ({
                     rate >= 80 ? 'active' : rate >= 50 ? 'pending' : 'info';
 
                 return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                         <Badge variant={badgeVariant}>{rate}% Tải Lớp</Badge>
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-200">
+                        <div className="h-2 w-20 overflow-hidden rounded-full bg-gray-200">
                             <div
-                                className={`h-1.5 rounded-full ${
+                                className={`h-2 rounded-full ${
                                     rate >= 80
                                         ? 'bg-emerald-600'
                                         : rate >= 50
@@ -118,8 +118,8 @@ export const Statistics: React.FC<any> = ({
                 {/* Header Action Bar with Role Badge & Center Scope Filter */}
                 <div className="flex flex-col justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-xs sm:flex-row sm:items-center">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-xl font-bold text-gray-900">
+                        <div className="flex items-center gap-2.5">
+                            <h2 className="text-2xl font-bold text-gray-900">
                                 Thống Kê Sĩ Số Học Sinh
                             </h2>
                             <Badge
@@ -131,20 +131,19 @@ export const Statistics: React.FC<any> = ({
                                 {isSuperAdmin ? '(Super Admin)' : ''}
                             </Badge>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">
-                            Báo cáo phân tích lượng học sinh cho từng lớp và
-                            từng trung tâm được phân quyền.
+                        <p className="mt-1 text-sm text-gray-500">
+                            Báo cáo phân tích lượng học sinh cho từng lớp và từng trung tâm được phân quyền.
                         </p>
                     </div>
 
                     {/* Scope Filter Dropdown */}
                     {allowedCenters && allowedCenters.length > 0 && (
                         <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-gray-500" />
+                            <Filter className="h-4.5 w-4.5 text-gray-500" />
                             <select
                                 value={selectedCenterId || ''}
                                 onChange={handleCenterFilterChange}
-                                className="ui-input min-w-[200px] rounded-lg py-1.5 text-xs"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden min-w-[220px]"
                             >
                                 <option value="">
                                     Tất cả Trung tâm được phép
@@ -161,13 +160,13 @@ export const Statistics: React.FC<any> = ({
 
                 {/* Summary Metrics Cards */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                    <Card className="bg-white">
+                    <Card className="bg-white p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                                <p className="text-sm font-semibold tracking-wider text-gray-500 uppercase">
                                     Trung Tâm Trong Phạm Vi
                                 </p>
-                                <h4 className="mt-1 text-2xl font-bold text-gray-900">
+                                <h4 className="mt-1.5 text-2xl font-bold text-gray-900">
                                     {centerStats?.length || 0}
                                 </h4>
                             </div>
@@ -177,13 +176,13 @@ export const Statistics: React.FC<any> = ({
                         </div>
                     </Card>
 
-                    <Card className="bg-white">
+                    <Card className="bg-white p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                                <p className="text-sm font-semibold tracking-wider text-gray-500 uppercase">
                                     Tổng Lớp Học Phạm Vi
                                 </p>
-                                <h4 className="mt-1 text-2xl font-bold text-gray-900">
+                                <h4 className="mt-1.5 text-2xl font-bold text-gray-900">
                                     {classStats?.length || 0}
                                 </h4>
                             </div>
@@ -193,13 +192,13 @@ export const Statistics: React.FC<any> = ({
                         </div>
                     </Card>
 
-                    <Card className="bg-white">
+                    <Card className="bg-white p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                                <p className="text-sm font-semibold tracking-wider text-gray-500 uppercase">
                                     Tổng Học Sinh Quản Lý
                                 </p>
-                                <h4 className="mt-1 text-2xl font-bold text-gray-900">
+                                <h4 className="mt-1.5 text-2xl font-bold text-gray-900">
                                     {centerStats
                                         ? centerStats.reduce(
                                               (sum: number, c: any) =>
@@ -220,7 +219,7 @@ export const Statistics: React.FC<any> = ({
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Chart 1: Students per Center */}
                     <Card title="Thống Kê Học Sinh Theo Trung Tâm">
-                        <div className="h-64 w-full pt-4">
+                        <div className="h-72 w-full pt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={centerStats || []}>
                                     <CartesianGrid
@@ -230,10 +229,10 @@ export const Statistics: React.FC<any> = ({
                                     />
                                     <XAxis
                                         dataKey="code"
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tick={{ fontSize: 13, fill: '#4b5563' }}
                                     />
                                     <Tooltip />
                                     <Bar
@@ -249,7 +248,7 @@ export const Statistics: React.FC<any> = ({
 
                     {/* Chart 2: Students per Class */}
                     <Card title="Thống Kê Học Sinh Theo Lớp Học">
-                        <div className="h-64 w-full pt-4">
+                        <div className="h-72 w-full pt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={classStats || []}>
                                     <CartesianGrid
@@ -259,10 +258,10 @@ export const Statistics: React.FC<any> = ({
                                     />
                                     <XAxis
                                         dataKey="code"
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        tick={{ fontSize: 13, fill: '#4b5563' }}
                                     />
                                     <Tooltip />
                                     <Bar

@@ -130,7 +130,7 @@ export default function ClassStudentsPage({
             header: 'Mã HS',
             accessorKey: 'student_code',
             cell: (row) => (
-                <span className="font-mono text-xs font-semibold text-gray-800">
+                <span className="font-mono text-sm font-semibold text-gray-800">
                     {row.student_code}
                 </span>
             ),
@@ -140,7 +140,7 @@ export default function ClassStudentsPage({
             accessorKey: 'full_name',
             cell: (row) => (
                 <div>
-                    <div className="font-medium text-gray-900">
+                    <div className="font-bold text-gray-900">
                         {row.full_name}
                     </div>
                     <div className="text-xs text-gray-500">{row.email}</div>
@@ -151,18 +151,20 @@ export default function ClassStudentsPage({
             header: 'Số điện thoại',
             accessorKey: 'phone',
             cell: (row) =>
-                row.phone || (
-                    <span className="text-gray-400 italic">Chưa có</span>
+                row.phone ? (
+                    <span className="font-mono text-sm text-gray-700">{row.phone}</span>
+                ) : (
+                    <span className="text-gray-400 italic text-sm">Chưa có</span>
                 ),
         },
         {
             header: 'Phụ huynh',
             cell: (row) => (
                 <div>
-                    <div className="text-xs font-medium text-gray-800">
+                    <div className="text-sm font-semibold text-gray-800">
                         {row.parent_name || 'N/A'}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="font-mono text-xs text-gray-500">
                         {row.parent_phone || ''}
                     </div>
                 </div>
@@ -171,7 +173,7 @@ export default function ClassStudentsPage({
         {
             header: 'Ngày ghi danh',
             cell: (row) => (
-                <span className="text-xs text-gray-600">
+                <span className="text-sm font-mono text-gray-600">
                     {row.pivot?.enrolled_at
                         ? new Date(row.pivot.enrolled_at).toLocaleDateString(
                               'vi-VN',
@@ -201,15 +203,15 @@ export default function ClassStudentsPage({
                 <div>
                     <button
                         onClick={() => window.history.back()}
-                        className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-gray-700"
+                        className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
                     >
-                        <ArrowLeft className="h-3.5 w-3.5" />
+                        <ArrowLeft className="h-4 w-4" />
                         Quay lại danh sách lớp học
                     </button>
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                            <h1 className="flex items-center gap-2.5 text-2xl font-bold text-gray-900">
                                 <GraduationCap className="h-7 w-7 text-emerald-600" />
                                 Học sinh Lớp: {schoolClass.name} (
                                 {schoolClass.code})
@@ -226,18 +228,20 @@ export default function ClassStudentsPage({
                         <div className="flex items-center gap-3">
                             <Button
                                 variant="secondary"
+                                size="md"
                                 onClick={handleExport}
                                 className="flex items-center gap-2"
                             >
-                                <Download className="h-4 w-4 text-gray-600" />
+                                <Download className="h-4.5 w-4.5 text-gray-600" />
                                 Export CSV Lớp
                             </Button>
                             <Button
                                 variant="success"
+                                size="md"
                                 onClick={() => setIsImportModalOpen(true)}
                                 className="flex items-center gap-2"
                             >
-                                <Upload className="h-4 w-4" />
+                                <Upload className="h-4.5 w-4.5" />
                                 Import CSV Lớp
                             </Button>
                         </div>
@@ -259,7 +263,7 @@ export default function ClassStudentsPage({
                 {/* Table Card */}
                 <Card>
                     {/* Search & Header */}
-                    <div className="flex flex-col justify-between gap-4 border-b border-gray-100 bg-slate-50/50 p-4 sm:flex-row sm:items-center">
+                    <div className="flex flex-col justify-between gap-4 border-b border-gray-100 bg-slate-50/50 p-5 sm:flex-row sm:items-center">
                         <form
                             onSubmit={handleSearch}
                             className="flex w-full max-w-md items-center gap-2"
@@ -268,17 +272,19 @@ export default function ClassStudentsPage({
                                 placeholder="Tìm học sinh trong lớp theo Tên, Mã HS, Email..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
+                                className="!py-2.5 !text-sm"
                             />
                             <Button
                                 type="submit"
                                 variant="secondary"
-                                className="px-3"
+                                size="md"
+                                className="px-4"
                             >
-                                <Search className="h-4 w-4" />
+                                <Search className="h-5 w-5" />
                             </Button>
                         </form>
 
-                        <div className="text-xs font-medium text-gray-500">
+                        <div className="text-sm font-medium text-gray-500">
                             Số học sinh hiển thị:{' '}
                             <span className="font-bold text-gray-900">
                                 {students.data.length}
@@ -302,7 +308,7 @@ export default function ClassStudentsPage({
                                 Trang {students.current_page} /{' '}
                                 {students.last_page}
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                                 {students.links.map((link, idx) => (
                                     <button
                                         key={idx}
@@ -310,7 +316,7 @@ export default function ClassStudentsPage({
                                         onClick={() =>
                                             link.url && router.get(link.url)
                                         }
-                                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
                                             link.active
                                                 ? 'bg-emerald-600 text-white'
                                                 : link.url
@@ -337,6 +343,7 @@ export default function ClassStudentsPage({
                     <>
                         <Button
                             variant="secondary"
+                            size="md"
                             onClick={() => setIsImportModalOpen(false)}
                             disabled={isUploading}
                         >
@@ -344,6 +351,7 @@ export default function ClassStudentsPage({
                         </Button>
                         <Button
                             variant="success"
+                            size="md"
                             onClick={handleImportSubmit}
                             disabled={isUploading || !selectedFile}
                         >
@@ -361,9 +369,9 @@ export default function ClassStudentsPage({
                         mới học sinh và đưa vào lớp học.
                     </p>
 
-                    <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                        <div className="flex items-center gap-1 font-semibold">
-                            <FileSpreadsheet className="h-4 w-4 text-amber-600" />
+                    <div className="space-y-1.5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        <div className="flex items-center gap-1.5 font-semibold">
+                            <FileSpreadsheet className="h-5 w-5 text-amber-600" />
                             Định dạng các cột trong CSV:
                         </div>
                         <div>
@@ -379,27 +387,28 @@ export default function ClassStudentsPage({
                     <div className="pt-2">
                         <Button
                             variant="secondary"
+                            size="md"
                             onClick={handleDownloadSample}
                             type="button"
-                            className="flex w-full items-center justify-center gap-2 py-2 text-xs"
+                            className="flex w-full items-center justify-center gap-2 py-2.5 text-sm"
                         >
-                            <Download className="h-4 w-4 text-emerald-600" />
+                            <Download className="h-4.5 w-4.5 text-emerald-600" />
                             Tải tệp CSV mẫu cho lớp học (.csv)
                         </Button>
                     </div>
 
-                    <div className="space-y-1 pt-2">
-                        <label className="block text-xs font-semibold text-gray-700">
+                    <div className="space-y-2 pt-2">
+                        <label className="block text-sm font-semibold text-gray-700">
                             Chọn tệp CSV từ máy tính
                         </label>
                         <input
                             type="file"
                             accept=".csv,text/csv"
                             onChange={handleFileChange}
-                            className="block w-full cursor-pointer rounded-md border border-gray-200 p-1 text-xs text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+                            className="block w-full cursor-pointer rounded-md border border-gray-200 p-2 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
                         />
                         {errorMessage && (
-                            <p className="mt-1 text-xs font-medium text-red-600">
+                            <p className="mt-1 text-sm font-medium text-red-600">
                                 {errorMessage}
                             </p>
                         )}

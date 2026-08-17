@@ -180,7 +180,7 @@ return;
                             <DollarSign className="h-7 w-7 text-emerald-600" />
                             Quản Lý Học Phí & Đóng Tiền
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-sm text-gray-500">
                             Theo dõi các khoản học phí, các đợt đóng tiền từng phần và công nợ của học sinh theo từng lớp học.
                         </p>
                     </div>
@@ -188,7 +188,7 @@ return;
                         <Button
                             variant="success"
                             size="md"
-                            icon={<Plus className="h-4 w-4" />}
+                            icon={<Plus className="h-4.5 w-4.5" />}
                         >
                             Tạo Khoản Thu Học Phí Mới
                         </Button>
@@ -197,16 +197,16 @@ return;
 
                 {/* 3 Summary Statistics Cards */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                    <Card className="border-l-4 border-l-blue-500 bg-white p-5 shadow-xs">
+                    <Card className="border-l-4 border-l-blue-500 bg-white p-6 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
                                     Tổng Học Phí Phải Thu
                                 </p>
-                                <h3 className="mt-1 text-2xl font-extrabold text-gray-900">
+                                <h3 className="mt-1.5 text-2xl font-extrabold text-gray-900">
                                     {formatCurrency(stats?.total_amount || 0)}
                                 </h3>
-                                <p className="mt-1 text-[11px] text-gray-400">
+                                <p className="mt-1 text-xs text-gray-400">
                                     Tổng <strong>{stats?.total_tuitions || 0}</strong> hồ sơ học phí
                                 </p>
                             </div>
@@ -216,16 +216,16 @@ return;
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-emerald-500 bg-white p-5 shadow-xs">
+                    <Card className="border-l-4 border-l-emerald-500 bg-white p-6 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                                <p className="text-sm font-semibold uppercase tracking-wider text-emerald-700">
                                     Đã Thu Thực Tế
                                 </p>
-                                <h3 className="mt-1 text-2xl font-extrabold text-emerald-700">
+                                <h3 className="mt-1.5 text-2xl font-extrabold text-emerald-700">
                                     {formatCurrency(stats?.paid_amount || 0)}
                                 </h3>
-                                <p className="mt-1 text-[11px] text-gray-400">
+                                <p className="mt-1 text-xs text-gray-400">
                                     <strong>{stats?.completed_count || 0}</strong> hồ sơ đã đóng đủ 100%
                                 </p>
                             </div>
@@ -235,16 +235,16 @@ return;
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-amber-500 bg-white p-5 shadow-xs">
+                    <Card className="border-l-4 border-l-amber-500 bg-white p-6 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                                <p className="text-sm font-semibold uppercase tracking-wider text-amber-700">
                                     Tổng Tiền Còn Nợ
                                 </p>
-                                <h3 className="mt-1 text-2xl font-extrabold text-amber-700">
+                                <h3 className="mt-1.5 text-2xl font-extrabold text-amber-700">
                                     {formatCurrency(stats?.remaining_amount || 0)}
                                 </h3>
-                                <p className="mt-1 text-[11px] text-gray-400">
+                                <p className="mt-1 text-xs text-gray-400">
                                     <strong>{stats?.partial_count || 0}</strong> học sinh đang đóng dở
                                 </p>
                             </div>
@@ -256,15 +256,16 @@ return;
                 </div>
 
                 {/* Filter Box */}
-                <Card className="border-gray-200 bg-white p-4 shadow-xs">
-                    <form onSubmit={handleSearch} className="space-y-3">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                    <form onSubmit={handleSearch} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
                                 <Input
                                     placeholder="Tìm tên HS, mã HS, tiêu đề..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    icon={<Search className="h-4 w-4 text-gray-400" />}
+                                    icon={<Search className="h-5 w-5 text-gray-400" />}
+                                    className="!py-2.5 !text-sm"
                                 />
                             </div>
 
@@ -276,7 +277,7 @@ return;
                                             setSelectedCenterId(e.target.value);
                                             setSelectedClassId('');
                                         }}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
@@ -292,7 +293,7 @@ return;
                                 <select
                                     value={selectedClassId}
                                     onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="">Tất cả Lớp học</option>
                                     {filteredClasses.map((cl) => (
@@ -307,7 +308,7 @@ return;
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả Trạng thái</option>
                                     <option value="pending">Chưa đóng</option>
@@ -318,11 +319,11 @@ return;
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-1">
+                        <div className="flex justify-end gap-2.5 pt-1">
                             <Button
                                 type="button"
                                 variant="secondary"
-                                size="sm"
+                                size="md"
                                 onClick={handleResetFilter}
                             >
                                 Đặt lại bộ lọc
@@ -330,8 +331,8 @@ return;
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
-                                icon={<Filter className="h-3.5 w-3.5" />}
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
                             >
                                 Lọc Dữ Liệu
                             </Button>
@@ -342,8 +343,8 @@ return;
                 {/* Main Table */}
                 <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-gray-600">
-                            <thead className="border-b border-gray-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-gray-700">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
                                     <th className="px-6 py-4">Học Sinh</th>
                                     <th className="px-6 py-4">Lớp Học & Khóa Học</th>
@@ -372,7 +373,7 @@ return;
                                                     <div className="font-bold text-gray-900">
                                                         {item.student?.full_name ?? 'N/A'}
                                                     </div>
-                                                    <div className="mt-0.5 font-mono text-[11px] text-gray-400">
+                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
                                                         {item.student?.student_code ?? ''}
                                                         {item.student?.phone && ` • ${item.student.phone}`}
                                                     </div>
@@ -382,7 +383,7 @@ return;
                                                     <div className="font-semibold text-gray-800">
                                                         {item.school_class?.name ?? 'Chưa gán lớp'}
                                                     </div>
-                                                    <div className="mt-0.5 text-[11px] text-gray-500">
+                                                    <div className="mt-0.5 text-xs text-gray-500">
                                                         {item.title || item.school_class?.code || ''}
                                                         {item.center && (
                                                             <span className="ml-1 text-gray-400">
@@ -399,7 +400,7 @@ return;
                                                 <td className="px-6 py-4 font-bold text-emerald-700">
                                                     {formatCurrency(paid)}
                                                     {item.payments_count > 0 && (
-                                                        <span className="ml-1 font-normal text-[11px] text-gray-500">
+                                                        <span className="ml-1 font-normal text-xs text-gray-500">
                                                             ({item.payments_count} đợt)
                                                         </span>
                                                     )}
@@ -412,14 +413,14 @@ return;
                                                 </td>
 
                                                 <td className="px-6 py-4">
-                                                    <div className="space-y-1.5 min-w-[130px]">
-                                                        <div className="flex items-center justify-between text-[11px]">
+                                                    <div className="space-y-1.5 min-w-[140px]">
+                                                        <div className="flex items-center justify-between text-xs">
                                                             {getStatusBadge(item.status)}
                                                             <span className="font-mono font-bold text-gray-700">
                                                                 {percent}%
                                                             </span>
                                                         </div>
-                                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                                                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                                                             <div
                                                                 className={`h-full transition-all duration-300 ${
                                                                     percent === 100
@@ -434,21 +435,21 @@ return;
                                                     </div>
                                                 </td>
 
-                                                <td className="px-6 py-4 text-gray-600">
+                                                <td className="px-6 py-4 text-gray-600 text-sm">
                                                     {item.due_date ? (
                                                         <span className="font-mono">{item.due_date}</span>
                                                     ) : (
-                                                        <span className="text-gray-400 italic">Không có</span>
+                                                        <span className="text-gray-400 italic text-xs">Không có</span>
                                                     )}
                                                 </td>
 
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-1.5">
+                                                    <div className="flex items-center justify-end gap-2">
                                                         <Link href={`/tuitions/${item.id}`}>
                                                             <Button
                                                                 variant="success"
                                                                 size="sm"
-                                                                icon={<Eye className="h-3.5 w-3.5" />}
+                                                                icon={<Eye className="h-4 w-4" />}
                                                                 title="Xem chi tiết & Đợt đóng tiền"
                                                             >
                                                                 Chi tiết
@@ -459,7 +460,7 @@ return;
                                                             <Button
                                                                 variant="edit"
                                                                 size="sm"
-                                                                icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                icon={<Edit2 className="h-4 w-4" />}
                                                                 title="Chỉnh sửa thông tin"
                                                             >
                                                                 Sửa
@@ -469,7 +470,7 @@ return;
                                                         <Button
                                                             variant="danger"
                                                             size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => openDeleteModal(item)}
                                                             title="Xóa hồ sơ học phí"
                                                         >
@@ -484,14 +485,14 @@ return;
                                     <tr>
                                         <td
                                             colSpan={8}
-                                            className="px-6 py-12 text-center text-xs text-gray-500"
+                                            className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">
-                                                <DollarSign className="h-8 w-8 text-gray-300" />
-                                                <p className="font-semibold text-gray-700">
+                                                <DollarSign className="h-10 w-10 text-gray-300" />
+                                                <p className="text-base font-semibold text-gray-700">
                                                     Không tìm thấy hồ sơ học phí nào phù hợp
                                                 </p>
-                                                <p className="text-gray-400">
+                                                <p className="text-sm text-gray-400">
                                                     Hãy thử điều chỉnh bộ lọc hoặc bấm "Tạo Khoản Thu Học Phí Mới"
                                                 </p>
                                             </div>
@@ -504,18 +505,18 @@ return;
 
                     {/* Pagination */}
                     {tuitions.links && tuitions.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-3 text-xs text-gray-600">
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 text-sm text-gray-600">
                             <div>
                                 Hiển thị trang <strong>{tuitions.current_page}</strong> / {tuitions.last_page} (Tổng {tuitions.total} hồ sơ)
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1.5">
                                 {tuitions.links.map((link, idx) => (
                                     <button
                                         key={idx}
                                         disabled={!link.url || link.active}
                                         onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                                        className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                                             link.active
                                                 ? 'bg-emerald-600 text-white'
                                                 : link.url
@@ -550,7 +551,7 @@ return;
                             size="md"
                             onClick={confirmDelete}
                             isLoading={isDeleting}
-                            icon={<Trash2 className="h-4 w-4" />}
+                            icon={<Trash2 className="h-5 w-5" />}
                         >
                             Xác Nhận Xóa
                         </Button>
@@ -560,11 +561,11 @@ return;
                 <div className="space-y-3">
                     <div className="flex items-center gap-3 text-red-600">
                         <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-sm font-semibold">
+                        <p className="text-base font-semibold">
                             Hành động này sẽ xóa khoản học phí của học sinh "{deletingTuition?.student?.full_name}" khỏi danh sách quản lý.
                         </p>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                         Các đợt đóng tiền liên quan sẽ được ẩn (soft delete) và có thể phục hồi nếu cần thiết từ cơ sở dữ liệu.
                     </p>
                 </div>

@@ -1,10 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Building2, Plus, Search, Edit2, Trash2, Calendar } from 'lucide-react';
+import { Building2, Plus, Search, Edit2, Trash2, Calendar, AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
+import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface Center {
@@ -35,16 +36,30 @@ interface IndexProps {
 
 export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletingCenter, setDeletingCenter] = useState<Center | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get('/centers', { search: searchTerm }, { preserveState: true });
     };
 
-    const handleDelete = (id: number, name: string) => {
-        if (confirm(`Bạn có chắc chắn muốn xóa trung tâm "${name}" không?`)) {
-            router.delete(`/centers/${id}`);
-        }
+    const openDeleteModal = (center: Center) => {
+        setDeletingCenter(center);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (!deletingCenter) return;
+        setIsDeleting(true);
+        router.delete(`/centers/${deletingCenter.id}`, {
+            onFinish: () => {
+                setIsDeleting(false);
+                setDeleteModalOpen(false);
+                setDeletingCenter(null);
+            },
+        });
     };
 
     return (
@@ -68,7 +83,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                         <Button
                             variant="success"
                             size="md"
-                            icon={<Plus className="h-4 w-4" />}
+                            icon={<Plus className="h-4.5 w-4.5" />}
                         >
                             Thêm Trung Tâm Mới
                         </Button>
@@ -76,7 +91,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                 </div>
 
                 {/* Filter & Search Bar */}
-                <Card className="p-4">
+                <Card className="p-5">
                     <form onSubmit={handleSearch} className="flex gap-3">
                         <div className="flex-1">
                             <Input
@@ -84,11 +99,12 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 icon={
-                                    <Search className="h-4 w-4 text-gray-400" />
+                                    <Search className="h-5 w-5 text-gray-400" />
                                 }
+                                className="!py-2.5 !text-sm"
                             />
                         </div>
-                        <Button type="submit" variant="secondary" size="md">
+                        <Button type="submit" variant="secondary" size="md" className="px-5">
                             Tìm Kiếm
                         </Button>
                     </form>
@@ -98,7 +114,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                 <Card className="overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="border-b border-gray-200 bg-slate-50 text-xs font-semibold text-gray-700 uppercase">
+                            <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
                                     <th className="px-6 py-4">
                                         Mã & Tên Trung Tâm
@@ -129,7 +145,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs font-medium text-gray-800">
+                                                <div className="text-sm font-semibold text-gray-800">
                                                     {center.phone ||
                                                         'Chưa cập nhật'}
                                                 </div>
@@ -138,11 +154,11 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 uppercase">
+                                                <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 uppercase">
                                                     {center.subscription_plan}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-xs">
+                                            <td className="px-6 py-4 text-sm">
                                                 <div className="flex items-center gap-3 text-gray-700">
                                                     <span title="Số lớp học">
                                                         <strong>
@@ -161,10 +177,10 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-xs">
+                                            <td className="px-6 py-4 text-sm">
                                                 {center.expires_at ? (
                                                     <div className="flex items-center gap-1.5 text-gray-700">
-                                                        <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                                        <Calendar className="h-4 w-4 text-gray-400" />
                                                         {new Date(
                                                             center.expires_at,
                                                         ).toLocaleDateString(
@@ -184,7 +200,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                         'active'
                                                             ? 'active'
                                                             : center.status ===
-                                                                'expired'
+                                                                  'expired'
                                                               ? 'danger'
                                                               : 'info'
                                                     }
@@ -201,7 +217,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                             variant="edit"
                                                             size="sm"
                                                             icon={
-                                                                <Edit2 className="h-3.5 w-3.5" />
+                                                                <Edit2 className="h-4 w-4" />
                                                             }
                                                         >
                                                             Sửa
@@ -211,13 +227,10 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                         variant="danger"
                                                         size="sm"
                                                         icon={
-                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                            <Trash2 className="h-4 w-4" />
                                                         }
                                                         onClick={() =>
-                                                            handleDelete(
-                                                                center.id,
-                                                                center.name,
-                                                            )
+                                                            openDeleteModal(center)
                                                         }
                                                     >
                                                         Xóa
@@ -230,7 +243,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                     <tr>
                                         <td
                                             colSpan={7}
-                                            className="py-12 text-center text-gray-500"
+                                            className="py-12 text-center text-sm text-gray-500"
                                         >
                                             Chưa tìm thấy trung tâm nào phù hợp.
                                         </td>
@@ -244,17 +257,17 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                 {/* Pagination Footer */}
                 {centers.links && centers.links.length > 3 && (
                     <div className="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row">
-                        <div className="text-xs text-gray-500">
+                        <div className="text-sm text-gray-500">
                             Hiển thị <strong>{centers.data.length}</strong> /{' '}
                             <strong>{centers.total}</strong> trung tâm
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                             {centers.links.map((link, idx) =>
                                 link.url ? (
                                     <Link
                                         key={idx}
                                         href={link.url}
-                                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                        className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                                             link.active
                                                 ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                                                 : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
@@ -266,7 +279,7 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                 ) : (
                                     <span
                                         key={idx}
-                                        className="cursor-not-allowed rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-400"
+                                        className="cursor-not-allowed rounded-lg border border-gray-100 bg-gray-50 px-3.5 py-1.5 text-sm font-semibold text-gray-400"
                                         dangerouslySetInnerHTML={{
                                             __html: link.label,
                                         }}
@@ -277,6 +290,46 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title="Xác Nhận Xóa Trung Tâm"
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setDeleteModalOpen(false)}
+                            disabled={isDeleting}
+                        >
+                            Hủy Bỏ
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="md"
+                            onClick={confirmDelete}
+                            isLoading={isDeleting}
+                            icon={<Trash2 className="h-5 w-5" />}
+                        >
+                            Xác Nhận Xóa
+                        </Button>
+                    </>
+                }
+            >
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-red-600">
+                        <AlertCircle className="h-6 w-6 shrink-0" />
+                        <p className="text-base font-semibold">
+                            Bạn có chắc chắn muốn xóa trung tâm "{deletingCenter?.name}" (Mã: {deletingCenter?.code})?
+                        </p>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                        Thông tin trung tâm và các dữ liệu liên quan sẽ được xử lý an toàn theo quy định hệ thống.
+                    </p>
+                </div>
+            </Modal>
         </AppLayout>
     );
 };

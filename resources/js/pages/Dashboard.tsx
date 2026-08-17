@@ -40,12 +40,12 @@ export const Dashboard: React.FC<any> = (props) => {
             {
                 header: 'Mã Trung Tâm',
                 accessorKey: 'code',
-                cell: (row) => <span className="font-semibold text-gray-900">{row.code}</span>,
+                cell: (row) => <span className="font-semibold text-gray-900 font-mono text-xs">{row.code}</span>,
             },
             {
                 header: 'Tên Trung Tâm',
                 accessorKey: 'name',
-                cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
+                cell: (row) => <span className="font-medium text-gray-800 text-sm">{row.name}</span>,
             },
             {
                 header: 'Gói Dịch Vụ',
@@ -58,6 +58,7 @@ export const Dashboard: React.FC<any> = (props) => {
             {
                 header: 'Số Điện Thoại',
                 accessorKey: 'phone',
+                cell: (row) => <span className="text-sm text-gray-700">{row.phone || 'N/A'}</span>,
             },
             {
                 header: 'Trạng Thái',
@@ -72,53 +73,53 @@ export const Dashboard: React.FC<any> = (props) => {
         return (
             <AppLayout title="Bảng Điều Khiển - Super Admin">
                 <div className="space-y-8">
-                    <Card className="border-gray-200 bg-white">
-                        <h2 className="text-xl font-bold text-gray-900">Tổng Quan Hệ Thống (Super Admin)</h2>
-                        <p className="mt-1 text-xs text-gray-500">
+                    <Card className="border-gray-200 bg-white p-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Tổng Quan Hệ Thống (Super Admin)</h2>
+                        <p className="mt-1 text-sm text-gray-500">
                             Thống kê toàn bộ các trung tâm đào tạo, tình hình đăng ký mới và gia hạn gói dịch vụ.
                         </p>
                     </Card>
 
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        <Card className="bg-white">
+                        <Card className="bg-white p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Trung Tâm</p>
-                                    <h4 className="text-2xl font-bold text-gray-900">{stats.centers ?? 0}</h4>
+                                    <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Tổng Trung Tâm</p>
+                                    <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.centers ?? 0}</h4>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                                     <Building2 className="h-6 w-6" />
                                 </div>
                             </div>
                         </Card>
-                        <Card className="bg-white">
+                        <Card className="bg-white p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Học Sinh</p>
-                                    <h4 className="text-2xl font-bold text-gray-900">{stats.students ?? 0}</h4>
+                                    <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Tổng Học Sinh</p>
+                                    <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.students ?? 0}</h4>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                                     <GraduationCap className="h-6 w-6" />
                                 </div>
                             </div>
                         </Card>
-                        <Card className="bg-white">
+                        <Card className="bg-white p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Giáo Viên</p>
-                                    <h4 className="text-2xl font-bold text-gray-900">{stats.teachers ?? 0}</h4>
+                                    <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Tổng Giáo Viên</p>
+                                    <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.teachers ?? 0}</h4>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
                                     <Users className="h-6 w-6" />
                                 </div>
                             </div>
                         </Card>
-                        <Card className="bg-white">
+                        <Card className="bg-white p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tổng Lớp Học</p>
-                                    <h4 className="text-2xl font-bold text-gray-900">{stats.classes ?? 0}</h4>
+                                    <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Tổng Lớp Học</p>
+                                    <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.classes ?? 0}</h4>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                                     <BookOpen className="h-6 w-6" />
@@ -131,17 +132,17 @@ export const Dashboard: React.FC<any> = (props) => {
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Biểu đồ tròn: Lượt đăng ký mới trong tháng theo gói */}
                         <Card title="Lượt Đăng Ký Mới Trong Tháng (Theo Gói Dịch Vụ)" className="lg:col-span-1">
-                            <CustomPieChart data={regPieData} height={260} />
+                            <CustomPieChart data={regPieData} height={280} />
                         </Card>
 
                         {/* Biểu đồ cột: Thống kê số lượng trung tâm đăng ký mới 6 tháng gần nhất */}
                         <Card title="Trung Tâm Đăng Ký Mới (6 Tháng Gần Nhất)" className="lg:col-span-2">
-                            <div className="h-64 w-full">
+                            <div className="h-72 w-full pt-2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={regBarData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                        <YAxis tick={{ fontSize: 12 }} />
+                                        <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
+                                        <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
                                         <Tooltip />
                                         <Bar dataKey="centers" name="Số trung tâm" fill="#059669" radius={[4, 4, 0, 0]} />
                                     </BarChart>
@@ -153,7 +154,7 @@ export const Dashboard: React.FC<any> = (props) => {
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Biểu đồ tròn: Trung tâm đến kỳ gia hạn tháng này mà không gia hạn */}
                         <Card title="Tình Hình Gia Hạn Kỳ Tháng Này (Không Gia Hạn)" className="lg:col-span-1">
-                            <CustomPieChart data={nonRenewedPieData} height={260} />
+                            <CustomPieChart data={nonRenewedPieData} height={280} />
                         </Card>
 
                         {/* Danh sách các trung tâm mới đăng ký */}
@@ -175,36 +176,36 @@ export const Dashboard: React.FC<any> = (props) => {
         return (
             <AppLayout title="Bảng Điều Khiển - Admin Quản Lý">
                 <div className="space-y-8">
-                    <Card className="border-gray-200 bg-white">
-                        <h2 className="text-xl font-bold text-gray-900">Thống Kê Trung Tâm Được Quản Lý</h2>
-                        <p className="mt-1 text-xs text-gray-500">
+                    <Card className="border-gray-200 bg-white p-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Thống Kê Trung Tâm Được Quản Lý</h2>
+                        <p className="mt-1 text-sm text-gray-500">
                             Theo dõi tăng trưởng Giáo viên, Học sinh và Lớp học mới trong 6 tháng gần nhất.
                         </p>
                     </Card>
 
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                        <Card className="bg-white">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.centers ?? 0}</h4>
+                        <Card className="bg-white p-6">
+                            <p className="text-sm font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.centers ?? 0}</h4>
                         </Card>
-                        <Card className="bg-white">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.students ?? 0}</h4>
+                        <Card className="bg-white p-6">
+                            <p className="text-sm font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.students ?? 0}</h4>
                         </Card>
-                        <Card className="bg-white">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1">{stats.teachers ?? 0}</h4>
+                        <Card className="bg-white p-6">
+                            <p className="text-sm font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
+                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.teachers ?? 0}</h4>
                         </Card>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <Card title="Số Lượng Giáo Viên Mới Đăng Ký (6 Tháng)">
-                            <div className="h-64 w-full">
+                            <div className="h-72 w-full pt-2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={teachersBar}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="month" />
-                                        <YAxis />
+                                        <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
+                                        <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
                                         <Tooltip />
                                         <Bar dataKey="teachers" name="Giáo viên mới" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                                     </BarChart>
@@ -213,12 +214,12 @@ export const Dashboard: React.FC<any> = (props) => {
                         </Card>
 
                         <Card title="Số Lượng Học Sinh Mới Đăng Ký (6 Tháng)">
-                            <div className="h-64 w-full">
+                            <div className="h-72 w-full pt-2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={studentsBar}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="month" />
-                                        <YAxis />
+                                        <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
+                                        <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
                                         <Tooltip />
                                         <Bar dataKey="students" name="Học sinh mới" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                                     </BarChart>
@@ -228,12 +229,12 @@ export const Dashboard: React.FC<any> = (props) => {
                     </div>
 
                     <Card title="Số Lượng Lớp Học Thêm Mới (6 Tháng)">
-                        <div className="h-64 w-full">
+                        <div className="h-72 w-full pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={classesBar}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
+                                    <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
+                                    <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
                                     <Tooltip />
                                     <Bar dataKey="classes" name="Lớp mới" fill="#10b981" radius={[4, 4, 0, 0]} />
                                 </BarChart>
@@ -252,9 +253,9 @@ export const Dashboard: React.FC<any> = (props) => {
         return (
             <AppLayout title="Bảng Điều Khiển - Giáo Viên">
                 <div className="space-y-8">
-                    <Card className="border-gray-200 bg-white">
-                        <h2 className="text-xl font-bold text-gray-900">Lịch Giảng Dạy Trong Tuần</h2>
-                        <p className="mt-1 text-xs text-gray-500">Danh sách các ca dạy theo lớp và môn học được phân công.</p>
+                    <Card className="border-gray-200 bg-white p-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Lịch Giảng Dạy Trong Tuần</h2>
+                        <p className="mt-1 text-sm text-gray-500">Danh sách các ca dạy theo lớp và môn học được phân công.</p>
                     </Card>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -263,7 +264,7 @@ export const Dashboard: React.FC<any> = (props) => {
                                 {dayItem.schedules && dayItem.schedules.length > 0 ? (
                                     <div className="space-y-3 pt-2">
                                         {dayItem.schedules.map((s: any) => (
-                                            <div key={s.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                                            <div key={s.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
                                                 <div className="font-bold text-gray-900 text-sm">{s.class_name}</div>
                                                 <div className="text-xs font-semibold text-emerald-700">{s.subject_name}</div>
                                                 <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
@@ -274,7 +275,7 @@ export const Dashboard: React.FC<any> = (props) => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-xs text-gray-400 italic pt-2">Không có lịch dạy.</p>
+                                    <p className="text-sm text-gray-400 italic pt-2">Không có lịch dạy.</p>
                                 )}
                             </Card>
                         ))}
@@ -306,19 +307,21 @@ return true;
         {
             header: 'Tên Bài Thi',
             accessorKey: 'exam_name',
-            cell: (row) => <span className="font-semibold text-gray-900">{row.exam_name}</span>,
+            cell: (row) => <span className="font-semibold text-gray-900 text-sm">{row.exam_name}</span>,
         },
         {
             header: 'Môn Học',
             accessorKey: 'subject_name',
+            cell: (row) => <span className="text-sm text-gray-800">{row.subject_name}</span>,
         },
         {
             header: 'Lớp Học',
             accessorKey: 'class_name',
+            cell: (row) => <span className="text-sm text-gray-800">{row.class_name}</span>,
         },
         {
             header: 'Điểm Số',
-            cell: (row) => <span className="font-bold text-emerald-600 text-base">{row.score}</span>,
+            cell: (row) => <span className="font-bold text-emerald-600 text-lg">{row.score}</span>,
         },
         {
             header: 'Đánh Giá / Thăng Hạng',
@@ -327,15 +330,16 @@ return true;
         {
             header: 'Ngày Thi',
             accessorKey: 'exam_date',
+            cell: (row) => <span className="text-sm text-gray-600 font-mono">{row.exam_date}</span>,
         },
     ];
 
     return (
         <AppLayout title="Bảng Điều Khiển - Học Sinh">
             <div className="space-y-8">
-                <Card className="border-gray-200 bg-white">
-                    <h2 className="text-xl font-bold text-gray-900">Góc Học Tập Của Tôi</h2>
-                    <p className="mt-1 text-xs text-gray-500">Xem lịch học trong tuần và bảng kết quả học tập kỳ thi.</p>
+                <Card className="border-gray-200 bg-white p-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Góc Học Tập Của Tôi</h2>
+                    <p className="mt-1 text-sm text-gray-500">Xem lịch học trong tuần và bảng kết quả học tập kỳ thi.</p>
                 </Card>
 
                 {/* Lịch học trong tuần */}
@@ -350,7 +354,7 @@ return true;
                                 {dayItem.schedules && dayItem.schedules.length > 0 ? (
                                     <div className="space-y-3 pt-2">
                                         {dayItem.schedules.map((s: any) => (
-                                            <div key={s.id} className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-lg space-y-1">
+                                            <div key={s.id} className="p-3.5 bg-emerald-50/50 border border-emerald-100 rounded-lg space-y-1.5">
                                                 <div className="font-bold text-gray-900 text-sm">{s.class_name}</div>
                                                 <div className="text-xs font-semibold text-emerald-700">{s.subject_name}</div>
                                                 <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
@@ -361,7 +365,7 @@ return true;
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-xs text-gray-400 italic pt-2">Không có lịch học.</p>
+                                    <p className="text-sm text-gray-400 italic pt-2">Không có lịch học.</p>
                                 )}
                             </Card>
                         ))}
@@ -372,14 +376,14 @@ return true;
                 <Card
                     title="Bảng Kết Quả Kỳ Thi"
                     headerAction={
-                        <div className="relative w-64">
+                        <div className="relative w-72">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Tìm bài thi, môn học..."
                                 value={examSearch}
                                 onChange={(e) => setExamSearch(e.target.value)}
-                                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-gray-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                             />
                         </div>
                     }

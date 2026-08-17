@@ -243,37 +243,37 @@ return;
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/tuitions">
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-gray-900">
+                            <div className="flex items-center gap-2.5">
+                                <h1 className="text-2xl font-bold text-gray-900">
                                     Hồ Sơ Học Phí: {tuition.student?.full_name}
                                 </h1>
                                 {getStatusBadge(tuition.status)}
                             </div>
-                            <p className="mt-0.5 text-xs text-gray-500">
+                            <p className="mt-1 text-sm text-gray-500">
                                 Lớp: <strong>{tuition.school_class?.name}</strong> • Trung tâm: <strong>{tuition.center?.name}</strong>
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                         <Link href={`/tuitions/${tuition.id}/edit`}>
-                            <Button variant="edit" size="sm" icon={<Edit2 className="h-3.5 w-3.5" />}>
+                            <Button variant="edit" size="md" icon={<Edit2 className="h-4 w-4" />}>
                                 Chỉnh Sửa Hồ Sơ
                             </Button>
                         </Link>
                         <Button
                             variant="success"
-                            size="sm"
+                            size="md"
                             onClick={() => {
                                 setAddAmount(String(Math.max(0, remaining)));
                                 setAddPaymentOpen(true);
                             }}
-                            icon={<Plus className="h-3.5 w-3.5" />}
+                            icon={<Plus className="h-4.5 w-4.5" />}
                         >
                             Thu Tiền Đợt Mới
                         </Button>
@@ -282,11 +282,11 @@ return;
 
                 {/* 3 Summary Money Cards */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                    <Card className="border-l-4 border-l-blue-500 bg-white p-5 shadow-xs">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <Card className="border-l-4 border-l-blue-500 bg-white p-6 shadow-xs">
+                        <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
                             Tổng Học Phí Cần Đóng
                         </p>
-                        <h3 className="mt-1 text-2xl font-extrabold text-gray-900">
+                        <h3 className="mt-1.5 text-2xl font-extrabold text-gray-900">
                             {formatCurrency(total)}
                         </h3>
                         <div className="mt-2 text-xs text-gray-400">
@@ -294,11 +294,11 @@ return;
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-emerald-500 bg-white p-5 shadow-xs">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                    <Card className="border-l-4 border-l-emerald-500 bg-white p-6 shadow-xs">
+                        <p className="text-sm font-semibold uppercase tracking-wider text-emerald-700">
                             Đã Đóng Thực Tế
                         </p>
-                        <h3 className="mt-1 text-2xl font-extrabold text-emerald-700">
+                        <h3 className="mt-1.5 text-2xl font-extrabold text-emerald-700">
                             {formatCurrency(paid)}
                         </h3>
                         <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
@@ -307,11 +307,11 @@ return;
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-amber-500 bg-white p-5 shadow-xs">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                    <Card className="border-l-4 border-l-amber-500 bg-white p-6 shadow-xs">
+                        <p className="text-sm font-semibold uppercase tracking-wider text-amber-700">
                             Số Tiền Còn Nợ
                         </p>
-                        <h3 className="mt-1 text-2xl font-extrabold text-amber-700">
+                        <h3 className="mt-1.5 text-2xl font-extrabold text-amber-700">
                             {formatCurrency(remaining)}
                         </h3>
                         <div className="mt-2 text-xs text-gray-400">
@@ -327,41 +327,41 @@ return;
                         <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-900">
                             Thông Tin Học Sinh & Khóa Học
                         </h2>
-                        <div className="space-y-3 text-xs">
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <div className="space-y-3.5 text-sm">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Họ và tên:</span>
                                 <span className="font-bold text-gray-900">{tuition.student?.full_name}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Mã học sinh:</span>
                                 <span className="font-mono font-semibold text-emerald-700">{tuition.student?.student_code}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Số điện thoại:</span>
                                 <span className="font-medium text-gray-800">{tuition.student?.phone || 'Chưa cập nhật'}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Phụ huynh:</span>
                                 <span className="font-medium text-gray-800">
                                     {tuition.student?.parent_name ? `${tuition.student.parent_name} (${tuition.student.parent_phone || ''})` : 'N/A'}
                                 </span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Lớp học:</span>
                                 <span className="font-bold text-gray-900">{tuition.school_class?.name}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Trung tâm:</span>
                                 <span className="font-medium text-gray-800">{tuition.center?.name}</span>
                             </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Tiêu đề khoản thu:</span>
                                 <span className="font-medium text-gray-900">{tuition.title || 'Học phí lớp học'}</span>
                             </div>
                             {tuition.note && (
                                 <div className="pt-1">
                                     <span className="text-gray-500">Ghi chú:</span>
-                                    <p className="mt-1 rounded-lg bg-gray-50 p-2.5 text-gray-700 italic">
+                                    <p className="mt-1.5 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 italic">
                                         "{tuition.note}"
                                     </p>
                                 </div>
@@ -374,7 +374,7 @@ return;
                         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <div>
                                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
-                                    <Receipt className="h-4 w-4 text-emerald-600" />
+                                    <Receipt className="h-4.5 w-4.5 text-emerald-600" />
                                     Lịch Sử Các Đợt Thu Tiền ({tuition.payments.length} đợt)
                                 </h2>
                                 <p className="mt-0.5 text-xs text-gray-500">
@@ -388,64 +388,64 @@ return;
                                     setAddAmount(String(Math.max(0, remaining)));
                                     setAddPaymentOpen(true);
                                 }}
-                                icon={<Plus className="h-3.5 w-3.5" />}
+                                icon={<Plus className="h-4 w-4" />}
                             >
                                 Thu Đợt Mới
                             </Button>
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs text-gray-600">
-                                <thead className="border-b border-gray-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-gray-700">
+                            <table className="w-full text-left text-sm text-gray-600">
+                                <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3">Đợt</th>
-                                        <th className="px-4 py-3">Ngày Thu</th>
-                                        <th className="px-4 py-3">Số Tiền</th>
-                                        <th className="px-4 py-3">Hình Thức</th>
-                                        <th className="px-4 py-3">Mã Phiếu / GD</th>
-                                        <th className="px-4 py-3">Ghi Chú</th>
-                                        <th className="px-4 py-3 text-right">Thao Tác</th>
+                                        <th className="px-4 py-3.5">Đợt</th>
+                                        <th className="px-4 py-3.5">Ngày Thu</th>
+                                        <th className="px-4 py-3.5">Số Tiền</th>
+                                        <th className="px-4 py-3.5">Hình Thức</th>
+                                        <th className="px-4 py-3.5">Mã Phiếu / GD</th>
+                                        <th className="px-4 py-3.5">Ghi Chú</th>
+                                        <th className="px-4 py-3.5 text-right">Thao Tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {tuition.payments && tuition.payments.length > 0 ? (
                                         tuition.payments.map((p, index) => (
                                             <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                                                <td className="px-4 py-3 font-bold text-gray-900">
+                                                <td className="px-4 py-3.5 font-bold text-gray-900">
                                                     Đợt {tuition.payments.length - index}
                                                 </td>
-                                                <td className="px-4 py-3 font-mono font-medium text-gray-700">
+                                                <td className="px-4 py-3.5 font-mono font-medium text-gray-700">
                                                     {p.payment_date}
                                                 </td>
-                                                <td className="px-4 py-3 font-extrabold text-emerald-700">
+                                                <td className="px-4 py-3.5 font-extrabold text-emerald-700">
                                                     {formatCurrency(p.amount)}
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <span className="inline-flex rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-800">
+                                                <td className="px-4 py-3.5">
+                                                    <span className="inline-flex rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-800">
                                                         {getPaymentMethodLabel(p.payment_method)}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 font-mono text-[11px] text-gray-600">
+                                                <td className="px-4 py-3.5 font-mono text-xs text-gray-600">
                                                     {p.transaction_code || '-'}
                                                 </td>
-                                                <td className="px-4 py-3 text-gray-500">
+                                                <td className="px-4 py-3.5 text-gray-500 text-xs">
                                                     {p.note || '-'}
                                                 </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <div className="flex items-center justify-end gap-1">
+                                                <td className="px-4 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
                                                         <button
                                                             onClick={() => openEditModal(p)}
-                                                            className="rounded-md p-1 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                                                            className="rounded-md p-1.5 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                                                             title="Sửa đợt đóng"
                                                         >
-                                                            <Edit2 className="h-3.5 w-3.5" />
+                                                            <Edit2 className="h-4 w-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => openDeletePaymentModal(p)}
-                                                            className="rounded-md p-1 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                            className="rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                                                             title="Xóa đợt đóng"
                                                         >
-                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                            <Trash2 className="h-4 w-4" />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -453,7 +453,7 @@ return;
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-400">
+                                            <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
                                                 Chưa có đợt thu học phí nào được ghi nhận. Bấm <strong>"Thu Đợt Mới"</strong> để ghi nhận tiền đã nộp.
                                             </td>
                                         </tr>
@@ -473,7 +473,7 @@ return;
             >
                 <form onSubmit={handleAddPayment} className="space-y-4">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Số Tiền Thu Đợt Này (VNĐ) (*)
                         </label>
                         <Input
@@ -483,35 +483,37 @@ return;
                             value={addAmount}
                             onChange={(e) => setAddAmount(e.target.value)}
                             placeholder="Nhập số tiền thu..."
+                            className="!py-2.5 !text-sm"
                             required
                         />
                         {remaining > 0 && (
-                            <p className="mt-1 text-[11px] text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500">
                                 Số tiền còn nợ hiện tại: <strong>{formatCurrency(remaining)}</strong>
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ngày Thu Tiền (*)
                         </label>
                         <Input
                             type="date"
                             value={addDate}
                             onChange={(e) => setAddDate(e.target.value)}
+                            className="!py-2.5 !text-sm"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Hình Thức Thanh Toán (*)
                         </label>
                         <select
                             value={addMethod}
                             onChange={(e) => setAddMethod(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
                             <option value="bank_transfer">Chuyển khoản ngân hàng</option>
                             <option value="cash">Tiền mặt</option>
@@ -523,28 +525,30 @@ return;
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Mã Phiếu Thu / Mã Giao Dịch
                         </label>
                         <Input
                             value={addCode}
                             onChange={(e) => setAddCode(e.target.value)}
                             placeholder="VD: PT-20260110-01"
+                            className="!py-2.5 !text-sm"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ghi Chú Đợt Thu
                         </label>
                         <Input
                             value={addNote}
                             onChange={(e) => setAddNote(e.target.value)}
                             placeholder="VD: Đợt 2 - Thu bổ sung trước kỳ thi"
+                            className="!py-2.5 !text-sm"
                         />
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2">
+                    <div className="flex items-center justify-end gap-2.5 pt-2">
                         <Button
                             type="button"
                             variant="secondary"
@@ -559,7 +563,7 @@ return;
                             variant="success"
                             size="md"
                             isLoading={isAdding}
-                            icon={<CheckCircle2 className="h-4 w-4" />}
+                            icon={<CheckCircle2 className="h-4.5 w-4.5" />}
                         >
                             Xác Nhận Thu Tiền
                         </Button>
@@ -575,7 +579,7 @@ return;
             >
                 <form onSubmit={handleEditPayment} className="space-y-4">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Số Tiền Thu (VNĐ) (*)
                         </label>
                         <Input
@@ -584,30 +588,32 @@ return;
                             step="1000"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
+                            className="!py-2.5 !text-sm"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ngày Thu Tiền (*)
                         </label>
                         <Input
                             type="date"
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
+                            className="!py-2.5 !text-sm"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Hình Thức Thanh Toán (*)
                         </label>
                         <select
                             value={editMethod}
                             onChange={(e) => setEditMethod(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
                             <option value="bank_transfer">Chuyển khoản ngân hàng</option>
                             <option value="cash">Tiền mặt</option>
@@ -619,26 +625,28 @@ return;
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Mã Phiếu Thu / Mã Giao Dịch
                         </label>
                         <Input
                             value={editCode}
                             onChange={(e) => setEditCode(e.target.value)}
+                            className="!py-2.5 !text-sm"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ghi Chú Đợt Thu
                         </label>
                         <Input
                             value={editNote}
                             onChange={(e) => setEditNote(e.target.value)}
+                            className="!py-2.5 !text-sm"
                         />
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2">
+                    <div className="flex items-center justify-end gap-2.5 pt-2">
                         <Button
                             type="button"
                             variant="secondary"
@@ -653,7 +661,7 @@ return;
                             variant="edit"
                             size="md"
                             isLoading={isEditing}
-                            icon={<Edit2 className="h-4 w-4" />}
+                            icon={<Edit2 className="h-4.5 w-4.5" />}
                         >
                             Lưu Thay Đổi
                         </Button>
@@ -681,7 +689,7 @@ return;
                             size="md"
                             onClick={handleConfirmDeletePayment}
                             isLoading={isDeleting}
-                            icon={<Trash2 className="h-4 w-4" />}
+                            icon={<Trash2 className="h-4.5 w-4.5" />}
                         >
                             Xác Nhận Xóa
                         </Button>
@@ -691,11 +699,11 @@ return;
                 <div className="space-y-3">
                     <div className="flex items-center gap-3 text-red-600">
                         <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-sm font-semibold">
+                        <p className="text-base font-semibold">
                             Bạn có chắc chắn muốn xóa đợt thu {formatCurrency(deletingPayment?.amount || 0)} ngày {deletingPayment?.payment_date}?
                         </p>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                         Tổng tiền đã đóng và số tiền còn nợ của học sinh sẽ tự động được tính toán lại sau khi xóa.
                     </p>
                 </div>

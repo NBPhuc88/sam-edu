@@ -90,23 +90,23 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
     };
 
     return (
-        <AppLayout title="Chỉnh Sửa Học Sinh - Hệ Thống Giáo Dục Sam">
-            <Head title="Chỉnh Sửa Học Sinh" />
+        <AppLayout title={`Chỉnh Sửa Học Sinh: ${student.full_name} - Hệ Thống Giáo Dục Sam`}>
+            <Head title={`Chỉnh Sửa Học Sinh: ${student.full_name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">
                 {/* Top bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/students">
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Học Sinh: {student.full_name}
                             </h1>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm text-gray-500">
                                 Cập nhật thông tin học viên, thông tin phụ huynh hoặc trạng thái học tập.
                             </p>
                         </div>
@@ -116,21 +116,21 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
-                            <User className="h-4 w-4 text-emerald-600" />
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                            <User className="h-5 w-5 text-emerald-600" />
                             1. Thông Tin Học Sinh & Tài Khoản
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Trung Tâm Đào Tạo (*)
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     {centers.map((c) => (
@@ -140,55 +140,57 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                                     ))}
                                 </select>
                                 {errors.center_id && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.center_id}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
                                 )}
                             </div>
 
                             {/* Full Name */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Họ Và Tên Học Sinh (*)
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Họ Và Tên Học Sinh <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
+                                    className="!py-3 !text-sm"
                                     required
                                 />
                                 {errors.full_name && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.full_name}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.full_name}</p>
                                 )}
                             </div>
 
                             {/* Student Code */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Mã Học Sinh
                                 </label>
                                 <Input
                                     value={studentCode}
                                     disabled
-                                    className="cursor-not-allowed bg-slate-50 font-mono text-gray-600"
+                                    className="cursor-not-allowed bg-slate-50 font-mono !py-3 !text-sm text-gray-600"
                                 />
                             </div>
 
                             {/* Username */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Tên Đăng Nhập (@username) (*)
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Tên Đăng Nhập (@username) <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
+                                    className="!py-3 !text-sm"
                                     required
                                 />
                                 {errors.username && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.username}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.username}</p>
                                 )}
                             </div>
 
                             {/* Password */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Mật Khẩu Mới (Để trống nếu không đổi)
                                 </label>
                                 <Input
@@ -196,62 +198,66 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    className="!py-3 !text-sm"
                                 />
                                 {errors.password && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.password}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.password}</p>
                                 )}
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Địa Chỉ Email
                                 </label>
                                 <Input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                                 {errors.email && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.email}</p>
                                 )}
                             </div>
 
                             {/* Phone */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Số Điện Thoại Học Sinh
                                 </label>
                                 <Input
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                                 {errors.phone && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.phone}</p>
                                 )}
                             </div>
 
                             {/* Date of Birth */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Sinh
                                 </label>
                                 <Input
                                     type="date"
                                     value={dateOfBirth}
                                     onChange={(e) => setDateOfBirth(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Gender */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Giới Tính
                                 </label>
                                 <select
                                     value={gender}
                                     onChange={(e) => setGender(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="male">Nam</option>
                                     <option value="female">Nữ</option>
@@ -261,12 +267,13 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
 
                             {/* Address */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Địa Chỉ Thường Trú
                                 </label>
                                 <Input
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
                         </div>
@@ -274,42 +281,45 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
 
                     {/* Parent / Guardian Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
-                            <HeartHandshake className="h-4 w-4 text-blue-600" />
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                            <HeartHandshake className="h-5 w-5 text-blue-600" />
                             2. Thông Tin Phụ Huynh / Người Giám Hộ
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             {/* Parent Name */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Họ Tên Phụ Huynh
                                 </label>
                                 <Input
                                     value={parentName}
                                     onChange={(e) => setParentName(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Parent Phone */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Số Điện Thoại Phụ Huynh
                                 </label>
                                 <Input
                                     value={parentPhone}
                                     onChange={(e) => setParentPhone(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Parent Relationship */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Mối Quan Hệ
                                 </label>
                                 <Input
                                     value={parentRelationship}
                                     onChange={(e) => setParentRelationship(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
                         </div>
@@ -317,33 +327,34 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
 
                     {/* Schooling & Status Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
-                            <Calendar className="h-4 w-4 text-amber-600" />
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                            <Calendar className="h-5 w-5 text-amber-600" />
                             3. Trạng Thái & Ngày Nhập Học
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             {/* Admission Date */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Nhập Học
                                 </label>
                                 <Input
                                     type="date"
                                     value={admissionDate}
                                     onChange={(e) => setAdmissionDate(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Status */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Trạng Thái Học Viên
                                 </label>
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="active">Đang học</option>
                                     <option value="inactive">Nghỉ học</option>
@@ -355,32 +366,32 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
 
                             {/* Note */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ghi Chú
                                 </label>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
                                     rows={3}
-                                    className="w-full rounded-lg border border-gray-300 p-3 text-xs text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 p-3.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
                     </Card>
 
                     {/* Submit Buttons */}
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3 pt-2">
                         <Link href="/students">
-                            <Button variant="secondary" size="md">
+                            <Button variant="secondary" size="lg">
                                 Hủy Bỏ
                             </Button>
                         </Link>
                         <Button
                             type="submit"
                             variant="edit"
-                            size="md"
+                            size="lg"
                             isLoading={isSubmitting}
-                            icon={<Save className="h-4 w-4" />}
+                            icon={<Save className="h-5 w-5" />}
                         >
                             Cập Nhật Học Sinh
                         </Button>

@@ -149,13 +149,13 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <Card className="p-6">
-                <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4">
-                    <div className="rounded-lg bg-emerald-50 p-2.5 text-emerald-700">
-                        <Building2 className="h-5 w-5" />
+            <Card className="p-6 sm:p-8">
+                <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-5">
+                    <div className="rounded-lg bg-emerald-50 p-3 text-emerald-700">
+                        <Building2 className="h-6 w-6" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-gray-900">
                             {mode === 'create'
                                 ? 'Thông Tin Trung Tâm Mới'
                                 : `Chỉnh Sửa Trung Tâm: ${initialValues?.name || ''}`}
@@ -166,18 +166,19 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {/* Center Code */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Mã Trung Tâm
                         </label>
                         <Input
                             name="code"
                             value={formData.code}
                             onChange={handleChange}
-                            placeholder="Mã tự động (ví dụ: CENTER-01)"
+                            placeholder="Mã tự động (ví dụ: CTR001)"
                             disabled={mode === 'edit'} // Code is readonly on edit
+                            className="!py-3 !text-sm"
                         />
                         {errors.code && (
-                            <p className="mt-1 text-xs text-red-600">
+                            <p className="mt-1.5 text-sm text-red-600">
                                 {errors.code}
                             </p>
                         )}
@@ -185,19 +186,19 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Center Name */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Tên Trung Tâm{' '}
-                            <span className="text-red-500">*</span>
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
+                            Tên Trung Tâm <span className="text-red-500">*</span>
                         </label>
                         <Input
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
                             placeholder="Nhập tên trung tâm đào tạo"
+                            className="!py-3 !text-sm"
                             required
                         />
                         {errors.name && (
-                            <p className="mt-1 text-xs text-red-600">
+                            <p className="mt-1.5 text-sm text-red-600">
                                 {errors.name}
                             </p>
                         )}
@@ -205,7 +206,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Phone */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Số Điện Thoại Liên Hệ
                         </label>
                         <Input
@@ -213,9 +214,10 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             value={formData.phone}
                             onChange={handleChange}
                             placeholder="0988.xxx.xxx"
+                            className="!py-3 !text-sm"
                         />
                         {errors.phone && (
-                            <p className="mt-1 text-xs text-red-600">
+                            <p className="mt-1.5 text-sm text-red-600">
                                 {errors.phone}
                             </p>
                         )}
@@ -223,7 +225,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Email */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Email Liên Hệ / Quản Lý
                         </label>
                         <Input
@@ -232,9 +234,10 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="admin@trungtam.com"
+                            className="!py-3 !text-sm"
                         />
                         {errors.email && (
-                            <p className="mt-1 text-xs text-red-600">
+                            <p className="mt-1.5 text-sm text-red-600">
                                 {errors.email}
                             </p>
                         )}
@@ -242,7 +245,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Address */}
                     <div className="md:col-span-2">
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Địa Chỉ Trụ Sở
                         </label>
                         <Input
@@ -250,9 +253,10 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             value={formData.address}
                             onChange={handleChange}
                             placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
+                            className="!py-3 !text-sm"
                         />
                         {errors.address && (
-                            <p className="mt-1 text-xs text-red-600">
+                            <p className="mt-1.5 text-sm text-red-600">
                                 {errors.address}
                             </p>
                         )}
@@ -260,15 +264,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Subscription Plan */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Gói Dịch Vụ SaaS{' '}
-                            <span className="text-red-500">*</span>
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
+                            Gói Dịch Vụ SaaS <span className="text-red-500">*</span>
                         </label>
                         <select
                             name="subscription_plan"
                             value={formData.subscription_plan}
                             onChange={handleChange}
-                            className="ui-input w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
                             {subscriptionPlans.map((plan: any) => (
                                 <option key={plan.id} value={plan.code}>
@@ -284,15 +287,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Status */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Trạng Thái Hoạt Động{' '}
-                            <span className="text-red-500">*</span>
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
+                            Trạng Thái Hoạt Động <span className="text-red-500">*</span>
                         </label>
                         <select
                             name="status"
                             value={formData.status}
                             onChange={handleChange}
-                            className="ui-input w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
                             <option value="active">
                                 Đang hoạt động (Active)
@@ -311,7 +313,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                     {/* Expiration Date */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                        <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Ngày Hết Hạn Gói Cước
                         </label>
                         <Input
@@ -319,13 +321,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             name="expires_at"
                             value={formData.expires_at}
                             onChange={handleChange}
+                            className="!py-3 !text-sm"
                         />
                     </div>
 
                     {/* Capacity Limits */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
                                 Giới Hạn HS
                             </label>
                             <Input
@@ -334,10 +337,11 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 value={formData.max_students}
                                 onChange={handleChange}
                                 placeholder="200"
+                                className="!py-3 !text-sm"
                             />
                         </div>
                         <div>
-                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
                                 Giới Hạn Lớp
                             </label>
                             <Input
@@ -346,6 +350,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 value={formData.max_classes}
                                 onChange={handleChange}
                                 placeholder="15"
+                                className="!py-3 !text-sm"
                             />
                         </div>
                     </div>
@@ -356,8 +361,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                     <Link href="/centers">
                         <Button
                             variant="secondary"
-                            size="md"
-                            icon={<ArrowLeft className="h-4 w-4" />}
+                            size="lg"
+                            icon={<ArrowLeft className="h-5 w-5" />}
                         >
                             Quay Lại
                         </Button>
@@ -365,9 +370,9 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                     <Button
                         type="submit"
                         variant={mode === 'create' ? 'success' : 'edit'}
-                        size="md"
+                        size="lg"
                         isLoading={isLoading}
-                        icon={<Save className="h-4 w-4" />}
+                        icon={<Save className="h-5 w-5" />}
                     >
                         {mode === 'create' ? 'Tạo Trung Tâm' : 'Lưu Thay Đổi'}
                     </Button>

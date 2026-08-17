@@ -129,13 +129,13 @@ export const Create: React.FC<CreateProps> = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/tuitions">
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">Tạo Khoản Thu Học Phí Mới</h1>
-                            <p className="text-xs text-gray-500">
+                            <h1 className="text-2xl font-bold text-gray-900">Tạo Khoản Thu Học Phí Mới</h1>
+                            <p className="text-sm text-gray-500">
                                 Thiết lập tổng số tiền học phí khóa học mà học sinh cần hoàn thành.
                             </p>
                         </div>
@@ -145,21 +145,21 @@ export const Create: React.FC<CreateProps> = ({
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Main Tuition Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900 uppercase tracking-wider">
-                            <DollarSign className="h-4 w-4 text-emerald-600" />
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold text-gray-900 uppercase tracking-wider">
+                            <DollarSign className="h-5 w-5 text-emerald-600" />
                             1. Thông Tin Khoản Học Phí
                         </h2>
 
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Trung Tâm Đào Tạo (*)
                                 </label>
                                 <select
                                     value={centerId}
                                     onChange={(e) => handleCenterChange(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Trung tâm --</option>
@@ -170,20 +170,20 @@ export const Create: React.FC<CreateProps> = ({
                                     ))}
                                 </select>
                                 {errors.center_id && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.center_id}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.center_id}</p>
                                 )}
                             </div>
 
                             {/* Class Selection */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Lớp Học / Khóa Học (*)
                                 </label>
                                 <select
                                     value={classId}
                                     onChange={(e) => handleClassChange(e.target.value)}
                                     disabled={!centerId}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
                                     required
                                 >
                                     <option value="">-- Chọn Lớp học --</option>
@@ -194,20 +194,20 @@ export const Create: React.FC<CreateProps> = ({
                                     ))}
                                 </select>
                                 {errors.class_id && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.class_id}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.class_id}</p>
                                 )}
                             </div>
 
                             {/* Student Selection */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Học Sinh Đóng Học Phí (*)
                                 </label>
                                 <select
                                     value={studentId}
                                     onChange={(e) => setStudentId(e.target.value)}
                                     disabled={!centerId}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
                                     required
                                 >
                                     <option value="">-- Chọn Học sinh --</option>
@@ -218,28 +218,29 @@ export const Create: React.FC<CreateProps> = ({
                                     ))}
                                 </select>
                                 {errors.student_id && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.student_id}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.student_id}</p>
                                 )}
                             </div>
 
                             {/* Tuition Title */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Tiêu Đề Khoản Thu / Học Phần
                                 </label>
                                 <Input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ví dụ: Học phí Lớp Toán 12 Nâng Cao - Học kỳ 1"
+                                    className="!py-3 !text-sm"
                                 />
                                 {errors.title && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.title}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.title}</p>
                                 )}
                             </div>
 
                             {/* Total Amount */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Tổng Số Tiền Học Phí Phải Đóng (VNĐ) (*)
                                 </label>
                                 <Input
@@ -249,31 +250,33 @@ export const Create: React.FC<CreateProps> = ({
                                     value={totalAmount}
                                     onChange={(e) => setTotalAmount(e.target.value)}
                                     placeholder="Ví dụ: 10000000"
+                                    className="!py-3 !text-sm"
                                     required
                                 />
                                 {errors.total_amount && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.total_amount}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.total_amount}</p>
                                 )}
                             </div>
 
                             {/* Due Date */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Hạn Chót Đóng Học Phí (Nếu có)
                                 </label>
                                 <Input
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                                 {errors.due_date && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.due_date}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.due_date}</p>
                                 )}
                             </div>
 
                             {/* Note */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Ghi Chú
                                 </label>
                                 <textarea
@@ -281,7 +284,7 @@ export const Create: React.FC<CreateProps> = ({
                                     onChange={(e) => setNote(e.target.value)}
                                     rows={3}
                                     placeholder="Ghi chú về hình thức đóng, chính sách giảm trừ hoặc ưu đãi..."
-                                    className="w-full rounded-lg border border-gray-300 p-3 text-xs text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 p-3.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
@@ -291,11 +294,11 @@ export const Create: React.FC<CreateProps> = ({
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                             <div>
-                                <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900 uppercase tracking-wider">
-                                    <Receipt className="h-4 w-4 text-blue-600" />
+                                <h2 className="flex items-center gap-2 text-base font-bold text-gray-900 uppercase tracking-wider">
+                                    <Receipt className="h-5 w-5 text-blue-600" />
                                     2. Thu Tiền Đợt 1 Ngay Lúc Này (Tùy Chọn)
                                 </h2>
-                                <p className="mt-0.5 text-xs text-gray-500">
+                                <p className="mt-1 text-sm text-gray-500">
                                     Nếu học sinh đã nộp tiền đợt 1 (cọc hoặc đóng trước một phần), bạn có thể ghi nhận ngay.
                                 </p>
                             </div>
@@ -317,9 +320,9 @@ export const Create: React.FC<CreateProps> = ({
                         </div>
 
                         {hasInitialPayment && (
-                            <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Số Tiền Thu Đợt 1 (VNĐ) (*)
                                     </label>
                                     <Input
@@ -329,30 +332,32 @@ export const Create: React.FC<CreateProps> = ({
                                         value={initialAmount}
                                         onChange={(e) => setInitialAmount(e.target.value)}
                                         placeholder="Ví dụ: 5000000"
+                                        className="!py-3 !text-sm"
                                         required={hasInitialPayment}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Ngày Thu Tiền (*)
                                     </label>
                                     <Input
                                         type="date"
                                         value={initialDate}
                                         onChange={(e) => setInitialDate(e.target.value)}
+                                        className="!py-3 !text-sm"
                                         required={hasInitialPayment}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Phương Thức Thanh Toán (*)
                                     </label>
                                     <select
                                         value={initialMethod}
                                         onChange={(e) => setInitialMethod(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="bank_transfer">Chuyển khoản ngân hàng</option>
                                         <option value="cash">Tiền mặt</option>
@@ -364,24 +369,26 @@ export const Create: React.FC<CreateProps> = ({
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Mã Phiếu Thu / Mã Giao Dịch
                                     </label>
                                     <Input
                                         value={initialCode}
                                         onChange={(e) => setInitialCode(e.target.value)}
                                         placeholder="Ví dụ: PT-20260110-01"
+                                        className="!py-3 !text-sm"
                                     />
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Ghi Chú Đợt Thu
                                     </label>
                                     <Input
                                         value={initialNote}
                                         onChange={(e) => setInitialNote(e.target.value)}
                                         placeholder="Ví dụ: Đợt 1 - Cọc giữ chỗ đầu khóa"
+                                        className="!py-3 !text-sm"
                                     />
                                 </div>
                             </div>
@@ -391,16 +398,16 @@ export const Create: React.FC<CreateProps> = ({
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
                         <Link href="/tuitions">
-                            <Button variant="secondary" size="md">
+                            <Button variant="secondary" size="lg">
                                 Hủy Bỏ
                             </Button>
                         </Link>
                         <Button
                             type="submit"
                             variant="success"
-                            size="md"
+                            size="lg"
                             isLoading={isSubmitting}
-                            icon={<Save className="h-4 w-4" />}
+                            icon={<Save className="h-5 w-5" />}
                         >
                             Tạo Hồ Sơ Học Phí
                         </Button>

@@ -111,15 +111,15 @@ export const Edit: React.FC<EditProps> = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Hồ Sơ Học Phí #{tuition.id}
                             </h1>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm text-gray-500">
                                 Cập nhật tổng số tiền học phí hoặc thông tin liên quan của học sinh.
                             </p>
                         </div>
@@ -131,7 +131,7 @@ export const Edit: React.FC<EditProps> = ({
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                             {/* Center */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Trung Tâm Đào Tạo
                                 </label>
                                 <select
@@ -141,7 +141,7 @@ export const Edit: React.FC<EditProps> = ({
                                         setClassId('');
                                         setStudentId('');
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     {centers.map((c) => (
@@ -154,13 +154,13 @@ export const Edit: React.FC<EditProps> = ({
 
                             {/* Class */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Lớp Học (*)
                                 </label>
                                 <select
                                     value={classId}
                                     onChange={(e) => setClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Lớp học --</option>
@@ -174,13 +174,13 @@ export const Edit: React.FC<EditProps> = ({
 
                             {/* Student */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Học Sinh (*)
                                 </label>
                                 <select
                                     value={studentId}
                                     onChange={(e) => setStudentId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Học sinh --</option>
@@ -194,19 +194,20 @@ export const Edit: React.FC<EditProps> = ({
 
                             {/* Title */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Tiêu Đề Khoản Thu
                                 </label>
                                 <Input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Tiêu đề học phí..."
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Total Amount */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Tổng Số Tiền Học Phí Phải Đóng (VNĐ) (*)
                                 </label>
                                 <Input
@@ -215,35 +216,37 @@ export const Edit: React.FC<EditProps> = ({
                                     step="1000"
                                     value={totalAmount}
                                     onChange={(e) => setTotalAmount(e.target.value)}
+                                    className="!py-3 !text-sm"
                                     required
                                 />
                                 {errors.total_amount && (
-                                    <p className="mt-1 text-xs text-red-600">{errors.total_amount}</p>
+                                    <p className="mt-1.5 text-xs text-red-600">{errors.total_amount}</p>
                                 )}
                             </div>
 
                             {/* Due Date */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Hạn Chót Đóng Học Phí
                                 </label>
                                 <Input
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
+                                    className="!py-3 !text-sm"
                                 />
                             </div>
 
                             {/* Note */}
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Ghi Chú
                                 </label>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
                                     rows={3}
-                                    className="w-full rounded-lg border border-gray-300 p-3 text-xs text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 p-3.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
@@ -252,16 +255,16 @@ export const Edit: React.FC<EditProps> = ({
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
                         <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="md">
+                            <Button variant="secondary" size="lg">
                                 Hủy Bỏ
                             </Button>
                         </Link>
                         <Button
                             type="submit"
                             variant="edit"
-                            size="md"
+                            size="lg"
                             isLoading={isSubmitting}
-                            icon={<Save className="h-4 w-4" />}
+                            icon={<Save className="h-5 w-5" />}
                         >
                             Cập Nhật Hồ Sơ
                         </Button>

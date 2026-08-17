@@ -48,13 +48,13 @@ const NavLink: React.FC<{
         <Link
             href={item.path}
             onClick={handleClick}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+            className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                 active
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
         >
-            {Icon && <Icon className="h-4 w-4 shrink-0" />}
+            {Icon && <Icon className="h-4.5 w-4.5 shrink-0" />}
             <span className="truncate">{item.label}</span>
         </Link>
     );
@@ -79,20 +79,20 @@ const NavGroup: React.FC<{
             <button
                 type="button"
                 onClick={() => setExpanded((prev) => !prev)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                className={`flex w-full items-center justify-between rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                     groupActive
                         ? 'bg-emerald-50 text-emerald-900'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
             >
                 <div className="flex items-center gap-3">
                     {Icon && (
-                        <Icon className="h-4 w-4 shrink-0 text-gray-500" />
+                        <Icon className="h-4.5 w-4.5 shrink-0 text-gray-500" />
                     )}
                     <span>{item.label}</span>
                 </div>
                 <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                    className={`h-4.5 w-4.5 shrink-0 transition-transform duration-200 ${
                         expanded
                             ? 'rotate-180 text-emerald-700'
                             : 'text-gray-400'
@@ -165,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <div className="text-sm leading-tight font-bold text-gray-900">
                                 Giáo dục Sam
                             </div>
-                            <div className="text-[11px] text-gray-400">
+                            <div className="text-xs text-gray-400">
                                 Quản lý Giáo dục
                             </div>
                         </div>
@@ -175,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="border-b border-gray-100 px-4 py-3">
                         <div className="flex items-center gap-2.5">
                             <div
-                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
                                     role === 'admin'
                                         ? 'bg-emerald-100 text-emerald-700'
                                         : role === 'teacher'
@@ -186,12 +186,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {avatarChar}
                             </div>
                             <div className="min-w-0">
-                                <div className="truncate text-xs font-bold text-gray-900">
+                                <div className="truncate text-sm font-bold text-gray-900">
                                     {fullName && fullName !== 'Admin'
                                         ? fullName
                                         : (adminRole === 'super_admin' ? 'Quản trị Tối cao' : 'Quản trị viên')}
                                 </div>
-                                <div className="text-[11px] text-gray-500">
+                                <div className="text-xs text-gray-500">
                                     {accountLabel}
                                 </div>
                             </div>
@@ -199,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+                    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
                         {navItems.map((item) =>
                             item.children ? (
                                 <NavGroup
@@ -220,7 +220,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </nav>
 
                     {/* Footer */}
-                    <div className="border-t border-gray-100 px-4 py-3 text-[10px] text-gray-400">
+                    <div className="border-t border-gray-100 px-4 py-3 text-xs text-gray-400">
                         © 2026 Giáo dục Sam · v1.0
                     </div>
                 </div>

@@ -36,8 +36,8 @@ body {
     justify-content: center;
     gap: 0.5rem;
     font-weight: 500;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.35rem;
     padding: 0.625rem 1.25rem;
     border-radius: 0.5rem;
     transition: all 0.15s ease-in-out;
@@ -100,8 +100,8 @@ body {
     border: 1px solid #d1d5db;
     color: #111827;
     border-radius: 0.5rem;
-    padding: 0.625rem 0.875rem;
-    font-size: 0.875rem;
+    padding: 0.6875rem 0.9375rem;
+    font-size: 0.9375rem;
     outline: none;
     transition:
         border-color 0.15s ease,
@@ -109,7 +109,7 @@ body {
 }
 
 .ui-input.has-icon {
-    padding-left: 2.5rem !important;
+    padding-left: 2.75rem !important;
 }
 
 .ui-input:focus {
@@ -128,18 +128,18 @@ body {
     background-color: #f9fafb;
     color: #374151;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.75rem 1rem;
+    padding: 0.875rem 1.125rem;
     border-bottom: 1px solid #e5e7eb;
 }
 
 .ui-table td {
-    padding: 1rem;
+    padding: 1rem 1.125rem;
     border-bottom: 1px solid #f3f4f6;
     color: #111827;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
 }
 
 .ui-table tr:hover td {

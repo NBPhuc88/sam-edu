@@ -157,7 +157,7 @@ return;
                             <GraduationCap className="h-7 w-7 text-emerald-600" />
                             Quản Lý Lớp Học
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-sm text-gray-500">
                             Quản lý thông tin lớp học, phân công nhiều môn học & giáo viên phụ trách theo trung tâm.
                         </p>
                     </div>
@@ -166,7 +166,7 @@ return;
                         <Button
                             variant="success"
                             size="md"
-                            icon={<Plus className="h-4 w-4" />}
+                            icon={<Plus className="h-4.5 w-4.5" />}
                         >
                             Thêm Lớp Học Mới
                         </Button>
@@ -174,15 +174,16 @@ return;
                 </div>
 
                 {/* Filter Box */}
-                <Card className="border-gray-200 bg-white p-4 shadow-xs">
-                    <form onSubmit={handleSearch} className="space-y-3">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                    <form onSubmit={handleSearch} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="lg:col-span-2">
                                 <Input
                                     placeholder="Tìm theo tên lớp, mã lớp, môn học, giáo viên..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    icon={<Search className="h-4 w-4 text-gray-400" />}
+                                    icon={<Search className="h-5 w-5 text-gray-400" />}
+                                    className="!py-2.5 !text-sm"
                                 />
                             </div>
 
@@ -191,7 +192,7 @@ return;
                                     <select
                                         value={selectedCenterId}
                                         onChange={(e) => setSelectedCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
@@ -207,7 +208,7 @@ return;
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả Trạng thái</option>
                                     <option value="1">Đang mở lớp</option>
@@ -217,11 +218,11 @@ return;
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-1">
+                        <div className="flex justify-end gap-2.5 pt-1">
                             <Button
                                 type="button"
                                 variant="secondary"
-                                size="sm"
+                                size="md"
                                 onClick={handleResetFilter}
                             >
                                 Đặt lại
@@ -229,8 +230,8 @@ return;
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
-                                icon={<Filter className="h-3.5 w-3.5" />}
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
                             >
                                 Lọc Dữ Liệu
                             </Button>
@@ -241,8 +242,8 @@ return;
                 {/* Main Classes Table */}
                 <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs text-gray-600">
-                            <thead className="border-b border-gray-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-gray-700">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
                                     <th className="px-6 py-4">Lớp Học</th>
                                     <th className="px-6 py-4">Trung Tâm</th>
@@ -264,11 +265,11 @@ return;
                                                 <div className="font-bold text-gray-900">
                                                     {cls.name}
                                                 </div>
-                                                <div className="mt-0.5 font-mono text-[11px] text-gray-400">
+                                                <div className="mt-0.5 font-mono text-xs text-gray-400">
                                                     Mã: {cls.code}
                                                 </div>
                                                 {cls.description && (
-                                                    <div className="mt-1 line-clamp-1 text-[11px] text-gray-500">
+                                                    <div className="mt-1 line-clamp-1 text-xs text-gray-500">
                                                         {cls.description}
                                                     </div>
                                                 )}
@@ -279,7 +280,7 @@ return;
                                                     {cls.center?.name || 'N/A'}
                                                 </div>
                                                 {cls.center?.code && (
-                                                    <div className="font-mono text-[11px] text-gray-400">
+                                                    <div className="font-mono text-xs text-gray-400">
                                                         {cls.center.code}
                                                     </div>
                                                 )}
@@ -291,7 +292,7 @@ return;
                                                         {cls.class_subjects.map((cs) => (
                                                             <div
                                                                 key={cs.id}
-                                                                className="flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-[11px]"
+                                                                className="flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs"
                                                             >
                                                                 <span className="font-bold text-gray-800">
                                                                     {cs.subject?.name || 'Môn học'}:
@@ -308,8 +309,8 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-1 font-semibold text-gray-800">
-                                                    <Users className="h-3.5 w-3.5 text-gray-400" />
+                                                <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+                                                    <Users className="h-4 w-4 text-gray-400" />
                                                     <span>{cls.students_count || 0}</span>
                                                     {cls.max_students && (
                                                         <span className="text-gray-400 font-normal">
@@ -319,7 +320,7 @@ return;
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-4 text-[11px] text-gray-600">
+                                            <td className="px-6 py-4 text-xs text-gray-600">
                                                 {cls.start_date || cls.end_date ? (
                                                     <div>
                                                         <div>Từ: {cls.start_date || '...'}</div>
@@ -335,12 +336,12 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <Link href={`/classes/${cls.id}/students`}>
                                                         <Button
                                                             variant="secondary"
                                                             size="sm"
-                                                            icon={<Users className="h-3.5 w-3.5" />}
+                                                            icon={<Users className="h-4 w-4" />}
                                                             title="Danh sách học sinh"
                                                         >
                                                             Học Sinh
@@ -350,7 +351,7 @@ return;
                                                         <Button
                                                             variant="secondary"
                                                             size="sm"
-                                                            icon={<MessageSquare className="h-3.5 w-3.5 text-blue-600" />}
+                                                            icon={<MessageSquare className="h-4 w-4 text-blue-600" />}
                                                             title="Nhóm chat lớp"
                                                         >
                                                             Chat
@@ -360,7 +361,7 @@ return;
                                                         <Button
                                                             variant="edit"
                                                             size="sm"
-                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                            icon={<Edit2 className="h-4 w-4" />}
                                                             title="Sửa lớp học"
                                                         >
                                                             Sửa
@@ -369,7 +370,7 @@ return;
                                                     <Button
                                                         variant="danger"
                                                         size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                        icon={<Trash2 className="h-4 w-4" />}
                                                         onClick={() => openDeleteModal(cls)}
                                                         title="Xóa lớp học"
                                                     >
@@ -383,14 +384,14 @@ return;
                                     <tr>
                                         <td
                                             colSpan={7}
-                                            className="px-6 py-12 text-center text-xs text-gray-500"
+                                            className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">
-                                                <GraduationCap className="h-8 w-8 text-gray-300" />
-                                                <p className="font-semibold text-gray-700">
+                                                <GraduationCap className="h-10 w-10 text-gray-300" />
+                                                <p className="text-base font-semibold text-gray-700">
                                                     Không tìm thấy lớp học nào phù hợp
                                                 </p>
-                                                <p className="text-gray-400">
+                                                <p className="text-sm text-gray-400">
                                                     Thử thay đổi bộ lọc hoặc tạo lớp học mới cho trung tâm.
                                                 </p>
                                             </div>
@@ -403,18 +404,18 @@ return;
 
                     {/* Pagination */}
                     {classes.links && classes.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-3 text-xs text-gray-600">
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4 text-sm text-gray-600">
                             <div>
                                 Hiển thị trang <strong>{classes.current_page}</strong> / {classes.last_page} (Tổng {classes.total} lớp học)
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1.5">
                                 {classes.links.map((link, idx) => (
                                     <button
                                         key={idx}
                                         disabled={!link.url || link.active}
                                         onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                                        className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                                             link.active
                                                 ? 'bg-emerald-600 text-white'
                                                 : link.url
@@ -449,7 +450,7 @@ return;
                             size="md"
                             onClick={confirmDelete}
                             isLoading={isDeleting}
-                            icon={<Trash2 className="h-4 w-4" />}
+                            icon={<Trash2 className="h-5 w-5" />}
                         >
                             Xác Nhận Xóa
                         </Button>
@@ -459,11 +460,11 @@ return;
                 <div className="space-y-3">
                     <div className="flex items-center gap-3 text-red-600">
                         <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-sm font-semibold">
+                        <p className="text-base font-semibold">
                             Bạn có chắc chắn muốn xóa lớp học "{deletingClass?.name}" (Mã: {deletingClass?.code})?
                         </p>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                         Lớp học và dữ liệu phân công môn học sẽ được ẩn khỏi hệ thống (soft delete).
                     </p>
                 </div>
