@@ -111,8 +111,15 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\SubjectController::class, 'destroy'])->name('destroy');
     });
 
-    // Class Student & Real-time Group Chat Routes
+    // Class Management (CRUD), Class Student & Real-time Group Chat Routes
     Route::prefix('classes')->name('classes.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SchoolClassController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\SchoolClassController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\SchoolClassController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\SchoolClassController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\SchoolClassController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\SchoolClassController::class, 'destroy'])->name('destroy');
+
         Route::get('/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('students.sample-csv');
         Route::get('/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('students.index');
         Route::get('/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('students.export');

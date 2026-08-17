@@ -3,18 +3,164 @@
 namespace App\Repositories\Class;
 
 use App\Models\ClassStudent;
+use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SchoolClassRepository implements SchoolClassRepositoryInterface
 {
+    /**
+     * @param  ?string              $search
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginate(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1
+    ): LengthAwarePaginator {
+        $query = SchoolClass::query()
+            ->with([
+                'center:id,name,code',
+                'classSubjects.subject:id,name,code',
+                'classSubjects.teacher:id,full_name,teacher_code',
+            ])
+            ->withCount('students');
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        if ($status !== null && $status !== '' && $status !== 'all') {
+            if (is_numeric($status)) {
+                $query->where('status', (int) $status);
+            } else {
+                $statusMap = [
+                    'inactive'  => 0,
+                    'active'    => 1,
+                    'completed' => 2,
+                ];
+
+                if (isset($statusMap[$status])) {
+                    $query->where('status', $statusMap[$status]);
+                }
+            }
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                    ->orWhere('code', 'like', "%{$term}%")
+                    ->orWhere('description', 'like', "%{$term}%")
+                    ->orWhereHas('classSubjects.subject', function ($sq) use ($term) {
+                        $sq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('classSubjects.teacher', function ($tq) use ($term) {
+                        $tq->where('full_name', 'like', "%{$term}%")
+                            ->orWhere('teacher_code', 'like', "%{$term}%");
+                    });
+            });
+        }
+
+        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /**
+     * @param  int              $id
+     * @param  array<int>|null  $allowedCenterIds
+     * @return SchoolClass|null
+     */
+    public function find(int $id, ?array $allowedCenterIds = null): ?SchoolClass
+    {
+        $query = SchoolClass::query()
+            ->with([
+                'center:id,name,code',
+                'classSubjects.subject:id,name,code',
+                'classSubjects.teacher:id,full_name,teacher_code',
+            ])
+            ->withCount('students');
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->find($id);
+    }
+
     public function findById(int $classId): ?SchoolClass
     {
         /** @var SchoolClass|null $class */
         $class = SchoolClass::find($classId);
 
         return $class;
+    }
+
+    /**
+     * @param  array<string, mixed> $data
+     * @return SchoolClass
+     */
+    public function create(array $data): SchoolClass
+    {
+        return SchoolClass::create($data);
+    }
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return SchoolClass
+     */
+    public function update(int $id, array $data): SchoolClass
+    {
+        $schoolClass = SchoolClass::findOrFail($id);
+        $schoolClass->update($data);
+
+        return $schoolClass;
+    }
+
+    /**
+     * @param  int  $id
+     * @return bool
+     */
+    public function delete(int $id): bool
+    {
+        $schoolClass = SchoolClass::findOrFail($id);
+
+        return (bool) $schoolClass->delete();
+    }
+
+    /**
+     * @param  SchoolClass                                         $schoolClass
+     * @param  array<int, array{subject_id: int, teacher_id: int}> $subjectsWithTeachers
+     * @return void
+     */
+    public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void
+    {
+        // Xóa các liên kết class_subjects cũ của lớp
+        ClassSubject::where('class_id', $schoolClass->id)->delete();
+
+        // Tạo các liên kết môn học & giáo viên mới
+        foreach ($subjectsWithTeachers as $item) {
+            if (! empty($item['subject_id']) && ! empty($item['teacher_id'])) {
+                ClassSubject::create([
+                    'class_id'   => $schoolClass->id,
+                    'subject_id' => (int) $item['subject_id'],
+                    'teacher_id' => (int) $item['teacher_id'],
+                    'status'     => 'active',
+                ]);
+            }
+        }
     }
 
     /**

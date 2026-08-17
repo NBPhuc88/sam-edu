@@ -80,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
         $this->app->bind(StudentTuitionServiceInterface::class, \App\Services\Tuition\StudentTuitionService::class);
         $this->app->bind(\App\Services\Subject\SubjectServiceInterface::class, \App\Services\Subject\SubjectService::class);
+        $this->app->bind(\App\Services\Class\SchoolClassServiceInterface::class, \App\Services\Class\SchoolClassService::class);
         $this->app->bind(ContactRequestServiceInterface::class, ContactRequestService::class);
         $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
         $this->app->bind(StatisticServiceInterface::class, StatisticService::class);

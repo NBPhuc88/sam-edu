@@ -8,7 +8,56 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface SchoolClassRepositoryInterface
 {
+    /**
+     * @param  ?string              $search
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginate(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1
+    ): LengthAwarePaginator;
+
+    /**
+     * @param  int              $id
+     * @param  array<int>|null  $allowedCenterIds
+     * @return SchoolClass|null
+     */
+    public function find(int $id, ?array $allowedCenterIds = null): ?SchoolClass;
+
     public function findById(int $classId): ?SchoolClass;
+
+    /**
+     * @param  array<string, mixed> $data
+     * @return SchoolClass
+     */
+    public function create(array $data): SchoolClass;
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return SchoolClass
+     */
+    public function update(int $id, array $data): SchoolClass;
+
+    /**
+     * @param  int  $id
+     * @return bool
+     */
+    public function delete(int $id): bool;
+
+    /**
+     * @param  SchoolClass                                         $schoolClass
+     * @param  array<int, array{subject_id: int, teacher_id: int}> $subjectsWithTeachers
+     * @return void
+     */
+    public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void;
 
     /**
      * @param  int                      $classId
