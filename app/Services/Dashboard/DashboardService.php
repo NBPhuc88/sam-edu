@@ -7,7 +7,6 @@ use App\Models\Center;
 use App\Models\ClassSchedule;
 use App\Models\ExamResult;
 use App\Models\PaymentTransaction;
-use App\Models\Room;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -27,10 +26,6 @@ class DashboardService implements DashboardServiceInterface
             /** @var Admin $user */
             $user = Auth::guard('admin')->user();
             $role = $user->isSuperAdmin() ? 'super_admin' : 'admin';
-        } elseif (Auth::guard('center')->check()) {
-            $role = 'center';
-            /** @var Center $user */
-            $user = Auth::guard('center')->user();
         } elseif (Auth::guard('teacher')->check()) {
             $role = 'teacher';
             /** @var Teacher $user */
@@ -78,23 +73,7 @@ class DashboardService implements DashboardServiceInterface
             return $data;
         }
 
-        // 3. CENTER DASHBOARD
-        if ($role === 'center' && $user instanceof Center) {
-            $centerIds                  = [$user->id];
-            $data['center']             = $this->formatCenterData($user);
-            $data['students_bar_chart'] = $this->getMonthlyNewStudentsBarChart($centerIds);
-            $data['classes_bar_chart']  = $this->getMonthlyNewClassesBarChart($centerIds);
-            $data['stats']              = [
-                'students' => Student::where('center_id', $user->id)->count(),
-                'teachers' => Teacher::where('center_id', $user->id)->count(),
-                'classes'  => SchoolClass::where('center_id', $user->id)->count(),
-                'rooms'    => Room::where('center_id', $user->id)->count(),
-            ];
-
-            return $data;
-        }
-
-        // 4. TEACHER DASHBOARD
+        // 3. TEACHER DASHBOARD
         if ($role === 'teacher' && $user instanceof Teacher) {
             $data['center']          = isset($user->center_id) ? $this->formatCenterData(Center::find($user->center_id)) : null;
             $data['weekly_schedule'] = $this->getTeacherWeeklySchedule($user->id);

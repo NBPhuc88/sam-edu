@@ -6,7 +6,6 @@ import {
     ShieldCheck,
     GraduationCap,
     Users,
-    Building2,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -16,7 +15,7 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 
 const loginSchema = z.object({
-    role: z.enum(['admin', 'center', 'teacher', 'student']),
+    role: z.enum(['admin', 'teacher', 'student']),
     username: z.string().min(1, 'Vui lòng nhập tên đăng nhập hoặc email'),
     password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
@@ -26,7 +25,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const Login: React.FC = () => {
     const { errors: serverErrors } = usePage().props as any;
     const [selectedRole, setSelectedRole] = useState<
-        'admin' | 'center' | 'teacher' | 'student'
+        'admin' | 'teacher' | 'student'
     >('admin');
 
     const {
@@ -44,7 +43,7 @@ export const Login: React.FC = () => {
     });
 
     const handleRoleChange = (
-        role: 'admin' | 'center' | 'teacher' | 'student',
+        role: 'admin' | 'teacher' | 'student',
     ) => {
         setSelectedRole(role);
         setValue('role', role);
@@ -89,19 +88,6 @@ export const Login: React.FC = () => {
                         >
                             <ShieldCheck className="h-3.5 w-3.5" />
                             Quản trị
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => handleRoleChange('center')}
-                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                selectedRole === 'center'
-                                    ? 'bg-white text-emerald-800 shadow-xs'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                        >
-                            <Building2 className="h-3.5 w-3.5" />
-                            Trung tâm
                         </button>
 
                         <button

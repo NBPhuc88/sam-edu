@@ -2,7 +2,6 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     Mail,
     ShieldCheck,
-    Building2,
     Users,
     GraduationCap,
     ArrowLeft,
@@ -16,7 +15,7 @@ import Input from '../../components/ui/Input';
 export const ForgotPassword: React.FC = () => {
     const { errors: serverErrors, flash } = usePage().props as any;
     const [accountType, setAccountType] = useState<
-        'admin' | 'center' | 'teacher' | 'student'
+        'admin' | 'teacher' | 'student'
     >('admin');
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,19 +84,6 @@ export const ForgotPassword: React.FC = () => {
                         >
                             <ShieldCheck className="h-3.5 w-3.5" />
                             Quản trị
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setAccountType('center')}
-                            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-xs font-semibold transition-all ${
-                                accountType === 'center'
-                                    ? 'bg-white text-emerald-800 shadow-xs'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                        >
-                            <Building2 className="h-3.5 w-3.5" />
-                            Trung tâm
                         </button>
 
                         <button

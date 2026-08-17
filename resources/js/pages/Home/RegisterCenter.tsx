@@ -2,14 +2,12 @@ import {
     Building,
     CheckCircle2,
     Clock,
-    Lock,
     Mail,
     MapPin,
     Phone,
     RefreshCw,
     Send,
     Sparkles,
-    User,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import Button from '../../components/ui/Button';
@@ -33,7 +31,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     contactInfo,
     enableOnlinePayment = false,
 }) => {
-    // Current Onboarding Wizard Step: 1 | 2 | 3
+    // Current Onboarding Wizard Step: 1 | 2 | 3 (1: Form, 2: Payment, 3: Success Confirmation)
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -76,13 +74,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     const [planName, setPlanName] = useState<string>('');
     const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
 
-    // Success notification state (when online payment is disabled)
+    // Success notification state
     const [registeredCenter, setRegisteredCenter] = useState<any>(null);
-
-    // Step 3 Account Setup State
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
 
     /**
      * Submit Step 1: Điền thông tin trung tâm & chọn gói cước
@@ -115,16 +108,13 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                 setCenterId(res.data.center_id);
 
                 if (res.data.step === 'contact_notification') {
-                    // Thanh toán tắt -> Hiển thị màn hình xác nhận đã đăng ký & gửi mail admin
+                    // Thành công ngay (Dùng thử hoặc phương thức khác)
                     setRegisteredCenter({
                         code: res.data.code,
                         name: res.data.name,
-                        plan: selectedPlan,
+                        plan: res.data.plan || selectedPlan,
                     });
-                    setCurrentStep(4); // Screen Step 4: Success confirmation
-                } else if (res.data.step === 'complete_account') {
-                    // Gói Dùng thử 14 ngày (0đ) -> Chuyển thẳng sang Step 3 tạo tài khoản
-                    setCurrentStep(3);
+                    setCurrentStep(3); // Screen Step 3: Success confirmation
                 } else if (res.data.step === 'payment_gateway') {
                     // Gói trả phí + Bật thanh toán -> Sang Step 2 cổng thanh toán
                     setAppTransId(res.data.app_trans_id);
@@ -135,6 +125,11 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                     setTransferMemo(res.data.transfer_memo);
                     setPaymentAmount(res.data.amount);
                     setPlanName(res.data.plan_name);
+                    setRegisteredCenter({
+                        code: res.data.code,
+                        name: res.data.name,
+                        plan: selectedPlan,
+                    });
                     setCurrentStep(2);
                 }
             } else {
@@ -167,6 +162,11 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
                     if (res.data?.status === 'paid') {
                         setIsPaymentSuccess(true);
+                        setRegisteredCenter({
+                            code: res.data.code || registeredCenter?.code,
+                            name: res.data.name || registeredCenter?.name,
+                            plan: res.data.plan || selectedPlan,
+                        });
                         clearInterval(intervalId);
                         setTimeout(() => {
                             setCurrentStep(3);
@@ -183,55 +183,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [currentStep, appTransId, isPaymentSuccess]);
-
-    /**
-     * Submit Step 3: Tạo username & password -> Tự động đăng nhập
-     */
-    const handleStep3Submit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrorMessage(null);
-
-        if (!username || !password) {
-            setErrorMessage('Vui lòng nhập tên đăng nhập và mật khẩu.');
-
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setErrorMessage('Mật khẩu xác nhận không trùng khớp.');
-
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const res = await apiClient.post(
-                '/register-center/complete-account',
-                {
-                    center_id: centerId,
-                    username: username,
-                    password: password,
-                },
-            );
-
-            if (res.data?.success && res.data?.redirect_url) {
-                window.location.assign(res.data.redirect_url);
-            } else {
-                setErrorMessage(
-                    res.data?.message || 'Có lỗi xảy ra khi tạo tài khoản.',
-                );
-            }
-        } catch (err: any) {
-            setErrorMessage(
-                err.response?.data?.message ||
-                    'Không thể tạo tài khoản. Vui lòng kiểm tra lại.',
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [currentStep, appTransId, isPaymentSuccess, registeredCenter, selectedPlan]);
 
     return (
         <PublicLayout title="Đăng Ký Trung Tâm Mới - Giáo Dục Sam">
@@ -701,82 +653,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                     </div>
                                 )}
 
-                                {/* ── STEP 3: Tạo Mật Khẩu Đăng Nhập ────────────────────────── */}
+                                {/* ── STEP 3: Thông Báo Xác Nhận Đăng Ký Thành Công ─────────────────── */}
                                 {currentStep === 3 && (
-                                    <form
-                                        onSubmit={handleStep3Submit}
-                                        className="space-y-6"
-                                    >
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-900">
-                                                Bước 3: Tạo Mật Khẩu Đăng Nhập
-                                            </h2>
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                Thiết lập tên đăng nhập và mật
-                                                khẩu để quản lý trung tâm
-                                            </p>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <Input
-                                                label="Tên đăng nhập (Username) (*)"
-                                                placeholder="VD: hanoicenter01"
-                                                icon={
-                                                    <User className="h-4 w-4" />
-                                                }
-                                                value={username}
-                                                onChange={(e) =>
-                                                    setUsername(e.target.value)
-                                                }
-                                                required
-                                            />
-                                            <Input
-                                                label="Mật khẩu đăng nhập (*)"
-                                                type="password"
-                                                placeholder="••••••••"
-                                                icon={
-                                                    <Lock className="h-4 w-4" />
-                                                }
-                                                value={password}
-                                                onChange={(e) =>
-                                                    setPassword(e.target.value)
-                                                }
-                                                required
-                                            />
-                                            <Input
-                                                label="Xác nhận mật khẩu (*)"
-                                                type="password"
-                                                placeholder="••••••••"
-                                                icon={
-                                                    <Lock className="h-4 w-4" />
-                                                }
-                                                value={confirmPassword}
-                                                onChange={(e) =>
-                                                    setConfirmPassword(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            variant="success"
-                                            size="lg"
-                                            isLoading={loading}
-                                            className="w-full justify-center py-3"
-                                            icon={
-                                                <Sparkles className="h-5 w-5" />
-                                            }
-                                        >
-                                            Hoàn tất & Đăng nhập Trang Quản trị
-                                        </Button>
-                                    </form>
-                                )}
-
-                                {/* ── STEP 4: Thông Báo Xác Nhận Đăng Ký Thành Công ─────────────────── */}
-                                {currentStep === 4 && (
                                     <div className="space-y-6 py-6 text-center">
                                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                                             <CheckCircle2 className="h-10 w-10" />

@@ -3,7 +3,6 @@
 namespace App\Services\Auth;
 
 use App\Repositories\Admin\AdminRepositoryInterface;
-use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
@@ -13,20 +12,16 @@ class AuthService implements AuthServiceInterface
 {
     protected AdminRepositoryInterface $adminRepository;
 
-    protected CenterRepositoryInterface $centerRepository;
-
     protected TeacherRepositoryInterface $teacherRepository;
 
     protected StudentRepositoryInterface $studentRepository;
 
     public function __construct(
         AdminRepositoryInterface $adminRepository,
-        CenterRepositoryInterface $centerRepository,
         TeacherRepositoryInterface $teacherRepository,
         StudentRepositoryInterface $studentRepository
     ) {
         $this->adminRepository   = $adminRepository;
-        $this->centerRepository  = $centerRepository;
         $this->teacherRepository = $teacherRepository;
         $this->studentRepository = $studentRepository;
     }
@@ -45,8 +40,6 @@ class AuthService implements AuthServiceInterface
 
         if ($role === 'admin') {
             $account = $this->adminRepository->findByUsernameOrEmail($username);
-        } elseif ($role === 'center') {
-            $account = $this->centerRepository->findByUsernameOrEmail($username);
         } elseif ($role === 'teacher') {
             $account = $this->teacherRepository->findByUsernameOrEmail($username);
         } elseif ($role === 'student') {
@@ -91,7 +84,6 @@ class AuthService implements AuthServiceInterface
     public function logout(): void
     {
         Auth::guard('admin')->logout();
-        Auth::guard('center')->logout();
         Auth::guard('teacher')->logout();
         Auth::guard('student')->logout();
 

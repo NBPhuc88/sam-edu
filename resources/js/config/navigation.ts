@@ -140,53 +140,6 @@ const adminNav: NavItem[] = [
     { label: 'Thông Báo', path: '/notifications', icon: Bell },
 ];
 
-// ─── Center Navigation ────────────────────────────────────────────────────────
-const centerNav: NavItem[] = [
-    { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard },
-    {
-        label: 'Quản Lý',
-        icon: Users,
-        children: [
-            { label: 'Giáo Viên', path: '/teachers' },
-            { label: 'Học Sinh', path: '/students' },
-            { label: 'Phòng Học', path: '/rooms' },
-            { label: 'Lớp Học', path: '/classes' },
-        ],
-    },
-    {
-        label: 'Học Thuật',
-        icon: BookOpen,
-        children: [
-            { label: 'Môn Học', path: '/subjects' },
-            { label: 'Lịch Học', path: '/schedules' },
-        ],
-    },
-    {
-        label: 'Vận Hành',
-        icon: Zap,
-        children: [
-            { label: 'Buổi Học', path: '/sessions' },
-            { label: 'Đổi Lịch', path: '/reschedules' },
-            { label: 'Điểm Danh', path: '/attendance' },
-        ],
-    },
-    {
-        label: 'Thi & Kiểm Tra',
-        icon: FileCheck,
-        children: [
-            { label: 'Kỳ Thi', path: '/exams' },
-            { label: 'Kết Quả Thi', path: '/exam-results' },
-        ],
-    },
-    {
-        label: 'Tài Chính',
-        icon: DollarSign,
-        children: [{ label: 'Thanh Toán & Gia Hạn', path: '/payments' }],
-    },
-    { label: 'Thống Kê Báo Cáo', path: '/statistics', icon: BarChart3 },
-    { label: 'Thông Báo', path: '/notifications', icon: Bell },
-];
-
 // ─── Teacher Navigation ───────────────────────────────────────────────────────
 const teacherNav: NavItem[] = [
     { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard },
@@ -223,7 +176,6 @@ export const navigationConfig = {
         super_admin: superAdminNav,
         admin: adminNav,
     },
-    center: centerNav,
     teacher: teacherNav,
     student: studentNav,
 };
@@ -242,8 +194,6 @@ export function getNavigationItems(
             return adminRole === 'super_admin'
                 ? navigationConfig.admin.super_admin
                 : navigationConfig.admin.admin;
-        case 'center':
-            return navigationConfig.center;
         case 'teacher':
             return navigationConfig.teacher;
         case 'student':
@@ -259,9 +209,8 @@ export function getAccountLabel(role: string | null, adminRole?: string | null):
     }
 
     const labels: Record<string, string> = {
-        admin: adminRole === 'super_admin' ? 'Super Admin' : 'Admin Trung Tâm',
+        admin: adminRole === 'super_admin' ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',
         super_admin: 'Super Admin',
-        center: 'Quản Lý Trung Tâm',
         teacher: 'Giáo Viên',
         student: 'Học Sinh',
     };
@@ -273,7 +222,6 @@ export function getAccountIcon(role: string | null): LucideIcon {
     const icons: Record<string, LucideIcon> = {
         admin: Lock,
         super_admin: Lock,
-        center: Building2,
         teacher: BookOpen,
         student: User,
     };

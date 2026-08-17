@@ -16,8 +16,9 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 ## 2. Quy tắc Kiến trúc Cốt lõi (Core Architecture Principles)
 
 > [!IMPORTANT]
-> **1. TÀI KHOẢN ĐỘC LẬP**:
-> Sử dụng 4 loại tài khoản độc lập chính: `admins`, `centers`, `teachers`, `students`.
+> **1. TÀI KHOẢN ĐỘC LẬP (3 LOẠI TÀI KHOẢN AUTHENTICATABLE)**:
+> Sử dụng 3 loại tài khoản đăng nhập độc lập chính: `admins`, `teachers`, `students`.
+> Trung tâm (`centers`) là thực thể tổ chức đào tạo, không có tài khoản đăng nhập riêng (`username`/`password`) mà được quản trị bởi Quản trị viên (`admins`).
 
 > [!IMPORTANT]
 > **2. ADMIN ROLE & QUYỀN HẠN**:
@@ -59,7 +60,6 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 
 - **Authenticatable Guards (`config/auth.php`)**:
     - `admin` -> Model `App\Models\Admin`
-    - `center` -> Model `App\Models\Center`
     - `teacher` -> Model `App\Models\Teacher`
     - `student` -> Model `App\Models\Student`
 - **Phân quyền Backend**: Phân quyền trực tiếp trong backend logic dựa trên `account_type` + `role` + dữ liệu phân công (dữ liệu `admin_centers`, lớp dạy của giáo viên, dữ liệu cá nhân của học sinh).
@@ -88,13 +88,13 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 
 |  STT   | Tên bảng (Table)          | Nhiệm vụ & Vai trò của bảng                                                                                                                                                                               |
 | :----: | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1**  | `centers`                 | Quản lý thông tin Trung tâm đào tạo (mã trung tâm, tên, email, phone, password, ngày hết hạn `expires_at`, gói dịch vụ `subscription_plan`, trạng thái `status`).                                         |
+| **1**  | `centers`                 | Quản lý thông tin Trung tâm đào tạo (mã trung tâm, tên, email, phone, địa chỉ, ngày hết hạn `expires_at`, gói dịch vụ `subscription_plan`, trạng thái `status`).                                           |
 | **2**  | `admins`                  | Quản lý Quản trị viên hệ thống (`username`, `full_name`, `email`, `phone`, `password`, `role`: `super_admin` \| `admin`, mã `admin_code`).                                                                |
 | **3**  | `teachers`                | Quản lý Giáo viên (`username`, `full_name`, `email`, `phone`, `password`, chuyên môn, mức lương/ca, `center_id`, `status`).                                                                               |
 | **4**  | `students`                | Quản lý Học sinh (`username`, `full_name`, `email`, `phone`, `password`, ngày sinh, giới tính, địa chỉ, thông tin phụ huynh `parent_name`, `parent_phone`, `parent_relationship`, `center_id`, `status`). |
 | **5**  | `admin_centers`           | Bảng liên hệ phân công Admin (role `admin`) được quản lý những Trung tâm nào (`admin_id`, `center_id`).                                                                                                   |
 | **6**  | `refresh_tokens`          | Lưu vết Refresh Token cho đăng nhập đa thiết bị (Polymorphic: `tokenable_type`, `tokenable_id`, `token_hash`, `expires_at`).                                                                              |
-| **7**  | `password_reset_otps`     | Lưu mã xác thực OTP 6 số (hash) kèm thời hạn 15 phút để quên/đặt lại mật khẩu cho 4 loại tài khoản (`email`, `account_type`, `otp_hash`, `expires_at`).                                                   |
+| **7**  | `password_reset_otps`     | Lưu mã xác thực OTP 6 số (hash) kèm thời hạn 15 phút để quên/đặt lại mật khẩu cho 3 loại tài khoản (`email`, `account_type`: admin/teacher/student, `otp_hash`, `expires_at`).                              |
 | **8**  | `subjects`                | Danh mục Môn học chung (tên môn học đã bao gồm cấp độ, ví dụ: _Toán 12 Nâng Cao_, _Tiếng Trung Sơ Cấp K1_).                                                                                               |
 | **9**  | `center_subjects`         | Cấu hình môn học và học phí theo từng Trung tâm (`center_id`, `subject_id`, `tuition_fee`, `total_sessions`).                                                                                             |
 | **10** | `rooms`                   | Quản lý Phòng học theo từng Trung tâm (`center_id`, `name`, `capacity`).                                                                                                                                  |

@@ -33,7 +33,6 @@ Route::prefix('register-center')->name('register-center.')->group(function () {
     Route::get('/', [CenterRegisterController::class, 'showRegisterForm'])->name('index');
     Route::post('/step1', [CenterRegisterController::class, 'registerStep1'])->name('step1');
     Route::get('/check-payment/{appTransId}', [CenterRegisterController::class, 'checkPaymentStatus'])->name('check-payment');
-    Route::post('/complete-account', [CenterRegisterController::class, 'completeAccount'])->name('complete-account');
 });
 
 // ─── Authentication Routes (Public) ──────────────────────────────────────────

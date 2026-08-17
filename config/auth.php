@@ -28,10 +28,6 @@ return [
             'driver'   => 'session',
             'provider' => 'admins',
         ],
-        'center' => [
-            'driver'   => 'session',
-            'provider' => 'centers',
-        ],
         'teacher' => [
             'driver'   => 'session',
             'provider' => 'teachers',
@@ -53,10 +49,6 @@ return [
             'driver' => 'eloquent',
             'model'  => Admin::class,
         ],
-        'centers' => [
-            'driver' => 'eloquent',
-            'model'  => \App\Models\Center::class,
-        ],
         'teachers' => [
             'driver' => 'eloquent',
             'model'  => Teacher::class,
@@ -76,12 +68,6 @@ return [
     'passwords' => [
         'admins' => [
             'provider' => 'admins',
-            'table'    => 'password_reset_tokens',
-            'expire'   => 60,
-            'throttle' => 60,
-        ],
-        'centers' => [
-            'provider' => 'centers',
             'table'    => 'password_reset_tokens',
             'expire'   => 60,
             'throttle' => 60,

@@ -6,7 +6,6 @@ use App\Models\SystemSetting;
 use App\Services\Center\CenterRegisterServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -72,33 +71,5 @@ class CenterRegisterController extends Controller
         }
 
         return response()->json($result);
-    }
-
-    /**
-     * Bước 3: Khởi tạo Tên đăng nhập & Mật khẩu cho Trung tâm -> Tự động Đăng nhập vào Dashboard.
-     * @param Request $request
-     */
-    public function completeAccount(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'center_id' => ['required', 'integer', 'exists:centers,id'],
-            'username'  => ['required', 'string', 'max:50', 'unique:centers,username'],
-            'password'  => ['required', 'string', 'min:6'],
-        ]);
-
-        $center = $this->centerRegisterService->completeAccount(
-            (int) $validated['center_id'],
-            (string) $validated['username'],
-            (string) $validated['password']
-        );
-
-        Auth::guard('center')->login($center);
-        $request->session()->regenerate();
-
-        return response()->json([
-            'success'      => true,
-            'redirect_url' => route('dashboard'),
-            'message'      => 'Tạo tài khoản thành công! Đang chuyển hướng vào bảng điều khiển...',
-        ]);
     }
 }

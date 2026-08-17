@@ -6,7 +6,7 @@ import Card from '../../components/ui/Card';
 
 interface VerifyOtpProps {
     email: string;
-    account_type: 'admin' | 'center' | 'teacher' | 'student';
+    account_type: 'admin' | 'teacher' | 'student';
 }
 
 export const VerifyOtp: React.FC<VerifyOtpProps> = ({
@@ -46,8 +46,6 @@ export const VerifyOtp: React.FC<VerifyOtpProps> = ({
         switch (type) {
             case 'admin':
                 return 'Quản trị viên';
-            case 'center':
-                return 'Trung tâm';
             case 'teacher':
                 return 'Giáo viên';
             case 'student':

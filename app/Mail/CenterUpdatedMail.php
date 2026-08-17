@@ -16,21 +16,15 @@ class CenterUpdatedMail extends Mailable implements ShouldQueue
     use SerializesModels;
 
     public Center $center;
-    public bool $isPasswordUpdated;
-    public ?string $newPassword;
 
     /**
      * Create a new message instance.
      *
-     * @param Center      $center
-     * @param bool        $isPasswordUpdated
-     * @param string|null $newPassword
+     * @param Center $center
      */
-    public function __construct(Center $center, bool $isPasswordUpdated = false, ?string $newPassword = null)
+    public function __construct(Center $center)
     {
-        $this->center            = $center;
-        $this->isPasswordUpdated = $isPasswordUpdated;
-        $this->newPassword       = $newPassword;
+        $this->center = $center;
     }
 
     /**
@@ -38,12 +32,8 @@ class CenterUpdatedMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        $subject = $this->isPasswordUpdated
-            ? "[Sam Edu] Thông báo: Mật khẩu & thông tin tài khoản Trung tâm '{$this->center->name}' đã được cập nhật"
-            : "[Sam Edu] Thông báo: Thông tin tài khoản Trung tâm '{$this->center->name}' đã được cập nhật";
-
         return new Envelope(
-            subject: $subject,
+            subject: "[Sam Edu] Thông báo: Thông tin Trung tâm '{$this->center->name}' đã được cập nhật",
         );
     }
 
@@ -55,9 +45,7 @@ class CenterUpdatedMail extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'emails.center_updated',
             with: [
-                'center'            => $this->center,
-                'isPasswordUpdated' => $this->isPasswordUpdated,
-                'newPassword'       => $this->newPassword,
+                'center' => $this->center,
             ],
         );
     }

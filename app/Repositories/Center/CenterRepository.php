@@ -50,19 +50,6 @@ class CenterRepository implements CenterRepositoryInterface
     }
 
     /**
-     * Find a center by username, code or email.
-     * @param string $username
-     */
-    public function findByUsernameOrEmail(string $username): ?Center
-    {
-        return Center::query()
-            ->where('username', $username)
-            ->orWhere('code', $username)
-            ->orWhere('email', $username)
-            ->first();
-    }
-
-    /**
      * Find a center by ID.
      * @param int $id
      */

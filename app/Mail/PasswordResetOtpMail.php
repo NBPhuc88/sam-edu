@@ -41,7 +41,6 @@ class PasswordResetOtpMail extends Mailable implements ShouldQueue
     {
         $roleLabel = match ($this->accountType) {
             'admin'   => 'Quản trị viên',
-            'center'  => 'Trung tâm',
             'teacher' => 'Giáo viên',
             'student' => 'Học sinh',
             default   => 'Tài khoản',

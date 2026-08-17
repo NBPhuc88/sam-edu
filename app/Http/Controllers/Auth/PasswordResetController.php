@@ -32,7 +32,7 @@ class PasswordResetController extends Controller
     public function sendOtp(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'account_type' => ['required', Rule::in(['admin', 'center', 'teacher', 'student'])],
+            'account_type' => ['required', Rule::in(['admin', 'teacher', 'student'])],
             'email'        => ['required', 'email', 'max:255'],
         ]);
 
@@ -72,7 +72,7 @@ class PasswordResetController extends Controller
     public function verifyOtp(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'account_type' => ['required', Rule::in(['admin', 'center', 'teacher', 'student'])],
+            'account_type' => ['required', Rule::in(['admin', 'teacher', 'student'])],
             'email'        => ['required', 'email'],
             'otp'          => ['required', 'string', 'size:6'],
         ]);

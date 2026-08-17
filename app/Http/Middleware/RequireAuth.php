@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
  * RequireAuth Middleware
  *
  * Kiểm tra đăng nhập cho bất kỳ guard nào trong hệ thống:
- * admin, center, teacher, student.
+ * admin, teacher, student.
  *
  * Nếu không có guard nào authenticated → redirect về /login.
  *
@@ -21,7 +21,7 @@ class RequireAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $guards = ['admin', 'center', 'teacher', 'student'];
+        $guards = ['admin', 'teacher', 'student'];
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {

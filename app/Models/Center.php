@@ -5,18 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int         $id
  * @property string      $code
  * @property string      $name
- * @property string|null $username
- * @property string|null $password
  * @property string|null $phone
  * @property string|null $email
+ * @property string|null $address
  * @property string      $status
  * @property string      $subscription_plan
  * @property Carbon|null $expires_at
@@ -27,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  */
-class Center extends Authenticatable
+class Center extends Model
 {
     use HasFactory;
     use SoftDeletes;
@@ -35,8 +34,6 @@ class Center extends Authenticatable
     protected $fillable = [
         'code',
         'name',
-        'username',
-        'password',
         'phone',
         'email',
         'address',
@@ -48,10 +45,6 @@ class Center extends Authenticatable
         'max_classes',
     ];
 
-    protected $hidden = [
-        'password',
-    ];
-
     protected function casts(): array
     {
         return [
@@ -59,7 +52,6 @@ class Center extends Authenticatable
             'trial_ends_at' => 'datetime',
             'max_students'  => 'integer',
             'max_classes'   => 'integer',
-            'password'      => 'hashed',
         ];
     }
 

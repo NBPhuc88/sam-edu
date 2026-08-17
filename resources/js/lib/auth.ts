@@ -38,13 +38,6 @@ export const isAdmin = (account: Account | null): boolean => {
 };
 
 /**
- * Kiểm tra xem account có phải center hay không
- */
-export const isCenter = (account: Account | null): boolean => {
-    return account?.account_type === 'center';
-};
-
-/**
  * Kiểm tra xem account có phải teacher hay không
  */
 export const isTeacher = (account: Account | null): boolean => {

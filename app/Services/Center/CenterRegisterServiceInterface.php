@@ -2,8 +2,6 @@
 
 namespace App\Services\Center;
 
-use App\Models\Center;
-
 interface CenterRegisterServiceInterface
 {
     /**
@@ -17,12 +15,4 @@ interface CenterRegisterServiceInterface
      * @return array<string, mixed>
      */
     public function checkPaymentStatus(string $appTransId): array;
-
-    /**
-     * @param  int    $centerId
-     * @param  string $username
-     * @param  string $password
-     * @return Center
-     */
-    public function completeAccount(int $centerId, string $username, string $password): Center;
 }

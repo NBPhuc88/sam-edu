@@ -3,7 +3,6 @@
 namespace App\Repositories\Auth;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\Student;
 use App\Models\Teacher;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +46,6 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
     {
         return match ($accountType) {
             'admin'   => Admin::where('email', $email)->first(),
-            'center'  => Center::where('email', $email)->first(),
             'teacher' => Teacher::where('email', $email)->first(),
             'student' => Student::where('email', $email)->first(),
             default   => null,

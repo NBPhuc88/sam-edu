@@ -9,7 +9,6 @@ use App\Models\SystemSetting;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
 use App\Services\Payment\PaymentGatewayFactory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -36,15 +35,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             $code = 'CENTER-' . strtoupper(Str::random(5));
         }
 
-        $tempUsername           = strtolower(Str::slug((string) ($data['name'] ?? 'center'))) . '_' . Str::random(4);
         $isOnlinePaymentEnabled = (bool) config('payment.enable_online_payment', false);
 
         if (! $isOnlinePaymentEnabled) {
             $center = $this->centerRepository->create([
                 'code'              => $code,
                 'name'              => $data['name'],
-                'username'          => null,
-                'password'          => null,
                 'phone'             => $data['phone'],
                 'email'             => $data['email'],
                 'address'           => $data['address'] ?? null,
@@ -64,7 +60,8 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_id' => $center->id,
                 'code'      => $center->code,
                 'name'      => $center->name,
-                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị Sam Edu sẽ liên hệ hỗ trợ kích hoạt tài khoản trong thời gian sớm nhất.',
+                'plan'      => $center->subscription_plan,
+                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị Sam Edu sẽ liên hệ hỗ trợ kích hoạt trong thời gian sớm nhất.',
             ];
         }
 
@@ -72,7 +69,6 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             $center = $this->centerRepository->create([
                 'code'              => $code,
                 'name'              => $data['name'],
-                'username'          => $tempUsername,
                 'phone'             => $data['phone'],
                 'email'             => $data['email'],
                 'address'           => $data['address'] ?? null,
@@ -88,10 +84,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
 
             return [
                 'success'   => true,
-                'step'      => 'complete_account',
+                'step'      => 'contact_notification',
                 'center_id' => $center->id,
-                'plan'      => 'trial_14d',
-                'message'   => 'Đăng ký dùng thử 14 ngày thành công! Vui lòng tạo tài khoản và mật khẩu.',
+                'code'      => $center->code,
+                'name'      => $center->name,
+                'plan'      => $center->subscription_plan,
+                'message'   => 'Đăng ký dùng thử 14 ngày thành công! Ban quản trị Sam Edu đã ghi nhận thông tin trung tâm.',
             ];
         }
 
@@ -101,7 +99,6 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         $center = $this->centerRepository->create([
             'code'              => $code,
             'name'              => $data['name'],
-            'username'          => $tempUsername,
             'phone'             => $data['phone'],
             'email'             => $data['email'],
             'address'           => $data['address'] ?? null,
@@ -145,6 +142,8 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'step'           => 'payment_gateway',
             'payment_method' => $paymentMethod,
             'center_id'      => $center->id,
+            'code'           => $center->code,
+            'name'           => $center->name,
             'app_trans_id'   => $appTransId,
             'order_url'      => $gatewayResult['order_url'] ?? null,
             'qr_code'        => $gatewayResult['qr_code'] ?? null,
@@ -171,10 +170,15 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         }
 
         if ($transaction->status === 'success') {
+            $center = $this->centerRepository->find($transaction->center_id);
+
             return [
                 'success'   => true,
                 'status'    => 'paid',
                 'center_id' => $transaction->center_id,
+                'code'      => $center?->code,
+                'name'      => $center?->name,
+                'plan'      => $center?->subscription_plan,
             ];
         }
 
@@ -202,6 +206,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'success'   => true,
                 'status'    => 'paid',
                 'center_id' => $transaction->center_id,
+                'code'      => $center?->code,
+                'name'      => $center?->name,
+                'plan'      => $center?->subscription_plan,
             ];
         }
 
@@ -210,17 +217,6 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'status'    => 'pending',
             'center_id' => $transaction->center_id,
         ];
-    }
-
-    public function completeAccount(int $centerId, string $username, string $password): Center
-    {
-        $center = $this->centerRepository->find($centerId);
-
-        return $this->centerRepository->update($center->id, [
-            'username' => $username,
-            'password' => Hash::make($password),
-            'status'   => $center->status === 'pending_payment' ? 'active' : $center->status,
-        ]);
     }
 
     protected function sendAdminNotificationMail(Center $center): void

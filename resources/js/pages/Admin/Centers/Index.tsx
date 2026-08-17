@@ -11,7 +11,6 @@ interface Center {
     id: number;
     code: string;
     name: string;
-    username?: string | null;
     phone: string | null;
     email: string | null;
     address: string | null;
@@ -127,11 +126,6 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                                                 </div>
                                                 <div className="mt-0.5 font-mono text-xs text-gray-400">
                                                     {center.code}
-                                                    {center.username && (
-                                                        <span className="ml-1.5 font-sans font-semibold text-emerald-700">
-                                                            (@{center.username})
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">

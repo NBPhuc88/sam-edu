@@ -178,11 +178,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
                                     role === 'admin'
                                         ? 'bg-emerald-100 text-emerald-700'
-                                        : role === 'center'
-                                          ? 'bg-blue-100 text-blue-700'
-                                          : role === 'teacher'
-                                            ? 'bg-violet-100 text-violet-700'
-                                            : 'bg-amber-100 text-amber-700'
+                                        : role === 'teacher'
+                                          ? 'bg-violet-100 text-violet-700'
+                                          : 'bg-amber-100 text-amber-700'
                                 }`}
                             >
                                 {avatarChar}

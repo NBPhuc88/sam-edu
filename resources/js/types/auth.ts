@@ -1,7 +1,6 @@
-// Kiến trúc Account: 4 loại tài khoản độc lập - KHÔNG dùng bảng users
-// Xem chi tiết: .agents/AGENTS.md - Mục 2.1 & 2.2
-
-export type AccountType = 'admin' | 'center' | 'teacher' | 'student';
+// Kiến trúc Account: 3 loại tài khoản độc lập (Admin, Giáo viên, Học sinh)
+// Trung tâm (Center) là thực thể tổ chức được quản lý bởi Admin
+export type AccountType = 'admin' | 'teacher' | 'student';
 
 // AdminRole chỉ áp dụng cho account_type = 'admin'
 export type AdminRole = 'super_admin' | 'admin';

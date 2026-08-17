@@ -90,7 +90,6 @@ class PasswordResetService implements PasswordResetServiceInterface
     public function updateForcedPassword(string $newPassword): array
     {
         $user = Auth::guard('admin')->user()
-            ?? Auth::guard('center')->user()
             ?? Auth::guard('teacher')->user()
             ?? Auth::guard('student')->user();
 
