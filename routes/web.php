@@ -133,6 +133,17 @@ Route::middleware('auth.any')->group(function () {
         });
     });
 
+    // Class Schedule Management Routes (CRUD & Session Generation)
+    Route::prefix('schedules')->name('schedules.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ClassScheduleController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\ClassScheduleController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\ClassScheduleController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\ClassScheduleController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\ClassScheduleController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\ClassScheduleController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/sessions', [\App\Http\Controllers\ClassScheduleController::class, 'sessions'])->name('sessions');
+    });
+
     // Student Tuition & Course Fee Management Routes
     Route::prefix('tuitions')->name('tuitions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\StudentTuitionController::class, 'index'])->name('index');
