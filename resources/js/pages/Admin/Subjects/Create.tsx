@@ -56,7 +56,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
         router.post(
             '/subjects',
             {
-                center_id: Number(centerId),
+                center_id: centerId ? Number(centerId) : undefined,
                 name,
                 code: code || undefined,
                 total_sessions: totalSessions ? Number(totalSessions) : undefined,
@@ -99,13 +99,14 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                             {/* Center Selection */}
                             <div className="md:col-span-2">
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Trung Tâm Đào Tạo (*)
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
+                                    disabled={centers.length === 0}
                                 >
                                     <option value="">-- Chọn Trung tâm --</option>
                                     {centers.map((c) => (
@@ -114,6 +115,11 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                                         </option>
                                     ))}
                                 </select>
+                                {centers.length === 0 && (
+                                    <p className="mt-1 text-xs text-amber-600">
+                                        Không tìm thấy trung tâm hoạt động hoặc tài khoản của bạn chưa được phân quyền quản lý trung tâm nào.
+                                    </p>
+                                )}
                                 {errors.center_id && (
                                     <p className="mt-1 text-xs text-red-600">{errors.center_id}</p>
                                 )}

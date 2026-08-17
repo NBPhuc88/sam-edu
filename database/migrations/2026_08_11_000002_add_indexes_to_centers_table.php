@@ -25,7 +25,7 @@ return new class () extends Migration {
                 $table->index('name', 'idx_centers_name');
             }
 
-            if (! in_array('ft_centers_address', $existing, true)) {
+            if (! in_array('ft_centers_address', $existing, true) && \Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
                 $table->fullText('address', 'ft_centers_address');
             }
         });

@@ -25,7 +25,7 @@ return new class () extends Migration {
                 $table->index('full_name', 'idx_students_full_name');
             }
 
-            if (! in_array('ft_students_longtext', $existingStudents, true)) {
+            if (! in_array('ft_students_longtext', $existingStudents, true) && \Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
                 $table->fullText(['address', 'note'], 'ft_students_longtext');
             }
         });
@@ -49,7 +49,7 @@ return new class () extends Migration {
                 $table->index('specialization', 'idx_teachers_specialization');
             }
 
-            if (! in_array('ft_teachers_note', $existingTeachers, true)) {
+            if (! in_array('ft_teachers_note', $existingTeachers, true) && \Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
                 $table->fullText('note', 'ft_teachers_note');
             }
         });
