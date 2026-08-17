@@ -83,9 +83,14 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');
     });
 
-    // Teacher Management Routes (Export & Import)
+    // Teacher Management Routes (CRUD, Export & Import)
     Route::prefix('teachers')->name('teachers.')->group(function () {
         Route::get('/', [TeacherController::class, 'index'])->name('index');
+        Route::get('/create', [TeacherController::class, 'create'])->name('create');
+        Route::post('/', [TeacherController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [TeacherController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [TeacherController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TeacherController::class, 'destroy'])->name('destroy');
         Route::get('/export', [TeacherController::class, 'export'])->name('export');
         Route::post('/import', [TeacherController::class, 'import'])->name('import');
         Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');

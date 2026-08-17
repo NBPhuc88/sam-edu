@@ -56,41 +56,100 @@ class TeacherRepository implements TeacherRepositoryInterface
         return $teacher;
     }
 
-    public function paginate(?string $search = null, ?int $centerId = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
-    {
-        $offset = max(0, ($page - 1) * $perPage);
-        $query  = Teacher::query();
+    /**
+     * @param  ?string              $search
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginate(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1
+    ): LengthAwarePaginator {
+        $query = Teacher::query()->with('center');
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('teacher_code', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('specialization', 'like', "%{$search}%");
-            });
-        }
-
-        if ($centerId) {
-            $query->where('center_id', $centerId);
-        }
-
-        if ($offset > 0) {
-            $idQuery   = (clone $query)->select('id')->latest('id')->offset($offset)->limit($perPage);
-            $targetIds = $idQuery->pluck('id')->toArray();
-
-            if (! empty($targetIds)) {
-                return Teacher::with('center')
-                    ->whereIn('id', $targetIds)
-                    ->latest('id')
-                    ->paginate($perPage)
-                    ->withQueryString();
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
             }
         }
 
-        return $query->with('center')
-            ->latest('id')
-            ->paginate($perPage)
-            ->withQueryString();
+        if ($status !== null && $status !== '' && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('full_name', 'like', "%{$term}%")
+                    ->orWhere('teacher_code', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('username', 'like', "%{$term}%")
+                    ->orWhere('specialization', 'like', "%{$term}%")
+                    ->orWhereHas('center', function ($cq) use ($term) {
+                        $cq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    });
+            });
+        }
+
+        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /**
+     * @param  int             $id
+     * @param  array<int>|null $allowedCenterIds
+     * @return Teacher|null
+     */
+    public function find(int $id, ?array $allowedCenterIds = null): ?Teacher
+    {
+        $query = Teacher::query()->with('center');
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->find($id);
+    }
+
+    /**
+     * @param  array<string, mixed> $data
+     * @return Teacher
+     */
+    public function create(array $data): Teacher
+    {
+        return Teacher::create($data);
+    }
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return Teacher
+     */
+    public function update(int $id, array $data): Teacher
+    {
+        $teacher = Teacher::findOrFail($id);
+        $teacher->update($data);
+
+        return $teacher;
+    }
+
+    /**
+     * @param  int  $id
+     * @return bool
+     */
+    public function delete(int $id): bool
+    {
+        $teacher = Teacher::findOrFail($id);
+
+        return (bool) $teacher->delete();
     }
 }

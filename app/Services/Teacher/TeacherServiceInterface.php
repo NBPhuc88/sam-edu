@@ -2,9 +2,62 @@
 
 namespace App\Services\Teacher;
 
+use App\Models\Admin;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface TeacherServiceInterface
 {
-    public function getPaginatedTeachers(?string $search = null, ?int $centerId = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    /**
+     * @param  ?string              $search
+     * @param  ?int                 $centerId
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @param  ?Admin               $admin
+     * @return LengthAwarePaginator
+     */
+    public function getPaginatedTeachers(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1,
+        ?Admin $admin = null
+    ): LengthAwarePaginator;
+
+    /**
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getFormData(?Admin $admin = null): array;
+
+    /**
+     * @param  int          $id
+     * @param  ?Admin       $admin
+     * @return Teacher|null
+     */
+    public function findTeacher(int $id, ?Admin $admin = null): ?Teacher;
+
+    /**
+     * @param  array<string, mixed> $data
+     * @param  ?Admin               $admin
+     * @return Teacher
+     */
+    public function createTeacher(array $data, ?Admin $admin = null): Teacher;
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @param  ?Admin               $admin
+     * @return Teacher
+     */
+    public function updateTeacher(int $id, array $data, ?Admin $admin = null): Teacher;
+
+    /**
+     * @param  int    $id
+     * @param  ?Admin $admin
+     * @return bool
+     */
+    public function deleteTeacher(int $id, ?Admin $admin = null): bool;
 }

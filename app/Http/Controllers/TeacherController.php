@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Student\ImportCsvRequest;
+use App\Http\Requests\Teacher\StoreTeacherRequest;
+use App\Http\Requests\Teacher\UpdateTeacherRequest;
+use App\Models\Admin;
 use App\Services\Teacher\TeacherExportImportServiceInterface;
 use App\Services\Teacher\TeacherServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,26 +23,91 @@ class TeacherController extends Controller
     ) {
     }
 
+    protected function getAuthAdmin(): ?Admin
+    {
+        /** @var Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
+
+        return $admin;
+    }
+
     public function index(Request $request): InertiaResponse
     {
+        $admin    = $this->getAuthAdmin();
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $status   = $request->input('status');
         $page     = $request->integer('page', 1);
 
         $teachers = $this->teacherService->getPaginatedTeachers(
             is_string($search) ? $search : null,
             $centerId,
+            is_string($status) ? $status : null,
             15,
-            $page
+            $page,
+            $admin
         );
+
+        $formData = $this->teacherService->getFormData($admin);
 
         return Inertia::render('Admin/Teachers/Index', [
             'teachers' => $teachers,
+            'centers'  => $formData['centers'],
             'filters'  => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
+                'status'    => $status ?? 'all',
             ],
         ]);
+    }
+
+    public function create(): InertiaResponse
+    {
+        $admin    = $this->getAuthAdmin();
+        $formData = $this->teacherService->getFormData($admin);
+
+        return Inertia::render('Admin/Teachers/Create', [
+            'centers' => $formData['centers'],
+        ]);
+    }
+
+    public function store(StoreTeacherRequest $request): RedirectResponse
+    {
+        $admin   = $this->getAuthAdmin();
+        $teacher = $this->teacherService->createTeacher($request->validated(), $admin);
+
+        return redirect()->route('teachers.index')
+            ->with('success', "Thêm giáo viên '{$teacher->full_name}' thành công!");
+    }
+
+    public function edit(int $id): InertiaResponse
+    {
+        $admin    = $this->getAuthAdmin();
+        $teacher  = $this->teacherService->findTeacher($id, $admin);
+        $formData = $this->teacherService->getFormData($admin);
+
+        return Inertia::render('Admin/Teachers/Edit', [
+            'teacher' => $teacher,
+            'centers' => $formData['centers'],
+        ]);
+    }
+
+    public function update(UpdateTeacherRequest $request, int $id): RedirectResponse
+    {
+        $admin   = $this->getAuthAdmin();
+        $teacher = $this->teacherService->updateTeacher($id, $request->validated(), $admin);
+
+        return redirect()->route('teachers.index')
+            ->with('success', "Cập nhật thông tin giáo viên '{$teacher->full_name}' thành công!");
+    }
+
+    public function destroy(int $id): RedirectResponse
+    {
+        $admin = $this->getAuthAdmin();
+        $this->teacherService->deleteTeacher($id, $admin);
+
+        return redirect()->route('teachers.index')
+            ->with('success', 'Xóa giáo viên thành công!');
     }
 
     public function export(Request $request): StreamedResponse

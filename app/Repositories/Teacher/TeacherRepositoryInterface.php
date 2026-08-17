@@ -23,5 +23,45 @@ interface TeacherRepositoryInterface
      */
     public function updateOrCreateByCode(string $teacherCode, array $data): Teacher;
 
-    public function paginate(?string $search = null, ?int $centerId = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    /**
+     * @param  ?string              $search
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginate(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1
+    ): LengthAwarePaginator;
+
+    /**
+     * @param  int             $id
+     * @param  array<int>|null $allowedCenterIds
+     * @return Teacher|null
+     */
+    public function find(int $id, ?array $allowedCenterIds = null): ?Teacher;
+
+    /**
+     * @param  array<string, mixed> $data
+     * @return Teacher
+     */
+    public function create(array $data): Teacher;
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return Teacher
+     */
+    public function update(int $id, array $data): Teacher;
+
+    /**
+     * @param  int  $id
+     * @return bool
+     */
+    public function delete(int $id): bool;
 }
