@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Tuition\FilterStudentTuitionRequest;
 use App\Http\Requests\Tuition\StoreStudentTuitionRequest;
 use App\Http\Requests\Tuition\StoreTuitionPaymentRequest;
 use App\Http\Requests\Tuition\UpdateStudentTuitionRequest;
@@ -29,7 +30,7 @@ class StudentTuitionController extends Controller
         return $admin;
     }
 
-    public function index(Request $request): InertiaResponse
+    public function index(FilterStudentTuitionRequest $request): InertiaResponse
     {
         $admin    = $this->getAuthAdmin();
         $search   = $request->input('search');
@@ -37,6 +38,7 @@ class StudentTuitionController extends Controller
         $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
         $status   = $request->input('status');
         $page     = $request->integer('page', 1);
+        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $tuitions = $this->studentTuitionService->getPaginatedTuitions(
             is_string($search) ? $search : null,
@@ -44,7 +46,7 @@ class StudentTuitionController extends Controller
             $classId,
             null,
             is_string($status) ? $status : null,
-            15,
+            $perPage,
             $page,
             $admin
         );
@@ -62,6 +64,7 @@ class StudentTuitionController extends Controller
                 'center_id' => $centerId,
                 'class_id'  => $classId,
                 'status'    => $status ?? 'all',
+                'per_page'  => $perPage,
             ],
         ]);
     }

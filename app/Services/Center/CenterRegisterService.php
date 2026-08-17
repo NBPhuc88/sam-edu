@@ -4,10 +4,10 @@ namespace App\Services\Center;
 
 use App\Mail\NewCenterRegisteredMail;
 use App\Models\Center;
-use App\Models\SubscriptionPlan;
-use App\Models\SystemSetting;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
+use App\Repositories\Setting\SystemSettingRepositoryInterface;
+use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use App\Services\Payment\PaymentGatewayFactory;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -16,7 +16,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
 {
     public function __construct(
         protected CenterRepositoryInterface $centerRepository,
-        protected PaymentTransactionRepositoryInterface $paymentTransactionRepository
+        protected PaymentTransactionRepositoryInterface $paymentTransactionRepository,
+        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository,
+        protected SystemSettingRepositoryInterface $systemSettingRepository
     ) {
     }
 
@@ -28,10 +30,10 @@ class CenterRegisterService implements CenterRegisterServiceInterface
     {
         $planCode      = (string) ($data['subscription_plan'] ?? 'trial_14d');
         $paymentMethod = (string) ($data['payment_method'] ?? 'zalopay');
-        $plan          = SubscriptionPlan::where('code', $planCode)->first();
+        $plan          = $this->subscriptionPlanRepository->findByCode($planCode);
 
         $code = 'CENTER-' . strtoupper(Str::random(5));
-        while (Center::where('code', $code)->exists()) {
+        while ($this->centerRepository->codeExists($code)) {
             $code = 'CENTER-' . strtoupper(Str::random(5));
         }
 
@@ -219,9 +221,21 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getRegisterPageData(): array
+    {
+        return [
+            'plans'               => $this->subscriptionPlanRepository->getAllOrderedByPrice(),
+            'enableOnlinePayment' => (bool) config('payment.enable_online_payment', false),
+            'paymentGateways'     => config('payment.gateways', []),
+        ];
+    }
+
     protected function sendAdminNotificationMail(Center $center): void
     {
-        $adminEmail = SystemSetting::getByKey('contact_email', config('mail.from.address', 'phucstt01@gmail.com'));
+        $adminEmail = $this->systemSettingRepository->getByKey('contact_email', config('mail.from.address', 'phucstt01@gmail.com'));
 
         try {
             Mail::to($adminEmail)->queue(new NewCenterRegisteredMail($center));

@@ -163,4 +163,30 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
     {
         return ClassSchedule::where('class_subject_id', $classSubjectId)->get();
     }
+
+    /**
+     * @param  int                            $teacherId
+     * @return Collection<int, ClassSchedule>
+     */
+    public function getTeacherSchedules(int $teacherId): Collection
+    {
+        return ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
+            ->whereHas('classSubject', function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId);
+            })
+            ->get();
+    }
+
+    /**
+     * @param  array<int, int>                $classIds
+     * @return Collection<int, ClassSchedule>
+     */
+    public function getStudentSchedules(array $classIds): Collection
+    {
+        return ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
+            ->whereHas('classSubject', function ($q) use ($classIds) {
+                $q->whereIn('class_id', $classIds);
+            })
+            ->get();
+    }
 }

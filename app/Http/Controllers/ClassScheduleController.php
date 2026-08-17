@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Schedule\FilterClassScheduleRequest;
 use App\Http\Requests\Schedule\StoreClassScheduleRequest;
 use App\Http\Requests\Schedule\UpdateClassScheduleRequest;
 use App\Models\Admin;
 use App\Services\Schedule\ClassScheduleServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -28,7 +28,7 @@ class ClassScheduleController extends Controller
         return $admin;
     }
 
-    public function index(Request $request): InertiaResponse
+    public function index(FilterClassScheduleRequest $request): InertiaResponse
     {
         $admin     = $this->getAuthAdmin();
         $search    = $request->input('search');
@@ -38,6 +38,7 @@ class ClassScheduleController extends Controller
         $teacherId = $request->input('teacher_id') ? (int) $request->input('teacher_id') : null;
         $status    = $request->input('status');
         $page      = $request->integer('page', 1);
+        $perPage   = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $schedules = $this->scheduleService->getPaginatedSchedules(
             is_string($search) ? $search : null,
@@ -46,7 +47,7 @@ class ClassScheduleController extends Controller
             $subjectId,
             $teacherId,
             is_string($status) ? $status : null,
-            15,
+            $perPage,
             $page,
             $admin
         );
@@ -66,6 +67,7 @@ class ClassScheduleController extends Controller
                 'subject_id' => $subjectId,
                 'teacher_id' => $teacherId,
                 'status'     => $status ?? 'all',
+                'per_page'   => $perPage,
             ],
         ]);
     }

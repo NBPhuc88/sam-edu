@@ -48,4 +48,12 @@ interface SubjectRepositoryInterface
      * @return bool
      */
     public function delete(int $id): bool;
+
+    public function codeExists(int $centerId, string $code): bool;
+
+    /**
+     * @param  array<int, int>                                        $centerIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+     */
+    public function getByCenterIds(array $centerIds): \Illuminate\Database\Eloquent\Collection;
 }

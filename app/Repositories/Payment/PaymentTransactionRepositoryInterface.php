@@ -18,4 +18,11 @@ interface PaymentTransactionRepositoryInterface
      * @param array<string, mixed> $data
      */
     public function update(int $id, array $data): bool;
+
+    /**
+     * @param  \Carbon\CarbonInterface $start
+     * @param  \Carbon\CarbonInterface $end
+     * @return array<int, int>
+     */
+    public function getSuccessfulCenterIdsBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
 }

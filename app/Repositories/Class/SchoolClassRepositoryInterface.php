@@ -68,4 +68,33 @@ interface SchoolClassRepositoryInterface
     public function attachStudent(int $classId, int $studentId, ?string $note = null): bool;
 
     public function getPaginatedClassStudents(SchoolClass $schoolClass, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+
+    public function count(): int;
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countByCenterIds(array $centerIds): int;
+
+    public function codeExists(int $centerId, string $code): bool;
+
+    /**
+     * @param int             $year
+     * @param int             $month
+     * @param array<int, int> $centerIds
+     */
+    public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int;
+
+    /**
+     * @param  array<int, int>                                            $centerIds
+     * @param  array<int, int>|null                                       $classIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getClassesWithStudentCount(array $centerIds, ?array $classIds = null): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int         $classId
+     * @return SchoolClass
+     */
+    public function findWithCenter(int $classId): SchoolClass;
 }

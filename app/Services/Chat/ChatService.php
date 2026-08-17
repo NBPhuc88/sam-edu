@@ -5,14 +5,22 @@ namespace App\Services\Chat;
 use App\Events\ClassChatMessagePinned;
 use App\Events\ClassChatMessageSent;
 use App\Models\ClassChatMessage;
+use App\Models\SchoolClass;
 use App\Repositories\Chat\ChatRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use Illuminate\Support\Facades\Redis;
 
 class ChatService implements ChatServiceInterface
 {
     public function __construct(
-        protected ChatRepositoryInterface $chatRepository
+        protected ChatRepositoryInterface $chatRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository
     ) {
+    }
+
+    public function getClassWithCenter(int $classId): SchoolClass
+    {
+        return $this->schoolClassRepository->findWithCenter($classId);
     }
 
     /**

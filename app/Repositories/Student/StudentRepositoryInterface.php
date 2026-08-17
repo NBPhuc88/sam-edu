@@ -64,4 +64,20 @@ interface StudentRepositoryInterface
      * @return bool
      */
     public function delete(int $id): bool;
+
+    public function count(): int;
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countByCenterIds(array $centerIds): int;
+
+    public function codeExists(int $centerId, string $code): bool;
+
+    /**
+     * @param int             $year
+     * @param int             $month
+     * @param array<int, int> $centerIds
+     */
+    public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int;
 }

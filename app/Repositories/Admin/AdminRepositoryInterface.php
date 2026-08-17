@@ -31,4 +31,10 @@ interface AdminRepositoryInterface
      * @param array<int, int> $centerIds
      */
     public function syncCenters(Admin $admin, array $centerIds): void;
+
+    public function hasSuperAdmin(): bool;
+
+    public function hasOtherSuperAdmin(int $id): bool;
+
+    public function getNextAdminCode(): string;
 }

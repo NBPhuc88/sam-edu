@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Student\ImportCsvRequest;
+use App\Http\Requests\Teacher\FilterTeacherRequest;
 use App\Http\Requests\Teacher\StoreTeacherRequest;
 use App\Http\Requests\Teacher\UpdateTeacherRequest;
 use App\Models\Admin;
@@ -31,19 +32,20 @@ class TeacherController extends Controller
         return $admin;
     }
 
-    public function index(Request $request): InertiaResponse
+    public function index(FilterTeacherRequest $request): InertiaResponse
     {
         $admin    = $this->getAuthAdmin();
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $status   = $request->input('status');
         $page     = $request->integer('page', 1);
+        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $teachers = $this->teacherService->getPaginatedTeachers(
             is_string($search) ? $search : null,
             $centerId,
             is_string($status) ? $status : null,
-            15,
+            $perPage,
             $page,
             $admin
         );
@@ -57,6 +59,7 @@ class TeacherController extends Controller
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
                 'status'    => $status ?? 'all',
+                'per_page'  => $perPage,
             ],
         ]);
     }

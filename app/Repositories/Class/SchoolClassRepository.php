@@ -232,4 +232,64 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ->paginate($perPage)
             ->withQueryString();
     }
+
+    public function count(): int
+    {
+        return SchoolClass::count();
+    }
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countByCenterIds(array $centerIds): int
+    {
+        return SchoolClass::whereIn('center_id', $centerIds)->count();
+    }
+
+    public function codeExists(int $centerId, string $code): bool
+    {
+        return SchoolClass::where('center_id', $centerId)->where('code', $code)->exists();
+    }
+
+    /**
+     * @param int             $year
+     * @param int             $month
+     * @param array<int, int> $centerIds
+     */
+    public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int
+    {
+        $query = SchoolClass::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if (! empty($centerIds)) {
+            $query->whereIn('center_id', $centerIds);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * @param  array<int, int>                                            $centerIds
+     * @param  array<int, int>|null                                       $classIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getClassesWithStudentCount(array $centerIds, ?array $classIds = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = SchoolClass::whereIn('center_id', $centerIds)->with(['center'])->withCount('students');
+
+        if ($classIds !== null) {
+            $query->whereIn('id', $classIds);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * @param  int         $classId
+     * @return SchoolClass
+     */
+    public function findWithCenter(int $classId): SchoolClass
+    {
+        return SchoolClass::with('center')->findOrFail($classId);
+    }
 }

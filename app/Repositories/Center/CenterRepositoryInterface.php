@@ -40,4 +40,59 @@ interface CenterRepositoryInterface
      * @param int $id
      */
     public function delete(int $id): bool;
+
+    public function count(): int;
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getActiveCenters(): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getCenterListForDropdown(): \Illuminate\Database\Eloquent\Collection;
+
+    public function codeExists(string $code): bool;
+
+    /**
+     * @param  int                                                   $limit
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getLatest(int $limit = 5): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  array<int, int>                                       $ids
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getWithCounts(array $ids): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  array<int, int>                                       $ids
+     * @param  array<int, string>                                    $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getByIds(array $ids, array $columns = ['id', 'code', 'name']): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  \Carbon\CarbonInterface                               $start
+     * @param  \Carbon\CarbonInterface                               $end
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getCreatedBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  \Carbon\CarbonInterface                               $start
+     * @param  \Carbon\CarbonInterface                               $end
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getExpiringBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  array<int, int>                                       $ids
+     * @return \Illuminate\Database\Eloquent\Collection<int, Center>
+     */
+    public function getByIdsCollection(array $ids): \Illuminate\Database\Eloquent\Collection;
+
+    public function countInYearMonth(int $year, int $month): int;
 }

@@ -100,4 +100,21 @@ class SubjectRepository implements SubjectRepositoryInterface
 
         return (bool) $subject->delete();
     }
+
+    public function codeExists(int $centerId, string $code): bool
+    {
+        return Subject::where('center_id', $centerId)->where('code', $code)->exists();
+    }
+
+    /**
+     * @param  array<int, int>                                        $centerIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+     */
+    public function getByCenterIds(array $centerIds): \Illuminate\Database\Eloquent\Collection
+    {
+        return Subject::whereIn('center_id', $centerIds)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
 }

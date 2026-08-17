@@ -3,8 +3,8 @@
 namespace App\Services\Teacher;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +14,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class TeacherService implements TeacherServiceInterface
 {
     public function __construct(
-        protected TeacherRepositoryInterface $teacherRepository
+        protected TeacherRepositoryInterface $teacherRepository,
+        protected CenterRepositoryInterface $centerRepository
     ) {
     }
 
@@ -83,12 +84,11 @@ class TeacherService implements TeacherServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        $centersQuery = Center::query()->where('status', 'active');
-
         if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
+            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+        } else {
+            $centers = $this->centerRepository->getActiveCenters();
         }
-        $centers = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
 
         return [
             'centers' => $centers,
@@ -142,10 +142,10 @@ class TeacherService implements TeacherServiceInterface
         $teacherCode = trim($data['teacher_code'] ?? '');
 
         if (empty($teacherCode)) {
-            $count       = Teacher::withTrashed()->where('center_id', $centerId)->count() + 1;
+            $count       = $this->teacherRepository->countByCenterIds([$centerId]) + 1;
             $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
 
-            while (Teacher::where('center_id', $centerId)->where('teacher_code', $teacherCode)->exists()) {
+            while ($this->teacherRepository->codeExists($centerId, $teacherCode)) {
                 $count++;
                 $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
             }

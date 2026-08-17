@@ -4,13 +4,15 @@ namespace App\Services\Admin;
 
 use App\Models\Admin;
 use App\Repositories\Admin\AdminRepositoryInterface;
+use App\Repositories\Center\CenterRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 
 class AdminService implements AdminServiceInterface
 {
     public function __construct(
-        protected AdminRepositoryInterface $adminRepository
+        protected AdminRepositoryInterface $adminRepository,
+        protected CenterRepositoryInterface $centerRepository
     ) {
     }
 
@@ -25,14 +27,14 @@ class AdminService implements AdminServiceInterface
     public function createAdmin(array $data): Admin
     {
         if ($data['role'] === 'super_admin') {
-            $hasSuperAdmin = Admin::where('role', 'super_admin')->exists();
+            $hasSuperAdmin = $this->adminRepository->hasSuperAdmin();
 
             if ($hasSuperAdmin) {
                 throw new \InvalidArgumentException('Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).');
             }
         }
 
-        $adminCode = 'ADM' . str_pad((string) (Admin::max('id') + 1), 4, '0', STR_PAD_LEFT);
+        $adminCode = $this->adminRepository->getNextAdminCode();
 
         $admin = $this->adminRepository->create([
             'username'   => $data['username'],
@@ -65,7 +67,7 @@ class AdminService implements AdminServiceInterface
         }
 
         if (! $targetAdmin->isSuperAdmin() && $data['role'] === 'super_admin') {
-            $hasOtherSuperAdmin = Admin::where('role', 'super_admin')->where('id', '!=', $id)->exists();
+            $hasOtherSuperAdmin = $this->adminRepository->hasOtherSuperAdmin($id);
 
             if ($hasOtherSuperAdmin) {
                 throw new \InvalidArgumentException('Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).');
@@ -107,5 +109,16 @@ class AdminService implements AdminServiceInterface
         }
 
         return $this->adminRepository->delete($id);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getFormData(): array
+    {
+        return [
+            'centers'       => $this->centerRepository->getCenterListForDropdown(),
+            'hasSuperAdmin' => $this->adminRepository->hasSuperAdmin(),
+        ];
     }
 }

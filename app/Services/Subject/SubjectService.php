@@ -3,8 +3,8 @@
 namespace App\Services\Subject;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\Subject;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -13,7 +13,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class SubjectService implements SubjectServiceInterface
 {
     public function __construct(
-        protected SubjectRepositoryInterface $subjectRepository
+        protected SubjectRepositoryInterface $subjectRepository,
+        protected CenterRepositoryInterface $centerRepository
     ) {
     }
 
@@ -82,12 +83,11 @@ class SubjectService implements SubjectServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        $centersQuery = Center::query()->where('status', 'active');
-
         if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
+            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+        } else {
+            $centers = $this->centerRepository->getActiveCenters();
         }
-        $centers = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
 
         return [
             'centers' => $centers,
@@ -128,10 +128,10 @@ class SubjectService implements SubjectServiceInterface
         $code = trim($data['code'] ?? '');
 
         if (empty($code)) {
-            $count = Subject::withTrashed()->where('center_id', $centerId)->count() + 1;
+            $count = 1;
             $code  = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
 
-            while (Subject::where('center_id', $centerId)->where('code', $code)->exists()) {
+            while ($this->subjectRepository->codeExists($centerId, $code)) {
                 $count++;
                 $code = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
             }

@@ -14,7 +14,20 @@ return new class () extends Migration {
         if (Schema::hasTable('class_subjects')) {
             Schema::table('class_subjects', function (Blueprint $table) {
                 if (Schema::hasColumn('class_subjects', 'center_subject_id')) {
-                    $table->dropForeign(['center_subject_id']);
+                    try {
+                        $table->dropUnique(['class_id', 'center_subject_id']);
+                    } catch (\Throwable $e) {
+                    }
+
+                    try {
+                        $table->dropIndex(['center_subject_id']);
+                    } catch (\Throwable $e) {
+                    }
+
+                    try {
+                        $table->dropForeign(['center_subject_id']);
+                    } catch (\Throwable $e) {
+                    }
                     $table->dropColumn('center_subject_id');
                 }
 

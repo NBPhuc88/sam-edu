@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\SendPasswordResetOtpRequest;
+use App\Http\Requests\Auth\UpdateForcedPasswordRequest;
+use App\Http\Requests\Auth\VerifyPasswordResetOtpRequest;
 use App\Services\Auth\PasswordResetServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,14 +29,11 @@ class PasswordResetController extends Controller
 
     /**
      * Generate and send 6-digit OTP to user's email.
-     * @param Request $request
+     * @param SendPasswordResetOtpRequest $request
      */
-    public function sendOtp(Request $request): RedirectResponse
+    public function sendOtp(SendPasswordResetOtpRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'account_type' => ['required', Rule::in(['admin', 'teacher', 'student'])],
-            'email'        => ['required', 'email', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $result = $this->passwordResetService->sendOtp(
             $validated['account_type'],
@@ -67,15 +66,11 @@ class PasswordResetController extends Controller
 
     /**
      * Verify OTP, authenticate user, and mark forced password change flag.
-     * @param Request $request
+     * @param VerifyPasswordResetOtpRequest $request
      */
-    public function verifyOtp(Request $request): RedirectResponse
+    public function verifyOtp(VerifyPasswordResetOtpRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'account_type' => ['required', Rule::in(['admin', 'teacher', 'student'])],
-            'email'        => ['required', 'email'],
-            'otp'          => ['required', 'string', 'size:6'],
-        ]);
+        $validated = $request->validated();
 
         $result = $this->passwordResetService->verifyOtpAndLogin(
             $validated['account_type'],
@@ -107,18 +102,10 @@ class PasswordResetController extends Controller
 
     /**
      * Update forced password and clear session restriction flag.
-     * @param Request $request
+     * @param UpdateForcedPasswordRequest $request
      */
-    public function updateForcedPassword(Request $request): RedirectResponse
+    public function updateForcedPassword(UpdateForcedPasswordRequest $request): RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
-        ], [
-            'password.required'  => 'Vui lòng nhập mật khẩu mới.',
-            'password.min'       => 'Mật khẩu tối thiểu phải từ 6 ký tự trở lên.',
-            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
-        ]);
-
         $result = $this->passwordResetService->updateForcedPassword(
             (string) $request->input('password')
         );

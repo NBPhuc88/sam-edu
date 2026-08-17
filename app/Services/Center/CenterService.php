@@ -5,14 +5,17 @@ namespace App\Services\Center;
 use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class CenterService implements CenterServiceInterface
 {
     public function __construct(
-        protected CenterRepositoryInterface $centerRepository
+        protected CenterRepositoryInterface $centerRepository,
+        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository
     ) {
     }
 
@@ -44,7 +47,7 @@ class CenterService implements CenterServiceInterface
     {
         // Auto generate center code if not provided
         if (empty($data['code'])) {
-            $data['code'] = 'CENTER-' . sprintf('%02d', Center::withTrashed()->count() + 1);
+            $data['code'] = 'CENTER-' . sprintf('%02d', $this->centerRepository->count() + 1);
         }
 
         // Set default trial expiration if creating new trial plan
@@ -85,5 +88,13 @@ class CenterService implements CenterServiceInterface
     public function deleteCenter(int $id): bool
     {
         return $this->centerRepository->delete($id);
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getSubscriptionPlans(): Collection
+    {
+        return $this->subscriptionPlanRepository->getAllOrderedByPrice();
     }
 }

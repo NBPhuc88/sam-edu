@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Class\FilterClassStudentRequest;
 use App\Http\Requests\Student\ImportCsvRequest;
-use App\Models\SchoolClass;
-use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Services\Class\SchoolClassServiceInterface;
 use App\Services\Class\StudentExportImportServiceInterface;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -16,22 +15,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class SchoolClassStudentController extends Controller
 {
     public function __construct(
-        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected SchoolClassServiceInterface $schoolClassService,
         protected StudentExportImportServiceInterface $studentExportImportService
     ) {
     }
 
-    public function index(Request $request, int $classId): InertiaResponse
+    public function index(FilterClassStudentRequest $request, int $classId): InertiaResponse
     {
-        $schoolClass = SchoolClass::with('center')->findOrFail($classId);
+        $schoolClass = $this->schoolClassService->getClassWithCenter($classId);
 
-        $search = $request->input('search');
-        $page   = $request->integer('page', 1);
+        $search  = $request->input('search');
+        $page    = $request->integer('page', 1);
+        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
 
-        $students = $this->schoolClassRepository->getPaginatedClassStudents(
-            $schoolClass,
+        $students = $this->schoolClassService->getPaginatedClassStudents(
+            $classId,
             is_string($search) ? $search : null,
-            15,
+            $perPage,
             $page
         );
 
@@ -39,14 +39,15 @@ class SchoolClassStudentController extends Controller
             'schoolClass' => $schoolClass,
             'students'    => $students,
             'filters'     => [
-                'search' => $search ?? '',
+                'search'   => $search ?? '',
+                'per_page' => $perPage,
             ],
         ]);
     }
 
     public function export(int $classId): StreamedResponse
     {
-        $schoolClass = SchoolClass::findOrFail($classId);
+        $schoolClass = $this->schoolClassService->getClassWithCenter($classId);
         $fileName    = 'danh_sach_hoc_sinh_lop_' . Str::slug($schoolClass->code) . '_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [

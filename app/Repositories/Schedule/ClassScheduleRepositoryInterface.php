@@ -61,4 +61,16 @@ interface ClassScheduleRepositoryInterface
      * @return Collection<int, ClassSchedule>
      */
     public function getByClassSubjectId(int $classSubjectId): Collection;
+
+    /**
+     * @param  int                            $teacherId
+     * @return Collection<int, ClassSchedule>
+     */
+    public function getTeacherSchedules(int $teacherId): Collection;
+
+    /**
+     * @param  array<int, int>                $classIds
+     * @return Collection<int, ClassSchedule>
+     */
+    public function getStudentSchedules(array $classIds): Collection;
 }

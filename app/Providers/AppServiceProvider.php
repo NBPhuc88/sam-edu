@@ -85,6 +85,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ContactRequestServiceInterface::class, ContactRequestService::class);
         $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
         $this->app->bind(StatisticServiceInterface::class, StatisticService::class);
+        $this->app->bind(\App\Services\Home\HomeServiceInterface::class, \App\Services\Home\HomeService::class);
+        $this->app->bind(\App\Services\Payment\PaymentServiceInterface::class, \App\Services\Payment\PaymentService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
@@ -100,6 +102,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CenterRepositoryInterface::class, CenterRepository::class);
         $this->app->bind(PaymentTransactionRepositoryInterface::class, PaymentTransactionRepository::class);
         $this->app->bind(ContactRequestRepositoryInterface::class, ContactRequestRepository::class);
+        $this->app->bind(\App\Repositories\Setting\SystemSettingRepositoryInterface::class, \App\Repositories\Setting\SystemSettingRepository::class);
+        $this->app->bind(\App\Repositories\Subscription\SubscriptionPlanRepositoryInterface::class, \App\Repositories\Subscription\SubscriptionPlanRepository::class);
+        $this->app->bind(\App\Repositories\Subscription\CenterSubscriptionRepositoryInterface::class, \App\Repositories\Subscription\CenterSubscriptionRepository::class);
+        $this->app->bind(\App\Repositories\Exam\ExamResultRepositoryInterface::class, \App\Repositories\Exam\ExamResultRepository::class);
     }
 
     /**

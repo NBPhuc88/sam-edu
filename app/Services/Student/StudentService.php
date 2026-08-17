@@ -3,8 +3,8 @@
 namespace App\Services\Student;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\Student;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +14,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class StudentService implements StudentServiceInterface
 {
     public function __construct(
-        protected StudentRepositoryInterface $studentRepository
+        protected StudentRepositoryInterface $studentRepository,
+        protected CenterRepositoryInterface $centerRepository
     ) {
     }
 
@@ -83,12 +84,11 @@ class StudentService implements StudentServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        $centersQuery = Center::query()->where('status', 'active');
-
         if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
+            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+        } else {
+            $centers = $this->centerRepository->getActiveCenters();
         }
-        $centers = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
 
         return [
             'centers' => $centers,
@@ -142,10 +142,10 @@ class StudentService implements StudentServiceInterface
         $studentCode = trim($data['student_code'] ?? '');
 
         if (empty($studentCode)) {
-            $count       = Student::withTrashed()->where('center_id', $centerId)->count() + 1;
+            $count       = $this->studentRepository->countByCenterIds([$centerId]) + 1;
             $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
 
-            while (Student::where('center_id', $centerId)->where('student_code', $studentCode)->exists()) {
+            while ($this->studentRepository->codeExists($centerId, $studentCode)) {
                 $count++;
                 $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
             }

@@ -21,11 +21,14 @@ return new class () extends Migration {
         DB::table('classes')->whereIn('status', ['planned', 'cancelled', 'inactive'])->update(['status_num' => 0]);
 
         Schema::table('classes', function (Blueprint $table) {
+            $table->dropIndex('classes_center_id_status_index');
+            $table->dropIndex('classes_center_status_idx');
             $table->dropColumn('status');
         });
 
         Schema::table('classes', function (Blueprint $table) {
             $table->tinyInteger('status')->default(1)->after('end_date');
+            $table->index(['center_id', 'status'], 'classes_center_status_idx');
         });
 
         DB::table('classes')->update([
@@ -46,11 +49,13 @@ return new class () extends Migration {
         DB::table('students')->whereIn('status', ['inactive', 'locked', 'suspended'])->update(['status_num' => 0]);
 
         Schema::table('students', function (Blueprint $table) {
+            $table->dropIndex('students_center_status_idx');
             $table->dropColumn('status');
         });
 
         Schema::table('students', function (Blueprint $table) {
             $table->tinyInteger('status')->default(1)->after('password');
+            $table->index(['center_id', 'status'], 'students_center_status_idx');
         });
 
         DB::table('students')->update([

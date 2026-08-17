@@ -36,4 +36,20 @@ class PaymentTransactionRepository implements PaymentTransactionRepositoryInterf
 
         return $transaction ? $transaction->update($data) : false;
     }
+
+    /**
+     * @param  \Carbon\CarbonInterface $start
+     * @param  \Carbon\CarbonInterface $end
+     * @return array<int, int>
+     */
+    public function getSuccessfulCenterIdsBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array
+    {
+        return PaymentTransaction::where('status', 'success')
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('updated_at', [$start, $end])
+                    ->orWhereBetween('paid_at', [$start, $end]);
+            })
+            ->pluck('center_id')
+            ->toArray();
+    }
 }

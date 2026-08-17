@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Chat\SendClassChatMessageRequest;
 use App\Models\Admin;
-use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\Chat\ChatServiceInterface;
@@ -23,8 +22,7 @@ class ChatController extends Controller
 
     public function index(Request $request, int $classId): InertiaResponse
     {
-        $schoolClass = SchoolClass::with('center')->findOrFail($classId);
-
+        $schoolClass   = $this->chatService->getClassWithCenter($classId);
         $currentUser   = $this->getCurrentUserSenderInfo();
         $messages      = $this->chatService->getRecentMessages($classId);
         $pinnedMessage = $this->chatService->getPinnedMessage($classId);
@@ -50,7 +48,7 @@ class ChatController extends Controller
 
     public function sendMessage(SendClassChatMessageRequest $request, int $classId): JsonResponse
     {
-        $schoolClass = SchoolClass::findOrFail($classId);
+        $schoolClass = $this->chatService->getClassWithCenter($classId);
         $senderInfo  = $this->getCurrentUserSenderInfo();
         $messageText = (string) $request->input('message');
 

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Statistic\FilterStatisticRequest;
 use App\Services\Statistic\StatisticServiceInterface;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,9 +16,9 @@ class StatisticController extends Controller
 
     /**
      * Display role-scoped student statistics page (by Center & by Class).
-     * @param Request $request
+     * @param FilterStatisticRequest $request
      */
-    public function index(Request $request): Response
+    public function index(FilterStatisticRequest $request): Response
     {
         $selectedCenterId = $request->query('center_id') ? (int) $request->query('center_id') : null;
         $data             = $this->statisticService->getStatisticData($selectedCenterId);

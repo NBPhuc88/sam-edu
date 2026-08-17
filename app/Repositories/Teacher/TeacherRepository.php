@@ -152,4 +152,39 @@ class TeacherRepository implements TeacherRepositoryInterface
 
         return (bool) $teacher->delete();
     }
+
+    public function count(): int
+    {
+        return Teacher::count();
+    }
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countByCenterIds(array $centerIds): int
+    {
+        return Teacher::whereIn('center_id', $centerIds)->count();
+    }
+
+    public function codeExists(int $centerId, string $code): bool
+    {
+        return Teacher::where('center_id', $centerId)->where('teacher_code', $code)->exists();
+    }
+
+    /**
+     * @param int             $year
+     * @param int             $month
+     * @param array<int, int> $centerIds
+     */
+    public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int
+    {
+        $query = Teacher::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if (! empty($centerIds)) {
+            $query->whereIn('center_id', $centerIds);
+        }
+
+        return $query->count();
+    }
 }

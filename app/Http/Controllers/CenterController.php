@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Center\FilterCenterRequest;
 use App\Http\Requests\Center\StoreCenterRequest;
 use App\Http\Requests\Center\UpdateCenterRequest;
-use App\Models\SubscriptionPlan;
 use App\Services\Center\CenterServiceInterface;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,17 +19,19 @@ class CenterController extends Controller
 
     /**
      * Display list of centers.
-     * @param Request $request
+     * @param FilterCenterRequest $request
      */
-    public function index(Request $request): Response
+    public function index(FilterCenterRequest $request): Response
     {
         $search  = $request->query('search');
-        $centers = $this->centerService->getPaginatedCenters(15, is_string($search) ? $search : null);
+        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
+        $centers = $this->centerService->getPaginatedCenters($perPage, is_string($search) ? $search : null);
 
         return Inertia::render('Admin/Centers/Index', [
             'centers' => $centers,
             'filters' => [
-                'search' => $search ?? '',
+                'search'   => $search ?? '',
+                'per_page' => $perPage,
             ],
         ]);
     }
@@ -40,7 +41,7 @@ class CenterController extends Controller
      */
     public function create(): Response
     {
-        $subscriptionPlans = SubscriptionPlan::orderBy('price', 'asc')->get();
+        $subscriptionPlans = $this->centerService->getSubscriptionPlans();
 
         return Inertia::render('Admin/Centers/Create', [
             'subscriptionPlans' => $subscriptionPlans,
@@ -66,7 +67,7 @@ class CenterController extends Controller
     public function edit(int $id): Response
     {
         $center            = $this->centerService->getCenterById($id);
-        $subscriptionPlans = SubscriptionPlan::orderBy('price', 'asc')->get();
+        $subscriptionPlans = $this->centerService->getSubscriptionPlans();
 
         return Inertia::render('Admin/Centers/Edit', [
             'center'            => $center,

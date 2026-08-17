@@ -6,6 +6,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
+import Pagination from '../../../components/ui/Pagination';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface Center {
@@ -27,22 +28,26 @@ interface IndexProps {
     centers: {
         data: Center[];
         links: any[];
+        from?: number | null;
+        to?: number | null;
         total: number;
     };
     filters: {
         search?: string;
+        per_page?: number;
     };
 }
 
 export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [perPage, setPerPage] = useState<number>(filters?.per_page || 20);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deletingCenter, setDeletingCenter] = useState<Center | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/centers', { search: searchTerm }, { preserveState: true });
+        router.get('/centers', { search: searchTerm, per_page: perPage }, { preserveState: true });
     };
 
     const openDeleteModal = (center: Center) => {
@@ -255,40 +260,18 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
                 </Card>
 
                 {/* Pagination Footer */}
-                {centers.links && centers.links.length > 3 && (
-                    <div className="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row">
-                        <div className="text-sm text-gray-500">
-                            Hiển thị <strong>{centers.data.length}</strong> /{' '}
-                            <strong>{centers.total}</strong> trung tâm
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            {centers.links.map((link, idx) =>
-                                link.url ? (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                                            link.active
-                                                ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
-                                                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ) : (
-                                    <span
-                                        key={idx}
-                                        className="cursor-not-allowed rounded-lg border border-gray-100 bg-gray-50 px-3.5 py-1.5 text-sm font-semibold text-gray-400"
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                ),
-                            )}
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    links={centers.links}
+                    from={centers.from}
+                    to={centers.to}
+                    total={centers.total}
+                    perPage={perPage}
+                    currentParams={{ search: searchTerm }}
+                    onPerPageChange={(newPerPage) => {
+                        setPerPage(newPerPage);
+                        router.get('/centers', { search: searchTerm, per_page: newPerPage, page: 1 }, { preserveState: true });
+                    }}
+                />
             </div>
 
             {/* Delete Confirmation Modal */}

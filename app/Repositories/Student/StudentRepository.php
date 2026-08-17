@@ -153,4 +153,39 @@ class StudentRepository implements StudentRepositoryInterface
 
         return (bool) $student->delete();
     }
+
+    public function count(): int
+    {
+        return Student::count();
+    }
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countByCenterIds(array $centerIds): int
+    {
+        return Student::whereIn('center_id', $centerIds)->count();
+    }
+
+    public function codeExists(int $centerId, string $code): bool
+    {
+        return Student::where('center_id', $centerId)->where('student_code', $code)->exists();
+    }
+
+    /**
+     * @param int             $year
+     * @param int             $month
+     * @param array<int, int> $centerIds
+     */
+    public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int
+    {
+        $query = Student::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        if (! empty($centerIds)) {
+            $query->whereIn('center_id', $centerIds);
+        }
+
+        return $query->count();
+    }
 }

@@ -15,4 +15,9 @@ interface CenterRegisterServiceInterface
      * @return array<string, mixed>
      */
     public function checkPaymentStatus(string $appTransId): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getRegisterPageData(): array;
 }

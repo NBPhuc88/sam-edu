@@ -75,4 +75,19 @@ class AdminRepository implements AdminRepositoryInterface
     {
         $admin->centers()->sync($centerIds);
     }
+
+    public function hasSuperAdmin(): bool
+    {
+        return Admin::where('role', 'super_admin')->exists();
+    }
+
+    public function hasOtherSuperAdmin(int $id): bool
+    {
+        return Admin::where('role', 'super_admin')->where('id', '!=', $id)->exists();
+    }
+
+    public function getNextAdminCode(): string
+    {
+        return 'ADM' . str_pad((string) (Admin::max('id') + 1), 4, '0', STR_PAD_LEFT);
+    }
 }

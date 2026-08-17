@@ -21,4 +21,9 @@ interface AdminServiceInterface
     public function updateAdmin(int $id, array $data): Admin;
 
     public function deleteAdmin(int $id, int $currentAdminId): bool;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getFormData(): array;
 }

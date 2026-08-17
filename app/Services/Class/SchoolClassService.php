@@ -3,11 +3,12 @@
 namespace App\Services\Class;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\SchoolClass;
-use App\Models\Subject;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Subject\SubjectRepositoryInterface;
+use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -15,7 +16,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class SchoolClassService implements SchoolClassServiceInterface
 {
     public function __construct(
-        protected SchoolClassRepositoryInterface $schoolClassRepository
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected CenterRepositoryInterface $centerRepository,
+        protected SubjectRepositoryInterface $subjectRepository,
+        protected TeacherRepositoryInterface $teacherRepository
     ) {
     }
 
@@ -84,19 +88,16 @@ class SchoolClassService implements SchoolClassServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        $centersQuery  = Center::query()->where('status', 'active');
-        $subjectsQuery = Subject::query()->where('status', 'active');
-        $teachersQuery = Teacher::query()->where('status', 'active');
-
         if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
-            $subjectsQuery->whereIn('center_id', $allowedCenterIds);
-            $teachersQuery->whereIn('center_id', $allowedCenterIds);
+            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+        } else {
+            $centers = $this->centerRepository->getActiveCenters();
         }
 
-        $centers  = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
-        $subjects = $subjectsQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id', 'tuition_fee', 'total_sessions']);
-        $teachers = $teachersQuery->orderBy('full_name')->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
+        $subjects = $this->subjectRepository->getByCenterIds($allowedCenterIds ?? $centers->pluck('id')->toArray());
+        $teachers = Teacher::query()->where('status', 'active')->when($allowedCenterIds !== null, function ($q) use ($allowedCenterIds) {
+            $q->whereIn('center_id', $allowedCenterIds);
+        })->orderBy('full_name')->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
 
         return [
             'centers'  => $centers,
@@ -139,10 +140,10 @@ class SchoolClassService implements SchoolClassServiceInterface
         $code = trim($data['code'] ?? '');
 
         if (empty($code)) {
-            $count = SchoolClass::withTrashed()->where('center_id', $centerId)->count() + 1;
+            $count = $this->schoolClassRepository->countByCenterIds([$centerId]) + 1;
             $code  = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
 
-            while (SchoolClass::where('center_id', $centerId)->where('code', $code)->exists()) {
+            while ($this->schoolClassRepository->codeExists($centerId, $code)) {
                 $count++;
                 $code = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
             }
@@ -243,5 +244,17 @@ class SchoolClassService implements SchoolClassServiceInterface
         $schoolClass = $this->findClass($id, $admin);
 
         return $this->schoolClassRepository->delete($schoolClass->id);
+    }
+
+    public function getClassWithCenter(int $classId): SchoolClass
+    {
+        return $this->schoolClassRepository->findWithCenter($classId);
+    }
+
+    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        $schoolClass = $this->schoolClassRepository->findWithCenter($classId);
+
+        return $this->schoolClassRepository->getPaginatedClassStudents($schoolClass, $search, $perPage, $page);
     }
 }

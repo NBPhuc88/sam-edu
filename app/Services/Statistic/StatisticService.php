@@ -6,10 +6,18 @@ use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 
 class StatisticService implements StatisticServiceInterface
 {
+    public function __construct(
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository
+    ) {
+    }
+
     /**
      * @param  ?int                 $selectedCenterId
      * @return array<string, mixed>
@@ -41,7 +49,7 @@ class StatisticService implements StatisticServiceInterface
             $isSuperAdmin = $user->role === 'super_admin';
 
             if ($isSuperAdmin) {
-                $allowedCenterIds = Center::pluck('id')->toArray();
+                $allowedCenterIds = $this->centerRepository->getCenterListForDropdown()->pluck('id')->toArray();
             } else {
                 $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
             }
@@ -55,8 +63,7 @@ class StatisticService implements StatisticServiceInterface
             $activeCenterIds = $allowedCenterIds;
         }
 
-        $centersQuery = Center::whereIn('id', $activeCenterIds)->withCount(['students', 'classes', 'teachers']);
-        $centers      = $centersQuery->get();
+        $centers = $this->centerRepository->getWithCounts($activeCenterIds);
 
         $centerStats = $centers->map(function (Center $center) {
             return [
@@ -69,14 +76,13 @@ class StatisticService implements StatisticServiceInterface
             ];
         });
 
-        $classesQuery = SchoolClass::whereIn('center_id', $activeCenterIds)->with(['center'])->withCount('students');
+        $teacherClassIds = null;
 
         if ($user instanceof Teacher) {
             $teacherClassIds = $user->classSubjects()->pluck('class_id')->unique()->toArray();
-            $classesQuery->whereIn('id', $teacherClassIds);
         }
 
-        $classes = $classesQuery->get();
+        $classes = $this->schoolClassRepository->getClassesWithStudentCount($activeCenterIds, $teacherClassIds);
 
         $classStats = $classes->map(function (SchoolClass $schoolClass) {
             $studentCount  = (int) $schoolClass->students_count;
@@ -100,7 +106,7 @@ class StatisticService implements StatisticServiceInterface
             'forbidden'        => false,
             'role'             => $role,
             'isSuperAdmin'     => $isSuperAdmin,
-            'allowedCenters'   => Center::whereIn('id', $allowedCenterIds)->get(['id', 'code', 'name']),
+            'allowedCenters'   => $this->centerRepository->getByIds($allowedCenterIds, ['id', 'code', 'name']),
             'centerStats'      => $centerStats,
             'classStats'       => $classStats,
             'selectedCenterId' => $selectedCenterId ? (int) $selectedCenterId : null,

@@ -40,4 +40,9 @@ interface CenterServiceInterface
      * @param int $id
      */
     public function deleteCenter(int $id): bool;
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getSubscriptionPlans(): \Illuminate\Database\Eloquent\Collection;
 }

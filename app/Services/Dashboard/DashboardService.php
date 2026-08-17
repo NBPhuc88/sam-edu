@@ -4,16 +4,30 @@ namespace App\Services\Dashboard;
 
 use App\Models\Admin;
 use App\Models\Center;
-use App\Models\ClassSchedule;
-use App\Models\ExamResult;
-use App\Models\PaymentTransaction;
-use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Exam\ExamResultRepositoryInterface;
+use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
+use App\Repositories\Schedule\ClassScheduleRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Student\StudentRepositoryInterface;
+use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardService implements DashboardServiceInterface
 {
+    public function __construct(
+        protected CenterRepositoryInterface $centerRepository,
+        protected StudentRepositoryInterface $studentRepository,
+        protected TeacherRepositoryInterface $teacherRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected ClassScheduleRepositoryInterface $classScheduleRepository,
+        protected ExamResultRepositoryInterface $examResultRepository,
+        protected PaymentTransactionRepositoryInterface $paymentTransactionRepository
+    ) {
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -46,12 +60,12 @@ class DashboardService implements DashboardServiceInterface
             $data['registration_pie_chart']          = $this->getSuperAdminRegistrationPieChart();
             $data['monthly_registrations_bar_chart'] = $this->getSuperAdminMonthlyRegistrationsBarChart();
             $data['non_renewed_pie_chart']           = $this->getSuperAdminNonRenewedPieChart();
-            $data['recent_centers']                  = Center::latest()->take(5)->get();
+            $data['recent_centers']                  = $this->centerRepository->getLatest(5);
             $data['stats']                           = [
-                'centers'  => Center::count(),
-                'students' => Student::count(),
-                'teachers' => Teacher::count(),
-                'classes'  => SchoolClass::count(),
+                'centers'  => $this->centerRepository->count(),
+                'students' => $this->studentRepository->count(),
+                'teachers' => $this->teacherRepository->count(),
+                'classes'  => $this->schoolClassRepository->count(),
             ];
 
             return $data;
@@ -65,9 +79,9 @@ class DashboardService implements DashboardServiceInterface
             $data['classes_bar_chart']  = $this->getMonthlyNewClassesBarChart($assignedCenterIds);
             $data['stats']              = [
                 'centers'  => count($assignedCenterIds),
-                'students' => Student::whereIn('center_id', $assignedCenterIds)->count(),
-                'teachers' => Teacher::whereIn('center_id', $assignedCenterIds)->count(),
-                'classes'  => SchoolClass::whereIn('center_id', $assignedCenterIds)->count(),
+                'students' => $this->studentRepository->countByCenterIds($assignedCenterIds),
+                'teachers' => $this->teacherRepository->countByCenterIds($assignedCenterIds),
+                'classes'  => $this->schoolClassRepository->countByCenterIds($assignedCenterIds),
             ];
 
             return $data;
@@ -75,11 +89,11 @@ class DashboardService implements DashboardServiceInterface
 
         // 3. TEACHER DASHBOARD
         if ($role === 'teacher' && $user instanceof Teacher) {
-            $data['center']          = isset($user->center_id) ? $this->formatCenterData(Center::find($user->center_id)) : null;
+            $data['center']          = isset($user->center_id) ? $this->formatCenterData($this->centerRepository->find($user->center_id)) : null;
             $data['weekly_schedule'] = $this->getTeacherWeeklySchedule($user->id);
             $data['stats']           = [
                 'my_classes'  => $user->classSubjects()->pluck('class_id')->unique()->count(),
-                'my_students' => Student::where('center_id', $user->center_id)->count(),
+                'my_students' => $this->studentRepository->countByCenterIds([$user->center_id]),
             ];
 
             return $data;
@@ -87,7 +101,7 @@ class DashboardService implements DashboardServiceInterface
 
         // 5. STUDENT DASHBOARD
         if ($role === 'student' && $user instanceof Student) {
-            $data['center']          = isset($user->center_id) ? $this->formatCenterData(Center::find($user->center_id)) : null;
+            $data['center']          = isset($user->center_id) ? $this->formatCenterData($this->centerRepository->find($user->center_id)) : null;
             $data['weekly_schedule'] = $this->getStudentWeeklySchedule($user->id);
             $data['exam_results']    = $this->getStudentExamResults($user->id);
 
@@ -107,15 +121,12 @@ class DashboardService implements DashboardServiceInterface
         $endOfMonth   = now()->endOfMonth();
 
         // 1. Center mới đăng ký trong tháng
-        $newCenters = Center::whereBetween('created_at', [$startOfMonth, $endOfMonth])->get();
+        $newCenters = $this->centerRepository->getCreatedBetween($startOfMonth, $endOfMonth);
 
         // 2. Center gia hạn thành công trong tháng (gồm tái gia hạn)
-        $renewedCenterIds = PaymentTransaction::where('status', 'success')
-            ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])
-            ->pluck('center_id')
-            ->toArray();
+        $renewedCenterIds = $this->paymentTransactionRepository->getSuccessfulCenterIdsBetween($startOfMonth, $endOfMonth);
 
-        $renewedCenters = Center::whereIn('id', $renewedCenterIds)->get();
+        $renewedCenters = $this->centerRepository->getByIdsCollection($renewedCenterIds);
 
         $allCenters = $newCenters->concat($renewedCenters)->unique('id');
 
@@ -147,9 +158,7 @@ class DashboardService implements DashboardServiceInterface
 
         for ($i = 5; $i >= 0; $i--) {
             $date  = now()->subMonths($i);
-            $count = Center::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
+            $count = $this->centerRepository->countInYearMonth($date->year, $date->month);
 
             $chart[] = [
                 'month'   => 'Thg ' . $date->format('n'),
@@ -170,7 +179,7 @@ class DashboardService implements DashboardServiceInterface
         $endOfMonth   = now()->endOfMonth();
 
         // Centers hết hạn trong tháng hiện tại
-        $expiringThisMonth = Center::whereBetween('expires_at', [$startOfMonth, $endOfMonth])->get();
+        $expiringThisMonth = $this->centerRepository->getExpiringBetween($startOfMonth, $endOfMonth);
 
         $renewedCount    = $expiringThisMonth->where('expires_at', '>', now())->count();
         $nonRenewedCount = $expiringThisMonth->where('expires_at', '<=', now())->count();
@@ -197,16 +206,11 @@ class DashboardService implements DashboardServiceInterface
 
         for ($i = 5; $i >= 0; $i--) {
             $date  = now()->subMonths($i);
-            $query = Teacher::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month);
-
-            if (! empty($centerIds)) {
-                $query->whereIn('center_id', $centerIds);
-            }
+            $count = $this->teacherRepository->countInYearMonthAndCenterIds($date->year, $date->month, $centerIds);
 
             $chart[] = [
                 'month'    => 'Thg ' . $date->format('n'),
-                'teachers' => $query->count(),
+                'teachers' => $count,
             ];
         }
 
@@ -224,16 +228,11 @@ class DashboardService implements DashboardServiceInterface
 
         for ($i = 5; $i >= 0; $i--) {
             $date  = now()->subMonths($i);
-            $query = Student::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month);
-
-            if (! empty($centerIds)) {
-                $query->whereIn('center_id', $centerIds);
-            }
+            $count = $this->studentRepository->countInYearMonthAndCenterIds($date->year, $date->month, $centerIds);
 
             $chart[] = [
                 'month'    => 'Thg ' . $date->format('n'),
-                'students' => $query->count(),
+                'students' => $count,
             ];
         }
 
@@ -251,16 +250,11 @@ class DashboardService implements DashboardServiceInterface
 
         for ($i = 5; $i >= 0; $i--) {
             $date  = now()->subMonths($i);
-            $query = SchoolClass::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month);
-
-            if (! empty($centerIds)) {
-                $query->whereIn('center_id', $centerIds);
-            }
+            $count = $this->schoolClassRepository->countInYearMonthAndCenterIds($date->year, $date->month, $centerIds);
 
             $chart[] = [
                 'month'   => 'Thg ' . $date->format('n'),
-                'classes' => $query->count(),
+                'classes' => $count,
             ];
         }
 
@@ -284,11 +278,7 @@ class DashboardService implements DashboardServiceInterface
             7 => 'Chủ Nhật',
         ];
 
-        $teacherSchedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
-            ->whereHas('classSubject', function ($q) use ($teacherId) {
-                $q->where('teacher_id', $teacherId);
-            })
-            ->get();
+        $teacherSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
 
         $result = [];
 
@@ -324,7 +314,7 @@ class DashboardService implements DashboardServiceInterface
      */
     protected function getStudentWeeklySchedule(int $studentId): array
     {
-        $student = Student::find($studentId);
+        $student = $this->studentRepository->find($studentId);
 
         if (! $student) {
             return [];
@@ -342,11 +332,7 @@ class DashboardService implements DashboardServiceInterface
             7 => 'Chủ Nhật',
         ];
 
-        $schedules = ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
-            ->whereHas('classSubject', function ($q) use ($classIds) {
-                $q->whereIn('class_id', $classIds);
-            })
-            ->get();
+        $schedules = $this->classScheduleRepository->getStudentSchedules($classIds);
 
         $result = [];
 
@@ -381,10 +367,7 @@ class DashboardService implements DashboardServiceInterface
      */
     protected function getStudentExamResults(int $studentId): array
     {
-        $results = ExamResult::with(['exam.subject', 'exam.schoolClass'])
-            ->where('student_id', $studentId)
-            ->latest()
-            ->get();
+        $results = $this->examResultRepository->getStudentExamResults($studentId);
 
         $mapped = [];
 
