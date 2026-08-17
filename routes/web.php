@@ -75,9 +75,14 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/{id}', [CenterController::class, 'destroy'])->name('destroy');
     });
 
-    // Student Management Routes (Export & Import)
+    // Student Management Routes (CRUD, Export & Import)
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/create', [StudentController::class, 'create'])->name('create');
+        Route::post('/', [StudentController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [StudentController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [StudentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [StudentController::class, 'destroy'])->name('destroy');
         Route::get('/export', [StudentController::class, 'export'])->name('export');
         Route::post('/import', [StudentController::class, 'import'])->name('import');
         Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');

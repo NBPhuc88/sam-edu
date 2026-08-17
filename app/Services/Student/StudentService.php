@@ -2,8 +2,14 @@
 
 namespace App\Services\Student;
 
+use App\Models\Admin;
+use App\Models\Center;
+use App\Models\Student;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StudentService implements StudentServiceInterface
 {
@@ -12,8 +18,227 @@ class StudentService implements StudentServiceInterface
     ) {
     }
 
-    public function getPaginatedStudents(?string $search = null, ?int $centerId = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    /**
+     * @param  ?Admin          $admin
+     * @return array<int>|null Null nghĩa là Super Admin (truy cập toàn bộ)
+     */
+    protected function getAllowedCenterIds(?Admin $admin): ?array
     {
-        return $this->studentRepository->paginate($search, $centerId, $perPage, $page);
+        if (! $admin) {
+            return [];
+        }
+
+        if ($admin->isSuperAdmin()) {
+            return null; // All centers
+        }
+
+        return $admin->centers()->pluck('centers.id')->toArray();
+    }
+
+    /**
+     * @param  ?string              $search
+     * @param  ?int                 $centerId
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @param  ?Admin               $admin
+     * @return LengthAwarePaginator
+     */
+    public function getPaginatedStudents(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1,
+        ?Admin $admin = null
+    ): LengthAwarePaginator {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($allowedCenterIds !== null) {
+            if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                $centerIds = []; // No access
+            } elseif ($centerId !== null) {
+                $centerIds = [$centerId];
+            } else {
+                $centerIds = $allowedCenterIds;
+            }
+        } else {
+            $centerIds = $centerId;
+        }
+
+        return $this->studentRepository->paginate(
+            $search,
+            $centerIds,
+            $status,
+            $perPage,
+            $page
+        );
+    }
+
+    /**
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getFormData(?Admin $admin = null): array
+    {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        $centersQuery = Center::query()->where('status', 'active');
+
+        if ($allowedCenterIds !== null) {
+            $centersQuery->whereIn('id', $allowedCenterIds);
+        }
+        $centers = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
+
+        return [
+            'centers' => $centers,
+        ];
+    }
+
+    /**
+     * @param  int          $id
+     * @param  ?Admin       $admin
+     * @return Student|null
+     */
+    public function findStudent(int $id, ?Admin $admin = null): ?Student
+    {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $student          = $this->studentRepository->find($id, $allowedCenterIds);
+
+        if (! $student) {
+            throw new NotFoundHttpException('Không tìm thấy học sinh hoặc bạn không có quyền truy cập.');
+        }
+
+        return $student;
+    }
+
+    /**
+     * @param  array<string, mixed> $data
+     * @param  ?Admin               $admin
+     * @return Student
+     */
+    public function createStudent(array $data, ?Admin $admin = null): Student
+    {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $centerId         = (int) $data['center_id'];
+
+        if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+            throw new AccessDeniedHttpException('Bạn không có quyền thêm học sinh vào Trung tâm này.');
+        }
+
+        // Tách hoặc gộp Họ và Tên
+        $fullName = trim($data['full_name'] ?? '');
+        $parts    = explode(' ', $fullName);
+
+        if (count($parts) > 1) {
+            $firstName = array_pop($parts);
+            $lastName  = implode(' ', $parts);
+        } else {
+            $firstName = $fullName;
+            $lastName  = $fullName;
+        }
+
+        // Tự sinh mã học sinh nếu không nhập
+        $studentCode = trim($data['student_code'] ?? '');
+
+        if (empty($studentCode)) {
+            $count       = Student::withTrashed()->where('center_id', $centerId)->count() + 1;
+            $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        }
+
+        $password = ! empty($data['password']) ? Hash::make($data['password']) : Hash::make('12345678');
+
+        return $this->studentRepository->create([
+            'username'            => trim($data['username']),
+            'email'               => ! empty($data['email']) ? trim($data['email']) : null,
+            'password'            => $password,
+            'status'              => $data['status'] ?? 'active',
+            'student_code'        => $studentCode,
+            'center_id'           => $centerId,
+            'first_name'          => $data['first_name'] ?? $firstName,
+            'last_name'           => $data['last_name'] ?? $lastName,
+            'full_name'           => $fullName,
+            'phone'               => $data['phone'] ?? null,
+            'date_of_birth'       => $data['date_of_birth'] ?? null,
+            'gender'              => $data['gender'] ?? null,
+            'address'             => $data['address'] ?? null,
+            'avatar'              => $data['avatar'] ?? null,
+            'parent_name'         => $data['parent_name'] ?? null,
+            'parent_phone'        => $data['parent_phone'] ?? null,
+            'parent_relationship' => $data['parent_relationship'] ?? null,
+            'admission_date'      => $data['admission_date'] ?? null,
+            'note'                => $data['note'] ?? null,
+        ]);
+    }
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @param  ?Admin               $admin
+     * @return Student
+     */
+    public function updateStudent(int $id, array $data, ?Admin $admin = null): Student
+    {
+        $student = $this->findStudent($id, $admin);
+
+        if (isset($data['center_id'])) {
+            $centerId         = (int) $data['center_id'];
+            $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+            if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                throw new AccessDeniedHttpException('Bạn không có quyền chuyển học sinh sang Trung tâm này.');
+            }
+        }
+
+        $updateData = [
+            'center_id'           => $data['center_id'] ?? $student->center_id,
+            'username'            => isset($data['username']) ? trim($data['username']) : $student->username,
+            'email'               => array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $student->email,
+            'status'              => $data['status'] ?? $student->status,
+            'student_code'        => isset($data['student_code']) ? trim($data['student_code']) : $student->student_code,
+            'phone'               => array_key_exists('phone', $data) ? $data['phone'] : $student->phone,
+            'date_of_birth'       => array_key_exists('date_of_birth', $data) ? $data['date_of_birth'] : $student->date_of_birth,
+            'gender'              => array_key_exists('gender', $data) ? $data['gender'] : $student->gender,
+            'address'             => array_key_exists('address', $data) ? $data['address'] : $student->address,
+            'parent_name'         => array_key_exists('parent_name', $data) ? $data['parent_name'] : $student->parent_name,
+            'parent_phone'        => array_key_exists('parent_phone', $data) ? $data['parent_phone'] : $student->parent_phone,
+            'parent_relationship' => array_key_exists('parent_relationship', $data) ? $data['parent_relationship'] : $student->parent_relationship,
+            'admission_date'      => array_key_exists('admission_date', $data) ? $data['admission_date'] : $student->admission_date,
+            'note'                => array_key_exists('note', $data) ? $data['note'] : $student->note,
+        ];
+
+        if (! empty($data['full_name'])) {
+            $fullName = trim($data['full_name']);
+            $parts    = explode(' ', $fullName);
+
+            if (count($parts) > 1) {
+                $firstName = array_pop($parts);
+                $lastName  = implode(' ', $parts);
+            } else {
+                $firstName = $fullName;
+                $lastName  = $fullName;
+            }
+            $updateData['full_name']  = $fullName;
+            $updateData['first_name'] = $data['first_name'] ?? $firstName;
+            $updateData['last_name']  = $data['last_name'] ?? $lastName;
+        }
+
+        if (! empty($data['password'])) {
+            $updateData['password'] = Hash::make($data['password']);
+        }
+
+        return $this->studentRepository->update($id, $updateData);
+    }
+
+    /**
+     * @param  int    $id
+     * @param  ?Admin $admin
+     * @return bool
+     */
+    public function deleteStudent(int $id, ?Admin $admin = null): bool
+    {
+        $student = $this->findStudent($id, $admin);
+
+        return $this->studentRepository->delete($student->id);
     }
 }
