@@ -25,6 +25,19 @@ interface Center {
     code: string;
 }
 
+interface SchoolClassOption {
+    id: number;
+    name: string;
+    code: string;
+    center_id: number;
+}
+
+interface StudentClassTag {
+    id: number;
+    name: string;
+    code: string;
+}
+
 interface Student {
     id: number;
     student_code: string;
@@ -41,6 +54,7 @@ interface Student {
     status: string;
     center_id: number;
     center?: Center;
+    classes?: StudentClassTag[];
 }
 
 interface PaginatedData<T> {
@@ -54,21 +68,43 @@ interface PaginatedData<T> {
 interface Props {
     students: PaginatedData<Student>;
     centers: Center[];
+    classes?: SchoolClassOption[];
     filters: {
         search?: string;
         center_id?: number | null;
+        class_id?: number | null;
         status?: string;
+        per_page?: number;
     };
 }
 
-export default function StudentIndex({ students, centers = [], filters }: Props) {
+export default function StudentIndex({ students, centers = [], classes = [], filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
     );
+    const [selectedClassId, setSelectedClassId] = useState<string>(
+        filters.class_id ? String(filters.class_id) : '',
+    );
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
     );
+
+    // Filter available classes by selected center
+    const availableClasses = selectedCenterId
+        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        : classes;
+
+    const handleCenterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newCenterId = e.target.value;
+        setSelectedCenterId(newCenterId);
+        if (newCenterId && selectedClassId) {
+            const cls = classes.find((c) => String(c.id) === selectedClassId);
+            if (cls && String(cls.center_id) !== newCenterId) {
+                setSelectedClassId('');
+            }
+        }
+    };
 
     // Import modal state
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -88,6 +124,7 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
             {
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
+                class_id: selectedClassId || undefined,
                 status: selectedStatus !== 'all' ? selectedStatus : undefined,
             },
             { preserveState: true },
@@ -97,6 +134,7 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
     const handleResetFilter = () => {
         setSearch('');
         setSelectedCenterId('');
+        setSelectedClassId('');
         setSelectedStatus('all');
         router.get('/students', {}, { preserveState: true });
     };
@@ -105,8 +143,12 @@ export default function StudentIndex({ students, centers = [], filters }: Props)
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-queryParams.append('center_id', selectedCenterId);
-}
+            queryParams.append('center_id', selectedCenterId);
+        }
+
+        if (selectedClassId) {
+            queryParams.append('class_id', selectedClassId);
+        }
 
         window.location.href = `/students/export?${queryParams.toString()}`;
     };
@@ -261,7 +303,7 @@ return;
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">
                     <form onSubmit={handleSearch} className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <div className="lg:col-span-2">
+                            <div>
                                 <Input
                                     placeholder="Tìm theo tên học sinh, mã HS, username, email, phụ huynh..."
                                     value={search}
@@ -275,18 +317,33 @@ return;
                                 <div>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                        onChange={handleCenterChange}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
+                                             <option key={c.id} value={c.id}>
+                                                 {c.name} ({c.code})
+                                             </option>
                                         ))}
                                     </select>
                                 </div>
                             )}
+
+                            <div>
+                                <select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="">Tất cả Lớp học</option>
+                                    {availableClasses.map((cls) => (
+                                        <option key={cls.id} value={cls.id}>
+                                            {cls.name} ({cls.code})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
                             <div>
                                 <select
@@ -358,6 +415,19 @@ return;
                                                         <div className="font-mono text-xs text-gray-400">
                                                             Mã: {student.student_code} • {getGenderLabel(student.gender)}
                                                         </div>
+                                                        {student.classes && student.classes.length > 0 && (
+                                                            <div className="mt-1 flex flex-wrap gap-1">
+                                                                {student.classes.map((cls) => (
+                                                                    <span
+                                                                        key={cls.id}
+                                                                        className="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                                                                        title={`Lớp: ${cls.name} (${cls.code})`}
+                                                                    >
+                                                                        {cls.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>

@@ -17,14 +17,21 @@ class StudentRepository implements StudentRepositoryInterface
 
     /**
      * @param  ?int                     $centerId
+     * @param  ?int                     $classId
      * @return \Generator<int, Student>
      */
-    public function getStudentsCursor(?int $centerId = null): \Generator
+    public function getStudentsCursor(?int $centerId = null, ?int $classId = null): \Generator
     {
         $query = Student::query()->orderBy('id', 'asc');
 
         if ($centerId !== null) {
             $query->where('center_id', $centerId);
+        }
+
+        if ($classId !== null && $classId > 0) {
+            $query->whereHas('classStudents', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            });
         }
 
         foreach ($query->cursor() as $student) {
@@ -59,6 +66,7 @@ class StudentRepository implements StudentRepositoryInterface
     /**
      * @param  ?string              $search
      * @param  array<int>|int|null  $centerIds
+     * @param  ?int                 $classId
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -67,11 +75,12 @@ class StudentRepository implements StudentRepositoryInterface
     public function paginate(
         ?string $search = null,
         array|int|null $centerIds = null,
+        ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Student::query()->with('center');
+        $query = Student::query()->with(['center', 'classes:id,name,code']);
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
@@ -79,6 +88,12 @@ class StudentRepository implements StudentRepositoryInterface
             } else {
                 $query->where('center_id', $centerIds);
             }
+        }
+
+        if ($classId !== null && $classId > 0) {
+            $query->whereHas('classStudents', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            });
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
@@ -97,6 +112,10 @@ class StudentRepository implements StudentRepositoryInterface
                     ->orWhere('parent_phone', 'like', "%{$term}%")
                     ->orWhereHas('center', function ($cq) use ($term) {
                         $cq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('classes', function ($clq) use ($term) {
+                        $clq->where('name', 'like', "%{$term}%")
                             ->orWhere('code', 'like', "%{$term}%");
                     });
             });

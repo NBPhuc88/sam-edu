@@ -7,8 +7,9 @@ interface StudentExportImportServiceInterface
     /**
      * @return \Generator<int, array<int, string>>
      * @param  ?int                                $centerId
+     * @param  ?int                                $classId
      */
-    public function exportStudentsCsv(?int $centerId = null): \Generator;
+    public function exportStudentsCsv(?int $centerId = null, ?int $classId = null): \Generator;
 
     /**
      * @return \Generator<int, array<string, string>>

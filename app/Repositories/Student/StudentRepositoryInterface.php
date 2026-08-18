@@ -11,9 +11,10 @@ interface StudentRepositoryInterface
 
     /**
      * @param  ?int                     $centerId
+     * @param  ?int                     $classId
      * @return \Generator<int, Student>
      */
-    public function getStudentsCursor(?int $centerId = null): \Generator;
+    public function getStudentsCursor(?int $centerId = null, ?int $classId = null): \Generator;
 
     public function findByCode(string $studentCode): ?Student;
 
@@ -26,6 +27,7 @@ interface StudentRepositoryInterface
     /**
      * @param  ?string              $search
      * @param  array<int>|int|null  $centerIds
+     * @param  ?int                 $classId
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -34,6 +36,7 @@ interface StudentRepositoryInterface
     public function paginate(
         ?string $search = null,
         array|int|null $centerIds = null,
+        ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1

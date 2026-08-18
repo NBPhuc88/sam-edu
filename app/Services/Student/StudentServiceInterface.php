@@ -11,6 +11,7 @@ interface StudentServiceInterface
     /**
      * @param  ?string              $search
      * @param  ?int                 $centerId
+     * @param  ?int                 $classId
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -20,6 +21,7 @@ interface StudentServiceInterface
     public function getPaginatedStudents(
         ?string $search = null,
         ?int $centerId = null,
+        ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,

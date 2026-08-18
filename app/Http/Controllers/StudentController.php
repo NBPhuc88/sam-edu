@@ -37,6 +37,7 @@ class StudentController extends Controller
         $admin    = $this->getAuthAdmin();
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
         $status   = $request->input('status');
         $page     = $request->integer('page', 1);
         $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
@@ -44,6 +45,7 @@ class StudentController extends Controller
         $students = $this->studentService->getPaginatedStudents(
             is_string($search) ? $search : null,
             $centerId,
+            $classId,
             is_string($status) ? $status : null,
             $perPage,
             $page,
@@ -55,9 +57,11 @@ class StudentController extends Controller
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
             'centers'  => $formData['centers'],
+            'classes'  => $formData['classes'] ?? [],
             'filters'  => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
+                'class_id'  => $classId,
                 'status'    => $status ?? 'all',
                 'per_page'  => $perPage,
             ],
@@ -116,6 +120,7 @@ class StudentController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
         $fileName = 'danh_sach_hoc_sinh_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
@@ -123,7 +128,7 @@ class StudentController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
-        return response()->stream(function () use ($centerId) {
+        return response()->stream(function () use ($centerId, $classId) {
             $handle = fopen('php://output', 'w');
 
             if ($handle === false) {
@@ -132,7 +137,7 @@ class StudentController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
 
-            foreach ($this->studentExportImportService->exportStudentsCsv($centerId) as $row) {
+            foreach ($this->studentExportImportService->exportStudentsCsv($centerId, $classId) as $row) {
                 fputcsv($handle, $row);
             }
 

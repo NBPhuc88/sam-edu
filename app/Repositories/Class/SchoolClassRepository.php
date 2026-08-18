@@ -285,6 +285,26 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
+     * @param  array<int>|int|null                                        $centerIds
+     * @param  array<string>                                              $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getClassesByCenterIds(array|int|null $centerIds = null, array $columns = ['id', 'name', 'code', 'center_id']): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = SchoolClass::query()->where('status', 'active');
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        return $query->orderBy('name')->get($columns);
+    }
+
+    /**
      * @param  int         $classId
      * @return SchoolClass
      */

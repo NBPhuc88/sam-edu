@@ -93,6 +93,13 @@ interface SchoolClassRepositoryInterface
     public function getClassesWithStudentCount(array $centerIds, ?array $classIds = null): \Illuminate\Database\Eloquent\Collection;
 
     /**
+     * @param  array<int>|int|null                                        $centerIds
+     * @param  array<string>                                              $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getClassesByCenterIds(array|int|null $centerIds = null, array $columns = ['id', 'name', 'code', 'center_id']): \Illuminate\Database\Eloquent\Collection;
+
+    /**
      * @param  int         $classId
      * @return SchoolClass
      */

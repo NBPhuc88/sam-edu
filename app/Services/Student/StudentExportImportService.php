@@ -16,8 +16,9 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     /**
      * @return \Generator<int, array<int, string>>
      * @param  ?int                                $centerId
+     * @param  ?int                                $classId
      */
-    public function exportStudentsCsv(?int $centerId = null): \Generator
+    public function exportStudentsCsv(?int $centerId = null, ?int $classId = null): \Generator
     {
         // Header row
         yield [
@@ -37,7 +38,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             'Trạng thái',
         ];
 
-        foreach ($this->studentRepository->getStudentsCursor($centerId) as $student) {
+        foreach ($this->studentRepository->getStudentsCursor($centerId, $classId) as $student) {
             yield [
                 (string) $student->student_code,
                 (string) $student->username,

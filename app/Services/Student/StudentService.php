@@ -5,6 +5,7 @@ namespace App\Services\Student;
 use App\Models\Admin;
 use App\Models\Student;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +16,8 @@ class StudentService implements StudentServiceInterface
 {
     public function __construct(
         protected StudentRepositoryInterface $studentRepository,
-        protected CenterRepositoryInterface $centerRepository
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository
     ) {
     }
 
@@ -39,6 +41,7 @@ class StudentService implements StudentServiceInterface
     /**
      * @param  ?string              $search
      * @param  ?int                 $centerId
+     * @param  ?int                 $classId
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -48,6 +51,7 @@ class StudentService implements StudentServiceInterface
     public function getPaginatedStudents(
         ?string $search = null,
         ?int $centerId = null,
+        ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
@@ -70,6 +74,7 @@ class StudentService implements StudentServiceInterface
         return $this->studentRepository->paginate(
             $search,
             $centerIds,
+            $classId,
             $status,
             $perPage,
             $page
@@ -86,12 +91,15 @@ class StudentService implements StudentServiceInterface
 
         if ($allowedCenterIds !== null) {
             $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+            $classes = $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds);
         } else {
             $centers = $this->centerRepository->getActiveCenters();
+            $classes = $this->schoolClassRepository->getClassesByCenterIds();
         }
 
         return [
             'centers' => $centers,
+            'classes' => $classes,
         ];
     }
 
