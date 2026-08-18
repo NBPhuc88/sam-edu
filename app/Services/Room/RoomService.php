@@ -86,7 +86,25 @@ class RoomService implements RoomServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền tạo phòng học cho trung tâm này.');
         }
 
+        if (empty($data['code'])) {
+            $data['code'] = $this->generateRoomCode((int) $data['center_id']);
+        }
+
         return $this->roomRepository->create($data);
+    }
+
+    protected function generateRoomCode(int $centerId): string
+    {
+        $count   = Room::where('center_id', $centerId)->count();
+        $nextNum = $count + 1;
+        $code    = sprintf('R%09d', $nextNum);
+
+        while ($this->roomRepository->codeExists($centerId, $code)) {
+            $nextNum++;
+            $code = sprintf('R%09d', $nextNum);
+        }
+
+        return $code;
     }
 
     public function updateRoom(int $id, array $data, ?Admin $admin = null): Room
@@ -116,9 +134,9 @@ class RoomService implements RoomServiceInterface
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null) {
-            $centers = $this->centerRepository->getByIds($allowedCenterIds);
+            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
         } else {
-            $centers = $this->centerRepository->getAllActive();
+            $centers = $this->centerRepository->getActiveCenters();
         }
 
         return [

@@ -39,6 +39,21 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > **5. MODEL `SchoolClass` DÙNG CHO BẢNG `classes`**:
 > Model tương ứng với bảng `classes` được đặt tên là `App\Models\SchoolClass` (do `Class` là từ khóa dự phòng của PHP).
 
+> [!IMPORTANT]
+> **6. QUY TẮC NHẬP MÃ & TỰ ĐỘNG SINH MÃ (CODE GENERATION RULES)**:
+>
+> - **Cho phép tự nhập hoặc để trống để tự sinh**: Tất cả các trường mã định danh (`code`, `admin_code`, `teacher_code`, `student_code`, v.v.) người dùng có thể tự nhập theo ý muốn hoặc để trống để hệ thống tự động sinh mã.
+> - **Cấu trúc mã tự sinh chuẩn**: `[Tiền tố thực thể (Prefix)][Số thứ tự 9 chữ số padded zeros]`.
+>   - **Phòng học (`rooms`)**: `R000000001`, `R000000002`, ... (`sprintf('R%09d', $nextId)`)
+>   - **Môn học (`subjects`)**: `S000000001`, `S000000002`, ... (`sprintf('S%09d', $nextId)`)
+>   - **Lớp học (`classes`)**: `C000000001` (hoặc `CLS000000001`)
+>   - **Trung tâm (`centers`)**: `CTR000000001`
+>   - **Giáo viên (`teachers`)**: `GV000000001` (hoặc `T000000001`)
+>   - **Học sinh (`students`)**: `HS000000001` (hoặc `STD000000001`)
+>   - **Quản trị viên (`admins`)**: `ADM000000001`
+> - **Xử lý Backend**: Trong Service/Repository, khi trường `code` rỗng hoặc null, tự động tính toán mã kế tiếp duy nhất theo tiền tố quy định và đảm bảo không bị trùng lặp.
+> - **Giao diện Frontend**: Không đặt thuộc tính `required` bắt buộc ở ô nhập mã; hiển thị placeholder rõ ràng: *"Để trống để tự động sinh mã (VD: R000000001)"*.
+
 ---
 
 ## 3. Quy tắc Phân lớp Backend (Controller - Service - Repository)

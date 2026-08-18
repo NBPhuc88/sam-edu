@@ -21,7 +21,7 @@ class StoreRoomRequest extends FormRequest
             'center_id' => ['required', 'integer', 'exists:centers,id'],
             'name'      => ['required', 'string', 'max:255'],
             'code'      => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 Rule::unique('rooms', 'code')->where(function ($query) {

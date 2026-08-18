@@ -137,14 +137,13 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                             {/* Room Code */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mã Phòng Học <span className="text-red-500">*</span>
+                                    Mã Phòng Học
                                 </label>
                                 <Input
                                     value={code}
                                     onChange={(e) => setCode(e.target.value)}
-                                    placeholder="Ví dụ: P101, LAB-02, P-VIP"
+                                    placeholder="Để trống để tự sinh mã (VD: R000000001)"
                                     className="!py-3 !text-sm uppercase font-mono"
-                                    required
                                 />
                                 {errors.code && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.code}</p>
