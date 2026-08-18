@@ -36,8 +36,8 @@ const superAdminNav: NavItem[] = [
         label: 'Quản Trị Hệ Thống',
         icon: Lock,
         children: [
-            { label: 'Quản Trị Viên', path: '/admins' },
             { label: 'Trung Tâm', path: '/centers' },
+            { label: 'Quản Trị Viên', path: '/admins' },
             { label: 'Giáo Viên', path: '/teachers' },
             { label: 'Học Sinh', path: '/students' },
         ],
@@ -74,10 +74,10 @@ const superAdminNav: NavItem[] = [
         label: 'Tài Chính',
         icon: DollarSign,
         children: [
-            { label: 'Học Phí Học Sinh', path: '/tuitions' },
-            { label: 'Gói Dịch Vụ', path: '/subscriptions' },
-            { label: 'Giao Dịch Thanh Toán', path: '/payments' },
             { label: 'Cấu Hình Gói', path: '/plans' },
+            { label: 'Gói Dịch Vụ', path: '/subscriptions' },
+            { label: 'Học Phí Học Sinh', path: '/tuitions' },
+            { label: 'Giao Dịch Thanh Toán', path: '/payments' },
         ],
     },
     { label: 'Thống Kê Báo Cáo', path: '/statistics', icon: BarChart3 },
@@ -99,7 +99,6 @@ const adminNav: NavItem[] = [
             { label: 'Trung Tâm', path: '/centers' },
             { label: 'Giáo Viên', path: '/teachers' },
             { label: 'Học Sinh', path: '/students' },
-            { label: 'Lớp Học', path: '/classes' },
         ],
     },
     {
@@ -108,6 +107,7 @@ const adminNav: NavItem[] = [
         children: [
             { label: 'Môn Học', path: '/subjects' },
             { label: 'Phòng Học', path: '/rooms' },
+            { label: 'Lớp Học', path: '/classes' },
         ],
     },
     {
