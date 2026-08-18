@@ -111,6 +111,16 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\SubjectController::class, 'destroy'])->name('destroy');
     });
 
+    // Room Management Routes (Center Scope CRUD)
+    Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\RoomController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\RoomController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\RoomController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\RoomController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\RoomController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\RoomController::class, 'destroy'])->name('destroy');
+    });
+
     // Class Management (CRUD), Class Student & Real-time Group Chat Routes
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SchoolClassController::class, 'index'])->name('index');

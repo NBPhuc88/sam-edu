@@ -80,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
         $this->app->bind(StudentTuitionServiceInterface::class, \App\Services\Tuition\StudentTuitionService::class);
         $this->app->bind(\App\Services\Subject\SubjectServiceInterface::class, \App\Services\Subject\SubjectService::class);
+        $this->app->bind(\App\Services\Room\RoomServiceInterface::class, \App\Services\Room\RoomService::class);
         $this->app->bind(\App\Services\Class\SchoolClassServiceInterface::class, \App\Services\Class\SchoolClassService::class);
         $this->app->bind(\App\Services\Schedule\ClassScheduleServiceInterface::class, \App\Services\Schedule\ClassScheduleService::class);
         $this->app->bind(ContactRequestServiceInterface::class, ContactRequestService::class);
@@ -97,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Tuition\StudentTuitionRepositoryInterface::class, \App\Repositories\Tuition\StudentTuitionRepository::class);
         $this->app->bind(\App\Repositories\Tuition\TuitionPaymentRepositoryInterface::class, \App\Repositories\Tuition\TuitionPaymentRepository::class);
         $this->app->bind(\App\Repositories\Subject\SubjectRepositoryInterface::class, \App\Repositories\Subject\SubjectRepository::class);
+        $this->app->bind(\App\Repositories\Room\RoomRepositoryInterface::class, \App\Repositories\Room\RoomRepository::class);
         $this->app->bind(\App\Repositories\Schedule\ClassScheduleRepositoryInterface::class, \App\Repositories\Schedule\ClassScheduleRepository::class);
         $this->app->bind(ChatRepositoryInterface::class, ChatRepository::class);
         $this->app->bind(CenterRepositoryInterface::class, CenterRepository::class);
