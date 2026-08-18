@@ -88,6 +88,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StatisticServiceInterface::class, StatisticService::class);
         $this->app->bind(\App\Services\Home\HomeServiceInterface::class, \App\Services\Home\HomeService::class);
         $this->app->bind(\App\Services\Payment\PaymentServiceInterface::class, \App\Services\Payment\PaymentService::class);
+        $this->app->bind(\App\Services\Attendance\AttendanceServiceInterface::class, \App\Services\Attendance\AttendanceService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
@@ -100,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Subject\SubjectRepositoryInterface::class, \App\Repositories\Subject\SubjectRepository::class);
         $this->app->bind(\App\Repositories\Room\RoomRepositoryInterface::class, \App\Repositories\Room\RoomRepository::class);
         $this->app->bind(\App\Repositories\Schedule\ClassScheduleRepositoryInterface::class, \App\Repositories\Schedule\ClassScheduleRepository::class);
+        $this->app->bind(\App\Repositories\Attendance\AttendanceRepositoryInterface::class, \App\Repositories\Attendance\AttendanceRepository::class);
         $this->app->bind(ChatRepositoryInterface::class, ChatRepository::class);
         $this->app->bind(CenterRepositoryInterface::class, CenterRepository::class);
         $this->app->bind(PaymentTransactionRepositoryInterface::class, PaymentTransactionRepository::class);

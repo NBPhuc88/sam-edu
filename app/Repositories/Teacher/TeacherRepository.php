@@ -187,4 +187,57 @@ class TeacherRepository implements TeacherRepositoryInterface
 
         return $query->count();
     }
+
+    /**
+     * @param  int                                                                     $teacherId
+     * @param  string                                                                  $startDate (Y-m-d)
+     * @param  string                                                                  $endDate   (Y-m-d)
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\ClassSession::query()
+            ->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)
+                    ->orWhereHas('classSubject', function ($csq) use ($teacherId) {
+                        $csq->where('teacher_id', $teacherId);
+                    });
+            })
+            ->with([
+                'classSubject.schoolClass' => function ($cq) {
+                    $cq->withCount('students');
+                },
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
+                'teacher:id,full_name,teacher_code,phone',
+                'room.equipments',
+            ])
+            ->whereBetween('session_date', [$startDate, $endDate])
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
+     * @param  int                                                                      $teacherId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\ClassSchedule::query()
+            ->whereHas('classSubject', function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId);
+            })
+            ->with([
+                'classSubject.schoolClass' => function ($cq) {
+                    $cq->withCount('students');
+                },
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'room.equipments',
+            ])
+            ->where('status', 'active')
+            ->orderBy('weekday')
+            ->orderBy('start_time')
+            ->get();
+    }
 }

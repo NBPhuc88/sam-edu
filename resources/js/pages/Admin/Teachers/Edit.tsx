@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, User, BookOpen } from 'lucide-react';
+import { ArrowLeft, Save, User, BookOpen, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -86,7 +86,7 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
 
             <div className="mx-auto max-w-4xl space-y-6">
                 {/* Header Top Bar */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/teachers">
                             <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
@@ -101,6 +101,19 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 Cập nhật thông tin giảng dạy, số điện thoại hoặc mật khẩu tài khoản.
                             </p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Link href={`/teachers/${teacher.id}/schedule`}>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                icon={<Calendar className="h-5 w-5 text-emerald-600" />}
+                            >
+                                Xem Lịch Dạy
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

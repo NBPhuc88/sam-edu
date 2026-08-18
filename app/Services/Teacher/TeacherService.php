@@ -3,9 +3,11 @@
 namespace App\Services\Teacher;
 
 use App\Models\Admin;
+use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -239,5 +241,153 @@ class TeacherService implements TeacherServiceInterface
         $teacher = $this->findTeacher($id, $admin);
 
         return $this->teacherRepository->delete($teacher->id);
+    }
+
+    /**
+     * @param  int                  $teacherId
+     * @param  ?string              $weekDate
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getTeacherTimetableData(int $teacherId, ?string $weekDate = null, ?Admin $admin = null): array
+    {
+        $teacher = $this->findTeacher($teacherId, $admin);
+
+        $teacher->load(['center:id,name,code']);
+
+        $baseDate    = $weekDate ? Carbon::parse($weekDate) : Carbon::today();
+        $startOfWeek = $baseDate->copy()->startOfWeek(Carbon::MONDAY);
+        $endOfWeek   = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
+
+        // 7 ngày trong tuần
+        $weekDays = [];
+        $dayNames = [
+            1 => 'Thứ 2',
+            2 => 'Thứ 3',
+            3 => 'Thứ 4',
+            4 => 'Thứ 5',
+            5 => 'Thứ 6',
+            6 => 'Thứ 7',
+            7 => 'Chủ Nhật',
+        ];
+
+        for ($i = 0; $i < 7; $i++) {
+            $day        = $startOfWeek->copy()->addDays($i);
+            $isoWeekday = $day->dayOfWeekIso; // 1 to 7
+
+            $weekDays[] = [
+                'weekday_number' => $isoWeekday,
+                'weekday_label'  => $dayNames[$isoWeekday] ?? "Thứ {$isoWeekday}",
+                'date_formatted' => $day->format('d/m/Y'),
+                'date_raw'       => $day->format('Y-m-d'),
+                'is_today'       => $day->isToday(),
+            ];
+        }
+
+        // Lấy danh sách ca dạy thực tế trong tuần
+        $sessions = $this->teacherRepository->getTeacherSessionsBetweenDates(
+            $teacherId,
+            $startOfWeek->format('Y-m-d'),
+            $endOfWeek->format('Y-m-d')
+        );
+
+        // Tính toán thứ tự buổi học cho từng session
+        $enrichedSessions = [];
+
+        foreach ($sessions as $session) {
+            $sessionArr = $session->toArray();
+
+            // Tính số thứ tự buổi học của môn này trong lớp
+            $sessionOrder = ClassSession::where('class_subject_id', $session->class_subject_id)
+                ->where(function ($q) use ($session) {
+                    $q->where('session_date', '<', $session->session_date)
+                        ->orWhere(function ($sq) use ($session) {
+                            $sq->where('session_date', $session->session_date)
+                                ->where('start_time', '<=', $session->start_time);
+                        });
+                })
+                ->count();
+
+            $sessionArr['session_order']  = $sessionOrder;
+            $sessionArr['total_sessions'] = $session->classSubject?->subject?->total_sessions;
+            $sessionArr['student_count']  = $session->classSubject?->schoolClass?->students_count ?? 0;
+            $sessionArr['max_students']   = $session->classSubject?->schoolClass?->max_students;
+            $sessionArr['class_name']     = $session->classSubject?->schoolClass?->name ?? 'Lớp học';
+            $sessionArr['class_code']     = $session->classSubject?->schoolClass?->code ?? '';
+            $sessionArr['subject_name']   = $session->classSubject?->subject?->name ?? 'Môn học';
+            $sessionArr['subject_code']   = $session->classSubject?->subject?->code ?? '';
+
+            // Room info
+            if ($session->room) {
+                $sessionArr['room_info'] = [
+                    'id'         => $session->room->id,
+                    'name'       => $session->room->name,
+                    'code'       => $session->room->code,
+                    'capacity'   => $session->room->capacity,
+                    'location'   => $session->room->location,
+                    'equipments' => $session->room->equipments ? $session->room->equipments->map(function ($eq) {
+                        return [
+                            'name'     => $eq->name,
+                            'quantity' => $eq->quantity,
+                            'unit'     => $eq->unit,
+                            'status'   => $eq->status,
+                        ];
+                    })->toArray() : [],
+                ];
+            } else {
+                $sessionArr['room_info'] = null;
+            }
+
+            $enrichedSessions[] = $sessionArr;
+        }
+
+        // Lấy lịch dạy cố định hàng tuần
+        $recurringSchedules = $this->teacherRepository->getTeacherWeeklySchedules($teacherId);
+
+        // Trích xuất các khung giờ dạy (Time slots) duy nhất
+        $timeSlotSet = [];
+
+        foreach ($sessions as $session) {
+            $start = substr((string) $session->start_time, 0, 5);
+            $end   = substr((string) $session->end_time, 0, 5);
+            $key   = "{$start} - {$end}";
+
+            $timeSlotSet[$key] = [
+                'start_time' => $start,
+                'end_time'   => $end,
+                'label'      => $key,
+            ];
+        }
+
+        foreach ($recurringSchedules as $schedule) {
+            $start = substr((string) $schedule->start_time, 0, 5);
+            $end   = substr((string) $schedule->end_time, 0, 5);
+            $key   = "{$start} - {$end}";
+
+            $timeSlotSet[$key] = [
+                'start_time' => $start,
+                'end_time'   => $end,
+                'label'      => $key,
+            ];
+        }
+
+        // Sắp xếp các time slots theo start_time
+        uasort($timeSlotSet, function ($a, $b) {
+            return strcmp($a['start_time'], $b['start_time']);
+        });
+
+        return [
+            'teacher'            => $teacher,
+            'weekDays'           => $weekDays,
+            'startOfWeek'        => $startOfWeek->format('Y-m-d'),
+            'endOfWeek'          => $endOfWeek->format('Y-m-d'),
+            'prevWeek'           => $startOfWeek->copy()->subWeek()->format('Y-m-d'),
+            'nextWeek'           => $startOfWeek->copy()->addWeek()->format('Y-m-d'),
+            'currentWeek'        => Carbon::today()->format('Y-m-d'),
+            'selectedDate'       => $baseDate->format('Y-m-d'),
+            'timeSlots'          => array_values($timeSlotSet),
+            'sessions'           => $enrichedSessions,
+            'recurringSchedules' => $recurringSchedules,
+        ];
     }
 }

@@ -10,6 +10,7 @@ import {
     GraduationCap,
     AlertCircle,
     Filter,
+    Calendar,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -399,6 +400,16 @@ return;
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <Link href={`/teachers/${teacher.id}/schedule`}>
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                            title="Xem thời khóa biểu / lịch dạy của giáo viên"
+                                                        >
+                                                            Lịch Dạy
+                                                        </Button>
+                                                    </Link>
                                                     <Link href={`/teachers/${teacher.id}/edit`}>
                                                         <Button
                                                             variant="edit"

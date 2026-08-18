@@ -60,4 +60,12 @@ interface TeacherServiceInterface
      * @return bool
      */
     public function deleteTeacher(int $id, ?Admin $admin = null): bool;
+
+    /**
+     * @param  int                  $teacherId
+     * @param  ?string              $weekDate
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getTeacherTimetableData(int $teacherId, ?string $weekDate = null, ?Admin $admin = null): array;
 }

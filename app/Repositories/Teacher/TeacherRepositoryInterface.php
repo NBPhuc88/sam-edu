@@ -80,4 +80,18 @@ interface TeacherRepositoryInterface
      * @param array<int, int> $centerIds
      */
     public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int;
+
+    /**
+     * @param  int                                                                     $teacherId
+     * @param  string                                                                  $startDate (Y-m-d)
+     * @param  string                                                                  $endDate   (Y-m-d)
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int                                                                      $teacherId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Database\Eloquent\Collection;
 }

@@ -99,6 +99,14 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/export', [TeacherController::class, 'export'])->name('export');
         Route::post('/import', [TeacherController::class, 'import'])->name('import');
         Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');
+        Route::get('/{id}/schedule', [TeacherController::class, 'schedule'])->name('schedule');
+    });
+
+    // Attendance Management Routes
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('index');
+        Route::get('/session/{sessionId}', [\App\Http\Controllers\AttendanceController::class, 'show'])->name('session');
+        Route::post('/session/{sessionId}', [\App\Http\Controllers\AttendanceController::class, 'save'])->name('save');
     });
 
     // Subject Management Routes (Center Scope CRUD)

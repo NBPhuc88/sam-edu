@@ -184,4 +184,17 @@ class TeacherController extends Controller
             fclose($handle);
         }, 200, $headers);
     }
+
+    public function schedule(Request $request, int $id): InertiaResponse
+    {
+        $admin         = $this->getAuthAdmin();
+        $weekDate      = $request->query('date');
+        $timetableData = $this->teacherService->getTeacherTimetableData(
+            $id,
+            is_string($weekDate) ? $weekDate : null,
+            $admin
+        );
+
+        return Inertia::render('Admin/Teachers/Schedule', $timetableData);
+    }
 }
