@@ -163,6 +163,13 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/{id}/sessions', [\App\Http\Controllers\ClassScheduleController::class, 'sessions'])->name('sessions');
     });
 
+    // Class Session Management Routes (List, Detail & Reschedule/Edit)
+    Route::prefix('sessions')->name('sessions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ClassSessionController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\ClassSessionController::class, 'show'])->name('show');
+        Route::patch('/{id}', [\App\Http\Controllers\ClassSessionController::class, 'update'])->name('update');
+    });
+
     // Student Tuition & Course Fee Management Routes
     Route::prefix('tuitions')->name('tuitions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\StudentTuitionController::class, 'index'])->name('index');

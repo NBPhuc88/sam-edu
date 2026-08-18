@@ -7,6 +7,7 @@ import {
     Trash2,
     AlertCircle,
     Filter,
+    Calendar,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -287,6 +288,16 @@ return;
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <Link href={`/sessions?subject_id=${sub.id}`}>
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                            title="Xem danh sách ca/buổi học của môn này"
+                                                        >
+                                                            Buổi Học
+                                                        </Button>
+                                                    </Link>
                                                     <Link href={`/subjects/${sub.id}/edit`}>
                                                         <Button
                                                             variant="edit"
