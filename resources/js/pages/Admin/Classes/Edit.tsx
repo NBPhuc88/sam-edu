@@ -396,8 +396,14 @@ export default function ClassEdit({
                                     key={index}
                                     className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-slate-50 p-4 sm:flex-row sm:items-start"
                                 >
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800 sm:mt-6">
-                                        {index + 1}
+                                    {/* Number Badge */}
+                                    <div className="flex flex-col items-center">
+                                        <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
+                                            &nbsp;
+                                        </span>
+                                        <div className="flex h-[42px] w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
+                                            {index + 1}
+                                        </div>
                                     </div>
 
                                     {/* Subject Select */}
@@ -455,7 +461,10 @@ export default function ClassEdit({
                                     </div>
 
                                     {/* Remove Row Button */}
-                                    <div className="flex sm:self-start sm:mt-6">
+                                    <div className="flex flex-col">
+                                        <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
+                                            &nbsp;
+                                        </span>
                                         <Button
                                             type="button"
                                             variant="danger"
@@ -463,6 +472,7 @@ export default function ClassEdit({
                                             icon={<Trash2 className="h-4 w-4" />}
                                             onClick={() => handleRemoveSubjectRow(index)}
                                             title="Xóa dòng môn học này"
+                                            className="!h-[42px]"
                                         >
                                             Xóa
                                         </Button>
