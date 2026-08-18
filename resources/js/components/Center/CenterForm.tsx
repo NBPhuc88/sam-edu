@@ -163,7 +163,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                     {/* Center Code */}
                     <div>
                         <label className="mb-2 block text-sm font-semibold text-gray-800">

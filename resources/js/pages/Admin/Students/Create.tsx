@@ -114,7 +114,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                             1. Thông Tin Học Sinh & Tài Khoản
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -285,7 +285,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                             2. Thông Tin Phụ Huynh / Người Giám Hộ
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 items-start">
                             {/* Parent Name */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -334,7 +334,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                             3. Trạng Thái & Ngày Nhập Học
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Admission Date */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">

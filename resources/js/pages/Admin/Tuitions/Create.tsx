@@ -150,7 +150,7 @@ export const Create: React.FC<CreateProps> = ({
                             1. Thông Tin Khoản Học Phí
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 items-start">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -320,7 +320,7 @@ export const Create: React.FC<CreateProps> = ({
                         </div>
 
                         {hasInitialPayment && (
-                            <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 items-start">
                                 <div>
                                     <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Số Tiền Thu Đợt 1 (VNĐ) (*)

@@ -108,7 +108,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                             1. Thông Tin Cơ Bản & Tài Khoản
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -237,7 +237,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                             2. Chuyên Môn Giảng Dạy & Trạng Thái
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Specialization */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">

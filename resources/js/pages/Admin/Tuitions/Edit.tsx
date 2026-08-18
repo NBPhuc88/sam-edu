@@ -128,7 +128,7 @@ export const Edit: React.FC<EditProps> = ({
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 items-start">
                             {/* Center */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">

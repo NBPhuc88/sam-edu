@@ -370,7 +370,7 @@ export default function ScheduleEdit({
                             1. Thông Tin Lớp Học & Môn Học
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Class Display */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -633,7 +633,7 @@ export default function ScheduleEdit({
                                 {offSessions.map((off, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3.5 sm:flex-row sm:items-center"
+                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3.5 sm:flex-row sm:items-start"
                                     >
                                         <div className="w-full sm:w-52">
                                             <input
@@ -701,7 +701,7 @@ export default function ScheduleEdit({
                                 {specificSessions.map((spec, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-purple-50/30 p-3.5 sm:flex-row sm:items-center"
+                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-purple-50/30 p-3.5 sm:flex-row sm:items-start"
                                     >
                                         <div className="w-full sm:w-44">
                                             <input

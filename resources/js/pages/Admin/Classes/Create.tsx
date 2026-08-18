@@ -146,7 +146,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                             1. Thông Tin Chung Lớp Học
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
                             {/* Center Selection */}
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -307,9 +307,9 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                             {subjectRows.map((row, index) => (
                                 <div
                                     key={index}
-                                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-slate-50 p-4 sm:flex-row sm:items-center"
+                                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-slate-50 p-4 sm:flex-row sm:items-start"
                                 >
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800 sm:mt-6">
                                         {index + 1}
                                     </div>
 
@@ -368,7 +368,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     </div>
 
                                     {/* Remove Row Button */}
-                                    <div className="flex sm:self-end sm:pb-0.5">
+                                    <div className="flex sm:self-start sm:mt-6">
                                         <Button
                                             type="button"
                                             variant="danger"
