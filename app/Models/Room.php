@@ -52,4 +52,12 @@ class Room extends Model
     {
         return $this->hasMany(ClassSession::class);
     }
+
+    /**
+     * @return HasMany<RoomEquipment, $this>
+     */
+    public function equipments(): HasMany
+    {
+        return $this->hasMany(RoomEquipment::class);
+    }
 }

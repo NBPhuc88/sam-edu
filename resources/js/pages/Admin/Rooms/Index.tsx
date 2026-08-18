@@ -12,6 +12,8 @@ import {
     XCircle,
     Building2,
     MapPin,
+    Armchair,
+    Eye,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -27,6 +29,16 @@ interface Center {
     code: string;
 }
 
+interface RoomEquipment {
+    id: number;
+    room_id: number;
+    name: string;
+    quantity: number;
+    unit: string | null;
+    status: 'good' | 'maintenance' | 'broken';
+    note: string | null;
+}
+
 interface Room {
     id: number;
     center_id: number;
@@ -37,6 +49,7 @@ interface Room {
     status: 'active' | 'inactive';
     created_at?: string;
     center?: Center;
+    equipments?: RoomEquipment[];
 }
 
 interface PaginatedData<T> {
@@ -79,6 +92,10 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     const [deletingRoom, setDeletingRoom] = useState<Room | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Equipment detail modal state
+    const [viewEquipmentModalOpen, setViewEquipmentModalOpen] = useState(false);
+    const [selectedRoomEquipment, setSelectedRoomEquipment] = useState<Room | null>(null);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
@@ -102,6 +119,11 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     const openDeleteModal = (room: Room) => {
         setDeletingRoom(room);
         setDeleteModalOpen(true);
+    };
+
+    const openEquipmentModal = (room: Room) => {
+        setSelectedRoomEquipment(room);
+        setViewEquipmentModalOpen(true);
     };
 
     const confirmDelete = () => {
@@ -130,6 +152,19 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
         }
     };
 
+    const getEquipmentStatusBadge = (status: string) => {
+        switch (status) {
+            case 'good':
+                return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-semibold text-emerald-700 border border-emerald-200">Tốt</span>;
+            case 'maintenance':
+                return <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-700 border border-amber-200">Bảo trì</span>;
+            case 'broken':
+                return <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-2xs font-semibold text-red-700 border border-red-200">Hỏng</span>;
+            default:
+                return <span className="text-xs text-gray-500">{status}</span>;
+        }
+    };
+
     return (
         <AppLayout title="Quản Lý Phòng Học - Hệ Thống Giáo Dục Sam">
             <Head title="Quản Lý Phòng Học" />
@@ -143,7 +178,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                             Quản Lý Phòng Học
                         </h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Danh sách phòng học, sức chứa chỗ ngồi, vị trí phòng và trạng thái hoạt động theo từng trung tâm.
+                            Danh sách phòng học, sức chứa chỗ ngồi, trang thiết bị vật chất và trạng thái hoạt động theo từng trung tâm.
                         </p>
                     </div>
 
@@ -315,6 +350,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     <th>Tên Phòng Học</th>
                                     <th>Trung Tâm</th>
                                     <th>Sức Chứa</th>
+                                    <th>Thiết Bị & Cơ Sở Vật Chất</th>
                                     <th>Vị Trí / Tầng</th>
                                     <th>Trạng Thái</th>
                                     <th className="text-right">Thao Tác</th>
@@ -323,7 +359,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                             <tbody>
                                 {rooms.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="py-12 text-center text-gray-500">
+                                        <td colSpan={9} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <DoorOpen className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -373,6 +409,24 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-gray-400 italic">Chưa thiết lập</span>
+                                                )}
+                                            </td>
+                                            {/* Equipments Column */}
+                                            <td>
+                                                {room.equipments && room.equipments.length > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEquipmentModal(room)}
+                                                        className="group flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/50 px-2.5 py-1 text-left text-xs font-medium text-purple-900 hover:bg-purple-100/70 transition-colors"
+                                                    >
+                                                        <Armchair className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                                                        <span className="max-w-[180px] truncate">
+                                                            {room.equipments.length} loại thiết bị ({room.equipments.reduce((acc, cur) => acc + Number(cur.quantity), 0)} món)
+                                                        </span>
+                                                        <Eye className="h-3 w-3 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Chưa có thiết bị</span>
                                                 )}
                                             </td>
                                             <td>
@@ -449,6 +503,72 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                 </Card>
             </div>
 
+            {/* Equipment Details Quick View Modal */}
+            <Modal
+                isOpen={viewEquipmentModalOpen}
+                onClose={() => setViewEquipmentModalOpen(false)}
+                title={`Danh Sách Thiết Bị: ${selectedRoomEquipment?.name} (${selectedRoomEquipment?.code})`}
+            >
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div className="flex items-center gap-2">
+                            <Armchair className="h-5 w-5 text-purple-600" />
+                            <span className="text-sm font-bold text-gray-800">
+                                Chi Tiết Cơ Sở Vật Chất & Thiết Bị Phòng
+                            </span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                            {selectedRoomEquipment?.center?.name}
+                        </span>
+                    </div>
+
+                    {selectedRoomEquipment?.equipments && selectedRoomEquipment.equipments.length > 0 ? (
+                        <div className="max-h-80 overflow-y-auto space-y-2">
+                            <table className="w-full text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
+                                        <th className="py-2 px-3">Tên thiết bị</th>
+                                        <th className="py-2 px-3 text-center">Số lượng</th>
+                                        <th className="py-2 px-3">Tình trạng</th>
+                                        <th className="py-2 px-3">Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {selectedRoomEquipment.equipments.map((eq, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/70">
+                                            <td className="py-2.5 px-3 font-semibold text-gray-900">
+                                                {eq.name}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-center font-bold text-purple-700">
+                                                {eq.quantity} {eq.unit || ''}
+                                            </td>
+                                            <td className="py-2.5 px-3">
+                                                {getEquipmentStatusBadge(eq.status)}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-gray-500 italic">
+                                                {eq.note || '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-center text-xs text-gray-500 py-6">
+                            Phòng học này chưa có thông tin thiết bị nào.
+                        </p>
+                    )}
+
+                    <div className="flex justify-end pt-3 border-t border-gray-100">
+                        <Link href={`/rooms/${selectedRoomEquipment?.id}/edit`}>
+                            <Button variant="edit" size="sm" icon={<Edit2 className="h-4 w-4" />}>
+                                Chỉnh Sửa Thiết Bị
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </Modal>
+
             {/* Delete Confirmation Modal */}
             <Modal
                 isOpen={deleteModalOpen}
@@ -469,7 +589,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                     </div>
 
                     <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 border border-amber-200">
-                        Lưu ý: Các ca học hoặc lịch học liên kết với phòng này sẽ không còn gán phòng. Dữ liệu phòng học sẽ được đưa vào thùng rác an toàn.
+                        Lưu ý: Các ca học hoặc lịch học liên kết với phòng này sẽ không còn gán phòng. Danh sách thiết bị và dữ liệu phòng học sẽ được xóa mềm an toàn.
                     </p>
 
                     <div className="flex justify-end gap-3 pt-2">

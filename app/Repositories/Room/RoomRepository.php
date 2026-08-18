@@ -3,8 +3,10 @@
 namespace App\Repositories\Room;
 
 use App\Models\Room;
+use App\Models\RoomEquipment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RoomRepository implements RoomRepositoryInterface
 {
@@ -15,7 +17,7 @@ class RoomRepository implements RoomRepositoryInterface
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Room::with('center')
+        $query = Room::with(['center', 'equipments'])
             ->orderBy('id', 'desc');
 
         if ($centerIds !== null) {
@@ -43,7 +45,7 @@ class RoomRepository implements RoomRepositoryInterface
 
     public function find(int $id, ?array $allowedCenterIds = null): ?Room
     {
-        $query = Room::with('center');
+        $query = Room::with(['center', 'equipments']);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -54,15 +56,78 @@ class RoomRepository implements RoomRepositoryInterface
 
     public function create(array $data): Room
     {
-        return Room::create($data);
+        return DB::transaction(function () use ($data) {
+            $equipments = $data['equipments'] ?? null;
+            unset($data['equipments']);
+
+            $room = Room::create($data);
+
+            if (! empty($equipments) && is_array($equipments)) {
+                foreach ($equipments as $item) {
+                    if (! empty($item['name'])) {
+                        $room->equipments()->create([
+                            'name'     => $item['name'],
+                            'quantity' => (int) ($item['quantity'] ?? 1),
+                            'unit'     => $item['unit'] ?? null,
+                            'status'   => $item['status'] ?? 'good',
+                            'note'     => $item['note'] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            return $room->fresh(['center', 'equipments']);
+        });
     }
 
     public function update(int $id, array $data): Room
     {
-        $room = Room::findOrFail($id);
-        $room->update($data);
+        return DB::transaction(function () use ($id, $data) {
+            $room       = Room::findOrFail($id);
+            $equipments = $data['equipments'] ?? null;
+            unset($data['equipments']);
 
-        return $room->fresh(['center']);
+            $room->update($data);
+
+            if ($equipments !== null && is_array($equipments)) {
+                $keptIds = [];
+
+                foreach ($equipments as $item) {
+                    if (empty($item['name'])) {
+                        continue;
+                    }
+
+                    if (! empty($item['id'])) {
+                        $existing = RoomEquipment::where('room_id', $room->id)->find($item['id']);
+
+                        if ($existing) {
+                            $existing->update([
+                                'name'     => $item['name'],
+                                'quantity' => (int) ($item['quantity'] ?? 1),
+                                'unit'     => $item['unit'] ?? null,
+                                'status'   => $item['status'] ?? 'good',
+                                'note'     => $item['note'] ?? null,
+                            ]);
+                            $keptIds[] = $existing->id;
+                        }
+                    } else {
+                        $newEquip = $room->equipments()->create([
+                            'name'     => $item['name'],
+                            'quantity' => (int) ($item['quantity'] ?? 1),
+                            'unit'     => $item['unit'] ?? null,
+                            'status'   => $item['status'] ?? 'good',
+                            'note'     => $item['note'] ?? null,
+                        ]);
+                        $keptIds[] = $newEquip->id;
+                    }
+                }
+
+                // Soft-delete items that were removed
+                $room->equipments()->whereNotIn('id', $keptIds)->delete();
+            }
+
+            return $room->fresh(['center', 'equipments']);
+        });
     }
 
     public function delete(int $id): bool
