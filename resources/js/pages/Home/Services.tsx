@@ -7,6 +7,7 @@ import {
     LayoutDashboard,
     ShieldCheck,
     Sparkles,
+    Tag,
     Zap,
 } from 'lucide-react';
 import React from 'react';
@@ -20,6 +21,7 @@ interface Plan {
     code: string;
     name: string;
     price: number;
+    yearly_price?: number | null;
     duration_days: number;
     max_students: number | null;
     max_classes: number | null;
@@ -56,39 +58,40 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
     ];
 
     return (
-        <PublicLayout title="Gói Cước & Dịch Vụ Phần Mềm - Giáo dục Sam">
-            {/* Header Hero Section */}
-            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/60 via-white to-white py-16 sm:py-20">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-semibold text-emerald-800">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>Bảng Giá Minh Bạch &amp; Tiết Kiệm</span>
+        <PublicLayout
+            title="Bảng Giá & Dịch Vụ SaaS - Giáo Dục Sam"
+            description="Bảng giá các gói dịch vụ quản lý trung tâm giáo dục Sam Edu. Đăng ký dùng thử miễn phí 14 ngày hoặc chọn gói tiêu chuẩn linh hoạt."
+            keywords="bảng giá phần mềm giáo dục, gói cước quản lý trung tâm, SaaS giáo dục, bảng giá Sam Edu"
+        >
+            {/* Hero Header */}
+                <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-16 text-center sm:py-20">
+                    <div className="mx-auto max-w-4xl space-y-4 px-4 sm:px-6 lg:px-8">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            <Tag className="h-3.5 w-3.5" />
+                            <span>Bảng Giá Minh Bạch & Tiết Kiệm</span>
+                        </div>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                            Bảng Giá Gói Dịch Vụ Linh Hoạt
+                        </h1>
+                        <p className="mx-auto max-w-2xl text-base text-gray-600 sm:text-lg">
+                            Chọn gói cước phù hợp nhất với quy mô trung tâm của
+                            bạn. Tự động hóa điểm danh, xếp lịch và kết nối phụ
+                            huynh tức thì.
+                        </p>
                     </div>
+                </section>
 
-                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-                        Gói Cước &amp; Dịch Vụ Phần Mềm
-                    </h1>
-
-                    <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
-                        Lựa chọn giải pháp phù hợp với quy mô trung tâm của bạn.
-                        Hỗ trợ 14 ngày dùng thử miễn phí không rủi ro, thanh
-                        toán linh hoạt qua ZaloPay QR Code.
-                    </p>
-                </div>
-            </section>
-
-            {/* Pricing Cards Grid */}
-            <section className="bg-white py-16">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+                {/* Pricing Cards */}
+                <section className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                         {plans &&
                             plans.map((plan) => (
                                 <Card
                                     key={plan.id}
-                                    className={`relative flex flex-col justify-between p-6 transition-all sm:p-8 ${
+                                    className={`relative flex flex-col justify-between p-8 transition-all hover:shadow-xl ${
                                         plan.is_featured
-                                            ? 'border-2 border-emerald-600 shadow-xl ring-2 ring-emerald-500/20'
-                                            : 'border-gray-200 shadow-sm hover:border-gray-300'
+                                            ? 'border-2 border-emerald-600 shadow-lg ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 bg-white'
                                     }`}
                                 >
                                     {plan.badge_text && (
@@ -118,16 +121,23 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-semibold text-gray-500">
-                                                        {plan.duration_days >=
-                                                        365
-                                                            ? '/ năm'
-                                                            : plan.duration_days >=
-                                                                30
-                                                              ? '/ tháng'
-                                                              : `/${plan.duration_days} ngày`}
+                                                        / tháng
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {plan.yearly_price && plan.yearly_price > 0 ? (
+                                                <div className="mt-2.5 rounded-lg bg-emerald-50 p-2.5 text-xs font-medium text-emerald-900 border border-emerald-200">
+                                                    <div className="font-semibold text-emerald-800">
+                                                        Mua trọn gói năm: {plan.yearly_price.toLocaleString('vi-VN')}đ/năm
+                                                    </div>
+                                                    {plan.price > 0 && (
+                                                        <div className="text-[11px] text-emerald-700 mt-0.5">
+                                                            💡 Tiết kiệm ~{Math.round((1 - plan.yearly_price / (plan.price * 12)) * 100)}% so với trả từng tháng
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : null}
                                         </div>
 
                                         <div className="space-y-1 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600">
@@ -202,10 +212,9 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                 </Card>
                             ))}
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ZaloPay Banner Section */}
+                {/* ZaloPay Banner Section */}
             <section className="bg-slate-900 py-12 text-white">
                 <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 lg:flex-row lg:px-8">
                     <div className="flex items-center gap-4 text-center lg:text-left">

@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -56,6 +57,16 @@ Route::middleware('auth.any')->group(function () {
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
+
+    // SaaS Subscription Plans Configuration Routes (Super Admin)
+    Route::prefix('plans')->name('plans.')->group(function () {
+        Route::get('/', [SubscriptionPlanController::class, 'index'])->name('index');
+        Route::get('/create', [SubscriptionPlanController::class, 'create'])->name('create');
+        Route::post('/', [SubscriptionPlanController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [SubscriptionPlanController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [SubscriptionPlanController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
+    });
 
     // Admin Management Routes (Super Admin)
     Route::prefix('admins')->name('admins.')->group(function () {

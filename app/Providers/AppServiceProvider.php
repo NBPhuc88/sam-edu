@@ -90,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Payment\PaymentServiceInterface::class, \App\Services\Payment\PaymentService::class);
         $this->app->bind(\App\Services\Attendance\AttendanceServiceInterface::class, \App\Services\Attendance\AttendanceService::class);
         $this->app->bind(\App\Services\Session\ClassSessionServiceInterface::class, \App\Services\Session\ClassSessionService::class);
+        $this->app->bind(\App\Services\Subscription\SubscriptionPlanServiceInterface::class, \App\Services\Subscription\SubscriptionPlanService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);

@@ -70,20 +70,21 @@ class SystemContentSeeder extends Seeder
         // Seed Default SEO Metadata using dedicated Seeder
         $this->call(SeoMetadataSeeder::class);
 
-        // Clean old subscription plans to ensure exact 3 plans
+        // Clean old subscription plans
         SubscriptionPlan::query()->delete();
 
-        // 3 Subscription Plans: Trial 14 Days, Monthly (30 Days), Yearly (365 Days - 20% Off)
+        // Subscription Plans with integrated yearly_price
         $plans = [
             [
                 'code'          => 'trial_14d',
-                'name'          => 'Gói Dùng Thử 14 Ngày',
+                'name'          => 'Gói Dùng Thử (Trial)',
                 'price'         => 0,
+                'yearly_price'  => 0,
                 'duration_days' => 14,
                 'max_students'  => 30,
                 'max_classes'   => 3,
                 'features'      => [
-                    'Trải nghiệm 14 ngày dùng thử miễn phí từ ngày tạo',
+                    'Trải nghiệm 14 ngày dùng thử miễn phí đầy đủ tính năng',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 30 học sinh cùng lúc & 3 lớp học cùng lúc',
                     'Điểm danh & Quản lý lớp học cơ bản',
@@ -93,40 +94,42 @@ class SystemContentSeeder extends Seeder
                 'is_featured' => false,
             ],
             [
-                'code'          => 'monthly',
-                'name'          => 'Gói Hàng Tháng (Standard)',
+                'code'          => 'standard',
+                'name'          => 'Gói Tiêu Chuẩn (Standard)',
                 'price'         => 500000,
+                'yearly_price'  => 4800000,
                 'duration_days' => 30,
                 'max_students'  => 200,
                 'max_classes'   => 15,
                 'features'      => [
-                    'Thanh toán linh hoạt từng tháng (500.000đ/tháng)',
-                    'Thời hạn 1 tháng (30 ngày)',
+                    'Thanh toán linh hoạt theo tháng (500.000đ/tháng) hoặc năm (4.800.000đ/năm - Tiết kiệm 20%)',
+                    'Thời hạn 30 ngày / tháng',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 200 học sinh cùng lúc & 15 lớp học cùng lúc',
-                    'Điểm danh & Quản lý sĩ số thông minh',
+                    'Điểm danh, Sĩ số & Học phí cơ bản',
                     'Hỗ trợ hotline 24/7',
                 ],
-                'badge_text'  => 'LINH HOẠT',
-                'is_featured' => false,
+                'badge_text'  => 'PHỔ BIẾN NHẤT',
+                'is_featured' => true,
             ],
             [
-                'code'          => 'yearly',
-                'name'          => 'Gói Theo Năm (Tiết kiêm 20%)',
-                'price'         => 4800000,
-                'duration_days' => 365,
+                'code'          => 'pro',
+                'name'          => 'Gói Chuyên Nghiệp (Pro)',
+                'price'         => 900000,
+                'yearly_price'  => 8640000,
+                'duration_days' => 30,
                 'max_students'  => 500,
                 'max_classes'   => 40,
                 'features'      => [
-                    'Tiết kiệm 20% so với mua lẻ hàng tháng (chỉ 400.000đ/tháng)',
-                    'Thời hạn 1 năm (365 ngày)',
+                    'Tiết kiệm 20% khi thanh toán cả năm (8.640.000đ/năm)',
+                    'Thời hạn 30 ngày / tháng',
                     'Quản lý đa trung tâm đào tạo',
                     'Tối đa 500 học sinh cùng lúc & 40 lớp học cùng lúc',
-                    'Gia hạn tự động qua ZaloPay QR Code v2',
-                    'Biểu đồ thống kê Recharts nâng cao',
+                    'Báo cáo thống kê & Điểm thi chuyên sâu',
+                    'Cổng thanh toán ZaloPay QR Code v2',
                 ],
-                'badge_text'  => 'TIẾT KIỆM 20%',
-                'is_featured' => true,
+                'badge_text'  => 'DOANH NGHIỆP',
+                'is_featured' => false,
             ],
         ];
 

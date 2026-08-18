@@ -30,6 +30,7 @@ interface SubscriptionPlan {
     code: string;
     name: string;
     price: number;
+    yearly_price?: number | null;
     duration_days: number;
     max_students: number;
     max_classes: number;

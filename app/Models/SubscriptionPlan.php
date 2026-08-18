@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
  * @property string                  $code
  * @property string                  $name
  * @property float                   $price
+ * @property float|null              $yearly_price
  * @property int                     $duration_days
  * @property int|null                $max_students
  * @property int|null                $max_classes
@@ -28,6 +29,7 @@ class SubscriptionPlan extends Model
         'code',
         'name',
         'price',
+        'yearly_price',
         'duration_days',
         'max_students',
         'max_classes',
@@ -40,6 +42,7 @@ class SubscriptionPlan extends Model
     {
         return [
             'price'         => 'float',
+            'yearly_price'  => 'float',
             'duration_days' => 'integer',
             'max_students'  => 'integer',
             'max_classes'   => 'integer',

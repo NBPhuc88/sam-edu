@@ -23,6 +23,7 @@ interface Plan {
     code: string;
     name: string;
     price: number;
+    yearly_price?: number | null;
     duration_days: number;
     max_students: number | null;
     max_classes: number | null;
@@ -226,12 +227,12 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                         {plans &&
                             plans.map((plan: Plan) => (
-                                <div
+                                <Card
                                     key={plan.id}
-                                    className={`ui-card relative flex flex-col justify-between p-6 transition-all ${
+                                    className={`relative flex flex-col justify-between p-6 transition-all hover:shadow-lg ${
                                         plan.is_featured
-                                            ? 'border-2 border-emerald-600 shadow-md ring-2 ring-emerald-500/20'
-                                            : 'border-gray-200'
+                                            ? 'border-2 border-emerald-600 bg-white shadow-md ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 bg-white'
                                     }`}
                                 >
                                     {plan.badge_text && (
@@ -261,16 +262,21 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                                 </span>
                                                 {plan.price > 0 && (
                                                     <span className="text-xs font-medium text-gray-500">
-                                                        {plan.duration_days >=
-                                                        365
-                                                            ? '/ năm'
-                                                            : plan.duration_days >=
-                                                                30
-                                                              ? '/ tháng'
-                                                              : `/${plan.duration_days} ngày`}
+                                                        / tháng
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {plan.yearly_price && plan.yearly_price > 0 ? (
+                                                <div className="mt-2 rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 border border-emerald-200">
+                                                    Mua theo năm: <strong>{plan.yearly_price.toLocaleString('vi-VN')}đ/năm</strong>{' '}
+                                                    {plan.price > 0 && (
+                                                        <span className="text-emerald-700">
+                                                            (Tiết kiệm ~{Math.round((1 - plan.yearly_price / (plan.price * 12)) * 100)}%)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ) : null}
                                         </div>
 
                                         <ul className="space-y-2 border-t border-gray-100 pt-2 text-xs text-gray-600">
@@ -308,7 +314,7 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                             </Button>
                                         </Link>
                                     </div>
-                                </div>
+                                </Card>
                             ))}
                     </div>
                 </div>
