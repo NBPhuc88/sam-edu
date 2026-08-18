@@ -57,13 +57,21 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     // Filter available subjects and teachers by selected center with fallback to all items
     const availableSubjects = React.useMemo(() => {
         const centerSubjects = subjects.filter((s) => !centerId || String(s.center_id) === String(centerId));
-        if (centerSubjects.length > 0) return centerSubjects;
+
+        if (centerSubjects.length > 0) {
+return centerSubjects;
+}
+
         return subjects; // Fallback to all subjects if none match this center
     }, [centerId, subjects]);
 
     const availableTeachers = React.useMemo(() => {
         const centerTeachers = teachers.filter((t) => !centerId || String(t.center_id) === String(centerId));
-        if (centerTeachers.length > 0) return centerTeachers;
+
+        if (centerTeachers.length > 0) {
+return centerTeachers;
+}
+
         return teachers; // Fallback to all teachers if none match this center
     }, [centerId, teachers]);
 

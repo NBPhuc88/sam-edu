@@ -1,15 +1,11 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     CheckCircle2,
     Clock,
     DoorOpen,
-    GraduationCap,
     Save,
-    UserCheck,
     Users,
-    XCircle,
-    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';

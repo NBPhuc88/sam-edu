@@ -129,13 +129,17 @@ function calculateEstimatedEndDate(
     totalSessions: number,
     offSessions: OffSession[]
 ): string | null {
-    if (!startDateStr || !totalSessions || totalSessions <= 0) return null;
+    if (!startDateStr || !totalSessions || totalSessions <= 0) {
+return null;
+}
 
     const enabledDays = Object.entries(weeklyTimes)
         .filter(([, conf]) => conf.enabled)
         .map(([day]) => Number(day));
 
-    if (enabledDays.length === 0) return null;
+    if (enabledDays.length === 0) {
+return null;
+}
 
     const offDatesSet = new Set(offSessions.filter((s) => s.date).map((s) => s.date));
 
@@ -157,7 +161,10 @@ function calculateEstimatedEndDate(
             }
         }
 
-        if (createdCount >= totalSessions) break;
+        if (createdCount >= totalSessions) {
+break;
+}
+
         curr.setDate(curr.getDate() + 1);
     }
 
@@ -216,6 +223,7 @@ export default function ScheduleEdit({
         }
 
         const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === Number(centerId));
+
         for (const t of centerTeachers) {
             if (!seenIds.has(t.id)) {
                 seenIds.add(t.id);
@@ -232,6 +240,7 @@ export default function ScheduleEdit({
 
     const displayRooms = React.useMemo(() => {
         const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === Number(centerId));
+
         return centerRooms.length > 0 ? centerRooms : rooms;
     }, [centerId, rooms]);
 
@@ -239,7 +248,10 @@ export default function ScheduleEdit({
     const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
 
     const estimatedEndDate = React.useMemo(() => {
-        if (!totalSessions || !startDate) return null;
+        if (!totalSessions || !startDate) {
+return null;
+}
+
         return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offSessions);
     }, [startDate, weeklyTimes, totalSessions, offSessions]);
 

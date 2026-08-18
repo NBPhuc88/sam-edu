@@ -67,7 +67,7 @@ export default function ClassEdit({
 }: EditProps) {
     const [centerId, setCenterId] = useState<string>(String(schoolClass.center_id));
     const [name, setName] = useState<string>(schoolClass.name || '');
-    const [code, setCode] = useState<string>(schoolClass.code || '');
+    const code = schoolClass.code || '';
     const [maxStudents, setMaxStudents] = useState<string>(
         schoolClass.max_students !== null && schoolClass.max_students !== undefined ? String(schoolClass.max_students) : '',
     );
@@ -110,6 +110,7 @@ export default function ClassEdit({
         }
 
         const centerSubjects = subjects.filter((s) => !centerId || String(s.center_id) === String(centerId));
+
         for (const s of centerSubjects) {
             if (!seenIds.has(s.id)) {
                 seenIds.add(s.id);
@@ -145,6 +146,7 @@ export default function ClassEdit({
         }
 
         const centerTeachers = teachers.filter((t) => !centerId || String(t.center_id) === String(centerId));
+
         for (const t of centerTeachers) {
             if (!seenIds.has(t.id)) {
                 seenIds.add(t.id);

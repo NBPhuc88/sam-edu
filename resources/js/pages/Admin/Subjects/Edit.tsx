@@ -34,7 +34,7 @@ interface EditProps {
 export default function SubjectEdit({ subject, centers = [], errors = {} }: EditProps) {
     const [centerId, setCenterId] = useState<string>(String(subject.center_id));
     const [name, setName] = useState<string>(subject.name || '');
-    const [code, setCode] = useState<string>(subject.code || '');
+    const code = subject.code || '';
     const [totalSessions, setTotalSessions] = useState<string>(
         subject.total_sessions !== null && subject.total_sessions !== undefined ? String(subject.total_sessions) : '',
     );

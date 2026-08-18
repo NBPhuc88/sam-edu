@@ -163,6 +163,7 @@ export default function ClassSchedulePage({
 
     const getStatusBadge = (status: string | number) => {
         const s = String(status);
+
         switch (s) {
             case '1':
             case 'active':
@@ -219,6 +220,7 @@ export default function ClassSchedulePage({
         if (!t) {
             return '';
         }
+
         return t.substring(0, 5);
     };
 
@@ -238,6 +240,7 @@ export default function ClassSchedulePage({
         return recurringSchedules.filter((rs) => {
             const rStart = formatTime(rs.start_time);
             const rEnd = formatTime(rs.end_time);
+
             return (
                 Number(rs.weekday) === weekdayNumber &&
                 rStart === slot.start_time &&

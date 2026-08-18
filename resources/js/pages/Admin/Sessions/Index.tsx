@@ -7,12 +7,9 @@ import {
     Eye,
     CheckSquare,
     UserCheck,
-    RotateCcw,
     Clock,
     BookOpen,
     GraduationCap,
-    School,
-    ArrowRight,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -242,17 +239,24 @@ export default function SessionIndex({
     };
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr) return '---';
+        if (!dateStr) {
+return '---';
+}
+
         const d = new Date(dateStr);
         const dayName = WEEKDAY_NAMES[d.getDay()];
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
+
         return `${dayName}, ${day}/${month}/${year}`;
     };
 
     const formatTime = (timeStr: string) => {
-        if (!timeStr) return '';
+        if (!timeStr) {
+return '';
+}
+
         return timeStr.substring(0, 5);
     };
 

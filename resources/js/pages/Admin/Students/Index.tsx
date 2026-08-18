@@ -98,8 +98,10 @@ export default function StudentIndex({ students, centers = [], classes = [], fil
     const handleCenterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newCenterId = e.target.value;
         setSelectedCenterId(newCenterId);
+
         if (newCenterId && selectedClassId) {
             const cls = classes.find((c) => String(c.id) === selectedClassId);
+
             if (cls && String(cls.center_id) !== newCenterId) {
                 setSelectedClassId('');
             }

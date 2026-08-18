@@ -120,7 +120,10 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
     };
 
     const confirmDelete = () => {
-        if (!deletingPlan) return;
+        if (!deletingPlan) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/plans/${deletingPlan.id}`, {
             onSuccess: () => {
@@ -137,7 +140,10 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
     };
 
     const formatCurrency = (val: number | null | undefined) => {
-        if (val === null || val === undefined || val === 0) return 'Miễn phí (0đ)';
+        if (val === null || val === undefined || val === 0) {
+return 'Miễn phí (0đ)';
+}
+
         return `${val.toLocaleString('vi-VN')}đ`;
     };
 

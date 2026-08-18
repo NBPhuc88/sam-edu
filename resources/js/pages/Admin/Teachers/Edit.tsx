@@ -41,7 +41,7 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
     const [username, setUsername] = useState<string>(teacher.username || '');
     const [email, setEmail] = useState<string>(teacher.email || '');
     const [password, setPassword] = useState<string>('');
-    const [teacherCode, setTeacherCode] = useState<string>(teacher.teacher_code || '');
+    const teacherCode = teacher.teacher_code || '';
     const [phone, setPhone] = useState<string>(teacher.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(teacher.date_of_birth || '');
     const [gender, setGender] = useState<string>(teacher.gender || 'male');

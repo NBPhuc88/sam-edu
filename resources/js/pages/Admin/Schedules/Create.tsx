@@ -96,13 +96,17 @@ function calculateEstimatedEndDate(
     totalSessions: number,
     offSessions: OffSession[]
 ): string | null {
-    if (!startDateStr || !totalSessions || totalSessions <= 0) return null;
+    if (!startDateStr || !totalSessions || totalSessions <= 0) {
+return null;
+}
 
     const enabledDays = Object.entries(weeklyTimes)
         .filter(([, conf]) => conf.enabled)
         .map(([day]) => Number(day));
 
-    if (enabledDays.length === 0) return null;
+    if (enabledDays.length === 0) {
+return null;
+}
 
     const offDatesSet = new Set(offSessions.filter((s) => s.date).map((s) => s.date));
 
@@ -124,7 +128,10 @@ function calculateEstimatedEndDate(
             }
         }
 
-        if (createdCount >= totalSessions) break;
+        if (createdCount >= totalSessions) {
+break;
+}
+
         curr.setDate(curr.getDate() + 1);
     }
 
@@ -201,6 +208,7 @@ export default function ScheduleCreate({
 
         // Add from subjects matching center
         const centerSubjects = subjects.filter((s) => !centerId || Number(s.center_id) === centerId);
+
         for (const s of centerSubjects) {
             if (!seenIds.has(s.id)) {
                 seenIds.add(s.id);
@@ -238,6 +246,7 @@ export default function ScheduleCreate({
 
         // Add from teachers matching center
         const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === centerId);
+
         for (const t of centerTeachers) {
             if (!seenIds.has(t.id)) {
                 seenIds.add(t.id);
@@ -256,6 +265,7 @@ export default function ScheduleCreate({
     // 3. Rooms list: matching center or fallback to all rooms
     const displayRooms = React.useMemo(() => {
         const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === centerId);
+
         return centerRooms.length > 0 ? centerRooms : rooms;
     }, [centerId, rooms]);
 
@@ -265,7 +275,10 @@ export default function ScheduleCreate({
     const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
 
     const estimatedEndDate = React.useMemo(() => {
-        if (!totalSessions || !startDate) return null;
+        if (!totalSessions || !startDate) {
+return null;
+}
+
         return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offSessions);
     }, [startDate, weeklyTimes, totalSessions, offSessions]);
 
@@ -278,13 +291,17 @@ export default function ScheduleCreate({
 
     const handleSubjectChange = (newSubjectId: string) => {
         setSelectedSubjectId(newSubjectId);
+
         if (!newSubjectId) {
             setSelectedTeacherId('');
+
             return;
         }
+
         const matchedCs = currentClass?.class_subjects?.find(
             (cs) => String(cs.subject?.id) === String(newSubjectId)
         );
+
         if (matchedCs?.teacher?.id) {
             setSelectedTeacherId(String(matchedCs.teacher.id));
         }

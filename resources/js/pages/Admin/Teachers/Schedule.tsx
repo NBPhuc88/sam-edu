@@ -10,15 +10,12 @@ import {
     GraduationCap,
     Info,
     Printer,
-    UserCheck,
     Users,
     CheckSquare,
     BookOpen,
     Layers,
-    X,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
@@ -191,6 +188,7 @@ export default function TeacherSchedulePage({
         if (!t) {
             return '';
         }
+
         return t.substring(0, 5);
     };
 
@@ -208,6 +206,7 @@ export default function TeacherSchedulePage({
         return recurringSchedules.filter((rs) => {
             const rStart = formatTime(rs.start_time);
             const rEnd = formatTime(rs.end_time);
+
             return (
                 Number(rs.weekday) === weekdayNumber &&
                 rStart === slot.start_time &&

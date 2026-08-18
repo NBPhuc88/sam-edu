@@ -126,7 +126,10 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
     };
 
     const confirmDelete = () => {
-        if (!deletingAdmin) return;
+        if (!deletingAdmin) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/admins/${deletingAdmin.id}`, {
             onFinish: () => {

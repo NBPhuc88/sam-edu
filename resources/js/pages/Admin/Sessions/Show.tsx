@@ -1,11 +1,10 @@
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     Calendar,
     Clock,
     DoorOpen,
     User,
     BookOpen,
-    GraduationCap,
     ArrowLeft,
     CheckSquare,
     Edit3,
@@ -17,7 +16,6 @@ import {
     HelpCircle,
     AlertTriangle,
     Save,
-    RotateCcw,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -164,7 +162,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         : rooms;
 
     // Reschedule form state
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, patch, processing, errors } = useForm({
         session_date: session.session_date ? String(session.session_date).substring(0, 10) : '',
         start_time: session.start_time ? session.start_time.substring(0, 5) : '08:00',
         end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
@@ -186,28 +184,39 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
     };
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return '---';
+        if (!dateStr) {
+return '---';
+}
+
         const d = new Date(dateStr);
         const dayName = WEEKDAY_NAMES[d.getDay()];
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
+
         return `${dayName}, ${day}/${month}/${year}`;
     };
 
     const formatTime = (timeStr: string | null) => {
-        if (!timeStr) return '';
+        if (!timeStr) {
+return '';
+}
+
         return timeStr.substring(0, 5);
     };
 
     const formatDateTime = (dtStr: string) => {
-        if (!dtStr) return '---';
+        if (!dtStr) {
+return '---';
+}
+
         const d = new Date(dtStr);
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
         const hours = String(d.getHours()).padStart(2, '0');
         const minutes = String(d.getMinutes()).padStart(2, '0');
+
         return `${hours}:${minutes} - ${day}/${month}/${year}`;
     };
 

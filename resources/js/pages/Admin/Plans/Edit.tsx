@@ -5,11 +5,9 @@ import {
     Plus,
     Trash2,
     DollarSign,
-    Sparkles,
     CheckCircle2,
     Layers,
     Users,
-    Calendar,
     Eye,
     Shield,
     Edit2,
@@ -73,11 +71,18 @@ export default function PlanEdit({ plan, errors = {} }: Props) {
 
     const handleAddFeature = (text?: string) => {
         const featToAdd = text || newFeatureText.trim();
-        if (!featToAdd) return;
+
+        if (!featToAdd) {
+return;
+}
+
         if (!features.includes(featToAdd)) {
             setFeatures([...features, featToAdd]);
         }
-        if (!text) setNewFeatureText('');
+
+        if (!text) {
+setNewFeatureText('');
+}
     };
 
     const handleRemoveFeature = (index: number) => {

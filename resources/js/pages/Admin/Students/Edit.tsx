@@ -44,7 +44,7 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
     const [username, setUsername] = useState<string>(student.username || '');
     const [email, setEmail] = useState<string>(student.email || '');
     const [password, setPassword] = useState<string>('');
-    const [studentCode, setStudentCode] = useState<string>(student.student_code || '');
+    const studentCode = student.student_code || '';
     const [phone, setPhone] = useState<string>(student.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(student.date_of_birth || '');
     const [gender, setGender] = useState<string>(student.gender || 'male');

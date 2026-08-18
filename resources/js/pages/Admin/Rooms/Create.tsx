@@ -299,6 +299,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                             <span className="text-xs font-semibold text-gray-600">Thêm nhanh:</span>
                             {QUICK_PRESETS.map((preset, idx) => {
                                 const Icon = preset.icon;
+
                                 return (
                                     <button
                                         key={idx}

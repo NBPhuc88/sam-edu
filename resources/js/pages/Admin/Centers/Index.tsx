@@ -56,7 +56,10 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
     };
 
     const confirmDelete = () => {
-        if (!deletingCenter) return;
+        if (!deletingCenter) {
+return;
+}
+
         setIsDeleting(true);
         router.delete(`/centers/${deletingCenter.id}`, {
             onFinish: () => {
