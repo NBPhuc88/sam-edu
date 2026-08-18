@@ -129,6 +129,7 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/{id}/edit', [\App\Http\Controllers\SchoolClassController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [\App\Http\Controllers\SchoolClassController::class, 'update'])->name('update');
         Route::delete('/{id}', [\App\Http\Controllers\SchoolClassController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/schedule', [\App\Http\Controllers\SchoolClassController::class, 'schedule'])->name('schedule');
 
         Route::get('/students/sample-csv', [SchoolClassStudentController::class, 'downloadSample'])->name('students.sample-csv');
         Route::get('/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('students.index');

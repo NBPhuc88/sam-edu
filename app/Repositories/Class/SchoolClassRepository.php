@@ -305,6 +305,50 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
+     * @param  int                                                                     $classId
+     * @param  string                                                                  $startDate (Y-m-d)
+     * @param  string                                                                  $endDate   (Y-m-d)
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\ClassSession::query()
+            ->whereHas('classSubject', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            })
+            ->with([
+                'classSubject.subject:id,name,code',
+                'teacher:id,full_name,teacher_code',
+                'room:id,name',
+            ])
+            ->whereBetween('session_date', [$startDate, $endDate])
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
+     * @param  int                                                                      $classId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getClassWeeklySchedules(int $classId): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\ClassSchedule::query()
+            ->whereHas('classSubject', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            })
+            ->with([
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'room:id,name',
+            ])
+            ->where('status', 'active')
+            ->orderBy('weekday')
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
      * @param  int         $classId
      * @return SchoolClass
      */

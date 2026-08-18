@@ -111,4 +111,17 @@ class SchoolClassController extends Controller
         return redirect()->route('classes.index')
             ->with('success', 'Xóa lớp học thành công!');
     }
+
+    public function schedule(\Illuminate\Http\Request $request, int $id): InertiaResponse
+    {
+        $admin         = $this->getAuthAdmin();
+        $weekDate      = $request->query('date');
+        $timetableData = $this->schoolClassService->getClassTimetableData(
+            $id,
+            is_string($weekDate) ? $weekDate : null,
+            $admin
+        );
+
+        return Inertia::render('Admin/Classes/Schedule', $timetableData);
+    }
 }

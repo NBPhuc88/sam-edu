@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -215,7 +215,7 @@ export default function ClassEdit({
 
             <div className="mx-auto max-w-4xl space-y-6">
                 {/* Header Top Bar */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/classes">
                             <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
@@ -230,6 +230,19 @@ export default function ClassEdit({
                                 Cập nhật thông tin lớp học, phân công thêm hoặc thay đổi giáo viên phụ trách từng môn.
                             </p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Link href={`/classes/${schoolClass.id}/schedule`}>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                icon={<Calendar className="h-5 w-5 text-emerald-600" />}
+                            >
+                                Xem Thời Khóa Biểu
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

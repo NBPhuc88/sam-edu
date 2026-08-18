@@ -100,6 +100,20 @@ interface SchoolClassRepositoryInterface
     public function getClassesByCenterIds(array|int|null $centerIds = null, array $columns = ['id', 'name', 'code', 'center_id']): \Illuminate\Database\Eloquent\Collection;
 
     /**
+     * @param  int                                                                     $classId
+     * @param  string                                                                  $startDate (Y-m-d)
+     * @param  string                                                                  $endDate   (Y-m-d)
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int                                                                      $classId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getClassWeeklySchedules(int $classId): \Illuminate\Database\Eloquent\Collection;
+
+    /**
      * @param  int         $classId
      * @return SchoolClass
      */

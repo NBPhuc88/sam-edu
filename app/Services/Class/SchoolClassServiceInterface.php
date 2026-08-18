@@ -64,4 +64,12 @@ interface SchoolClassServiceInterface
     public function getClassWithCenter(int $classId): SchoolClass;
 
     public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+
+    /**
+     * @param  int                  $classId
+     * @param  ?string              $weekDate
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null): array;
 }
