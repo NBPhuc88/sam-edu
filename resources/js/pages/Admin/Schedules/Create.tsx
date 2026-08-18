@@ -138,8 +138,10 @@ export default function ScheduleCreate({
     rooms = [],
     errors = {},
 }: CreateProps) {
+    const initialClass = classes[0];
+
     const [selectedClassId, setSelectedClassId] = useState<string>(
-        classes[0]?.id ? String(classes[0].id) : '',
+        initialClass?.id ? String(initialClass.id) : '',
     );
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
@@ -173,16 +175,92 @@ export default function ScheduleCreate({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Selected class object
-    const currentClass = classes.find((c) => String(c.id) === selectedClassId);
-    const centerId = currentClass?.center_id;
+    const currentClass = classes.find((c) => String(c.id) === String(selectedClassId));
+    const centerId = currentClass ? Number(currentClass.center_id) : null;
 
-    // Filter available subjects, teachers, rooms
-    const availableSubjects = subjects.filter((s) => !centerId || s.center_id === centerId);
-    const availableTeachers = teachers.filter((t) => !centerId || t.center_id === centerId);
-    const availableRooms = rooms.filter((r) => !centerId || r.center_id === centerId);
+    // 1. Subjects list: combine class_subjects with center subjects, fallback to all subjects
+    const displaySubjects = React.useMemo(() => {
+        const list: Subject[] = [];
+        const seenIds = new Set<number>();
+
+        // Add from currentClass.class_subjects first
+        if (currentClass?.class_subjects) {
+            for (const cs of currentClass.class_subjects) {
+                if (cs.subject && !seenIds.has(cs.subject.id)) {
+                    seenIds.add(cs.subject.id);
+                    const fullSub = subjects.find((s) => s.id === cs.subject?.id);
+                    list.push(fullSub || {
+                        id: cs.subject.id,
+                        name: cs.subject.name,
+                        code: cs.subject.code,
+                        center_id: centerId || 0,
+                    });
+                }
+            }
+        }
+
+        // Add from subjects matching center
+        const centerSubjects = subjects.filter((s) => !centerId || Number(s.center_id) === centerId);
+        for (const s of centerSubjects) {
+            if (!seenIds.has(s.id)) {
+                seenIds.add(s.id);
+                list.push(s);
+            }
+        }
+
+        // Fallback to all subjects prop if still empty
+        if (list.length === 0) {
+            return subjects;
+        }
+
+        return list;
+    }, [currentClass, centerId, subjects]);
+
+    // 2. Teachers list: combine class_subjects with center teachers, fallback to all teachers
+    const displayTeachers = React.useMemo(() => {
+        const list: Teacher[] = [];
+        const seenIds = new Set<number>();
+
+        // Add from currentClass.class_subjects first
+        if (currentClass?.class_subjects) {
+            for (const cs of currentClass.class_subjects) {
+                if (cs.teacher && !seenIds.has(cs.teacher.id)) {
+                    seenIds.add(cs.teacher.id);
+                    list.push({
+                        id: cs.teacher.id,
+                        full_name: cs.teacher.full_name,
+                        teacher_code: cs.teacher.teacher_code,
+                        center_id: centerId || 0,
+                    });
+                }
+            }
+        }
+
+        // Add from teachers matching center
+        const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === centerId);
+        for (const t of centerTeachers) {
+            if (!seenIds.has(t.id)) {
+                seenIds.add(t.id);
+                list.push(t);
+            }
+        }
+
+        // Fallback to all teachers prop if still empty
+        if (list.length === 0) {
+            return teachers;
+        }
+
+        return list;
+    }, [currentClass, centerId, teachers]);
+
+    // 3. Rooms list: matching center or fallback to all rooms
+    const displayRooms = React.useMemo(() => {
+        const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === centerId);
+        return centerRooms.length > 0 ? centerRooms : rooms;
+    }, [centerId, rooms]);
 
     // Currently selected subject details
-    const currentSubject = availableSubjects.find((s) => String(s.id) === selectedSubjectId);
+    const currentSubject = displaySubjects.find((s) => String(s.id) === String(selectedSubjectId));
     const totalSessions = currentSubject?.total_sessions;
     const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
 
@@ -191,21 +269,24 @@ export default function ScheduleCreate({
         return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offSessions);
     }, [startDate, weeklyTimes, totalSessions, offSessions]);
 
-    // When class changes, auto select subject and teacher if class has class_subjects
+    // When class changes, reset subject and teacher to empty
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
-        const cls = classes.find((c) => String(c.id) === newClassId);
+        setSelectedSubjectId('');
+        setSelectedTeacherId('');
+    };
 
-        if (cls?.class_subjects && cls.class_subjects.length > 0) {
-            const firstCs = cls.class_subjects[0];
-
-            if (firstCs.subject?.id) {
-setSelectedSubjectId(String(firstCs.subject.id));
-}
-
-            if (firstCs.teacher?.id) {
-setSelectedTeacherId(String(firstCs.teacher.id));
-}
+    const handleSubjectChange = (newSubjectId: string) => {
+        setSelectedSubjectId(newSubjectId);
+        if (!newSubjectId) {
+            setSelectedTeacherId('');
+            return;
+        }
+        const matchedCs = currentClass?.class_subjects?.find(
+            (cs) => String(cs.subject?.id) === String(newSubjectId)
+        );
+        if (matchedCs?.teacher?.id) {
+            setSelectedTeacherId(String(matchedCs.teacher.id));
         }
     };
 
@@ -367,17 +448,22 @@ setSelectedTeacherId(String(firstCs.teacher.id));
                                 </label>
                                 <select
                                     value={selectedSubjectId}
-                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                    onChange={(e) => handleSubjectChange(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Môn Học --</option>
-                                    {availableSubjects.map((s) => (
+                                    {displaySubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
-                                            {s.name} ({s.code})
+                                            {s.name} ({s.code}){s.total_sessions ? ` - ${s.total_sessions} buổi` : ''}
                                         </option>
                                     ))}
                                 </select>
+                                {displaySubjects.length === 0 && (
+                                    <p className="mt-1.5 text-xs text-amber-600">
+                                        Chưa có dữ liệu môn học. Vui lòng thêm môn học trước.
+                                    </p>
+                                )}
                                 {errors.subject_id && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.subject_id}</p>
                                 )}
@@ -395,12 +481,17 @@ setSelectedTeacherId(String(firstCs.teacher.id));
                                     required
                                 >
                                     <option value="">-- Chọn Giáo Viên --</option>
-                                    {availableTeachers.map((t) => (
+                                    {displayTeachers.map((t) => (
                                         <option key={t.id} value={t.id}>
                                             {t.full_name} ({t.teacher_code})
                                         </option>
                                     ))}
                                 </select>
+                                {displayTeachers.length === 0 && (
+                                    <p className="mt-1.5 text-xs text-amber-600">
+                                        Chưa có dữ liệu giáo viên. Vui lòng thêm giáo viên trước.
+                                    </p>
+                                )}
                                 {errors.teacher_id && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.teacher_id}</p>
                                 )}
@@ -417,7 +508,7 @@ setSelectedTeacherId(String(firstCs.teacher.id));
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="">-- Chưa Chọn Phòng (Online / Linh hoạt) --</option>
-                                    {availableRooms.map((r) => (
+                                    {displayRooms.map((r) => (
                                         <option key={r.id} value={r.id}>
                                             {r.name}
                                         </option>

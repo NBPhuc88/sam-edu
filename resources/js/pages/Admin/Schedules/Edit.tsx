@@ -200,9 +200,16 @@ export default function ScheduleEdit({
     const [excludeHolidays, setExcludeHolidays] = useState<boolean>(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Available items for this center
-    const availableTeachers = teachers.filter((t) => !centerId || t.center_id === centerId);
-    const availableRooms = rooms.filter((r) => !centerId || r.center_id === centerId);
+    // Available items for this center, fallback to all if empty
+    const displayTeachers = React.useMemo(() => {
+        const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === Number(centerId));
+        return centerTeachers.length > 0 ? centerTeachers : teachers;
+    }, [centerId, teachers]);
+
+    const displayRooms = React.useMemo(() => {
+        const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === Number(centerId));
+        return centerRooms.length > 0 ? centerRooms : rooms;
+    }, [centerId, rooms]);
 
     const totalSessions = classSubject?.subject?.total_sessions;
     const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
@@ -371,7 +378,8 @@ export default function ScheduleEdit({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    {availableTeachers.map((t) => (
+                                    <option value="">-- Chọn Giáo Viên --</option>
+                                    {displayTeachers.map((t) => (
                                         <option key={t.id} value={t.id}>
                                             {t.full_name} ({t.teacher_code})
                                         </option>
@@ -390,7 +398,7 @@ export default function ScheduleEdit({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="">-- Chưa Chọn Phòng (Online / Linh hoạt) --</option>
-                                    {availableRooms.map((r) => (
+                                    {displayRooms.map((r) => (
                                         <option key={r.id} value={r.id}>
                                             {r.name}
                                         </option>
