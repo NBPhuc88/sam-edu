@@ -4,6 +4,7 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -89,15 +90,19 @@ class SchoolClassService implements SchoolClassServiceInterface
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null) {
-            $centers = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+            $centers  = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
+            $subjects = $this->subjectRepository->getByCenterIds($allowedCenterIds);
+            $teachers = Teacher::query()->where('status', 'active')
+                ->whereIn('center_id', $allowedCenterIds)
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
         } else {
-            $centers = $this->centerRepository->getActiveCenters();
+            $centers  = $this->centerRepository->getActiveCenters();
+            $subjects = Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code', 'center_id']);
+            $teachers = Teacher::query()->where('status', 'active')
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
         }
-
-        $subjects = $this->subjectRepository->getByCenterIds($allowedCenterIds ?? $centers->pluck('id')->toArray());
-        $teachers = Teacher::query()->where('status', 'active')->when($allowedCenterIds !== null, function ($q) use ($allowedCenterIds) {
-            $q->whereIn('center_id', $allowedCenterIds);
-        })->orderBy('full_name')->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
 
         return [
             'centers'  => $centers,

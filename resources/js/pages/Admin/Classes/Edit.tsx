@@ -88,9 +88,76 @@ export default function ClassEdit({
     const [subjectRows, setSubjectRows] = useState<SubjectTeacherRow[]>(initialRows);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filter available subjects and teachers by selected center
-    const availableSubjects = subjects.filter((s) => !centerId || String(s.center_id) === centerId);
-    const availableTeachers = teachers.filter((t) => !centerId || String(t.center_id) === centerId);
+    // Filter available subjects and teachers by selected center with fallback & including current class subjects
+    const availableSubjects = React.useMemo(() => {
+        const list: Subject[] = [];
+        const seenIds = new Set<number>();
+
+        // Always include currently assigned subjects
+        if (schoolClass?.class_subjects) {
+            for (const cs of schoolClass.class_subjects) {
+                if (cs.subject_id && !seenIds.has(cs.subject_id)) {
+                    seenIds.add(cs.subject_id);
+                    const found = subjects.find((s) => s.id === cs.subject_id);
+                    list.push(found || {
+                        id: cs.subject_id,
+                        name: `Môn học #${cs.subject_id}`,
+                        code: `MH${cs.subject_id}`,
+                        center_id: Number(centerId) || 0,
+                    });
+                }
+            }
+        }
+
+        const centerSubjects = subjects.filter((s) => !centerId || String(s.center_id) === String(centerId));
+        for (const s of centerSubjects) {
+            if (!seenIds.has(s.id)) {
+                seenIds.add(s.id);
+                list.push(s);
+            }
+        }
+
+        if (list.length === 0) {
+            return subjects;
+        }
+
+        return list;
+    }, [schoolClass, centerId, subjects]);
+
+    const availableTeachers = React.useMemo(() => {
+        const list: Teacher[] = [];
+        const seenIds = new Set<number>();
+
+        // Always include currently assigned teachers
+        if (schoolClass?.class_subjects) {
+            for (const cs of schoolClass.class_subjects) {
+                if (cs.teacher_id && !seenIds.has(cs.teacher_id)) {
+                    seenIds.add(cs.teacher_id);
+                    const found = teachers.find((t) => t.id === cs.teacher_id);
+                    list.push(found || {
+                        id: cs.teacher_id,
+                        full_name: `Giáo viên #${cs.teacher_id}`,
+                        teacher_code: `GV${cs.teacher_id}`,
+                        center_id: Number(centerId) || 0,
+                    });
+                }
+            }
+        }
+
+        const centerTeachers = teachers.filter((t) => !centerId || String(t.center_id) === String(centerId));
+        for (const t of centerTeachers) {
+            if (!seenIds.has(t.id)) {
+                seenIds.add(t.id);
+                list.push(t);
+            }
+        }
+
+        if (list.length === 0) {
+            return teachers;
+        }
+
+        return list;
+    }, [schoolClass, centerId, teachers]);
 
     const handleAddSubjectRow = () => {
         setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '' }]);
@@ -350,6 +417,14 @@ export default function ClassEdit({
                                                 </option>
                                             ))}
                                         </select>
+                                        {availableSubjects.length === 0 && (
+                                            <p className="mt-1 text-xs text-amber-600">
+                                                Chưa có môn học.{' '}
+                                                <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
+                                                    Tạo môn học mới
+                                                </Link>
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Teacher Select */}
@@ -369,6 +444,14 @@ export default function ClassEdit({
                                                 </option>
                                             ))}
                                         </select>
+                                        {availableTeachers.length === 0 && (
+                                            <p className="mt-1 text-xs text-amber-600">
+                                                Chưa có giáo viên.{' '}
+                                                <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
+                                                    Tạo giáo viên mới
+                                                </Link>
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Remove Row Button */}

@@ -54,9 +54,18 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filter available subjects and teachers by selected center
-    const availableSubjects = subjects.filter((s) => !centerId || String(s.center_id) === centerId);
-    const availableTeachers = teachers.filter((t) => !centerId || String(t.center_id) === centerId);
+    // Filter available subjects and teachers by selected center with fallback to all items
+    const availableSubjects = React.useMemo(() => {
+        const centerSubjects = subjects.filter((s) => !centerId || String(s.center_id) === String(centerId));
+        if (centerSubjects.length > 0) return centerSubjects;
+        return subjects; // Fallback to all subjects if none match this center
+    }, [centerId, subjects]);
+
+    const availableTeachers = React.useMemo(() => {
+        const centerTeachers = teachers.filter((t) => !centerId || String(t.center_id) === String(centerId));
+        if (centerTeachers.length > 0) return centerTeachers;
+        return teachers; // Fallback to all teachers if none match this center
+    }, [centerId, teachers]);
 
     const handleAddSubjectRow = () => {
         setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '' }]);
@@ -321,6 +330,14 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                                 </option>
                                             ))}
                                         </select>
+                                        {availableSubjects.length === 0 && (
+                                            <p className="mt-1 text-xs text-amber-600">
+                                                Chưa có môn học.{' '}
+                                                <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
+                                                    Tạo môn học mới
+                                                </Link>
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Teacher Select */}
@@ -340,6 +357,14 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                                 </option>
                                             ))}
                                         </select>
+                                        {availableTeachers.length === 0 && (
+                                            <p className="mt-1 text-xs text-amber-600">
+                                                Chưa có giáo viên.{' '}
+                                                <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
+                                                    Tạo giáo viên mới
+                                                </Link>
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Remove Row Button */}

@@ -202,9 +202,33 @@ export default function ScheduleEdit({
 
     // Available items for this center, fallback to all if empty
     const displayTeachers = React.useMemo(() => {
+        const list: Teacher[] = [];
+        const seenIds = new Set<number>();
+
+        if (classSubject?.teacher && !seenIds.has(classSubject.teacher.id)) {
+            seenIds.add(classSubject.teacher.id);
+            list.push({
+                id: classSubject.teacher.id,
+                full_name: classSubject.teacher.full_name,
+                teacher_code: classSubject.teacher.teacher_code,
+                center_id: centerId || 0,
+            });
+        }
+
         const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === Number(centerId));
-        return centerTeachers.length > 0 ? centerTeachers : teachers;
-    }, [centerId, teachers]);
+        for (const t of centerTeachers) {
+            if (!seenIds.has(t.id)) {
+                seenIds.add(t.id);
+                list.push(t);
+            }
+        }
+
+        if (list.length === 0) {
+            return teachers;
+        }
+
+        return list;
+    }, [classSubject, centerId, teachers]);
 
     const displayRooms = React.useMemo(() => {
         const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === Number(centerId));
