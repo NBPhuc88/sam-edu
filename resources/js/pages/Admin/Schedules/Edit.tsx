@@ -35,6 +35,8 @@ interface Subject {
     name: string;
     code: string;
     center_id: number;
+    total_sessions?: number | null;
+    duration_minutes?: number | null;
 }
 
 interface Teacher {
@@ -76,6 +78,8 @@ interface ClassSchedule {
             id: number;
             name: string;
             code: string;
+            total_sessions?: number | null;
+            duration_minutes?: number | null;
         };
         teacher?: {
             id: number;
@@ -119,6 +123,47 @@ const WEEKDAYS = [
     { id: 7, label: 'Chủ Nhật' },
 ];
 
+function calculateEstimatedEndDate(
+    startDateStr: string,
+    weeklyTimes: Record<number, { enabled: boolean; start_time: string; end_time: string }>,
+    totalSessions: number,
+    offSessions: OffSession[]
+): string | null {
+    if (!startDateStr || !totalSessions || totalSessions <= 0) return null;
+
+    const enabledDays = Object.entries(weeklyTimes)
+        .filter(([, conf]) => conf.enabled)
+        .map(([day]) => Number(day));
+
+    if (enabledDays.length === 0) return null;
+
+    const offDatesSet = new Set(offSessions.filter((s) => s.date).map((s) => s.date));
+
+    let createdCount = 0;
+    const curr = new Date(startDateStr);
+    let lastDate: string | null = null;
+    let loopGuard = 0;
+
+    while (createdCount < totalSessions && loopGuard < 1500) {
+        loopGuard++;
+        const ymd = curr.toISOString().split('T')[0];
+        const jsDay = curr.getDay();
+        const isoDay = jsDay === 0 ? 7 : jsDay;
+
+        if (enabledDays.includes(isoDay)) {
+            if (!offDatesSet.has(ymd)) {
+                createdCount++;
+                lastDate = ymd;
+            }
+        }
+
+        if (createdCount >= totalSessions) break;
+        curr.setDate(curr.getDate() + 1);
+    }
+
+    return lastDate;
+}
+
 export default function ScheduleEdit({
     schedule,
     teachers = [],
@@ -158,6 +203,14 @@ export default function ScheduleEdit({
     // Available items for this center
     const availableTeachers = teachers.filter((t) => !centerId || t.center_id === centerId);
     const availableRooms = rooms.filter((r) => !centerId || r.center_id === centerId);
+
+    const totalSessions = classSubject?.subject?.total_sessions;
+    const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
+
+    const estimatedEndDate = React.useMemo(() => {
+        if (!totalSessions || !startDate) return null;
+        return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offSessions);
+    }, [startDate, weeklyTimes, totalSessions, offSessions]);
 
     const toggleWeekday = (day: number) => {
         setWeeklyTimes({
@@ -361,15 +414,51 @@ export default function ScheduleEdit({
 
                             {/* End Date */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Ngày Kết Thúc (Dự kiến)
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="!py-3 !text-sm"
-                                />
+                                <div className="mb-2 flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-gray-800">
+                                        Ngày Kết Thúc (Dự kiến)
+                                    </label>
+                                    {totalSessions && totalSessions > 0 && !endDate && (
+                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                            ✨ Tự động theo {totalSessions} buổi
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="!py-3 !text-sm"
+                                    />
+                                    {endDate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setEndDate('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                                            title="Xóa ngày cố định để hệ thống tự động tính theo số buổi môn học"
+                                        >
+                                            Xóa (Tự động tính)
+                                        </button>
+                                    )}
+                                </div>
+                                {totalSessions && totalSessions > 0 ? (
+                                    <div className="mt-1.5 text-xs">
+                                        {endDate ? (
+                                            <span className="text-gray-500">
+                                                Đang đặt ngày kết thúc cố định. (Nếu để trống, hệ thống sẽ sinh đúng <strong>{totalSessions} buổi</strong> dự kiến đến <strong>{estimatedEndDate || '...'}</strong>).
+                                            </span>
+                                        ) : (
+                                            <span className="font-medium text-emerald-700">
+                                                Môn học đã thiết lập <strong>{totalSessions} buổi</strong>. Để trống ô này để hệ thống tự động tính ngày kết thúc dự kiến là <strong>{estimatedEndDate || '...'}</strong>.
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="mt-1.5 text-xs text-gray-400">
+                                        (Tùy chọn) Để trống sẽ tự động tạo lịch trong 12 tuần.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </Card>
@@ -380,9 +469,21 @@ export default function ScheduleEdit({
                             <Clock className="h-5 w-5 text-blue-600" />
                             2. Lịch Học Định Kỳ Trong Tuần (T2, T3, T4, T5, T6, T7, CN)
                         </h2>
-                        <p className="mb-6 text-sm text-gray-500">
-                            Chọn các thứ trong tuần và cập nhật khung giờ học.
-                        </p>
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
+                            <p>
+                                Chọn các thứ trong tuần và cập nhật khung giờ học.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                                    Đã chọn: <strong className="text-emerald-700">{activeDaysCount} buổi/tuần</strong>
+                                </span>
+                                {totalSessions && totalSessions > 0 && activeDaysCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                                        Môn học: <strong>{totalSessions} buổi</strong> (~<strong>{Math.ceil(totalSessions / activeDaysCount)} tuần</strong>)
+                                    </span>
+                                )}
+                            </div>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
@@ -411,26 +512,37 @@ export default function ScheduleEdit({
 
                                         {conf.enabled && (
                                             <div
-                                                className="mt-3.5 flex items-center gap-2"
+                                                className="mt-3.5 space-y-1.5"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <input
-                                                    type="time"
-                                                    value={conf.start_time}
-                                                    onChange={(e) =>
-                                                        handleWeekdayTimeChange(day.id, 'start_time', e.target.value)
-                                                    }
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
-                                                />
-                                                <span className="text-sm text-gray-400">-</span>
-                                                <input
-                                                    type="time"
-                                                    value={conf.end_time}
-                                                    onChange={(e) =>
-                                                        handleWeekdayTimeChange(day.id, 'end_time', e.target.value)
-                                                    }
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
-                                                />
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="min-w-0">
+                                                        <label className="mb-1 block text-[11px] font-semibold text-gray-500">
+                                                            Bắt đầu
+                                                        </label>
+                                                        <input
+                                                            type="time"
+                                                            value={conf.start_time}
+                                                            onChange={(e) =>
+                                                                handleWeekdayTimeChange(day.id, 'start_time', e.target.value)
+                                                            }
+                                                            className="w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <label className="mb-1 block text-[11px] font-semibold text-gray-500">
+                                                            Kết thúc
+                                                        </label>
+                                                        <input
+                                                            type="time"
+                                                            value={conf.end_time}
+                                                            onChange={(e) =>
+                                                                handleWeekdayTimeChange(day.id, 'end_time', e.target.value)
+                                                            }
+                                                            className="w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -631,7 +743,9 @@ export default function ScheduleEdit({
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            Cập Nhật & Đồng Bộ Ca Học
+                            {totalSessions && totalSessions > 0 && !endDate
+                                ? `Cập Nhật & Đồng Bộ ${totalSessions} Ca Học`
+                                : 'Cập Nhật & Đồng Bộ Ca Học'}
                         </Button>
                     </div>
                 </form>

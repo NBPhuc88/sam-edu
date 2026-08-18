@@ -102,7 +102,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         $centersQuery = Center::query()->where('status', 'active');
         $classesQuery = SchoolClass::query()->with([
-            'classSubjects.subject:id,name,code',
+            'classSubjects.subject:id,name,code,total_sessions,duration_minutes',
             'classSubjects.teacher:id,full_name,teacher_code',
         ]);
         $roomsQuery    = Room::query();
@@ -122,7 +122,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             'classes'  => $classesQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id']),
             'rooms'    => $roomsQuery->orderBy('name')->get(['id', 'name', 'center_id', 'capacity']),
             'teachers' => $teachersQuery->orderBy('full_name')->get(['id', 'full_name', 'teacher_code', 'center_id']),
-            'subjects' => $subjectsQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id']),
+            'subjects' => $subjectsQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id', 'total_sessions', 'duration_minutes', 'tuition_fee']),
         ];
     }
 
@@ -225,7 +225,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
 
             // 3. Tự động sinh ra danh sách ca học thực tế (ClassSession)
-            $this->generateSessions($classSubject, $createdSchedules, $data);
+            $result = $this->generateSessions($classSubject, $createdSchedules, $data);
+
+            // Cập nhật ngày kết thúc được tính toán vào class_subject và class_schedules nếu ban đầu để trống
+            if (empty($data['end_date']) && ! empty($result['calculated_end_date'])) {
+                $classSubject->update(['end_date' => $result['calculated_end_date']]);
+                ClassSchedule::where('class_subject_id', $classSubject->id)
+                    ->update(['effective_to' => $result['calculated_end_date']]);
+            }
 
             return $firstSchedule;
         });
@@ -299,32 +306,45 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 ->where('session_date', '>=', now()->toDateString())
                 ->delete();
 
-            $this->generateSessions($classSubject, $createdSchedules, $data);
+            $result = $this->generateSessions($classSubject, $createdSchedules, $data);
+
+            // Cập nhật ngày kết thúc được tính toán vào class_subject và class_schedules nếu ban đầu để trống
+            if (empty($data['end_date']) && ! empty($result['calculated_end_date'])) {
+                $classSubject->update(['end_date' => $result['calculated_end_date']]);
+                ClassSchedule::where('class_subject_id', $classSubject->id)
+                    ->update(['effective_to' => $result['calculated_end_date']]);
+            }
 
             return $firstSchedule;
         });
     }
 
     /**
-     * Tự động sinh danh sách các ca học (ClassSession) từ lịch học định kỳ và các thiết lập ngày nghỉ/học bù
+     * Tự động sinh danh sách các ca học (ClassSession) từ lịch học định kỳ và các thiết lập ngày nghỉ/học bù.
+     * Nếu không có ngày kết thúc cụ thể, số ca học sẽ được sinh theo số buổi thiết lập của Môn Học.
      *
-     * @param  ClassSubject              $classSubject
-     * @param  array<int, ClassSchedule> $createdSchedules
-     * @param  array<string, mixed>      $data
-     * @return int                       Số lượng buổi học được sinh ra
+     * @param  ClassSubject                                            $classSubject
+     * @param  array<int, ClassSchedule>                               $createdSchedules
+     * @param  array<string, mixed>                                    $data
+     * @return array{created_count: int, calculated_end_date: ?string}
      */
-    protected function generateSessions(ClassSubject $classSubject, array $createdSchedules, array $data): int
+    protected function generateSessions(ClassSubject $classSubject, array $createdSchedules, array $data): array
     {
         $startDateStr = $data['start_date'] ?? null;
-        $endDateStr   = $data['end_date'] ?? null;
+        $endDateStr   = ! empty($data['end_date']) ? $data['end_date'] : null;
 
         if (! $startDateStr) {
-            return 0;
+            return [
+                'created_count'       => 0,
+                'calculated_end_date' => null,
+            ];
         }
 
         $startDate = Carbon::parse($startDateStr);
-        // Nếu không có ngày kết thúc, mặc định tạo trong 12 tuần (khoảng 3 tháng)
-        $endDate = $endDateStr ? Carbon::parse($endDateStr) : $startDate->copy()->addWeeks(12);
+
+        // Lấy số buổi đã thiết lập của môn học
+        $subject       = $classSubject->subject ?? Subject::find($classSubject->subject_id);
+        $totalSessions = $subject?->total_sessions;
 
         $weeklySchedules = $data['weekly_schedules'] ?? [];
         $weeklyMap       = [];
@@ -346,55 +366,138 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $teacherId       = (int) $data['teacher_id'];
         $roomId          = ! empty($data['room_id']) ? (int) $data['room_id'] : null;
 
-        $createdCount = 0;
-        $currentDate  = $startDate->copy();
+        $createdCount    = 0;
+        $currentDate     = $startDate->copy();
+        $lastSessionDate = null;
 
         // 1. Sinh ca học theo chu kỳ các thứ trong tuần
-        while ($currentDate->lte($endDate)) {
-            $dayOfWeek = (int) $currentDate->dayOfWeekIso; // 1 = Mon, ..., 7 = Sun
-            $dateStr   = $currentDate->format('Y-m-d');
+        if (! $endDateStr) {
+            if ($totalSessions && $totalSessions > 0) {
+                // TH1: Môn học đã cấu hình số buổi (total_sessions) -> sinh chính xác theo số buổi
+                $pastSessionsCount = ClassSession::where('class_subject_id', $classSubject->id)
+                    ->where('session_date', '<', $startDateStr)
+                    ->count();
 
-            if (isset($weeklyMap[$dayOfWeek])) {
-                $item = $weeklyMap[$dayOfWeek];
+                $targetRemainingCount = max(1, $totalSessions - $pastSessionsCount);
+                $maxSafetyDate        = $startDate->copy()->addYears(3); // Giới hạn tối đa tránh lặp vô tận
 
-                // Kiểm tra nếu là ngày nghỉ cố định
-                if (isset($offDatesMap[$dateStr])) {
+                while ($createdCount < $targetRemainingCount && $currentDate->lte($maxSafetyDate)) {
+                    $dayOfWeek = (int) $currentDate->dayOfWeekIso; // 1 = Mon, ..., 7 = Sun
+                    $dateStr   = $currentDate->format('Y-m-d');
+
+                    if (isset($weeklyMap[$dayOfWeek])) {
+                        $isOffDay = isset($offDatesMap[$dateStr]);
+                        $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+
+                        if (! $isOffDay && ! $isVnHol) {
+                            $item       = $weeklyMap[$dayOfWeek];
+                            $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
+
+                            $exists = ClassSession::where('class_subject_id', $classSubject->id)
+                                ->where('session_date', $dateStr)
+                                ->where('start_time', $item['start_time'])
+                                ->exists();
+
+                            if (! $exists) {
+                                ClassSession::create([
+                                    'class_subject_id'  => $classSubject->id,
+                                    'class_schedule_id' => $scheduleId,
+                                    'teacher_id'        => $teacherId,
+                                    'room_id'           => $roomId,
+                                    'session_date'      => $dateStr,
+                                    'start_time'        => $item['start_time'],
+                                    'end_time'          => $item['end_time'],
+                                    'status'            => 'scheduled',
+                                ]);
+                                $createdCount++;
+                                $lastSessionDate = $dateStr;
+                            }
+                        }
+                    }
+
                     $currentDate->addDay();
-
-                    continue;
                 }
+            } else {
+                // TH2: Môn học không có cấu hình số buổi -> mặc định 12 tuần (khoảng 3 tháng)
+                $endDate = $startDate->copy()->addWeeks(12);
 
-                // Kiểm tra nếu là ngày lễ Việt Nam
-                if ($excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate)) {
+                while ($currentDate->lte($endDate)) {
+                    $dayOfWeek = (int) $currentDate->dayOfWeekIso;
+                    $dateStr   = $currentDate->format('Y-m-d');
+
+                    if (isset($weeklyMap[$dayOfWeek])) {
+                        $isOffDay = isset($offDatesMap[$dateStr]);
+                        $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+
+                        if (! $isOffDay && ! $isVnHol) {
+                            $item       = $weeklyMap[$dayOfWeek];
+                            $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
+
+                            $exists = ClassSession::where('class_subject_id', $classSubject->id)
+                                ->where('session_date', $dateStr)
+                                ->where('start_time', $item['start_time'])
+                                ->exists();
+
+                            if (! $exists) {
+                                ClassSession::create([
+                                    'class_subject_id'  => $classSubject->id,
+                                    'class_schedule_id' => $scheduleId,
+                                    'teacher_id'        => $teacherId,
+                                    'room_id'           => $roomId,
+                                    'session_date'      => $dateStr,
+                                    'start_time'        => $item['start_time'],
+                                    'end_time'          => $item['end_time'],
+                                    'status'            => 'scheduled',
+                                ]);
+                                $createdCount++;
+                                $lastSessionDate = $dateStr;
+                            }
+                        }
+                    }
+
                     $currentDate->addDay();
-
-                    continue;
-                }
-
-                $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
-
-                // Kiểm tra tránh trùng lặp ngày & giờ
-                $exists = ClassSession::where('class_subject_id', $classSubject->id)
-                    ->where('session_date', $dateStr)
-                    ->where('start_time', $item['start_time'])
-                    ->exists();
-
-                if (! $exists) {
-                    ClassSession::create([
-                        'class_subject_id'  => $classSubject->id,
-                        'class_schedule_id' => $scheduleId,
-                        'teacher_id'        => $teacherId,
-                        'room_id'           => $roomId,
-                        'session_date'      => $dateStr,
-                        'start_time'        => $item['start_time'],
-                        'end_time'          => $item['end_time'],
-                        'status'            => 'scheduled',
-                    ]);
-                    $createdCount++;
                 }
             }
+        } else {
+            // TH3: Người dùng đã chỉ định ngày kết thúc dự kiến cụ thể
+            $endDate = Carbon::parse($endDateStr);
 
-            $currentDate->addDay();
+            while ($currentDate->lte($endDate)) {
+                $dayOfWeek = (int) $currentDate->dayOfWeekIso;
+                $dateStr   = $currentDate->format('Y-m-d');
+
+                if (isset($weeklyMap[$dayOfWeek])) {
+                    $isOffDay = isset($offDatesMap[$dateStr]);
+                    $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+
+                    if (! $isOffDay && ! $isVnHol) {
+                        $item       = $weeklyMap[$dayOfWeek];
+                        $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
+
+                        $exists = ClassSession::where('class_subject_id', $classSubject->id)
+                            ->where('session_date', $dateStr)
+                            ->where('start_time', $item['start_time'])
+                            ->exists();
+
+                        if (! $exists) {
+                            ClassSession::create([
+                                'class_subject_id'  => $classSubject->id,
+                                'class_schedule_id' => $scheduleId,
+                                'teacher_id'        => $teacherId,
+                                'room_id'           => $roomId,
+                                'session_date'      => $dateStr,
+                                'start_time'        => $item['start_time'],
+                                'end_time'          => $item['end_time'],
+                                'status'            => 'scheduled',
+                            ]);
+                            $createdCount++;
+                            $lastSessionDate = $dateStr;
+                        }
+                    }
+                }
+
+                $currentDate->addDay();
+            }
         }
 
         // 2. Thêm các buổi học cố định bổ sung (specific_sessions)
@@ -422,11 +525,20 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                         'topic'             => $spec['topic'] ?? 'Buổi học bổ sung',
                     ]);
                     $createdCount++;
+
+                    if ($lastSessionDate === null || $specDateStr > $lastSessionDate) {
+                        $lastSessionDate = $specDateStr;
+                    }
                 }
             }
         }
 
-        return $createdCount;
+        $calculatedEndDate = $endDateStr ?: $lastSessionDate;
+
+        return [
+            'created_count'       => $createdCount,
+            'calculated_end_date' => $calculatedEndDate,
+        ];
     }
 
     /**
