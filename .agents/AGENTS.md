@@ -96,6 +96,9 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
     - Dạng tròn đặc (`innerRadius={0}`).
     - Tỉ lệ phần trăm `%` hiển thị bằng chữ đậm màu trắng (`fill="#ffffff"`) trực tiếp trong lòng các lát cắt.
     - Phần chú thích mô tả màu (`<Legend />`) được đặt ở phía dưới biểu đồ (`verticalAlign="bottom"`).
+5. **Dọn dẹp Import khi xóa/thay đổi Component (Frontend Cleanup)**:
+    - Khi chỉnh sửa mã nguồn Frontend (React/TypeScript), nếu xóa bỏ hoặc ngưng sử dụng bất kỳ component, icon, hook, function hay type nào thì **BẮT BUỘC phải xóa khai báo `import` tương ứng ở đầu file**.
+    - Tuyệt đối không để lại unused imports gây rác mã nguồn hoặc lỗi linter/build.
 
 ---
 
