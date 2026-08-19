@@ -167,7 +167,7 @@ export default function AssignExamModal({
             isOpen={isOpen}
             onClose={onClose}
             title={editingClassExam ? 'Chỉnh Sửa Lịch Thi Của Lớp' : 'Gán Đề Thi & Lên Lịch Thi Cho Lớp'}
-            maxWidth="max-w-2xl"
+            maxWidth="4xl"
         >
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Center Filter (if super admin) */}
@@ -273,7 +273,7 @@ export default function AssignExamModal({
                 </div>
 
                 {/* Date & Time */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <Calendar className="h-3.5 w-3.5 text-gray-500" />
@@ -317,9 +317,9 @@ export default function AssignExamModal({
                 </div>
 
                 {/* Duration, Max Score, Pass Score, Status */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
-                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Thời Lượng (Phút)">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 whitespace-nowrap">
                             Thời Lượng (Phút)
                         </label>
                         <Input
@@ -333,7 +333,7 @@ export default function AssignExamModal({
                     </div>
 
                     <div>
-                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Điểm Tối Đa">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 whitespace-nowrap">
                             Điểm Tối Đa
                         </label>
                         <Input
@@ -346,7 +346,7 @@ export default function AssignExamModal({
                     </div>
 
                     <div>
-                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Điểm Đạt">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 whitespace-nowrap">
                             Điểm Đạt
                         </label>
                         <Input
@@ -360,13 +360,13 @@ export default function AssignExamModal({
                     </div>
 
                     <div>
-                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Trạng Thái">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 whitespace-nowrap">
                             Trạng Thái
                         </label>
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value as any)}
-                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                         >
                             <option value="scheduled">Đã lên lịch</option>
                             <option value="ongoing">Đang diễn ra</option>

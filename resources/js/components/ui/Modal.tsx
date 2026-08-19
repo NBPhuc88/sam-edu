@@ -9,7 +9,7 @@ export interface ModalProps {
     title?: string;
     children: React.ReactNode;
     footer?: React.ReactNode;
-    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
+    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | string;
     className?: string;
 }
 
@@ -22,7 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
     maxWidth = 'lg',
     className = '',
 }) => {
-    const maxWidthClasses = {
+    const maxWidthClasses: Record<string, string> = {
         sm: 'max-w-sm',
         md: 'max-w-md',
         lg: 'max-w-lg',
@@ -31,7 +31,17 @@ export const Modal: React.FC<ModalProps> = ({
         '3xl': 'max-w-3xl',
         '4xl': 'max-w-4xl',
         '5xl': 'max-w-5xl',
+        'max-w-sm': 'max-w-sm',
+        'max-w-md': 'max-w-md',
+        'max-w-lg': 'max-w-lg',
+        'max-w-xl': 'max-w-xl',
+        'max-w-2xl': 'max-w-2xl',
+        'max-w-3xl': 'max-w-3xl',
+        'max-w-4xl': 'max-w-4xl',
+        'max-w-5xl': 'max-w-5xl',
     };
+
+    const resolvedMaxWidth = maxWidthClasses[maxWidth] || (maxWidth.startsWith('max-w-') ? maxWidth : 'max-w-lg');
 
     return (
         <AnimatePresence>
@@ -54,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
                         transition={{ type: 'spring', duration: 0.3 }}
                         className={clsx(
                             'relative w-full bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-10 my-8',
-                            maxWidthClasses[maxWidth] || 'max-w-lg',
+                            resolvedMaxWidth,
                             className,
                         )}
                     >
