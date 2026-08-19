@@ -56,7 +56,7 @@ export default function QuestionBuilder({
 }: Props) {
     const [activeQuestionTypeModal, setActiveQuestionTypeModal] = useState(false);
     const [selectedSkillTab, setSelectedSkillTab] = useState<ExamSkill | 'all'>('all');
-    const [modalSkillFilter, setModalSkillFilter] = useState<ExamSkill | 'all'>('all');
+    const [modalSkillFilter, setModalSkillFilter] = useState<ExamSkill>('listening');
     const [expandedQuestionIndexes, setExpandedQuestionIndexes] = useState<number[]>([0]);
     const [expandedImageIndexes, setExpandedImageIndexes] = useState<number[]>([]);
 
@@ -116,22 +116,16 @@ export default function QuestionBuilder({
     };
 
     const handleOpenAddModal = (targetSkill?: ExamSkill | 'all') => {
-        const skill = targetSkill || (selectedSkillTab !== 'all' ? selectedSkillTab : 'reading');
+        const skill: ExamSkill = (targetSkill && targetSkill !== 'all')
+            ? targetSkill
+            : (selectedSkillTab !== 'all' ? selectedSkillTab : 'listening');
         setModalSkillFilter(skill);
         setActiveQuestionTypeModal(true);
     };
 
     const handleSelectQuestionType = (type: QuestionType, targetSkill?: ExamSkill) => {
         const nextIdx = questions.length;
-        const skill: ExamSkill =
-            targetSkill ||
-            (modalSkillFilter !== 'all'
-                ? modalSkillFilter
-                : type === 'audio_record'
-                  ? 'speaking'
-                  : type === 'essay'
-                    ? 'writing'
-                    : 'reading');
+        const skill: ExamSkill = targetSkill || modalSkillFilter;
 
         const newQuestion: ExamQuestionData = {
             code: `Q${String(nextIdx + 1).padStart(9, '0')}`,
@@ -721,9 +715,19 @@ export default function QuestionBuilder({
                                                     value={q.skill || 'reading'}
                                                     onChange={(e) => {
                                                         const newSkill = e.target.value as ExamSkill;
+                                                        const validTypes = QUESTION_TYPES.filter((t) => t.skills.includes(newSkill));
+                                                        const isCurrentValid = validTypes.some((t) => t.type === q.question_type);
+                                                        const fallbackType = isCurrentValid ? q.question_type : validTypes[0]?.type || 'single_choice';
+
                                                         handleUpdateQuestion(qIndex, {
                                                             skill: newSkill,
+                                                            question_type: fallbackType,
                                                             audio_url: newSkill === 'listening' ? q.audio_url || '' : null,
+                                                            ...(isCurrentValid ? {} : {
+                                                                options: getDefaultOptions(fallbackType),
+                                                                correct_answer: getDefaultCorrectAnswer(fallbackType),
+                                                                metadata: getDefaultMetadata(fallbackType),
+                                                            }),
                                                         });
                                                     }}
                                                     className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
@@ -750,7 +754,7 @@ export default function QuestionBuilder({
                                                     }}
                                                     className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
                                                 >
-                                                    {QUESTION_TYPES.map((t) => (
+                                                    {QUESTION_TYPES.filter((t) => t.skills.includes(q.skill || 'reading')).map((t) => (
                                                         <option key={t.type} value={t.type}>
                                                             {t.label}
                                                         </option>
@@ -999,42 +1003,46 @@ export default function QuestionBuilder({
             >
                 <div className="space-y-4">
                     {/* Modal Skill Selector Tabs */}
-                    <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3">
-                        <button
-                            type="button"
-                            onClick={() => setModalSkillFilter('all')}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                                modalSkillFilter === 'all'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
-                            }`}
-                        >
-                            Tất Cả Dạng ({QUESTION_TYPES.length})
-                        </button>
-                        {EXAM_SKILLS.map((sk) => (
-                            <button
-                                key={sk.skill}
-                                type="button"
-                                onClick={() => setModalSkillFilter(sk.skill)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                                    modalSkillFilter === sk.skill
-                                        ? sk.skill === 'listening'
-                                            ? 'bg-blue-600 text-white'
-                                            : sk.skill === 'reading'
-                                              ? 'bg-emerald-600 text-white'
-                                              : sk.skill === 'writing'
-                                                ? 'bg-amber-600 text-white'
-                                                : 'bg-pink-600 text-white'
-                                        : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
-                                }`}
-                            >
-                                {sk.label}
-                            </button>
-                        ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-gray-100 pb-3">
+                        {EXAM_SKILLS.map((sk) => {
+                            const typesCount = QUESTION_TYPES.filter((t) => t.skills.includes(sk.skill)).length;
+                            const isActive = modalSkillFilter === sk.skill;
+                            return (
+                                <button
+                                    key={sk.skill}
+                                    type="button"
+                                    onClick={() => setModalSkillFilter(sk.skill)}
+                                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all border ${
+                                        isActive
+                                            ? sk.skill === 'listening'
+                                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                                : sk.skill === 'reading'
+                                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                                  : sk.skill === 'writing'
+                                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                                    : 'bg-pink-600 text-white border-pink-600 shadow-xs'
+                                            : 'bg-slate-50 text-gray-700 border-gray-200 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        {sk.skill === 'listening' && <Headphones className="h-3.5 w-3.5" />}
+                                        {sk.skill === 'reading' && <BookOpen className="h-3.5 w-3.5" />}
+                                        {sk.skill === 'writing' && <PenTool className="h-3.5 w-3.5" />}
+                                        {sk.skill === 'speaking' && <Mic className="h-3.5 w-3.5" />}
+                                        <span>{sk.label}</span>
+                                    </div>
+                                    <span className={`text-2xs px-1.5 py-0.5 rounded-full font-mono ${
+                                        isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                                    }`}>
+                                        {typesCount} mẫu
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <p className="text-xs text-gray-500">
-                        Chọn một trong các dạng câu hỏi dưới đây để thêm vào bài kiểm tra:
+                        Chọn một trong các dạng câu hỏi tương thích với <strong className="text-gray-900">{EXAM_SKILLS.find((s) => s.skill === modalSkillFilter)?.label}</strong>:
                     </p>
 
                     <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 max-h-[60vh] overflow-y-auto p-1">
@@ -1042,12 +1050,7 @@ export default function QuestionBuilder({
                             <button
                                 key={typeMeta.type}
                                 type="button"
-                                onClick={() =>
-                                    handleSelectQuestionType(
-                                        typeMeta.type,
-                                        modalSkillFilter !== 'all' ? modalSkillFilter : undefined,
-                                    )
-                                }
+                                onClick={() => handleSelectQuestionType(typeMeta.type, modalSkillFilter)}
                                 className="group flex flex-col justify-between text-left rounded-2xl border border-gray-200 bg-white p-4.5 shadow-2xs hover:border-emerald-500 hover:bg-emerald-50/40 hover:shadow-md transition-all duration-200"
                             >
                                 <div className="space-y-2.5 w-full">
