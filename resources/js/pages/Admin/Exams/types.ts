@@ -147,7 +147,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
     {
         type: 'ordering',
         label: 'Sắp xếp thứ tự / Ghép câu',
-        description: 'Sắp xếp các mẩu từ xáo trộn thành câu hoàn chỉnh hoặc sắp xếp đoạn',
+        description: 'Sắp xếp các cụm từ xáo trộn thành câu hoàn chỉnh hoặc sắp xếp đoạn',
         badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200',
         iconName: 'ArrowUpDown',
         autoGraded: true,

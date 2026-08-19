@@ -186,9 +186,9 @@ export default function QuestionBuilder({
                 };
             case 'ordering':
                 return [
-                    { id: 't1', text: 'Mẩu từ 1' },
-                    { id: 't2', text: 'Mẩu từ 2' },
-                    { id: 't3', text: 'Mẩu từ 3' },
+                    { id: 't1', text: 'Cụm từ 1' },
+                    { id: 't2', text: 'Cụm từ 2' },
+                    { id: 't3', text: 'Cụm từ 3' },
                 ];
             case 'diagram_labelling':
                 return {
@@ -348,39 +348,7 @@ export default function QuestionBuilder({
         }
     };
 
-    const getSkillBadge = (skill?: ExamSkill) => {
-        switch (skill) {
-            case 'listening':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">
-                        <Headphones className="h-3 w-3 text-blue-600" />
-                        Nghe (Listening)
-                    </span>
-                );
-            case 'writing':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-2xs font-bold text-amber-700 border border-amber-200">
-                        <PenTool className="h-3 w-3 text-amber-600" />
-                        Viết (Writing)
-                    </span>
-                );
-            case 'speaking':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-pink-50 px-2 py-0.5 text-2xs font-bold text-pink-700 border border-pink-200">
-                        <Mic className="h-3 w-3 text-pink-600" />
-                        Nói (Speaking)
-                    </span>
-                );
-            case 'reading':
-            default:
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-2xs font-bold text-emerald-700 border border-emerald-200">
-                        <BookOpen className="h-3 w-3 text-emerald-600" />
-                        Đọc (Reading)
-                    </span>
-                );
-        }
-    };
+
 
     // Filter questions based on selected tab
     const filteredQuestions = selectedSkillTab === 'all'
@@ -411,11 +379,10 @@ export default function QuestionBuilder({
                     <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 border border-slate-200">
                         <span className="text-xs text-gray-500">Tổng điểm:</span>
                         <span
-                            className={`font-mono text-sm font-extrabold ${
-                                Number(totalScore) === Number(examMaxScore)
-                                    ? 'text-emerald-700'
-                                    : 'text-amber-700'
-                            }`}
+                            className={`font-mono text-sm font-extrabold ${Number(totalScore) === Number(examMaxScore)
+                                ? 'text-emerald-700'
+                                : 'text-amber-700'
+                                }`}
                         >
                             {totalScore} / {examMaxScore} điểm
                         </span>
@@ -438,11 +405,10 @@ export default function QuestionBuilder({
                 <button
                     type="button"
                     onClick={() => setSelectedSkillTab('all')}
-                    className={`flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
-                        selectedSkillTab === 'all'
-                            ? 'bg-white text-gray-900 shadow-xs border border-gray-200'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                    }`}
+                    className={`flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'all'
+                        ? 'bg-white text-gray-900 shadow-xs border border-gray-200'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                        }`}
                 >
                     <Layers className="h-4 w-4 text-gray-500" />
                     <span>Tất Cả ({questions.length})</span>
@@ -451,19 +417,17 @@ export default function QuestionBuilder({
                 <button
                     type="button"
                     onClick={() => setSelectedSkillTab('listening')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
-                        selectedSkillTab === 'listening'
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-gray-700 hover:bg-white/50'
-                    }`}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'listening'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-white/50'
+                        }`}
                 >
                     <div className="flex items-center gap-1.5">
                         <Headphones className={`h-4 w-4 ${selectedSkillTab === 'listening' ? 'text-white' : 'text-blue-600'}`} />
                         <span>🎧 Nghe</span>
                     </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
-                        selectedSkillTab === 'listening' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-800'
-                    }`}>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'listening' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-800'
+                        }`}>
                         {skillStats.listening.count} câu
                     </span>
                 </button>
@@ -471,19 +435,17 @@ export default function QuestionBuilder({
                 <button
                     type="button"
                     onClick={() => setSelectedSkillTab('reading')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
-                        selectedSkillTab === 'reading'
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'text-gray-700 hover:bg-white/50'
-                    }`}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'reading'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-white/50'
+                        }`}
                 >
                     <div className="flex items-center gap-1.5">
                         <BookOpen className={`h-4 w-4 ${selectedSkillTab === 'reading' ? 'text-white' : 'text-emerald-600'}`} />
                         <span>📖 Đọc</span>
                     </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
-                        selectedSkillTab === 'reading' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
-                    }`}>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'reading' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
                         {skillStats.reading.count} câu
                     </span>
                 </button>
@@ -491,19 +453,17 @@ export default function QuestionBuilder({
                 <button
                     type="button"
                     onClick={() => setSelectedSkillTab('writing')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
-                        selectedSkillTab === 'writing'
-                            ? 'bg-amber-600 text-white shadow-xs'
-                            : 'text-gray-700 hover:bg-white/50'
-                    }`}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'writing'
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-white/50'
+                        }`}
                 >
                     <div className="flex items-center gap-1.5">
                         <PenTool className={`h-4 w-4 ${selectedSkillTab === 'writing' ? 'text-white' : 'text-amber-600'}`} />
                         <span>✍️ Viết</span>
                     </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
-                        selectedSkillTab === 'writing' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'
-                    }`}>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'writing' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'
+                        }`}>
                         {skillStats.writing.count} câu
                     </span>
                 </button>
@@ -511,19 +471,17 @@ export default function QuestionBuilder({
                 <button
                     type="button"
                     onClick={() => setSelectedSkillTab('speaking')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
-                        selectedSkillTab === 'speaking'
-                            ? 'bg-pink-600 text-white shadow-xs'
-                            : 'text-gray-700 hover:bg-white/50'
-                    }`}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'speaking'
+                        ? 'bg-pink-600 text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-white/50'
+                        }`}
                 >
                     <div className="flex items-center gap-1.5">
                         <Mic className={`h-4 w-4 ${selectedSkillTab === 'speaking' ? 'text-white' : 'text-pink-600'}`} />
                         <span>🗣️ Nói</span>
                     </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
-                        selectedSkillTab === 'speaking' ? 'bg-pink-700 text-white' : 'bg-pink-100 text-pink-800'
-                    }`}>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'speaking' ? 'bg-pink-700 text-white' : 'bg-pink-100 text-pink-800'
+                        }`}>
                         {skillStats.speaking.count} câu
                     </span>
                 </button>
@@ -561,436 +519,429 @@ export default function QuestionBuilder({
                 </div>
             )}
 
-            {/* Questions List */}
-            {filteredQuestions.length === 0 ? (
+            {/* Questions List — grouped by skill section */}
+            {questions.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center bg-gray-50/50">
                     <Sparkles className="mx-auto h-10 w-10 text-gray-400" />
-                    <p className="mt-3 text-sm font-bold text-gray-800">
-                        {selectedSkillTab === 'all'
-                            ? 'Chưa có câu hỏi nào trong đề thi này'
-                            : `Chưa có câu hỏi nào thuộc ${EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}`}
-                    </p>
+                    <p className="mt-3 text-sm font-bold text-gray-800">Chưa có câu hỏi nào trong đề thi này</p>
                     <p className="mt-1 text-xs text-gray-400 max-w-sm mx-auto">
-                        Bấm nút bên dưới để chọn dạng câu hỏi phù hợp cho kỹ năng này.
+                        Bấm nút "Thêm Câu Hỏi" ở trên để bắt đầu soạn thảo theo từng kỹ năng.
                     </p>
-                    <div className="mt-5">
-                        <Button
-                            type="button"
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4 w-4" />}
-                            onClick={() => handleOpenAddModal(selectedSkillTab)}
-                        >
-                            Thêm Câu Hỏi Cho {selectedSkillTab === 'all' ? 'Đề Thi' : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
-                        </Button>
-                    </div>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {questions.map((q, qIndex) => {
-                        // Check if item is included in current filter
-                        if (selectedSkillTab !== 'all' && (q.skill || 'reading') !== selectedSkillTab) {
-                            return null;
-                        }
+                <div className="space-y-6">
+                    {EXAM_SKILLS.filter((sk) =>
+                        selectedSkillTab === 'all' || selectedSkillTab === sk.skill,
+                    ).map((sk) => {
+                        const sectionQuestions = questions
+                            .map((q, idx) => ({ q, idx }))
+                            .filter(({ q }) => (q.skill || 'reading') === sk.skill);
 
-                        const isExpanded = expandedQuestionIndexes.includes(qIndex);
-                        const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
-                        const currentSkill = q.skill || 'reading';
-                        const isListening = currentSkill === 'listening';
+                        const sectionScore = sectionQuestions.reduce(
+                            (sum, { q }) => sum + (Number(q.score) || 0),
+                            0,
+                        );
+
+                        const colorMap: Record<string, {
+                            header: string; border: string; badge: string;
+                            addBtn: string; emptyBg: string; dot: string;
+                        }> = {
+                            listening: {
+                                header: 'bg-blue-600', border: 'border-blue-300',
+                                badge: 'bg-blue-700 text-white',
+                                addBtn: 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200',
+                                emptyBg: 'bg-blue-50/40', dot: 'bg-blue-500',
+                            },
+                            reading: {
+                                header: 'bg-emerald-600', border: 'border-emerald-300',
+                                badge: 'bg-emerald-700 text-white',
+                                addBtn: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200',
+                                emptyBg: 'bg-emerald-50/40', dot: 'bg-emerald-500',
+                            },
+                            writing: {
+                                header: 'bg-amber-500', border: 'border-amber-300',
+                                badge: 'bg-amber-600 text-white',
+                                addBtn: 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200',
+                                emptyBg: 'bg-amber-50/40', dot: 'bg-amber-500',
+                            },
+                            speaking: {
+                                header: 'bg-pink-500', border: 'border-pink-300',
+                                badge: 'bg-pink-600 text-white',
+                                addBtn: 'bg-pink-50 hover:bg-pink-100 text-pink-700 border-pink-200',
+                                emptyBg: 'bg-pink-50/40', dot: 'bg-pink-500',
+                            },
+                        };
+                        const c = colorMap[sk.skill];
 
                         return (
-                            <div
-                                key={qIndex}
-                                className={`rounded-2xl border transition-all duration-200 ${
-                                    isExpanded
-                                        ? 'border-gray-300 bg-white shadow-sm ring-1 ring-emerald-500/20'
-                                        : 'border-gray-200 bg-slate-50/70 hover:border-gray-300'
-                                }`}
-                            >
-                                {/* Question Header Bar */}
-                                <div
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 cursor-pointer select-none"
-                                    onClick={() => toggleExpand(qIndex)}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 font-mono text-xs font-extrabold text-white">
-                                            {qIndex + 1}
+                            <div key={sk.skill} className={`rounded-2xl border-2 ${c.border} overflow-hidden`}>
+                                {/* ── Section Header ── */}
+                                <div className={`${c.header} px-4 py-3 flex items-center justify-between`}>
+                                    <div className="flex items-center gap-2.5">
+                                        {sk.skill === 'listening' && <Headphones className="h-4 w-4 text-white" />}
+                                        {sk.skill === 'reading' && <BookOpen className="h-4 w-4 text-white" />}
+                                        {sk.skill === 'writing' && <PenTool className="h-4 w-4 text-white" />}
+                                        {sk.skill === 'speaking' && <Mic className="h-4 w-4 text-white" />}
+                                        <span className="text-sm font-extrabold text-white tracking-wide">{sk.label}</span>
+                                        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${c.badge}`}>
+                                            {sectionQuestions.length} câu • {sectionScore} điểm
                                         </span>
-
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            {getSkillBadge(q.skill)}
-
-                                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
-                                                {getTypeIcon(q.question_type)}
-                                                {typeInfo.label}
-                                            </span>
-
-                                            <span className="text-xs text-gray-400 font-mono">
-                                                ({q.code || `Q${qIndex + 1}`})
-                                            </span>
-                                        </div>
                                     </div>
-
-                                    <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
-                                        {/* Score tag */}
-                                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
-                                            <span className="text-gray-500">Điểm:</span>
-                                            <input
-                                                type="number"
-                                                step="0.25"
-                                                min={0}
-                                                value={q.score}
-                                                onChange={(e) => handleUpdateQuestion(qIndex, { score: e.target.value })}
-                                                className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
-                                                title="Điểm số câu hỏi"
-                                            />
-                                        </div>
-
-                                        {/* Reorder Buttons */}
-                                        <button
-                                            type="button"
-                                            disabled={qIndex === 0}
-                                            onClick={() => handleMoveQuestion(qIndex, qIndex - 1)}
-                                            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title="Di chuyển lên"
-                                        >
-                                            <ChevronUp className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            disabled={qIndex === questions.length - 1}
-                                            onClick={() => handleMoveQuestion(qIndex, qIndex + 1)}
-                                            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title="Di chuyển xuống"
-                                        >
-                                            <ChevronDown className="h-4 w-4" />
-                                        </button>
-
-                                        {/* Duplicate */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDuplicateQuestion(qIndex)}
-                                            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                                            title="Nhân bản câu hỏi"
-                                        >
-                                            <Copy className="h-4 w-4" />
-                                        </button>
-
-                                        {/* Delete */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDeleteQuestion(qIndex)}
-                                            className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                                            title="Xóa câu hỏi"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-
-                                        {/* Expand Toggle */}
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleExpand(qIndex)}
-                                            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-                                        >
-                                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenAddModal(sk.skill)}
+                                        className="flex items-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 px-2.5 py-1.5 text-2xs font-bold text-white transition-colors"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Thêm câu
+                                    </button>
                                 </div>
 
-                                {/* Question Content Preview when collapsed */}
-                                {!isExpanded && q.content && (
-                                    <div className="px-4 pb-3 text-xs text-gray-600 truncate border-t border-gray-100/60 pt-2">
-                                        {q.content}
+                                {/* ── Questions in section ── */}
+                                {sectionQuestions.length === 0 ? (
+                                    <div className={`${c.emptyBg} px-5 py-5 text-center border-t ${c.border}`}>
+                                        <p className="text-xs font-semibold text-gray-500">
+                                            Chưa có câu hỏi nào — bấm <strong>Thêm câu</strong> để bắt đầu.
+                                        </p>
                                     </div>
-                                )}
+                                ) : (
+                                    <div className="space-y-2.5 p-3 bg-slate-50/80">
+                                        {sectionQuestions.map(({ q, idx: qIndex }, sectionPos) => {
+                                            const isExpanded = expandedQuestionIndexes.includes(qIndex);
+                                            const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
+                                            const isListening = sk.skill === 'listening';
 
-                                {/* Question Editor Body when expanded */}
-                                {isExpanded && (
-                                    <div className="border-t border-gray-200 p-5 space-y-5 bg-white rounded-b-2xl">
-                                        {/* Question Header Controls: Skill Selector & Type Selector */}
-                                        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold text-gray-700">Kỹ Năng:</span>
-                                                <select
-                                                    value={q.skill || 'reading'}
-                                                    onChange={(e) => {
-                                                        const newSkill = e.target.value as ExamSkill;
-                                                        const validTypes = QUESTION_TYPES.filter((t) => t.skills.includes(newSkill));
-                                                        const isCurrentValid = validTypes.some((t) => t.type === q.question_type);
-                                                        const fallbackType = isCurrentValid ? q.question_type : validTypes[0]?.type || 'single_choice';
-
-                                                        handleUpdateQuestion(qIndex, {
-                                                            skill: newSkill,
-                                                            question_type: fallbackType,
-                                                            audio_url: newSkill === 'listening' ? q.audio_url || '' : null,
-                                                            ...(isCurrentValid ? {} : {
-                                                                options: getDefaultOptions(fallbackType),
-                                                                correct_answer: getDefaultCorrectAnswer(fallbackType),
-                                                                metadata: getDefaultMetadata(fallbackType),
-                                                            }),
-                                                        });
-                                                    }}
-                                                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
-                                                >
-                                                    <option value="listening">🎧 Kỹ Năng Nghe (Listening)</option>
-                                                    <option value="reading">📖 Kỹ Năng Đọc (Reading)</option>
-                                                    <option value="writing">✍️ Kỹ Năng Viết (Writing)</option>
-                                                    <option value="speaking">🗣️ Kỹ Năng Nói (Speaking)</option>
-                                                </select>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
-                                                <select
-                                                    value={q.question_type}
-                                                    onChange={(e) => {
-                                                        const newType = e.target.value as QuestionType;
-                                                        handleUpdateQuestion(qIndex, {
-                                                            question_type: newType,
-                                                            options: getDefaultOptions(newType),
-                                                            correct_answer: getDefaultCorrectAnswer(newType),
-                                                            metadata: getDefaultMetadata(newType),
-                                                        });
-                                                    }}
-                                                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
-                                                >
-                                                    {QUESTION_TYPES.filter((t) => t.skills.includes(q.skill || 'reading')).map((t) => (
-                                                        <option key={t.type} value={t.type}>
-                                                            {t.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Audio Section: ONLY SHOWN FOR LISTENING QUESTIONS */}
-                                        {isListening && (
-                                            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
-                                                        <Volume2 className="h-4 w-4 text-blue-600" />
-                                                        Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
-                                                    </label>
-                                                    <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                                                        Phần Nghe
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={q.audio_url || ''}
-                                                    onChange={(e) => handleUpdateQuestion(qIndex, { audio_url: e.target.value || null })}
-                                                    placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3 hoặc link file audio trực tuyến..."
-                                                    className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
-                                                />
-                                                {q.audio_url && (
-                                                    <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
-                                                        <audio controls src={q.audio_url} className="w-full h-8" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Question Prompt / Content */}
-                                        <div>
-                                            <div className="flex items-center justify-between mb-1.5">
-                                                <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
-                                                    Nội Dung Câu Hỏi / Đề Bài (*)
-                                                </label>
-                                                {/* Optional image toggle for non-diagram questions */}
-                                                {q.question_type !== 'diagram_labelling' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleImageAttachment(qIndex)}
-                                                        className="text-2xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
+                                            return (
+                                                <div key={qIndex} className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${
+                                                    isExpanded
+                                                        ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
+                                                        : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
+                                                }`}>
+                                                    {/* Question row header */}
+                                                    <div
+                                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none"
+                                                        onClick={() => toggleExpand(qIndex)}
                                                     >
-                                                        <ImageIcon className="h-3 w-3 text-emerald-600" />
-                                                        <span>{q.image_url || expandedImageIndexes.includes(qIndex) ? 'Đóng ảnh đính kèm' : '+ Đính kèm ảnh đề bài'}</span>
-                                                    </button>
-                                                )}
-                                            </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${c.dot} font-mono text-2xs font-extrabold text-white`}>
+                                                                    {sectionPos + 1}
+                                                                </span>
+                                                                <span className="text-2xs text-gray-400 font-mono">(#{qIndex + 1})</span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
+                                                                    {getTypeIcon(q.question_type)}
+                                                                    {typeInfo.label}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400 font-mono">{q.code || `Q${qIndex + 1}`}</span>
+                                                                {q.content && (
+                                                                    <span className="hidden sm:inline text-xs text-gray-500 truncate max-w-xs">
+                                                                        — {q.content}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
 
-                                            <textarea
-                                                rows={3}
-                                                value={q.content}
-                                                onChange={(e) => handleUpdateQuestion(qIndex, { content: e.target.value })}
-                                                placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
-                                                className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Image Attachment (Only if requested or has value) */}
-                                        {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageIndexes.includes(qIndex)) && (
-                                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
-                                                        <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
-                                                        Đường Dẫn Hình Ảnh Minh Họa (Image URL)
-                                                    </label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            toggleImageAttachment(qIndex);
-                                                            handleUpdateQuestion(qIndex, { image_url: null });
-                                                        }}
-                                                        className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
-                                                    >
-                                                        Xóa ảnh
-                                                    </button>
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={q.image_url || ''}
-                                                    onChange={(e) => handleUpdateQuestion(qIndex, { image_url: e.target.value || null })}
-                                                    placeholder="VD: /storage/exams/images/question_diagram.png..."
-                                                    className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                />
-                                                {q.image_url && (
-                                                    <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
-                                                        <img
-                                                            src={q.image_url}
-                                                            alt="Preview đề bài"
-                                                            className="max-h-36 object-contain rounded"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLElement).style.display = 'none';
-                                                            }}
-                                                        />
+                                                        <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
+                                                                <span className="text-gray-500">Điểm:</span>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.25"
+                                                                    min={0}
+                                                                    value={q.score}
+                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { score: e.target.value })}
+                                                                    className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
+                                                                    title="Điểm số câu hỏi"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                disabled={qIndex === 0}
+                                                                onClick={() => handleMoveQuestion(qIndex, qIndex - 1)}
+                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                title="Di chuyển lên"
+                                                            >
+                                                                <ChevronUp className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={qIndex === questions.length - 1}
+                                                                onClick={() => handleMoveQuestion(qIndex, qIndex + 1)}
+                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                title="Di chuyển xuống"
+                                                            >
+                                                                <ChevronDown className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDuplicateQuestion(qIndex)}
+                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                                                                title="Nhân bản câu hỏi"
+                                                            >
+                                                                <Copy className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteQuestion(qIndex)}
+                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                                title="Xóa câu hỏi"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleExpand(qIndex)}
+                                                                className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
+                                                            >
+                                                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        )}
 
-                                        {/* Dynamic Question Type Specific Editor */}
-                                        <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
-                                            {q.question_type === 'single_choice' && (
-                                                <SingleChoiceEditor
-                                                    options={q.options || []}
-                                                    correctAnswer={q.correct_answer}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                />
-                                            )}
+                                                    {/* Expanded editor */}
+                                                    {isExpanded && (
+                                                        <div className="border-t border-gray-200 p-5 space-y-5 bg-white">
+                                                            {/* Type selector */}
+                                                            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
+                                                                    <select
+                                                                        value={q.question_type}
+                                                                        onChange={(e) => {
+                                                                            const newType = e.target.value as QuestionType;
+                                                                            handleUpdateQuestion(qIndex, {
+                                                                                question_type: newType,
+                                                                                options: getDefaultOptions(newType),
+                                                                                correct_answer: getDefaultCorrectAnswer(newType),
+                                                                                metadata: getDefaultMetadata(newType),
+                                                                            });
+                                                                        }}
+                                                                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
+                                                                    >
+                                                                        {QUESTION_TYPES.filter((t) => t.skills.includes(q.skill || 'reading')).map((t) => (
+                                                                            <option key={t.type} value={t.type}>{t.label}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
 
-                                            {q.question_type === 'multiple_choice' && (
-                                                <MultipleChoiceEditor
-                                                    options={q.options || []}
-                                                    correctAnswer={q.correct_answer || []}
-                                                    metadata={q.metadata || {}}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                    onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                />
-                                            )}
+                                                            {/* Audio (Listening only) */}
+                                                            {isListening && (
+                                                                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
+                                                                            <Volume2 className="h-4 w-4 text-blue-600" />
+                                                                            Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
+                                                                        </label>
+                                                                        <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">Phần Nghe</span>
+                                                                    </div>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={q.audio_url || ''}
+                                                                        onChange={(e) => handleUpdateQuestion(qIndex, { audio_url: e.target.value || null })}
+                                                                        placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3..."
+                                                                        className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
+                                                                    />
+                                                                    {q.audio_url && (
+                                                                        <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
+                                                                            <audio controls src={q.audio_url} className="w-full h-8" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
 
-                                            {q.question_type === 'true_false_not_given' && (
-                                                <TrueFalseEditor
-                                                    correctAnswer={q.correct_answer}
-                                                    metadata={q.metadata || {}}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                    onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                />
-                                            )}
+                                                            {/* Content */}
+                                                            <div>
+                                                                <div className="flex items-center justify-between mb-1.5">
+                                                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
+                                                                        Nội Dung Câu Hỏi / Đề Bài (*)
+                                                                    </label>
+                                                                    {q.question_type !== 'diagram_labelling' && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => toggleImageAttachment(qIndex)}
+                                                                            className="text-2xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
+                                                                        >
+                                                                            <ImageIcon className="h-3 w-3 text-emerald-600" />
+                                                                            <span>{q.image_url || expandedImageIndexes.includes(qIndex) ? 'Đóng ảnh đính kèm' : '+ Đính kèm ảnh đề bài'}</span>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <textarea
+                                                                    rows={3}
+                                                                    value={q.content}
+                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { content: e.target.value })}
+                                                                    placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
+                                                                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                    required
+                                                                />
+                                                            </div>
 
-                                            {q.question_type === 'fill_in_blank' && (
-                                                <FillInBlankEditor
-                                                    content={q.content}
-                                                    correctAnswer={q.correct_answer || {}}
-                                                    metadata={q.metadata || {}}
-                                                    onInsertBlank={() => handleInsertBlankTag(qIndex)}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                    onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                />
-                                            )}
+                                                            {/* Image Attachment */}
+                                                            {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageIndexes.includes(qIndex)) && (
+                                                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
+                                                                            <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+                                                                            Đường Dẫn Hình Ảnh Minh Họa (Image URL)
+                                                                        </label>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                toggleImageAttachment(qIndex);
+                                                                                handleUpdateQuestion(qIndex, { image_url: null });
+                                                                            }}
+                                                                            className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                                                                        >
+                                                                            Xóa ảnh
+                                                                        </button>
+                                                                    </div>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={q.image_url || ''}
+                                                                        onChange={(e) => handleUpdateQuestion(qIndex, { image_url: e.target.value || null })}
+                                                                        placeholder="VD: /storage/exams/images/question_diagram.png..."
+                                                                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                    />
+                                                                    {q.image_url && (
+                                                                        <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
+                                                                            <img
+                                                                                src={q.image_url}
+                                                                                alt="Preview đề bài"
+                                                                                className="max-h-36 object-contain rounded"
+                                                                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                                                            />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
 
-                                            {q.question_type === 'matching' && (
-                                                <MatchingEditor
-                                                    options={q.options || { left_items: [], right_items: [] }}
-                                                    correctAnswer={q.correct_answer || {}}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                />
-                                            )}
+                                                            {/* Type-specific editor */}
+                                                            <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
+                                                                {q.question_type === 'single_choice' && (
+                                                                    <SingleChoiceEditor
+                                                                        options={q.options || []}
+                                                                        correctAnswer={q.correct_answer}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'multiple_choice' && (
+                                                                    <MultipleChoiceEditor
+                                                                        options={q.options || []}
+                                                                        correctAnswer={q.correct_answer || []}
+                                                                        metadata={q.metadata || {}}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'true_false_not_given' && (
+                                                                    <TrueFalseEditor
+                                                                        correctAnswer={q.correct_answer}
+                                                                        metadata={q.metadata || {}}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'fill_in_blank' && (
+                                                                    <FillInBlankEditor
+                                                                        content={q.content}
+                                                                        correctAnswer={q.correct_answer || {}}
+                                                                        metadata={q.metadata || {}}
+                                                                        onInsertBlank={() => handleInsertBlankTag(qIndex)}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'matching' && (
+                                                                    <MatchingEditor
+                                                                        options={q.options || { left_items: [], right_items: [] }}
+                                                                        correctAnswer={q.correct_answer || {}}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'ordering' && (
+                                                                    <OrderingEditor
+                                                                        options={q.options || []}
+                                                                        correctAnswer={q.correct_answer || []}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'diagram_labelling' && (
+                                                                    <DiagramLabellingEditor
+                                                                        imageUrl={q.image_url || ''}
+                                                                        options={q.options || { labels: [], map_pins: [] }}
+                                                                        correctAnswer={q.correct_answer || {}}
+                                                                        onChangeImageUrl={(url) => handleUpdateQuestion(qIndex, { image_url: url })}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'find_mistake' && (
+                                                                    <FindMistakeEditor
+                                                                        options={q.options || { sentence_segments: [] }}
+                                                                        correctAnswer={q.correct_answer}
+                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
+                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'essay' && (
+                                                                    <EssayEditor
+                                                                        metadata={q.metadata || {}}
+                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
+                                                                    />
+                                                                )}
+                                                                {q.question_type === 'audio_record' && (
+                                                                    <AudioRecordEditor
+                                                                        metadata={q.metadata || {}}
+                                                                        audioUrl={q.audio_url}
+                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
+                                                                        onChangeAudioUrl={(url) => handleUpdateQuestion(qIndex, { audio_url: url })}
+                                                                    />
+                                                                )}
+                                                            </div>
 
-                                            {q.question_type === 'ordering' && (
-                                                <OrderingEditor
-                                                    options={q.options || []}
-                                                    correctAnswer={q.correct_answer || []}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                />
-                                            )}
+                                                            {/* Explanation */}
+                                                            <div>
+                                                                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                                                    Lời Giải Thích Chi Tiết / Hướng Dẫn Giải
+                                                                </label>
+                                                                <textarea
+                                                                    rows={2}
+                                                                    value={q.explanation || ''}
+                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { explanation: e.target.value || null })}
+                                                                    placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc / đoạn nghe..."
+                                                                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
 
-                                            {q.question_type === 'diagram_labelling' && (
-                                                <DiagramLabellingEditor
-                                                    imageUrl={q.image_url || ''}
-                                                    options={q.options || { labels: [], map_pins: [] }}
-                                                    correctAnswer={q.correct_answer || {}}
-                                                    onChangeImageUrl={(url) => handleUpdateQuestion(qIndex, { image_url: url })}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                />
-                                            )}
-
-                                            {q.question_type === 'find_mistake' && (
-                                                <FindMistakeEditor
-                                                    options={q.options || { sentence_segments: [] }}
-                                                    correctAnswer={q.correct_answer}
-                                                    onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                    onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                />
-                                            )}
-
-                                            {q.question_type === 'essay' && (
-                                                <EssayEditor
-                                                    metadata={q.metadata || {}}
-                                                    onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                />
-                                            )}
-
-                                            {q.question_type === 'audio_record' && (
-                                                <AudioRecordEditor
-                                                    metadata={q.metadata || {}}
-                                                    audioUrl={q.audio_url}
-                                                    onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                    onChangeAudioUrl={(url) => handleUpdateQuestion(qIndex, { audio_url: url })}
-                                                />
-                                            )}
-                                        </div>
-
-                                        {/* Detailed Explanation */}
-                                        <div>
-                                            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                                                Lời Giải Thích Chi Tiết / Hướng Dẫn Giải
-                                            </label>
-                                            <textarea
-                                                rows={2}
-                                                value={q.explanation || ''}
-                                                onChange={(e) => handleUpdateQuestion(qIndex, { explanation: e.target.value || null })}
-                                                placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc / đoạn nghe..."
-                                                className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                            />
+                                        {/* Section footer add button */}
+                                        <div className="px-4 py-3 border-t border-gray-100">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOpenAddModal(sk.skill)}
+                                                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${c.addBtn}`}
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                                Thêm câu cho {sk.label}
+                                            </button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         );
                     })}
-                </div>
-            )}
-
-            {/* Bottom Add Question Button */}
-            {questions.length > 0 && (
-                <div className="flex justify-center pt-2">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="md"
-                        icon={<Plus className="h-4 w-4 text-emerald-600" />}
-                        onClick={() => handleOpenAddModal(selectedSkillTab)}
-                    >
-                        Thêm Câu Hỏi Tiếp Theo Cho {selectedSkillTab === 'all' ? 'Đề Thi' : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
-                    </Button>
                 </div>
             )}
 
@@ -1012,17 +963,16 @@ export default function QuestionBuilder({
                                     key={sk.skill}
                                     type="button"
                                     onClick={() => setModalSkillFilter(sk.skill)}
-                                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all border ${
-                                        isActive
-                                            ? sk.skill === 'listening'
-                                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                                : sk.skill === 'reading'
-                                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                                  : sk.skill === 'writing'
+                                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all border ${isActive
+                                        ? sk.skill === 'listening'
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                            : sk.skill === 'reading'
+                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                                : sk.skill === 'writing'
                                                     ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                                                     : 'bg-pink-600 text-white border-pink-600 shadow-xs'
-                                            : 'bg-slate-50 text-gray-700 border-gray-200 hover:bg-slate-100'
-                                    }`}
+                                        : 'bg-slate-50 text-gray-700 border-gray-200 hover:bg-slate-100'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-1.5">
                                         {sk.skill === 'listening' && <Headphones className="h-3.5 w-3.5" />}
@@ -1031,9 +981,8 @@ export default function QuestionBuilder({
                                         {sk.skill === 'speaking' && <Mic className="h-3.5 w-3.5" />}
                                         <span>{sk.label}</span>
                                     </div>
-                                    <span className={`text-2xs px-1.5 py-0.5 rounded-full font-mono ${
-                                        isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
-                                    }`}>
+                                    <span className={`text-2xs px-1.5 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                                        }`}>
                                         {typesCount} mẫu
                                     </span>
                                 </button>
