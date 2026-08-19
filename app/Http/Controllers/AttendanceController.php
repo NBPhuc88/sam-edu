@@ -61,7 +61,7 @@ class AttendanceController extends Controller
             return redirect()->route('teachers.schedule', ['id' => $user->id]);
         }
 
-        return redirect()->route('schedules.index');
+        return redirect()->route('sessions.index');
     }
 
     public function show(int $sessionId): InertiaResponse
