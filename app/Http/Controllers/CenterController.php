@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Center\FilterCenterRequest;
 use App\Http\Requests\Center\StoreCenterRequest;
 use App\Http\Requests\Center\UpdateCenterRequest;
+use App\Models\Admin;
 use App\Services\Center\CenterServiceInterface;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,10 +21,24 @@ class CenterController extends Controller
 
     /**
      * Display list of centers.
+     * Admin phụ sẽ được chuyển hướng thẳng tới trang chi tiết Trung tâm do mình quản lý.
      * @param FilterCenterRequest $request
      */
-    public function index(FilterCenterRequest $request): Response
+    public function index(FilterCenterRequest $request): Response|RedirectResponse
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            $assignedCenterId = $currentAdmin->assignedCenterId();
+
+            if ($assignedCenterId) {
+                return redirect()->route('centers.edit', ['id' => $assignedCenterId]);
+            }
+
+            abort(403, 'Tài khoản của bạn chưa được phân công quản lý trung tâm nào.');
+        }
+
         $search  = $request->query('search');
         $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
         $centers = $this->centerService->getPaginatedCenters($perPage, is_string($search) ? $search : null);
@@ -37,10 +53,17 @@ class CenterController extends Controller
     }
 
     /**
-     * Show center creation form.
+     * Show center creation form. (Chỉ dành cho Super Admin)
      */
     public function create(): Response
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Quản trị viên phụ không có quyền thêm mới trung tâm.');
+        }
+
         $subscriptionPlans = $this->centerService->getSubscriptionPlans();
 
         return Inertia::render('Admin/Centers/Create', [
@@ -49,11 +72,18 @@ class CenterController extends Controller
     }
 
     /**
-     * Store a newly created center.
+     * Store a newly created center. (Chỉ dành cho Super Admin)
      * @param StoreCenterRequest $request
      */
     public function store(StoreCenterRequest $request): RedirectResponse
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Quản trị viên phụ không có quyền thêm mới trung tâm.');
+        }
+
         $validated = $request->validated();
         $this->centerService->createCenter($validated);
 
@@ -66,6 +96,17 @@ class CenterController extends Controller
      */
     public function edit(int $id): Response
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            $assignedCenterId = $currentAdmin->assignedCenterId();
+
+            if (! $assignedCenterId || $assignedCenterId !== $id) {
+                abort(403, 'Bạn chỉ có quyền xem/chỉnh sửa thông tin trung tâm do mình quản lý.');
+            }
+        }
+
         $center            = $this->centerService->getCenterById($id);
         $subscriptionPlans = $this->centerService->getSubscriptionPlans();
 
@@ -82,18 +123,40 @@ class CenterController extends Controller
      */
     public function update(UpdateCenterRequest $request, int $id): RedirectResponse
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            $assignedCenterId = $currentAdmin->assignedCenterId();
+
+            if (! $assignedCenterId || $assignedCenterId !== $id) {
+                abort(403, 'Bạn chỉ có quyền cập nhật thông tin trung tâm do mình quản lý.');
+            }
+        }
+
         $validated = $request->validated();
         $this->centerService->updateCenter($id, $validated);
 
-        return redirect()->route('centers.index')->with('success', 'Cập nhật thông tin trung tâm thành công!');
+        $redirectRoute = ($currentAdmin && ! $currentAdmin->isSuperAdmin())
+            ? redirect()->route('centers.edit', ['id' => $id])
+            : redirect()->route('centers.index');
+
+        return $redirectRoute->with('success', 'Cập nhật thông tin trung tâm thành công!');
     }
 
     /**
-     * Delete center by ID.
+     * Delete center by ID. (Chỉ dành cho Super Admin)
      * @param int $id
      */
     public function destroy(int $id): RedirectResponse
     {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Quản trị viên phụ không có quyền xóa trung tâm.');
+        }
+
         $this->centerService->deleteCenter($id);
 
         return back()->with('success', 'Xóa trung tâm thành công!');

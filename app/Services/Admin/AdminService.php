@@ -47,8 +47,12 @@ class AdminService implements AdminServiceInterface
             'admin_code' => $adminCode,
         ]);
 
-        if (! empty($data['center_ids']) && $data['role'] === 'admin') {
-            $this->adminRepository->syncCenters($admin, (array) $data['center_ids']);
+        if ($data['role'] === 'admin') {
+            $centerId = $data['center_id'] ?? ($data['center_ids'][0] ?? null);
+
+            if ($centerId) {
+                $this->adminRepository->syncCenters($admin, [(int) $centerId]);
+            }
         }
 
         return $admin;
@@ -88,7 +92,8 @@ class AdminService implements AdminServiceInterface
         $admin = $this->adminRepository->update($id, $updateData);
 
         if ($data['role'] === 'admin') {
-            $this->adminRepository->syncCenters($admin, (array) ($data['center_ids'] ?? []));
+            $centerId = $data['center_id'] ?? ($data['center_ids'][0] ?? null);
+            $this->adminRepository->syncCenters($admin, $centerId ? [(int) $centerId] : []);
         } else {
             $this->adminRepository->syncCenters($admin, []);
         }

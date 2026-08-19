@@ -25,7 +25,8 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >
 > - Bảng `admins` sử dụng cột `role` để phân biệt: `super_admin` và `admin`.
 > - **Chỉ tồn tại DUY NHẤT 1 tài khoản `super_admin` trong toàn bộ hệ thống**. Không thể hạ cấp hoặc xóa tài khoản `super_admin`.
-> - Quyền hạn Admin được phân công quản lý các Trung tâm thông qua bảng `admin_centers`.
+> - **Mỗi Admin phụ (`role = admin`) chỉ được phân công duy nhất 1 Trung tâm** (1 Trung tâm có thể được quản lý bởi nhiều Admin phụ).
+> - **Quyền hạn Trung tâm của Admin phụ**: Không được thêm mới hoặc xóa Trung tâm; không được truy cập danh sách tất cả Trung tâm (`/centers`). Khi truy cập menu Trung tâm, hệ thống tự động chuyển hướng trực tiếp vào trang chi tiết Trung tâm mình quản lý (`/centers/{center_id}/edit`).
 
 > [!NOTE]
 > **3. KHÔNG CÓ BẢNG `parents` RIÊNG**:

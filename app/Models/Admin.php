@@ -59,6 +59,18 @@ class Admin extends Authenticatable
     }
 
     /**
+     * Lấy ID Trung tâm duy nhất được phân công cho Admin phụ.
+     */
+    public function assignedCenterId(): ?int
+    {
+        if ($this->isSuperAdmin()) {
+            return null;
+        }
+
+        return $this->centers()->pluck('centers.id')->first();
+    }
+
+    /**
      * @return MorphMany<RefreshToken, $this>
      */
     public function refreshTokens(): MorphMany

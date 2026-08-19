@@ -30,7 +30,8 @@ class UpdateAdminRequest extends FormRequest
             'phone'        => ['nullable', 'string', 'max:20'],
             'password'     => ['nullable', 'string', 'min:6'],
             'role'         => ['required', Rule::in(['super_admin', 'admin'])],
-            'center_ids'   => ['array'],
+            'center_id'    => ['nullable', 'required_if:role,admin', 'exists:centers,id'],
+            'center_ids'   => ['nullable', 'array'],
             'center_ids.*' => ['exists:centers,id'],
         ];
     }

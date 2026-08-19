@@ -68,7 +68,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         phone: '',
         password: '',
         role: 'admin' as 'super_admin' | 'admin',
-        center_ids: [] as number[],
+        center_id: '' as string | number,
     });
 
     const handleSearch = (e: React.FormEvent) => {
@@ -95,7 +95,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
             phone: admin.phone ?? '',
             password: '',
             role: admin.role,
-            center_ids: admin.centers.map((c) => c.id),
+            center_id: admin.centers[0]?.id ?? '',
         });
         setIsCreateModalOpen(true);
     };
@@ -138,19 +138,6 @@ return;
                 setDeletingAdmin(null);
             },
         });
-    };
-
-    const toggleCenterSelection = (centerId: number) => {
-        const current = [...form.data.center_ids];
-        const index = current.indexOf(centerId);
-
-        if (index > -1) {
-            current.splice(index, 1);
-        } else {
-            current.push(centerId);
-        }
-
-        form.setData('center_ids', current);
     };
 
     return (
@@ -292,30 +279,19 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                {admin.role ===
-                                                'super_admin' ? (
+                                                {admin.role === 'super_admin' ? (
                                                     <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
                                                         <UserCheck className="h-4 w-4" />
                                                         Tất cả Trung tâm
                                                     </span>
-                                                ) : admin.centers.length ===
-                                                  0 ? (
+                                                ) : admin.centers.length === 0 ? (
                                                     <span className="text-sm text-gray-400 italic">
                                                         Chưa phân công
                                                     </span>
                                                 ) : (
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {admin.centers.map(
-                                                            (c) => (
-                                                                <span
-                                                                    key={c.id}
-                                                                    className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
-                                                                >
-                                                                    {c.name}
-                                                                </span>
-                                                            ),
-                                                        )}
-                                                    </div>
+                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                                                        {admin.centers[0].name} ({admin.centers[0].code})
+                                                    </span>
                                                 )}
                                             </td>
 
@@ -514,36 +490,28 @@ return;
                             </div>
                         </div>
 
-                        {/* Phân công Trung tâm (Chỉ chọn khi role = admin) */}
+                        {/* Phân công Trung tâm (Chỉ chọn 1 Trung tâm duy nhất khi role = admin) */}
                         {form.data.role === 'admin' && (
                             <div className="space-y-2 pt-2">
                                 <label className="block text-sm font-bold text-gray-700">
-                                    Phân công Trung tâm quản lý:
+                                    Trung tâm quản lý (*)
                                 </label>
-                                <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 p-3.5 space-y-2">
+                                <select
+                                    value={form.data.center_id}
+                                    onChange={(e) => form.setData('center_id', e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    required={form.data.role === 'admin'}
+                                >
+                                    <option value="">-- Chọn 1 Trung tâm quản lý --</option>
                                     {centers.map((center) => (
-                                        <label
-                                            key={center.id}
-                                            className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={form.data.center_ids.includes(
-                                                    center.id,
-                                                )}
-                                                onChange={() =>
-                                                    toggleCenterSelection(
-                                                        center.id,
-                                                    )
-                                                }
-                                                className="rounded-sm text-emerald-600 focus:ring-emerald-500"
-                                            />
-                                            <span>
-                                                {center.name} ({center.code})
-                                            </span>
-                                        </label>
+                                        <option key={center.id} value={center.id}>
+                                            {center.name} ({center.code})
+                                        </option>
                                     ))}
-                                </div>
+                                </select>
+                                {form.errors.center_id && (
+                                    <p className="text-xs text-red-600">{form.errors.center_id}</p>
+                                )}
                             </div>
                         )}
 

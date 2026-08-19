@@ -78,6 +78,7 @@ class HandleInertiaRequests extends Middleware
                 'role'      => $role,
                 // admin_role chỉ tồn tại khi role = 'admin': 'super_admin' | 'admin'
                 'admin_role' => $role === 'admin' ? ($user->role ?? 'admin') : null,
+                'center_id'  => ($role === 'admin' && method_exists($user, 'assignedCenterId')) ? $user->assignedCenterId() : null,
             ];
         }
 

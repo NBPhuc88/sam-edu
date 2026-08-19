@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '../ui/Button';
@@ -36,6 +36,10 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     isLoading = false,
     errors = {},
 }) => {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const backHref = isSuperAdmin ? '/centers' : '/dashboard';
+
     const calculateExpirationDate = (planCode: string): string => {
         const selectedPlan = subscriptionPlans.find(
             (p: any) => p.code === planCode,
@@ -158,7 +162,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <h2 className="text-2xl font-bold text-gray-900">
                             {mode === 'create'
                                 ? 'Thông Tin Trung Tâm Mới'
-                                : `Chỉnh Sửa Trung Tâm: ${initialValues?.name || ''}`}
+                                : `Thông Tin Trung Tâm: ${initialValues?.name || ''}`}
                         </h2>
                     </div>
                 </div>
@@ -271,7 +275,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             name="subscription_plan"
                             value={formData.subscription_plan}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                            disabled={!isSuperAdmin}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             {subscriptionPlans.map((plan: any) => (
                                 <option key={plan.id} value={plan.code}>
@@ -294,7 +299,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             name="status"
                             value={formData.status}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                            disabled={!isSuperAdmin}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             <option value="active">
                                 Đang hoạt động (Active)
@@ -321,7 +327,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             name="expires_at"
                             value={formData.expires_at}
                             onChange={handleChange}
-                            className="!py-3 !text-sm"
+                            disabled={!isSuperAdmin}
+                            className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
@@ -337,7 +344,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 value={formData.max_students}
                                 onChange={handleChange}
                                 placeholder="200"
-                                className="!py-3 !text-sm"
+                                disabled={!isSuperAdmin}
+                                className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -350,7 +358,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 value={formData.max_classes}
                                 onChange={handleChange}
                                 placeholder="15"
-                                className="!py-3 !text-sm"
+                                disabled={!isSuperAdmin}
+                                className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -358,13 +367,13 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                 {/* Form Action Buttons */}
                 <div className="mt-8 flex items-center justify-end gap-3 border-t border-gray-100 pt-6">
-                    <Link href="/centers">
+                    <Link href={backHref}>
                         <Button
                             variant="secondary"
                             size="lg"
                             icon={<ArrowLeft className="h-5 w-5" />}
                         >
-                            Quay Lại
+                            {isSuperAdmin ? 'Danh Sách Trung Tâm' : 'Trang Chủ Dashboard'}
                         </Button>
                     </Link>
                     <Button
