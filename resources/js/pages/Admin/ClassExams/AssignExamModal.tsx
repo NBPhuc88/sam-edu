@@ -197,15 +197,15 @@ export default function AssignExamModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Class Select */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                        <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <Users className="h-3.5 w-3.5 text-emerald-600" />
-                            Lớp Học Tổ Chức Thi (*)
+                            <span>Lớp Học Tổ Chức Thi (*)</span>
                         </label>
                         <select
                             value={classId}
                             onChange={(e) => setClassId(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                         >
                             <option value="">-- Chọn Lớp Học --</option>
                             {filteredClasses.map((c) => (
@@ -219,15 +219,15 @@ export default function AssignExamModal({
 
                     {/* Exam Select */}
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                        <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <BookOpen className="h-3.5 w-3.5 text-blue-600" />
-                            Đề Thi Từ Kho Mẫu (*)
+                            <span>Đề Thi Từ Kho Mẫu (*)</span>
                         </label>
                         <select
                             value={examId}
                             onChange={(e) => handleExamChange(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                         >
                             <option value="">-- Chọn Đề Thi Trong Kho --</option>
                             {filteredExams.map((e) => (
@@ -259,7 +259,7 @@ export default function AssignExamModal({
 
                 {/* Exam Title for Class */}
                 <div>
-                    <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                    <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700">
                         Tiêu Đề Bài Thi Của Lớp (*)
                     </label>
                     <Input
@@ -267,7 +267,7 @@ export default function AssignExamModal({
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="VD: Bài kiểm tra 15 phút Unit 3, Thi giữa kỳ 1, Final Exam..."
                         required
-                        className="!py-2 !text-xs font-semibold"
+                        className="!h-10 !text-xs font-semibold"
                     />
                     {errors.title && <p className="mt-1 text-2xs text-red-600">{errors.title}</p>}
                 </div>
@@ -275,51 +275,51 @@ export default function AssignExamModal({
                 {/* Date & Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                        <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                            Ngày Thi (*)
+                            <span>Ngày Thi (*)</span>
                         </label>
                         <Input
                             type="date"
                             value={examDate}
                             onChange={(e) => setExamDate(e.target.value)}
                             required
-                            className="!py-2 !text-xs"
+                            className="!h-10 !text-xs font-semibold"
                         />
                         {errors.exam_date && <p className="mt-1 text-2xs text-red-600">{errors.exam_date}</p>}
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                        <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <Clock className="h-3.5 w-3.5 text-gray-500" />
-                            Giờ Bắt Đầu
+                            <span>Giờ Bắt Đầu</span>
                         </label>
                         <Input
                             type="time"
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
-                            className="!py-2 !text-xs"
+                            className="!h-10 !text-xs font-semibold"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                        <label className="mb-1.5 flex h-5 items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-700">
                             <Clock className="h-3.5 w-3.5 text-gray-500" />
-                            Giờ Kết Thúc
+                            <span>Giờ Kết Thúc</span>
                         </label>
                         <Input
                             type="time"
                             value={endTime}
                             onChange={(e) => setEndTime(e.target.value)}
-                            className="!py-2 !text-xs"
+                            className="!h-10 !text-xs font-semibold"
                         />
                     </div>
                 </div>
 
                 {/* Duration, Max Score, Pass Score, Status */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Thời Lượng (Phút)">
                             Thời Lượng (Phút)
                         </label>
                         <Input
@@ -328,12 +328,12 @@ export default function AssignExamModal({
                             max={600}
                             value={durationMinutes}
                             onChange={(e) => setDurationMinutes(e.target.value)}
-                            className="!py-2 !text-xs font-semibold"
+                            className="!h-10 !text-xs font-semibold"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Điểm Tối Đa">
                             Điểm Tối Đa
                         </label>
                         <Input
@@ -341,12 +341,12 @@ export default function AssignExamModal({
                             step="0.5"
                             value={maxScore}
                             onChange={(e) => setMaxScore(e.target.value)}
-                            className="!py-2 !text-xs font-bold"
+                            className="!h-10 !text-xs font-bold"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Điểm Đạt">
                             Điểm Đạt
                         </label>
                         <Input
@@ -355,18 +355,18 @@ export default function AssignExamModal({
                             value={passScore}
                             onChange={(e) => setPassScore(e.target.value)}
                             placeholder="5.0"
-                            className="!py-2 !text-xs"
+                            className="!h-10 !text-xs font-semibold"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                        <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 truncate" title="Trạng Thái">
                             Trạng Thái
                         </label>
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value as any)}
-                            className="w-full rounded-xl border border-gray-300 bg-white px-2.5 py-2 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                         >
                             <option value="scheduled">Đã lên lịch</option>
                             <option value="ongoing">Đang diễn ra</option>
