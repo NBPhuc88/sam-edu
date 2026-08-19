@@ -14,12 +14,16 @@ class ClassExam extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'code',
+        'access_code',
         'class_id',
         'exam_id',
         'title',
         'exam_date',
         'start_time',
         'end_time',
+        'valid_from',
+        'valid_to',
         'duration_minutes',
         'max_score',
         'pass_score',
@@ -32,6 +36,8 @@ class ClassExam extends Model
     {
         return [
             'exam_date'        => 'date',
+            'valid_from'       => 'datetime',
+            'valid_to'         => 'datetime',
             'duration_minutes' => 'integer',
             'max_score'        => 'decimal:2',
             'pass_score'       => 'decimal:2',
@@ -68,6 +74,14 @@ class ClassExam extends Model
     public function createdByAdmin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by_admin_id');
+    }
+
+    /**
+     * @return HasMany<ClassExamSubmission, $this>
+     */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(ClassExamSubmission::class, 'class_exam_id');
     }
 
     /**

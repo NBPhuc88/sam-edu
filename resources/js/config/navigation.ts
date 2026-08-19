@@ -65,6 +65,7 @@ const superAdminNav: NavItem[] = [
         label: 'Thi & Kiểm Tra',
         icon: FileCheck,
         children: [
+            { label: 'Vào Phòng Thi', path: '/exam-room' },
             { label: 'Kho Đề Thi', path: '/exams' },
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams' },
             { label: 'Kết Quả Thi', path: '/exam-results' },

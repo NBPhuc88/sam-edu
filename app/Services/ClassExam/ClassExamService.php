@@ -58,13 +58,36 @@ class ClassExamService implements ClassExamServiceInterface
             // Lấy thông tin từ đề thi gốc
             $exam = Exam::findOrFail($data['exam_id']);
 
+            // Sinh mã kỳ thi nếu chưa có (CE000000001)
+            $code = ! empty($data['code']) ? trim($data['code']) : null;
+
+            if (! $code) {
+                $maxId = (int) (ClassExam::max('id') ?? 0);
+                $code  = sprintf('CE%09d', $maxId + 1);
+            }
+
+            // Sinh mã truy cập phòng thi 6 số ngẫu nhiên
+            $accessCode = ! empty($data['access_code']) ? trim($data['access_code']) : str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Tính toán valid_from và valid_to
+            $examDate  = $data['exam_date'];
+            $startTime = ! empty($data['start_time']) ? $data['start_time'] : '00:00:00';
+            $endTime   = ! empty($data['end_time']) ? $data['end_time'] : '23:59:59';
+
+            $validFrom = "{$examDate} {$startTime}";
+            $validTo   = "{$examDate} {$endTime}";
+
             $payload = [
+                'code'                => $code,
+                'access_code'         => $accessCode,
                 'class_id'            => $data['class_id'],
                 'exam_id'             => $exam->id,
                 'title'               => $data['title'],
-                'exam_date'           => $data['exam_date'],
+                'exam_date'           => $examDate,
                 'start_time'          => $data['start_time'] ?? null,
                 'end_time'            => $data['end_time'] ?? null,
+                'valid_from'          => $validFrom,
+                'valid_to'            => $validTo,
                 'duration_minutes'    => $data['duration_minutes'] ?? $exam->duration_minutes,
                 'max_score'           => $data['max_score'] ?? $exam->max_score,
                 'pass_score'          => $data['pass_score'] ?? $exam->pass_score,
@@ -81,6 +104,15 @@ class ClassExamService implements ClassExamServiceInterface
         $classExam = $this->findClassExam($id, $admin);
 
         return DB::transaction(function () use ($classExam, $data) {
+            if (isset($data['exam_date'])) {
+                $examDate  = $data['exam_date'];
+                $startTime = ! empty($data['start_time']) ? $data['start_time'] : ($classExam->start_time ? $classExam->start_time->format('H:i:s') : '00:00:00');
+                $endTime   = ! empty($data['end_time']) ? $data['end_time'] : ($classExam->end_time ? $classExam->end_time->format('H:i:s') : '23:59:59');
+
+                $data['valid_from'] = "{$examDate} {$startTime}";
+                $data['valid_to']   = "{$examDate} {$endTime}";
+            }
+
             return $this->classExamRepository->update($classExam, $data);
         });
     }

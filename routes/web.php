@@ -214,6 +214,17 @@ Route::middleware('auth.any')->group(function () {
         Route::patch('/{id}', [\App\Http\Controllers\ClassExamController::class, 'update'])->name('update');
         Route::delete('/{id}', [\App\Http\Controllers\ClassExamController::class, 'destroy'])->name('destroy');
     });
+
+    // Online Exam Taking & Review Routes (Student & Teacher)
+    Route::get('/exam-room', [\App\Http\Controllers\OnlineExamController::class, 'enterCode'])->name('online-exam.enter');
+    Route::post('/exam-room/join', [\App\Http\Controllers\OnlineExamController::class, 'joinRoom'])->name('online-exam.join');
+    Route::get('/class-exams/{id}/room', [\App\Http\Controllers\OnlineExamController::class, 'showLobby'])->name('online-exam.lobby');
+    Route::post('/class-exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'startExam'])->name('online-exam.start');
+    Route::get('/class-exams/{id}/take/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'takeExam'])->name('online-exam.take');
+    Route::post('/class-exams/{id}/submit/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'submitExam'])->name('online-exam.submit');
+    Route::get('/class-exams/{id}/results/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'showResult'])->name('online-exam.result');
+    Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio');
+    Route::get('/class-exams/audio-stream', [\App\Http\Controllers\OnlineExamController::class, 'streamAudio'])->name('online-exam.audio-stream');
 });
 
 // ─── Fallback Route for 404 Not Found ────────────────────────────────────────

@@ -374,10 +374,11 @@ export default function ClassExamIndex({
                             <thead>
                                 <tr>
                                     <th className="w-12 text-center">STT</th>
-                                    <th>Bài Thi Của Lớp</th>
+                                    <th>Mã & Tiêu Đề</th>
+                                    <th>Mã Vào Phòng</th>
                                     <th>Lớp Học</th>
-                                    <th>Đề Thi Gốc (Từ Kho)</th>
-                                    <th>Lịch Thi & Khung Giờ</th>
+                                    <th>Đề Thi Gốc</th>
+                                    <th>Lịch Thi</th>
                                     <th>Thời Lượng</th>
                                     <th>Thang Điểm</th>
                                     <th>Trạng Thái</th>
@@ -387,7 +388,7 @@ export default function ClassExamIndex({
                             <tbody>
                                 {classExams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="py-12 text-center text-gray-500">
+                                        <td colSpan={10} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -421,9 +422,19 @@ export default function ClassExamIndex({
                                                     {rowNum}
                                                 </td>
                                                 <td>
-                                                    <div className="font-bold text-gray-900 text-sm">
-                                                        {item.title}
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-bold text-gray-900 text-sm">
+                                                            {item.title}
+                                                        </div>
+                                                        <div className="font-mono text-2xs text-gray-500">
+                                                            Mã: {item.code || `CE${item.id}`}
+                                                        </div>
                                                     </div>
+                                                </td>
+                                                <td>
+                                                    <span className="font-mono font-bold text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                                        {item.access_code || '---'}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <div className="space-y-0.5">
@@ -484,6 +495,17 @@ export default function ClassExamIndex({
                                                 </td>
                                                 <td className="text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/class-exams/${item.id}/room`}>
+                                                            <Button
+                                                                type="button"
+                                                                variant="success"
+                                                                size="sm"
+                                                                icon={<PlayCircle className="h-3.5 w-3.5" />}
+                                                                title="Vào phòng thi"
+                                                            >
+                                                                Phòng Thi
+                                                            </Button>
+                                                        </Link>
                                                         <Button
                                                             type="button"
                                                             variant="edit"
