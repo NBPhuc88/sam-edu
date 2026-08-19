@@ -27,6 +27,7 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > - **Chỉ tồn tại DUY NHẤT 1 tài khoản `super_admin` trong toàn bộ hệ thống**. Không thể hạ cấp hoặc xóa tài khoản `super_admin`.
 > - **Mỗi Admin phụ (`role = admin`) chỉ được phân công duy nhất 1 Trung tâm** (1 Trung tâm có thể được quản lý bởi nhiều Admin phụ).
 > - **Quyền hạn Trung tâm của Admin phụ**: Không được thêm mới hoặc xóa Trung tâm; không được truy cập danh sách tất cả Trung tâm (`/centers`). Khi truy cập menu Trung tâm, hệ thống tự động chuyển hướng trực tiếp vào trang chi tiết Trung tâm mình quản lý (`/centers/{center_id}/edit`).
+> - **ẨN OPTION CHỌN TRUNG TÂM CHO ADMIN PHỤ**: Admin phụ (`role = admin`) không được chọn Trung tâm trong tất cả các ô chọn (`<select center_id>`) và bộ lọc trên toàn hệ thống. Giá trị `center_id` được gán mặc định bằng Trung tâm mình quản lý (`auth.user.center_id`) và ẩn hoàn toàn option/bộ lọc đó khỏi UI. Chỉ Super Admin (`role = super_admin`) mới hiển thị option chọn Trung tâm.
 
 > [!NOTE]
 > **3. KHÔNG CÓ BẢNG `parents` RIÊNG**:
