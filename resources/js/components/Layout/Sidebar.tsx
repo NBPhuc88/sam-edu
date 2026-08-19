@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { getAccountLabel, getNavigationItems } from '../../config/navigation';
+import { getNavigationItems } from '../../config/navigation';
 import type { NavItem } from '../../config/navigation';
 
 interface SidebarProps {
@@ -187,10 +187,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
     const { url } = usePage();
     const navItems = getNavigationItems(role, adminRole);
-    const accountLabel = getAccountLabel(role, adminRole);
-
-    // Avatar character or a simple letter placeholder
-    const avatarChar = fullName?.charAt(0)?.toUpperCase() ?? '?';
 
     return (
         <>
@@ -217,47 +213,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
                 {/* Fixed width container to prevent text warping during transition */}
                 <div className="flex h-full w-64 flex-col justify-between">
-                    {/* Top Section: Brand + Account */}
-                    <div className="shrink-0">
-                        {/* Brand header */}
-                        <div className="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-black text-white shadow-xs">
-                                SAM
-                            </div>
-                            <div>
-                                <div className="text-sm leading-tight font-extrabold text-gray-900">
-                                    Giáo dục Sam
-                                </div>
-                                <div className="text-2xs text-gray-400 font-medium">
-                                    Quản lý Giáo dục
-                                </div>
-                            </div>
+                    {/* Top Section: Brand header */}
+                    <div className="flex h-16 shrink-0 items-center gap-3 border-b border-gray-100 px-4">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-black text-white shadow-xs">
+                            SAM
                         </div>
-
-                        {/* Account info block */}
-                        <div className="border-b border-gray-100 px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                                <div
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-                                        role === 'admin'
-                                            ? 'bg-emerald-100 text-emerald-700'
-                                            : role === 'teacher'
-                                              ? 'bg-violet-100 text-violet-700'
-                                              : 'bg-amber-100 text-amber-700'
-                                    }`}
-                                >
-                                    {avatarChar}
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="truncate text-xs font-bold text-gray-900">
-                                        {fullName && fullName !== 'Admin'
-                                            ? fullName
-                                            : (adminRole === 'super_admin' ? 'Quản trị Tối cao' : 'Quản trị viên')}
-                                    </div>
-                                    <div className="text-2xs text-gray-500 font-medium">
-                                        {accountLabel}
-                                    </div>
-                                </div>
+                        <div>
+                            <div className="text-sm leading-tight font-extrabold text-gray-900">
+                                Giáo dục Sam
+                            </div>
+                            <div className="text-2xs text-gray-400 font-medium">
+                                Quản lý Giáo dục
                             </div>
                         </div>
                     </div>

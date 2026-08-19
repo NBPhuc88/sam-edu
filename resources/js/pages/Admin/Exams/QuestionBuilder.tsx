@@ -81,7 +81,7 @@ export default function QuestionBuilder({
         title: '',
         message: '',
         type: 'danger',
-        onConfirm: () => {},
+        onConfirm: () => { },
     });
 
     // Expand states
@@ -389,9 +389,9 @@ export default function QuestionBuilder({
                 };
             case 'ordering':
                 return [
-                    { id: 't1', text: 'Mẩu từ 1' },
-                    { id: 't2', text: 'Mẩu từ 2' },
-                    { id: 't3', text: 'Mẩu từ 3' },
+                    { id: 't1', text: 'Cụm từ 1' },
+                    { id: 't2', text: 'Cụm từ 2' },
+                    { id: 't3', text: 'Cụm từ 3' },
                 ];
             case 'diagram_labelling':
                 return {
@@ -572,11 +572,10 @@ export default function QuestionBuilder({
                     <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 border border-slate-200">
                         <span className="text-xs text-gray-500">Tổng điểm:</span>
                         <span
-                            className={`font-mono text-sm font-extrabold ${
-                                Number(totalScore) === Number(examMaxScore)
-                                    ? 'text-emerald-700'
-                                    : 'text-amber-700'
-                            }`}
+                            className={`font-mono text-sm font-extrabold ${Number(totalScore) === Number(examMaxScore)
+                                ? 'text-emerald-700'
+                                : 'text-amber-700'
+                                }`}
                         >
                             {totalScore} / {examMaxScore} điểm
                         </span>
@@ -724,12 +723,11 @@ export default function QuestionBuilder({
                                                         Kỹ Năng Phần Thi:
                                                     </label>
                                                     <div className="flex items-center gap-2 pt-0.5">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
-                                                            section.skill === 'listening' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${section.skill === 'listening' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
                                                             section.skill === 'writing' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                                                            section.skill === 'speaking' ? 'bg-pink-100 text-pink-800 border border-pink-200' :
-                                                            'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                        }`}>
+                                                                section.skill === 'speaking' ? 'bg-pink-100 text-pink-800 border border-pink-200' :
+                                                                    'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                            }`}>
                                                             {secConfig.icon}
                                                             {secConfig.name}
                                                         </span>
@@ -783,11 +781,10 @@ export default function QuestionBuilder({
                                                     return (
                                                         <div
                                                             key={qKey}
-                                                            className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${
-                                                                isExpanded
-                                                                    ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
-                                                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
-                                                            }`}
+                                                            className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${isExpanded
+                                                                ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
+                                                                : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
+                                                                }`}
                                                         >
                                                             {/* Question Row Header */}
                                                             <div
@@ -1204,18 +1201,16 @@ export default function QuestionBuilder({
                                             const num = sections.length + 1;
                                             setNewSectionTitle(`Phần ${num}: ${sk.label} (${sk.englishLabel})`);
                                         }}
-                                        className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${
-                                            isSelected
-                                                ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20'
-                                                : 'border-gray-200 bg-white hover:bg-gray-50'
-                                        }`}
+                                        className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${isSelected
+                                            ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 bg-white hover:bg-gray-50'
+                                            }`}
                                     >
-                                        <div className={`p-2 rounded-lg ${
-                                            sk.skill === 'listening' ? 'bg-blue-100 text-blue-700' :
+                                        <div className={`p-2 rounded-lg ${sk.skill === 'listening' ? 'bg-blue-100 text-blue-700' :
                                             sk.skill === 'reading' ? 'bg-emerald-100 text-emerald-700' :
-                                            sk.skill === 'writing' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-pink-100 text-pink-700'
-                                        }`}>
+                                                sk.skill === 'writing' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-pink-100 text-pink-700'
+                                            }`}>
                                             {sk.skill === 'listening' && <Headphones className="h-4 w-4" />}
                                             {sk.skill === 'reading' && <BookOpen className="h-4 w-4" />}
                                             {sk.skill === 'writing' && <PenTool className="h-4 w-4" />}
@@ -1284,11 +1279,10 @@ export default function QuestionBuilder({
             <Modal
                 isOpen={activeQuestionModalSectionIdx !== null}
                 onClose={() => setActiveQuestionModalSectionIdx(null)}
-                title={`Chọn Kiểu Câu Hỏi Cho ${
-                    activeQuestionModalSectionIdx !== null
-                        ? sections[activeQuestionModalSectionIdx]?.title || 'Phần thi'
-                        : 'Phần thi'
-                }`}
+                title={`Chọn Kiểu Câu Hỏi Cho ${activeQuestionModalSectionIdx !== null
+                    ? sections[activeQuestionModalSectionIdx]?.title || 'Phần thi'
+                    : 'Phần thi'
+                    }`}
                 maxWidth="3xl"
             >
                 <div className="space-y-4">
