@@ -635,6 +635,23 @@ export default function ExamIndex({
                                                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-600 font-mono text-2xs font-bold text-white">
                                                     {idx + 1}
                                                 </span>
+                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${
+                                                    q.skill === 'listening'
+                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                        : q.skill === 'writing'
+                                                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                          : q.skill === 'speaking'
+                                                            ? 'bg-pink-50 text-pink-700 border border-pink-200'
+                                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                }`}>
+                                                    {q.skill === 'listening'
+                                                        ? '🎧 Nghe'
+                                                        : q.skill === 'writing'
+                                                          ? '✍️ Viết'
+                                                          : q.skill === 'speaking'
+                                                            ? '🗣️ Nói'
+                                                            : '📖 Đọc'}
+                                                </span>
                                                 <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold border ${typeMeta.badgeColor}`}>
                                                     {typeMeta.label}
                                                 </span>

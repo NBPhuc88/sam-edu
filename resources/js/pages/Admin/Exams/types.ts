@@ -1,3 +1,5 @@
+export type ExamSkill = 'listening' | 'reading' | 'writing' | 'speaking';
+
 export type QuestionType =
     | 'single_choice'
     | 'multiple_choice'
@@ -17,7 +19,84 @@ export interface QuestionTypeMeta {
     badgeColor: string;
     iconName: string;
     autoGraded: boolean;
+    skills: ExamSkill[];
 }
+
+export interface ExamSkillMeta {
+    skill: ExamSkill;
+    label: string;
+    englishLabel: string;
+    iconName: string;
+    color: string;
+    badgeColor: string;
+    description: string;
+    supportedQuestionTypes: QuestionType[];
+}
+
+export const EXAM_SKILLS: ExamSkillMeta[] = [
+    {
+        skill: 'listening',
+        label: 'Kỹ Năng Nghe',
+        englishLabel: 'Listening',
+        iconName: 'Headphones',
+        color: 'blue',
+        badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+        description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, gán nhãn sơ đồ',
+        supportedQuestionTypes: [
+            'single_choice',
+            'multiple_choice',
+            'true_false_not_given',
+            'fill_in_blank',
+            'matching',
+            'diagram_labelling',
+        ],
+    },
+    {
+        skill: 'reading',
+        label: 'Kỹ Năng Đọc',
+        englishLabel: 'Reading',
+        iconName: 'BookOpen',
+        color: 'emerald',
+        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề đoạn văn, tìm lỗi sai',
+        supportedQuestionTypes: [
+            'single_choice',
+            'multiple_choice',
+            'true_false_not_given',
+            'matching',
+            'fill_in_blank',
+            'ordering',
+            'find_mistake',
+        ],
+    },
+    {
+        skill: 'writing',
+        label: 'Kỹ Năng Viết',
+        englishLabel: 'Writing',
+        iconName: 'PenTool',
+        color: 'amber',
+        badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+        description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, điền từ hoặc viết lại câu',
+        supportedQuestionTypes: [
+            'essay',
+            'ordering',
+            'fill_in_blank',
+            'find_mistake',
+        ],
+    },
+    {
+        skill: 'speaking',
+        label: 'Kỹ Năng Nói',
+        englishLabel: 'Speaking',
+        iconName: 'Mic',
+        color: 'pink',
+        badgeColor: 'bg-pink-50 text-pink-700 border-pink-200',
+        description: 'Ghi âm trực tiếp câu trả lời qua micro trình duyệt, trả lời các chủ đề khẩu ngữ IELTS / HSKK',
+        supportedQuestionTypes: [
+            'audio_record',
+        ],
+    },
+];
 
 export const QUESTION_TYPES: QuestionTypeMeta[] = [
     {
@@ -27,6 +106,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
         iconName: 'CheckCircle2',
         autoGraded: true,
+        skills: ['listening', 'reading'],
     },
     {
         type: 'multiple_choice',
@@ -35,6 +115,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
         iconName: 'ListChecks',
         autoGraded: true,
+        skills: ['listening', 'reading'],
     },
     {
         type: 'true_false_not_given',
@@ -43,6 +124,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         iconName: 'HelpCircle',
         autoGraded: true,
+        skills: ['listening', 'reading'],
     },
     {
         type: 'fill_in_blank',
@@ -51,6 +133,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
         iconName: 'FileText',
         autoGraded: true,
+        skills: ['listening', 'reading', 'writing'],
     },
     {
         type: 'matching',
@@ -59,6 +142,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
         iconName: 'GitMerge',
         autoGraded: true,
+        skills: ['listening', 'reading'],
     },
     {
         type: 'ordering',
@@ -67,6 +151,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200',
         iconName: 'ArrowUpDown',
         autoGraded: true,
+        skills: ['reading', 'writing'],
     },
     {
         type: 'diagram_labelling',
@@ -75,6 +160,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
         iconName: 'MapPin',
         autoGraded: true,
+        skills: ['listening'],
     },
     {
         type: 'find_mistake',
@@ -83,6 +169,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
         iconName: 'AlertTriangle',
         autoGraded: true,
+        skills: ['reading', 'writing'],
     },
     {
         type: 'essay',
@@ -91,6 +178,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-orange-50 text-orange-700 border-orange-200',
         iconName: 'PenTool',
         autoGraded: false,
+        skills: ['writing'],
     },
     {
         type: 'audio_record',
@@ -99,12 +187,14 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         badgeColor: 'bg-pink-50 text-pink-700 border-pink-200',
         iconName: 'Mic',
         autoGraded: false,
+        skills: ['speaking'],
     },
 ];
 
 export interface ExamQuestionData {
     id?: number;
     code?: string;
+    skill?: ExamSkill;
     question_type: QuestionType;
     content: string;
     score: number | string;

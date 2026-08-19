@@ -195,6 +195,7 @@ class ExamRepository implements ExamRepositoryInterface
                     'exam_id'        => $exam->id,
                     'code'           => $qCode,
                     'question_type'  => $qData['question_type'] ?? 'single_choice',
+                    'skill'          => ! empty($qData['skill']) ? $qData['skill'] : 'reading',
                     'content'        => $qData['content'] ?? '',
                     'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
                     'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,

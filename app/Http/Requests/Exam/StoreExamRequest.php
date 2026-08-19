@@ -48,6 +48,7 @@ class StoreExamRequest extends FormRequest
             'questions'                  => ['nullable', 'array'],
             'questions.*.id'             => ['nullable', 'integer'],
             'questions.*.code'           => ['nullable', 'string', 'max:50'],
+            'questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
             'questions.*.question_type'  => ['required_with:questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,matching,ordering,diagram_labelling,find_mistake,essay,audio_record'],
             'questions.*.content'        => ['required_with:questions', 'string'],
             'questions.*.score'          => ['required_with:questions', 'numeric', 'min:0'],

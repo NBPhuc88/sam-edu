@@ -18,7 +18,9 @@ import {
     Sparkles,
     Image as ImageIcon,
     Volume2,
-    HelpCircle as QuestionIcon,
+    Headphones,
+    BookOpen,
+    Layers,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -33,7 +35,13 @@ import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
 import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
 import EssayEditor from './QuestionEditors/EssayEditor';
 import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
-import { ExamQuestionData, QuestionType, QUESTION_TYPES } from './types';
+import {
+    ExamQuestionData,
+    ExamSkill,
+    EXAM_SKILLS,
+    QuestionType,
+    QUESTION_TYPES,
+} from './types';
 
 interface Props {
     questions: ExamQuestionData[];
@@ -47,10 +55,41 @@ export default function QuestionBuilder({
     examMaxScore = 10,
 }: Props) {
     const [activeQuestionTypeModal, setActiveQuestionTypeModal] = useState(false);
+    const [selectedSkillTab, setSelectedSkillTab] = useState<ExamSkill | 'all'>('all');
+    const [modalSkillFilter, setModalSkillFilter] = useState<ExamSkill | 'all'>('all');
     const [expandedQuestionIndexes, setExpandedQuestionIndexes] = useState<number[]>([0]);
+    const [expandedImageIndexes, setExpandedImageIndexes] = useState<number[]>([]);
 
     // Calculate total score of all questions
     const totalScore = questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
+
+    // Calculate count and score per skill
+    const skillStats = {
+        listening: {
+            count: questions.filter((q) => (q.skill || 'reading') === 'listening').length,
+            score: questions
+                .filter((q) => (q.skill || 'reading') === 'listening')
+                .reduce((s, q) => s + (Number(q.score) || 0), 0),
+        },
+        reading: {
+            count: questions.filter((q) => (q.skill || 'reading') === 'reading').length,
+            score: questions
+                .filter((q) => (q.skill || 'reading') === 'reading')
+                .reduce((s, q) => s + (Number(q.score) || 0), 0),
+        },
+        writing: {
+            count: questions.filter((q) => (q.skill || 'reading') === 'writing').length,
+            score: questions
+                .filter((q) => (q.skill || 'reading') === 'writing')
+                .reduce((s, q) => s + (Number(q.score) || 0), 0),
+        },
+        speaking: {
+            count: questions.filter((q) => (q.skill || 'reading') === 'speaking').length,
+            score: questions
+                .filter((q) => (q.skill || 'reading') === 'speaking')
+                .reduce((s, q) => s + (Number(q.score) || 0), 0),
+        },
+    };
 
     const toggleExpand = (index: number) => {
         if (expandedQuestionIndexes.includes(index)) {
@@ -68,15 +107,40 @@ export default function QuestionBuilder({
         setExpandedQuestionIndexes([]);
     };
 
-    const handleSelectQuestionType = (type: QuestionType) => {
+    const toggleImageAttachment = (index: number) => {
+        if (expandedImageIndexes.includes(index)) {
+            setExpandedImageIndexes(expandedImageIndexes.filter((i) => i !== index));
+        } else {
+            setExpandedImageIndexes([...expandedImageIndexes, index]);
+        }
+    };
+
+    const handleOpenAddModal = (targetSkill?: ExamSkill | 'all') => {
+        const skill = targetSkill || (selectedSkillTab !== 'all' ? selectedSkillTab : 'reading');
+        setModalSkillFilter(skill);
+        setActiveQuestionTypeModal(true);
+    };
+
+    const handleSelectQuestionType = (type: QuestionType, targetSkill?: ExamSkill) => {
         const nextIdx = questions.length;
+        const skill: ExamSkill =
+            targetSkill ||
+            (modalSkillFilter !== 'all'
+                ? modalSkillFilter
+                : type === 'audio_record'
+                  ? 'speaking'
+                  : type === 'essay'
+                    ? 'writing'
+                    : 'reading');
+
         const newQuestion: ExamQuestionData = {
             code: `Q${String(nextIdx + 1).padStart(9, '0')}`,
+            skill,
             question_type: type,
             content: '',
             score: 1.00,
             image_url: null,
-            audio_url: null,
+            audio_url: skill === 'listening' ? '' : null,
             options: getDefaultOptions(type),
             correct_answer: getDefaultCorrectAnswer(type),
             explanation: '',
@@ -286,21 +350,65 @@ export default function QuestionBuilder({
             case 'audio_record':
                 return <Mic className="h-4 w-4 text-pink-600" />;
             default:
-                return <QuestionIcon className="h-4 w-4 text-gray-500" />;
+                return <HelpCircle className="h-4 w-4 text-gray-500" />;
         }
     };
 
+    const getSkillBadge = (skill?: ExamSkill) => {
+        switch (skill) {
+            case 'listening':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">
+                        <Headphones className="h-3 w-3 text-blue-600" />
+                        Nghe (Listening)
+                    </span>
+                );
+            case 'writing':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-2xs font-bold text-amber-700 border border-amber-200">
+                        <PenTool className="h-3 w-3 text-amber-600" />
+                        Viết (Writing)
+                    </span>
+                );
+            case 'speaking':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-pink-50 px-2 py-0.5 text-2xs font-bold text-pink-700 border border-pink-200">
+                        <Mic className="h-3 w-3 text-pink-600" />
+                        Nói (Speaking)
+                    </span>
+                );
+            case 'reading':
+            default:
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-2xs font-bold text-emerald-700 border border-emerald-200">
+                        <BookOpen className="h-3 w-3 text-emerald-600" />
+                        Đọc (Reading)
+                    </span>
+                );
+        }
+    };
+
+    // Filter questions based on selected tab
+    const filteredQuestions = selectedSkillTab === 'all'
+        ? questions
+        : questions.filter((q) => (q.skill || 'reading') === selectedSkillTab);
+
+    // Filter modal types based on modal skill filter
+    const modalQuestionsTypes = modalSkillFilter === 'all'
+        ? QUESTION_TYPES
+        : QUESTION_TYPES.filter((t) => t.skills.includes(modalSkillFilter));
+
     return (
         <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8 space-y-6">
-            {/* Header */}
+            {/* Header & Overall KPI */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-5">
                 <div>
                     <h2 className="flex items-center gap-2.5 text-xl font-bold text-gray-900">
                         <Sparkles className="h-6 w-6 text-emerald-600" />
-                        2. Soạn Thảo Bộ Câu Hỏi (Question Builder)
+                        2. Soạn Thảo Bộ Câu Hỏi (Theo 4 Kỹ Năng: Nghe, Đọc, Viết, Nói)
                     </h2>
                     <p className="mt-1 text-xs text-gray-500">
-                        Tích hợp 10 kiểu câu hỏi tiêu chuẩn (IELTS, HSK, TOEIC, THPT, Tự luận & Khẩu ngữ).
+                        Phân loại đề thi theo 4 kỹ năng chuẩn hóa quốc tế (IELTS, HSK, TOEIC) và các kiểu câu hỏi tương ứng.
                     </p>
                 </div>
 
@@ -308,11 +416,13 @@ export default function QuestionBuilder({
                     {/* Score Counter Badge */}
                     <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 border border-slate-200">
                         <span className="text-xs text-gray-500">Tổng điểm:</span>
-                        <span className={`font-mono text-sm font-extrabold ${
-                            Number(totalScore) === Number(examMaxScore)
-                                ? 'text-emerald-700'
-                                : 'text-amber-700'
-                        }`}>
+                        <span
+                            className={`font-mono text-sm font-extrabold ${
+                                Number(totalScore) === Number(examMaxScore)
+                                    ? 'text-emerald-700'
+                                    : 'text-amber-700'
+                            }`}
+                        >
                             {totalScore} / {examMaxScore} điểm
                         </span>
                     </div>
@@ -322,18 +432,120 @@ export default function QuestionBuilder({
                         variant="success"
                         size="md"
                         icon={<Plus className="h-4 w-4" />}
-                        onClick={() => setActiveQuestionTypeModal(true)}
+                        onClick={() => handleOpenAddModal(selectedSkillTab)}
                     >
                         Thêm Câu Hỏi
                     </Button>
                 </div>
             </div>
 
+            {/* 4 Skills Navigation Tabs & KPI Badges */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 p-1 rounded-xl bg-slate-100/80 border border-slate-200">
+                <button
+                    type="button"
+                    onClick={() => setSelectedSkillTab('all')}
+                    className={`flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
+                        selectedSkillTab === 'all'
+                            ? 'bg-white text-gray-900 shadow-xs border border-gray-200'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                    }`}
+                >
+                    <Layers className="h-4 w-4 text-gray-500" />
+                    <span>Tất Cả ({questions.length})</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setSelectedSkillTab('listening')}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
+                        selectedSkillTab === 'listening'
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    <div className="flex items-center gap-1.5">
+                        <Headphones className={`h-4 w-4 ${selectedSkillTab === 'listening' ? 'text-white' : 'text-blue-600'}`} />
+                        <span>🎧 Nghe</span>
+                    </div>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
+                        selectedSkillTab === 'listening' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                        {skillStats.listening.count} câu
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setSelectedSkillTab('reading')}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
+                        selectedSkillTab === 'reading'
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    <div className="flex items-center gap-1.5">
+                        <BookOpen className={`h-4 w-4 ${selectedSkillTab === 'reading' ? 'text-white' : 'text-emerald-600'}`} />
+                        <span>📖 Đọc</span>
+                    </div>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
+                        selectedSkillTab === 'reading' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                        {skillStats.reading.count} câu
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setSelectedSkillTab('writing')}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
+                        selectedSkillTab === 'writing'
+                            ? 'bg-amber-600 text-white shadow-xs'
+                            : 'text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    <div className="flex items-center gap-1.5">
+                        <PenTool className={`h-4 w-4 ${selectedSkillTab === 'writing' ? 'text-white' : 'text-amber-600'}`} />
+                        <span>✍️ Viết</span>
+                    </div>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
+                        selectedSkillTab === 'writing' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                        {skillStats.writing.count} câu
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setSelectedSkillTab('speaking')}
+                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${
+                        selectedSkillTab === 'speaking'
+                            ? 'bg-pink-600 text-white shadow-xs'
+                            : 'text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    <div className="flex items-center gap-1.5">
+                        <Mic className={`h-4 w-4 ${selectedSkillTab === 'speaking' ? 'text-white' : 'text-pink-600'}`} />
+                        <span>🗣️ Nói</span>
+                    </div>
+                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${
+                        selectedSkillTab === 'speaking' ? 'bg-pink-700 text-white' : 'bg-pink-100 text-pink-800'
+                    }`}>
+                        {skillStats.speaking.count} câu
+                    </span>
+                </button>
+            </div>
+
             {/* Quick Actions (Expand/Collapse all) */}
             {questions.length > 0 && (
                 <div className="flex items-center justify-between text-xs text-gray-500 px-1">
                     <span>
-                        Tổng cộng: <strong className="text-gray-900">{questions.length}</strong> câu hỏi
+                        Đang xem:{' '}
+                        <strong className="text-gray-900">
+                            {selectedSkillTab === 'all'
+                                ? 'Tất cả kỹ năng'
+                                : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
+                        </strong>{' '}
+                        ({filteredQuestions.length} / {questions.length} câu hỏi)
                     </span>
                     <div className="flex items-center gap-3">
                         <button
@@ -356,14 +568,16 @@ export default function QuestionBuilder({
             )}
 
             {/* Questions List */}
-            {questions.length === 0 ? (
+            {filteredQuestions.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center bg-gray-50/50">
                     <Sparkles className="mx-auto h-10 w-10 text-gray-400" />
                     <p className="mt-3 text-sm font-bold text-gray-800">
-                        Chưa có câu hỏi nào trong đề thi này
+                        {selectedSkillTab === 'all'
+                            ? 'Chưa có câu hỏi nào trong đề thi này'
+                            : `Chưa có câu hỏi nào thuộc ${EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}`}
                     </p>
                     <p className="mt-1 text-xs text-gray-400 max-w-sm mx-auto">
-                        Bấm nút bên dưới để chọn dạng câu hỏi (Trắc nghiệm, Nối cột, Điền từ, Sơ đồ, Tự luận, v.v.).
+                        Bấm nút bên dưới để chọn dạng câu hỏi phù hợp cho kỹ năng này.
                     </p>
                     <div className="mt-5">
                         <Button
@@ -371,17 +585,24 @@ export default function QuestionBuilder({
                             variant="success"
                             size="md"
                             icon={<Plus className="h-4 w-4" />}
-                            onClick={() => setActiveQuestionTypeModal(true)}
+                            onClick={() => handleOpenAddModal(selectedSkillTab)}
                         >
-                            Thêm Câu Hỏi Đầu Tiên
+                            Thêm Câu Hỏi Cho {selectedSkillTab === 'all' ? 'Đề Thi' : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
                         </Button>
                     </div>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {questions.map((q, qIndex) => {
+                        // Check if item is included in current filter
+                        if (selectedSkillTab !== 'all' && (q.skill || 'reading') !== selectedSkillTab) {
+                            return null;
+                        }
+
                         const isExpanded = expandedQuestionIndexes.includes(qIndex);
                         const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
+                        const currentSkill = q.skill || 'reading';
+                        const isListening = currentSkill === 'listening';
 
                         return (
                             <div
@@ -403,12 +624,14 @@ export default function QuestionBuilder({
                                         </span>
 
                                         <div className="flex flex-wrap items-center gap-2">
+                                            {getSkillBadge(q.skill)}
+
                                             <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
                                                 {getTypeIcon(q.question_type)}
                                                 {typeInfo.label}
                                             </span>
 
-                                            <span className="text-xs text-gray-500 font-mono">
+                                            <span className="text-xs text-gray-400 font-mono">
                                                 ({q.code || `Q${qIndex + 1}`})
                                             </span>
                                         </div>
@@ -490,33 +713,96 @@ export default function QuestionBuilder({
                                 {/* Question Editor Body when expanded */}
                                 {isExpanded && (
                                     <div className="border-t border-gray-200 p-5 space-y-5 bg-white rounded-b-2xl">
+                                        {/* Question Header Controls: Skill Selector & Type Selector */}
+                                        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-gray-700">Kỹ Năng:</span>
+                                                <select
+                                                    value={q.skill || 'reading'}
+                                                    onChange={(e) => {
+                                                        const newSkill = e.target.value as ExamSkill;
+                                                        handleUpdateQuestion(qIndex, {
+                                                            skill: newSkill,
+                                                            audio_url: newSkill === 'listening' ? q.audio_url || '' : null,
+                                                        });
+                                                    }}
+                                                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
+                                                >
+                                                    <option value="listening">🎧 Kỹ Năng Nghe (Listening)</option>
+                                                    <option value="reading">📖 Kỹ Năng Đọc (Reading)</option>
+                                                    <option value="writing">✍️ Kỹ Năng Viết (Writing)</option>
+                                                    <option value="speaking">🗣️ Kỹ Năng Nói (Speaking)</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
+                                                <select
+                                                    value={q.question_type}
+                                                    onChange={(e) => {
+                                                        const newType = e.target.value as QuestionType;
+                                                        handleUpdateQuestion(qIndex, {
+                                                            question_type: newType,
+                                                            options: getDefaultOptions(newType),
+                                                            correct_answer: getDefaultCorrectAnswer(newType),
+                                                            metadata: getDefaultMetadata(newType),
+                                                        });
+                                                    }}
+                                                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
+                                                >
+                                                    {QUESTION_TYPES.map((t) => (
+                                                        <option key={t.type} value={t.type}>
+                                                            {t.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Audio Section: ONLY SHOWN FOR LISTENING QUESTIONS */}
+                                        {isListening && (
+                                            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
+                                                        <Volume2 className="h-4 w-4 text-blue-600" />
+                                                        Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
+                                                    </label>
+                                                    <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                                                        Phần Nghe
+                                                    </span>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={q.audio_url || ''}
+                                                    onChange={(e) => handleUpdateQuestion(qIndex, { audio_url: e.target.value || null })}
+                                                    placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3 hoặc link file audio trực tuyến..."
+                                                    className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
+                                                />
+                                                {q.audio_url && (
+                                                    <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
+                                                        <audio controls src={q.audio_url} className="w-full h-8" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         {/* Question Prompt / Content */}
                                         <div>
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
                                                     Nội Dung Câu Hỏi / Đề Bài (*)
                                                 </label>
-                                                <div className="flex items-center gap-2">
-                                                    <select
-                                                        value={q.question_type}
-                                                        onChange={(e) => {
-                                                            const newType = e.target.value as QuestionType;
-                                                            handleUpdateQuestion(qIndex, {
-                                                                question_type: newType,
-                                                                options: getDefaultOptions(newType),
-                                                                correct_answer: getDefaultCorrectAnswer(newType),
-                                                                metadata: getDefaultMetadata(newType),
-                                                            });
-                                                        }}
-                                                        className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700"
+                                                {/* Optional image toggle for non-diagram questions */}
+                                                {q.question_type !== 'diagram_labelling' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleImageAttachment(qIndex)}
+                                                        className="text-2xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
                                                     >
-                                                        {QUESTION_TYPES.map((t) => (
-                                                            <option key={t.type} value={t.type}>
-                                                                Đổi sang: {t.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+                                                        <ImageIcon className="h-3 w-3 text-emerald-600" />
+                                                        <span>{q.image_url || expandedImageIndexes.includes(qIndex) ? 'Đóng ảnh đính kèm' : '+ Đính kèm ảnh đề bài'}</span>
+                                                    </button>
+                                                )}
                                             </div>
 
                                             <textarea
@@ -529,35 +815,46 @@ export default function QuestionBuilder({
                                             />
                                         </div>
 
-                                        {/* Image URL & Audio URL Attachments */}
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <div>
-                                                <label className="flex items-center gap-1 text-2xs font-semibold text-gray-600 mb-1">
-                                                    <ImageIcon className="h-3 w-3 text-emerald-600" />
-                                                    Đường dẫn hình ảnh đính kèm (Tùy chọn)
-                                                </label>
+                                        {/* Image Attachment (Only if requested or has value) */}
+                                        {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageIndexes.includes(qIndex)) && (
+                                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
+                                                        <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+                                                        Đường Dẫn Hình Ảnh Minh Họa (Image URL)
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            toggleImageAttachment(qIndex);
+                                                            handleUpdateQuestion(qIndex, { image_url: null });
+                                                        }}
+                                                        className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                                                    >
+                                                        Xóa ảnh
+                                                    </button>
+                                                </div>
                                                 <input
                                                     type="text"
                                                     value={q.image_url || ''}
                                                     onChange={(e) => handleUpdateQuestion(qIndex, { image_url: e.target.value || null })}
-                                                    placeholder="VD: /storage/exams/images/q1_pic.png"
-                                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                    placeholder="VD: /storage/exams/images/question_diagram.png..."
+                                                    className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                                                 />
+                                                {q.image_url && (
+                                                    <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
+                                                        <img
+                                                            src={q.image_url}
+                                                            alt="Preview đề bài"
+                                                            className="max-h-36 object-contain rounded"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLElement).style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div>
-                                                <label className="flex items-center gap-1 text-2xs font-semibold text-gray-600 mb-1">
-                                                    <Volume2 className="h-3 w-3 text-blue-600" />
-                                                    Đường dẫn file Audio nghe (Tùy chọn)
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={q.audio_url || ''}
-                                                    onChange={(e) => handleUpdateQuestion(qIndex, { audio_url: e.target.value || null })}
-                                                    placeholder="VD: /storage/exams/audio/q1_listening.mp3"
-                                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                />
-                                            </div>
-                                        </div>
+                                        )}
 
                                         {/* Dynamic Question Type Specific Editor */}
                                         <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
@@ -666,7 +963,7 @@ export default function QuestionBuilder({
                                                 rows={2}
                                                 value={q.explanation || ''}
                                                 onChange={(e) => handleUpdateQuestion(qIndex, { explanation: e.target.value || null })}
-                                                placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc..."
+                                                placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc / đoạn nghe..."
                                                 className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                                             />
                                         </div>
@@ -686,31 +983,71 @@ export default function QuestionBuilder({
                         variant="secondary"
                         size="md"
                         icon={<Plus className="h-4 w-4 text-emerald-600" />}
-                        onClick={() => setActiveQuestionTypeModal(true)}
+                        onClick={() => handleOpenAddModal(selectedSkillTab)}
                     >
-                        Thêm Câu Hỏi Tiếp Theo
+                        Thêm Câu Hỏi Tiếp Theo Cho {selectedSkillTab === 'all' ? 'Đề Thi' : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
                     </Button>
                 </div>
             )}
 
-            {/* Question Type Selection Modal */}
+            {/* Question Type Selection Modal with Skill Filter */}
             <Modal
                 isOpen={activeQuestionTypeModal}
                 onClose={() => setActiveQuestionTypeModal(false)}
-                title="Chọn Kiểu Câu Hỏi Cần Tạo (10 Dạng Câu Hỏi)"
+                title="Chọn Kiểu Mẫu Câu Hỏi Theo 4 Kỹ Năng"
                 maxWidth="4xl"
             >
                 <div className="space-y-4">
+                    {/* Modal Skill Selector Tabs */}
+                    <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3">
+                        <button
+                            type="button"
+                            onClick={() => setModalSkillFilter('all')}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                                modalSkillFilter === 'all'
+                                    ? 'bg-gray-900 text-white'
+                                    : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
+                            }`}
+                        >
+                            Tất Cả Dạng ({QUESTION_TYPES.length})
+                        </button>
+                        {EXAM_SKILLS.map((sk) => (
+                            <button
+                                key={sk.skill}
+                                type="button"
+                                onClick={() => setModalSkillFilter(sk.skill)}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                                    modalSkillFilter === sk.skill
+                                        ? sk.skill === 'listening'
+                                            ? 'bg-blue-600 text-white'
+                                            : sk.skill === 'reading'
+                                              ? 'bg-emerald-600 text-white'
+                                              : sk.skill === 'writing'
+                                                ? 'bg-amber-600 text-white'
+                                                : 'bg-pink-600 text-white'
+                                        : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
+                                }`}
+                            >
+                                {sk.label}
+                            </button>
+                        ))}
+                    </div>
+
                     <p className="text-xs text-gray-500">
-                        Chọn một trong 10 dạng câu hỏi dưới đây để thêm vào bài kiểm tra:
+                        Chọn một trong các dạng câu hỏi dưới đây để thêm vào bài kiểm tra:
                     </p>
 
-                    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 max-h-[65vh] overflow-y-auto p-1">
-                        {QUESTION_TYPES.map((typeMeta) => (
+                    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 max-h-[60vh] overflow-y-auto p-1">
+                        {modalQuestionsTypes.map((typeMeta) => (
                             <button
                                 key={typeMeta.type}
                                 type="button"
-                                onClick={() => handleSelectQuestionType(typeMeta.type)}
+                                onClick={() =>
+                                    handleSelectQuestionType(
+                                        typeMeta.type,
+                                        modalSkillFilter !== 'all' ? modalSkillFilter : undefined,
+                                    )
+                                }
                                 className="group flex flex-col justify-between text-left rounded-2xl border border-gray-200 bg-white p-4.5 shadow-2xs hover:border-emerald-500 hover:bg-emerald-50/40 hover:shadow-md transition-all duration-200"
                             >
                                 <div className="space-y-2.5 w-full">
@@ -723,9 +1060,16 @@ export default function QuestionBuilder({
                                                 <h4 className="font-bold text-sm text-gray-900 group-hover:text-emerald-800 leading-tight">
                                                     {typeMeta.label}
                                                 </h4>
-                                                <span className="text-2xs font-mono text-gray-400">
-                                                    {typeMeta.type}
-                                                </span>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    {typeMeta.skills.map((sk) => (
+                                                        <span
+                                                            key={sk}
+                                                            className="text-3xs uppercase font-bold tracking-wider text-gray-400"
+                                                        >
+                                                            #{sk}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
 
