@@ -27,6 +27,10 @@ class StudentTuitionController extends Controller
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
 
+        if (! $admin) {
+            abort(403, 'Chỉ Quản trị viên (Admin) mới có quyền truy cập trang quản lý học phí.');
+        }
+
         return $admin;
     }
 
@@ -51,7 +55,7 @@ class StudentTuitionController extends Controller
             $admin
         );
 
-        $stats    = $this->studentTuitionService->getSummaryStats($admin);
+        $stats    = $this->studentTuitionService->getSummaryStats($admin, $centerId);
         $formData = $this->studentTuitionService->getFormData($admin, $centerId);
 
         return Inertia::render('Admin/Tuitions/Index', [

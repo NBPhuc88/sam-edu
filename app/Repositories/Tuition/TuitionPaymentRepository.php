@@ -47,4 +47,24 @@ class TuitionPaymentRepository implements TuitionPaymentRepositoryInterface
 
         return (bool) $payment->delete();
     }
+
+    /**
+     * @param  array<int>|null $allowedCenterIds
+     * @param  string          $startDate
+     * @param  string          $endDate
+     * @return float
+     */
+    public function getSumBetweenDates(?array $allowedCenterIds, string $startDate, string $endDate): float
+    {
+        $query = TuitionPayment::query()
+            ->whereBetween('payment_date', [$startDate, $endDate]);
+
+        if ($allowedCenterIds !== null) {
+            $query->whereHas('studentTuition', function ($q) use ($allowedCenterIds) {
+                $q->whereIn('center_id', $allowedCenterIds);
+            });
+        }
+
+        return (float) $query->sum('amount');
+    }
 }

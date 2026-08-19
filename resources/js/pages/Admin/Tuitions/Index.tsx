@@ -11,6 +11,8 @@ import {
     Clock,
     AlertCircle,
     Filter,
+    Calendar,
+    Wallet,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '../../../components/ui/Badge';
@@ -67,6 +69,10 @@ interface IndexProps {
         completed_count: number;
         partial_count: number;
         pending_count: number;
+        last_month_paid_amount?: number;
+        this_month_paid_amount?: number;
+        last_month_name?: string;
+        this_month_name?: string;
     };
     centers: Array<{ id: number; name: string; code: string }>;
     classes: Array<{ id: number; name: string; code: string; center_id: number }>;
@@ -77,6 +83,7 @@ interface IndexProps {
         status?: string;
     };
 }
+
 
 export const Index: React.FC<IndexProps> = ({
     tuitions,
@@ -198,65 +205,104 @@ return;
                     </Link>
                 </div>
 
-                {/* 3 Summary Statistics Cards */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                    <Card className="border-l-4 border-l-blue-500 bg-white p-6 shadow-xs">
+                {/* 5 Summary Statistics Cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <Card className="border-l-4 border-l-blue-500 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-                                    Tổng Học Phí Phải Thu
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    Tổng Phải Thu
                                 </p>
-                                <h3 className="mt-1.5 text-2xl font-extrabold text-gray-900">
+                                <h3 className="mt-1 text-xl font-extrabold text-gray-900">
                                     {formatCurrency(stats?.total_amount || 0)}
                                 </h3>
                                 <p className="mt-1 text-xs text-gray-400">
-                                    Tổng <strong>{stats?.total_tuitions || 0}</strong> hồ sơ học phí
+                                    <strong>{stats?.total_tuitions || 0}</strong> hồ sơ học phí
                                 </p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <CreditCard className="h-6 w-6" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <CreditCard className="h-5 w-5" />
                             </div>
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-emerald-500 bg-white p-6 shadow-xs">
+                    <Card className="border-l-4 border-l-emerald-500 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-semibold uppercase tracking-wider text-emerald-700">
-                                    Đã Thu Thực Tế
+                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                                    Đã Thu Tất Cả
                                 </p>
-                                <h3 className="mt-1.5 text-2xl font-extrabold text-emerald-700">
+                                <h3 className="mt-1 text-xl font-extrabold text-emerald-700">
                                     {formatCurrency(stats?.paid_amount || 0)}
                                 </h3>
                                 <p className="mt-1 text-xs text-gray-400">
-                                    <strong>{stats?.completed_count || 0}</strong> hồ sơ đã đóng đủ 100%
+                                    <strong>{stats?.completed_count || 0}</strong> hồ sơ đóng đủ
                                 </p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                                <CheckCircle2 className="h-6 w-6" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                <CheckCircle2 className="h-5 w-5" />
                             </div>
                         </div>
                     </Card>
 
-                    <Card className="border-l-4 border-l-amber-500 bg-white p-6 shadow-xs">
+                    <Card className="border-l-4 border-l-amber-500 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-semibold uppercase tracking-wider text-amber-700">
-                                    Tổng Tiền Còn Nợ
+                                <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                                    Tổng Còn Nợ
                                 </p>
-                                <h3 className="mt-1.5 text-2xl font-extrabold text-amber-700">
+                                <h3 className="mt-1 text-xl font-extrabold text-amber-700">
                                     {formatCurrency(stats?.remaining_amount || 0)}
                                 </h3>
                                 <p className="mt-1 text-xs text-gray-400">
-                                    <strong>{stats?.partial_count || 0}</strong> học sinh đang đóng dở
+                                    <strong>{stats?.partial_count || 0}</strong> đang đóng dở
                                 </p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                                <Clock className="h-6 w-6" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                                <Clock className="h-5 w-5" />
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-purple-500 bg-white p-5 shadow-xs">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-purple-700">
+                                    {stats?.last_month_name ? `Thu ${stats.last_month_name}` : 'Thu Tháng Trước'}
+                                </p>
+                                <h3 className="mt-1 text-xl font-extrabold text-purple-700">
+                                    {formatCurrency(stats?.last_month_paid_amount || 0)}
+                                </h3>
+                                <p className="mt-1 text-xs text-gray-400">
+                                    Tháng trước
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                                <Calendar className="h-5 w-5" />
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-teal-500 bg-white p-5 shadow-xs">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+                                    {stats?.this_month_name ? `Thu ${stats.this_month_name}` : 'Thu Tháng Này'}
+                                </p>
+                                <h3 className="mt-1 text-xl font-extrabold text-teal-700">
+                                    {formatCurrency(stats?.this_month_paid_amount || 0)}
+                                </h3>
+                                <p className="mt-1 text-xs text-gray-400">
+                                    Đầu tháng đến hôm nay
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                                <Wallet className="h-5 w-5" />
                             </div>
                         </div>
                     </Card>
                 </div>
+
 
                 {/* Filter Box */}
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">

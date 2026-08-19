@@ -89,13 +89,36 @@ class StudentTuitionService implements StudentTuitionServiceInterface
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?int                 $selectedCenterId
      * @return array<string, mixed>
      */
-    public function getSummaryStats(?Admin $admin = null): array
+    public function getSummaryStats(?Admin $admin = null, ?int $selectedCenterId = null): array
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        return $this->studentTuitionRepository->getSummaryStats($allowedCenterIds);
+        if ($allowedCenterIds !== null) {
+            if ($selectedCenterId !== null && in_array($selectedCenterId, $allowedCenterIds, true)) {
+                $centerIds = [$selectedCenterId];
+            } else {
+                $centerIds = $allowedCenterIds;
+            }
+        } else {
+            $centerIds = $selectedCenterId ? [$selectedCenterId] : null;
+        }
+
+        $stats = $this->studentTuitionRepository->getSummaryStats($centerIds);
+
+        $lastMonthStart = now()->startOfMonth()->subMonth()->toDateString();
+        $lastMonthEnd   = now()->startOfMonth()->subMonth()->endOfMonth()->toDateString();
+        $thisMonthStart = now()->startOfMonth()->toDateString();
+        $today          = now()->toDateString();
+
+        $stats['last_month_paid_amount'] = $this->tuitionPaymentRepository->getSumBetweenDates($centerIds, $lastMonthStart, $lastMonthEnd);
+        $stats['this_month_paid_amount'] = $this->tuitionPaymentRepository->getSumBetweenDates($centerIds, $thisMonthStart, $today);
+        $stats['last_month_name']        = 'Tháng ' . now()->startOfMonth()->subMonth()->format('m/Y');
+        $stats['this_month_name']        = 'Tháng ' . now()->format('m/Y') . ' (Đến nay)';
+
+        return $stats;
     }
 
     /**

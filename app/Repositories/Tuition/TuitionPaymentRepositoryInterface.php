@@ -30,4 +30,12 @@ interface TuitionPaymentRepositoryInterface
      * @return bool
      */
     public function delete(int $id): bool;
+
+    /**
+     * @param  array<int>|null $allowedCenterIds
+     * @param  string          $startDate
+     * @param  string          $endDate
+     * @return float
+     */
+    public function getSumBetweenDates(?array $allowedCenterIds, string $startDate, string $endDate): float;
 }

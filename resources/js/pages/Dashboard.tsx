@@ -5,6 +5,8 @@ import {
     BookOpen,
     Search,
     Calendar,
+    DollarSign,
+    Wallet,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import {
@@ -28,6 +30,13 @@ export const Dashboard: React.FC<any> = (props) => {
     const stats = props.stats || {};
 
     const [examSearch, setExamSearch] = useState('');
+
+    const formatCurrency = (amount: number | string) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+        }).format(Number(amount) || 0);
+    };
 
     // Render Super Admin Dashboard
     if (role === 'super_admin') {
@@ -179,24 +188,55 @@ export const Dashboard: React.FC<any> = (props) => {
                     <Card className="border-gray-200 bg-white p-6">
                         <h2 className="text-2xl font-bold text-gray-900">Thống Kê Trung Tâm Được Quản Lý</h2>
                         <p className="mt-1 text-sm text-gray-500">
-                            Theo dõi tăng trưởng Giáo viên, Học sinh và Lớp học mới trong 6 tháng gần nhất.
+                            Theo dõi tăng trưởng Giáo viên, Học sinh, Lớp học và doanh thu thu học phí hàng tháng.
                         </p>
                     </Card>
 
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                        <Card className="bg-white p-6">
-                            <p className="text-sm font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-gray-400">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
                             <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.centers ?? 0}</h4>
                         </Card>
-                        <Card className="bg-white p-6">
-                            <p className="text-sm font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
+                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-blue-500">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
                             <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.students ?? 0}</h4>
                         </Card>
-                        <Card className="bg-white p-6">
-                            <p className="text-sm font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
+                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-purple-500">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
                             <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.teachers ?? 0}</h4>
                         </Card>
+                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-indigo-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-indigo-700">
+                                        {stats?.last_month_name ? `Thu ${stats.last_month_name}` : 'Thu Tháng Trước'}
+                                    </p>
+                                    <h4 className="text-xl font-extrabold text-indigo-700 mt-1.5">
+                                        {formatCurrency(stats?.last_month_paid_amount || 0)}
+                                    </h4>
+                                </div>
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                                    <DollarSign className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-emerald-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-emerald-700">
+                                        {stats?.this_month_name ? `Thu ${stats.this_month_name}` : 'Thu Tháng Này'}
+                                    </p>
+                                    <h4 className="text-xl font-extrabold text-emerald-700 mt-1.5">
+                                        {formatCurrency(stats?.this_month_paid_amount || 0)}
+                                    </h4>
+                                </div>
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                    <Wallet className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
                     </div>
+
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <Card title="Số Lượng Giáo Viên Mới Đăng Ký (6 Tháng)">

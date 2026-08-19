@@ -13,6 +13,7 @@ use App\Repositories\Schedule\ClassScheduleRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
+use App\Repositories\Tuition\TuitionPaymentRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardService implements DashboardServiceInterface
@@ -24,7 +25,8 @@ class DashboardService implements DashboardServiceInterface
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected ClassScheduleRepositoryInterface $classScheduleRepository,
         protected ExamResultRepositoryInterface $examResultRepository,
-        protected PaymentTransactionRepositoryInterface $paymentTransactionRepository
+        protected PaymentTransactionRepositoryInterface $paymentTransactionRepository,
+        protected TuitionPaymentRepositoryInterface $tuitionPaymentRepository
     ) {
     }
 
@@ -77,11 +79,21 @@ class DashboardService implements DashboardServiceInterface
             $data['teachers_bar_chart'] = $this->getMonthlyNewTeachersBarChart($assignedCenterIds);
             $data['students_bar_chart'] = $this->getMonthlyNewStudentsBarChart($assignedCenterIds);
             $data['classes_bar_chart']  = $this->getMonthlyNewClassesBarChart($assignedCenterIds);
-            $data['stats']              = [
-                'centers'  => count($assignedCenterIds),
-                'students' => $this->studentRepository->countByCenterIds($assignedCenterIds),
-                'teachers' => $this->teacherRepository->countByCenterIds($assignedCenterIds),
-                'classes'  => $this->schoolClassRepository->countByCenterIds($assignedCenterIds),
+
+            $lastMonthStart = now()->startOfMonth()->subMonth()->toDateString();
+            $lastMonthEnd   = now()->startOfMonth()->subMonth()->endOfMonth()->toDateString();
+            $thisMonthStart = now()->startOfMonth()->toDateString();
+            $today          = now()->toDateString();
+
+            $data['stats'] = [
+                'centers'                => count($assignedCenterIds),
+                'students'               => $this->studentRepository->countByCenterIds($assignedCenterIds),
+                'teachers'               => $this->teacherRepository->countByCenterIds($assignedCenterIds),
+                'classes'                => $this->schoolClassRepository->countByCenterIds($assignedCenterIds),
+                'last_month_paid_amount' => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $lastMonthStart, $lastMonthEnd),
+                'this_month_paid_amount' => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $thisMonthStart, $today),
+                'last_month_name'        => 'Tháng ' . now()->startOfMonth()->subMonth()->format('m/Y'),
+                'this_month_name'        => 'Tháng ' . now()->format('m/Y') . ' (Đến nay)',
             ];
 
             return $data;

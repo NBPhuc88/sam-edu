@@ -33,9 +33,10 @@ interface StudentTuitionServiceInterface
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?int                 $selectedCenterId
      * @return array<string, mixed>
      */
-    public function getSummaryStats(?Admin $admin = null): array;
+    public function getSummaryStats(?Admin $admin = null, ?int $selectedCenterId = null): array;
 
     /**
      * @param  ?Admin               $admin
