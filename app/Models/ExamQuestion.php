@@ -12,6 +12,7 @@ class ExamQuestion extends Model
 
     protected $fillable = [
         'exam_id',
+        'section_id',
         'code',
         'question_type',
         'skill',
@@ -43,5 +44,13 @@ class ExamQuestion extends Model
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);
+    }
+
+    /**
+     * @return BelongsTo<ExamSection, $this>
+     */
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(ExamSection::class, 'section_id');
     }
 }

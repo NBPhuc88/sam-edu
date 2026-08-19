@@ -21,10 +21,14 @@ import {
     Headphones,
     BookOpen,
     Layers,
+    Edit3,
+    AlignLeft,
+    ChevronRight,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
 import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
 import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
@@ -37,6 +41,7 @@ import EssayEditor from './QuestionEditors/EssayEditor';
 import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
 import {
     ExamQuestionData,
+    ExamSectionData,
     ExamSkill,
     EXAM_SKILLS,
     QuestionType,
@@ -44,110 +49,263 @@ import {
 } from './types';
 
 interface Props {
-    questions: ExamQuestionData[];
-    onChangeQuestions: (questions: ExamQuestionData[]) => void;
+    sections: ExamSectionData[];
+    onChangeSections: (sections: ExamSectionData[]) => void;
     examMaxScore: number | string;
 }
 
 export default function QuestionBuilder({
-    questions = [],
-    onChangeQuestions,
+    sections = [],
+    onChangeSections,
     examMaxScore = 10,
 }: Props) {
-    const [activeQuestionTypeModal, setActiveQuestionTypeModal] = useState(false);
-    const [selectedSkillTab, setSelectedSkillTab] = useState<ExamSkill | 'all'>('all');
-    const [modalSkillFilter, setModalSkillFilter] = useState<ExamSkill>('listening');
-    const [expandedQuestionIndexes, setExpandedQuestionIndexes] = useState<number[]>([0]);
-    const [expandedImageIndexes, setExpandedImageIndexes] = useState<number[]>([]);
+    // Modal states
+    const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
+    const [newSectionSkill, setNewSectionSkill] = useState<ExamSkill>('reading');
+    const [newSectionTitle, setNewSectionTitle] = useState('');
+    const [newSectionDescription, setNewSectionDescription] = useState('');
 
-    // Calculate total score of all questions
-    const totalScore = questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
+    const [activeQuestionModalSectionIdx, setActiveQuestionModalSectionIdx] = useState<number | null>(null);
 
-    // Calculate count and score per skill
-    const skillStats = {
-        listening: {
-            count: questions.filter((q) => (q.skill || 'reading') === 'listening').length,
-            score: questions
-                .filter((q) => (q.skill || 'reading') === 'listening')
-                .reduce((s, q) => s + (Number(q.score) || 0), 0),
-        },
-        reading: {
-            count: questions.filter((q) => (q.skill || 'reading') === 'reading').length,
-            score: questions
-                .filter((q) => (q.skill || 'reading') === 'reading')
-                .reduce((s, q) => s + (Number(q.score) || 0), 0),
-        },
-        writing: {
-            count: questions.filter((q) => (q.skill || 'reading') === 'writing').length,
-            score: questions
-                .filter((q) => (q.skill || 'reading') === 'writing')
-                .reduce((s, q) => s + (Number(q.score) || 0), 0),
-        },
-        speaking: {
-            count: questions.filter((q) => (q.skill || 'reading') === 'speaking').length,
-            score: questions
-                .filter((q) => (q.skill || 'reading') === 'speaking')
-                .reduce((s, q) => s + (Number(q.score) || 0), 0),
-        },
+    // Confirm Dialog state
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string | React.ReactNode;
+        type: 'danger' | 'warning' | 'info';
+        confirmText?: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'danger',
+        onConfirm: () => {},
+    });
+
+    // Expand states
+    const [expandedSectionIndexes, setExpandedSectionIndexes] = useState<number[]>([0]);
+    const [expandedQuestionKeys, setExpandedQuestionKeys] = useState<string[]>(['0-0']);
+    const [expandedImageKeys, setExpandedImageKeys] = useState<string[]>([]);
+
+    // Calculate total questions and total score across all sections
+    const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
+    const totalScore = sections.reduce(
+        (sum, sec) => sum + (sec.questions || []).reduce((qSum, q) => qSum + (Number(q.score) || 0), 0),
+        0,
+    );
+
+    // --- Section Management ---
+    const handleOpenAddSectionModal = () => {
+        const nextNum = sections.length + 1;
+        setNewSectionSkill('reading');
+        setNewSectionTitle(`Phần ${nextNum}: Đọc hiểu (Reading)`);
+        setNewSectionDescription('');
+        setIsAddSectionModalOpen(true);
     };
 
-    const toggleExpand = (index: number) => {
-        if (expandedQuestionIndexes.includes(index)) {
-            setExpandedQuestionIndexes(expandedQuestionIndexes.filter((i) => i !== index));
+    const handleConfirmAddSection = (e: React.FormEvent) => {
+        e.preventDefault();
+        const nextIndex = sections.length;
+        const newSection: ExamSectionData = {
+            tempId: `sec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: newSectionTitle.trim() || `Phần ${nextIndex + 1}`,
+            description: newSectionDescription.trim() || null,
+            skill: newSectionSkill,
+            order_index: nextIndex,
+            questions: [],
+        };
+
+        const updated = [...sections, newSection];
+        onChangeSections(updated);
+        setExpandedSectionIndexes([...expandedSectionIndexes, nextIndex]);
+        setIsAddSectionModalOpen(false);
+    };
+
+    const handleUpdateSection = (sectionIndex: number, fields: Partial<ExamSectionData>) => {
+        const updated = [...sections];
+        updated[sectionIndex] = { ...updated[sectionIndex], ...fields };
+        onChangeSections(updated);
+    };
+
+    const handleDeleteSection = (sectionIndex: number) => {
+        const sec = sections[sectionIndex];
+        const count = sec.questions?.length || 0;
+        const messageText = count > 0
+            ? `Bạn có chắc muốn xóa "${sec.title || `Phần ${sectionIndex + 1}`}" cùng toàn bộ ${count} câu hỏi bên trong không?`
+            : `Bạn có chắc muốn xóa "${sec.title || `Phần ${sectionIndex + 1}`}" không?`;
+
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Xác nhận xóa phần thi',
+            message: messageText,
+            type: 'danger',
+            confirmText: 'Xóa phần thi',
+            onConfirm: () => {
+                const updated = sections.filter((_, idx) => idx !== sectionIndex);
+                onChangeSections(updated);
+                setExpandedSectionIndexes(
+                    expandedSectionIndexes
+                        .filter((idx) => idx !== sectionIndex)
+                        .map((idx) => (idx > sectionIndex ? idx - 1 : idx)),
+                );
+                setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+            },
+        });
+    };
+
+    const handleMoveSection = (fromIdx: number, toIdx: number) => {
+        if (toIdx < 0 || toIdx >= sections.length) return;
+        const updated = [...sections];
+        const [moved] = updated.splice(fromIdx, 1);
+        updated.splice(toIdx, 0, moved);
+        onChangeSections(updated);
+    };
+
+    const toggleExpandSection = (sectionIndex: number) => {
+        if (expandedSectionIndexes.includes(sectionIndex)) {
+            setExpandedSectionIndexes(expandedSectionIndexes.filter((idx) => idx !== sectionIndex));
         } else {
-            setExpandedQuestionIndexes([...expandedQuestionIndexes, index]);
+            setExpandedSectionIndexes([...expandedSectionIndexes, sectionIndex]);
         }
     };
 
-    const expandAll = () => {
-        setExpandedQuestionIndexes(questions.map((_, i) => i));
-    };
+    // --- Question Management inside a Section ---
+    const getQuestionKey = (sectionIdx: number, qIdx: number) => `${sectionIdx}-${qIdx}`;
 
-    const collapseAll = () => {
-        setExpandedQuestionIndexes([]);
-    };
-
-    const toggleImageAttachment = (index: number) => {
-        if (expandedImageIndexes.includes(index)) {
-            setExpandedImageIndexes(expandedImageIndexes.filter((i) => i !== index));
+    const toggleExpandQuestion = (sectionIdx: number, qIdx: number) => {
+        const key = getQuestionKey(sectionIdx, qIdx);
+        if (expandedQuestionKeys.includes(key)) {
+            setExpandedQuestionKeys(expandedQuestionKeys.filter((k) => k !== key));
         } else {
-            setExpandedImageIndexes([...expandedImageIndexes, index]);
+            setExpandedQuestionKeys([...expandedQuestionKeys, key]);
         }
     };
 
-    const handleOpenAddModal = (targetSkill?: ExamSkill | 'all') => {
-        const skill: ExamSkill = (targetSkill && targetSkill !== 'all')
-            ? targetSkill
-            : (selectedSkillTab !== 'all' ? selectedSkillTab : 'listening');
-        setModalSkillFilter(skill);
-        setActiveQuestionTypeModal(true);
+    const toggleImageAttachment = (sectionIdx: number, qIdx: number) => {
+        const key = getQuestionKey(sectionIdx, qIdx);
+        if (expandedImageKeys.includes(key)) {
+            setExpandedImageKeys(expandedImageKeys.filter((k) => k !== key));
+        } else {
+            setExpandedImageKeys([...expandedImageKeys, key]);
+        }
     };
 
-    const handleSelectQuestionType = (type: QuestionType, targetSkill?: ExamSkill) => {
-        const nextIdx = questions.length;
-        const skill: ExamSkill = targetSkill || modalSkillFilter;
+    const handleOpenAddQuestionModal = (sectionIdx: number) => {
+        setActiveQuestionModalSectionIdx(sectionIdx);
+    };
+
+    const handleSelectQuestionType = (type: QuestionType) => {
+        if (activeQuestionModalSectionIdx === null) return;
+        const sectionIdx = activeQuestionModalSectionIdx;
+        const section = sections[sectionIdx];
+        const currentQuestions = section.questions || [];
+        const nextLocalIdx = currentQuestions.length;
+
+        // Calculate global question number
+        let globalNum = 1;
+        for (let i = 0; i < sectionIdx; i++) {
+            globalNum += (sections[i].questions?.length || 0);
+        }
+        globalNum += nextLocalIdx;
 
         const newQuestion: ExamQuestionData = {
-            code: `Q${String(nextIdx + 1).padStart(9, '0')}`,
-            skill,
+            code: `Q${String(globalNum).padStart(9, '0')}`,
+            skill: section.skill,
             question_type: type,
             content: '',
             score: 1.00,
             image_url: null,
-            audio_url: skill === 'listening' ? '' : null,
+            audio_url: section.skill === 'listening' ? '' : null,
             options: getDefaultOptions(type),
             correct_answer: getDefaultCorrectAnswer(type),
             explanation: '',
             metadata: getDefaultMetadata(type),
-            order_index: nextIdx,
+            order_index: nextLocalIdx,
         };
 
-        const updated = [...questions, newQuestion];
-        onChangeQuestions(updated);
-        setExpandedQuestionIndexes([...expandedQuestionIndexes, nextIdx]);
-        setActiveQuestionTypeModal(false);
+        const updatedQuestions = [...currentQuestions, newQuestion];
+        handleUpdateSection(sectionIdx, { questions: updatedQuestions });
+
+        setExpandedQuestionKeys([...expandedQuestionKeys, getQuestionKey(sectionIdx, nextLocalIdx)]);
+        setActiveQuestionModalSectionIdx(null);
     };
 
+    const handleUpdateQuestion = (
+        sectionIdx: number,
+        qIdx: number,
+        updatedFields: Partial<ExamQuestionData>,
+    ) => {
+        const section = sections[sectionIdx];
+        const updatedQuestions = [...(section.questions || [])];
+        updatedQuestions[qIdx] = { ...updatedQuestions[qIdx], ...updatedFields };
+        handleUpdateSection(sectionIdx, { questions: updatedQuestions });
+    };
+
+    const handleDuplicateQuestion = (sectionIdx: number, qIdx: number) => {
+        const section = sections[sectionIdx];
+        const currentQuestions = section.questions || [];
+        const target = currentQuestions[qIdx];
+        const clone: ExamQuestionData = {
+            ...JSON.parse(JSON.stringify(target)),
+            id: undefined,
+            code: `Q${String(totalQuestionsCount + 1).padStart(9, '0')}`,
+            order_index: currentQuestions.length,
+        };
+        const updatedQuestions = [...currentQuestions, clone];
+        handleUpdateSection(sectionIdx, { questions: updatedQuestions });
+        setExpandedQuestionKeys([...expandedQuestionKeys, getQuestionKey(sectionIdx, currentQuestions.length)]);
+    };
+
+    const handleDeleteQuestion = (sectionIdx: number, qIdx: number) => {
+        const q = (sections[sectionIdx]?.questions || [])[qIdx];
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Xác nhận xóa câu hỏi',
+            message: `Bạn có chắc muốn xóa câu hỏi số ${qIdx + 1} (${q?.code || `Q${qIdx + 1}`}) này không?`,
+            type: 'danger',
+            confirmText: 'Xóa câu hỏi',
+            onConfirm: () => {
+                const section = sections[sectionIdx];
+                const updatedQuestions = (section.questions || []).filter((_, idx) => idx !== qIdx);
+                handleUpdateSection(sectionIdx, { questions: updatedQuestions });
+                setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+            },
+        });
+    };
+
+    const handleMoveQuestion = (sectionIdx: number, fromIdx: number, toIdx: number) => {
+        const section = sections[sectionIdx];
+        const questionsList = [...(section.questions || [])];
+        if (toIdx < 0 || toIdx >= questionsList.length) return;
+        const [moved] = questionsList.splice(fromIdx, 1);
+        questionsList.splice(toIdx, 0, moved);
+        handleUpdateSection(sectionIdx, { questions: questionsList });
+    };
+
+    const handleInsertBlankTag = (sectionIdx: number, questionIndex: number) => {
+        const section = sections[sectionIdx];
+        const q = (section.questions || [])[questionIndex];
+        const matches = (q.content || '').match(/\[blank_\d+\]/g) || [];
+        const nextNum = matches.length + 1;
+        const newTag = `[blank_${nextNum}]`;
+
+        const newContent = q.content ? `${q.content} ${newTag}` : newTag;
+        const currentAns = { ...(q.correct_answer || {}) };
+        if (!currentAns[`blank_${nextNum}`]) {
+            currentAns[`blank_${nextNum}`] = {
+                accepted_answers: [''],
+                case_sensitive: false,
+            };
+        }
+
+        handleUpdateQuestion(sectionIdx, questionIndex, {
+            content: newContent,
+            correct_answer: currentAns,
+        });
+    };
+
+    // --- Defaults & Helpers ---
     const getDefaultOptions = (type: QuestionType) => {
         switch (type) {
             case 'single_choice':
@@ -186,9 +344,9 @@ export default function QuestionBuilder({
                 };
             case 'ordering':
                 return [
-                    { id: 't1', text: 'Cụm từ 1' },
-                    { id: 't2', text: 'Cụm từ 2' },
-                    { id: 't3', text: 'Cụm từ 3' },
+                    { id: 't1', text: 'Mẩu từ 1' },
+                    { id: 't2', text: 'Mẩu từ 2' },
+                    { id: 't3', text: 'Mẩu từ 3' },
                 ];
             case 'diagram_labelling':
                 return {
@@ -263,64 +421,6 @@ export default function QuestionBuilder({
         }
     };
 
-    const handleUpdateQuestion = (index: number, updatedFields: Partial<ExamQuestionData>) => {
-        const updated = [...questions];
-        updated[index] = { ...updated[index], ...updatedFields };
-        onChangeQuestions(updated);
-    };
-
-    const handleDuplicateQuestion = (index: number) => {
-        const target = questions[index];
-        const clone: ExamQuestionData = {
-            ...JSON.parse(JSON.stringify(target)),
-            id: undefined,
-            code: `Q${String(questions.length + 1).padStart(9, '0')}`,
-            order_index: questions.length,
-        };
-        const updated = [...questions, clone];
-        onChangeQuestions(updated);
-        setExpandedQuestionIndexes([...expandedQuestionIndexes, questions.length]);
-    };
-
-    const handleDeleteQuestion = (index: number) => {
-        const updated = questions.filter((_, i) => i !== index);
-        onChangeQuestions(updated);
-        setExpandedQuestionIndexes(
-            expandedQuestionIndexes
-                .filter((i) => i !== index)
-                .map((i) => (i > index ? i - 1 : i)),
-        );
-    };
-
-    const handleMoveQuestion = (fromIdx: number, toIdx: number) => {
-        if (toIdx < 0 || toIdx >= questions.length) return;
-        const updated = [...questions];
-        const [moved] = updated.splice(fromIdx, 1);
-        updated.splice(toIdx, 0, moved);
-        onChangeQuestions(updated);
-    };
-
-    const handleInsertBlankTag = (questionIndex: number) => {
-        const q = questions[questionIndex];
-        const matches = (q.content || '').match(/\[blank_\d+\]/g) || [];
-        const nextNum = matches.length + 1;
-        const newTag = `[blank_${nextNum}]`;
-
-        const newContent = q.content ? `${q.content} ${newTag}` : newTag;
-        const currentAns = { ...(q.correct_answer || {}) };
-        if (!currentAns[`blank_${nextNum}`]) {
-            currentAns[`blank_${nextNum}`] = {
-                accepted_answers: [''],
-                case_sensitive: false,
-            };
-        }
-
-        handleUpdateQuestion(questionIndex, {
-            content: newContent,
-            correct_answer: currentAns,
-        });
-    };
-
     const getTypeIcon = (type: QuestionType) => {
         switch (type) {
             case 'single_choice':
@@ -348,17 +448,57 @@ export default function QuestionBuilder({
         }
     };
 
+    const getSkillConfig = (skill: ExamSkill) => {
+        switch (skill) {
+            case 'listening':
+                return {
+                    headerBg: 'bg-blue-600',
+                    border: 'border-blue-300',
+                    badge: 'bg-blue-700 text-white',
+                    addBtn: 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200',
+                    dot: 'bg-blue-500',
+                    icon: <Headphones className="h-4 w-4 text-white" />,
+                    name: 'Nghe (Listening)',
+                };
+            case 'writing':
+                return {
+                    headerBg: 'bg-amber-500',
+                    border: 'border-amber-300',
+                    badge: 'bg-amber-600 text-white',
+                    addBtn: 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200',
+                    dot: 'bg-amber-500',
+                    icon: <PenTool className="h-4 w-4 text-white" />,
+                    name: 'Viết (Writing)',
+                };
+            case 'speaking':
+                return {
+                    headerBg: 'bg-pink-500',
+                    border: 'border-pink-300',
+                    badge: 'bg-pink-600 text-white',
+                    addBtn: 'bg-pink-50 hover:bg-pink-100 text-pink-700 border-pink-200',
+                    dot: 'bg-pink-500',
+                    icon: <Mic className="h-4 w-4 text-white" />,
+                    name: 'Nói (Speaking)',
+                };
+            case 'reading':
+            default:
+                return {
+                    headerBg: 'bg-emerald-600',
+                    border: 'border-emerald-300',
+                    badge: 'bg-emerald-700 text-white',
+                    addBtn: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200',
+                    dot: 'bg-emerald-500',
+                    icon: <BookOpen className="h-4 w-4 text-white" />,
+                    name: 'Đọc (Reading)',
+                };
+        }
+    };
 
+    const activeModalSkill = activeQuestionModalSectionIdx !== null
+        ? sections[activeQuestionModalSectionIdx]?.skill || 'reading'
+        : 'reading';
 
-    // Filter questions based on selected tab
-    const filteredQuestions = selectedSkillTab === 'all'
-        ? questions
-        : questions.filter((q) => (q.skill || 'reading') === selectedSkillTab);
-
-    // Filter modal types based on modal skill filter
-    const modalQuestionsTypes = modalSkillFilter === 'all'
-        ? QUESTION_TYPES
-        : QUESTION_TYPES.filter((t) => t.skills.includes(modalSkillFilter));
+    const compatibleQuestionTypes = QUESTION_TYPES.filter((t) => t.skills.includes(activeModalSkill));
 
     return (
         <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8 space-y-6">
@@ -367,10 +507,10 @@ export default function QuestionBuilder({
                 <div>
                     <h2 className="flex items-center gap-2.5 text-xl font-bold text-gray-900">
                         <Sparkles className="h-6 w-6 text-emerald-600" />
-                        2. Soạn Thảo Bộ Câu Hỏi (Theo 4 Kỹ Năng: Nghe, Đọc, Viết, Nói)
+                        2. Soạn Thảo Đề Thi (Theo Từng Phần Thi Động)
                     </h2>
                     <p className="mt-1 text-xs text-gray-500">
-                        Phân loại đề thi theo 4 kỹ năng chuẩn hóa quốc tế (IELTS, HSK, TOEIC) và các kiểu câu hỏi tương ứng.
+                        Thêm các phần thi (Sections) linh hoạt theo thứ tự bất kỳ (Đọc, Nghe, Viết, Nói) với tiêu đề và mô tả riêng.
                     </p>
                 </div>
 
@@ -379,13 +519,15 @@ export default function QuestionBuilder({
                     <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 border border-slate-200">
                         <span className="text-xs text-gray-500">Tổng điểm:</span>
                         <span
-                            className={`font-mono text-sm font-extrabold ${Number(totalScore) === Number(examMaxScore)
-                                ? 'text-emerald-700'
-                                : 'text-amber-700'
-                                }`}
+                            className={`font-mono text-sm font-extrabold ${
+                                Number(totalScore) === Number(examMaxScore)
+                                    ? 'text-emerald-700'
+                                    : 'text-amber-700'
+                            }`}
                         >
                             {totalScore} / {examMaxScore} điểm
                         </span>
+                        <span className="text-2xs text-gray-400">({totalQuestionsCount} câu)</span>
                     </div>
 
                     <Button
@@ -393,550 +535,552 @@ export default function QuestionBuilder({
                         variant="success"
                         size="md"
                         icon={<Plus className="h-4 w-4" />}
-                        onClick={() => handleOpenAddModal(selectedSkillTab)}
+                        onClick={handleOpenAddSectionModal}
                     >
-                        Thêm Câu Hỏi
+                        Thêm Phần Thi
                     </Button>
                 </div>
             </div>
 
-            {/* 4 Skills Navigation Tabs & KPI Badges */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 p-1 rounded-xl bg-slate-100/80 border border-slate-200">
-                <button
-                    type="button"
-                    onClick={() => setSelectedSkillTab('all')}
-                    className={`flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'all'
-                        ? 'bg-white text-gray-900 shadow-xs border border-gray-200'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                        }`}
-                >
-                    <Layers className="h-4 w-4 text-gray-500" />
-                    <span>Tất Cả ({questions.length})</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setSelectedSkillTab('listening')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'listening'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'text-gray-700 hover:bg-white/50'
-                        }`}
-                >
-                    <div className="flex items-center gap-1.5">
-                        <Headphones className={`h-4 w-4 ${selectedSkillTab === 'listening' ? 'text-white' : 'text-blue-600'}`} />
-                        <span>🎧 Nghe</span>
-                    </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'listening' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                        {skillStats.listening.count} câu
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setSelectedSkillTab('reading')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'reading'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-gray-700 hover:bg-white/50'
-                        }`}
-                >
-                    <div className="flex items-center gap-1.5">
-                        <BookOpen className={`h-4 w-4 ${selectedSkillTab === 'reading' ? 'text-white' : 'text-emerald-600'}`} />
-                        <span>📖 Đọc</span>
-                    </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'reading' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                        {skillStats.reading.count} câu
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setSelectedSkillTab('writing')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'writing'
-                        ? 'bg-amber-600 text-white shadow-xs'
-                        : 'text-gray-700 hover:bg-white/50'
-                        }`}
-                >
-                    <div className="flex items-center gap-1.5">
-                        <PenTool className={`h-4 w-4 ${selectedSkillTab === 'writing' ? 'text-white' : 'text-amber-600'}`} />
-                        <span>✍️ Viết</span>
-                    </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'writing' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'
-                        }`}>
-                        {skillStats.writing.count} câu
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setSelectedSkillTab('speaking')}
-                    className={`flex items-center justify-between rounded-lg py-2.5 px-3 text-xs font-bold transition-all ${selectedSkillTab === 'speaking'
-                        ? 'bg-pink-600 text-white shadow-xs'
-                        : 'text-gray-700 hover:bg-white/50'
-                        }`}
-                >
-                    <div className="flex items-center gap-1.5">
-                        <Mic className={`h-4 w-4 ${selectedSkillTab === 'speaking' ? 'text-white' : 'text-pink-600'}`} />
-                        <span>🗣️ Nói</span>
-                    </div>
-                    <span className={`font-mono text-2xs px-1.5 py-0.5 rounded-full ${selectedSkillTab === 'speaking' ? 'bg-pink-700 text-white' : 'bg-pink-100 text-pink-800'
-                        }`}>
-                        {skillStats.speaking.count} câu
-                    </span>
-                </button>
-            </div>
-
-            {/* Quick Actions (Expand/Collapse all) */}
-            {questions.length > 0 && (
-                <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-                    <span>
-                        Đang xem:{' '}
-                        <strong className="text-gray-900">
-                            {selectedSkillTab === 'all'
-                                ? 'Tất cả kỹ năng'
-                                : EXAM_SKILLS.find((s) => s.skill === selectedSkillTab)?.label}
-                        </strong>{' '}
-                        ({filteredQuestions.length} / {questions.length} câu hỏi)
-                    </span>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={expandAll}
-                            className="hover:text-emerald-700 font-medium"
-                        >
-                            Mở rộng tất cả
-                        </button>
-                        <span>•</span>
-                        <button
-                            type="button"
-                            onClick={collapseAll}
-                            className="hover:text-emerald-700 font-medium"
-                        >
-                            Thu gọn tất cả
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Questions List — grouped by skill section */}
-            {questions.length === 0 ? (
+            {/* Sections List */}
+            {sections.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center bg-gray-50/50">
-                    <Sparkles className="mx-auto h-10 w-10 text-gray-400" />
-                    <p className="mt-3 text-sm font-bold text-gray-800">Chưa có câu hỏi nào trong đề thi này</p>
-                    <p className="mt-1 text-xs text-gray-400 max-w-sm mx-auto">
-                        Bấm nút "Thêm Câu Hỏi" ở trên để bắt đầu soạn thảo theo từng kỹ năng.
+                    <Layers className="mx-auto h-10 w-10 text-gray-400" />
+                    <p className="mt-3 text-sm font-bold text-gray-800">Chưa có phần thi nào trong đề thi này</p>
+                    <p className="mt-1 text-xs text-gray-400 max-w-md mx-auto">
+                        Bấm nút bên dưới để thêm Phần thi đầu tiên (ví dụ: Phần 1: Đọc hiểu, Phần 2: Nghe...).
                     </p>
+                    <div className="mt-5">
+                        <Button
+                            type="button"
+                            variant="success"
+                            size="md"
+                            icon={<Plus className="h-4 w-4" />}
+                            onClick={handleOpenAddSectionModal}
+                        >
+                            + Thêm Phần Thi Đầu Tiên
+                        </Button>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {EXAM_SKILLS.filter((sk) =>
-                        selectedSkillTab === 'all' || selectedSkillTab === sk.skill,
-                    ).map((sk) => {
-                        const sectionQuestions = questions
-                            .map((q, idx) => ({ q, idx }))
-                            .filter(({ q }) => (q.skill || 'reading') === sk.skill);
-
-                        const sectionScore = sectionQuestions.reduce(
-                            (sum, { q }) => sum + (Number(q.score) || 0),
-                            0,
-                        );
-
-                        const colorMap: Record<string, {
-                            header: string; border: string; badge: string;
-                            addBtn: string; emptyBg: string; dot: string;
-                        }> = {
-                            listening: {
-                                header: 'bg-blue-600', border: 'border-blue-300',
-                                badge: 'bg-blue-700 text-white',
-                                addBtn: 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200',
-                                emptyBg: 'bg-blue-50/40', dot: 'bg-blue-500',
-                            },
-                            reading: {
-                                header: 'bg-emerald-600', border: 'border-emerald-300',
-                                badge: 'bg-emerald-700 text-white',
-                                addBtn: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200',
-                                emptyBg: 'bg-emerald-50/40', dot: 'bg-emerald-500',
-                            },
-                            writing: {
-                                header: 'bg-amber-500', border: 'border-amber-300',
-                                badge: 'bg-amber-600 text-white',
-                                addBtn: 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200',
-                                emptyBg: 'bg-amber-50/40', dot: 'bg-amber-500',
-                            },
-                            speaking: {
-                                header: 'bg-pink-500', border: 'border-pink-300',
-                                badge: 'bg-pink-600 text-white',
-                                addBtn: 'bg-pink-50 hover:bg-pink-100 text-pink-700 border-pink-200',
-                                emptyBg: 'bg-pink-50/40', dot: 'bg-pink-500',
-                            },
-                        };
-                        const c = colorMap[sk.skill];
+                    {sections.map((section, secIdx) => {
+                        const isSecExpanded = expandedSectionIndexes.includes(secIdx);
+                        const secConfig = getSkillConfig(section.skill);
+                        const secQuestions = section.questions || [];
+                        const secScore = secQuestions.reduce((s, q) => s + (Number(q.score) || 0), 0);
 
                         return (
-                            <div key={sk.skill} className={`rounded-2xl border-2 ${c.border} overflow-hidden`}>
-                                {/* ── Section Header ── */}
-                                <div className={`${c.header} px-4 py-3 flex items-center justify-between`}>
+                            <div
+                                key={section.tempId || section.id || secIdx}
+                                className={`rounded-2xl border-2 ${secConfig.border} overflow-hidden shadow-xs`}
+                            >
+                                {/* ── Section Header Bar ── */}
+                                <div
+                                    className={`${secConfig.headerBg} px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none cursor-pointer`}
+                                    onClick={() => toggleExpandSection(secIdx)}
+                                >
                                     <div className="flex items-center gap-2.5">
-                                        {sk.skill === 'listening' && <Headphones className="h-4 w-4 text-white" />}
-                                        {sk.skill === 'reading' && <BookOpen className="h-4 w-4 text-white" />}
-                                        {sk.skill === 'writing' && <PenTool className="h-4 w-4 text-white" />}
-                                        {sk.skill === 'speaking' && <Mic className="h-4 w-4 text-white" />}
-                                        <span className="text-sm font-extrabold text-white tracking-wide">{sk.label}</span>
-                                        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${c.badge}`}>
-                                            {sectionQuestions.length} câu • {sectionScore} điểm
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleExpandSection(secIdx);
+                                            }}
+                                            className="text-white hover:bg-white/20 p-1 rounded-md transition-colors"
+                                        >
+                                            {isSecExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {secConfig.icon}
+                                            <span className="text-sm font-extrabold text-white tracking-wide">
+                                                {section.title || `Phần ${secIdx + 1}`}
+                                            </span>
+                                        </div>
+                                        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${secConfig.badge}`}>
+                                            {secConfig.name} • {secQuestions.length} câu • {secScore} điểm
                                         </span>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleOpenAddModal(sk.skill)}
-                                        className="flex items-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 px-2.5 py-1.5 text-2xs font-bold text-white transition-colors"
-                                    >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        Thêm câu
-                                    </button>
+
+                                    <div className="flex items-center gap-1.5 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
+                                        {/* Reorder Section Buttons */}
+                                        <button
+                                            type="button"
+                                            disabled={secIdx === 0}
+                                            onClick={() => handleMoveSection(secIdx, secIdx - 1)}
+                                            className="rounded-md p-1.5 text-white/70 hover:bg-white/20 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
+                                            title="Di chuyển phần thi lên trên"
+                                        >
+                                            <ChevronUp className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={secIdx === sections.length - 1}
+                                            onClick={() => handleMoveSection(secIdx, secIdx + 1)}
+                                            className="rounded-md p-1.5 text-white/70 hover:bg-white/20 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed"
+                                            title="Di chuyển phần thi xuống dưới"
+                                        >
+                                            <ChevronDown className="h-4 w-4" />
+                                        </button>
+
+                                        {/* Add Question Button on Header */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenAddQuestionModal(secIdx)}
+                                            className="flex items-center gap-1 rounded-lg bg-white/20 hover:bg-white/30 px-2.5 py-1 text-2xs font-bold text-white transition-colors ml-1"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            Thêm câu hỏi
+                                        </button>
+
+                                        {/* Delete Section */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteSection(secIdx)}
+                                            className="rounded-md p-1.5 text-white/70 hover:bg-red-600 hover:text-white transition-colors"
+                                            title="Xóa phần thi này"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {/* ── Questions in section ── */}
-                                {sectionQuestions.length === 0 ? (
-                                    <div className={`${c.emptyBg} px-5 py-5 text-center border-t ${c.border}`}>
-                                        <p className="text-xs font-semibold text-gray-500">
-                                            Chưa có câu hỏi nào — bấm <strong>Thêm câu</strong> để bắt đầu.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2.5 p-3 bg-slate-50/80">
-                                        {sectionQuestions.map(({ q, idx: qIndex }, sectionPos) => {
-                                            const isExpanded = expandedQuestionIndexes.includes(qIndex);
-                                            const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
-                                            const isListening = sk.skill === 'listening';
-
-                                            return (
-                                                <div key={qIndex} className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${
-                                                    isExpanded
-                                                        ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
-                                                        : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
-                                                }`}>
-                                                    {/* Question row header */}
-                                                    <div
-                                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none"
-                                                        onClick={() => toggleExpand(qIndex)}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${c.dot} font-mono text-2xs font-extrabold text-white`}>
-                                                                    {sectionPos + 1}
-                                                                </span>
-                                                                <span className="text-2xs text-gray-400 font-mono">(#{qIndex + 1})</span>
-                                                            </div>
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
-                                                                    {getTypeIcon(q.question_type)}
-                                                                    {typeInfo.label}
-                                                                </span>
-                                                                <span className="text-xs text-gray-400 font-mono">{q.code || `Q${qIndex + 1}`}</span>
-                                                                {q.content && (
-                                                                    <span className="hidden sm:inline text-xs text-gray-500 truncate max-w-xs">
-                                                                        — {q.content}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
-                                                            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
-                                                                <span className="text-gray-500">Điểm:</span>
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.25"
-                                                                    min={0}
-                                                                    value={q.score}
-                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { score: e.target.value })}
-                                                                    className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
-                                                                    title="Điểm số câu hỏi"
-                                                                />
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                disabled={qIndex === 0}
-                                                                onClick={() => handleMoveQuestion(qIndex, qIndex - 1)}
-                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
-                                                                title="Di chuyển lên"
-                                                            >
-                                                                <ChevronUp className="h-4 w-4" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                disabled={qIndex === questions.length - 1}
-                                                                onClick={() => handleMoveQuestion(qIndex, qIndex + 1)}
-                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
-                                                                title="Di chuyển xuống"
-                                                            >
-                                                                <ChevronDown className="h-4 w-4" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleDuplicateQuestion(qIndex)}
-                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                                                                title="Nhân bản câu hỏi"
-                                                            >
-                                                                <Copy className="h-4 w-4" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleDeleteQuestion(qIndex)}
-                                                                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                                                                title="Xóa câu hỏi"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleExpand(qIndex)}
-                                                                className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-                                                            >
-                                                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Expanded editor */}
-                                                    {isExpanded && (
-                                                        <div className="border-t border-gray-200 p-5 space-y-5 bg-white">
-                                                            {/* Type selector */}
-                                                            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
-                                                                    <select
-                                                                        value={q.question_type}
-                                                                        onChange={(e) => {
-                                                                            const newType = e.target.value as QuestionType;
-                                                                            handleUpdateQuestion(qIndex, {
-                                                                                question_type: newType,
-                                                                                options: getDefaultOptions(newType),
-                                                                                correct_answer: getDefaultCorrectAnswer(newType),
-                                                                                metadata: getDefaultMetadata(newType),
-                                                                            });
-                                                                        }}
-                                                                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
-                                                                    >
-                                                                        {QUESTION_TYPES.filter((t) => t.skills.includes(q.skill || 'reading')).map((t) => (
-                                                                            <option key={t.type} value={t.type}>{t.label}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Audio (Listening only) */}
-                                                            {isListening && (
-                                                                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
-                                                                            <Volume2 className="h-4 w-4 text-blue-600" />
-                                                                            Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
-                                                                        </label>
-                                                                        <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">Phần Nghe</span>
-                                                                    </div>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={q.audio_url || ''}
-                                                                        onChange={(e) => handleUpdateQuestion(qIndex, { audio_url: e.target.value || null })}
-                                                                        placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3..."
-                                                                        className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
-                                                                    />
-                                                                    {q.audio_url && (
-                                                                        <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
-                                                                            <audio controls src={q.audio_url} className="w-full h-8" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Content */}
-                                                            <div>
-                                                                <div className="flex items-center justify-between mb-1.5">
-                                                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
-                                                                        Nội Dung Câu Hỏi / Đề Bài (*)
-                                                                    </label>
-                                                                    {q.question_type !== 'diagram_labelling' && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => toggleImageAttachment(qIndex)}
-                                                                            className="text-2xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
-                                                                        >
-                                                                            <ImageIcon className="h-3 w-3 text-emerald-600" />
-                                                                            <span>{q.image_url || expandedImageIndexes.includes(qIndex) ? 'Đóng ảnh đính kèm' : '+ Đính kèm ảnh đề bài'}</span>
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                                <textarea
-                                                                    rows={3}
-                                                                    value={q.content}
-                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { content: e.target.value })}
-                                                                    placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
-                                                                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                                                    required
-                                                                />
-                                                            </div>
-
-                                                            {/* Image Attachment */}
-                                                            {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageIndexes.includes(qIndex)) && (
-                                                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
-                                                                            <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
-                                                                            Đường Dẫn Hình Ảnh Minh Họa (Image URL)
-                                                                        </label>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                toggleImageAttachment(qIndex);
-                                                                                handleUpdateQuestion(qIndex, { image_url: null });
-                                                                            }}
-                                                                            className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
-                                                                        >
-                                                                            Xóa ảnh
-                                                                        </button>
-                                                                    </div>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={q.image_url || ''}
-                                                                        onChange={(e) => handleUpdateQuestion(qIndex, { image_url: e.target.value || null })}
-                                                                        placeholder="VD: /storage/exams/images/question_diagram.png..."
-                                                                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                                    />
-                                                                    {q.image_url && (
-                                                                        <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
-                                                                            <img
-                                                                                src={q.image_url}
-                                                                                alt="Preview đề bài"
-                                                                                className="max-h-36 object-contain rounded"
-                                                                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Type-specific editor */}
-                                                            <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
-                                                                {q.question_type === 'single_choice' && (
-                                                                    <SingleChoiceEditor
-                                                                        options={q.options || []}
-                                                                        correctAnswer={q.correct_answer}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'multiple_choice' && (
-                                                                    <MultipleChoiceEditor
-                                                                        options={q.options || []}
-                                                                        correctAnswer={q.correct_answer || []}
-                                                                        metadata={q.metadata || {}}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'true_false_not_given' && (
-                                                                    <TrueFalseEditor
-                                                                        correctAnswer={q.correct_answer}
-                                                                        metadata={q.metadata || {}}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'fill_in_blank' && (
-                                                                    <FillInBlankEditor
-                                                                        content={q.content}
-                                                                        correctAnswer={q.correct_answer || {}}
-                                                                        metadata={q.metadata || {}}
-                                                                        onInsertBlank={() => handleInsertBlankTag(qIndex)}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'matching' && (
-                                                                    <MatchingEditor
-                                                                        options={q.options || { left_items: [], right_items: [] }}
-                                                                        correctAnswer={q.correct_answer || {}}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'ordering' && (
-                                                                    <OrderingEditor
-                                                                        options={q.options || []}
-                                                                        correctAnswer={q.correct_answer || []}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'diagram_labelling' && (
-                                                                    <DiagramLabellingEditor
-                                                                        imageUrl={q.image_url || ''}
-                                                                        options={q.options || { labels: [], map_pins: [] }}
-                                                                        correctAnswer={q.correct_answer || {}}
-                                                                        onChangeImageUrl={(url) => handleUpdateQuestion(qIndex, { image_url: url })}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'find_mistake' && (
-                                                                    <FindMistakeEditor
-                                                                        options={q.options || { sentence_segments: [] }}
-                                                                        correctAnswer={q.correct_answer}
-                                                                        onChangeOptions={(opts) => handleUpdateQuestion(qIndex, { options: opts })}
-                                                                        onChangeCorrectAnswer={(ans) => handleUpdateQuestion(qIndex, { correct_answer: ans })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'essay' && (
-                                                                    <EssayEditor
-                                                                        metadata={q.metadata || {}}
-                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                                    />
-                                                                )}
-                                                                {q.question_type === 'audio_record' && (
-                                                                    <AudioRecordEditor
-                                                                        metadata={q.metadata || {}}
-                                                                        audioUrl={q.audio_url}
-                                                                        onChangeMetadata={(meta) => handleUpdateQuestion(qIndex, { metadata: meta })}
-                                                                        onChangeAudioUrl={(url) => handleUpdateQuestion(qIndex, { audio_url: url })}
-                                                                    />
-                                                                )}
-                                                            </div>
-
-                                                            {/* Explanation */}
-                                                            <div>
-                                                                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                                                                    Lời Giải Thích Chi Tiết / Hướng Dẫn Giải
-                                                                </label>
-                                                                <textarea
-                                                                    rows={2}
-                                                                    value={q.explanation || ''}
-                                                                    onChange={(e) => handleUpdateQuestion(qIndex, { explanation: e.target.value || null })}
-                                                                    placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc / đoạn nghe..."
-                                                                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                {/* ── Section Body ── */}
+                                {isSecExpanded && (
+                                    <div className="bg-slate-50/60 p-4 space-y-4 border-t border-gray-100">
+                                        {/* Section Metadata: Editable Title & Description */}
+                                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <div className="sm:col-span-2">
+                                                    <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                                                        <Edit3 className="h-3 w-3 text-emerald-600" />
+                                                        Tiêu Đề Phần Thi (*)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={section.title}
+                                                        onChange={(e) => handleUpdateSection(secIdx, { title: e.target.value })}
+                                                        placeholder="VD: Phần 1: Đọc hiểu văn bản / Reading Passage 1..."
+                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                    />
                                                 </div>
-                                            );
-                                        })}
 
-                                        {/* Section footer add button */}
-                                        <div className="px-4 py-3 border-t border-gray-100">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenAddModal(sk.skill)}
-                                                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${c.addBtn}`}
-                                            >
-                                                <Plus className="h-3.5 w-3.5" />
-                                                Thêm câu cho {sk.label}
-                                            </button>
+                                                <div>
+                                                    <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700">
+                                                        Kỹ Năng:
+                                                    </label>
+                                                    <select
+                                                        value={section.skill}
+                                                        onChange={(e) => handleUpdateSection(secIdx, { skill: e.target.value as ExamSkill })}
+                                                        className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-bold text-gray-800 shadow-2xs"
+                                                    >
+                                                        <option value="reading">📖 Đọc (Reading)</option>
+                                                        <option value="listening">🎧 Nghe (Listening)</option>
+                                                        <option value="writing">✍️ Viết (Writing)</option>
+                                                        <option value="speaking">🗣️ Nói (Speaking)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
+                                                    <AlignLeft className="h-3 w-3 text-gray-500" />
+                                                    Mô Tả / Đoạn Văn Bản Hướng Dẫn Chung Cho Phần Này
+                                                </label>
+                                                <textarea
+                                                    rows={2}
+                                                    value={section.description || ''}
+                                                    onChange={(e) => handleUpdateSection(secIdx, { description: e.target.value || null })}
+                                                    placeholder="VD: Đọc đoạn văn sau và trả lời các câu hỏi từ 1 đến 5 bằng cách chọn đáp án đúng..."
+                                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 focus:border-emerald-500 focus:outline-hidden"
+                                                />
+                                            </div>
                                         </div>
+
+                                        {/* Questions in Section */}
+                                        {secQuestions.length === 0 ? (
+                                            <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center bg-white">
+                                                <p className="text-xs font-semibold text-gray-500">
+                                                    Phần này chưa có câu hỏi nào.
+                                                </p>
+                                                <div className="mt-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenAddQuestionModal(secIdx)}
+                                                        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${secConfig.addBtn}`}
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                        Thêm câu hỏi cho {section.title || `Phần ${secIdx + 1}`}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2.5">
+                                                {secQuestions.map((q, qIndex) => {
+                                                    const qKey = getQuestionKey(secIdx, qIndex);
+                                                    const isExpanded = expandedQuestionKeys.includes(qKey);
+                                                    const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
+                                                    const isListening = section.skill === 'listening';
+
+                                                    return (
+                                                        <div
+                                                            key={qKey}
+                                                            className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${
+                                                                isExpanded
+                                                                    ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
+                                                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
+                                                            }`}
+                                                        >
+                                                            {/* Question Row Header */}
+                                                            <div
+                                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none"
+                                                                onClick={() => toggleExpandQuestion(secIdx, qIndex)}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${secConfig.dot} font-mono text-2xs font-extrabold text-white`}>
+                                                                            {qIndex + 1}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
+                                                                            {getTypeIcon(q.question_type)}
+                                                                            {typeInfo.label}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-400 font-mono">
+                                                                            {q.code || `Q${qIndex + 1}`}
+                                                                        </span>
+                                                                        {q.content && (
+                                                                            <span className="hidden sm:inline text-xs text-gray-500 truncate max-w-xs">
+                                                                                — {q.content}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
+                                                                    {/* Score */}
+                                                                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
+                                                                        <span className="text-gray-500">Điểm:</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.25"
+                                                                            min={0}
+                                                                            value={q.score}
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: e.target.value })}
+                                                                            className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
+                                                                            title="Điểm số câu hỏi"
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Reorder */}
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={qIndex === 0}
+                                                                        onClick={() => handleMoveQuestion(secIdx, qIndex, qIndex - 1)}
+                                                                        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                        title="Di chuyển lên"
+                                                                    >
+                                                                        <ChevronUp className="h-4 w-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={qIndex === secQuestions.length - 1}
+                                                                        onClick={() => handleMoveQuestion(secIdx, qIndex, qIndex + 1)}
+                                                                        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                        title="Di chuyển xuống"
+                                                                    >
+                                                                        <ChevronDown className="h-4 w-4" />
+                                                                    </button>
+
+                                                                    {/* Duplicate */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDuplicateQuestion(secIdx, qIndex)}
+                                                                        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                                                                        title="Nhân bản câu hỏi"
+                                                                    >
+                                                                        <Copy className="h-4 w-4" />
+                                                                    </button>
+
+                                                                    {/* Delete */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteQuestion(secIdx, qIndex)}
+                                                                        className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                                        title="Xóa câu hỏi"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </button>
+
+                                                                    {/* Expand Toggle */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => toggleExpandQuestion(secIdx, qIndex)}
+                                                                        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
+                                                                    >
+                                                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Expanded Question Editor */}
+                                                            {isExpanded && (
+                                                                <div className="border-t border-gray-200 p-5 space-y-5 bg-white">
+                                                                    {/* Question Type Selector */}
+                                                                    <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
+                                                                            <select
+                                                                                value={q.question_type}
+                                                                                onChange={(e) => {
+                                                                                    const newType = e.target.value as QuestionType;
+                                                                                    handleUpdateQuestion(secIdx, qIndex, {
+                                                                                        question_type: newType,
+                                                                                        options: getDefaultOptions(newType),
+                                                                                        correct_answer: getDefaultCorrectAnswer(newType),
+                                                                                        metadata: getDefaultMetadata(newType),
+                                                                                    });
+                                                                                }}
+                                                                                className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-2xs"
+                                                                            >
+                                                                                {QUESTION_TYPES.filter((t) => t.skills.includes(section.skill)).map((t) => (
+                                                                                    <option key={t.type} value={t.type}>
+                                                                                        {t.label}
+                                                                                    </option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Audio Section: ONLY FOR LISTENING */}
+                                                                    {isListening && (
+                                                                        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
+                                                                                    <Volume2 className="h-4 w-4 text-blue-600" />
+                                                                                    Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
+                                                                                </label>
+                                                                                <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                                                                                    Phần Nghe
+                                                                                </span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={q.audio_url || ''}
+                                                                                onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { audio_url: e.target.value || null })}
+                                                                                placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3..."
+                                                                                className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
+                                                                            />
+                                                                            {q.audio_url && (
+                                                                                <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
+                                                                                    <audio controls src={q.audio_url} className="w-full h-8" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Question Content */}
+                                                                    <div>
+                                                                        <div className="flex items-center justify-between mb-1.5">
+                                                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
+                                                                                Nội Dung Câu Hỏi / Đề Bài (*)
+                                                                            </label>
+                                                                            {q.question_type !== 'diagram_labelling' && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => toggleImageAttachment(secIdx, qIndex)}
+                                                                                    className="text-2xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
+                                                                                >
+                                                                                    <ImageIcon className="h-3 w-3 text-emerald-600" />
+                                                                                    <span>
+                                                                                        {q.image_url || expandedImageKeys.includes(qKey) ? 'Đóng ảnh đính kèm' : '+ Đính kèm ảnh đề bài'}
+                                                                                    </span>
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        <textarea
+                                                                            rows={3}
+                                                                            value={q.content}
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { content: e.target.value })}
+                                                                            placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
+                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                            required
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Image Attachment */}
+                                                                    {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
+                                                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
+                                                                                    <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+                                                                                    Đường Dẫn Hình Ảnh Minh Họa (Image URL)
+                                                                                </label>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        toggleImageAttachment(secIdx, qIndex);
+                                                                                        handleUpdateQuestion(secIdx, qIndex, { image_url: null });
+                                                                                    }}
+                                                                                    className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                                                                                >
+                                                                                    Xóa ảnh
+                                                                                </button>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={q.image_url || ''}
+                                                                                onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { image_url: e.target.value || null })}
+                                                                                placeholder="VD: /storage/exams/images/question_diagram.png..."
+                                                                                className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                            />
+                                                                            {q.image_url && (
+                                                                                <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
+                                                                                    <img
+                                                                                        src={q.image_url}
+                                                                                        alt="Preview đề bài"
+                                                                                        className="max-h-36 object-contain rounded"
+                                                                                        onError={(e) => {
+                                                                                            (e.target as HTMLElement).style.display = 'none';
+                                                                                        }}
+                                                                                    />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Type Specific Editor */}
+                                                                    <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
+                                                                        {q.question_type === 'single_choice' && (
+                                                                            <SingleChoiceEditor
+                                                                                options={q.options || []}
+                                                                                correctAnswer={q.correct_answer}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'multiple_choice' && (
+                                                                            <MultipleChoiceEditor
+                                                                                options={q.options || []}
+                                                                                correctAnswer={q.correct_answer || []}
+                                                                                metadata={q.metadata || {}}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'true_false_not_given' && (
+                                                                            <TrueFalseEditor
+                                                                                correctAnswer={q.correct_answer}
+                                                                                metadata={q.metadata || {}}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'fill_in_blank' && (
+                                                                            <FillInBlankEditor
+                                                                                content={q.content}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                metadata={q.metadata || {}}
+                                                                                onInsertBlank={() => handleInsertBlankTag(secIdx, qIndex)}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'matching' && (
+                                                                            <MatchingEditor
+                                                                                options={q.options || { left_items: [], right_items: [] }}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'ordering' && (
+                                                                            <OrderingEditor
+                                                                                options={q.options || []}
+                                                                                correctAnswer={q.correct_answer || []}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'diagram_labelling' && (
+                                                                            <DiagramLabellingEditor
+                                                                                imageUrl={q.image_url || ''}
+                                                                                options={q.options || { labels: [], map_pins: [] }}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                onChangeImageUrl={(url) => handleUpdateQuestion(secIdx, qIndex, { image_url: url })}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'find_mistake' && (
+                                                                            <FindMistakeEditor
+                                                                                options={q.options || { sentence_segments: [] }}
+                                                                                correctAnswer={q.correct_answer}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'essay' && (
+                                                                            <EssayEditor
+                                                                                metadata={q.metadata || {}}
+                                                                                onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'audio_record' && (
+                                                                            <AudioRecordEditor
+                                                                                metadata={q.metadata || {}}
+                                                                                audioUrl={q.audio_url}
+                                                                                onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                                onChangeAudioUrl={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url })}
+                                                                            />
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Explanation */}
+                                                                    <div>
+                                                                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                                                                            Lời Giải Thích Chi Tiết / Hướng Dẫn Giải
+                                                                        </label>
+                                                                        <textarea
+                                                                            rows={2}
+                                                                            value={q.explanation || ''}
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { explanation: e.target.value || null })}
+                                                                            placeholder="Giải thích vì sao chọn đáp án này, trích dẫn bài đọc / đoạn nghe..."
+                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {/* Bottom Add Question for this Section */}
+                                                <div className="pt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenAddQuestionModal(secIdx)}
+                                                        className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${secConfig.addBtn}`}
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                        Thêm câu hỏi cho {section.title || `Phần ${secIdx + 1}`}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -945,61 +1089,145 @@ export default function QuestionBuilder({
                 </div>
             )}
 
-            {/* Question Type Selection Modal with Skill Filter */}
+            {/* Bottom Add Section Button */}
+            {sections.length > 0 && (
+                <div className="flex justify-center pt-2">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="md"
+                        icon={<Plus className="h-4 w-4 text-emerald-600" />}
+                        onClick={handleOpenAddSectionModal}
+                    >
+                        Thêm Phần Thi Mới
+                    </Button>
+                </div>
+            )}
+
+            {/* --- Modal 1: Add Section Modal --- */}
             <Modal
-                isOpen={activeQuestionTypeModal}
-                onClose={() => setActiveQuestionTypeModal(false)}
-                title="Chọn Kiểu Mẫu Câu Hỏi Theo 4 Kỹ Năng"
-                maxWidth="4xl"
+                isOpen={isAddSectionModalOpen}
+                onClose={() => setIsAddSectionModalOpen(false)}
+                title="Thêm Phần Thi Mới (Section)"
+                maxWidth="lg"
             >
-                <div className="space-y-4">
-                    {/* Modal Skill Selector Tabs */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-gray-100 pb-3">
-                        {EXAM_SKILLS.map((sk) => {
-                            const typesCount = QUESTION_TYPES.filter((t) => t.skills.includes(sk.skill)).length;
-                            const isActive = modalSkillFilter === sk.skill;
-                            return (
-                                <button
-                                    key={sk.skill}
-                                    type="button"
-                                    onClick={() => setModalSkillFilter(sk.skill)}
-                                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all border ${isActive
-                                        ? sk.skill === 'listening'
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                            : sk.skill === 'reading'
-                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                                : sk.skill === 'writing'
-                                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                                                    : 'bg-pink-600 text-white border-pink-600 shadow-xs'
-                                        : 'bg-slate-50 text-gray-700 border-gray-200 hover:bg-slate-100'
+                <form onSubmit={handleConfirmAddSection} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+                            1. Chọn Kỹ Năng Của Phần Này (*)
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {EXAM_SKILLS.map((sk) => {
+                                const isSelected = newSectionSkill === sk.skill;
+                                return (
+                                    <button
+                                        key={sk.skill}
+                                        type="button"
+                                        onClick={() => {
+                                            setNewSectionSkill(sk.skill);
+                                            const num = sections.length + 1;
+                                            setNewSectionTitle(`Phần ${num}: ${sk.label} (${sk.englishLabel})`);
+                                        }}
+                                        className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${
+                                            isSelected
+                                                ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20'
+                                                : 'border-gray-200 bg-white hover:bg-gray-50'
                                         }`}
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        {sk.skill === 'listening' && <Headphones className="h-3.5 w-3.5" />}
-                                        {sk.skill === 'reading' && <BookOpen className="h-3.5 w-3.5" />}
-                                        {sk.skill === 'writing' && <PenTool className="h-3.5 w-3.5" />}
-                                        {sk.skill === 'speaking' && <Mic className="h-3.5 w-3.5" />}
-                                        <span>{sk.label}</span>
-                                    </div>
-                                    <span className={`text-2xs px-1.5 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                                    >
+                                        <div className={`p-2 rounded-lg ${
+                                            sk.skill === 'listening' ? 'bg-blue-100 text-blue-700' :
+                                            sk.skill === 'reading' ? 'bg-emerald-100 text-emerald-700' :
+                                            sk.skill === 'writing' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-pink-100 text-pink-700'
                                         }`}>
-                                        {typesCount} mẫu
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                            {sk.skill === 'listening' && <Headphones className="h-4 w-4" />}
+                                            {sk.skill === 'reading' && <BookOpen className="h-4 w-4" />}
+                                            {sk.skill === 'writing' && <PenTool className="h-4 w-4" />}
+                                            {sk.skill === 'speaking' && <Mic className="h-4 w-4" />}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900">{sk.label}</p>
+                                            <p className="text-3xs text-gray-500">{sk.englishLabel}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                            2. Tiêu Đề Phần Thi (*)
+                        </label>
+                        <input
+                            type="text"
+                            value={newSectionTitle}
+                            onChange={(e) => setNewSectionTitle(e.target.value)}
+                            placeholder="VD: Phần 1: Đọc hiểu văn bản / Section 1: Listening..."
+                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                            3. Mô Tả / Hướng Dẫn Làm Bài (Tùy chọn)
+                        </label>
+                        <textarea
+                            rows={3}
+                            value={newSectionDescription}
+                            onChange={(e) => setNewSectionDescription(e.target.value)}
+                            placeholder="Nhập hướng dẫn làm bài, đoạn văn đọc hiểu chung hoặc ngữ cảnh phần thi..."
+                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setIsAddSectionModalOpen(false)}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="md"
+                            icon={<Plus className="h-4 w-4" />}
+                        >
+                            Tạo Phần Thi
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* --- Modal 2: Add Question Modal for a Specific Section --- */}
+            <Modal
+                isOpen={activeQuestionModalSectionIdx !== null}
+                onClose={() => setActiveQuestionModalSectionIdx(null)}
+                title={`Chọn Kiểu Câu Hỏi Cho ${
+                    activeQuestionModalSectionIdx !== null
+                        ? sections[activeQuestionModalSectionIdx]?.title || 'Phần thi'
+                        : 'Phần thi'
+                }`}
+                maxWidth="3xl"
+            >
+                <div className="space-y-4">
                     <p className="text-xs text-gray-500">
-                        Chọn một trong các dạng câu hỏi tương thích với <strong className="text-gray-900">{EXAM_SKILLS.find((s) => s.skill === modalSkillFilter)?.label}</strong>:
+                        Các dạng câu hỏi tương thích với kỹ năng{' '}
+                        <strong className="text-gray-900">
+                            {EXAM_SKILLS.find((s) => s.skill === activeModalSkill)?.label}
+                        </strong>:
                     </p>
 
                     <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 max-h-[60vh] overflow-y-auto p-1">
-                        {modalQuestionsTypes.map((typeMeta) => (
+                        {compatibleQuestionTypes.map((typeMeta) => (
                             <button
                                 key={typeMeta.type}
                                 type="button"
-                                onClick={() => handleSelectQuestionType(typeMeta.type, modalSkillFilter)}
+                                onClick={() => handleSelectQuestionType(typeMeta.type)}
                                 className="group flex flex-col justify-between text-left rounded-2xl border border-gray-200 bg-white p-4.5 shadow-2xs hover:border-emerald-500 hover:bg-emerald-50/40 hover:shadow-md transition-all duration-200"
                             >
                                 <div className="space-y-2.5 w-full">
@@ -1013,14 +1241,9 @@ export default function QuestionBuilder({
                                                     {typeMeta.label}
                                                 </h4>
                                                 <div className="flex items-center gap-1.5 mt-0.5">
-                                                    {typeMeta.skills.map((sk) => (
-                                                        <span
-                                                            key={sk}
-                                                            className="text-3xs uppercase font-bold tracking-wider text-gray-400"
-                                                        >
-                                                            #{sk}
-                                                        </span>
-                                                    ))}
+                                                    <span className="text-3xs uppercase font-bold tracking-wider text-gray-400">
+                                                        #{activeModalSkill}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1045,6 +1268,17 @@ export default function QuestionBuilder({
                     </div>
                 </div>
             </Modal>
+
+            {/* --- Modal 3: Confirm Dialog Popup --- */}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                type={confirmDialog.type}
+                confirmText={confirmDialog.confirmText}
+            />
         </Card>
     );
 }

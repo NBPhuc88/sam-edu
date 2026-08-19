@@ -169,8 +169,9 @@ class ExamService implements ExamServiceInterface
             }
         }
 
+        $sections  = $data['sections'] ?? null;
         $questions = $data['questions'] ?? [];
-        unset($data['questions']);
+        unset($data['sections'], $data['questions']);
 
         $examData = array_merge($data, [
             'center_id'           => $centerId,
@@ -192,7 +193,9 @@ class ExamService implements ExamServiceInterface
 
         $exam = $this->examRepository->create($examData);
 
-        if (! empty($questions)) {
+        if (! empty($sections)) {
+            $this->examRepository->syncSections($exam, $sections);
+        } elseif (! empty($questions)) {
             $this->examRepository->syncQuestions($exam, $questions);
         }
 
@@ -224,8 +227,9 @@ class ExamService implements ExamServiceInterface
             $code = $exam->code;
         }
 
+        $sections  = $data['sections'] ?? null;
         $questions = $data['questions'] ?? null;
-        unset($data['questions']);
+        unset($data['sections'], $data['questions']);
 
         $updateData = array_merge($data, [
             'code'              => $code,
@@ -244,7 +248,9 @@ class ExamService implements ExamServiceInterface
 
         $updatedExam = $this->examRepository->update($id, $updateData);
 
-        if ($questions !== null) {
+        if ($sections !== null) {
+            $this->examRepository->syncSections($updatedExam, $sections);
+        } elseif ($questions !== null) {
             $this->examRepository->syncQuestions($updatedExam, $questions);
         }
 
@@ -252,6 +258,7 @@ class ExamService implements ExamServiceInterface
             'center:id,name,code',
             'schoolClass:id,name,code',
             'subject:id,name,code',
+            'sections.questions',
             'questions',
         ]);
     }

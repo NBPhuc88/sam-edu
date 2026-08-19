@@ -4,6 +4,7 @@ namespace App\Repositories\Exam;
 
 use App\Models\Exam;
 use App\Models\ExamQuestion;
+use App\Models\ExamSection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class ExamRepository implements ExamRepositoryInterface
                 'schoolClass:id,name,code',
                 'subject:id,name,code',
             ])
-            ->withCount(['questions', 'examResults']);
+            ->withCount(['questions', 'sections', 'examResults']);
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
@@ -88,11 +89,17 @@ class ExamRepository implements ExamRepositoryInterface
                 'center:id,name,code',
                 'schoolClass:id,name,code',
                 'subject:id,name,code',
+                'sections' => function ($sq) {
+                    $sq->orderBy('order_index')->orderBy('id')
+                        ->with(['questions' => function ($qq) {
+                            $qq->orderBy('order_index')->orderBy('id');
+                        }]);
+                },
                 'questions' => function ($q) {
                     $q->orderBy('order_index')->orderBy('id');
                 },
             ])
-            ->withCount(['questions', 'examResults']);
+            ->withCount(['questions', 'sections', 'examResults']);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -127,6 +134,7 @@ class ExamRepository implements ExamRepositoryInterface
             'center:id,name,code',
             'schoolClass:id,name,code',
             'subject:id,name,code',
+            'sections.questions',
             'questions',
         ]);
     }
@@ -193,6 +201,7 @@ class ExamRepository implements ExamRepositoryInterface
 
                 $payload = [
                     'exam_id'        => $exam->id,
+                    'section_id'     => ! empty($qData['section_id']) ? (int) $qData['section_id'] : null,
                     'code'           => $qCode,
                     'question_type'  => $qData['question_type'] ?? 'single_choice',
                     'skill'          => ! empty($qData['skill']) ? $qData['skill'] : 'reading',
@@ -221,6 +230,100 @@ class ExamRepository implements ExamRepositoryInterface
 
             if (! empty($toDelete)) {
                 ExamQuestion::whereIn('id', $toDelete)->where('exam_id', $exam->id)->delete();
+            }
+        });
+    }
+
+    /**
+     * Đồng bộ các Phần thi (Dynamic Sections) và danh sách câu hỏi trong từng phần
+     *
+     * @param  Exam              $exam
+     * @param  array<int, mixed> $sections
+     * @return void
+     */
+    public function syncSections(Exam $exam, array $sections): void
+    {
+        DB::transaction(function () use ($exam, $sections) {
+            $existingSectionIds  = $exam->sections()->pluck('id')->toArray();
+            $existingQuestionIds = $exam->questions()->pluck('id')->toArray();
+
+            $incomingSectionIds  = [];
+            $incomingQuestionIds = [];
+
+            $globalQuestionIndex = 0;
+
+            foreach ($sections as $sectionIndex => $secData) {
+                $secId = ! empty($secData['id']) ? (int) $secData['id'] : null;
+
+                $sectionPayload = [
+                    'exam_id'     => $exam->id,
+                    'title'       => trim($secData['title'] ?? ('Phần ' . ($sectionIndex + 1))),
+                    'description' => ! empty($secData['description']) ? trim($secData['description']) : null,
+                    'skill'       => ! empty($secData['skill']) ? $secData['skill'] : 'reading',
+                    'order_index' => isset($secData['order_index']) ? (int) $secData['order_index'] : $sectionIndex,
+                ];
+
+                if ($secId && in_array($secId, $existingSectionIds, true)) {
+                    ExamSection::where('id', $secId)->where('exam_id', $exam->id)->update($sectionPayload);
+                    $section              = ExamSection::find($secId);
+                    $incomingSectionIds[] = $secId;
+                } else {
+                    $section              = ExamSection::create($sectionPayload);
+                    $incomingSectionIds[] = $section->id;
+                }
+
+                // Xử lý các câu hỏi thuộc Section này
+                $secQuestions = $secData['questions'] ?? [];
+
+                foreach ($secQuestions as $qLocalIndex => $qData) {
+                    $globalQuestionIndex++;
+                    $qId = ! empty($qData['id']) ? (int) $qData['id'] : null;
+
+                    $qCode = trim($qData['code'] ?? '');
+
+                    if (empty($qCode)) {
+                        $qCode = sprintf('Q%09d', $globalQuestionIndex);
+                    }
+
+                    $questionPayload = [
+                        'exam_id'        => $exam->id,
+                        'section_id'     => $section->id,
+                        'code'           => $qCode,
+                        'question_type'  => $qData['question_type'] ?? 'single_choice',
+                        'skill'          => $section->skill,
+                        'content'        => $qData['content'] ?? '',
+                        'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
+                        'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
+                        'score'          => isset($qData['score']) ? (float) $qData['score'] : 1.00,
+                        'options'        => $qData['options'] ?? null,
+                        'correct_answer' => $qData['correct_answer'] ?? null,
+                        'explanation'    => ! empty($qData['explanation']) ? $qData['explanation'] : null,
+                        'metadata'       => $qData['metadata'] ?? null,
+                        'order_index'    => isset($qData['order_index']) ? (int) $qData['order_index'] : $qLocalIndex,
+                    ];
+
+                    if ($qId && in_array($qId, $existingQuestionIds, true)) {
+                        ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->update($questionPayload);
+                        $incomingQuestionIds[] = $qId;
+                    } else {
+                        $newQuestion           = ExamQuestion::create($questionPayload);
+                        $incomingQuestionIds[] = $newQuestion->id;
+                    }
+                }
+            }
+
+            // Xóa các câu hỏi không còn nằm trong danh sách
+            $questionsToDelete = array_diff($existingQuestionIds, $incomingQuestionIds);
+
+            if (! empty($questionsToDelete)) {
+                ExamQuestion::whereIn('id', $questionsToDelete)->where('exam_id', $exam->id)->delete();
+            }
+
+            // Xóa các section không còn nằm trong danh sách
+            $sectionsToDelete = array_diff($existingSectionIds, $incomingSectionIds);
+
+            if (! empty($sectionsToDelete)) {
+                ExamSection::whereIn('id', $sectionsToDelete)->where('exam_id', $exam->id)->delete();
             }
         });
     }

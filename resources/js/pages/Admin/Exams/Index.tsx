@@ -145,7 +145,7 @@ export default function ExamIndex({
             case 'published':
                 return <Badge variant="active">Đã công bố</Badge>;
             case 'draft':
-                return <Badge variant="warning">Bản nháp</Badge>;
+                return <Badge variant="pending">Bản nháp</Badge>;
             case 'completed':
                 return <Badge variant="info">Đã kết thúc</Badge>;
             case 'cancelled':

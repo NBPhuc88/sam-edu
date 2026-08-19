@@ -98,6 +98,14 @@ class Exam extends Model
     }
 
     /**
+     * @return HasMany<ExamSection, $this>
+     */
+    public function sections(): HasMany
+    {
+        return $this->hasMany(ExamSection::class)->orderBy('order_index');
+    }
+
+    /**
      * @return HasMany<ExamQuestion, $this>
      */
     public function questions(): HasMany

@@ -193,6 +193,7 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
 
 export interface ExamQuestionData {
     id?: number;
+    section_id?: number;
     code?: string;
     skill?: ExamSkill;
     question_type: QuestionType;
@@ -205,6 +206,16 @@ export interface ExamQuestionData {
     explanation?: string | null;
     metadata?: any;
     order_index?: number;
+}
+
+export interface ExamSectionData {
+    id?: number;
+    tempId?: string;
+    title: string;
+    description?: string | null;
+    skill: ExamSkill;
+    order_index?: number;
+    questions: ExamQuestionData[];
 }
 
 export interface Center {
@@ -251,7 +262,9 @@ export interface Exam {
     school_class?: SchoolClass;
     schoolClass?: SchoolClass;
     subject?: Subject;
+    sections?: ExamSectionData[];
     questions?: ExamQuestionData[];
+    sections_count?: number;
     questions_count?: number;
     exam_results_count?: number;
 }

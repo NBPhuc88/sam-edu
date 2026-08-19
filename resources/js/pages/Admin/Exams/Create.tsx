@@ -14,7 +14,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 import QuestionBuilder from './QuestionBuilder';
-import { Center, ExamQuestionData, SchoolClass, Subject } from './types';
+import { Center, ExamQuestionData, ExamSectionData, SchoolClass, Subject } from './types';
 
 interface Props {
     centers: Center[];
@@ -54,23 +54,33 @@ export default function ExamCreate({
     const [endTime, setEndTime] = useState('');
     const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>('draft');
 
-    // Questions State (Initialize with 1 single_choice question)
-    const [questions, setQuestions] = useState<ExamQuestionData[]>([
+    // Sections State (Initialize with 1 Reading section containing 1 question)
+    const [sections, setSections] = useState<ExamSectionData[]>([
         {
-            code: 'Q000000001',
-            question_type: 'single_choice',
-            content: '',
-            score: 1.00,
-            options: [
-                { id: 'A', text: '' },
-                { id: 'B', text: '' },
-                { id: 'C', text: '' },
-                { id: 'D', text: '' },
-            ],
-            correct_answer: 'A',
-            explanation: '',
-            metadata: {},
+            tempId: 'sec_init_1',
+            title: 'Phần 1: Đọc hiểu văn bản (Reading)',
+            description: 'Đọc kỹ các câu hỏi bên dưới và chọn câu trả lời chính xác nhất.',
+            skill: 'reading',
             order_index: 0,
+            questions: [
+                {
+                    code: 'Q000000001',
+                    skill: 'reading',
+                    question_type: 'single_choice',
+                    content: '',
+                    score: 1.00,
+                    options: [
+                        { id: 'A', text: '' },
+                        { id: 'B', text: '' },
+                        { id: 'C', text: '' },
+                        { id: 'D', text: '' },
+                    ],
+                    correct_answer: 'A',
+                    explanation: '',
+                    metadata: {},
+                    order_index: 0,
+                },
+            ],
         },
     ]);
 
@@ -84,6 +94,9 @@ export default function ExamCreate({
     const filteredSubjects = centerId
         ? subjects.filter((s) => String(s.center_id) === String(centerId))
         : subjects;
+
+    // Total questions count across sections
+    const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -109,10 +122,15 @@ export default function ExamCreate({
                 start_time: startTime || null,
                 end_time: endTime || null,
                 status,
-                questions: questions.map((q, idx) => ({
-                    ...q,
-                    order_index: idx,
-                    score: Number(q.score) || 1,
+                sections: sections.map((sec, sIdx) => ({
+                    ...sec,
+                    order_index: sIdx,
+                    questions: (sec.questions || []).map((q, qIdx) => ({
+                        ...q,
+                        skill: sec.skill,
+                        order_index: qIdx,
+                        score: Number(q.score) || 1,
+                    })),
                 })),
             },
             {
@@ -474,8 +492,8 @@ export default function ExamCreate({
 
                     {/* Card 2: Interactive Question Builder */}
                     <QuestionBuilder
-                        questions={questions}
-                        onChangeQuestions={setQuestions}
+                        sections={sections}
+                        onChangeSections={setSections}
                         examMaxScore={maxScore}
                     />
 
@@ -497,7 +515,7 @@ export default function ExamCreate({
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            Lưu Bài Kiểm Tra ({questions.length} câu hỏi)
+                            Lưu Bài Kiểm Tra ({sections.length} phần thi • {totalQuestionsCount} câu hỏi)
                         </Button>
                     </div>
                 </form>

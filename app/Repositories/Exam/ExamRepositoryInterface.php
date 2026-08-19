@@ -77,6 +77,13 @@ interface ExamRepositoryInterface
     public function syncQuestions(Exam $exam, array $questions): void;
 
     /**
+     * @param  Exam              $exam
+     * @param  array<int, mixed> $sections
+     * @return void
+     */
+    public function syncSections(Exam $exam, array $sections): void;
+
+    /**
      * @param  array<int>|null    $allowedCenterIds
      * @return array<string, int>
      */

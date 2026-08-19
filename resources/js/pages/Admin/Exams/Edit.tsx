@@ -14,7 +14,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 import QuestionBuilder from './QuestionBuilder';
-import { Center, Exam, ExamQuestionData, SchoolClass, Subject } from './types';
+import { Center, Exam, ExamQuestionData, ExamSectionData, SchoolClass, Subject } from './types';
 
 interface Props {
     exam: Exam;
@@ -53,10 +53,33 @@ export default function ExamEdit({
     const [endTime, setEndTime] = useState(exam.end_time ? String(exam.end_time).substring(0, 5) : '');
     const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>(exam.status || 'draft');
 
-    // Questions State
-    const [questions, setQuestions] = useState<ExamQuestionData[]>(
-        exam.questions && exam.questions.length > 0 ? exam.questions : [],
-    );
+    // Sections State (Initialize from exam.sections or fallback to grouping exam.questions)
+    const [sections, setSections] = useState<ExamSectionData[]>(() => {
+        if (exam.sections && exam.sections.length > 0) {
+            return exam.sections;
+        }
+
+        // Fallback backward-compatible: Group raw questions by skill into sections
+        if (exam.questions && exam.questions.length > 0) {
+            const skillMap: Record<string, ExamQuestionData[]> = {};
+            exam.questions.forEach((q) => {
+                const sk = q.skill || 'reading';
+                if (!skillMap[sk]) skillMap[sk] = [];
+                skillMap[sk].push(q);
+            });
+
+            return Object.entries(skillMap).map(([sk, qs], idx) => ({
+                tempId: `sec_legacy_${idx}`,
+                title: `Phần ${idx + 1}: ${sk === 'listening' ? 'Kỹ Năng Nghe' : sk === 'writing' ? 'Kỹ Năng Viết' : sk === 'speaking' ? 'Kỹ Năng Nói' : 'Kỹ Năng Đọc'}`,
+                description: null,
+                skill: sk as any,
+                order_index: idx,
+                questions: qs,
+            }));
+        }
+
+        return [];
+    });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,6 +91,9 @@ export default function ExamEdit({
     const filteredSubjects = centerId
         ? subjects.filter((s) => String(s.center_id) === String(centerId))
         : subjects;
+
+    // Total questions count across sections
+    const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,10 +119,15 @@ export default function ExamEdit({
                 start_time: startTime || null,
                 end_time: endTime || null,
                 status,
-                questions: questions.map((q, idx) => ({
-                    ...q,
-                    order_index: idx,
-                    score: Number(q.score) || 1,
+                sections: sections.map((sec, sIdx) => ({
+                    ...sec,
+                    order_index: sIdx,
+                    questions: (sec.questions || []).map((q, qIdx) => ({
+                        ...q,
+                        skill: sec.skill,
+                        order_index: qIdx,
+                        score: Number(q.score) || 1,
+                    })),
                 })),
             },
             {
@@ -455,8 +486,8 @@ export default function ExamEdit({
 
                     {/* Card 2: Interactive Question Builder */}
                     <QuestionBuilder
-                        questions={questions}
-                        onChangeQuestions={setQuestions}
+                        sections={sections}
+                        onChangeSections={setSections}
                         examMaxScore={maxScore}
                     />
 
@@ -478,7 +509,7 @@ export default function ExamEdit({
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            Cập Nhật Bài Kiểm Tra ({questions.length} câu hỏi)
+                            Cập Nhật Bài Kiểm Tra ({sections.length} phần thi • {totalQuestionsCount} câu hỏi)
                         </Button>
                     </div>
                 </form>
