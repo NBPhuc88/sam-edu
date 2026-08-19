@@ -171,19 +171,18 @@ export default function ExamIndex({
     };
 
     return (
-        <AppLayout title="Quản Lý Bài Kiểm Tra & Kỳ Thi - Hệ Thống Giáo Dục Sam">
-            <Head title="Quản Lý Bài Kiểm Tra" />
+        <AppLayout title="Kho Đề Thi - Hệ Thống Giáo Dục Sam">
+            <Head title="Kho Đề Thi" />
 
             <div className="space-y-6">
                 {/* Top Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-gray-900">
-                            <FileCheck className="h-7 w-7 text-emerald-600" />
-                            Quản Lý Bài Kiểm Tra & Kỳ Thi
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            Kho Đề Thi & Quản Lý Đề Mẫu
                         </h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Quản lý ngân hàng đề thi, bài kiểm tra định kỳ, phân loại 10 dạng câu hỏi và thiết lập cấu hình thi trực tuyến.
+                        <p className="text-sm text-gray-500">
+                            Quản lý ngân hàng đề thi mẫu của Trung tâm, cấu hình câu hỏi trắc nghiệm tương tác và hỗ trợ gán đề cho các lớp học.
                         </p>
                     </div>
 
@@ -193,7 +192,7 @@ export default function ExamIndex({
                             size="md"
                             icon={<Plus className="h-4.5 w-4.5" />}
                         >
-                            Tạo Bài Kiểm Tra Mới
+                            Tạo Đề Thi Mới
                         </Button>
                     </Link>
                 </div>
@@ -205,7 +204,7 @@ export default function ExamIndex({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        Tổng Số Bài Thi
+                                        Tổng Số Đề Thi
                                     </p>
                                     <p className="mt-1.5 text-2xl font-extrabold text-gray-900">
                                         {stats.total}
@@ -260,74 +259,53 @@ export default function ExamIndex({
                                     </p>
                                 </div>
                                 <div className="rounded-xl bg-purple-50 p-3 text-purple-600">
-                                    <FileText className="h-6 w-6" />
+                                    <HelpCircle className="h-6 w-6" />
                                 </div>
                             </div>
                         </Card>
                     </div>
                 )}
 
-                {/* Filter Box */}
+                {/* Filter Card */}
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">
                     <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
-                            {/* Search Keyword */}
-                            <div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                            {/* Search */}
+                            <div className="lg:col-span-2">
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Tìm kiếm
+                                    Tìm kiếm đề thi
                                 </label>
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Tên bài thi, mã đề thi..."
+                                    placeholder="Tìm theo tên đề thi, mã đề..."
                                     icon={<Search className="h-4 w-4 text-gray-400" />}
-                                    className="!py-2 !text-sm"
                                 />
                             </div>
 
                             {/* Center Filter (Super Admin only) */}
-                            {isSuperAdmin && centers.length > 0 && (
+                            {isSuperAdmin && (
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                        Trung Tâm Đào Tạo
+                                        Trung Tâm
                                     </label>
                                     <select
                                         value={selectedCenterId}
                                         onChange={(e) => {
                                             setSelectedCenterId(e.target.value);
-                                            setSelectedClassId('');
                                             setSelectedSubjectId('');
                                         }}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
                                         <option value="">-- Tất cả Trung Tâm --</option>
-                                        {centers.map((center) => (
-                                            <option key={center.id} value={center.id}>
-                                                {center.name} ({center.code})
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
                                             </option>
                                         ))}
                                     </select>
                                 </div>
                             )}
-
-                            {/* Class Filter */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Lớp Học
-                                </label>
-                                <select
-                                    value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="">-- Tất cả Lớp Học --</option>
-                                    {filteredClasses.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
 
                             {/* Subject Filter */}
                             <div>
@@ -351,37 +329,19 @@ export default function ExamIndex({
                             {/* Exam Type Filter */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Loại Bài Thi
+                                    Loại Đề Thi
                                 </label>
                                 <select
                                     value={selectedExamType}
                                     onChange={(e) => setSelectedExamType(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả loại bài thi</option>
+                                    <option value="all">Tất cả loại đề</option>
                                     <option value="general">Chung (General)</option>
                                     <option value="ielts">IELTS Mock Test</option>
                                     <option value="hsk">HSK Đề Thi Mẫu</option>
                                     <option value="toeic">TOEIC Practice Test</option>
                                     <option value="custom">Tuỳ Chỉnh</option>
-                                </select>
-                            </div>
-
-                            {/* Status Filter */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Trạng thái
-                                </label>
-                                <select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả trạng thái</option>
-                                    <option value="published">Đã công bố (Published)</option>
-                                    <option value="draft">Bản nháp (Draft)</option>
-                                    <option value="completed">Đã kết thúc (Completed)</option>
-                                    <option value="cancelled">Đã hủy (Cancelled)</option>
                                 </select>
                             </div>
                         </div>
@@ -415,12 +375,11 @@ export default function ExamIndex({
                                 <tr>
                                     <th className="w-12 text-center">STT</th>
                                     <th>Mã Đề Thi</th>
-                                    <th>Tên Bài Kiểm Tra</th>
-                                    <th>Trung Tâm / Lớp / Môn</th>
-                                    <th>Loại Bài Thi</th>
+                                    <th>Tên Đề Thi</th>
+                                    <th>Trung Tâm / Môn Học</th>
+                                    <th>Loại Đề Thi</th>
                                     <th>Thời Lượng & Số Câu</th>
                                     <th>Điểm Tối Đa</th>
-                                    <th>Thời Gian Thi</th>
                                     <th>Trạng Thái</th>
                                     <th className="text-right">Thao Tác</th>
                                 </tr>
@@ -428,7 +387,7 @@ export default function ExamIndex({
                             <tbody>
                                 {exams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} className="py-12 text-center text-gray-500">
+                                        <td colSpan={9} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -519,23 +478,6 @@ export default function ExamIndex({
                                                         </span>
                                                     )}
                                                 </div>
-                                            </td>
-                                            <td>
-                                                {exam.exam_date ? (
-                                                    <div className="space-y-0.5 text-xs text-gray-700">
-                                                        <div className="flex items-center gap-1 font-medium">
-                                                            <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                                                            <span>{exam.exam_date}</span>
-                                                        </div>
-                                                        {exam.start_time && (
-                                                            <span className="text-2xs text-gray-500 block">
-                                                                {exam.start_time.substring(0, 5)} {exam.end_time ? `- ${exam.end_time.substring(0, 5)}` : ''}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400 italic">Không giới hạn</span>
-                                                )}
                                             </td>
                                             <td>
                                                 {getStatusBadge(exam.status)}

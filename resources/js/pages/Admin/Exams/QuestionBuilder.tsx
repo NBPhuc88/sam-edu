@@ -34,6 +34,7 @@ import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
 import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
 import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
 import MatchingEditor from './QuestionEditors/MatchingEditor';
+import MatchingImageEditor from './QuestionEditors/MatchingImageEditor';
 import OrderingEditor from './QuestionEditors/OrderingEditor';
 import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
 import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
@@ -104,11 +105,19 @@ export default function QuestionBuilder({
         setIsAddSectionModalOpen(true);
     };
 
-    const handleConfirmAddSection = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleConfirmAddSection = (e?: React.FormEvent | React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (!newSectionTitle.trim()) {
+            return;
+        }
+
         const nextIndex = sections.length;
+        const tempId = `sec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const newSection: ExamSectionData = {
-            tempId: `sec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tempId,
             title: newSectionTitle.trim() || `Phần ${nextIndex + 1}`,
             description: newSectionDescription.trim() || null,
             skill: newSectionSkill,
@@ -118,8 +127,16 @@ export default function QuestionBuilder({
 
         const updated = [...sections, newSection];
         onChangeSections(updated);
-        setExpandedSectionIndexes([...expandedSectionIndexes, nextIndex]);
+        setExpandedSectionIndexes((prev) => [...prev, nextIndex]);
         setIsAddSectionModalOpen(false);
+
+        // Scroll gently to the newly created section
+        setTimeout(() => {
+            const el = document.getElementById(`section_block_${tempId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 150);
     };
 
     const handleUpdateSection = (sectionIndex: number, fields: Partial<ExamSectionData>) => {
@@ -342,6 +359,34 @@ export default function QuestionBuilder({
                         { id: 'R3', text: 'iii. Tiêu đề mục 3' },
                     ],
                 };
+            case 'matching_image':
+                return {
+                    sentences: [
+                        { id: 'S1', text: 'The cat is sleeping under the tree.' },
+                        { id: 'S2', text: 'A boy is riding a bicycle in the park.' },
+                        { id: 'S3', text: 'They are having a picnic near the lake.' },
+                    ],
+                    images: [
+                        { id: 'IMG_A', image_url: '', label: 'Hình A' },
+                        { id: 'IMG_B', image_url: '', label: 'Hình B' },
+                        { id: 'IMG_C', image_url: '', label: 'Hình C' },
+                        { id: 'IMG_D', image_url: '', label: 'Hình D (tùy chọn thừa)' },
+                    ],
+                };
+            case 'matching_sentences':
+                return {
+                    left_items: [
+                        { id: 'L1', label: '1. Although it was raining heavily,' },
+                        { id: 'L2', label: '2. Because he studied very hard,' },
+                        { id: 'L3', label: '3. If you practice English every day,' },
+                    ],
+                    right_items: [
+                        { id: 'R1', text: 'A. they still decided to go camping.' },
+                        { id: 'R2', text: 'B. he passed the final exam with high scores.' },
+                        { id: 'R3', text: 'C. your speaking skills will improve quickly.' },
+                        { id: 'R4', text: 'D. she didn\'t attend the meeting.' },
+                    ],
+                };
             case 'ordering':
                 return [
                     { id: 't1', text: 'Mẩu từ 1' },
@@ -384,6 +429,10 @@ export default function QuestionBuilder({
                     blank_1: { accepted_answers: [''], case_sensitive: false },
                 };
             case 'matching':
+                return { L1: 'R1', L2: 'R2', L3: 'R3' };
+            case 'matching_image':
+                return { S1: 'IMG_A', S2: 'IMG_B', S3: 'IMG_C' };
+            case 'matching_sentences':
                 return { L1: 'R1', L2: 'R2', L3: 'R3' };
             case 'ordering':
                 return ['t1', 't2', 't3'];
@@ -433,6 +482,10 @@ export default function QuestionBuilder({
                 return <FileText className="h-4 w-4 text-amber-600" />;
             case 'matching':
                 return <GitMerge className="h-4 w-4 text-purple-600" />;
+            case 'matching_image':
+                return <ImageIcon className="h-4 w-4 text-teal-600" />;
+            case 'matching_sentences':
+                return <GitMerge className="h-4 w-4 text-violet-600" />;
             case 'ordering':
                 return <ArrowUpDown className="h-4 w-4 text-cyan-600" />;
             case 'diagram_labelling':
@@ -573,7 +626,8 @@ export default function QuestionBuilder({
                         return (
                             <div
                                 key={section.tempId || section.id || secIdx}
-                                className={`rounded-2xl border-2 ${secConfig.border} overflow-hidden shadow-xs`}
+                                id={`section_block_${section.tempId || section.id || secIdx}`}
+                                className={`rounded-2xl border-2 ${secConfig.border} overflow-hidden shadow-xs scroll-mt-6`}
                             >
                                 {/* ── Section Header Bar ── */}
                                 <div
@@ -667,18 +721,22 @@ export default function QuestionBuilder({
 
                                                 <div>
                                                     <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700">
-                                                        Kỹ Năng:
+                                                        Kỹ Năng Phần Thi:
                                                     </label>
-                                                    <select
-                                                        value={section.skill}
-                                                        onChange={(e) => handleUpdateSection(secIdx, { skill: e.target.value as ExamSkill })}
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-bold text-gray-800 shadow-2xs"
-                                                    >
-                                                        <option value="reading">📖 Đọc (Reading)</option>
-                                                        <option value="listening">🎧 Nghe (Listening)</option>
-                                                        <option value="writing">✍️ Viết (Writing)</option>
-                                                        <option value="speaking">🗣️ Nói (Speaking)</option>
-                                                    </select>
+                                                    <div className="flex items-center gap-2 pt-0.5">
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
+                                                            section.skill === 'listening' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                            section.skill === 'writing' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                                            section.skill === 'speaking' ? 'bg-pink-100 text-pink-800 border border-pink-200' :
+                                                            'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                        }`}>
+                                                            {secConfig.icon}
+                                                            {secConfig.name}
+                                                        </span>
+                                                        <span className="text-3xs text-gray-400 font-medium" title="Kỹ năng đã cố định cho phần này. Để đổi kỹ năng, vui lòng xóa và thêm phần mới.">
+                                                            (Cố định)
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1003,6 +1061,24 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
+                                                                        {q.question_type === 'matching_image' && (
+                                                                            <MatchingImageEditor
+                                                                                options={q.options || { sentences: [], images: [] }}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
+                                                                        {q.question_type === 'matching_sentences' && (
+                                                                            <MatchingEditor
+                                                                                options={q.options || { left_items: [], right_items: [] }}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                            />
+                                                                        )}
+
                                                                         {q.question_type === 'ordering' && (
                                                                             <OrderingEditor
                                                                                 options={q.options || []}
@@ -1111,7 +1187,7 @@ export default function QuestionBuilder({
                 title="Thêm Phần Thi Mới (Section)"
                 maxWidth="lg"
             >
-                <form onSubmit={handleConfirmAddSection} className="space-y-4">
+                <div className="space-y-4">
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
                             1. Chọn Kỹ Năng Của Phần Này (*)
@@ -1192,15 +1268,16 @@ export default function QuestionBuilder({
                             Hủy
                         </Button>
                         <Button
-                            type="submit"
+                            type="button"
                             variant="success"
                             size="md"
                             icon={<Plus className="h-4 w-4" />}
+                            onClick={() => handleConfirmAddSection()}
                         >
                             Tạo Phần Thi
                         </Button>
                     </div>
-                </form>
+                </div>
             </Modal>
 
             {/* --- Modal 2: Add Question Modal for a Specific Section --- */}

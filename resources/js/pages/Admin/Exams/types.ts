@@ -6,6 +6,8 @@ export type QuestionType =
     | 'true_false_not_given'
     | 'fill_in_blank'
     | 'matching'
+    | 'matching_image'
+    | 'matching_sentences'
     | 'ordering'
     | 'diagram_labelling'
     | 'find_mistake'
@@ -41,13 +43,14 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'Headphones',
         color: 'blue',
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-        description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, gán nhãn sơ đồ',
+        description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, gán nhãn sơ đồ, ghép câu với hình',
         supportedQuestionTypes: [
             'single_choice',
             'multiple_choice',
             'true_false_not_given',
             'fill_in_blank',
             'matching',
+            'matching_image',
             'diagram_labelling',
         ],
     },
@@ -58,12 +61,14 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'BookOpen',
         color: 'emerald',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề đoạn văn, tìm lỗi sai',
+        description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề, ghép câu với hình, ghép vế câu, tìm lỗi sai',
         supportedQuestionTypes: [
             'single_choice',
             'multiple_choice',
             'true_false_not_given',
             'matching',
+            'matching_image',
+            'matching_sentences',
             'fill_in_blank',
             'ordering',
             'find_mistake',
@@ -76,10 +81,11 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'PenTool',
         color: 'amber',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-        description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, điền từ hoặc viết lại câu',
+        description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, ghép câu, điền từ hoặc viết lại câu',
         supportedQuestionTypes: [
             'essay',
             'ordering',
+            'matching_sentences',
             'fill_in_blank',
             'find_mistake',
         ],
@@ -138,11 +144,29 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
     {
         type: 'matching',
         label: 'Nối cặp / Ghép tiêu đề',
-        description: 'Ghép nối thông tin giữa 2 cột (Ghép tiêu đề, ghép tranh, nối từ)',
+        description: 'Ghép nối thông tin giữa 2 cột (Ghép tiêu đề đoạn văn, nối từ vựng)',
         badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
         iconName: 'GitMerge',
         autoGraded: true,
         skills: ['listening', 'reading'],
+    },
+    {
+        type: 'matching_image',
+        label: 'Ghép câu với hình ảnh',
+        description: 'Ghép các câu mô tả (A, B, C...) tương ứng với các bức hình minh họa (1, 2, 3...)',
+        badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
+        iconName: 'ImageIcon',
+        autoGraded: true,
+        skills: ['reading', 'listening'],
+    },
+    {
+        type: 'matching_sentences',
+        label: 'Ghép câu với nhau / Ghép vế câu',
+        description: 'Ghép nửa đầu của câu (1, 2, 3...) với nửa sau phù hợp (A, B, C...) để tạo câu hoàn chỉnh',
+        badgeColor: 'bg-violet-50 text-violet-700 border-violet-200',
+        iconName: 'GitMerge',
+        autoGraded: true,
+        skills: ['reading', 'writing'],
     },
     {
         type: 'ordering',
