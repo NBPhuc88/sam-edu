@@ -91,6 +91,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Attendance\AttendanceServiceInterface::class, \App\Services\Attendance\AttendanceService::class);
         $this->app->bind(\App\Services\Session\ClassSessionServiceInterface::class, \App\Services\Session\ClassSessionService::class);
         $this->app->bind(\App\Services\Subscription\SubscriptionPlanServiceInterface::class, \App\Services\Subscription\SubscriptionPlanService::class);
+        $this->app->bind(\App\Services\Exam\ExamServiceInterface::class, \App\Services\Exam\ExamService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
@@ -113,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Subscription\SubscriptionPlanRepositoryInterface::class, \App\Repositories\Subscription\SubscriptionPlanRepository::class);
         $this->app->bind(\App\Repositories\Subscription\CenterSubscriptionRepositoryInterface::class, \App\Repositories\Subscription\CenterSubscriptionRepository::class);
         $this->app->bind(\App\Repositories\Exam\ExamResultRepositoryInterface::class, \App\Repositories\Exam\ExamResultRepository::class);
+        $this->app->bind(\App\Repositories\Exam\ExamRepositoryInterface::class, \App\Repositories\Exam\ExamRepository::class);
     }
 
     /**

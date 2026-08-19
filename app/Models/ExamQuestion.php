@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ExamQuestion extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'exam_id',
+        'code',
+        'question_type',
+        'content',
+        'image_url',
+        'audio_url',
+        'score',
+        'options',
+        'correct_answer',
+        'explanation',
+        'metadata',
+        'order_index',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'score'          => 'decimal:2',
+            'options'        => 'array',
+            'correct_answer' => 'array',
+            'metadata'       => 'array',
+            'order_index'    => 'integer',
+        ];
+    }
+
+    /**
+     * @return BelongsTo<Exam, $this>
+     */
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(Exam::class);
+    }
+}
