@@ -136,8 +136,8 @@ export const Statistics: React.FC<any> = ({
                         </p>
                     </div>
 
-                    {/* Scope Filter Dropdown */}
-                    {allowedCenters && allowedCenters.length > 0 && (
+                    {/* Scope Filter Dropdown (Super Admin only) */}
+                    {isSuperAdmin && allowedCenters && allowedCenters.length > 0 && (
                         <div className="flex items-center gap-2">
                             <Filter className="h-4.5 w-4.5 text-gray-500" />
                             <select

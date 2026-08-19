@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Calendar,
     Search,
@@ -132,6 +132,9 @@ export default function SessionIndex({
     rooms = [],
     filters,
 }: Props) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
@@ -308,7 +311,7 @@ return '';
                             </div>
 
                             {/* Center filter */}
-                            {centers.length > 1 && (
+                            {isSuperAdmin && centers.length > 1 && (
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Trung tâm

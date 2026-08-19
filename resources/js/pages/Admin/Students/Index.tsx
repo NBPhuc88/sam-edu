@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Download,
     Upload,
@@ -79,6 +79,9 @@ interface Props {
 }
 
 export default function StudentIndex({ students, centers = [], classes = [], filters }: Props) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
@@ -315,7 +318,7 @@ return;
                                 />
                             </div>
 
-                            {centers && centers.length > 1 && (
+                            {isSuperAdmin && centers && centers.length > 1 && (
                                 <div>
                                     <select
                                         value={selectedCenterId}

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     DoorOpen,
     Plus,
@@ -79,6 +79,9 @@ interface Props {
 }
 
 export default function RoomIndex({ rooms, centers = [], stats, filters }: Props) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
@@ -281,7 +284,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                             </div>
 
                             {/* Center Filter */}
-                            {centers.length > 0 && (
+                            {isSuperAdmin && centers.length > 0 && (
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Trung Tâm Đào Tạo

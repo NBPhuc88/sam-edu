@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -32,6 +32,9 @@ interface EditProps {
 }
 
 export default function SubjectEdit({ subject, centers = [], errors = {} }: EditProps) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
     const [centerId, setCenterId] = useState<string>(String(subject.center_id));
     const [name, setName] = useState<string>(subject.name || '');
     const code = subject.code || '';
@@ -98,34 +101,36 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection */}
-                            <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={centerId}
-                                    onChange={(e) => setCenterId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                    disabled={centers.length === 0}
-                                >
-                                    <option value="">-- Chọn Trung tâm --</option>
-                                    {centers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {centers.length === 0 && (
-                                    <p className="mt-1.5 text-sm text-amber-600">
-                                        Không tìm thấy trung tâm hoạt động hoặc tài khoản của bạn chưa được phân quyền quản lý trung tâm nào.
-                                    </p>
-                                )}
-                                {errors.center_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                )}
-                            </div>
+                            {/* Center Selection (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={centerId}
+                                        onChange={(e) => setCenterId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                        disabled={centers.length === 0}
+                                    >
+                                        <option value="">-- Chọn Trung tâm --</option>
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {centers.length === 0 && (
+                                        <p className="mt-1.5 text-sm text-amber-600">
+                                            Không tìm thấy trung tâm hoạt động hoặc tài khoản của bạn chưa được phân quyền quản lý trung tâm nào.
+                                        </p>
+                                    )}
+                                    {errors.center_id && (
+                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Subject Name */}
                             <div>

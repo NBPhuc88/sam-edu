@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, User, HeartHandshake, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -18,7 +18,13 @@ interface CreateProps {
 }
 
 export default function StudentCreate({ centers = [], errors = {} }: CreateProps) {
-    const [centerId, setCenterId] = useState<string>(centers[0]?.id ? String(centers[0].id) : '');
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const userCenterId = auth?.user?.center_id;
+
+    const [centerId, setCenterId] = useState<string>(
+        !isSuperAdmin && userCenterId ? String(userCenterId) : (centers[0]?.id ? String(centers[0].id) : '')
+    );
     const [fullName, setFullName] = useState<string>('');
     const [username, setUsername] = useState<string>('');
     const [email, setEmail] = useState<string>('');
@@ -115,28 +121,30 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                         </h2>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection */}
-                            <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={centerId}
-                                    onChange={(e) => setCenterId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Trung tâm --</option>
-                                    {centers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.center_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                )}
-                            </div>
+                            {/* Center Selection (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={centerId}
+                                        onChange={(e) => setCenterId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                    >
+                                        <option value="">-- Chọn Trung tâm --</option>
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.center_id && (
+                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Full Name */}
                             <div>

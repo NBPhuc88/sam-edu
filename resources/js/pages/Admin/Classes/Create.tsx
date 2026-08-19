@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -39,7 +39,13 @@ interface SubjectTeacherRow {
 }
 
 export default function ClassCreate({ centers = [], subjects = [], teachers = [], errors = {} }: CreateProps) {
-    const [centerId, setCenterId] = useState<string>(centers[0]?.id ? String(centers[0].id) : '');
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const userCenterId = auth?.user?.center_id;
+
+    const [centerId, setCenterId] = useState<string>(
+        !isSuperAdmin && userCenterId ? String(userCenterId) : (centers[0]?.id ? String(centers[0].id) : '')
+    );
     const [name, setName] = useState<string>('');
     const [maxStudents, setMaxStudents] = useState<string>('30');
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -59,8 +65,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         const centerSubjects = subjects.filter((s) => !centerId || String(s.center_id) === String(centerId));
 
         if (centerSubjects.length > 0) {
-return centerSubjects;
-}
+            return centerSubjects;
+        }
 
         return subjects; // Fallback to all subjects if none match this center
     }, [centerId, subjects]);
@@ -69,8 +75,8 @@ return centerSubjects;
         const centerTeachers = teachers.filter((t) => !centerId || String(t.center_id) === String(centerId));
 
         if (centerTeachers.length > 0) {
-return centerTeachers;
-}
+            return centerTeachers;
+        }
 
         return teachers; // Fallback to all teachers if none match this center
     }, [centerId, teachers]);
@@ -155,32 +161,34 @@ return centerTeachers;
                         </h2>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection */}
-                            <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={centerId}
-                                    onChange={(e) => {
-                                        setCenterId(e.target.value);
-                                        // Reset subject rows when center changes
-                                        setSubjectRows([{ subject_id: '', teacher_id: '' }]);
-                                    }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Trung tâm --</option>
-                                    {centers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.center_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                )}
-                            </div>
+                            {/* Center Selection (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={centerId}
+                                        onChange={(e) => {
+                                            setCenterId(e.target.value);
+                                            // Reset subject rows when center changes
+                                            setSubjectRows([{ subject_id: '', teacher_id: '' }]);
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                    >
+                                        <option value="">-- Chọn Trung tâm --</option>
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.center_id && (
+                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Class Name */}
                             <div>

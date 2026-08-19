@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Save,
@@ -47,8 +47,12 @@ export const Create: React.FC<CreateProps> = ({
     selectedCenterId,
     errors = {},
 }) => {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const userCenterId = auth?.user?.center_id;
+
     const [centerId, setCenterId] = useState<string>(
-        selectedCenterId ? String(selectedCenterId) : (centers[0]?.id ? String(centers[0].id) : ''),
+        !isSuperAdmin && userCenterId ? String(userCenterId) : (selectedCenterId ? String(selectedCenterId) : (centers[0]?.id ? String(centers[0].id) : ''))
     );
     const [classId, setClassId] = useState<string>('');
     const [studentId, setStudentId] = useState<string>('');
@@ -151,28 +155,30 @@ export const Create: React.FC<CreateProps> = ({
                         </h2>
 
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 items-start">
-                            {/* Center Selection */}
-                            <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                                    Trung Tâm Đào Tạo (*)
-                                </label>
-                                <select
-                                    value={centerId}
-                                    onChange={(e) => handleCenterChange(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Trung tâm --</option>
-                                    {centers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.center_id && (
-                                    <p className="mt-1.5 text-xs text-red-600">{errors.center_id}</p>
-                                )}
-                            </div>
+                            {/* Center Selection (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                        Trung Tâm Đào Tạo (*)
+                                    </label>
+                                    <select
+                                        value={centerId}
+                                        onChange={(e) => handleCenterChange(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                    >
+                                        <option value="">-- Chọn Trung tâm --</option>
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.center_id && (
+                                        <p className="mt-1.5 text-xs text-red-600">{errors.center_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Class Selection */}
                             <div>

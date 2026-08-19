@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Save,
@@ -57,6 +57,9 @@ const QUICK_PRESETS = [
 ];
 
 export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
     const [centerId, setCenterId] = useState<string>(String(room.center_id));
     const [name, setName] = useState(room.name || '');
     const [code, setCode] = useState(room.code || '');
@@ -181,27 +184,29 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection */}
-                            <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={centerId}
-                                    onChange={(e) => setCenterId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    {centers.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.center_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                )}
-                            </div>
+                            {/* Center Selection (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div className="md:col-span-2">
+                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={centerId}
+                                        onChange={(e) => setCenterId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                    >
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.center_id && (
+                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Room Name */}
                             <div>
