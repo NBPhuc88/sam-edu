@@ -65,7 +65,8 @@ const superAdminNav: NavItem[] = [
         label: 'Thi & Kiểm Tra',
         icon: FileCheck,
         children: [
-            { label: 'Kỳ Thi', path: '/exams' },
+            { label: 'Kho Đề Thi', path: '/exams' },
+            { label: 'Kỳ Thi Lớp Học', path: '/class-exams' },
             { label: 'Kết Quả Thi', path: '/exam-results' },
             { label: 'Lịch Sử Kết Quả', path: '/exam-result-histories' },
         ],
@@ -124,7 +125,8 @@ const adminNav: NavItem[] = [
         label: 'Thi & Kiểm Tra',
         icon: FileCheck,
         children: [
-            { label: 'Kỳ Thi', path: '/exams' },
+            { label: 'Kho Đề Thi', path: '/exams' },
+            { label: 'Kỳ Thi Lớp Học', path: '/class-exams' },
             { label: 'Kết Quả Thi', path: '/exam-results' },
         ],
     },

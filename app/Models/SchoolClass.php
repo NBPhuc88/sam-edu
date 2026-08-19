@@ -78,4 +78,12 @@ class SchoolClass extends Model
     {
         return $this->hasMany(StudentTuition::class, 'class_id');
     }
+
+    /**
+     * @return HasMany<ClassExam, $this>
+     */
+    public function classExams(): HasMany
+    {
+        return $this->hasMany(ClassExam::class, 'class_id');
+    }
 }

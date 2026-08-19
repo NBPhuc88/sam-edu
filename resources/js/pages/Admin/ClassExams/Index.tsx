@@ -1,0 +1,543 @@
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    Calendar,
+    Clock,
+    Award,
+    FileCheck,
+    Plus,
+    Search,
+    Edit2,
+    Trash2,
+    Filter,
+    Users,
+    BookOpen,
+    PlayCircle,
+    CheckCircle2,
+    AlertCircle,
+    Eye,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import AppLayout from '@/layouts/AppLayout';
+import AssignExamModal from './AssignExamModal';
+import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
+
+interface Props {
+    classExams: PaginatedData<ClassExam>;
+    centers: Center[];
+    classes: SchoolClass[];
+    exams: Exam[];
+    stats?: {
+        total: number;
+        scheduled: number;
+        ongoing: number;
+        completed: number;
+    };
+    filters: {
+        search?: string;
+        center_id?: number | null;
+        class_id?: number | null;
+        exam_id?: number | null;
+        status?: string;
+    };
+}
+
+export default function ClassExamIndex({
+    classExams,
+    centers = [],
+    classes = [],
+    exams = [],
+    stats,
+    filters,
+}: Props) {
+    const { auth } = usePage<any>().props;
+    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+
+    const [search, setSearch] = useState(filters.search || '');
+    const [selectedCenterId, setSelectedCenterId] = useState<string>(
+        filters.center_id ? String(filters.center_id) : '',
+    );
+    const [selectedClassId, setSelectedClassId] = useState<string>(
+        filters.class_id ? String(filters.class_id) : '',
+    );
+    const [selectedStatus, setSelectedStatus] = useState<string>(
+        filters.status || 'all',
+    );
+
+    // Modal state
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [editingClassExam, setEditingClassExam] = useState<ClassExam | null>(null);
+
+    // Delete dialog state
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletingExam, setDeletingExam] = useState<ClassExam | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const filteredClasses = selectedCenterId
+        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        : classes;
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(
+            '/class-exams',
+            {
+                search: search || undefined,
+                center_id: selectedCenterId || undefined,
+                class_id: selectedClassId || undefined,
+                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+            },
+            { preserveState: true },
+        );
+    };
+
+    const handleResetFilter = () => {
+        setSearch('');
+        setSelectedCenterId('');
+        setSelectedClassId('');
+        setSelectedStatus('all');
+        router.get('/class-exams', {}, { preserveState: true });
+    };
+
+    const openCreateModal = () => {
+        setEditingClassExam(null);
+        setAssignModalOpen(true);
+    };
+
+    const openEditModal = (item: ClassExam) => {
+        setEditingClassExam(item);
+        setAssignModalOpen(true);
+    };
+
+    const openDeleteDialog = (item: ClassExam) => {
+        setDeletingExam(item);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (!deletingExam) return;
+        setIsDeleting(true);
+        router.delete(`/class-exams/${deletingExam.id}`, {
+            onFinish: () => {
+                setIsDeleting(false);
+                setDeleteDialogOpen(false);
+                setDeletingExam(null);
+            },
+        });
+    };
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'scheduled':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+                        <Calendar className="h-3 w-3" /> Đã lên lịch
+                    </span>
+                );
+            case 'ongoing':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
+                        <PlayCircle className="h-3 w-3" /> Đang diễn ra
+                    </span>
+                );
+            case 'completed':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
+                        <CheckCircle2 className="h-3 w-3" /> Đã kết thúc
+                    </span>
+                );
+            case 'cancelled':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
+                        <AlertCircle className="h-3 w-3" /> Đã hủy
+                    </span>
+                );
+            default:
+                return <Badge>{status}</Badge>;
+        }
+    };
+
+    return (
+        <AppLayout title="Quản Lý Kỳ Thi Lớp Học - Hệ Thống Giáo Dục Sam">
+            <Head title="Quản Lý Kỳ Thi Lớp Học" />
+
+            <div className="space-y-6">
+                {/* Top Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            Quản Lý Kỳ Thi Lớp Học
+                        </h1>
+                        <p className="text-sm text-gray-500">
+                            Gán đề thi từ Kho đề thi mẫu cho các lớp học, lên lịch thi và theo dõi tiến độ thi.
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Link href="/exams">
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                icon={<BookOpen className="h-4 w-4" />}
+                            >
+                                Đến Kho Đề Thi
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="success"
+                            size="md"
+                            icon={<Plus className="h-4.5 w-4.5" />}
+                            onClick={openCreateModal}
+                        >
+                            Gán Đề Thi Cho Lớp
+                        </Button>
+                    </div>
+                </div>
+
+                {/* KPI Stat Cards */}
+                {stats && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        Tổng Số Kỳ Thi
+                                    </p>
+                                    <p className="mt-1.5 text-2xl font-extrabold text-gray-900">
+                                        {stats.total}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+                                    <FileCheck className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        Đã Lên Lịch
+                                    </p>
+                                    <p className="mt-1.5 text-2xl font-extrabold text-blue-600">
+                                        {stats.scheduled}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+                                    <Calendar className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        Đang Diễn Ra
+                                    </p>
+                                    <p className="mt-1.5 text-2xl font-extrabold text-emerald-600">
+                                        {stats.ongoing}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
+                                    <PlayCircle className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        Đã Hoàn Thành
+                                    </p>
+                                    <p className="mt-1.5 text-2xl font-extrabold text-purple-600">
+                                        {stats.completed}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-purple-50 p-3 text-purple-600">
+                                    <CheckCircle2 className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                )}
+
+                {/* Filter Card */}
+                <Card className="border-gray-200 bg-white p-5 shadow-xs">
+                    <form onSubmit={handleSearch} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            {/* Search */}
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Tìm kiếm kỳ thi
+                                </label>
+                                <Input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Tên bài thi, lớp học, mã đề..."
+                                    icon={<Search className="h-4 w-4 text-gray-400" />}
+                                />
+                            </div>
+
+                            {/* Center Filter (Super Admin only) */}
+                            {isSuperAdmin && (
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                        Trung Tâm
+                                    </label>
+                                    <select
+                                        value={selectedCenterId}
+                                        onChange={(e) => {
+                                            setSelectedCenterId(e.target.value);
+                                            setSelectedClassId('');
+                                        }}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="">-- Tất cả Trung Tâm --</option>
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Class Filter */}
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Lớp Học
+                                </label>
+                                <select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="">-- Tất cả Lớp Học --</option>
+                                    {filteredClasses.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} ({c.code})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Status Filter */}
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                    Trạng thái
+                                </label>
+                                <select
+                                    value={selectedStatus}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="scheduled">Đã lên lịch</option>
+                                    <option value="ongoing">Đang diễn ra</option>
+                                    <option value="completed">Đã kết thúc</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2.5 border-t border-gray-100 pt-4">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleResetFilter}
+                            >
+                                Đặt Lại
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="sm"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
+                                Áp Dụng Lọc
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+
+                {/* Data Table */}
+                <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
+                    <div className="overflow-x-auto">
+                        <table className="ui-table">
+                            <thead>
+                                <tr>
+                                    <th className="w-12 text-center">STT</th>
+                                    <th>Bài Thi Của Lớp</th>
+                                    <th>Lớp Học</th>
+                                    <th>Đề Thi Gốc (Từ Kho)</th>
+                                    <th>Lịch Thi & Khung Giờ</th>
+                                    <th>Thời Lượng</th>
+                                    <th>Thang Điểm</th>
+                                    <th>Trạng Thái</th>
+                                    <th className="text-right">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {classExams.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="py-12 text-center text-gray-500">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <FileCheck className="h-10 w-10 text-gray-300" />
+                                                <p className="mt-3 font-semibold text-gray-700">
+                                                    Chưa có kỳ thi nào được gán cho lớp
+                                                </p>
+                                                <p className="mt-1 text-xs text-gray-400">
+                                                    Hãy chọn đề thi từ Kho đề thi mẫu và gán vào lớp học để lên lịch thi.
+                                                </p>
+                                                <div className="mt-4">
+                                                    <Button
+                                                        variant="success"
+                                                        size="sm"
+                                                        icon={<Plus className="h-4 w-4" />}
+                                                        onClick={openCreateModal}
+                                                    >
+                                                        Gán Đề Thi Ngay
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    classExams.data.map((item, index) => {
+                                        const rowNum = (classExams.current_page - 1) * classExams.per_page + index + 1;
+                                        const cls = item.schoolClass || item.school_class;
+                                        const ex = item.exam;
+
+                                        return (
+                                            <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                                                <td className="text-center font-mono text-xs font-semibold text-gray-500">
+                                                    {rowNum}
+                                                </td>
+                                                <td>
+                                                    <div className="font-bold text-gray-900 text-sm">
+                                                        {item.title}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-bold text-gray-800 text-xs flex items-center gap-1.5">
+                                                            <Users className="h-3.5 w-3.5 text-emerald-600" />
+                                                            {cls?.name || 'N/A'}
+                                                        </div>
+                                                        <div className="text-2xs text-gray-500">
+                                                            {cls?.center?.name || ''}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-semibold text-blue-900 text-xs flex items-center gap-1">
+                                                            <BookOpen className="h-3 w-3 text-blue-600" />
+                                                            {ex?.name || 'Đề thi không xác định'}
+                                                        </div>
+                                                        {ex?.subject && (
+                                                            <span className="text-3xs bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">
+                                                                {ex.subject.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="space-y-0.5 text-xs text-gray-700">
+                                                        <div className="flex items-center gap-1 font-medium">
+                                                            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                                            <span>{item.exam_date}</span>
+                                                        </div>
+                                                        {item.start_time && (
+                                                            <span className="text-2xs text-gray-500 flex items-center gap-1">
+                                                                <Clock className="h-3 w-3 text-gray-400" />
+                                                                {item.start_time.substring(0, 5)} {item.end_time ? `- ${item.end_time.substring(0, 5)}` : ''}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="font-semibold text-xs text-gray-800">
+                                                        {item.duration_minutes || ex?.duration_minutes || 45} phút
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
+                                                        <Award className="h-3.5 w-3.5 text-amber-500" />
+                                                        <span>{item.max_score}</span>
+                                                        {item.pass_score && (
+                                                            <span className="text-2xs font-normal text-gray-500">
+                                                                (Đạt: {item.pass_score})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {getStatusBadge(item.status)}
+                                                </td>
+                                                <td className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="edit"
+                                                            size="sm"
+                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                            onClick={() => openEditModal(item)}
+                                                            title="Sửa lịch thi"
+                                                        >
+                                                            Sửa
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="danger"
+                                                            size="sm"
+                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            onClick={() => openDeleteDialog(item)}
+                                                            title="Hủy kỳ thi"
+                                                        >
+                                                            Xóa
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            </div>
+
+            {/* Assign / Edit Exam Modal */}
+            <AssignExamModal
+                isOpen={assignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                centers={centers}
+                classes={classes}
+                exams={exams}
+                editingClassExam={editingClassExam}
+            />
+
+            {/* Delete Confirm Popup */}
+            <ConfirmDialog
+                isOpen={deleteDialogOpen}
+                title="Xác Nhận Hủy Kỳ Thi Của Lớp"
+                message={`Bạn có chắc chắn muốn hủy kỳ thi "${deletingExam?.title}" của lớp ${deletingExam?.schoolClass?.name || deletingExam?.school_class?.name}? Thao tác này không thể hoàn tác.`}
+                confirmLabel="Xóa Kỳ Thi"
+                cancelLabel="Giữ Lại"
+                variant="danger"
+                isLoading={isDeleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteDialogOpen(false)}
+            />
+        </AppLayout>
+    );
+}

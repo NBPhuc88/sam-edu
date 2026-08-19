@@ -14,6 +14,7 @@ import {
     HelpCircle,
     CheckCircle2,
     FileText,
+    Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -22,6 +23,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import AssignExamModal from '../ClassExams/AssignExamModal';
 import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
 
 interface Props {
@@ -60,9 +62,6 @@ export default function ExamIndex({
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
-    );
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
         filters.subject_id ? String(filters.subject_id) : '',
     );
@@ -81,6 +80,10 @@ export default function ExamIndex({
     // Quick View Questions Modal
     const [viewQuestionsModalOpen, setViewQuestionsModalOpen] = useState(false);
     const [selectedExamQuestions, setSelectedExamQuestions] = useState<Exam | null>(null);
+
+    // Assign Exam to Class Modal State
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [assigningExamId, setAssigningExamId] = useState<number | null>(null);
 
     // Filter classes and subjects by selected center
     const filteredClasses = selectedCenterId
@@ -484,6 +487,19 @@ export default function ExamIndex({
                                             </td>
                                             <td className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="success"
+                                                        size="sm"
+                                                        icon={<Users className="h-3.5 w-3.5" />}
+                                                        onClick={() => {
+                                                            setAssigningExamId(exam.id);
+                                                            setAssignModalOpen(true);
+                                                        }}
+                                                        title="Gán đề thi này cho một lớp học"
+                                                    >
+                                                        Gán Lớp
+                                                    </Button>
                                                     <Link href={`/exams/${exam.id}/edit`}>
                                                         <Button
                                                             variant="edit"
@@ -519,20 +535,20 @@ export default function ExamIndex({
                             <p className="text-xs text-gray-500">
                                 Hiển thị từ <span className="font-semibold text-gray-800">{exams.from || 0}</span> đến{' '}
                                 <span className="font-semibold text-gray-800">{exams.to || 0}</span> trong tổng số{' '}
-                                <span className="font-semibold text-gray-800">{exams.total}</span> bài kiểm tra
+                                <span className="font-semibold text-gray-800">{exams.total}</span> đề thi
                             </p>
                             <div className="flex items-center gap-1">
-                                {exams.links.map((link, i) => (
+                                {exams.links.map((link, idx) => (
                                     <Link
-                                        key={i}
+                                        key={idx}
                                         href={link.url || '#'}
                                         preserveState
-                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                                             link.active
-                                                ? 'bg-emerald-600 text-white shadow-xs'
+                                                ? 'bg-emerald-600 text-white'
                                                 : link.url
-                                                  ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                  : 'cursor-not-allowed text-gray-300'
+                                                ? 'text-gray-700 hover:bg-gray-100'
+                                                : 'text-gray-300 cursor-not-allowed'
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
@@ -547,15 +563,13 @@ export default function ExamIndex({
             <Modal
                 isOpen={viewQuestionsModalOpen}
                 onClose={() => setViewQuestionsModalOpen(false)}
-                title={`Danh Sách Câu Hỏi: ${selectedExamQuestions?.name} (${selectedExamQuestions?.code})`}
+                title={`Danh Sách Câu Hỏi: ${selectedExamQuestions?.name || ''}`}
+                maxWidth="max-w-2xl"
             >
                 <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                         <div>
                             <p className="text-xs text-gray-500">
-                                Trung tâm: <span className="font-semibold text-gray-800">{selectedExamQuestions?.center?.name}</span>
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
                                 Thời lượng: <span className="font-semibold text-gray-800">{selectedExamQuestions?.duration_minutes || 45} phút</span> • Điểm tối đa: <span className="font-semibold text-emerald-700">{selectedExamQuestions?.max_score}</span>
                             </p>
                         </div>

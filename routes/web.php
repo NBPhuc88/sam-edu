@@ -197,7 +197,7 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/payments/{paymentId}', [\App\Http\Controllers\StudentTuitionController::class, 'destroyPayment'])->name('payments.destroy');
     });
 
-    // Exam Management Routes (CRUD)
+    // Exam Bank Management Routes (CRUD)
     Route::prefix('exams')->name('exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ExamController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\ExamController::class, 'create'])->name('create');
@@ -205,6 +205,14 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/{id}/edit', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [\App\Http\Controllers\ExamController::class, 'update'])->name('update');
         Route::delete('/{id}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');
+    });
+
+    // Class Exam Management Routes (Assign Exam to Class)
+    Route::prefix('class-exams')->name('class-exams.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ClassExamController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\ClassExamController::class, 'store'])->name('store');
+        Route::patch('/{id}', [\App\Http\Controllers\ClassExamController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\ClassExamController::class, 'destroy'])->name('destroy');
     });
 });
 

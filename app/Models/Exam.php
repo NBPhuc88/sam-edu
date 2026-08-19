@@ -120,4 +120,12 @@ class Exam extends Model
     {
         return $this->hasMany(ExamResult::class);
     }
+
+    /**
+     * @return HasMany<ClassExam, $this>
+     */
+    public function classExams(): HasMany
+    {
+        return $this->hasMany(ClassExam::class, 'exam_id');
+    }
 }
