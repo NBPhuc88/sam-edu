@@ -107,8 +107,8 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-queryParams.append('center_id', selectedCenterId);
-}
+            queryParams.append('center_id', selectedCenterId);
+        }
 
         window.location.href = `/teachers/export?${queryParams.toString()}`;
     };
@@ -162,8 +162,8 @@ queryParams.append('center_id', selectedCenterId);
 
     const confirmDelete = () => {
         if (!deletingTeacher) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/teachers/${deletingTeacher.id}`, {
