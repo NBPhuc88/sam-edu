@@ -2,6 +2,8 @@ import { Center, Exam, PaginatedData, SchoolClass, Subject } from '../Exams/type
 
 export interface ClassExam {
     id: number;
+    code?: string | null;
+    access_code?: string | null;
     class_id: number;
     exam_id: number;
     title: string;

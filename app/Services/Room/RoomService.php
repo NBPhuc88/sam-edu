@@ -95,7 +95,7 @@ class RoomService implements RoomServiceInterface
 
     protected function generateRoomCode(int $centerId): string
     {
-        $count   = Room::where('center_id', $centerId)->count();
+        $count   = $this->roomRepository->countByCenterId($centerId);
         $nextNum = $count + 1;
         $code    = sprintf('R%09d', $nextNum);
 

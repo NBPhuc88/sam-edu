@@ -69,4 +69,19 @@ interface ClassSessionRepositoryInterface
      * @return Collection<int, ClassSession>
      */
     public function getByClassSubjectId(int $classSubjectId): Collection;
+
+    public function countPastSessions(int $classSubjectId, string $date, ?string $startTime): int;
+
+    public function countSessionsBeforeDate(int $classSubjectId, string $date): int;
+
+    public function sessionExists(int $classSubjectId, string $date, string $startTime): bool;
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function createSession(array $data): ClassSession;
+
+    public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int;
+
+    public function deleteFutureSessionsByScheduleId(int $classScheduleId, string $fromDate): int;
 }

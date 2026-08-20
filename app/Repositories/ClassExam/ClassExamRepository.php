@@ -168,4 +168,110 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             'completed' => $completed,
         ];
     }
+
+    public function findByCodeOrAccessCode(string $code): ?ClassExam
+    {
+        $cleanedCode = trim($code);
+
+        return ClassExam::query()
+            ->select('id', 'code', 'access_code', 'class_id', 'exam_id', 'title', 'exam_date', 'start_time', 'end_time', 'valid_from', 'valid_to', 'duration_minutes', 'max_score', 'pass_score', 'status', 'created_by_teacher_id', 'created_by_admin_id', 'created_at')
+            ->with([
+                'schoolClass:id,center_id,name,code,teacher_id',
+                'schoolClass.students:id,student_code,full_name,email,phone',
+                'schoolClass.center:id,name,code',
+                'exam:id,subject_id,name,code,duration_minutes,total_score,pass_score',
+                'exam.subject:id,name,code',
+                'exam.sections:id,exam_id,title,description,skill,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+            ])
+            ->where(function ($q) use ($cleanedCode) {
+                $q->where('code', $cleanedCode)
+                    ->orWhere('access_code', $cleanedCode);
+            })
+            ->first();
+    }
+
+    public function findWithFullExam(int $classExamId): ?ClassExam
+    {
+        return ClassExam::query()
+            ->select('id', 'code', 'access_code', 'class_id', 'exam_id', 'title', 'exam_date', 'start_time', 'end_time', 'valid_from', 'valid_to', 'duration_minutes', 'max_score', 'pass_score', 'status', 'created_by_teacher_id', 'created_by_admin_id', 'created_at')
+            ->with([
+                'schoolClass:id,center_id,name,code,teacher_id',
+                'schoolClass.center:id,name,code',
+                'exam:id,subject_id,name,code,duration_minutes,total_score,pass_score',
+                'exam.subject:id,name,code',
+                'exam.sections:id,exam_id,title,description,skill,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+            ])
+            ->find($classExamId);
+    }
+
+    public function findClassExamById(int $classExamId): ?ClassExam
+    {
+        return ClassExam::select('id', 'code', 'access_code', 'class_id', 'exam_id', 'title', 'exam_date', 'start_time', 'end_time', 'valid_from', 'valid_to', 'duration_minutes', 'max_score', 'pass_score', 'status')->find($classExamId);
+    }
+
+    public function getNextClassExamCode(): string
+    {
+        $maxId = (int) (ClassExam::max('id') ?? 0);
+
+        return sprintf('CE%09d', $maxId + 1);
+    }
+
+    public function getStudentSubmission(int $classExamId, int $studentId): ?\App\Models\ClassExamSubmission
+    {
+        return \App\Models\ClassExamSubmission::query()
+            ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
+            ->where('class_exam_id', $classExamId)
+            ->where('student_id', $studentId)
+            ->orderBy('attempt_number', 'desc')
+            ->first();
+    }
+
+    public function createSubmission(array $data): \App\Models\ClassExamSubmission
+    {
+        return \App\Models\ClassExamSubmission::create($data);
+    }
+
+    public function updateSubmission(\App\Models\ClassExamSubmission $submission, array $data): \App\Models\ClassExamSubmission
+    {
+        $submission->update($data);
+
+        return $submission;
+    }
+
+    public function findSubmissionWithDetails(int $submissionId): ?\App\Models\ClassExamSubmission
+    {
+        return \App\Models\ClassExamSubmission::query()
+            ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
+            ->with([
+                'student:id,student_code,full_name,email,phone',
+                'classExam:id,class_id,exam_id,title,exam_date,start_time,end_time,duration_minutes,max_score,pass_score,status',
+                'classExam.schoolClass:id,center_id,name,code',
+                'classExam.schoolClass.center:id,name,code',
+                'classExam.exam:id,subject_id,name,code',
+                'classExam.exam.subject:id,name,code',
+                'classExam.exam.sections:id,exam_id,title,description,skill,order_index',
+                'classExam.exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+            ])
+            ->find($submissionId);
+    }
+
+    public function findSubmissionForGrading(int $submissionId): ?\App\Models\ClassExamSubmission
+    {
+        return \App\Models\ClassExamSubmission::query()
+            ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
+            ->with([
+                'classExam:id,class_id,exam_id,title,exam_date,start_time,end_time,duration_minutes,max_score,pass_score,status',
+                'classExam.exam:id,subject_id,name,code',
+                'classExam.exam.sections:id,exam_id,title,description,skill,order_index',
+                'classExam.exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+            ])
+            ->find($submissionId);
+    }
+
+    public function findQuestionById(int $questionId): ?\App\Models\ExamQuestion
+    {
+        return \App\Models\ExamQuestion::select('id', 'exam_id', 'section_id', 'code', 'question_type', 'skill', 'content', 'image_url', 'audio_url', 'score')->find($questionId);
+    }
 }

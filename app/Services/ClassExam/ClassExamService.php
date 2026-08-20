@@ -3,11 +3,11 @@
 namespace App\Services\ClassExam;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\ClassExam;
-use App\Models\Exam;
-use App\Models\SchoolClass;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\ClassExam\ClassExamRepositoryInterface;
+use App\Repositories\Exam\ExamRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 class ClassExamService implements ClassExamServiceInterface
 {
     public function __construct(
-        protected ClassExamRepositoryInterface $classExamRepository
+        protected ClassExamRepositoryInterface $classExamRepository,
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected ExamRepositoryInterface $examRepository
     ) {
     }
 
@@ -55,16 +58,15 @@ class ClassExamService implements ClassExamServiceInterface
     public function createClassExam(array $data, ?Admin $admin = null): ClassExam
     {
         return DB::transaction(function () use ($data, $admin) {
-            // Lấy thông tin từ đề thi gốc
-            $exam = Exam::findOrFail($data['exam_id']);
+            // Lấy thông tin từ đề thi gốc qua Repository
+            $exam = $this->examRepository->find($data['exam_id']);
+
+            if (! $exam) {
+                throw new ModelNotFoundException("Không tìm thấy đề thi gốc với ID #{$data['exam_id']}");
+            }
 
             // Sinh mã kỳ thi nếu chưa có (CE000000001)
-            $code = ! empty($data['code']) ? trim($data['code']) : null;
-
-            if (! $code) {
-                $maxId = (int) (ClassExam::max('id') ?? 0);
-                $code  = sprintf('CE%09d', $maxId + 1);
-            }
+            $code = ! empty($data['code']) ? trim($data['code']) : $this->classExamRepository->getNextClassExamCode();
 
             // Sinh mã truy cập phòng thi 6 số ngẫu nhiên
             $accessCode = ! empty($data['access_code']) ? trim($data['access_code']) : str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
@@ -128,21 +130,16 @@ class ClassExamService implements ClassExamServiceInterface
 
     public function getFormData(?Admin $admin = null): array
     {
-        $centersQuery = Center::query()->where('status', 'active');
-        $classesQuery = SchoolClass::query()->where('status', 'active');
-        $examsQuery   = Exam::query()->where('status', 'published')->with(['subject', 'sections']);
+        $managedCenterIds = null;
 
         if ($admin && ! $admin->isSuperAdmin()) {
             $managedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
-            $centersQuery->whereIn('id', $managedCenterIds);
-            $classesQuery->whereIn('center_id', $managedCenterIds);
-            $examsQuery->whereIn('center_id', $managedCenterIds);
         }
 
         return [
-            'centers' => $centersQuery->orderBy('name')->get(['id', 'name', 'code']),
-            'classes' => $classesQuery->orderBy('name')->get(['id', 'center_id', 'name', 'code']),
-            'exams'   => $examsQuery->orderBy('name')->get(['id', 'center_id', 'subject_id', 'name', 'code', 'exam_type', 'duration_minutes', 'max_score']),
+            'centers' => $this->centerRepository->getActiveCenters($managedCenterIds),
+            'classes' => $this->schoolClassRepository->getClassesByCenterIds($managedCenterIds),
+            'exams'   => $this->examRepository->getPublishedExamsForDropdown($managedCenterIds),
         ];
     }
 

@@ -4,15 +4,15 @@ namespace App\Services\Schedule;
 
 use App\Helpers\VietnamHolidayHelper;
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\ClassSchedule;
-use App\Models\ClassSession;
 use App\Models\ClassSubject;
-use App\Models\Room;
-use App\Models\SchoolClass;
-use App\Models\Subject;
-use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Room\RoomRepositoryInterface;
 use App\Repositories\Schedule\ClassScheduleRepositoryInterface;
+use App\Repositories\Session\ClassSessionRepositoryInterface;
+use App\Repositories\Subject\SubjectRepositoryInterface;
+use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ClassScheduleService implements ClassScheduleServiceInterface
 {
     public function __construct(
-        protected ClassScheduleRepositoryInterface $scheduleRepository
+        protected ClassScheduleRepositoryInterface $scheduleRepository,
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected RoomRepositoryInterface $roomRepository,
+        protected TeacherRepositoryInterface $teacherRepository,
+        protected SubjectRepositoryInterface $subjectRepository,
+        protected ClassSessionRepositoryInterface $sessionRepository
     ) {
     }
 
@@ -100,29 +106,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        $centersQuery = Center::query()->where('status', 'active');
-        $classesQuery = SchoolClass::query()->with([
-            'classSubjects.subject:id,name,code,total_sessions,duration_minutes',
-            'classSubjects.teacher:id,full_name,teacher_code',
-        ]);
-        $roomsQuery    = Room::query();
-        $teachersQuery = Teacher::query()->where('status', 'active');
-        $subjectsQuery = Subject::query()->where('status', 'active');
-
-        if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
-            $classesQuery->whereIn('center_id', $allowedCenterIds);
-            $roomsQuery->whereIn('center_id', $allowedCenterIds);
-            $teachersQuery->whereIn('center_id', $allowedCenterIds);
-            $subjectsQuery->whereIn('center_id', $allowedCenterIds);
-        }
-
         return [
-            'centers'  => $centersQuery->orderBy('name')->get(['id', 'name', 'code']),
-            'classes'  => $classesQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id']),
-            'rooms'    => $roomsQuery->orderBy('name')->get(['id', 'name', 'center_id', 'capacity']),
-            'teachers' => $teachersQuery->orderBy('full_name')->get(['id', 'full_name', 'teacher_code', 'center_id']),
-            'subjects' => $subjectsQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id', 'total_sessions', 'duration_minutes', 'tuition_fee']),
+            'centers'  => $this->centerRepository->getActiveCenters($allowedCenterIds),
+            'classes'  => $this->schoolClassRepository->getClassesForScheduleForm($allowedCenterIds),
+            'rooms'    => $this->roomRepository->getByCenterIds($allowedCenterIds),
+            'teachers' => $this->teacherRepository->getActiveTeachers($allowedCenterIds),
+            'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
         ];
     }
 
@@ -154,7 +143,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $subjectId = (int) $data['subject_id'];
         $teacherId = (int) $data['teacher_id'];
 
-        $schoolClass      = SchoolClass::findOrFail($classId);
+        $schoolClass = $this->schoolClassRepository->find($classId);
+
+        if (! $schoolClass) {
+            throw new NotFoundHttpException("Không tìm thấy lớp học với ID #{$classId}");
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null && ! in_array($schoolClass->center_id, $allowedCenterIds, true)) {
@@ -163,11 +157,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         return DB::transaction(function () use ($data, $schoolClass, $subjectId, $teacherId) {
             // 1. Tìm hoặc tạo liên kết ClassSubject
-            $classSubject = ClassSubject::firstOrCreate(
-                [
-                    'class_id'   => $schoolClass->id,
-                    'subject_id' => $subjectId,
-                ],
+            $classSubject = $this->scheduleRepository->findOrCreateClassSubject(
+                $schoolClass->id,
+                $subjectId,
                 [
                     'teacher_id' => $teacherId,
                     'start_date' => $data['start_date'] ?? null,
@@ -177,7 +169,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             );
 
             // Cập nhật teacher và ngày học của class_subject nếu có thay đổi
-            $classSubject->update([
+            $this->scheduleRepository->updateClassSubject($classSubject->id, [
                 'teacher_id' => $teacherId,
                 'start_date' => $data['start_date'] ?? $classSubject->start_date,
                 'end_date'   => $data['end_date'] ?? $classSubject->end_date,
@@ -229,9 +221,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
             // Cập nhật ngày kết thúc được tính toán vào class_subject và class_schedules nếu ban đầu để trống
             if (empty($data['end_date']) && ! empty($result['calculated_end_date'])) {
-                $classSubject->update(['end_date' => $result['calculated_end_date']]);
-                ClassSchedule::where('class_subject_id', $classSubject->id)
-                    ->update(['effective_to' => $result['calculated_end_date']]);
+                $this->scheduleRepository->updateClassSubject($classSubject->id, ['end_date' => $result['calculated_end_date']]);
+                $this->scheduleRepository->updateEffectiveToByClassSubjectId($classSubject->id, $result['calculated_end_date']);
             }
 
             return $firstSchedule;
@@ -253,14 +244,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $teacherId    = ! empty($data['teacher_id']) ? (int) $data['teacher_id'] : $classSubject->teacher_id;
 
             // Cập nhật class_subject
-            $classSubject->update([
+            $this->scheduleRepository->updateClassSubject($classSubject->id, [
                 'teacher_id' => $teacherId,
                 'start_date' => $data['start_date'] ?? $classSubject->start_date,
                 'end_date'   => $data['end_date'] ?? $classSubject->end_date,
             ]);
 
             // Xóa các schedule cũ của class_subject này để đồng bộ lại
-            ClassSchedule::where('class_subject_id', $classSubject->id)->delete();
+            $this->scheduleRepository->deleteByClassSubjectId($classSubject->id);
 
             // Tạo lại các schedule tuần mới
             $weeklySchedules  = $data['weekly_schedules'] ?? [];
@@ -302,17 +293,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
 
             // Xóa các ca học cũ chưa diễn ra hoặc chưa điểm danh và sinh lại ca học mới
-            ClassSession::where('class_subject_id', $classSubject->id)
-                ->where('session_date', '>=', now()->toDateString())
-                ->delete();
+            $this->sessionRepository->deleteFutureUnattendedSessions($classSubject->id, now()->toDateString());
 
             $result = $this->generateSessions($classSubject, $createdSchedules, $data);
 
             // Cập nhật ngày kết thúc được tính toán vào class_subject và class_schedules nếu ban đầu để trống
             if (empty($data['end_date']) && ! empty($result['calculated_end_date'])) {
-                $classSubject->update(['end_date' => $result['calculated_end_date']]);
-                ClassSchedule::where('class_subject_id', $classSubject->id)
-                    ->update(['effective_to' => $result['calculated_end_date']]);
+                $this->scheduleRepository->updateClassSubject($classSubject->id, ['end_date' => $result['calculated_end_date']]);
+                $this->scheduleRepository->updateEffectiveToByClassSubjectId($classSubject->id, $result['calculated_end_date']);
             }
 
             return $firstSchedule;
@@ -343,7 +331,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $startDate = Carbon::parse($startDateStr);
 
         // Lấy số buổi đã thiết lập của môn học
-        $subject       = $classSubject->subject ?? Subject::find($classSubject->subject_id);
+        $subject       = $classSubject->subject ?? $this->subjectRepository->find($classSubject->subject_id);
         $totalSessions = $subject?->total_sessions;
 
         $weeklySchedules = $data['weekly_schedules'] ?? [];
@@ -374,9 +362,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         if (! $endDateStr) {
             if ($totalSessions && $totalSessions > 0) {
                 // TH1: Môn học đã cấu hình số buổi (total_sessions) -> sinh chính xác theo số buổi
-                $pastSessionsCount = ClassSession::where('class_subject_id', $classSubject->id)
-                    ->where('session_date', '<', $startDateStr)
-                    ->count();
+                $pastSessionsCount = $this->sessionRepository->countSessionsBeforeDate($classSubject->id, $startDateStr);
 
                 $targetRemainingCount = max(1, $totalSessions - $pastSessionsCount);
                 $maxSafetyDate        = $startDate->copy()->addYears(3); // Giới hạn tối đa tránh lặp vô tận
@@ -393,13 +379,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                             $item       = $weeklyMap[$dayOfWeek];
                             $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
 
-                            $exists = ClassSession::where('class_subject_id', $classSubject->id)
-                                ->where('session_date', $dateStr)
-                                ->where('start_time', $item['start_time'])
-                                ->exists();
+                            $exists = $this->sessionRepository->sessionExists($classSubject->id, $dateStr, $item['start_time']);
 
                             if (! $exists) {
-                                ClassSession::create([
+                                $this->sessionRepository->createSession([
                                     'class_subject_id'  => $classSubject->id,
                                     'class_schedule_id' => $scheduleId,
                                     'teacher_id'        => $teacherId,
@@ -433,13 +416,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                             $item       = $weeklyMap[$dayOfWeek];
                             $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
 
-                            $exists = ClassSession::where('class_subject_id', $classSubject->id)
-                                ->where('session_date', $dateStr)
-                                ->where('start_time', $item['start_time'])
-                                ->exists();
+                            $exists = $this->sessionRepository->sessionExists($classSubject->id, $dateStr, $item['start_time']);
 
                             if (! $exists) {
-                                ClassSession::create([
+                                $this->sessionRepository->createSession([
                                     'class_subject_id'  => $classSubject->id,
                                     'class_schedule_id' => $scheduleId,
                                     'teacher_id'        => $teacherId,
@@ -474,13 +454,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                         $item       = $weeklyMap[$dayOfWeek];
                         $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
 
-                        $exists = ClassSession::where('class_subject_id', $classSubject->id)
-                            ->where('session_date', $dateStr)
-                            ->where('start_time', $item['start_time'])
-                            ->exists();
+                        $exists = $this->sessionRepository->sessionExists($classSubject->id, $dateStr, $item['start_time']);
 
                         if (! $exists) {
-                            ClassSession::create([
+                            $this->sessionRepository->createSession([
                                 'class_subject_id'  => $classSubject->id,
                                 'class_schedule_id' => $scheduleId,
                                 'teacher_id'        => $teacherId,
@@ -507,13 +484,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             if (! empty($spec['date']) && ! empty($spec['start_time']) && ! empty($spec['end_time'])) {
                 $specDateStr = $spec['date'];
 
-                $exists = ClassSession::where('class_subject_id', $classSubject->id)
-                    ->where('session_date', $specDateStr)
-                    ->where('start_time', $spec['start_time'])
-                    ->exists();
+                $exists = $this->sessionRepository->sessionExists($classSubject->id, $specDateStr, $spec['start_time']);
 
                 if (! $exists) {
-                    ClassSession::create([
+                    $this->sessionRepository->createSession([
                         'class_subject_id'  => $classSubject->id,
                         'class_schedule_id' => null,
                         'teacher_id'        => $teacherId,
@@ -551,9 +525,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $schedule = $this->findSchedule($id, $admin);
 
         // Xóa các ca học tương ứng chưa diễn ra
-        ClassSession::where('class_schedule_id', $schedule->id)
-            ->where('session_date', '>=', now()->toDateString())
-            ->delete();
+        $this->sessionRepository->deleteFutureSessionsByScheduleId($schedule->id, now()->toDateString());
 
         return $this->scheduleRepository->delete($schedule->id);
     }

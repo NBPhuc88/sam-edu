@@ -304,4 +304,15 @@ class TeacherRepository implements TeacherRepositoryInterface
             ->orderBy('start_time')
             ->get();
     }
+
+    public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = Teacher::select($columns)->where('status', 'active');
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->orderBy('full_name')->get();
+    }
 }

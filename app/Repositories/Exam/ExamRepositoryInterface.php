@@ -88,4 +88,10 @@ interface ExamRepositoryInterface
      * @return array<string, int>
      */
     public function getStats(?array $allowedCenterIds = null): array;
+
+    /**
+     * @param  ?array<int>                                                     $allowedCenterIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Exam>
+     */
+    public function getPublishedExamsForDropdown(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
 }

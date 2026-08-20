@@ -5,13 +5,17 @@ import Button from './Button';
 
 export interface ConfirmDialogProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose?: () => void;
+    onCancel?: () => void;
     onConfirm: () => void;
     title?: string;
     message: string | React.ReactNode;
     confirmText?: string;
+    confirmLabel?: string;
     cancelText?: string;
+    cancelLabel?: string;
     type?: 'danger' | 'warning' | 'info' | 'success';
+    variant?: 'danger' | 'warning' | 'info' | 'success';
     isLoading?: boolean;
     icon?: React.ReactNode;
 }
@@ -19,15 +23,23 @@ export interface ConfirmDialogProps {
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     isOpen,
     onClose,
+    onCancel,
     onConfirm,
     title,
     message,
-    confirmText = 'Xác nhận',
-    cancelText = 'Hủy bỏ',
-    type = 'danger',
+    confirmText,
+    confirmLabel,
+    cancelText,
+    cancelLabel,
+    type,
+    variant,
     isLoading = false,
     icon,
 }) => {
+    const handleClose = onClose || onCancel || (() => {});
+    const resolvedConfirmText = confirmText || confirmLabel || 'Xác nhận';
+    const resolvedCancelText = cancelText || cancelLabel || 'Hủy bỏ';
+    const resolvedType = type || variant || 'danger';
     const config = {
         danger: {
             defaultTitle: 'Xác nhận xóa',
@@ -53,7 +65,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             confirmVariant: 'success' as const,
             defaultIcon: <CheckCircle2 className="w-6 h-6" />,
         },
-    }[type];
+    }[resolvedType];
 
     return (
         <AnimatePresence>
@@ -64,7 +76,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
                     />
 
@@ -97,10 +109,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                                 type="button"
                                 variant="secondary"
                                 size="md"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 disabled={isLoading}
                             >
-                                {cancelText}
+                                {resolvedCancelText}
                             </Button>
 
                             <Button
@@ -110,7 +122,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                                 onClick={onConfirm}
                                 isLoading={isLoading}
                             >
-                                {confirmText}
+                                {resolvedConfirmText}
                             </Button>
                         </div>
                     </motion.div>

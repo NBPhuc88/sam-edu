@@ -243,4 +243,15 @@ class StudentRepository implements StudentRepositoryInterface
 
         return $query->count();
     }
+
+    public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = Student::select($columns)->where('status', 'active');
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->orderBy('full_name')->get();
+    }
 }

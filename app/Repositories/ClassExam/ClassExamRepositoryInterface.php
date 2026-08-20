@@ -50,4 +50,31 @@ interface ClassExamRepositoryInterface
      * @param  ?Admin                                                          $admin
      */
     public function getStats(?Admin $admin = null): array;
+
+    public function findByCodeOrAccessCode(string $code): ?ClassExam;
+
+    public function findWithFullExam(int $classExamId): ?ClassExam;
+
+    public function findClassExamById(int $classExamId): ?ClassExam;
+
+    public function getNextClassExamCode(): string;
+
+    public function getStudentSubmission(int $classExamId, int $studentId): ?\App\Models\ClassExamSubmission;
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function createSubmission(array $data): \App\Models\ClassExamSubmission;
+
+    /**
+     * @param \App\Models\ClassExamSubmission $submission
+     * @param array<string, mixed>            $data
+     */
+    public function updateSubmission(\App\Models\ClassExamSubmission $submission, array $data): \App\Models\ClassExamSubmission;
+
+    public function findSubmissionWithDetails(int $submissionId): ?\App\Models\ClassExamSubmission;
+
+    public function findSubmissionForGrading(int $submissionId): ?\App\Models\ClassExamSubmission;
+
+    public function findQuestionById(int $questionId): ?\App\Models\ExamQuestion;
 }

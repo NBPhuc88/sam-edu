@@ -3,11 +3,11 @@
 namespace App\Services\Tuition;
 
 use App\Models\Admin;
-use App\Models\Center;
-use App\Models\SchoolClass;
-use App\Models\Student;
 use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Tuition\StudentTuitionRepositoryInterface;
 use App\Repositories\Tuition\TuitionPaymentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -20,7 +20,10 @@ class StudentTuitionService implements StudentTuitionServiceInterface
 {
     public function __construct(
         protected StudentTuitionRepositoryInterface $studentTuitionRepository,
-        protected TuitionPaymentRepositoryInterface $tuitionPaymentRepository
+        protected TuitionPaymentRepositoryInterface $tuitionPaymentRepository,
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected StudentRepositoryInterface $studentRepository
     ) {
     }
 
@@ -129,33 +132,13 @@ class StudentTuitionService implements StudentTuitionServiceInterface
     public function getFormData(?Admin $admin = null, ?int $selectedCenterId = null): array
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $centers          = $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters();
 
-        $centersQuery = Center::query()->where('status', 'active');
+        $centerId        = $selectedCenterId ?? ($centers->first()?->id ?? null);
+        $targetCenterIds = $centerId ? [$centerId] : $allowedCenterIds;
 
-        if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
-        }
-        $centers = $centersQuery->orderBy('name')->get(['id', 'name', 'code']);
-
-        $centerId = $selectedCenterId ?? ($centers->first()?->id ?? null);
-
-        $classesQuery = SchoolClass::query()->where('status', 'active');
-
-        if ($centerId) {
-            $classesQuery->where('center_id', $centerId);
-        } elseif ($allowedCenterIds !== null) {
-            $classesQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $classes = $classesQuery->orderBy('name')->get(['id', 'name', 'code', 'center_id']);
-
-        $studentsQuery = Student::query()->where('status', 'active');
-
-        if ($centerId) {
-            $studentsQuery->where('center_id', $centerId);
-        } elseif ($allowedCenterIds !== null) {
-            $studentsQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $students = $studentsQuery->orderBy('full_name')->get(['id', 'full_name', 'student_code', 'phone', 'center_id']);
+        $classes  = $this->schoolClassRepository->getClassesByCenterIds($targetCenterIds);
+        $students = $this->studentRepository->getActiveStudents($targetCenterIds, ['id', 'full_name', 'student_code', 'phone', 'center_id']);
 
         return [
             'centers'            => $centers,
@@ -200,7 +183,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $title       = $data['title'] ?? null;
 
         if (empty($title)) {
-            $class = SchoolClass::find($data['class_id']);
+            $class = $this->schoolClassRepository->find((int) $data['class_id']);
             $title = 'Học phí ' . ($class ? $class->name : 'lớp học');
         }
 
@@ -372,7 +355,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      */
     public function recalculateSummary(int $tuitionId): void
     {
-        $tuition = StudentTuition::with('payments')->find($tuitionId);
+        $tuition = $this->studentTuitionRepository->find($tuitionId);
 
         if (! $tuition) {
             return;
@@ -392,7 +375,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             $status = $isOverdue ? 'overdue' : 'pending';
         }
 
-        $tuition->update([
+        $this->studentTuitionRepository->update($tuitionId, [
             'paid_amount'      => $paidAmount,
             'remaining_amount' => $remainingAmount,
             'status'           => $status,

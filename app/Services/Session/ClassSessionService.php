@@ -3,13 +3,14 @@
 namespace App\Services\Session;
 
 use App\Models\Admin;
-use App\Models\Center;
 use App\Models\ClassSession;
-use App\Models\Room;
-use App\Models\SchoolClass;
-use App\Models\Subject;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Room\RoomRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
+use App\Repositories\Subject\SubjectRepositoryInterface;
+use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -18,7 +19,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ClassSessionService implements ClassSessionServiceInterface
 {
     public function __construct(
-        protected ClassSessionRepositoryInterface $sessionRepository
+        protected ClassSessionRepositoryInterface $sessionRepository,
+        protected CenterRepositoryInterface $centerRepository,
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected SubjectRepositoryInterface $subjectRepository,
+        protected TeacherRepositoryInterface $teacherRepository,
+        protected RoomRepositoryInterface $roomRepository
     ) {
     }
 
@@ -245,52 +251,12 @@ class ClassSessionService implements ClassSessionServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($user);
 
-        // Centers query
-        $centersQuery = Center::query()->where('status', 'active');
-
-        if ($allowedCenterIds !== null) {
-            $centersQuery->whereIn('id', $allowedCenterIds);
-        }
-        $centers = $centersQuery->select(['id', 'name', 'code'])->orderBy('name')->get();
-
-        // Classes query
-        $classesQuery = SchoolClass::query()->where('status', 'active');
-
-        if ($allowedCenterIds !== null) {
-            $classesQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $classes = $classesQuery->select(['id', 'name', 'code', 'center_id'])->orderBy('name')->get();
-
-        // Subjects query
-        $subjectsQuery = Subject::query()->where('status', 'active');
-
-        if ($allowedCenterIds !== null) {
-            $subjectsQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $subjects = $subjectsQuery->select(['id', 'name', 'code', 'center_id'])->orderBy('name')->get();
-
-        // Teachers query
-        $teachersQuery = Teacher::query()->where('status', 'active');
-
-        if ($allowedCenterIds !== null) {
-            $teachersQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $teachers = $teachersQuery->select(['id', 'full_name', 'teacher_code', 'center_id'])->orderBy('full_name')->get();
-
-        // Rooms query
-        $roomsQuery = Room::query();
-
-        if ($allowedCenterIds !== null) {
-            $roomsQuery->whereIn('center_id', $allowedCenterIds);
-        }
-        $rooms = $roomsQuery->select(['id', 'name', 'center_id', 'capacity'])->orderBy('name')->get();
-
         return [
-            'centers'  => $centers,
-            'classes'  => $classes,
-            'subjects' => $subjects,
-            'teachers' => $teachers,
-            'rooms'    => $rooms,
+            'centers'  => $this->centerRepository->getActiveCenters($allowedCenterIds),
+            'classes'  => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
+            'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
+            'teachers' => $this->teacherRepository->getActiveTeachers($allowedCenterIds, ['id', 'full_name', 'teacher_code', 'center_id']),
+            'rooms'    => $this->roomRepository->getByCenterIds($allowedCenterIds),
         ];
     }
 }

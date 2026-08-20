@@ -133,12 +133,12 @@ class SubjectRepository implements SubjectRepositoryInterface
     }
 
     /**
-     * @param  array<int, int>                                        $centerIds
+     * @param  ?array<int, int>                                       $centerIds
      * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
      */
-    public function getByCenterIds(array $centerIds): \Illuminate\Database\Eloquent\Collection
+    public function getByCenterIds(?array $centerIds = null): \Illuminate\Database\Eloquent\Collection
     {
-        return Subject::select(
+        $query = Subject::select(
             'id',
             'center_id',
             'code',
@@ -148,10 +148,12 @@ class SubjectRepository implements SubjectRepositoryInterface
             'duration_minutes',
             'tuition_fee',
             'status'
-        )
-        ->whereIn('center_id', $centerIds)
-        ->where('status', 'active')
-        ->orderBy('name')
-        ->get();
+        )->where('status', 'active');
+
+        if ($centerIds !== null) {
+            $query->whereIn('center_id', $centerIds);
+        }
+
+        return $query->orderBy('name')->get();
     }
 }

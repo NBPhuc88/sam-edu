@@ -73,4 +73,16 @@ interface ClassScheduleRepositoryInterface
      * @return Collection<int, ClassSchedule>
      */
     public function getStudentSchedules(array $classIds): Collection;
+
+    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): \App\Models\ClassSubject;
+
+    /**
+     * @param array<string, mixed> $attributes
+     * @param int                  $classSubjectId
+     */
+    public function updateClassSubject(int $classSubjectId, array $attributes): bool;
+
+    public function updateEffectiveToByClassSubjectId(int $classSubjectId, ?string $effectiveTo): int;
+
+    public function deleteByClassSubjectId(int $classSubjectId): int;
 }

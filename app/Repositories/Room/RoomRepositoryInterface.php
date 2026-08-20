@@ -71,4 +71,6 @@ interface RoomRepositoryInterface
      * @return array{total: int, active: int, inactive: int, total_capacity: int}
      */
     public function getStats(?array $allowedCenterIds = null): array;
+
+    public function countByCenterId(int $centerId): int;
 }

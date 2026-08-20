@@ -3,16 +3,17 @@
 namespace App\Services\Attendance;
 
 use App\Models\Admin;
-use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Attendance\AttendanceRepositoryInterface;
+use App\Repositories\Session\ClassSessionRepositoryInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AttendanceService implements AttendanceServiceInterface
 {
     public function __construct(
-        protected AttendanceRepositoryInterface $attendanceRepository
+        protected AttendanceRepositoryInterface $attendanceRepository,
+        protected ClassSessionRepositoryInterface $sessionRepository
     ) {
     }
 
@@ -75,15 +76,11 @@ class AttendanceService implements AttendanceServiceInterface
         });
 
         // Compute session number
-        $sessionOrder = ClassSession::where('class_subject_id', $session->class_subject_id)
-            ->where(function ($q) use ($session) {
-                $q->where('session_date', '<', $session->session_date)
-                    ->orWhere(function ($sq) use ($session) {
-                        $sq->where('session_date', $session->session_date)
-                            ->where('start_time', '<=', $session->start_time);
-                    });
-            })
-            ->count();
+        $sessionOrder = $this->sessionRepository->countPastSessions(
+            (int) $session->class_subject_id,
+            $session->session_date ? (string) $session->session_date : now()->toDateString(),
+            $session->start_time
+        );
 
         return [
             'session'       => $session,

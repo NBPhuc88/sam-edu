@@ -5,9 +5,9 @@ namespace App\Services\OnlineExam;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
-use App\Models\ExamQuestion;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Repositories\ClassExam\ClassExamRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
@@ -20,17 +20,14 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class OnlineExamService implements OnlineExamServiceInterface
 {
+    public function __construct(
+        protected ClassExamRepositoryInterface $classExamRepository
+    ) {
+    }
+
     public function getExamRoomByCode(string $code, ?Student $student = null, ?Teacher $teacher = null, ?Admin $admin = null): ClassExam
     {
-        $cleanedCode = trim($code);
-
-        $classExam = ClassExam::query()
-            ->with(['schoolClass.students', 'schoolClass.center', 'exam.subject', 'exam.sections.questions'])
-            ->where(function ($q) use ($cleanedCode) {
-                $q->where('code', $cleanedCode)
-                    ->orWhere('access_code', $cleanedCode);
-            })
-            ->first();
+        $classExam = $this->classExamRepository->findByCodeOrAccessCode($code);
 
         if (! $classExam) {
             throw ValidationException::withMessages([
@@ -45,24 +42,18 @@ class OnlineExamService implements OnlineExamServiceInterface
 
     public function getExamForTaking(int $classExamId, ?Student $student = null, ?Teacher $teacher = null, ?Admin $admin = null): array
     {
-        $classExam = ClassExam::query()
-            ->with([
-                'schoolClass.center',
-                'exam.subject',
-                'exam.sections.questions',
-            ])
-            ->findOrFail($classExamId);
+        $classExam = $this->classExamRepository->findWithFullExam($classExamId);
+
+        if (! $classExam) {
+            throw new ModelNotFoundException("Không tìm thấy kỳ thi với ID #{$classExamId}");
+        }
 
         $this->authorizeAccess($classExam, $student, $teacher, $admin);
 
         $submission = null;
 
         if ($student) {
-            $submission = ClassExamSubmission::query()
-                ->where('class_exam_id', $classExamId)
-                ->where('student_id', $student->id)
-                ->orderBy('attempt_number', 'desc')
-                ->first();
+            $submission = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
         }
 
         // Kiểm tra hiệu lực thời gian bài thi
@@ -76,7 +67,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         // Nếu quá hạn mà chưa có submission -> Tạo submission với trạng thái missed (0 điểm)
         if ($isAfterEnd && $student && ! $submission) {
-            $submission = ClassExamSubmission::create([
+            $submission = $this->classExamRepository->createSubmission([
                 'class_exam_id'         => $classExam->id,
                 'student_id'            => $student->id,
                 'attempt_number'        => 1,
@@ -104,7 +95,11 @@ class OnlineExamService implements OnlineExamServiceInterface
 
     public function startExamAttempt(int $classExamId, Student $student): ClassExamSubmission
     {
-        $classExam = ClassExam::query()->findOrFail($classExamId);
+        $classExam = $this->classExamRepository->findWithFullExam($classExamId);
+
+        if (! $classExam) {
+            throw new ModelNotFoundException("Không tìm thấy kỳ thi với ID #{$classExamId}");
+        }
 
         $this->authorizeAccess($classExam, $student);
 
@@ -119,11 +114,7 @@ class OnlineExamService implements OnlineExamServiceInterface
         }
 
         // Kiểm tra nếu đã có bài thi đang làm
-        $existing = ClassExamSubmission::query()
-            ->where('class_exam_id', $classExamId)
-            ->where('student_id', $student->id)
-            ->orderBy('attempt_number', 'desc')
-            ->first();
+        $existing = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
 
         if ($existing && $existing->status === 'in_progress') {
             return $existing;
@@ -135,7 +126,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         $totalQuestions = $this->countTotalQuestions($classExam);
 
-        return ClassExamSubmission::create([
+        return $this->classExamRepository->createSubmission([
             'class_exam_id'         => $classExamId,
             'student_id'            => $student->id,
             'attempt_number'        => 1,
@@ -153,9 +144,11 @@ class OnlineExamService implements OnlineExamServiceInterface
 
     public function submitExamAttempt(int $submissionId, array $answers, Student $student, bool $isTimeout = false): ClassExamSubmission
     {
-        $submission = ClassExamSubmission::query()
-            ->with(['classExam.exam.sections.questions'])
-            ->findOrFail($submissionId);
+        $submission = $this->classExamRepository->findSubmissionForGrading($submissionId);
+
+        if (! $submission) {
+            throw new ModelNotFoundException("Không tìm thấy bài làm thi #{$submissionId}");
+        }
 
         if ($submission->student_id !== $student->id) {
             throw ValidationException::withMessages(['unauthorized' => 'Bạn không có quyền nộp bài thi này.']);
@@ -173,7 +166,7 @@ class OnlineExamService implements OnlineExamServiceInterface
             // Tự động chấm điểm các câu hỏi
             $gradingResult = $this->gradeExam($submission->classExam, $answers);
 
-            $submission->update([
+            return $this->classExamRepository->updateSubmission($submission, [
                 'submitted_at'          => $now,
                 'duration_seconds_used' => $durationSecs,
                 'score'                 => $gradingResult['total_score'],
@@ -183,17 +176,24 @@ class OnlineExamService implements OnlineExamServiceInterface
                 'answers'               => $answers,
                 'grading_details'       => $gradingResult['details'],
             ]);
-
-            return $submission;
         });
     }
 
     public function uploadSpeakingAudio(int $classExamId, int $questionId, UploadedFile $file, Student $student): string
     {
-        $classExam = ClassExam::query()->findOrFail($classExamId);
+        $classExam = $this->classExamRepository->findClassExamById($classExamId);
+
+        if (! $classExam) {
+            throw new ModelNotFoundException("Không tìm thấy kỳ thi với ID #{$classExamId}");
+        }
+
         $this->authorizeAccess($classExam, $student);
 
-        $question = ExamQuestion::query()->findOrFail($questionId);
+        $question = $this->classExamRepository->findQuestionById($questionId);
+
+        if (! $question) {
+            throw new ModelNotFoundException("Không tìm thấy câu hỏi với ID #{$questionId}");
+        }
 
         $examCode     = $classExam->code ?: "CE{$classExam->id}";
         $studentCode  = $student->student_code ?: ($student->username ?: "STD{$student->id}");
@@ -229,14 +229,11 @@ class OnlineExamService implements OnlineExamServiceInterface
 
     public function getSubmissionReview(int $submissionId, ?Student $student = null, ?Teacher $teacher = null, ?Admin $admin = null): array
     {
-        $submission = ClassExamSubmission::query()
-            ->with([
-                'student',
-                'classExam.schoolClass.center',
-                'classExam.exam.subject',
-                'classExam.exam.sections.questions',
-            ])
-            ->findOrFail($submissionId);
+        $submission = $this->classExamRepository->findSubmissionWithDetails($submissionId);
+
+        if (! $submission) {
+            throw new ModelNotFoundException("Không tìm thấy bài làm thi #{$submissionId}");
+        }
 
         if ($student && $submission->student_id !== $student->id) {
             throw ValidationException::withMessages(['unauthorized' => 'Bạn không được xem bài thi của thí sinh khác.']);

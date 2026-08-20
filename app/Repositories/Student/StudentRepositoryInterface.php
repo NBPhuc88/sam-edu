@@ -83,4 +83,11 @@ interface StudentRepositoryInterface
      * @param array<int, int> $centerIds
      */
     public function countInYearMonthAndCenterIds(int $year, int $month, array $centerIds = []): int;
+
+    /**
+     * @param  ?array<int>                                                        $allowedCenterIds
+     * @param  array<string>                                                      $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
+     */
+    public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection;
 }

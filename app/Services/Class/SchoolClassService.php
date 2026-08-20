@@ -4,8 +4,6 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
-use App\Models\Subject;
-use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
@@ -90,25 +88,10 @@ class SchoolClassService implements SchoolClassServiceInterface
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        if ($allowedCenterIds !== null) {
-            $centers  = $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']);
-            $subjects = $this->subjectRepository->getByCenterIds($allowedCenterIds);
-            $teachers = Teacher::query()->where('status', 'active')
-                ->whereIn('center_id', $allowedCenterIds)
-                ->orderBy('full_name')
-                ->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
-        } else {
-            $centers  = $this->centerRepository->getActiveCenters();
-            $subjects = Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code', 'center_id']);
-            $teachers = Teacher::query()->where('status', 'active')
-                ->orderBy('full_name')
-                ->get(['id', 'full_name', 'teacher_code', 'center_id', 'phone']);
-        }
-
         return [
-            'centers'  => $centers,
-            'subjects' => $subjects,
-            'teachers' => $teachers,
+            'centers'  => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
+            'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
+            'teachers' => $this->teacherRepository->getActiveTeachers($allowedCenterIds, ['id', 'full_name', 'teacher_code', 'center_id', 'phone']),
         ];
     }
 
@@ -277,6 +260,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         // Nạp đầy đủ thông tin môn học và giáo viên
         $schoolClass->load([
             'center:id,name,code',
+            'classSubjects:id,class_id,subject_id,teacher_id,status',
             'classSubjects.subject:id,name,code,total_sessions,duration_minutes,tuition_fee',
             'classSubjects.teacher:id,full_name,teacher_code,phone',
         ]);

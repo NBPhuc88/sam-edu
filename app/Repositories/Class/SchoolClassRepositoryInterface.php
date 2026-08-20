@@ -118,4 +118,10 @@ interface SchoolClassRepositoryInterface
      * @return SchoolClass
      */
     public function findWithCenter(int $classId): SchoolClass;
+
+    /**
+     * @param  ?array<int>                                                $allowedCenterIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getClassesForScheduleForm(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
 }

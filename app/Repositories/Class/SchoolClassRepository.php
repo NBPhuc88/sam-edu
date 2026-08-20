@@ -427,4 +427,22 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ->with('center:id,name,code')
         ->findOrFail($classId);
     }
+
+    public function getClassesForScheduleForm(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = SchoolClass::query()
+            ->select('id', 'center_id', 'name', 'code')
+            ->where('status', 'active')
+            ->with([
+                'classSubjects:id,class_id,subject_id,teacher_id,status',
+                'classSubjects.subject:id,name,code,total_sessions,duration_minutes',
+                'classSubjects.teacher:id,full_name,teacher_code',
+            ]);
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->orderBy('name')->get();
+    }
 }

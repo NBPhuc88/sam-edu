@@ -216,4 +216,9 @@ class RoomRepository implements RoomRepositoryInterface
             'total_capacity' => $totalCapacity,
         ];
     }
+
+    public function countByCenterId(int $centerId): int
+    {
+        return Room::where('center_id', $centerId)->count();
+    }
 }

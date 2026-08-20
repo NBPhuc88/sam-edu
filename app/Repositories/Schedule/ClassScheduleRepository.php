@@ -256,4 +256,27 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             })
             ->get();
     }
+
+    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): \App\Models\ClassSubject
+    {
+        return \App\Models\ClassSubject::firstOrCreate(
+            ['class_id' => $classId, 'subject_id' => $subjectId],
+            $attributes
+        );
+    }
+
+    public function updateClassSubject(int $classSubjectId, array $attributes): bool
+    {
+        return (bool) \App\Models\ClassSubject::where('id', $classSubjectId)->update($attributes);
+    }
+
+    public function updateEffectiveToByClassSubjectId(int $classSubjectId, ?string $effectiveTo): int
+    {
+        return ClassSchedule::where('class_subject_id', $classSubjectId)->update(['effective_to' => $effectiveTo]);
+    }
+
+    public function deleteByClassSubjectId(int $classSubjectId): int
+    {
+        return ClassSchedule::where('class_subject_id', $classSubjectId)->delete();
+    }
 }

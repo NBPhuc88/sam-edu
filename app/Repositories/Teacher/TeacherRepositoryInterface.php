@@ -94,4 +94,11 @@ interface TeacherRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
      */
     public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  ?array<int>                                                        $allowedCenterIds
+     * @param  array<string>                                                      $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Teacher>
+     */
+    public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection;
 }

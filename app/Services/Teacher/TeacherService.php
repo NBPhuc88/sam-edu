@@ -3,9 +3,9 @@
 namespace App\Services\Teacher;
 
 use App\Models\Admin;
-use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Session\ClassSessionRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -17,7 +17,8 @@ class TeacherService implements TeacherServiceInterface
 {
     public function __construct(
         protected TeacherRepositoryInterface $teacherRepository,
-        protected CenterRepositoryInterface $centerRepository
+        protected CenterRepositoryInterface $centerRepository,
+        protected ClassSessionRepositoryInterface $sessionRepository
     ) {
     }
 
@@ -298,15 +299,11 @@ class TeacherService implements TeacherServiceInterface
             $sessionArr = $session->toArray();
 
             // Tính số thứ tự buổi học của môn này trong lớp
-            $sessionOrder = ClassSession::where('class_subject_id', $session->class_subject_id)
-                ->where(function ($q) use ($session) {
-                    $q->where('session_date', '<', $session->session_date)
-                        ->orWhere(function ($sq) use ($session) {
-                            $sq->where('session_date', $session->session_date)
-                                ->where('start_time', '<=', $session->start_time);
-                        });
-                })
-                ->count();
+            $sessionOrder = $this->sessionRepository->countPastSessions(
+                (int) $session->class_subject_id,
+                $session->session_date ? (string) $session->session_date : now()->toDateString(),
+                $session->start_time
+            );
 
             $sessionArr['session_order']  = $sessionOrder;
             $sessionArr['total_sessions'] = $session->classSubject?->subject?->total_sessions;

@@ -146,7 +146,7 @@ export default function ExamEdit({
 
         router.patch(
             `/exams/${exam.id}`,
-            dirtyPayload,
+            dirtyPayload as any,
             {
                 onFinish: () => setIsSubmitting(false),
             },

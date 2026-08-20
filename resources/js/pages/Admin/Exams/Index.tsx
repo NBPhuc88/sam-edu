@@ -62,6 +62,9 @@ export default function ExamIndex({
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
         filters.center_id ? String(filters.center_id) : '',
     );
+    const [selectedClassId, setSelectedClassId] = useState<string>(
+        filters.class_id ? String(filters.class_id) : '',
+    );
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
         filters.subject_id ? String(filters.subject_id) : '',
     );

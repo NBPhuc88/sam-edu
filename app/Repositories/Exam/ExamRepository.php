@@ -434,4 +434,21 @@ class ExamRepository implements ExamRepositoryInterface
             'total_questions' => $totalQuestions,
         ];
     }
+
+    public function getPublishedExamsForDropdown(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = Exam::query()
+            ->select('id', 'center_id', 'subject_id', 'name', 'code', 'exam_type', 'duration_minutes', 'max_score')
+            ->where('status', 'published')
+            ->with([
+                'subject:id,name,code',
+                'sections:id,exam_id,title,description,skill,order_index',
+            ]);
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->orderBy('name')->get();
+    }
 }

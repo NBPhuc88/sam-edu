@@ -246,4 +246,55 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             ->orderBy('start_time', 'asc')
             ->get();
     }
+
+    public function countPastSessions(int $classSubjectId, string $date, ?string $startTime): int
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where(function ($q) use ($date, $startTime) {
+                $q->where('session_date', '<', $date)
+                    ->orWhere(function ($sq) use ($date, $startTime) {
+                        $sq->where('session_date', $date)
+                            ->where('start_time', '<=', $startTime ?? '00:00:00');
+                    });
+            })
+            ->count();
+    }
+
+    public function countSessionsBeforeDate(int $classSubjectId, string $date): int
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where('session_date', '<', $date)
+            ->count();
+    }
+
+    public function sessionExists(int $classSubjectId, string $date, string $startTime): bool
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where('session_date', $date)
+            ->where('start_time', $startTime)
+            ->exists();
+    }
+
+    public function createSession(array $data): ClassSession
+    {
+        return ClassSession::create($data);
+    }
+
+    public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where('session_date', '>=', $fromDate)
+            ->where('status', 'scheduled')
+            ->whereDoesntHave('attendances')
+            ->delete();
+    }
+
+    public function deleteFutureSessionsByScheduleId(int $classScheduleId, string $fromDate): int
+    {
+        return ClassSession::where('class_schedule_id', $classScheduleId)
+            ->where('session_date', '>=', $fromDate)
+            ->where('status', 'scheduled')
+            ->whereDoesntHave('attendances')
+            ->delete();
+    }
 }
