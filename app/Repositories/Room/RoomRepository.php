@@ -25,7 +25,6 @@ class RoomRepository implements RoomRepositoryInterface
                 'code',
                 'capacity',
                 'location',
-                'description',
                 'status',
                 'created_at'
             )
@@ -68,7 +67,6 @@ class RoomRepository implements RoomRepositoryInterface
                 'code',
                 'capacity',
                 'location',
-                'description',
                 'status',
                 'created_at'
             )

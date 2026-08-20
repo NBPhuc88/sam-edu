@@ -17,14 +17,14 @@ class SubscriptionPlanRepository implements SubscriptionPlanRepositoryInterface
             'id',
             'code',
             'name',
-            'description',
             'price',
+            'yearly_price',
             'duration_days',
             'max_students',
             'max_classes',
+            'features',
             'is_featured',
-            'badge_text',
-            'status'
+            'badge_text'
         )->orderBy('price', 'asc')
         ->get();
     }
@@ -36,14 +36,14 @@ class SubscriptionPlanRepository implements SubscriptionPlanRepositoryInterface
             'id',
             'code',
             'name',
-            'description',
             'price',
+            'yearly_price',
             'duration_days',
             'max_students',
             'max_classes',
+            'features',
             'is_featured',
             'badge_text',
-            'status',
             'created_at'
         );
 
