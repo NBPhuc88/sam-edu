@@ -78,7 +78,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AdminServiceInterface::class, AdminService::class);
         $this->app->bind(StudentServiceInterface::class, StudentService::class);
         $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
-        $this->app->bind(StudentTuitionServiceInterface::class, \App\Services\Tuition\StudentTuitionService::class);
+        $this->app->bind(\App\Services\Tuition\StudentTuitionServiceInterface::class, \App\Services\Tuition\StudentTuitionService::class);
         $this->app->bind(\App\Services\Subject\SubjectServiceInterface::class, \App\Services\Subject\SubjectService::class);
         $this->app->bind(\App\Services\Room\RoomServiceInterface::class, \App\Services\Room\RoomService::class);
         $this->app->bind(\App\Services\Class\SchoolClassServiceInterface::class, \App\Services\Class\SchoolClassService::class);

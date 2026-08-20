@@ -33,7 +33,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'name',
                 'code',
                 'description',
-                'max_capacity',
+                'max_students',
                 'start_date',
                 'end_date',
                 'status'
@@ -104,7 +104,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'name',
                 'code',
                 'description',
-                'max_capacity',
+                'max_students',
                 'start_date',
                 'end_date',
                 'status'
@@ -419,7 +419,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             'name',
             'code',
             'description',
-            'max_capacity',
+            'max_students',
             'start_date',
             'end_date',
             'status'
