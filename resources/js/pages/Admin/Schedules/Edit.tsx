@@ -66,7 +66,9 @@ interface ClassSchedule {
         id: number;
         class_id: number;
         subject_id: number;
-        teacher_id: number;
+        teacher_id?: number | null;
+        start_date?: string | null;
+        end_date?: string | null;
         school_class?: {
             id: number;
             name: string;
@@ -86,6 +88,13 @@ interface ClassSchedule {
             full_name: string;
             teacher_code: string;
         };
+        class_schedules?: Array<{
+            id: number;
+            weekday: number;
+            start_time: string;
+            end_time: string;
+            room_id?: number | null;
+        }>;
     };
 }
 
@@ -185,22 +194,44 @@ export default function ScheduleEdit({
     const [selectedRoomId, setSelectedRoomId] = useState<string>(
         schedule.room_id ? String(schedule.room_id) : '',
     );
-    const [startDate, setStartDate] = useState<string>(schedule.effective_from || '');
-    const [endDate, setEndDate] = useState<string>(schedule.effective_to || '');
+    const [startDate, setStartDate] = useState<string>(
+        schedule.effective_from ? String(schedule.effective_from).slice(0, 10) : (classSubject?.start_date ? String(classSubject.start_date).slice(0, 10) : '')
+    );
+    const [endDate, setEndDate] = useState<string>(
+        schedule.effective_to ? String(schedule.effective_to).slice(0, 10) : (classSubject?.end_date ? String(classSubject.end_date).slice(0, 10) : '')
+    );
     const [status] = useState<string>(schedule.status || 'active');
 
-    // Setup initial weekday
-    const [weeklyTimes, setWeeklyTimes] = useState<
-        Record<number, { enabled: boolean; start_time: string; end_time: string }>
-    >({
-        1: { enabled: schedule.weekday === 1, start_time: schedule.start_time.slice(0, 5) || '18:00', end_time: schedule.end_time.slice(0, 5) || '20:00' },
-        2: { enabled: schedule.weekday === 2, start_time: '18:00', end_time: '20:00' },
-        3: { enabled: schedule.weekday === 3, start_time: '18:00', end_time: '20:00' },
-        4: { enabled: schedule.weekday === 4, start_time: '18:00', end_time: '20:00' },
-        5: { enabled: schedule.weekday === 5, start_time: '18:00', end_time: '20:00' },
-        6: { enabled: schedule.weekday === 6, start_time: '08:00', end_time: '10:00' },
-        7: { enabled: schedule.weekday === 7, start_time: '08:00', end_time: '10:00' },
-    });
+    // Setup initial weekday from all class_subject schedules
+    const initialWeeklyTimes = React.useMemo(() => {
+        const base: Record<number, { enabled: boolean; start_time: string; end_time: string }> = {
+            1: { enabled: false, start_time: '18:00', end_time: '20:00' },
+            2: { enabled: false, start_time: '18:00', end_time: '20:00' },
+            3: { enabled: false, start_time: '18:00', end_time: '20:00' },
+            4: { enabled: false, start_time: '18:00', end_time: '20:00' },
+            5: { enabled: false, start_time: '18:00', end_time: '20:00' },
+            6: { enabled: false, start_time: '08:00', end_time: '10:00' },
+            7: { enabled: false, start_time: '08:00', end_time: '10:00' },
+        };
+
+        const existingList = classSubject?.class_schedules && classSubject.class_schedules.length > 0
+            ? classSubject.class_schedules
+            : [schedule];
+
+        for (const s of existingList) {
+            if (s.weekday && base[s.weekday]) {
+                base[s.weekday] = {
+                    enabled: true,
+                    start_time: s.start_time ? s.start_time.slice(0, 5) : '18:00',
+                    end_time: s.end_time ? s.end_time.slice(0, 5) : '20:00',
+                };
+            }
+        }
+
+        return base;
+    }, [classSubject, schedule]);
+
+    const [weeklyTimes, setWeeklyTimes] = useState(initialWeeklyTimes);
 
     const [specificSessions, setSpecificSessions] = useState<SpecificSession[]>([]);
     const [offSessions, setOffSessions] = useState<OffSession[]>([]);

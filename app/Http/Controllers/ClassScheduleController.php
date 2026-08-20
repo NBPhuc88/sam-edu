@@ -140,9 +140,13 @@ class ClassScheduleController extends Controller
         $admin    = $this->getAuthAdmin();
         $schedule = $this->scheduleService->findSchedule($id, $admin);
 
+        $sessions = $schedule->classSubject
+            ? $schedule->classSubject->classSessions()->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get()
+            : $schedule->classSessions()->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get();
+
         return response()->json([
             'schedule' => $schedule,
-            'sessions' => $schedule->classSessions,
+            'sessions' => $sessions,
         ]);
     }
 }

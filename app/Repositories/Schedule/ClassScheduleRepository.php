@@ -37,14 +37,19 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'start_time',
                 'end_time',
                 'room_id',
+                'effective_from',
+                'effective_to',
                 'status',
                 'created_at'
             )
             ->with([
-                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject' => function ($q) {
+                    $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
+                      ->withCount('classSessions');
+                },
                 'classSubject.schoolClass:id,center_id,name,code',
                 'classSubject.schoolClass.center:id,name,code',
-                'classSubject.subject:id,name,code',
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name,code',
             ])
@@ -121,15 +126,21 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'start_time',
                 'end_time',
                 'room_id',
+                'effective_from',
+                'effective_to',
                 'status',
                 'created_at'
             )
             ->with([
-                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject' => function ($q) {
+                    $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
+                      ->withCount('classSessions');
+                },
                 'classSubject.schoolClass:id,center_id,name,code',
                 'classSubject.schoolClass.center:id,name,code',
-                'classSubject.subject:id,name,code',
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
+                'classSubject.classSchedules:id,class_subject_id,weekday,start_time,end_time,room_id,effective_from,effective_to,status',
                 'room:id,name,code',
                 'classSessions' => function ($sq) {
                     $sq->select(
@@ -215,12 +226,14 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'start_time',
                 'end_time',
                 'room_id',
+                'effective_from',
+                'effective_to',
                 'status'
             )
             ->with([
-                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
                 'classSubject.schoolClass:id,name,code',
-                'classSubject.subject:id,name,code',
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])
             ->whereHas('classSubject', function ($q) use ($teacherId) {
@@ -243,12 +256,14 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'start_time',
                 'end_time',
                 'room_id',
+                'effective_from',
+                'effective_to',
                 'status'
             )
             ->with([
-                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
                 'classSubject.schoolClass:id,name,code',
-                'classSubject.subject:id,name,code',
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])
             ->whereHas('classSubject', function ($q) use ($classIds) {

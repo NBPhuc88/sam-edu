@@ -89,6 +89,7 @@ interface ClassSchedule {
             full_name: string;
             teacher_code: string;
         };
+        class_sessions_count?: number;
     };
 }
 
@@ -431,7 +432,7 @@ return;
                                                     title="Xem chi tiết các ca học"
                                                 >
                                                     <Eye className="h-4 w-4 text-blue-600" />
-                                                    {sch.class_sessions_count || 0} ca học
+                                                    {sch.class_subject?.class_sessions_count ?? sch.class_sessions_count ?? 0} ca học
                                                 </button>
                                             </td>
 

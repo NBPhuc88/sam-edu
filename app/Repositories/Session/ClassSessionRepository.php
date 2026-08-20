@@ -280,6 +280,58 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         return ClassSession::create($data);
     }
 
+    /**
+     * Bulk insert sessions in chunks (max 1000 items per chunk).
+     *
+     * @param  array<int, array<string, mixed>> $sessions
+     * @return int
+     */
+    public function bulkInsertSessions(array $sessions): int
+    {
+        if (empty($sessions)) {
+            return 0;
+        }
+
+        $now           = now()->toDateTimeString();
+        $totalInserted = 0;
+
+        foreach (array_chunk($sessions, 1000) as $chunk) {
+            $formattedChunk = array_map(function ($session) use ($now) {
+                if (! isset($session['created_at'])) {
+                    $session['created_at'] = $now;
+                }
+
+                if (! isset($session['updated_at'])) {
+                    $session['updated_at'] = $now;
+                }
+
+                return $session;
+            }, $chunk);
+
+            ClassSession::insert($formattedChunk);
+            $totalInserted += count($formattedChunk);
+        }
+
+        return $totalInserted;
+    }
+
+    /**
+     * Sync sessions for a class subject: delete future unattended sessions and bulk insert new ones.
+     *
+     * @param  int                              $classSubjectId
+     * @param  array<int, array<string, mixed>> $sessions
+     * @param  ?string                          $fromDate
+     * @return int
+     */
+    public function syncSessions(int $classSubjectId, array $sessions, ?string $fromDate = null): int
+    {
+        if ($fromDate !== null) {
+            $this->deleteFutureUnattendedSessions($classSubjectId, $fromDate);
+        }
+
+        return $this->bulkInsertSessions($sessions);
+    }
+
     public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
