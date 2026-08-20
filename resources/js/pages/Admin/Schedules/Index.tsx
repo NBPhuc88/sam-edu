@@ -183,8 +183,8 @@ export default function ScheduleIndex({
 
     const confirmDelete = () => {
         if (!deletingSchedule) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/schedules/${deletingSchedule.id}`, {
@@ -366,7 +366,13 @@ return;
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
-                                    <th className="px-6 py-4">Lớp Học & Trung Tâm</th>
+                                    {
+                                        isSuperAdmin ? (
+                                            <th className="px-6 py-4">Lớp Học & Trung Tâm</th>
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
                                     <th className="px-6 py-4">Môn Học</th>
                                     <th className="px-6 py-4">Giáo Viên & Phòng Học</th>
                                     <th className="px-6 py-4">Lịch Định Kỳ Trong Tuần</th>
@@ -383,14 +389,20 @@ return;
                                             key={sch.id}
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900">
-                                                    {sch.class_subject?.school_class?.name || 'N/A'}
-                                                </div>
-                                                <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                    {sch.class_subject?.school_class?.code} • {sch.class_subject?.school_class?.center?.name}
-                                                </div>
-                                            </td>
+                                            {
+                                                isSuperAdmin ? (
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-bold text-gray-900">
+                                                            {sch.class_subject?.school_class?.name || 'N/A'}
+                                                        </div>
+                                                        <div className="mt-0.5 font-mono text-xs text-gray-400">
+                                                            {sch.class_subject?.school_class?.code} • {sch.class_subject?.school_class?.center?.name}
+                                                        </div>
+                                                    </td>
+                                                ) : (
+                                                    <></>
+                                                )
+                                            }
 
                                             <td className="px-6 py-4">
                                                 <div className="font-semibold text-emerald-800">
@@ -504,13 +516,12 @@ return;
                                         disabled={!link.url || link.active}
                                         onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                                            link.active
-                                                ? 'bg-emerald-600 text-white'
-                                                : link.url
-                                                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                  : 'cursor-not-allowed text-gray-400 opacity-50'
-                                        }`}
+                                        className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${link.active
+                                            ? 'bg-emerald-600 text-white'
+                                            : link.url
+                                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                : 'cursor-not-allowed text-gray-400 opacity-50'
+                                            }`}
                                     />
                                 ))}
                             </div>
