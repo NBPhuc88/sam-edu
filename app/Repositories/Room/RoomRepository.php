@@ -177,9 +177,13 @@ class RoomRepository implements RoomRepositoryInterface
         return $query->exists();
     }
 
-    public function getByCenterIds(array $centerIds): Collection
+    /**
+     * @param  ?array<int, int>      $centerIds
+     * @return Collection<int, Room>
+     */
+    public function getByCenterIds(?array $centerIds = null): Collection
     {
-        return Room::select(
+        $query = Room::select(
             'id',
             'center_id',
             'name',
@@ -188,10 +192,13 @@ class RoomRepository implements RoomRepositoryInterface
             'location',
             'status'
         )
-        ->whereIn('center_id', $centerIds)
-        ->where('status', 'active')
-        ->orderBy('name')
-        ->get();
+        ->where('status', 'active');
+
+        if ($centerIds !== null) {
+            $query->whereIn('center_id', $centerIds);
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     public function getStats(?array $allowedCenterIds = null): array

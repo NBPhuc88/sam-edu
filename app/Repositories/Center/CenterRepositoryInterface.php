@@ -44,9 +44,10 @@ interface CenterRepositoryInterface
     public function count(): int;
 
     /**
+     * @param  ?array<int, int>                                      $centerIds
      * @return \Illuminate\Database\Eloquent\Collection<int, Center>
      */
-    public function getActiveCenters(): \Illuminate\Database\Eloquent\Collection;
+    public function getActiveCenters(?array $centerIds = null): \Illuminate\Database\Eloquent\Collection;
 
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Center>

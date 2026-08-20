@@ -142,10 +142,41 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 
 ---
 
-## 7. Kiểm tra & Biên dịch (Verification Commands)
+## 7. Quy tắc Môi trường Docker & Thực thi Lệnh Backend (Docker Environment & Execution Rules)
+
+> [!IMPORTANT]
+> **MÔI TRƯỜNG PHP / LARAVEL NẰM TRONG DOCKER CONTAINER**:
+> Khi project ở đường dẫn: `~/Desktop/web/projects/sam-edu` (hoặc `/home/phuc/Desktop/web/projects/sam-edu`), môi trường PHP/Laravel/Composer được quản lý bởi Docker Compose:
+> - **Thư mục Docker**: `~/Desktop/web/docker`
+> - **Service container**: `php83`
+> - **Thư mục dự án trong container**: `sam-edu` (đường dẫn tuyệt đối: `/var/www/sam-edu`)
+
+### Cách truy cập và chạy lệnh:
+
+1. **Truy cập trực tiếp vào bash container**:
+   ```bash
+   cd ~/Desktop/web/docker
+   docker compose exec php83 bash
+   cd sam-edu
+   ```
+
+2. **Chạy lệnh trực tiếp từ Host (không cần vào interactive bash)**:
+   ```bash
+   docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 <command>
+   ```
+   **Ví dụ thực tế**:
+   - **Artisan**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan migrate`
+   - **Pint Formatter**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 vendor/bin/pint --dirty --format agent`
+   - **Pest Test**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan test --compact`
+   - **PHP Syntax Check**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php -l <relative-path-to-file>`
+
+---
+
+## 8. Kiểm tra & Biên dịch (Verification Commands)
 
 Mọi chỉnh sửa mã nguồn trước khi hoàn tất CẦN đảm bảo các lệnh kiểm tra sau chạy thành công 0 lỗi:
 
 - **Build Frontend**: `npm run build` hoặc `npx tsc --noEmit`
-- **PHP Formatting**: `vendor/bin/pint --dirty --format agent`
-- **PHP Syntax**: `php -l <path-to-file>`
+- **PHP Formatting**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 vendor/bin/pint --dirty --format agent` (hoặc `vendor/bin/pint --dirty --format agent` bên trong container)
+- **PHP Syntax**: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php -l <path-to-file>` (hoặc `php -l <path-to-file>` bên trong container)
+

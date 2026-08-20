@@ -59,10 +59,10 @@ interface RoomRepositoryInterface
     public function codeExists(int $centerId, string $code, ?int $ignoreId = null): bool;
 
     /**
-     * @param  array<int, int>       $centerIds
+     * @param  ?array<int, int>      $centerIds
      * @return Collection<int, Room>
      */
-    public function getByCenterIds(array $centerIds): Collection;
+    public function getByCenterIds(?array $centerIds = null): Collection;
 
     /**
      * Get statistics counts for rooms.

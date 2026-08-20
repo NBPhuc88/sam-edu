@@ -123,11 +123,12 @@ class CenterRepository implements CenterRepositoryInterface
     }
 
     /**
+     * @param  ?array<int, int>                                      $centerIds
      * @return \Illuminate\Database\Eloquent\Collection<int, Center>
      */
-    public function getActiveCenters(): \Illuminate\Database\Eloquent\Collection
+    public function getActiveCenters(?array $centerIds = null): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::select(
+        $query = Center::select(
             'id',
             'code',
             'name',
@@ -135,9 +136,13 @@ class CenterRepository implements CenterRepositoryInterface
             'phone',
             'status'
         )
-        ->where('status', 'active')
-        ->orderBy('name')
-        ->get();
+        ->where('status', 'active');
+
+        if ($centerIds !== null) {
+            $query->whereIn('id', $centerIds);
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     /**
