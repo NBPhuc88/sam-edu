@@ -1,6 +1,7 @@
 import React from 'react';
-import { Plus, Trash2, MapPin, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, MapPin } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import MediaUploader from '@/components/ui/MediaUploader';
 
 interface LabelItem {
     id: string;
@@ -78,32 +79,15 @@ export default function DiagramLabellingEditor({
 
     return (
         <div className="space-y-5">
-            {/* Image URL Section */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700">
-                    <ImageIcon className="h-4 w-4 text-teal-600" />
-                    Đường Dẫn Hình Ảnh Sơ Đồ / Bản Đồ (Image URL)
-                </label>
-                <input
-                    type="text"
-                    value={imageUrl || ''}
-                    onChange={(e) => onChangeImageUrl(e.target.value)}
-                    placeholder="VD: /storage/exams/maps/building_map.png hoặc link URL ảnh online..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-teal-500 focus:outline-hidden"
-                />
-                {imageUrl && (
-                    <div className="mt-2 rounded-lg border border-gray-200 p-2 bg-slate-50 max-h-48 overflow-hidden flex items-center justify-center">
-                        <img
-                            src={imageUrl}
-                            alt="Preview sơ đồ"
-                            className="max-h-44 object-contain rounded"
-                            onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
+            {/* Image Upload / URL Section */}
+            <MediaUploader
+                value={imageUrl}
+                onChange={onChangeImageUrl}
+                objectType="diagram"
+                objectId="map"
+                label="Hình Ảnh Sơ Đồ / Bản Đồ Bài Thi"
+                placeholder="VD: Dán URL ảnh bản đồ hoặc chọn file từ máy..."
+            />
 
             {/* Pins Configuration */}
             <div className="rounded-xl border border-teal-200 bg-teal-50/40 p-4 space-y-2">

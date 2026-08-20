@@ -15,6 +15,7 @@ import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './types';
+import { getDirtyFields } from '@/lib/dirty-tracker';
 
 interface Props {
     exam: Exam;
@@ -93,33 +94,59 @@ export default function ExamEdit({
         e.preventDefault();
         setIsSubmitting(true);
 
+        const currentPayload = {
+            center_id: centerId ? Number(centerId) : null,
+            subject_id: subjectId ? Number(subjectId) : null,
+            name: name.trim(),
+            code: code.trim(),
+            exam_type: examType,
+            duration_minutes: durationMinutes ? Number(durationMinutes) : null,
+            max_score: calculatedMaxScore,
+            pass_score: passScore ? Number(passScore) : null,
+            shuffle_questions: shuffleQuestions,
+            shuffle_options: shuffleOptions,
+            max_attempts: maxAttempts ? Number(maxAttempts) : 1,
+            description: description.trim() || null,
+            status,
+            sections: sections.map((sec, sIdx) => ({
+                ...sec,
+                order_index: sIdx,
+                questions: (sec.questions || []).map((q, qIdx) => ({
+                    ...q,
+                    skill: sec.skill,
+                    order_index: qIdx,
+                    score: Number(q.score) || 1,
+                })),
+            })),
+        };
+
+        const initialPayload = {
+            center_id: exam.center_id ? Number(exam.center_id) : null,
+            subject_id: exam.subject_id ? Number(exam.subject_id) : null,
+            name: (exam.name || '').trim(),
+            code: (exam.code || '').trim(),
+            exam_type: exam.exam_type || 'general',
+            duration_minutes: exam.duration_minutes ? Number(exam.duration_minutes) : null,
+            max_score: Number(exam.max_score) || 10,
+            pass_score: exam.pass_score ? Number(exam.pass_score) : null,
+            shuffle_questions: Boolean(exam.shuffle_questions),
+            shuffle_options: Boolean(exam.shuffle_options),
+            max_attempts: exam.max_attempts ? Number(exam.max_attempts) : 1,
+            description: (exam.description || '').trim() || null,
+            status: exam.status || 'draft',
+            sections: exam.sections || [],
+        };
+
+        const dirtyPayload = getDirtyFields(initialPayload, currentPayload);
+
+        // Always ensure sections are included if modified or if any structural change
+        if (!dirtyPayload.sections && JSON.stringify(initialPayload.sections) !== JSON.stringify(currentPayload.sections)) {
+            dirtyPayload.sections = currentPayload.sections;
+        }
+
         router.patch(
             `/exams/${exam.id}`,
-            {
-                center_id: centerId ? Number(centerId) : null,
-                subject_id: subjectId ? Number(subjectId) : null,
-                name: name.trim(),
-                code: code.trim(),
-                exam_type: examType,
-                duration_minutes: durationMinutes ? Number(durationMinutes) : null,
-                max_score: calculatedMaxScore,
-                pass_score: passScore ? Number(passScore) : null,
-                shuffle_questions: shuffleQuestions,
-                shuffle_options: shuffleOptions,
-                max_attempts: maxAttempts ? Number(maxAttempts) : 1,
-                description: description.trim() || null,
-                status,
-                sections: sections.map((sec, sIdx) => ({
-                    ...sec,
-                    order_index: sIdx,
-                    questions: (sec.questions || []).map((q, qIdx) => ({
-                        ...q,
-                        skill: sec.skill,
-                        order_index: qIdx,
-                        score: Number(q.score) || 1,
-                    })),
-                })),
-            },
+            dirtyPayload,
             {
                 onFinish: () => setIsSubmitting(false),
             },

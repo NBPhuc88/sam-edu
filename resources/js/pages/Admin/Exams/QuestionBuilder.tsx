@@ -28,6 +28,7 @@ import {
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
+import MediaUploader from '@/components/ui/MediaUploader';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
 import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
@@ -967,42 +968,15 @@ export default function QuestionBuilder({
 
                                                                     {/* Image Attachment */}
                                                                     {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
-                                                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 space-y-2">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-emerald-900">
-                                                                                    <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
-                                                                                    Đường Dẫn Hình Ảnh Minh Họa (Image URL)
-                                                                                </label>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        toggleImageAttachment(secIdx, qIndex);
-                                                                                        handleUpdateQuestion(secIdx, qIndex, { image_url: null });
-                                                                                    }}
-                                                                                    className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
-                                                                                >
-                                                                                    Xóa ảnh
-                                                                                </button>
-                                                                            </div>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={q.image_url || ''}
-                                                                                onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { image_url: e.target.value || null })}
-                                                                                placeholder="VD: /storage/exams/images/question_diagram.png..."
-                                                                                className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                        <div className="space-y-2">
+                                                                            <MediaUploader
+                                                                                value={q.image_url}
+                                                                                onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { image_url: url || null })}
+                                                                                objectType="question"
+                                                                                objectId={q.code || `Q${secIdx + 1}_${qIndex + 1}`}
+                                                                                label="Hình Ảnh Đính Kèm Đề Bài"
+                                                                                placeholder="Dán URL ảnh hoặc tải ảnh từ máy tính..."
                                                                             />
-                                                                            {q.image_url && (
-                                                                                <div className="mt-2 rounded-lg border border-emerald-200 p-2 bg-white max-h-40 overflow-hidden flex items-center justify-center">
-                                                                                    <img
-                                                                                        src={q.image_url}
-                                                                                        alt="Preview đề bài"
-                                                                                        className="max-h-36 object-contain rounded"
-                                                                                        onError={(e) => {
-                                                                                            (e.target as HTMLElement).style.display = 'none';
-                                                                                        }}
-                                                                                    />
-                                                                                </div>
-                                                                            )}
                                                                         </div>
                                                                     )}
 

@@ -225,6 +225,9 @@ Route::middleware('auth.any')->group(function () {
     Route::get('/class-exams/{id}/results/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'showResult'])->name('online-exam.result');
     Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio');
     Route::get('/class-exams/audio-stream', [\App\Http\Controllers\OnlineExamController::class, 'streamAudio'])->name('online-exam.audio-stream');
+
+    // General Media Upload API
+    Route::post('/api/uploads/media', [\App\Http\Controllers\MediaUploadController::class, 'upload'])->name('uploads.media');
 });
 
 // ─── Fallback Route for 404 Not Found ────────────────────────────────────────

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Trash2, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import MediaUploader from '@/components/ui/MediaUploader';
 
 interface LeftItem {
     id: string;
@@ -190,15 +191,19 @@ export default function MatchingImageEditor({
                                         value={item.label || ''}
                                         onChange={(e) => handleImageChange(idx, { label: e.target.value })}
                                         placeholder={`Tên / Nhãn (VD: Hình ${String.fromCharCode(65 + idx)})`}
-                                        className="w-1/3 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                        className="w-1/3 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
                                     />
-                                    <input
-                                        type="text"
-                                        value={item.image_url}
-                                        onChange={(e) => handleImageChange(idx, { image_url: e.target.value })}
-                                        placeholder="Đường dẫn URL hình ảnh (VD: /storage/exams/img1.png)..."
-                                        className="flex-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                    />
+                                    <div className="flex-1">
+                                        <MediaUploader
+                                            compact={true}
+                                            value={item.image_url}
+                                            onChange={(url) => handleImageChange(idx, { image_url: url })}
+                                            objectType="matching"
+                                            objectId={`img_${String.fromCharCode(65 + idx)}`}
+                                            subId={item.id}
+                                            placeholder="URL ảnh hoặc chọn tải lên..."
+                                        />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveImage(idx)}

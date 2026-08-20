@@ -94,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Exam\ExamServiceInterface::class, \App\Services\Exam\ExamService::class);
         $this->app->bind(\App\Services\ClassExam\ClassExamServiceInterface::class, \App\Services\ClassExam\ClassExamService::class);
         $this->app->bind(\App\Services\OnlineExam\OnlineExamServiceInterface::class, \App\Services\OnlineExam\OnlineExamService::class);
+        $this->app->bind(\App\Services\Media\MediaUploadServiceInterface::class, \App\Services\Media\MediaUploadService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
