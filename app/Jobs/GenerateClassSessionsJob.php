@@ -33,17 +33,22 @@ class GenerateClassSessionsJob implements ShouldQueue
     /**
      * Execute the job.
      * @param ClassSessionRepositoryInterface $sessionRepository
+     * @param ClassScheduleServiceInterface   $scheduleService
      */
-    public function handle(ClassSessionRepositoryInterface $sessionRepository): void
-    {
+    public function handle(
+        ClassSessionRepositoryInterface $sessionRepository,
+        ClassScheduleServiceInterface $scheduleService
+    ): void {
         if ($this->isUpdate) {
-            $sessionRepository->syncSessions(
+            $scheduleService->syncSessionsWithChunking(
                 $this->classSubjectId,
                 $this->sessionsPayload,
                 $this->fromDate ?? now()->toDateString()
             );
         } else {
-            $sessionRepository->bulkInsertSessions($this->sessionsPayload);
+            foreach (array_chunk($this->sessionsPayload, 1000) as $chunk) {
+                $sessionRepository->bulkInsertSessions($chunk);
+            }
         }
     }
 }

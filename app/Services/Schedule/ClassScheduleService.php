@@ -2,7 +2,6 @@
 
 namespace App\Services\Schedule;
 
-use App\Jobs\GenerateClassSessionsJob;
 use App\Models\Admin;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
@@ -321,9 +320,11 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             // Cập nhật ngày bắt đầu / kết thúc của lớp học nếu cần
             $this->syncSchoolClassDates($schoolClass, $data['start_date'], $finalEndDate);
 
-            // 5. Lưu các ca học hàng loạt
+            // 5. Lưu các ca học hàng loạt (mỗi mảng đủ 1000 items thì insert)
             if (! empty($sessionResult['sessions'])) {
-                GenerateClassSessionsJob::dispatchSync($classSubject->id, $sessionResult['sessions'], false);
+                foreach (array_chunk($sessionResult['sessions'], 1000) as $chunk) {
+                    $this->sessionRepository->bulkInsertSessions($chunk);
+                }
             }
 
             return $schedule->refresh();
@@ -376,8 +377,30 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
 
             // Khi có thay đổi về ngày bắt đầu, ngày kết thúc, weeks, off_days hoặc extra_days:
-            $oldStartDate = $classSubject->start_date?->format('Y-m-d');
-            $fromDate     = min(array_filter([$startDate, $oldStartDate, now()->toDateString()]));
+            $today = now()->toDateString();
+
+            // 1. Stream các buổi học trong quá khứ / đã điểm danh / hoàn thành bằng cursor() để tiết kiệm RAM
+            $pastSessionsCursor = $this->sessionRepository->getPastSessionsCursor($classSubject->id, $today);
+            $pastSessionsCount  = 0;
+            $pastSessionKeys    = [];
+
+            foreach ($pastSessionsCursor as $ps) {
+                $pastSessionsCount++;
+                $pDate                                 = $ps->session_date instanceof \DateTimeInterface ? $ps->session_date->format('Y-m-d') : (string) $ps->session_date;
+                $pStart                                = substr((string) $ps->start_time, 0, 5);
+                $pastSessionKeys["{$pDate}_{$pStart}"] = true;
+            }
+
+            // 2. Mốc ngày bắt đầu quét ca học tương lai
+            $scanStartDate = ($startDate && $startDate > $today) ? $startDate : $today;
+
+            // 3. Tính số buổi còn lại cần sinh trong tương lai
+            $totalSessions        = $subject?->total_sessions;
+            $neededFutureSessions = null;
+
+            if ($totalSessions && $totalSessions > 0) {
+                $neededFutureSessions = max(0, $totalSessions - $pastSessionsCount);
+            }
 
             $normalizedWeeks     = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? $schedule->weeks ?? []);
             $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? $schedule->off_days ?? []);
@@ -391,7 +414,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'status'     => $data['status'] ?? $schedule->status,
             ]);
 
-            // Tính toán toàn bộ ca học mới
+            // 4. Tính toán danh sách ca học tương lai mới
             $sessionResult = $this->calculateSessionsPayload(
                 $classSubject,
                 $schedule->id,
@@ -402,10 +425,26 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $data['end_date'] ?? null,
                 $teacherId,
                 $roomId,
-                $subject?->total_sessions
+                $neededFutureSessions,
+                $scanStartDate,
+                $pastSessionKeys
             );
 
-            $finalEndDate = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
+            // 5. Đồng bộ các ca học tương lai (Giữ trùng, Xóa khác, Thêm thiếu) với chunk 1000 items
+            $this->syncSessionsWithChunking(
+                $classSubject->id,
+                $sessionResult['sessions'],
+                $scanStartDate
+            );
+
+            // 6. Tính toán lại ngày kết thúc từ buổi học cuối cùng trong DB qua repository
+            $lastSession = $this->sessionRepository->getLatestSession($classSubject->id);
+
+            $finalEndDate = ! empty($data['end_date'])
+                ? $data['end_date']
+                : ($lastSession?->session_date instanceof \DateTimeInterface
+                    ? $lastSession->session_date->format('Y-m-d')
+                    : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']));
 
             // Cập nhật class_subject
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
@@ -419,16 +458,104 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $this->syncSchoolClassDates($classSubject->schoolClass, $startDate, $finalEndDate);
             }
 
-            // Xóa các ca học cũ bị thay đổi và sinh lại ca học mới
-            GenerateClassSessionsJob::dispatchSync(
-                $classSubject->id,
-                $sessionResult['sessions'],
-                true,
-                $fromDate
-            );
-
             return $schedule->refresh();
         });
+    }
+
+    /**
+     * Đồng bộ ca học thông minh tiết kiệm RAM:
+     * - Stream future sessions qua cursor().
+     * - So khớp và gom batch: mảng xóa đủ 1000 ID -> xóa, mảng insert đủ 1000 slot -> insert.
+     *
+     * @param  int                                          $classSubjectId
+     * @param  array<int, array<string, mixed>>             $newFutureSlots
+     * @param  string                                       $fromDate
+     * @return array{kept: int, deleted: int, created: int}
+     */
+    public function syncSessionsWithChunking(int $classSubjectId, array $newFutureSlots, string $fromDate): array
+    {
+        // 1. Key hóa danh sách new future slots để tra cứu O(1)
+        $newSlotMap = [];
+
+        foreach ($newFutureSlots as $slot) {
+            $dateStr          = (string) $slot['session_date'];
+            $startTime        = substr((string) $slot['start_time'], 0, 5);
+            $endTime          = substr((string) $slot['end_time'], 0, 5);
+            $key              = "{$dateStr}_{$startTime}_{$endTime}";
+            $newSlotMap[$key] = $slot;
+        }
+
+        $matchedSlotKeys = [];
+        $deleteBatch     = [];
+        $keptCount       = 0;
+        $deletedCount    = 0;
+        $createdCount    = 0;
+
+        // 2. Stream các ca học tương lai hiện có từ database bằng cursor() để tiết kiệm RAM
+        $futureCursor = $this->sessionRepository->getFutureUnattendedSessionsCursor($classSubjectId, $fromDate);
+
+        foreach ($futureCursor as $existing) {
+            $dateStr   = $existing->session_date instanceof \DateTimeInterface ? $existing->session_date->format('Y-m-d') : (string) $existing->session_date;
+            $startTime = substr((string) $existing->start_time, 0, 5);
+            $endTime   = substr((string) $existing->end_time, 0, 5);
+            $key       = "{$dateStr}_{$startTime}_{$endTime}";
+
+            if (isset($newSlotMap[$key])) {
+                // TRÙNG LỊCH: Giữ nguyên session
+                $matchedSlotKeys[$key] = true;
+                $slot                  = $newSlotMap[$key];
+
+                $existing->update([
+                    'teacher_id'        => $slot['teacher_id'] ?? $existing->teacher_id,
+                    'room_id'           => array_key_exists('room_id', $slot) ? $slot['room_id'] : $existing->room_id,
+                    'class_schedule_id' => $slot['class_schedule_id'] ?? $existing->class_schedule_id,
+                    'topic'             => $slot['topic'] ?? $existing->topic,
+                ]);
+                $keptCount++;
+            } else {
+                // KHÁC LỊCH: Gom vào batch xóa
+                $deleteBatch[] = $existing->id;
+
+                // Khi mảng xóa đủ 1000 ID -> gọi repository xóa
+                if (count($deleteBatch) >= 1000) {
+                    $deletedCount += $this->sessionRepository->deleteSessionsByIds($deleteBatch);
+                    $deleteBatch = [];
+                }
+            }
+        }
+
+        // Xóa nốt các ID còn lại trong deleteBatch
+        if (! empty($deleteBatch)) {
+            $deletedCount += $this->sessionRepository->deleteSessionsByIds($deleteBatch);
+            $deleteBatch = [];
+        }
+
+        // 3. Gom các slot THIẾU vào batch insert (cứ đủ 1000 item thì insert)
+        $insertBatch = [];
+
+        foreach ($newSlotMap as $key => $slot) {
+            if (! isset($matchedSlotKeys[$key])) {
+                $insertBatch[] = $slot;
+
+                // Khi mảng insert đủ 1000 item -> gọi repository insert
+                if (count($insertBatch) >= 1000) {
+                    $createdCount += $this->sessionRepository->bulkInsertSessions($insertBatch);
+                    $insertBatch = [];
+                }
+            }
+        }
+
+        // Insert nốt các slot còn lại trong insertBatch
+        if (! empty($insertBatch)) {
+            $createdCount += $this->sessionRepository->bulkInsertSessions($insertBatch);
+            $insertBatch = [];
+        }
+
+        return [
+            'kept'    => $keptCount,
+            'deleted' => $deletedCount,
+            'created' => $createdCount,
+        ];
     }
 
     /**
@@ -530,7 +657,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
      * @param  ?string                                                                                     $endDateStr
      * @param  int                                                                                         $teacherId
      * @param  ?int                                                                                        $roomId
-     * @param  ?int                                                                                        $totalSessions
+     * @param  ?int                                                                                        $targetRemainingCount
+     * @param  ?string                                                                                     $scanStartDateStr
+     * @param  array<string, bool>                                                                         $existingPastKeys
      * @return array{sessions: array<int, array<string, mixed>>, calculated_end_date: ?string, count: int}
      */
     protected function calculateSessionsPayload(
@@ -543,9 +672,13 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         ?string $endDateStr = null,
         int $teacherId = 0,
         ?int $roomId = null,
-        ?int $totalSessions = null
+        ?int $targetRemainingCount = null,
+        ?string $scanStartDateStr = null,
+        array $existingPastKeys = []
     ): array {
-        if (! $startDateStr) {
+        $actualScanStart = $scanStartDateStr ?: $startDateStr;
+
+        if (! $actualScanStart) {
             return [
                 'sessions'            => [],
                 'calculated_end_date' => null,
@@ -553,7 +686,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             ];
         }
 
-        $startDate = Carbon::parse($startDateStr);
+        $scanStart = Carbon::parse($actualScanStart);
 
         // Tạo map tra cứu nhanh cho off_days:
         // 1. $fullOffDays = ['2026-09-02' => true] (nghỉ cả ngày)
@@ -579,16 +712,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $sessions        = [];
         $seenDateTime    = [];
         $lastSessionDate = null;
-        $currentDate     = $startDate->copy();
+        $currentDate     = $scanStart->copy();
         $now             = now()->toDateTimeString();
 
         // 1. Sinh ca học theo chu kỳ tuần (weeks JSON)
         if (! $endDateStr) {
-            if ($totalSessions && $totalSessions > 0) {
-                // Môn học có cấu hình số buổi cụ thể (VD: 60 buổi)
-                $pastSessionsCount    = $this->sessionRepository->countSessionsBeforeDate($classSubject->id, $startDateStr);
-                $targetRemainingCount = max(1, $totalSessions - $pastSessionsCount);
-                $maxSafetyDate        = $startDate->copy()->addYears(5);
+            if ($targetRemainingCount !== null) {
+                // Đã xác định số buổi cần tạo (VD: 60 buổi hoặc còn 45 buổi)
+                $maxSafetyDate = $scanStart->copy()->addYears(5);
 
                 while (count($sessions) < $targetRemainingCount && $currentDate->lte($maxSafetyDate)) {
                     $dayKey  = (string) $currentDate->dayOfWeekIso; // 1 = Mon .. 7 = Sun
@@ -598,7 +729,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                         foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                             $slotKey = "{$dateStr}_{$startTime}";
 
-                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
                                 $seenDateTime[$slotKey] = true;
                                 $sessions[]             = [
                                     'class_subject_id'  => $classSubject->id,
@@ -627,7 +758,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 }
             } else {
                 // Môn học không cấu hình số buổi -> mặc định 12 tuần
-                $endDate = $startDate->copy()->addWeeks(12);
+                $endDate = $scanStart->copy()->addWeeks(12);
 
                 while ($currentDate->lte($endDate)) {
                     $dayKey  = (string) $currentDate->dayOfWeekIso;
@@ -637,7 +768,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                         foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                             $slotKey = "{$dateStr}_{$startTime}";
 
-                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
                                 $seenDateTime[$slotKey] = true;
                                 $sessions[]             = [
                                     'class_subject_id'  => $classSubject->id,
@@ -673,7 +804,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                         $slotKey = "{$dateStr}_{$startTime}";
 
-                        if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                        if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
                             $seenDateTime[$slotKey] = true;
                             $sessions[]             = [
                                 'class_subject_id'  => $classSubject->id,
@@ -704,10 +835,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $specStart   = $extra['start_time'] ?? null;
             $specEnd     = $extra['end_time'] ?? null;
 
-            if ($specDateStr && $specStart && $specEnd) {
+            if ($specDateStr && $specStart && $specEnd && $specDateStr >= $actualScanStart) {
                 $key = "{$specDateStr}_{$specStart}";
 
-                if (! isset($seenDateTime[$key])) {
+                if (! isset($seenDateTime[$key]) && ! isset($existingPastKeys[$key])) {
                     $seenDateTime[$key] = true;
                     $sessions[]         = [
                         'class_subject_id'  => $classSubject->id,

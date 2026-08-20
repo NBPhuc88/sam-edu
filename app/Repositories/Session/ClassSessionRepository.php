@@ -247,15 +247,71 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             ->get();
     }
 
-    public function countPastSessions(int $classSubjectId, string $date, ?string $startTime): int
+    /**
+     * Lấy cursor các ca học trong quá khứ / đã điểm danh / trạng thái hoàn thành để stream tiết kiệm RAM.
+     *
+     * @param  int                                                               $classSubjectId
+     * @param  string                                                            $fromDate
+     * @return \Illuminate\Support\LazyCollection<int, \App\Models\ClassSession>
+     */
+    public function getPastSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
-            ->where(function ($q) use ($date, $startTime) {
-                $q->where('session_date', '<', $date)
-                    ->orWhere(function ($sq) use ($date, $startTime) {
-                        $sq->where('session_date', $date)
-                            ->where('start_time', '<=', $startTime ?? '00:00:00');
-                    });
+            ->where(function ($q) use ($fromDate) {
+                $q->where('session_date', '<', $fromDate)
+                    ->orWhere('status', '!=', 'scheduled')
+                    ->orWhereHas('attendances');
+            })
+            ->select(['id', 'session_date', 'start_time', 'end_time', 'status'])
+            ->orderBy('session_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->cursor();
+    }
+
+    /**
+     * Lấy cursor các ca học tương lai có thể điều chỉnh (chưa diễn ra, chưa điểm danh) để stream tiết kiệm RAM.
+     *
+     * @param  int                                                               $classSubjectId
+     * @param  string                                                            $fromDate
+     * @return \Illuminate\Support\LazyCollection<int, \App\Models\ClassSession>
+     */
+    public function getFutureUnattendedSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where('session_date', '>=', $fromDate)
+            ->where('status', 'scheduled')
+            ->whereDoesntHave('attendances')
+            ->select([
+                'id',
+                'class_subject_id',
+                'class_schedule_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+            ])
+            ->orderBy('session_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->cursor();
+    }
+
+    /**
+     * Đếm số ca học trong quá khứ hoặc đã điểm danh/chốt.
+     *
+     * @param  int    $classSubjectId
+     * @param  string $fromDate
+     * @return int
+     */
+    public function countPastSessions(int $classSubjectId, string $fromDate): int
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where(function ($q) use ($fromDate) {
+                $q->where('session_date', '<', $fromDate)
+                    ->orWhere('status', '!=', 'scheduled')
+                    ->orWhereHas('attendances');
             })
             ->count();
     }
@@ -281,7 +337,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     }
 
     /**
-     * Bulk insert sessions in chunks (max 1000 items per chunk).
+     * Bulk insert sessions theo danh sách mảng (chạy raw insert).
      *
      * @param  array<int, array<string, mixed>> $sessions
      * @return int
@@ -292,44 +348,52 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             return 0;
         }
 
-        $now           = now()->toDateTimeString();
-        $totalInserted = 0;
+        $now = now()->toDateTimeString();
 
-        foreach (array_chunk($sessions, 1000) as $chunk) {
-            $formattedChunk = array_map(function ($session) use ($now) {
-                if (! isset($session['created_at'])) {
-                    $session['created_at'] = $now;
-                }
+        $formatted = array_map(function ($session) use ($now) {
+            if (! isset($session['created_at'])) {
+                $session['created_at'] = $now;
+            }
 
-                if (! isset($session['updated_at'])) {
-                    $session['updated_at'] = $now;
-                }
+            if (! isset($session['updated_at'])) {
+                $session['updated_at'] = $now;
+            }
 
-                return $session;
-            }, $chunk);
+            return $session;
+        }, $sessions);
 
-            ClassSession::insert($formattedChunk);
-            $totalInserted += count($formattedChunk);
-        }
+        ClassSession::insert($formatted);
 
-        return $totalInserted;
+        return count($formatted);
     }
 
     /**
-     * Sync sessions for a class subject: delete future unattended sessions and bulk insert new ones.
+     * Xóa hàng loạt ca học theo danh sách ID (chạy raw whereIn delete).
      *
-     * @param  int                              $classSubjectId
-     * @param  array<int, array<string, mixed>> $sessions
-     * @param  ?string                          $fromDate
+     * @param  array<int> $ids
      * @return int
      */
-    public function syncSessions(int $classSubjectId, array $sessions, ?string $fromDate = null): int
+    public function deleteSessionsByIds(array $ids): int
     {
-        if ($fromDate !== null) {
-            $this->deleteFutureUnattendedSessions($classSubjectId, $fromDate);
+        if (empty($ids)) {
+            return 0;
         }
 
-        return $this->bulkInsertSessions($sessions);
+        return ClassSession::whereIn('id', $ids)->delete();
+    }
+
+    /**
+     * Lấy buổi học có ngày muộn nhất của môn học.
+     *
+     * @param  int           $classSubjectId
+     * @return ?ClassSession
+     */
+    public function getLatestSession(int $classSubjectId): ?ClassSession
+    {
+        return ClassSession::where('class_subject_id', $classSubjectId)
+            ->orderBy('session_date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->first();
     }
 
     public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int

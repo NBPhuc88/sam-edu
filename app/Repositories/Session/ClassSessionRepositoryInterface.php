@@ -70,7 +70,32 @@ interface ClassSessionRepositoryInterface
      */
     public function getByClassSubjectId(int $classSubjectId): Collection;
 
-    public function countPastSessions(int $classSubjectId, string $date, ?string $startTime): int;
+    /**
+     * Lấy cursor các ca học trong quá khứ / đã điểm danh / trạng thái hoàn thành để stream tiết kiệm RAM.
+     *
+     * @param  int                                                   $classSubjectId
+     * @param  string                                                $fromDate
+     * @return \Illuminate\Support\LazyCollection<int, ClassSession>
+     */
+    public function getPastSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection;
+
+    /**
+     * Lấy cursor các ca học tương lai có thể điều chỉnh (chưa diễn ra, chưa điểm danh) để stream tiết kiệm RAM.
+     *
+     * @param  int                                                   $classSubjectId
+     * @param  string                                                $fromDate
+     * @return \Illuminate\Support\LazyCollection<int, ClassSession>
+     */
+    public function getFutureUnattendedSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection;
+
+    /**
+     * Đếm số ca học trong quá khứ hoặc đã điểm danh/chốt.
+     *
+     * @param  int    $classSubjectId
+     * @param  string $fromDate
+     * @return int
+     */
+    public function countPastSessions(int $classSubjectId, string $fromDate): int;
 
     public function countSessionsBeforeDate(int $classSubjectId, string $date): int;
 
@@ -82,7 +107,7 @@ interface ClassSessionRepositoryInterface
     public function createSession(array $data): ClassSession;
 
     /**
-     * Bulk insert sessions in chunks (max 1000 items per chunk).
+     * Bulk insert sessions theo danh sách mảng (chạy raw insert).
      *
      * @param  array<int, array<string, mixed>> $sessions
      * @return int
@@ -90,14 +115,20 @@ interface ClassSessionRepositoryInterface
     public function bulkInsertSessions(array $sessions): int;
 
     /**
-     * Sync sessions for a class subject: delete future unattended sessions and bulk insert new ones.
+     * Xóa hàng loạt ca học theo danh sách ID (chạy raw whereIn delete).
      *
-     * @param  int                              $classSubjectId
-     * @param  array<int, array<string, mixed>> $sessions
-     * @param  ?string                          $fromDate
+     * @param  array<int> $ids
      * @return int
      */
-    public function syncSessions(int $classSubjectId, array $sessions, ?string $fromDate = null): int;
+    public function deleteSessionsByIds(array $ids): int;
+
+    /**
+     * Lấy buổi học có ngày muộn nhất của môn học.
+     *
+     * @param  int           $classSubjectId
+     * @return ?ClassSession
+     */
+    public function getLatestSession(int $classSubjectId): ?ClassSession;
 
     public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int;
 

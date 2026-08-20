@@ -349,3 +349,138 @@ test('does not recreate sessions when only teacher or room changes without date 
     $sampleSession = ClassSession::where('class_subject_id', $classSubject->id)->first();
     expect($sampleSession->teacher_id)->toBe($teacher2->id);
 });
+
+test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps matching, deletes obsolete, creates missing)', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000009',
+        'name'   => 'Trung Tâm Test Diff Sync',
+        'email'  => 'diffsync@test.com',
+        'phone'  => '0901234599',
+        'status' => 'active',
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'superadmin_diff_1',
+        'full_name'  => 'Super Admin Diff',
+        'email'      => 'diff1@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000009',
+    ]);
+
+    $teacher = Teacher::create([
+        'center_id'    => $center->id,
+        'teacher_code' => 'GV000000009',
+        'username'     => 'teacher_diff_1',
+        'first_name'   => 'Diff',
+        'last_name'    => 'Nguyễn',
+        'full_name'    => 'Nguyễn Diff',
+        'email'        => 'teacherdiff@test.com',
+        'password'     => 'password123',
+        'status'       => 'active',
+    ]);
+
+    $subject = Subject::create([
+        'center_id'        => $center->id,
+        'code'             => 'S000000099',
+        'name'             => 'Môn Học 10 Buổi Diff Test',
+        'total_sessions'   => 10,
+        'duration_minutes' => 90,
+        'tuition_fee'      => 3000000,
+        'status'           => 'active',
+    ]);
+
+    $class = SchoolClass::create([
+        'center_id'    => $center->id,
+        'code'         => 'C000000099',
+        'name'         => 'Lớp Diff Test',
+        'max_students' => 20,
+        'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    $service = app(ClassScheduleServiceInterface::class);
+
+    // 1. Tạo lịch ban đầu (bắt đầu trong quá khứ 2026-08-01, học T2 và T4)
+    $schedule = $service->createSchedule([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'start_date' => '2026-08-01',
+        'end_date'   => null,
+        'weeks'      => [
+            '1' => [['18:00', '20:00']], // Thứ 2
+            '3' => [['18:00', '20:00']], // Thứ 4
+        ],
+        'status' => 'active',
+    ], $admin);
+
+    $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
+    expect(ClassSession::where('class_subject_id', $classSubject->id)->count())->toBe(10);
+
+    // Đánh dấu 3 buổi đầu tiên thành "completed" (quá khứ)
+    $first3Sessions = ClassSession::where('class_subject_id', $classSubject->id)
+        ->orderBy('session_date')
+        ->orderBy('start_time')
+        ->take(3)
+        ->get();
+
+    foreach ($first3Sessions as $s) {
+        $s->update(['status' => 'completed']);
+    }
+
+    $pastIds = $first3Sessions->pluck('id')->toArray();
+
+    // Giả sử có một ca tương lai vào Thứ 2 (ví dụ trùng lịch)
+    $futureMonSession = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('status', 'scheduled')
+        ->whereRaw("strftime('%w', session_date) = '1'") // Thứ 2 (SQLite %w: 0=Sun, 1=Mon)
+        ->first();
+
+    $futureMonId = $futureMonSession?->id;
+
+    // 2. Cập nhật lịch: Bây giờ học Thứ 2 (giữ lại các buổi T2 tương lai) và Thứ 6 (thay cho Thứ 4)
+    $service->updateSchedule($schedule->id, [
+        'teacher_id' => $teacher->id,
+        'start_date' => '2026-08-01',
+        'end_date'   => null,
+        'weeks'      => [
+            '1' => [['18:00', '20:00']], // Thứ 2 (vẫn giữ)
+            '5' => [['18:00', '20:00']], // Thứ 6 (mới, thay cho Thứ 4)
+        ],
+        'status' => 'active',
+    ], $admin);
+
+    // 3. Kiểm tra kết quả:
+    // A. Tổng số buổi toàn môn vẫn là 10 (3 buổi completed trong quá khứ + 7 buổi tương lai)
+    $allSessions = ClassSession::where('class_subject_id', $classSubject->id)->get();
+    expect($allSessions)->toHaveCount(10);
+
+    // B. 3 buổi quá khứ (completed) vẫn giữ nguyên 100% ID
+    $currentPastIds = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('status', 'completed')
+        ->pluck('id')
+        ->toArray();
+    expect($currentPastIds)->toEqual($pastIds);
+
+    // C. Ca Thứ 2 tương lai nào trùng lịch được giữ nguyên ID
+    if ($futureMonId) {
+        $stillExists = ClassSession::where('id', $futureMonId)->exists();
+        expect($stillExists)->toBeTrue();
+    }
+
+    // D. Không còn ca Thứ 4 nào trong tương lai (session_date >= today)
+    $wedFutureCount = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('session_date', '>=', now()->toDateString())
+        ->where('status', 'scheduled')
+        ->whereRaw("strftime('%w', session_date) = '3'") // Thứ 4
+        ->count();
+    expect($wedFutureCount)->toBe(0);
+
+    // E. Có các ca Thứ 6 mới được tạo trong tương lai (session_date >= today)
+    $friFutureCount = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('session_date', '>=', now()->toDateString())
+        ->where('status', 'scheduled')
+        ->whereRaw("strftime('%w', session_date) = '5'") // Thứ 6
+        ->count();
+    expect($friFutureCount)->toBeGreaterThan(0);
+});

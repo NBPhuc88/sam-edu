@@ -66,4 +66,14 @@ interface ClassScheduleServiceInterface
      * @return bool
      */
     public function deleteSchedule(int $id, ?Admin $admin = null): bool;
+
+    /**
+     * Đồng bộ ca học thông minh tiết kiệm RAM (stream qua cursor và gom batch 1000 items).
+     *
+     * @param  int                                          $classSubjectId
+     * @param  array<int, array<string, mixed>>             $newFutureSlots
+     * @param  string                                       $fromDate
+     * @return array{kept: int, deleted: int, created: int}
+     */
+    public function syncSessionsWithChunking(int $classSubjectId, array $newFutureSlots, string $fromDate): array;
 }
