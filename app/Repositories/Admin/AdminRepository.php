@@ -23,6 +23,17 @@ class AdminRepository implements AdminRepositoryInterface
     public function paginate(int $perPage = 15, ?string $search = null, ?string $role = null): LengthAwarePaginator
     {
         return Admin::query()
+            ->select(
+                'id',
+                'admin_code',
+                'full_name',
+                'username',
+                'email',
+                'phone',
+                'role',
+                'status',
+                'created_at'
+            )
             ->with('centers:id,name,code')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {

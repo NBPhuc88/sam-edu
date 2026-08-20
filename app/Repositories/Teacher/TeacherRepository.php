@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Teacher;
 
+use App\Models\ClassSchedule;
+use App\Models\ClassSession;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -71,7 +73,21 @@ class TeacherRepository implements TeacherRepositoryInterface
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Teacher::query()->with('center');
+        $query = Teacher::query()
+            ->select(
+                'id',
+                'teacher_code',
+                'full_name',
+                'email',
+                'phone',
+                'specialization',
+                'gender',
+                'date_of_birth',
+                'hire_date',
+                'status',
+                'center_id'
+            )
+            ->with('center:id,name,code');
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
@@ -111,7 +127,22 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function find(int $id, ?array $allowedCenterIds = null): ?Teacher
     {
-        $query = Teacher::query()->with('center');
+        $query = Teacher::query()
+            ->select(
+                'id',
+                'teacher_code',
+                'full_name',
+                'username',
+                'email',
+                'phone',
+                'specialization',
+                'gender',
+                'date_of_birth',
+                'hire_date',
+                'status',
+                'center_id'
+            )
+            ->with('center:id,name,code');
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -196,7 +227,19 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
     {
-        return \App\Models\ClassSession::query()
+        return ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
             ->where(function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId)
                     ->orWhereHas('classSubject', function ($csq) use ($teacherId) {
@@ -204,12 +247,18 @@ class TeacherRepository implements TeacherRepositoryInterface
                     });
             })
             ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.schoolClass' => function ($cq) {
-                    $cq->withCount('students');
+                    $cq->select(
+                        'id',
+                        'center_id',
+                        'name',
+                        'code'
+                    )->withCount('students');
                 },
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'teacher:id,full_name,teacher_code,phone',
-                'room.equipments',
+                'room:id,name',
             ])
             ->whereBetween('session_date', [$startDate, $endDate])
             ->orderBy('session_date')
@@ -223,17 +272,32 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Database\Eloquent\Collection
     {
-        return \App\Models\ClassSchedule::query()
+        return ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status'
+            )
             ->whereHas('classSubject', function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId);
             })
             ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.schoolClass' => function ($cq) {
-                    $cq->withCount('students');
+                    $cq->select(
+                        'id',
+                        'center_id',
+                        'name',
+                        'code'
+                    )->withCount('students');
                 },
                 'classSubject.subject:id,name,code',
                 'classSubject.teacher:id,full_name,teacher_code',
-                'room.equipments',
+                'room:id,name',
             ])
             ->where('status', 'active')
             ->orderBy('weekday')

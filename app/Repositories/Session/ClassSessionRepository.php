@@ -39,11 +39,26 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         int $page = 1
     ): LengthAwarePaginator {
         $query = ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'class_schedule_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
             ->with([
-                'classSubject.schoolClass.center',
-                'classSubject.subject',
-                'teacher',
-                'room',
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass.center:id,name,code',
+                'classSubject.subject:id,name,code',
+                'teacher:id,full_name,teacher_code',
+                'room:id,name,code',
             ])
             ->withCount([
                 'attendances',
@@ -141,20 +156,38 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function findWithDetails(int $id): ?ClassSession
     {
-        return ClassSession::with([
-            'classSubject.schoolClass.center',
-            'classSubject.schoolClass.classStudents.student',
-            'classSubject.subject',
-            'classSubject.teacher',
-            'classSchedule',
-            'teacher',
-            'room',
-            'attendances.student',
-            'reschedules.oldRoom',
-            'reschedules.newRoom',
-            'reschedules.changedByAdmin',
-            'reschedules.changedByTeacher',
-        ])->find($id);
+        return ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'class_schedule_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
+            ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass.classStudents:id,class_id,student_id,status',
+                'classSubject.schoolClass.classStudents.student:id,student_code,full_name,email,phone',
+                'classSubject.schoolClass.center:id,name,code',
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'classSchedule:id,weekday,start_time,end_time',
+                'teacher:id,full_name,teacher_code',
+                'room:id,name,code',
+                'attendances:id,session_id,student_id,status,note,marked_at',
+                'attendances.student:id,student_code,full_name,email,phone',
+                'reschedules.oldRoom:id,name',
+                'reschedules.newRoom:id,name',
+                'reschedules.changedByAdmin:id,full_name,username',
+                'reschedules.changedByTeacher:id,full_name,teacher_code',
+            ])->find($id);
     }
 
     /**
@@ -190,8 +223,25 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function getByClassSubjectId(int $classSubjectId): Collection
     {
-        return ClassSession::where('class_subject_id', $classSubjectId)
-            ->with(['teacher', 'room'])
+        return ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'class_schedule_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
+            ->where('class_subject_id', $classSubjectId)
+            ->with([
+                'teacher:id,full_name,teacher_code',
+                'room:id,name,code'
+            ])
             ->orderBy('session_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();

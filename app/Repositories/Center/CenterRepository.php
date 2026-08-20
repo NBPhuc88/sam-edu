@@ -37,6 +37,18 @@ class CenterRepository implements CenterRepositoryInterface
 
             if (! empty($targetIds)) {
                 return Center::query()
+                    ->select(
+                        'id',
+                        'code',
+                        'name',
+                        'email',
+                        'phone',
+                        'address',
+                        'status',
+                        'subscription_plan',
+                        'expires_at',
+                        'created_at'
+                    )
                     ->whereIn('id', $targetIds)
                     ->withCount(['students', 'classes', 'teachers'])
                     ->latest('id')
@@ -44,7 +56,19 @@ class CenterRepository implements CenterRepositoryInterface
             }
         }
 
-        return $query->withCount(['students', 'classes', 'teachers'])
+        return $query->select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'address',
+            'status',
+            'subscription_plan',
+            'expires_at',
+            'created_at'
+        )
+            ->withCount(['students', 'classes', 'teachers'])
             ->latest('id')
             ->paginate($perPage);
     }
@@ -103,7 +127,17 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getActiveCenters(): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::where('status', 'active')->orderBy('name')->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status'
+        )
+        ->where('status', 'active')
+        ->orderBy('name')
+        ->get();
     }
 
     /**
@@ -125,7 +159,18 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getLatest(int $limit = 5): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::latest()->take($limit)->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status',
+            'created_at'
+        )
+        ->latest()
+        ->take($limit)
+        ->get();
     }
 
     /**
@@ -134,7 +179,17 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getWithCounts(array $ids): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::whereIn('id', $ids)->withCount(['students', 'classes', 'teachers'])->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status'
+        )
+        ->whereIn('id', $ids)
+        ->withCount(['students', 'classes', 'teachers'])
+        ->get();
     }
 
     /**
@@ -154,7 +209,17 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getCreatedBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::whereBetween('created_at', [$start, $end])->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status',
+            'created_at'
+        )
+        ->whereBetween('created_at', [$start, $end])
+        ->get();
     }
 
     /**
@@ -164,7 +229,17 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getExpiringBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::whereBetween('expires_at', [$start, $end])->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status',
+            'expires_at'
+        )
+        ->whereBetween('expires_at', [$start, $end])
+        ->get();
     }
 
     /**
@@ -173,7 +248,16 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function getByIdsCollection(array $ids): \Illuminate\Database\Eloquent\Collection
     {
-        return Center::whereIn('id', $ids)->get();
+        return Center::select(
+            'id',
+            'code',
+            'name',
+            'email',
+            'phone',
+            'status'
+        )
+        ->whereIn('id', $ids)
+        ->get();
     }
 
     public function countInYearMonth(int $year, int $month): int

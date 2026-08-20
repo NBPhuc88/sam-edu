@@ -80,7 +80,26 @@ class StudentRepository implements StudentRepositoryInterface
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Student::query()->with(['center', 'classes:id,name,code']);
+        $query = Student::query()
+            ->select(
+                'id',
+                'student_code',
+                'full_name',
+                'username',
+                'email',
+                'phone',
+                'gender',
+                'date_of_birth',
+                'parent_name',
+                'parent_phone',
+                'parent_relationship',
+                'status',
+                'center_id'
+            )
+            ->with([
+                'center:id,name,code',
+                'classes:id,name,code'
+            ]);
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
@@ -131,7 +150,24 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function find(int $id, ?array $allowedCenterIds = null): ?Student
     {
-        $query = Student::query()->with('center');
+        $query = Student::query()
+            ->select(
+                'id',
+                'student_code',
+                'full_name',
+                'username',
+                'email',
+                'phone',
+                'gender',
+                'date_of_birth',
+                'address',
+                'parent_name',
+                'parent_phone',
+                'parent_relationship',
+                'status',
+                'center_id'
+            )
+            ->with('center:id,name,code');
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);

@@ -30,11 +30,23 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
         int $page = 1
     ): LengthAwarePaginator {
         $query = ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status',
+                'created_at'
+            )
             ->with([
-                'classSubject.schoolClass.center',
-                'classSubject.subject',
-                'classSubject.teacher',
-                'room',
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass.center:id,name,code',
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'room:id,name,code',
             ])
             ->withCount('classSessions');
 
@@ -102,13 +114,38 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?ClassSchedule
     {
         $query = ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status',
+                'created_at'
+            )
             ->with([
-                'classSubject.schoolClass.center',
-                'classSubject.subject',
-                'classSubject.teacher',
-                'room',
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass.center:id,name,code',
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'room:id,name,code',
                 'classSessions' => function ($sq) {
-                    $sq->orderBy('session_date', 'asc')->orderBy('start_time', 'asc');
+                    $sq->select(
+                        'id',
+                        'class_schedule_id',
+                        'class_subject_id',
+                        'teacher_id',
+                        'room_id',
+                        'session_date',
+                        'start_time',
+                        'end_time',
+                        'topic',
+                        'status'
+                    )
+                    ->orderBy('session_date', 'asc')
+                    ->orderBy('start_time', 'asc');
                 },
             ])
             ->withCount('classSessions');
@@ -170,7 +207,22 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
      */
     public function getTeacherSchedules(int $teacherId): Collection
     {
-        return ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
+        return ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status'
+            )
+            ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,name,code',
+                'classSubject.subject:id,name,code',
+                'room:id,name,code',
+            ])
             ->whereHas('classSubject', function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId);
             })
@@ -183,7 +235,22 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
      */
     public function getStudentSchedules(array $classIds): Collection
     {
-        return ClassSchedule::with(['classSubject.schoolClass', 'classSubject.subject', 'room'])
+        return ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status'
+            )
+            ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass:id,name,code',
+                'classSubject.subject:id,name,code',
+                'room:id,name,code',
+            ])
             ->whereHas('classSubject', function ($q) use ($classIds) {
                 $q->whereIn('class_id', $classIds);
             })

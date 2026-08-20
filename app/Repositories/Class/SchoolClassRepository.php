@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Class;
 
+use App\Models\ClassSchedule;
 use App\Models\ClassStudent;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
@@ -26,8 +27,20 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         int $page = 1
     ): LengthAwarePaginator {
         $query = SchoolClass::query()
+            ->select(
+                'id',
+                'center_id',
+                'name',
+                'code',
+                'description',
+                'max_capacity',
+                'start_date',
+                'end_date',
+                'status'
+            )
             ->with([
                 'center:id,name,code',
+                'classSubjects:id,class_id,subject_id,teacher_id,status',
                 'classSubjects.subject:id,name,code',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
@@ -85,8 +98,20 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?SchoolClass
     {
         $query = SchoolClass::query()
+            ->select(
+                'id',
+                'center_id',
+                'name',
+                'code',
+                'description',
+                'max_capacity',
+                'start_date',
+                'end_date',
+                'status'
+            )
             ->with([
                 'center:id,name,code',
+                'classSubjects:id,class_id,subject_id,teacher_id,status',
                 'classSubjects.subject:id,name,code',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
@@ -214,7 +239,10 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         }
 
         if ($offset > 0) {
-            $idQuery   = (clone $query)->select('students.id')->latest('students.id')->offset($offset)->limit($perPage);
+            $idQuery = (clone $query)->select('students.id')
+            ->latest('students.id')
+            ->offset($offset)
+            ->limit($perPage);
             $targetIds = $idQuery->pluck('students.id')->toArray();
 
             if (! empty($targetIds)) {
@@ -275,7 +303,15 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function getClassesWithStudentCount(array $centerIds, ?array $classIds = null): \Illuminate\Database\Eloquent\Collection
     {
-        $query = SchoolClass::whereIn('center_id', $centerIds)->with(['center'])->withCount('students');
+        $query = SchoolClass::select(
+            'id',
+            'center_id',
+            'name',
+            'code',
+            'status'
+        )->whereIn('center_id', $centerIds)
+        ->with(['center:id,name,code'])
+        ->withCount('students');
 
         if ($classIds !== null) {
             $query->whereIn('id', $classIds);
@@ -313,10 +349,23 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
     {
         return \App\Models\ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
             ->whereHas('classSubject', function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             })
             ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.subject:id,name,code',
                 'teacher:id,full_name,teacher_code',
                 'room:id,name',
@@ -333,11 +382,21 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function getClassWeeklySchedules(int $classId): \Illuminate\Database\Eloquent\Collection
     {
-        return \App\Models\ClassSchedule::query()
+        return ClassSchedule::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'weekday',
+                'start_time',
+                'end_time',
+                'room_id',
+                'status'
+            )
             ->whereHas('classSubject', function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             })
             ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.subject:id,name,code',
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name',
@@ -354,6 +413,18 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function findWithCenter(int $classId): SchoolClass
     {
-        return SchoolClass::with('center')->findOrFail($classId);
+        return SchoolClass::select(
+            'id',
+            'center_id',
+            'name',
+            'code',
+            'description',
+            'max_capacity',
+            'start_date',
+            'end_date',
+            'status'
+        )
+        ->with('center:id,name,code')
+        ->findOrFail($classId);
     }
 }

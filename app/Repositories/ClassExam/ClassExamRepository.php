@@ -19,7 +19,29 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         ?Admin $admin = null
     ): LengthAwarePaginator {
         $query = ClassExam::query()
-            ->with(['schoolClass.center', 'exam.subject', 'createdByTeacher', 'createdByAdmin']);
+            ->select(
+                'id',
+                'class_id',
+                'exam_id',
+                'created_by_teacher_id',
+                'created_by_admin_id',
+                'title',
+                'exam_date',
+                'start_time',
+                'end_time',
+                'duration_minutes',
+                'total_score',
+                'status',
+                'created_at'
+            )
+            ->with([
+                'schoolClass:id,center_id,name,code',
+                'schoolClass.center:id,name,code',
+                'exam:id,subject_id,name,code',
+                'exam.subject:id,name,code',
+                'createdByTeacher:id,full_name,teacher_code',
+                'createdByAdmin:id,full_name,admin_code',
+            ]);
 
         // Scope by admin center
         if ($admin && ! $admin->isSuperAdmin()) {
@@ -67,12 +89,31 @@ class ClassExamRepository implements ClassExamRepositoryInterface
     public function findById(int $id, ?Admin $admin = null): ?ClassExam
     {
         $query = ClassExam::query()
+            ->select(
+                'id',
+                'class_id',
+                'exam_id',
+                'created_by_teacher_id',
+                'created_by_admin_id',
+                'title',
+                'exam_date',
+                'start_time',
+                'end_time',
+                'duration_minutes',
+                'total_score',
+                'status',
+                'note',
+                'created_at'
+            )
             ->with([
-                'schoolClass.center',
-                'exam.subject',
-                'exam.sections.questions',
-                'createdByTeacher',
-                'createdByAdmin',
+                'schoolClass:id,center_id,name,code',
+                'schoolClass.center:id,name,code',
+                'exam:id,subject_id,name,code',
+                'exam.subject:id,name,code',
+                'exam.sections:id,exam_id,title,description,skill,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'createdByTeacher:id,full_name,teacher_code',
+                'createdByAdmin:id,full_name,admin_code',
             ]);
 
         if ($admin && ! $admin->isSuperAdmin()) {
@@ -107,7 +148,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         $query = ClassExam::query();
 
         if ($admin && ! $admin->isSuperAdmin()) {
-            $managedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
+            $managedCenterIds = $admin->centers()
+            ->pluck('centers.id')
+            ->toArray();
             $query->whereHas('schoolClass', function ($q) use ($managedCenterIds) {
                 $q->whereIn('center_id', $managedCenterIds);
             });

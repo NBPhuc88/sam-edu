@@ -13,12 +13,39 @@ class SubscriptionPlanRepository implements SubscriptionPlanRepositoryInterface
      */
     public function getAllOrderedByPrice(): Collection
     {
-        return SubscriptionPlan::orderBy('price', 'asc')->get();
+        return SubscriptionPlan::select(
+            'id',
+            'code',
+            'name',
+            'description',
+            'price',
+            'duration_days',
+            'max_students',
+            'max_classes',
+            'is_featured',
+            'badge_text',
+            'status'
+        )->orderBy('price', 'asc')
+        ->get();
     }
 
     public function getPaginatedPlans(?string $search = null, ?string $type = null, int $perPage = 20, int $page = 1): LengthAwarePaginator
     {
-        $query = SubscriptionPlan::query();
+        $query = SubscriptionPlan::query()
+        ->select(
+            'id',
+            'code',
+            'name',
+            'description',
+            'price',
+            'duration_days',
+            'max_students',
+            'max_classes',
+            'is_featured',
+            'badge_text',
+            'status',
+            'created_at'
+        );
 
         if ($search !== null && trim($search) !== '') {
             $term = trim($search);

@@ -27,7 +27,25 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         int $page = 1
     ): LengthAwarePaginator {
         $query = StudentTuition::query()
-            ->with(['student:id,full_name,student_code,phone', 'schoolClass:id,name,code', 'center:id,name,code'])
+            ->select(
+                'id',
+                'center_id',
+                'student_id',
+                'class_id',
+                'created_by_admin_id',
+                'title',
+                'total_amount',
+                'paid_amount',
+                'remaining_amount',
+                'status',
+                'due_date',
+                'created_at'
+            )
+            ->with([
+                'student:id,full_name,student_code,phone',
+                'schoolClass:id,name,code',
+                'center:id,name,code'
+            ])
             ->withCount('payments');
 
         if ($centerIds !== null) {
@@ -81,13 +99,40 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?StudentTuition
     {
         $query = StudentTuition::query()
+            ->select(
+                'id',
+                'center_id',
+                'student_id',
+                'class_id',
+                'created_by_admin_id',
+                'title',
+                'description',
+                'total_amount',
+                'paid_amount',
+                'remaining_amount',
+                'status',
+                'due_date',
+                'created_at'
+            )
             ->with([
-                'student',
-                'schoolClass',
-                'center',
+                'student:id,full_name,student_code,email,phone',
+                'schoolClass:id,name,code',
+                'center:id,name,code',
                 'creator:id,username,full_name',
                 'payments' => function ($q) {
-                    $q->with('receiver:id,username,full_name')->latest('payment_date');
+                    $q->select(
+                        'id',
+                        'student_tuition_id',
+                        'received_by_admin_id',
+                        'amount',
+                        'payment_date',
+                        'payment_method',
+                        'transaction_code',
+                        'note',
+                        'created_at'
+                    )
+                    ->with('receiver:id,username,full_name')
+                    ->latest('payment_date');
                 },
             ]);
 

@@ -22,7 +22,20 @@ class SubjectRepository implements SubjectRepositoryInterface
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Subject::query()->with('center');
+        $query = Subject::query()
+            ->select(
+                'id',
+                'center_id',
+                'code',
+                'name',
+                'description',
+                'total_sessions',
+                'duration_minutes',
+                'tuition_fee',
+                'status',
+                'created_at'
+            )
+            ->with('center:id,name,code');
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
@@ -59,7 +72,20 @@ class SubjectRepository implements SubjectRepositoryInterface
      */
     public function find(int $id, ?array $allowedCenterIds = null): ?Subject
     {
-        $query = Subject::query()->with('center');
+        $query = Subject::query()
+            ->select(
+                'id',
+                'center_id',
+                'code',
+                'name',
+                'description',
+                'total_sessions',
+                'duration_minutes',
+                'tuition_fee',
+                'status',
+                'created_at'
+            )
+            ->with('center:id,name,code');
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -112,9 +138,20 @@ class SubjectRepository implements SubjectRepositoryInterface
      */
     public function getByCenterIds(array $centerIds): \Illuminate\Database\Eloquent\Collection
     {
-        return Subject::whereIn('center_id', $centerIds)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        return Subject::select(
+            'id',
+            'center_id',
+            'code',
+            'name',
+            'description',
+            'total_sessions',
+            'duration_minutes',
+            'tuition_fee',
+            'status'
+        )
+        ->whereIn('center_id', $centerIds)
+        ->where('status', 'active')
+        ->orderBy('name')
+        ->get();
     }
 }

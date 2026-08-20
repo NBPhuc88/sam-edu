@@ -33,6 +33,21 @@ class ExamRepository implements ExamRepositoryInterface
         int $page = 1
     ): LengthAwarePaginator {
         $query = Exam::query()
+            ->select(
+                'id',
+                'center_id',
+                'class_id',
+                'subject_id',
+                'code',
+                'name',
+                'description',
+                'exam_type',
+                'duration_minutes',
+                'total_score',
+                'pass_score',
+                'status',
+                'created_at'
+            )
             ->with([
                 'center:id,name,code',
                 'schoolClass:id,name,code',
@@ -85,18 +100,77 @@ class ExamRepository implements ExamRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?Exam
     {
         $query = Exam::query()
+            ->select(
+                'id',
+                'center_id',
+                'class_id',
+                'subject_id',
+                'code',
+                'name',
+                'description',
+                'exam_type',
+                'duration_minutes',
+                'total_score',
+                'pass_score',
+                'status',
+                'created_at'
+            )
             ->with([
                 'center:id,name,code',
                 'schoolClass:id,name,code',
                 'subject:id,name,code',
                 'sections' => function ($sq) {
-                    $sq->orderBy('order_index')->orderBy('id')
-                        ->with(['questions' => function ($qq) {
-                            $qq->orderBy('order_index')->orderBy('id');
-                        }]);
+                    $sq->select(
+                        'id',
+                        'exam_id',
+                        'title',
+                        'description',
+                        'skill',
+                        'order_index'
+                    )
+                    ->orderBy('order_index')->orderBy('id')
+                    ->with(['questions' => function ($qq) {
+                        $qq->select(
+                            'id',
+                            'exam_id',
+                            'section_id',
+                            'code',
+                            'question_type',
+                            'skill',
+                            'content',
+                            'image_url',
+                            'audio_url',
+                            'score',
+                            'options',
+                            'correct_answer',
+                            'explanation',
+                            'metadata',
+                            'order_index'
+                        )
+                        ->orderBy('order_index')
+                        ->orderBy('id');
+                    }]);
                 },
                 'questions' => function ($q) {
-                    $q->orderBy('order_index')->orderBy('id');
+                    $q->select(
+                        'id',
+                        'exam_id',
+                        'section_id',
+                        'code',
+                        'question_type',
+                        'skill',
+                        'content',
+                        'image_url',
+                        'audio_url',
+                        'score',
+                        'options',
+                        'correct_answer',
+                        'explanation',
+                        'metadata',
+                        'order_index'
+                    )
+                    ->orderBy('order_index')
+                    ->orderBy('id');
                 },
             ])
             ->withCount(['questions', 'sections', 'examResults']);

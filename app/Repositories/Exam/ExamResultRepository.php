@@ -13,7 +13,22 @@ class ExamResultRepository implements ExamResultRepositoryInterface
      */
     public function getStudentExamResults(int $studentId): Collection
     {
-        return ExamResult::with(['exam.subject', 'exam.schoolClass'])
+        return ExamResult::query()
+            ->select(
+                'id',
+                'exam_id',
+                'student_id',
+                'score',
+                'max_score',
+                'grade',
+                'note',
+                'created_at'
+            )
+            ->with([
+                'exam:id,name,code,subject_id,class_id',
+                'exam.subject:id,name,code',
+                'exam.schoolClass:id,name,code',
+            ])
             ->where('student_id', $studentId)
             ->latest()
             ->get();

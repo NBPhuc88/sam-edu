@@ -15,7 +15,20 @@ class ChatRepository implements ChatRepositoryInterface
     public function getRecentMessages(int $classId, int $limit = 50): Collection
     {
         /** @var Collection<int, ClassChatMessage> $messages */
-        $messages = ClassChatMessage::where('class_id', $classId)
+        $messages = ClassChatMessage::query()
+            ->select(
+                'id',
+                'class_id',
+                'sender_type',
+                'sender_id',
+                'sender_name',
+                'message',
+                'is_pinned',
+                'pinned_at',
+                'pinned_by_name',
+                'created_at'
+            )
+            ->where('class_id', $classId)
             ->orderBy('id', 'desc')
             ->limit($limit)
             ->get()
@@ -28,7 +41,20 @@ class ChatRepository implements ChatRepositoryInterface
     public function getPinnedMessage(int $classId): ?ClassChatMessage
     {
         /** @var ClassChatMessage|null $message */
-        $message = ClassChatMessage::where('class_id', $classId)
+        $message = ClassChatMessage::query()
+            ->select(
+                'id',
+                'class_id',
+                'sender_type',
+                'sender_id',
+                'sender_name',
+                'message',
+                'is_pinned',
+                'pinned_at',
+                'pinned_by_name',
+                'created_at'
+            )
+            ->where('class_id', $classId)
             ->where('is_pinned', true)
             ->orderBy('pinned_at', 'desc')
             ->first();

@@ -17,7 +17,22 @@ class RoomRepository implements RoomRepositoryInterface
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = Room::with(['center', 'equipments'])
+        $query = Room::query()
+            ->select(
+                'id',
+                'center_id',
+                'name',
+                'code',
+                'capacity',
+                'location',
+                'description',
+                'status',
+                'created_at'
+            )
+            ->with([
+                'center:id,name,code',
+                'equipments:id,room_id,name,quantity,unit,status,note'
+            ])
             ->orderBy('id', 'desc');
 
         if ($centerIds !== null) {
@@ -45,7 +60,22 @@ class RoomRepository implements RoomRepositoryInterface
 
     public function find(int $id, ?array $allowedCenterIds = null): ?Room
     {
-        $query = Room::with(['center', 'equipments']);
+        $query = Room::query()
+            ->select(
+                'id',
+                'center_id',
+                'name',
+                'code',
+                'capacity',
+                'location',
+                'description',
+                'status',
+                'created_at'
+            )
+            ->with([
+                'center:id,name,code',
+                'equipments:id,room_id,name,quantity,unit,status,note'
+            ]);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -151,10 +181,19 @@ class RoomRepository implements RoomRepositoryInterface
 
     public function getByCenterIds(array $centerIds): Collection
     {
-        return Room::whereIn('center_id', $centerIds)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        return Room::select(
+            'id',
+            'center_id',
+            'name',
+            'code',
+            'capacity',
+            'location',
+            'status'
+        )
+        ->whereIn('center_id', $centerIds)
+        ->where('status', 'active')
+        ->orderBy('name')
+        ->get();
     }
 
     public function getStats(?array $allowedCenterIds = null): array

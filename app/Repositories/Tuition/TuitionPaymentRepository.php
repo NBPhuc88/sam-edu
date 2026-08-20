@@ -12,7 +12,20 @@ class TuitionPaymentRepository implements TuitionPaymentRepositoryInterface
      */
     public function find(int $id): ?TuitionPayment
     {
-        return TuitionPayment::with('studentTuition')->find($id);
+        return TuitionPayment::query()
+            ->select(
+                'id',
+                'student_tuition_id',
+                'received_by_admin_id',
+                'amount',
+                'payment_date',
+                'payment_method',
+                'transaction_code',
+                'note',
+                'created_at'
+            )
+            ->with('studentTuition:id,center_id,student_id,class_id,title,total_amount,paid_amount,remaining_amount,status')
+            ->find($id);
     }
 
     /**
