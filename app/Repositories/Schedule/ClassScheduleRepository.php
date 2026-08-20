@@ -33,12 +33,10 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->select(
                 'id',
                 'class_subject_id',
-                'weekday',
-                'start_time',
-                'end_time',
+                'weeks',
+                'off_days',
+                'extra_days',
                 'room_id',
-                'effective_from',
-                'effective_to',
                 'status',
                 'created_at'
             )
@@ -122,12 +120,10 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->select(
                 'id',
                 'class_subject_id',
-                'weekday',
-                'start_time',
-                'end_time',
+                'weeks',
+                'off_days',
+                'extra_days',
                 'room_id',
-                'effective_from',
-                'effective_to',
                 'status',
                 'created_at'
             )
@@ -140,7 +136,6 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
-                'classSubject.classSchedules:id,class_subject_id,weekday,start_time,end_time,room_id,effective_from,effective_to,status',
                 'room:id,name,code',
                 'classSessions' => function ($sq) {
                     $sq->select(
@@ -213,6 +208,15 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
     }
 
     /**
+     * @param  int                $classSubjectId
+     * @return ClassSchedule|null
+     */
+    public function findByClassSubjectId(int $classSubjectId): ?ClassSchedule
+    {
+        return ClassSchedule::where('class_subject_id', $classSubjectId)->first();
+    }
+
+    /**
      * @param  int                            $teacherId
      * @return Collection<int, ClassSchedule>
      */
@@ -222,12 +226,10 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->select(
                 'id',
                 'class_subject_id',
-                'weekday',
-                'start_time',
-                'end_time',
+                'weeks',
+                'off_days',
+                'extra_days',
                 'room_id',
-                'effective_from',
-                'effective_to',
                 'status'
             )
             ->with([
@@ -252,12 +254,10 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->select(
                 'id',
                 'class_subject_id',
-                'weekday',
-                'start_time',
-                'end_time',
+                'weeks',
+                'off_days',
+                'extra_days',
                 'room_id',
-                'effective_from',
-                'effective_to',
                 'status'
             )
             ->with([
@@ -283,11 +283,6 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
     public function updateClassSubject(int $classSubjectId, array $attributes): bool
     {
         return (bool) \App\Models\ClassSubject::where('id', $classSubjectId)->update($attributes);
-    }
-
-    public function updateEffectiveToByClassSubjectId(int $classSubjectId, ?string $effectiveTo): int
-    {
-        return ClassSchedule::where('class_subject_id', $classSubjectId)->update(['effective_to' => $effectiveTo]);
     }
 
     public function deleteByClassSubjectId(int $classSubjectId): int

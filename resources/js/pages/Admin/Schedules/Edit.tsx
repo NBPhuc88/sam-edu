@@ -10,11 +10,13 @@ import {
     Square,
     Coffee,
     CalendarPlus,
+    Sparkles,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -55,12 +57,10 @@ interface Room {
 interface ClassSchedule {
     id: number;
     class_subject_id: number;
-    weekday: number;
-    start_time: string;
-    end_time: string;
+    weeks: Record<string, [string, string][]>;
+    off_days?: { date: string; start_time?: string | null; end_time?: string | null; reason?: string }[] | null;
+    extra_days?: { date: string; start_time: string; end_time: string }[] | null;
     room_id: number | null;
-    effective_from: string;
-    effective_to: string | null;
     status: string;
     class_subject?: {
         id: number;
@@ -88,13 +88,6 @@ interface ClassSchedule {
             full_name: string;
             teacher_code: string;
         };
-        class_schedules?: Array<{
-            id: number;
-            weekday: number;
-            start_time: string;
-            end_time: string;
-            room_id?: number | null;
-        }>;
     };
 }
 
@@ -108,18 +101,28 @@ interface EditProps {
     errors?: Record<string, string>;
 }
 
-interface SpecificSession {
-    [key: string]: any;
+interface WeekDaySlot {
+    start_time: string;
+    end_time: string;
+}
+
+interface OffDayItem {
+    date: string;
+    is_full_day: boolean;
+    start_time?: string;
+    end_time?: string;
+    reason?: string;
+}
+
+interface ExtraDayItem {
     date: string;
     start_time: string;
     end_time: string;
-    topic: string;
 }
 
-interface OffSession {
-    [key: string]: any;
+interface VNHoliday {
     date: string;
-    reason: string;
+    name: string;
 }
 
 const WEEKDAYS = [
@@ -134,23 +137,23 @@ const WEEKDAYS = [
 
 function calculateEstimatedEndDate(
     startDateStr: string,
-    weeklyTimes: Record<number, { enabled: boolean; start_time: string; end_time: string }>,
+    weeklyTimes: Record<number, { enabled: boolean; slots: WeekDaySlot[] }>,
     totalSessions: number,
-    offSessions: OffSession[]
+    offDays: OffDayItem[]
 ): string | null {
     if (!startDateStr || !totalSessions || totalSessions <= 0) {
-return null;
-}
+        return null;
+    }
 
     const enabledDays = Object.entries(weeklyTimes)
-        .filter(([, conf]) => conf.enabled)
+        .filter(([, conf]) => conf.enabled && conf.slots.length > 0)
         .map(([day]) => Number(day));
 
     if (enabledDays.length === 0) {
-return null;
-}
+        return null;
+    }
 
-    const offDatesSet = new Set(offSessions.filter((s) => s.date).map((s) => s.date));
+    const fullOffDatesSet = new Set(offDays.filter((s) => s.is_full_day && s.date).map((s) => s.date));
 
     let createdCount = 0;
     const curr = new Date(startDateStr);
@@ -163,16 +166,25 @@ return null;
         const jsDay = curr.getDay();
         const isoDay = jsDay === 0 ? 7 : jsDay;
 
-        if (enabledDays.includes(isoDay)) {
-            if (!offDatesSet.has(ymd)) {
-                createdCount++;
-                lastDate = ymd;
+        if (enabledDays.includes(isoDay) && !fullOffDatesSet.has(ymd)) {
+            const slots = weeklyTimes[isoDay]?.slots || [];
+            for (const slot of slots) {
+                const isSlotOff = offDays.some(
+                    (o) => !o.is_full_day && o.date === ymd && o.start_time === slot.start_time
+                );
+                if (!isSlotOff) {
+                    createdCount++;
+                    lastDate = ymd;
+                    if (createdCount >= totalSessions) {
+                        break;
+                    }
+                }
             }
         }
 
         if (createdCount >= totalSessions) {
-break;
-}
+            break;
+        }
 
         curr.setDate(curr.getDate() + 1);
     }
@@ -184,6 +196,7 @@ export default function ScheduleEdit({
     schedule,
     teachers = [],
     rooms = [],
+    errors = {},
 }: EditProps) {
     const classSubject = schedule.class_subject;
     const centerId = classSubject?.school_class?.center_id;
@@ -195,50 +208,79 @@ export default function ScheduleEdit({
         schedule.room_id ? String(schedule.room_id) : '',
     );
     const [startDate, setStartDate] = useState<string>(
-        schedule.effective_from ? String(schedule.effective_from).slice(0, 10) : (classSubject?.start_date ? String(classSubject.start_date).slice(0, 10) : '')
+        classSubject?.start_date ? String(classSubject.start_date).slice(0, 10) : ''
     );
     const [endDate, setEndDate] = useState<string>(
-        schedule.effective_to ? String(schedule.effective_to).slice(0, 10) : (classSubject?.end_date ? String(classSubject.end_date).slice(0, 10) : '')
+        classSubject?.end_date ? String(classSubject.end_date).slice(0, 10) : ''
     );
     const [status] = useState<string>(schedule.status || 'active');
 
-    // Setup initial weekday from all class_subject schedules
     const initialWeeklyTimes = React.useMemo(() => {
-        const base: Record<number, { enabled: boolean; start_time: string; end_time: string }> = {
-            1: { enabled: false, start_time: '18:00', end_time: '20:00' },
-            2: { enabled: false, start_time: '18:00', end_time: '20:00' },
-            3: { enabled: false, start_time: '18:00', end_time: '20:00' },
-            4: { enabled: false, start_time: '18:00', end_time: '20:00' },
-            5: { enabled: false, start_time: '18:00', end_time: '20:00' },
-            6: { enabled: false, start_time: '08:00', end_time: '10:00' },
-            7: { enabled: false, start_time: '08:00', end_time: '10:00' },
+        const base: Record<number, { enabled: boolean; slots: WeekDaySlot[] }> = {
+            1: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
+            2: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
+            3: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
+            4: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
+            5: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
+            6: { enabled: false, slots: [{ start_time: '08:00', end_time: '10:00' }] },
+            7: { enabled: false, slots: [{ start_time: '08:00', end_time: '10:00' }] },
         };
 
-        const existingList = classSubject?.class_schedules && classSubject.class_schedules.length > 0
-            ? classSubject.class_schedules
-            : [schedule];
-
-        for (const s of existingList) {
-            if (s.weekday && base[s.weekday]) {
-                base[s.weekday] = {
-                    enabled: true,
-                    start_time: s.start_time ? s.start_time.slice(0, 5) : '18:00',
-                    end_time: s.end_time ? s.end_time.slice(0, 5) : '20:00',
-                };
-            }
+        if (schedule.weeks && typeof schedule.weeks === 'object') {
+            Object.entries(schedule.weeks).forEach(([dayKey, slots]) => {
+                const dayNum = Number(dayKey);
+                if (base[dayNum] && Array.isArray(slots) && slots.length > 0) {
+                    base[dayNum] = {
+                        enabled: true,
+                        slots: slots.map((s) => ({
+                            start_time: s[0] ? s[0].slice(0, 5) : '18:00',
+                            end_time: s[1] ? s[1].slice(0, 5) : '20:00',
+                        })),
+                    };
+                }
+            });
         }
 
         return base;
-    }, [classSubject, schedule]);
+    }, [schedule]);
 
     const [weeklyTimes, setWeeklyTimes] = useState(initialWeeklyTimes);
 
-    const [specificSessions, setSpecificSessions] = useState<SpecificSession[]>([]);
-    const [offSessions, setOffSessions] = useState<OffSession[]>([]);
-    const [excludeHolidays, setExcludeHolidays] = useState<boolean>(true);
+    const initialOffDays = React.useMemo(() => {
+        if (!schedule.off_days || !Array.isArray(schedule.off_days)) {
+            return [];
+        }
+        return schedule.off_days.map((o: any) => ({
+            date: typeof o === 'string' ? o : o.date,
+            is_full_day: typeof o === 'string' || !o.start_time,
+            start_time: o.start_time ? String(o.start_time).slice(0, 5) : '18:00',
+            end_time: o.end_time ? String(o.end_time).slice(0, 5) : '20:00',
+            reason: o.reason || 'Nghỉ theo lịch',
+        }));
+    }, [schedule]);
+
+    const [offDays, setOffDays] = useState<OffDayItem[]>(initialOffDays);
+
+    const initialExtraDays = React.useMemo(() => {
+        if (!schedule.extra_days || !Array.isArray(schedule.extra_days)) {
+            return [];
+        }
+        return schedule.extra_days.map((e: any) => ({
+            date: e.date,
+            start_time: e.start_time ? String(e.start_time).slice(0, 5) : '08:00',
+            end_time: e.end_time ? String(e.end_time).slice(0, 5) : '10:00',
+        }));
+    }, [schedule]);
+
+    const [extraDays, setExtraDays] = useState<ExtraDayItem[]>(initialExtraDays);
+
+    const [showHolidayModal, setShowHolidayModal] = useState<boolean>(false);
+    const [availableHolidays, setAvailableHolidays] = useState<VNHoliday[]>([]);
+    const [selectedHolidayDates, setSelectedHolidayDates] = useState<Set<string>>(new Set());
+    const [isLoadingHolidays, setIsLoadingHolidays] = useState<boolean>(false);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Available items for this center, fallback to all if empty
     const displayTeachers = React.useMemo(() => {
         const list: Teacher[] = [];
         const seenIds = new Set<number>();
@@ -254,7 +296,6 @@ export default function ScheduleEdit({
         }
 
         const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === Number(centerId));
-
         for (const t of centerTeachers) {
             if (!seenIds.has(t.id)) {
                 seenIds.add(t.id);
@@ -262,105 +303,188 @@ export default function ScheduleEdit({
             }
         }
 
-        if (list.length === 0) {
-            return teachers;
-        }
-
-        return list;
+        return list.length > 0 ? list : teachers;
     }, [classSubject, centerId, teachers]);
 
     const displayRooms = React.useMemo(() => {
         const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === Number(centerId));
-
         return centerRooms.length > 0 ? centerRooms : rooms;
     }, [centerId, rooms]);
 
     const totalSessions = classSubject?.subject?.total_sessions;
-    const activeDaysCount = Object.values(weeklyTimes).filter((w) => w.enabled).length;
+    const activeSlotsCount = Object.values(weeklyTimes)
+        .filter((w) => w.enabled)
+        .reduce((sum, w) => sum + w.slots.length, 0);
 
     const estimatedEndDate = React.useMemo(() => {
         if (!totalSessions || !startDate) {
-return null;
-}
-
-        return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offSessions);
-    }, [startDate, weeklyTimes, totalSessions, offSessions]);
+            return null;
+        }
+        return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offDays);
+    }, [startDate, weeklyTimes, totalSessions, offDays]);
 
     const toggleWeekday = (day: number) => {
-        setWeeklyTimes({
-            ...weeklyTimes,
+        setWeeklyTimes((prev) => ({
+            ...prev,
             [day]: {
-                ...weeklyTimes[day],
-                enabled: !weeklyTimes[day].enabled,
+                ...prev[day],
+                enabled: !prev[day].enabled,
             },
+        }));
+    };
+
+    const handleSlotChange = (day: number, slotIdx: number, field: 'start_time' | 'end_time', val: string) => {
+        setWeeklyTimes((prev) => {
+            const dayConf = prev[day];
+            const updatedSlots = [...dayConf.slots];
+            updatedSlots[slotIdx] = { ...updatedSlots[slotIdx], [field]: val };
+            return {
+                ...prev,
+                [day]: { ...dayConf, slots: updatedSlots },
+            };
         });
     };
 
-    const handleWeekdayTimeChange = (day: number, field: 'start_time' | 'end_time', val: string) => {
-        setWeeklyTimes({
-            ...weeklyTimes,
-            [day]: {
-                ...weeklyTimes[day],
-                [field]: val,
-            },
+    const handleAddSlot = (day: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setWeeklyTimes((prev) => {
+            const dayConf = prev[day];
+            return {
+                ...prev,
+                [day]: {
+                    ...dayConf,
+                    slots: [...dayConf.slots, { start_time: '08:00', end_time: '10:00' }],
+                },
+            };
         });
     };
 
-    // Specific session handlers
-    const handleAddSpecificSession = () => {
-        setSpecificSessions([
-            ...specificSessions,
+    const handleRemoveSlot = (day: number, slotIdx: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setWeeklyTimes((prev) => {
+            const dayConf = prev[day];
+            if (dayConf.slots.length <= 1) {
+                return prev;
+            }
+            return {
+                ...prev,
+                [day]: {
+                    ...dayConf,
+                    slots: dayConf.slots.filter((_, idx) => idx !== slotIdx),
+                },
+            };
+        });
+    };
+
+    const handleAddOffDay = () => {
+        setOffDays([
+            ...offDays,
             {
                 date: new Date().toISOString().split('T')[0],
-                start_time: '10:00',
-                end_time: '12:00',
-                topic: '',
+                is_full_day: true,
+                start_time: '18:00',
+                end_time: '20:00',
+                reason: 'Nghỉ theo lịch',
             },
         ]);
     };
 
-    const handleRemoveSpecificSession = (index: number) => {
-        setSpecificSessions(specificSessions.filter((_, idx) => idx !== index));
+    const handleRemoveOffDay = (index: number) => {
+        setOffDays(offDays.filter((_, idx) => idx !== index));
     };
 
-    const handleSpecificSessionChange = (index: number, field: keyof SpecificSession, val: string) => {
-        const updated = [...specificSessions];
-        updated[index][field] = val;
-        setSpecificSessions(updated);
+    const handleOffDayChange = (index: number, field: keyof OffDayItem, val: any) => {
+        const updated = [...offDays];
+        updated[index] = { ...updated[index], [field]: val };
+        setOffDays(updated);
     };
 
-    // Off session handlers
-    const handleAddOffSession = () => {
-        setOffSessions([
-            ...offSessions,
+    const handleAddExtraDay = () => {
+        setExtraDays([
+            ...extraDays,
             {
                 date: new Date().toISOString().split('T')[0],
-                reason: 'Nghỉ đột xuất',
+                start_time: '08:00',
+                end_time: '10:00',
             },
         ]);
     };
 
-    const handleRemoveOffSession = (index: number) => {
-        setOffSessions(offSessions.filter((_, idx) => idx !== index));
+    const handleRemoveExtraDay = (index: number) => {
+        setExtraDays(extraDays.filter((_, idx) => idx !== index));
     };
 
-    const handleOffSessionChange = (index: number, field: keyof OffSession, val: string) => {
-        const updated = [...offSessions];
-        updated[index][field] = val;
-        setOffSessions(updated);
+    const handleExtraDayChange = (index: number, field: keyof ExtraDayItem, val: string) => {
+        const updated = [...extraDays];
+        updated[index] = { ...updated[index], [field]: val };
+        setExtraDays(updated);
+    };
+
+    const handleOpenHolidayModal = async () => {
+        setShowHolidayModal(true);
+        setIsLoadingHolidays(true);
+        try {
+            const year = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear();
+            const res = await fetch(`/api/vietnam-holidays?year=${year}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableHolidays(data.holidays || []);
+                const existing = new Set(offDays.filter((o) => o.is_full_day).map((o) => o.date));
+                setSelectedHolidayDates(existing);
+            }
+        } catch (err) {
+            console.error('Lỗi khi tải ngày lễ:', err);
+        } finally {
+            setIsLoadingHolidays(false);
+        }
+    };
+
+    const handleToggleHolidaySelection = (date: string) => {
+        const next = new Set(selectedHolidayDates);
+        if (next.has(date)) {
+            next.delete(date);
+        } else {
+            next.add(date);
+        }
+        setSelectedHolidayDates(next);
+    };
+
+    const handleApplyHolidays = () => {
+        const holidayDatesMap = new Map(availableHolidays.map((h) => [h.date, h.name]));
+        const nonHolidays = offDays.filter((o) => !holidayDatesMap.has(o.date));
+
+        const newHolidaysOff: OffDayItem[] = Array.from(selectedHolidayDates).map((date) => ({
+            date,
+            is_full_day: true,
+            reason: holidayDatesMap.get(date) || 'Nghỉ Lễ Việt Nam',
+        }));
+
+        setOffDays([...nonHolidays, ...newHolidaysOff]);
+        setShowHolidayModal(false);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        const weeklySchedulesPayload = Object.entries(weeklyTimes)
-            .filter(([, conf]) => conf.enabled)
-            .map(([dayStr, conf]) => ({
-                weekday: Number(dayStr),
-                start_time: conf.start_time,
-                end_time: conf.end_time,
-            }));
+        const weeksPayload: Record<string, [string, string][]> = {};
+        Object.entries(weeklyTimes).forEach(([dayStr, conf]) => {
+            if (conf.enabled && conf.slots.length > 0) {
+                weeksPayload[dayStr] = conf.slots.map((s) => [s.start_time, s.end_time]);
+            }
+        });
+
+        const offDaysPayload = offDays.map((o) => ({
+            date: o.date,
+            start_time: o.is_full_day ? null : o.start_time || null,
+            end_time: o.is_full_day ? null : o.end_time || null,
+        }));
+
+        const extraDaysPayload = extraDays.map((e) => ({
+            date: e.date,
+            start_time: e.start_time,
+            end_time: e.end_time,
+        }));
 
         router.patch(
             `/schedules/${schedule.id}`,
@@ -369,10 +493,9 @@ return null;
                 room_id: selectedRoomId ? Number(selectedRoomId) : null,
                 start_date: startDate,
                 end_date: endDate || null,
-                weekly_schedules: weeklySchedulesPayload,
-                specific_sessions: specificSessions,
-                off_sessions: offSessions,
-                exclude_vietnam_holidays: excludeHolidays,
+                weeks: weeksPayload,
+                off_days: offDaysPayload,
+                extra_days: extraDaysPayload,
                 status,
             },
             {
@@ -382,11 +505,10 @@ return null;
     };
 
     return (
-        <AppLayout title="Chỉnh Sửa Lịch Học - Hệ Thống Giáo Dục Sam">
-            <Head title="Chỉnh Sửa Lịch Học" />
+        <AppLayout title="Cập Nhật Lịch Học - Hệ Thống Giáo Dục Sam">
+            <Head title="Cập Nhật Lịch Học" />
 
             <div className="mx-auto max-w-4xl space-y-6">
-                {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/schedules">
@@ -395,54 +517,54 @@ return null;
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                Chỉnh Sửa Lịch Học: {classSubject?.school_class?.name} - {classSubject?.subject?.name}
-                            </h1>
+                            <h1 className="text-2xl font-bold text-gray-900">Cập Nhật Lịch Học</h1>
                             <p className="text-sm text-gray-500">
-                                Cập nhật giờ học, đổi giáo viên phụ trách, thêm ngày nghỉ và đồng bộ lại danh sách ca học.
+                                Lớp: <span className="font-semibold text-gray-800">{classSubject?.school_class?.name}</span> | Môn: <span className="font-semibold text-emerald-700">{classSubject?.subject?.name}</span>
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Section 1: Thông tin Lớp & Môn Học */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                             <GraduationCap className="h-5 w-5 text-emerald-600" />
-                            1. Thông Tin Lớp Học & Môn Học
+                            1. Thông Tin Chung
                         </h2>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Class Display */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Lớp Học
                                 </label>
-                                <div className="rounded-lg border border-gray-200 bg-slate-50 px-4 py-3 text-sm font-bold text-gray-800">
-                                    {classSubject?.school_class?.name} ({classSubject?.school_class?.code})
-                                </div>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={`${classSubject?.school_class?.name || ''} (${classSubject?.school_class?.code || ''})`}
+                                    className="w-full rounded-lg border border-gray-200 bg-slate-100 px-4 py-3 text-sm font-medium text-gray-600 shadow-xs cursor-not-allowed"
+                                />
                             </div>
 
-                            {/* Subject Display */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Môn Học
                                 </label>
-                                <div className="rounded-lg border border-gray-200 bg-slate-50 px-4 py-3 text-sm font-bold text-emerald-800">
-                                    {classSubject?.subject?.name} ({classSubject?.subject?.code})
-                                </div>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={`${classSubject?.subject?.name || ''} (${classSubject?.subject?.code || ''})${totalSessions ? ` - ${totalSessions} buổi` : ''}`}
+                                    className="w-full rounded-lg border border-gray-200 bg-slate-100 px-4 py-3 text-sm font-medium text-gray-600 shadow-xs cursor-not-allowed"
+                                />
                             </div>
 
-                            {/* Teacher Selection */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Giáo Viên Giảng Dạy <span className="text-red-500">*</span>
+                                    Giáo Viên <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={selectedTeacherId}
                                     onChange={(e) => setSelectedTeacherId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Giáo Viên --</option>
@@ -452,9 +574,11 @@ return null;
                                         </option>
                                     ))}
                                 </select>
+                                {errors.teacher_id && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.teacher_id}</p>
+                                )}
                             </div>
 
-                            {/* Room Selection */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Phòng Học (Tùy chọn)
@@ -462,7 +586,7 @@ return null;
                                 <select
                                     value={selectedRoomId}
                                     onChange={(e) => setSelectedRoomId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500"
                                 >
                                     <option value="">-- Chưa Chọn Phòng (Online / Linh hoạt) --</option>
                                     {displayRooms.map((r) => (
@@ -473,10 +597,9 @@ return null;
                                 </select>
                             </div>
 
-                            {/* Start Date */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Ngày Bắt Đầu <span className="text-red-500">*</span>
+                                    Ngày Bắt Đầu Môn Học <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     type="date"
@@ -485,78 +608,67 @@ return null;
                                     className="!py-3 !text-sm"
                                     required
                                 />
+                                {errors.start_date && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.start_date}</p>
+                                )}
                             </div>
 
-                            {/* End Date */}
                             <div>
                                 <div className="mb-2 flex items-center justify-between">
                                     <label className="text-sm font-semibold text-gray-800">
                                         Ngày Kết Thúc (Dự kiến)
                                     </label>
-                                    {totalSessions && totalSessions > 0 && !endDate && (
-                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                            ✨ Tự động theo {totalSessions} buổi
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="relative">
-                                    <Input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className="!py-3 !text-sm"
-                                    />
                                     {endDate && (
                                         <button
                                             type="button"
                                             onClick={() => setEndDate('')}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
-                                            title="Xóa ngày cố định để hệ thống tự động tính theo số buổi môn học"
+                                            title="Xóa ngày cố định để hệ thống tự động tính theo số buổi"
                                         >
                                             Xóa (Tự động tính)
                                         </button>
                                     )}
                                 </div>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="!py-3 !text-sm"
+                                />
                                 {totalSessions && totalSessions > 0 ? (
                                     <div className="mt-1.5 text-xs">
                                         {endDate ? (
                                             <span className="text-gray-500">
-                                                Đang đặt ngày kết thúc cố định. (Nếu để trống, hệ thống sẽ sinh đúng <strong>{totalSessions} buổi</strong> dự kiến đến <strong>{estimatedEndDate || '...'}</strong>).
+                                                Đang đặt ngày kết thúc cố định. (Nếu để trống, sinh đúng <strong>{totalSessions} buổi</strong> dự kiến đến <strong>{estimatedEndDate || '...'}</strong>).
                                             </span>
                                         ) : (
                                             <span className="font-medium text-emerald-700">
-                                                Môn học đã thiết lập <strong>{totalSessions} buổi</strong>. Để trống ô này để hệ thống tự động tính ngày kết thúc dự kiến là <strong>{estimatedEndDate || '...'}</strong>.
+                                                Môn học gồm <strong>{totalSessions} buổi</strong>. Tự động tính ngày kết thúc là <strong>{estimatedEndDate || '...'}</strong>.
                                             </span>
                                         )}
                                     </div>
                                 ) : (
                                     <p className="mt-1.5 text-xs text-gray-400">
-                                        (Tùy chọn) Để trống sẽ tự động tạo lịch trong 12 tuần.
+                                        (Tùy chọn) Để trống sẽ tự động tính toán.
                                     </p>
                                 )}
                             </div>
                         </div>
                     </Card>
 
-                    {/* Section 2: Lịch Học Định Kỳ Hàng Tuần (T2 .. CN) */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-2 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                             <Clock className="h-5 w-5 text-blue-600" />
-                            2. Lịch Học Định Kỳ Trong Tuần (T2, T3, T4, T5, T6, T7, CN)
+                            2. Lịch Học Định Kỳ Trong Tuần (T2 đến CN, hỗ trợ nhiều ca/ngày)
                         </h2>
                         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
                             <p>
-                                Chọn các thứ trong tuần và cập nhật khung giờ học.
+                                Chọn các thứ học trong tuần và thiết lập khung giờ. Mỗi ngày có thể thêm nhiều ca học.
                             </p>
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
-                                    Đã chọn: <strong className="text-emerald-700">{activeDaysCount} buổi/tuần</strong>
+                                    Tổng cộng: <strong className="text-emerald-700">{activeSlotsCount} ca học/tuần</strong>
                                 </span>
-                                {totalSessions && totalSessions > 0 && activeDaysCount > 0 && (
-                                    <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                                        Môn học: <strong>{totalSessions} buổi</strong> (~<strong>{Math.ceil(totalSessions / activeDaysCount)} tuần</strong>)
-                                    </span>
-                                )}
                             </div>
                         </div>
 
@@ -570,7 +682,7 @@ return null;
                                         onClick={() => toggleWeekday(day.id)}
                                         className={`cursor-pointer rounded-xl border p-4 transition-all ${
                                             conf.enabled
-                                                ? 'border-emerald-500 bg-emerald-50/50 shadow-xs'
+                                                ? 'border-emerald-500 bg-emerald-50/40 shadow-xs'
                                                 : 'border-gray-200 bg-white opacity-70 hover:opacity-100'
                                         }`}
                                     >
@@ -587,37 +699,58 @@ return null;
 
                                         {conf.enabled && (
                                             <div
-                                                className="mt-3.5 space-y-1.5"
+                                                className="mt-3.5 space-y-3"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div className="min-w-0">
-                                                        <label className="mb-1 block text-[11px] font-semibold text-gray-500">
-                                                            Bắt đầu
-                                                        </label>
-                                                        <input
-                                                            type="time"
-                                                            value={conf.start_time}
-                                                            onChange={(e) =>
-                                                                handleWeekdayTimeChange(day.id, 'start_time', e.target.value)
-                                                            }
-                                                            className="w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
-                                                        />
+                                                {conf.slots.map((slot, sIdx) => (
+                                                    <div key={sIdx} className="rounded-lg bg-white p-2.5 shadow-xs border border-emerald-200/80">
+                                                        <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
+                                                            <span>Ca {sIdx + 1}</span>
+                                                            {conf.slots.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => handleRemoveSlot(day.id, sIdx, e)}
+                                                                    className="text-red-500 hover:text-red-700 text-xs"
+                                                                    title="Xóa ca này"
+                                                                >
+                                                                    Xóa ca
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] text-gray-500">Bắt đầu</label>
+                                                                <input
+                                                                    type="time"
+                                                                    value={slot.start_time}
+                                                                    onChange={(e) =>
+                                                                        handleSlotChange(day.id, sIdx, 'start_time', e.target.value)
+                                                                    }
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-mono font-medium text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="mb-1 block text-[10px] text-gray-500">Kết thúc</label>
+                                                                <input
+                                                                    type="time"
+                                                                    value={slot.end_time}
+                                                                    onChange={(e) =>
+                                                                        handleSlotChange(day.id, sIdx, 'end_time', e.target.value)
+                                                                    }
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-mono font-medium text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <label className="mb-1 block text-[11px] font-semibold text-gray-500">
-                                                            Kết thúc
-                                                        </label>
-                                                        <input
-                                                            type="time"
-                                                            value={conf.end_time}
-                                                            onChange={(e) =>
-                                                                handleWeekdayTimeChange(day.id, 'end_time', e.target.value)
-                                                            }
-                                                            className="w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden"
-                                                        />
-                                                    </div>
-                                                </div>
+                                                ))}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleAddSlot(day.id, e)}
+                                                    className="w-full rounded-md border border-dashed border-emerald-300 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50"
+                                                >
+                                                    + Thêm ca học trong ngày
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -626,105 +759,135 @@ return null;
                         </div>
                     </Card>
 
-                    {/* Section 3: Ngày Nghỉ Cố Định & Nghỉ Lễ Việt Nam */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                                     <Coffee className="h-5 w-5 text-amber-600" />
-                                    3. Cấu Hình Ngày Nghỉ & Nghỉ Lễ Việt Nam
+                                    3. Cấu Hình Ngày Nghỉ (Cả ngày hoặc Khung giờ cụ thể)
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Hệ thống sẽ tự động bỏ qua các ngày nghỉ này khi tái sinh danh sách ca học.
+                                    Bỏ qua ca học vào các ngày nghỉ lễ hoặc khung giờ nghỉ cụ thể.
                                 </p>
                             </div>
 
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="md"
-                                icon={<Plus className="h-4 w-4 text-amber-600" />}
-                                onClick={handleAddOffSession}
-                            >
-                                Thêm Ngày Nghỉ
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={<Sparkles className="h-4 w-4 text-emerald-600" />}
+                                    onClick={handleOpenHolidayModal}
+                                >
+                                    Nạp Ngày Lễ VN
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={<Plus className="h-4 w-4 text-amber-600" />}
+                                    onClick={handleAddOffDay}
+                                >
+                                    Thêm Ngày Nghỉ
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* Holiday Toggle */}
-                        <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
-                            <label className="flex cursor-pointer items-start gap-3">
-                                <input
-                                    type="checkbox"
-                                    checked={excludeHolidays}
-                                    onChange={(e) => setExcludeHolidays(e.target.checked)}
-                                    className="mt-0.5 h-5 w-5 rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                                />
-                                <div>
-                                    <span className="text-sm font-bold text-gray-900">
-                                        Tự động nghỉ các ngày lễ theo lịch Việt Nam
-                                    </span>
-                                    <p className="mt-0.5 text-xs text-gray-600">
-                                        Bao gồm: Tết Nguyên Đán, Tết Dương Lịch (1/1), Giỗ Tổ Hùng Vương (10/3 ÂL), 30/4, 1/5 và Quốc Khánh 2/9.
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-
-                        {/* Custom Off Dates */}
-                        {offSessions.length > 0 && (
+                        {offDays.length > 0 ? (
                             <div className="space-y-3">
-                                {offSessions.map((off, idx) => (
+                                {offDays.map((off, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3.5 sm:flex-row sm:items-start"
+                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3.5 sm:flex-row sm:items-center"
                                     >
-                                        <div className="w-full sm:w-52">
+                                        <div className="w-full sm:w-44">
                                             <input
                                                 type="date"
                                                 value={off.date}
                                                 onChange={(e) =>
-                                                    handleOffSessionChange(idx, 'date', e.target.value)
+                                                    handleOffDayChange(idx, 'date', e.target.value)
                                                 }
                                                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
                                                 required
                                             />
                                         </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={off.is_full_day}
+                                                    onChange={(e) =>
+                                                        handleOffDayChange(idx, 'is_full_day', e.target.checked)
+                                                    }
+                                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                />
+                                                Nghỉ cả ngày
+                                            </label>
+                                        </div>
+
+                                        {!off.is_full_day && (
+                                            <div className="flex items-center gap-1.5">
+                                                <input
+                                                    type="time"
+                                                    value={off.start_time || '18:00'}
+                                                    onChange={(e) =>
+                                                        handleOffDayChange(idx, 'start_time', e.target.value)
+                                                    }
+                                                    className="w-24 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono text-gray-900"
+                                                />
+                                                <span className="text-xs text-gray-400">-</span>
+                                                <input
+                                                    type="time"
+                                                    value={off.end_time || '20:00'}
+                                                    onChange={(e) =>
+                                                        handleOffDayChange(idx, 'end_time', e.target.value)
+                                                    }
+                                                    className="w-24 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono text-gray-900"
+                                                />
+                                            </div>
+                                        )}
+
                                         <div className="flex-1">
                                             <input
                                                 type="text"
-                                                value={off.reason}
+                                                value={off.reason || ''}
                                                 onChange={(e) =>
-                                                    handleOffSessionChange(idx, 'reason', e.target.value)
+                                                    handleOffDayChange(idx, 'reason', e.target.value)
                                                 }
-                                                placeholder="Lý do nghỉ"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                                                placeholder="Lý do nghỉ (Tùy chọn)"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900"
                                             />
                                         </div>
+
                                         <Button
                                             type="button"
                                             variant="danger"
                                             size="sm"
                                             icon={<Trash2 className="h-4 w-4" />}
-                                            onClick={() => handleRemoveOffSession(idx)}
+                                            onClick={() => handleRemoveOffDay(idx)}
                                         >
                                             Xóa
                                         </Button>
                                     </div>
                                 ))}
                             </div>
+                        ) : (
+                            <p className="rounded-lg border border-dashed border-gray-200 py-4 text-center text-sm text-gray-400">
+                                Chưa có ngày nghỉ nào được thiết lập.
+                            </p>
                         )}
                     </Card>
 
-                    {/* Section 4: Ngày Giờ Học Cố Định Bổ Sung */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                                     <CalendarPlus className="h-5 w-5 text-purple-600" />
-                                    4. Thêm Ngày Giờ Học Cố Định Bổ Sung (Tùy chọn)
+                                    4. Thêm Ngày Giờ Học Bù Cố Định (Tùy chọn)
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Học bù, học tăng cường vào ngày cụ thể.
+                                    Ví dụ: Học bù, học tăng cường vào ngày cụ thể (10:00 - 12:00 ngày 20-01-2026).
                                 </p>
                             </div>
 
@@ -733,25 +896,25 @@ return null;
                                 variant="secondary"
                                 size="md"
                                 icon={<Plus className="h-4 w-4 text-purple-600" />}
-                                onClick={handleAddSpecificSession}
+                                onClick={handleAddExtraDay}
                             >
-                                Thêm Buổi Học
+                                Thêm Buổi Học Bù
                             </Button>
                         </div>
 
-                        {specificSessions.length > 0 && (
+                        {extraDays.length > 0 ? (
                             <div className="space-y-3">
-                                {specificSessions.map((spec, idx) => (
+                                {extraDays.map((extra, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-purple-50/30 p-3.5 sm:flex-row sm:items-start"
+                                        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-purple-50/30 p-3.5 sm:flex-row sm:items-center"
                                     >
                                         <div className="w-full sm:w-44">
                                             <input
                                                 type="date"
-                                                value={spec.date}
+                                                value={extra.date}
                                                 onChange={(e) =>
-                                                    handleSpecificSessionChange(idx, 'date', e.target.value)
+                                                    handleExtraDayChange(idx, 'date', e.target.value)
                                                 }
                                                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-mono text-gray-900"
                                                 required
@@ -760,9 +923,9 @@ return null;
                                         <div className="flex items-center gap-1.5">
                                             <input
                                                 type="time"
-                                                value={spec.start_time}
+                                                value={extra.start_time}
                                                 onChange={(e) =>
-                                                    handleSpecificSessionChange(idx, 'start_time', e.target.value)
+                                                    handleExtraDayChange(idx, 'start_time', e.target.value)
                                                 }
                                                 className="w-28 rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-mono text-gray-900"
                                                 required
@@ -770,41 +933,36 @@ return null;
                                             <span className="text-sm text-gray-400">-</span>
                                             <input
                                                 type="time"
-                                                value={spec.end_time}
+                                                value={extra.end_time}
                                                 onChange={(e) =>
-                                                    handleSpecificSessionChange(idx, 'end_time', e.target.value)
+                                                    handleExtraDayChange(idx, 'end_time', e.target.value)
                                                 }
                                                 className="w-28 rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-mono text-gray-900"
                                                 required
                                             />
                                         </div>
-                                        <div className="flex-1">
-                                            <input
-                                                type="text"
-                                                value={spec.topic}
-                                                onChange={(e) =>
-                                                    handleSpecificSessionChange(idx, 'topic', e.target.value)
-                                                }
-                                                placeholder="Nội dung / Chủ đề buổi học"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-                                            />
+                                        <div className="flex-1 text-xs text-gray-500 italic">
+                                            Buổi học bù / tăng cường
                                         </div>
                                         <Button
                                             type="button"
                                             variant="danger"
                                             size="sm"
                                             icon={<Trash2 className="h-4 w-4" />}
-                                            onClick={() => handleRemoveSpecificSession(idx)}
+                                            onClick={() => handleRemoveExtraDay(idx)}
                                         >
                                             Xóa
                                         </Button>
                                     </div>
                                 ))}
                             </div>
+                        ) : (
+                            <p className="rounded-lg border border-dashed border-gray-200 py-4 text-center text-sm text-gray-400">
+                                Chưa có buổi học bù nào.
+                            </p>
                         )}
                     </Card>
 
-                    {/* Submit Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-2">
                         <Link href="/schedules">
                             <Button variant="secondary" size="lg">
@@ -818,9 +976,7 @@ return null;
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            {totalSessions && totalSessions > 0 && !endDate
-                                ? `Cập Nhật & Đồng Bộ ${totalSessions} Ca Học`
-                                : 'Cập Nhật & Đồng Bộ Ca Học'}
+                            Lưu Lịch Học
                         </Button>
                     </div>
                 </form>

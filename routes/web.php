@@ -174,6 +174,9 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/{id}/sessions', [\App\Http\Controllers\ClassScheduleController::class, 'sessions'])->name('sessions');
     });
 
+    Route::get('/api/vietnam-holidays', [\App\Http\Controllers\Api\VietnamHolidayController::class, 'index'])->name('vietnam-holidays.index');
+
+
     // Class Session Management Routes (List, Detail & Reschedule/Edit)
     Route::prefix('sessions')->name('sessions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ClassSessionController::class, 'index'])->name('index');

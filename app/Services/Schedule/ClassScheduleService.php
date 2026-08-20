@@ -2,10 +2,10 @@
 
 namespace App\Services\Schedule;
 
-use App\Helpers\VietnamHolidayHelper;
 use App\Jobs\GenerateClassSessionsJob;
 use App\Models\Admin;
 use App\Models\ClassSchedule;
+use App\Models\ClassSession;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -135,6 +135,112 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     }
 
     /**
+     * Chuẩn hóa cấu trúc weeks sang dạng map [dayKey => [[start, end], ...]]
+     * @param  array<mixed>                                           $rawWeeks
+     * @return array<string, array<int, array{0: string, 1: string}>>
+     */
+    protected function normalizeWeeks(array $rawWeeks): array
+    {
+        $normalized = [];
+
+        // Hỗ trợ cả 2 định dạng: {"1": [["18:00","20:00"]]} hoặc mảng weekly_schedules cũ [{weekday: 1, start_time: ..., end_time: ...}]
+        foreach ($rawWeeks as $key => $value) {
+            if (is_array($value) && isset($value['weekday'])) {
+                // Định dạng cũ [{weekday: 1, start_time: '18:00', end_time: '20:00'}]
+                $dayKey = (string) $value['weekday'];
+
+                if (! empty($value['start_time']) && ! empty($value['end_time'])) {
+                    $normalized[$dayKey][] = [
+                        substr((string) $value['start_time'], 0, 5),
+                        substr((string) $value['end_time'], 0, 5),
+                    ];
+                }
+            } elseif (is_numeric($key) || is_string($key)) {
+                $dayKey = (string) $key;
+
+                if (is_array($value)) {
+                    foreach ($value as $slot) {
+                        if (is_array($slot) && count($slot) >= 2) {
+                            $normalized[$dayKey][] = [
+                                substr((string) $slot[0], 0, 5),
+                                substr((string) $slot[1], 0, 5),
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sắp xếp các ca học trong mỗi ngày theo giờ bắt đầu
+        foreach ($normalized as $k => $slots) {
+            usort($slots, fn ($a, $b) => strcmp($a[0], $b[0]));
+            $normalized[$k] = $slots;
+        }
+
+        ksort($normalized);
+
+        return $normalized;
+    }
+
+    /**
+     * Chuẩn hóa mảng off_days
+     * @param  ?array<mixed>                                                           $offDays
+     * @return array<int, array{date: string, start_time: ?string, end_time: ?string}>
+     */
+    protected function normalizeOffDays(?array $offDays): array
+    {
+        if (empty($offDays)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($offDays as $item) {
+            if (is_string($item) && ! empty($item)) {
+                $result[] = [
+                    'date'       => $item,
+                    'start_time' => null,
+                    'end_time'   => null,
+                ];
+            } elseif (is_array($item) && ! empty($item['date'])) {
+                $result[] = [
+                    'date'       => (string) $item['date'],
+                    'start_time' => ! empty($item['start_time']) ? substr((string) $item['start_time'], 0, 5) : null,
+                    'end_time'   => ! empty($item['end_time']) ? substr((string) $item['end_time'], 0, 5) : null,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Chuẩn hóa mảng extra_days
+     * @param  ?array<mixed>                                                         $extraDays
+     * @return array<int, array{date: string, start_time: string, end_time: string}>
+     */
+    protected function normalizeExtraDays(?array $extraDays): array
+    {
+        if (empty($extraDays)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($extraDays as $item) {
+            if (is_array($item) && ! empty($item['date']) && ! empty($item['start_time']) && ! empty($item['end_time'])) {
+                $result[] = [
+                    'date'       => (string) $item['date'],
+                    'start_time' => substr((string) $item['start_time'], 0, 5),
+                    'end_time'   => substr((string) $item['end_time'], 0, 5),
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param  array<string, mixed> $data
      * @param  ?Admin               $admin
      * @return ClassSchedule
@@ -157,7 +263,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền quản lý lịch học của lớp này.');
         }
 
-        // Lấy thông tin môn học để đảm bảo có số buổi total_sessions chính xác
         $subject = $this->subjectRepository->find($subjectId);
 
         return DB::transaction(function () use ($data, $schoolClass, $subject, $subjectId, $teacherId) {
@@ -173,52 +278,39 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 ]
             );
 
-            $firstSchedule    = null;
-            $createdSchedules = [];
+            $normalizedWeeks     = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? []);
+            $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? []);
+            $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
 
-            // 2. Tạo các bản ghi ClassSchedule theo từng thứ trong tuần
-            $weeklySchedules = $data['weekly_schedules'] ?? [];
-
-            foreach ($weeklySchedules as $item) {
-                if (! empty($item['weekday']) && ! empty($item['start_time']) && ! empty($item['end_time'])) {
-                    $schedule = $this->scheduleRepository->create([
-                        'class_subject_id' => $classSubject->id,
-                        'weekday'          => (int) $item['weekday'],
-                        'start_time'       => $item['start_time'],
-                        'end_time'         => $item['end_time'],
-                        'room_id'          => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                        'effective_from'   => $data['start_date'],
-                        'effective_to'     => $data['end_date'] ?? null,
-                        'status'           => $data['status'] ?? 'active',
-                    ]);
-
-                    $createdSchedules[$item['weekday']] = $schedule;
-
-                    if (! $firstSchedule) {
-                        $firstSchedule = $schedule;
-                    }
-                }
-            }
-
-            // Fallback nếu không có weekly_schedules nhưng có specific_sessions
-            if (! $firstSchedule) {
-                $firstSchedule = $this->scheduleRepository->create([
-                    'class_subject_id' => $classSubject->id,
-                    'weekday'          => 1,
-                    'start_time'       => '08:00',
-                    'end_time'         => '10:00',
-                    'room_id'          => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                    'effective_from'   => $data['start_date'],
-                    'effective_to'     => $data['end_date'] ?? null,
-                    'status'           => $data['status'] ?? 'active',
-                ]);
-            }
+            // 2. Tạo hoặc cập nhật bản ghi ClassSchedule duy nhất
+            $schedule = ClassSchedule::updateOrCreate(
+                ['class_subject_id' => $classSubject->id],
+                [
+                    'weeks'      => $normalizedWeeks,
+                    'off_days'   => $normalizedOffDays,
+                    'extra_days' => $normalizedExtraDays,
+                    'room_id'    => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
+                    'status'     => $data['status'] ?? 'active',
+                ]
+            );
 
             // 3. Tính toán toàn bộ danh sách ca học và ngày kết thúc (thuần in-memory)
-            $sessionResult = $this->calculateSessionsPayload($classSubject, $createdSchedules, $data, $subject?->total_sessions);
-            $finalEndDate  = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
+            $sessionResult = $this->calculateSessionsPayload(
+                $classSubject,
+                $schedule->id,
+                $normalizedWeeks,
+                $normalizedOffDays,
+                $normalizedExtraDays,
+                $data['start_date'],
+                $data['end_date'] ?? null,
+                $teacherId,
+                ! empty($data['room_id']) ? (int) $data['room_id'] : null,
+                $subject?->total_sessions
+            );
 
-            // 4. Cập nhật ngày bắt đầu và kết thúc vào class_subject và class_schedules
+            $finalEndDate = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
+
+            // 4. Cập nhật ngày bắt đầu và kết thúc vào class_subject
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
                 'teacher_id' => $teacherId,
                 'start_date' => $data['start_date'],
@@ -226,19 +318,15 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'status'     => 'active',
             ]);
 
-            if ($finalEndDate) {
-                $this->scheduleRepository->updateEffectiveToByClassSubjectId($classSubject->id, $finalEndDate);
-            }
-
             // Cập nhật ngày bắt đầu / kết thúc của lớp học nếu cần
             $this->syncSchoolClassDates($schoolClass, $data['start_date'], $finalEndDate);
 
-            // 5. Dispatch Job để lưu các ca học hàng loạt (tối đa 1000 items/chunk)
+            // 5. Lưu các ca học hàng loạt
             if (! empty($sessionResult['sessions'])) {
                 GenerateClassSessionsJob::dispatchSync($classSubject->id, $sessionResult['sessions'], false);
             }
 
-            return $firstSchedule->refresh();
+            return $schedule->refresh();
         });
     }
 
@@ -255,12 +343,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         return DB::transaction(function () use ($schedule, $data) {
             $classSubject = $schedule->classSubject;
             $teacherId    = ! empty($data['teacher_id']) ? (int) $data['teacher_id'] : $classSubject->teacher_id;
-            $roomId       = ! empty($data['room_id']) ? (int) $data['room_id'] : null;
-            $startDate    = $data['start_date'] ?? ($schedule->effective_from?->format('Y-m-d') ?: $classSubject->start_date?->format('Y-m-d') ?: now()->toDateString());
+            $roomId       = array_key_exists('room_id', $data) ? (! empty($data['room_id']) ? (int) $data['room_id'] : null) : $schedule->room_id;
+            $startDate    = $data['start_date'] ?? $classSubject->start_date?->format('Y-m-d') ?: now()->toDateString();
             $subjectId    = $classSubject->subject_id;
             $subject      = $this->subjectRepository->find($subjectId);
 
-            $scheduleChanged = $this->hasScheduleOrDateChanged($classSubject, $data);
+            $scheduleChanged = $this->hasScheduleOrDateChanged($classSubject, $schedule, $data);
 
             if (! $scheduleChanged) {
                 // Chỉ cập nhật thông tin chung (teacher_id, room_id, status) mà không xóa và sinh lại buổi học
@@ -269,15 +357,13 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'status'     => $data['status'] ?? $classSubject->status,
                 ]);
 
-                foreach ($classSubject->classSchedules as $cs) {
-                    $this->scheduleRepository->update($cs->id, [
-                        'room_id' => $roomId,
-                        'status'  => $data['status'] ?? $cs->status,
-                    ]);
-                }
+                $schedule->update([
+                    'room_id' => $roomId,
+                    'status'  => $data['status'] ?? $schedule->status,
+                ]);
 
                 // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
-                \App\Models\ClassSession::where('class_subject_id', $classSubject->id)
+                ClassSession::where('class_subject_id', $classSubject->id)
                     ->where('session_date', '>=', now()->toDateString())
                     ->where('status', 'scheduled')
                     ->whereDoesntHave('attendances')
@@ -289,58 +375,39 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 return $schedule->refresh();
             }
 
-            // Khi có thay đổi về ngày bắt đầu hoặc lịch học:
+            // Khi có thay đổi về ngày bắt đầu, ngày kết thúc, weeks, off_days hoặc extra_days:
             $oldStartDate = $classSubject->start_date?->format('Y-m-d');
             $fromDate     = min(array_filter([$startDate, $oldStartDate, now()->toDateString()]));
 
-            // 1. Xóa các schedule cũ của class_subject này để đồng bộ lại
-            $this->scheduleRepository->deleteByClassSubjectId($classSubject->id);
+            $normalizedWeeks     = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? $schedule->weeks ?? []);
+            $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? $schedule->off_days ?? []);
+            $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? $schedule->extra_days ?? []);
 
-            // 2. Tạo lại các schedule tuần mới
-            $weeklySchedules  = $data['weekly_schedules'] ?? [];
-            $createdSchedules = [];
-            $firstSchedule    = null;
+            $schedule->update([
+                'weeks'      => $normalizedWeeks,
+                'off_days'   => $normalizedOffDays,
+                'extra_days' => $normalizedExtraDays,
+                'room_id'    => $roomId,
+                'status'     => $data['status'] ?? $schedule->status,
+            ]);
 
-            foreach ($weeklySchedules as $item) {
-                if (! empty($item['weekday']) && ! empty($item['start_time']) && ! empty($item['end_time'])) {
-                    $newSchedule = $this->scheduleRepository->create([
-                        'class_subject_id' => $classSubject->id,
-                        'weekday'          => (int) $item['weekday'],
-                        'start_time'       => $item['start_time'],
-                        'end_time'         => $item['end_time'],
-                        'room_id'          => $roomId,
-                        'effective_from'   => $startDate,
-                        'effective_to'     => $data['end_date'] ?? null,
-                        'status'           => $data['status'] ?? 'active',
-                    ]);
+            // Tính toán toàn bộ ca học mới
+            $sessionResult = $this->calculateSessionsPayload(
+                $classSubject,
+                $schedule->id,
+                $normalizedWeeks,
+                $normalizedOffDays,
+                $normalizedExtraDays,
+                $startDate,
+                $data['end_date'] ?? null,
+                $teacherId,
+                $roomId,
+                $subject?->total_sessions
+            );
 
-                    $createdSchedules[$item['weekday']] = $newSchedule;
+            $finalEndDate = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
 
-                    if (! $firstSchedule) {
-                        $firstSchedule = $newSchedule;
-                    }
-                }
-            }
-
-            if (! $firstSchedule) {
-                $firstSchedule = $this->scheduleRepository->create([
-                    'class_subject_id' => $classSubject->id,
-                    'weekday'          => 1,
-                    'start_time'       => '08:00',
-                    'end_time'         => '10:00',
-                    'room_id'          => $roomId,
-                    'effective_from'   => $startDate,
-                    'effective_to'     => $data['end_date'] ?? null,
-                    'status'           => $data['status'] ?? 'active',
-                ]);
-            }
-
-            // 3. Tính toán toàn bộ ca học mới
-            $calcData      = array_merge($data, ['start_date' => $startDate]);
-            $sessionResult = $this->calculateSessionsPayload($classSubject, $createdSchedules, $calcData, $subject?->total_sessions);
-            $finalEndDate  = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
-
-            // 4. Cập nhật class_subject và class_schedules
+            // Cập nhật class_subject
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
                 'teacher_id' => $teacherId,
                 'start_date' => $startDate,
@@ -348,15 +415,11 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'status'     => $data['status'] ?? 'active',
             ]);
 
-            if ($finalEndDate) {
-                $this->scheduleRepository->updateEffectiveToByClassSubjectId($classSubject->id, $finalEndDate);
-            }
-
             if ($classSubject->schoolClass) {
                 $this->syncSchoolClassDates($classSubject->schoolClass, $startDate, $finalEndDate);
             }
 
-            // 5. Xóa các ca học cũ bị thay đổi và sinh lại ca học mới
+            // Xóa các ca học cũ bị thay đổi và sinh lại ca học mới
             GenerateClassSessionsJob::dispatchSync(
                 $classSubject->id,
                 $sessionResult['sessions'],
@@ -364,7 +427,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $fromDate
             );
 
-            return $firstSchedule->refresh();
+            return $schedule->refresh();
         });
     }
 
@@ -372,10 +435,11 @@ class ClassScheduleService implements ClassScheduleServiceInterface
      * Kiểm tra xem ngày bắt đầu hoặc cấu hình lịch học có bị thay đổi hay không.
      *
      * @param  ClassSubject         $classSubject
+     * @param  ClassSchedule        $schedule
      * @param  array<string, mixed> $data
      * @return bool
      */
-    protected function hasScheduleOrDateChanged(ClassSubject $classSubject, array $data): bool
+    protected function hasScheduleOrDateChanged(ClassSubject $classSubject, ClassSchedule $schedule, array $data): bool
     {
         $oldStartDate = $classSubject->start_date?->format('Y-m-d');
         $newStartDate = ! empty($data['start_date']) ? Carbon::parse($data['start_date'])->format('Y-m-d') : null;
@@ -393,32 +457,34 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
         }
 
-        if (! empty($data['specific_sessions']) || ! empty($data['off_sessions'])) {
-            return true;
+        if (array_key_exists('weeks', $data) || array_key_exists('weekly_schedules', $data)) {
+            $oldWeeks = $schedule->weeks ?? [];
+            $newWeeks = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? []);
+
+            if ($oldWeeks !== $newWeeks) {
+                return true;
+            }
         }
 
-        $oldSchedules = $classSubject->classSchedules
-            ->map(fn ($s) => [
-                'weekday'    => (int) $s->weekday,
-                'start_time' => substr((string) $s->start_time, 0, 5),
-                'end_time'   => substr((string) $s->end_time, 0, 5),
-            ])
-            ->sortBy(['weekday', 'start_time'])
-            ->values()
-            ->toArray();
+        if (array_key_exists('off_days', $data) || array_key_exists('off_sessions', $data)) {
+            $oldOff = $schedule->off_days ?? [];
+            $newOff = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? []);
 
-        $newSchedules = collect($data['weekly_schedules'] ?? [])
-            ->filter(fn ($s) => ! empty($s['weekday']) && ! empty($s['start_time']) && ! empty($s['end_time']))
-            ->map(fn ($s) => [
-                'weekday'    => (int) $s['weekday'],
-                'start_time' => substr((string) $s['start_time'], 0, 5),
-                'end_time'   => substr((string) $s['end_time'], 0, 5),
-            ])
-            ->sortBy(['weekday', 'start_time'])
-            ->values()
-            ->toArray();
+            if ($oldOff !== $newOff) {
+                return true;
+            }
+        }
 
-        return $oldSchedules !== $newSchedules;
+        if (array_key_exists('extra_days', $data) || array_key_exists('specific_sessions', $data)) {
+            $oldExtra = $schedule->extra_days ?? [];
+            $newExtra = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
+
+            if ($oldExtra !== $newExtra) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -454,23 +520,31 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
     /**
      * Tính toán thuần danh sách ca học (ClassSession payload) và ngày kết thúc dự kiến.
-     * Xử lý hoàn toàn trong bộ nhớ theo mảng, không thực hiện các câu query đơn lẻ trong vòng lặp.
      *
      * @param  ClassSubject                                                                                $classSubject
-     * @param  array<int, ClassSchedule>                                                                   $createdSchedules
-     * @param  array<string, mixed>                                                                        $data
+     * @param  int                                                                                         $scheduleId
+     * @param  array<string, array<int, array{0: string, 1: string}>>                                      $weeks
+     * @param  array<int, array{date: string, start_time: ?string, end_time: ?string}>                     $offDays
+     * @param  array<int, array{date: string, start_time: string, end_time: string}>                       $extraDays
+     * @param  string                                                                                      $startDateStr
+     * @param  ?string                                                                                     $endDateStr
+     * @param  int                                                                                         $teacherId
+     * @param  ?int                                                                                        $roomId
      * @param  ?int                                                                                        $totalSessions
      * @return array{sessions: array<int, array<string, mixed>>, calculated_end_date: ?string, count: int}
      */
     protected function calculateSessionsPayload(
         ClassSubject $classSubject,
-        array $createdSchedules,
-        array $data,
+        int $scheduleId,
+        array $weeks,
+        array $offDays,
+        array $extraDays,
+        string $startDateStr,
+        ?string $endDateStr = null,
+        int $teacherId = 0,
+        ?int $roomId = null,
         ?int $totalSessions = null
     ): array {
-        $startDateStr = $data['start_date'] ?? null;
-        $endDateStr   = ! empty($data['end_date']) ? $data['end_date'] : null;
-
         if (! $startDateStr) {
             return [
                 'sessions'            => [],
@@ -481,25 +555,26 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         $startDate = Carbon::parse($startDateStr);
 
-        $weeklySchedules = $data['weekly_schedules'] ?? [];
-        $weeklyMap       = [];
+        // Tạo map tra cứu nhanh cho off_days:
+        // 1. $fullOffDays = ['2026-09-02' => true] (nghỉ cả ngày)
+        // 2. $slotOffDays = ['2026-09-04_08:00' => true] (nghỉ theo khung giờ bắt đầu)
+        $fullOffDays = [];
+        $slotOffDays = [];
 
-        foreach ($weeklySchedules as $ws) {
-            $weeklyMap[(int) $ws['weekday']] = $ws;
-        }
+        foreach ($offDays as $off) {
+            $d = $off['date'] ?? null;
 
-        $offSessions = $data['off_sessions'] ?? [];
-        $offDatesMap = [];
+            if (! $d) {
+                continue;
+            }
+            $st = $off['start_time'] ?? null;
 
-        foreach ($offSessions as $off) {
-            if (! empty($off['date'])) {
-                $offDatesMap[$off['date']] = $off['reason'] ?? 'Nghỉ theo lịch đã đặt';
+            if (empty($st)) {
+                $fullOffDays[$d] = true;
+            } else {
+                $slotOffDays["{$d}_{$st}"] = true;
             }
         }
-
-        $excludeHolidays = ! empty($data['exclude_vietnam_holidays']);
-        $teacherId       = (int) $data['teacher_id'];
-        $roomId          = ! empty($data['room_id']) ? (int) $data['room_id'] : null;
 
         $sessions        = [];
         $seenDateTime    = [];
@@ -507,37 +582,32 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $currentDate     = $startDate->copy();
         $now             = now()->toDateTimeString();
 
-        // 1. Sinh ca học theo chu kỳ các thứ trong tuần
+        // 1. Sinh ca học theo chu kỳ tuần (weeks JSON)
         if (! $endDateStr) {
             if ($totalSessions && $totalSessions > 0) {
-                // TH1: Môn học có cấu hình số buổi (VD: 60 buổi) -> sinh chính xác đến khi đủ số buổi
+                // Môn học có cấu hình số buổi cụ thể (VD: 60 buổi)
                 $pastSessionsCount    = $this->sessionRepository->countSessionsBeforeDate($classSubject->id, $startDateStr);
                 $targetRemainingCount = max(1, $totalSessions - $pastSessionsCount);
-                $maxSafetyDate        = $startDate->copy()->addYears(5); // Giới hạn an toàn
+                $maxSafetyDate        = $startDate->copy()->addYears(5);
 
                 while (count($sessions) < $targetRemainingCount && $currentDate->lte($maxSafetyDate)) {
-                    $dayOfWeek = (int) $currentDate->dayOfWeekIso; // 1 = Mon, ..., 7 = Sun
-                    $dateStr   = $currentDate->format('Y-m-d');
+                    $dayKey  = (string) $currentDate->dayOfWeekIso; // 1 = Mon .. 7 = Sun
+                    $dateStr = $currentDate->format('Y-m-d');
 
-                    if (isset($weeklyMap[$dayOfWeek])) {
-                        $isOffDay = isset($offDatesMap[$dateStr]);
-                        $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+                    if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
+                        foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                            $slotKey = "{$dateStr}_{$startTime}";
 
-                        if (! $isOffDay && ! $isVnHol) {
-                            $item       = $weeklyMap[$dayOfWeek];
-                            $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
-                            $key        = "{$dateStr}_{$item['start_time']}";
-
-                            if (! isset($seenDateTime[$key])) {
-                                $seenDateTime[$key] = true;
-                                $sessions[]         = [
+                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                                $seenDateTime[$slotKey] = true;
+                                $sessions[]             = [
                                     'class_subject_id'  => $classSubject->id,
                                     'class_schedule_id' => $scheduleId,
                                     'teacher_id'        => $teacherId,
                                     'room_id'           => $roomId,
                                     'session_date'      => $dateStr,
-                                    'start_time'        => $item['start_time'],
-                                    'end_time'          => $item['end_time'],
+                                    'start_time'        => $startTime,
+                                    'end_time'          => $endTime,
                                     'status'            => 'scheduled',
                                     'topic'             => null,
                                     'note'              => null,
@@ -545,6 +615,10 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                                     'updated_at'        => $now,
                                 ];
                                 $lastSessionDate = $dateStr;
+
+                                if (count($sessions) >= $targetRemainingCount) {
+                                    break 2;
+                                }
                             }
                         }
                     }
@@ -552,32 +626,27 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     $currentDate->addDay();
                 }
             } else {
-                // TH2: Môn học không có cấu hình số buổi -> mặc định 12 tuần (khoảng 3 tháng)
+                // Môn học không cấu hình số buổi -> mặc định 12 tuần
                 $endDate = $startDate->copy()->addWeeks(12);
 
                 while ($currentDate->lte($endDate)) {
-                    $dayOfWeek = (int) $currentDate->dayOfWeekIso;
-                    $dateStr   = $currentDate->format('Y-m-d');
+                    $dayKey  = (string) $currentDate->dayOfWeekIso;
+                    $dateStr = $currentDate->format('Y-m-d');
 
-                    if (isset($weeklyMap[$dayOfWeek])) {
-                        $isOffDay = isset($offDatesMap[$dateStr]);
-                        $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+                    if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
+                        foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                            $slotKey = "{$dateStr}_{$startTime}";
 
-                        if (! $isOffDay && ! $isVnHol) {
-                            $item       = $weeklyMap[$dayOfWeek];
-                            $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
-                            $key        = "{$dateStr}_{$item['start_time']}";
-
-                            if (! isset($seenDateTime[$key])) {
-                                $seenDateTime[$key] = true;
-                                $sessions[]         = [
+                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                                $seenDateTime[$slotKey] = true;
+                                $sessions[]             = [
                                     'class_subject_id'  => $classSubject->id,
                                     'class_schedule_id' => $scheduleId,
                                     'teacher_id'        => $teacherId,
                                     'room_id'           => $roomId,
                                     'session_date'      => $dateStr,
-                                    'start_time'        => $item['start_time'],
-                                    'end_time'          => $item['end_time'],
+                                    'start_time'        => $startTime,
+                                    'end_time'          => $endTime,
                                     'status'            => 'scheduled',
                                     'topic'             => null,
                                     'note'              => null,
@@ -593,32 +662,27 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 }
             }
         } else {
-            // TH3: Người dùng đã chỉ định ngày kết thúc dự kiến cụ thể
+            // Có ngày kết thúc cụ thể
             $endDate = Carbon::parse($endDateStr);
 
             while ($currentDate->lte($endDate)) {
-                $dayOfWeek = (int) $currentDate->dayOfWeekIso;
-                $dateStr   = $currentDate->format('Y-m-d');
+                $dayKey  = (string) $currentDate->dayOfWeekIso;
+                $dateStr = $currentDate->format('Y-m-d');
 
-                if (isset($weeklyMap[$dayOfWeek])) {
-                    $isOffDay = isset($offDatesMap[$dateStr]);
-                    $isVnHol  = $excludeHolidays && VietnamHolidayHelper::isHoliday($currentDate);
+                if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
+                    foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                        $slotKey = "{$dateStr}_{$startTime}";
 
-                    if (! $isOffDay && ! $isVnHol) {
-                        $item       = $weeklyMap[$dayOfWeek];
-                        $scheduleId = isset($createdSchedules[$dayOfWeek]) ? $createdSchedules[$dayOfWeek]->id : null;
-                        $key        = "{$dateStr}_{$item['start_time']}";
-
-                        if (! isset($seenDateTime[$key])) {
-                            $seenDateTime[$key] = true;
-                            $sessions[]         = [
+                        if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey])) {
+                            $seenDateTime[$slotKey] = true;
+                            $sessions[]             = [
                                 'class_subject_id'  => $classSubject->id,
                                 'class_schedule_id' => $scheduleId,
                                 'teacher_id'        => $teacherId,
                                 'room_id'           => $roomId,
                                 'session_date'      => $dateStr,
-                                'start_time'        => $item['start_time'],
-                                'end_time'          => $item['end_time'],
+                                'start_time'        => $startTime,
+                                'end_time'          => $endTime,
                                 'status'            => 'scheduled',
                                 'topic'             => null,
                                 'note'              => null,
@@ -634,26 +698,27 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
         }
 
-        // 2. Thêm các buổi học cố định bổ sung (specific_sessions)
-        $specificSessions = $data['specific_sessions'] ?? [];
+        // 2. Thêm các buổi học bù cố định (extra_days)
+        foreach ($extraDays as $extra) {
+            $specDateStr = $extra['date'] ?? null;
+            $specStart   = $extra['start_time'] ?? null;
+            $specEnd     = $extra['end_time'] ?? null;
 
-        foreach ($specificSessions as $spec) {
-            if (! empty($spec['date']) && ! empty($spec['start_time']) && ! empty($spec['end_time'])) {
-                $specDateStr = $spec['date'];
-                $key         = "{$specDateStr}_{$spec['start_time']}";
+            if ($specDateStr && $specStart && $specEnd) {
+                $key = "{$specDateStr}_{$specStart}";
 
                 if (! isset($seenDateTime[$key])) {
                     $seenDateTime[$key] = true;
                     $sessions[]         = [
                         'class_subject_id'  => $classSubject->id,
-                        'class_schedule_id' => null,
+                        'class_schedule_id' => $scheduleId,
                         'teacher_id'        => $teacherId,
                         'room_id'           => $roomId,
                         'session_date'      => $specDateStr,
-                        'start_time'        => $spec['start_time'],
-                        'end_time'          => $spec['end_time'],
+                        'start_time'        => $specStart,
+                        'end_time'          => $specEnd,
                         'status'            => 'scheduled',
-                        'topic'             => $spec['topic'] ?? 'Buổi học bổ sung',
+                        'topic'             => 'Buổi học bổ sung / bù',
                         'note'              => null,
                         'created_at'        => $now,
                         'updated_at'        => $now,

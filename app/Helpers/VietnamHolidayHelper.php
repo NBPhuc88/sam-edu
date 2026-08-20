@@ -128,4 +128,37 @@ class VietnamHolidayHelper
 
         return null;
     }
+
+    /**
+     * Lấy danh sách tất cả các ngày lễ trong năm (đã format {date: Y-m-d, name: string})
+     * @param  int                                           $year
+     * @return array<int, array{date: string, name: string}>
+     */
+    public static function getHolidaysForYear(int $year): array
+    {
+        $holidays = [];
+
+        // 1. Thêm ngày lễ Dương Lịch
+        foreach (self::$solarHolidays as $md => $name) {
+            $holidays[] = [
+                'date' => sprintf('%04d-%s', $year, $md),
+                'name' => $name,
+            ];
+        }
+
+        // 2. Thêm ngày lễ Âm Lịch (Tết & Giỗ Tổ) nếu có trong bảng tra cứu
+        if (isset(self::$lunarHolidaysMap[$year])) {
+            foreach (self::$lunarHolidaysMap[$year] as $ymd => $name) {
+                $holidays[] = [
+                    'date' => $ymd,
+                    'name' => $name,
+                ];
+            }
+        }
+
+        // Sắp xếp theo ngày tăng dần
+        usort($holidays, fn ($a, $b) => strcmp($a['date'], $b['date']));
+
+        return array_values($holidays);
+    }
 }

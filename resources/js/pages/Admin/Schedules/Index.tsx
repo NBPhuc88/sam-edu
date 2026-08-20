@@ -62,17 +62,17 @@ interface ClassSession {
 interface ClassSchedule {
     id: number;
     class_subject_id: number;
-    weekday: number;
-    start_time: string;
-    end_time: string;
+    weeks: Record<string, [string, string][]>;
+    off_days?: { date: string; start_time?: string | null; end_time?: string | null }[] | null;
+    extra_days?: { date: string; start_time: string; end_time: string }[] | null;
     room_id: number | null;
-    effective_from: string;
-    effective_to: string | null;
     status: string;
     class_sessions_count?: number;
     room?: Room;
     class_subject?: {
         id: number;
+        start_date?: string;
+        end_date?: string | null;
         school_class?: {
             id: number;
             name: string;
@@ -424,17 +424,28 @@ export default function ScheduleIndex({
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                                                    <span>{getWeekdayLabel(sch.weekday)}:</span>
-                                                    <span className="font-mono">
-                                                        {sch.start_time.slice(0, 5)} - {sch.end_time.slice(0, 5)}
-                                                    </span>
+                                                <div className="flex flex-wrap gap-1.5 max-w-xs">
+                                                    {sch.weeks && Object.keys(sch.weeks).length > 0 ? (
+                                                        Object.entries(sch.weeks).map(([dayKey, slots]) => (
+                                                            <div
+                                                                key={dayKey}
+                                                                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
+                                                            >
+                                                                <span className="font-bold">{getWeekdayLabel(Number(dayKey))}:</span>
+                                                                <span className="font-mono">
+                                                                    {slots.map((s) => `${s[0]} - ${s[1]}`).join(', ')}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Chưa đặt lịch tuần</span>
+                                                    )}
                                                 </div>
                                             </td>
 
                                             <td className="px-6 py-4 text-xs text-gray-600 font-mono">
-                                                <div>Từ: {sch.effective_from}</div>
-                                                {sch.effective_to && <div>Đến: {sch.effective_to}</div>}
+                                                <div>Từ: {sch.class_subject?.start_date || 'N/A'}</div>
+                                                {sch.class_subject?.end_date && <div>Đến: {sch.class_subject.end_date}</div>}
                                             </td>
 
                                             <td className="px-6 py-4">

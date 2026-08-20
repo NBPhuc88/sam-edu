@@ -6,30 +6,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClassSchedule extends Model
 {
     use HasFactory;
-    use SoftDeletes;
 
     protected $fillable = [
         'class_subject_id',
-        'weekday',
-        'start_time',
-        'end_time',
+        'weeks',
+        'off_days',
+        'extra_days',
         'room_id',
-        'effective_from',
-        'effective_to',
         'status',
     ];
 
     protected function casts(): array
     {
         return [
-            'weekday'        => 'integer',
-            'effective_from' => 'date',
-            'effective_to'   => 'date',
+            'weeks'      => 'array',
+            'off_days'   => 'array',
+            'extra_days' => 'array',
         ];
     }
 
