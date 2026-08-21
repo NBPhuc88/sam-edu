@@ -419,19 +419,24 @@ return '---';
                 {/* Topic & Notes Box */}
                 {(session.topic || session.note) && (
                     <Card className="border border-gray-100 p-5 shadow-xs bg-slate-50/50">
-                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-2">
+                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-2.5">
                             <BookOpen className="h-4 w-4 text-emerald-600" />
-                            Nội Dung & Ghi Chú Bài Giảng
+                            Nội Dung & Ghi Chú Buổi Học
                         </h3>
                         {session.topic && (
-                            <p className="text-sm text-gray-800 font-medium mb-1">
+                            <p className="text-sm text-gray-800 font-medium mb-2">
                                 <span className="text-gray-500">Chủ đề / Bài học:</span> {session.topic}
                             </p>
                         )}
                         {session.note && (
-                            <p className="text-sm text-gray-600">
-                                <span className="text-gray-500">Ghi chú vận hành:</span> {session.note}
-                            </p>
+                            <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-3.5 shadow-2xs">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 mb-1">
+                                    <span>📢 Ghi chú / Dặn dò buổi học:</span>
+                                </div>
+                                <p className="text-sm text-blue-950 font-medium whitespace-pre-line leading-relaxed">
+                                    {session.note}
+                                </p>
+                            </div>
                         )}
                     </Card>
                 )}
@@ -773,6 +778,23 @@ return '---';
                         />
                         {errors.topic && (
                             <p className="mt-1 text-xs text-red-600">{errors.topic}</p>
+                        )}
+                    </div>
+
+                    {/* Note */}
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                            Ghi chú / Dặn dò buổi học (Học sinh & Giáo viên đều xem được)
+                        </label>
+                        <textarea
+                            rows={3}
+                            placeholder="Ví dụ: Nhớ mang sách bài tập tập 2, làm bài tập trước khi đến lớp, chuẩn bị bài thuyết trình..."
+                            value={data.note}
+                            onChange={(e) => setData('note', e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        />
+                        {errors.note && (
+                            <p className="mt-1 text-xs text-red-600">{errors.note}</p>
                         )}
                     </div>
 

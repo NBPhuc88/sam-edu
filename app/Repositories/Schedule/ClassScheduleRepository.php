@@ -148,7 +148,8 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                         'start_time',
                         'end_time',
                         'topic',
-                        'status'
+                        'status',
+                        'note'
                     )
                     ->orderBy('session_date', 'asc')
                     ->orderBy('start_time', 'asc');
