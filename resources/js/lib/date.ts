@@ -8,16 +8,26 @@ export const WEEKDAY_NAMES = [
     'Thứ Bảy',
 ];
 
+export interface DateFormatOptions {
+    separator?: '/' | '-';
+    includeWeekday?: boolean;
+}
+
+export interface DateTimeFormatOptions {
+    separator?: '/' | '-';
+    timeFirst?: boolean;
+}
+
 /**
  * Parse chuỗi ngày an toàn hỗ trợ các định dạng:
- * - d-m-Y hoặc d/m/Y (ví dụ: '21-08-2026', '21-08-2026 22:00')
+ * - d-m-Y hoặc d/m/Y (ví dụ: '21-08-2026', '21/08/2026', '21-08-2026 22:00')
  * - Y-m-d (ví dụ: '2026-08-21', '2026-08-21T00:00:00.000000Z')
  */
 export function parseDate(dateStr: string | null | undefined): Date | null {
     if (!dateStr) return null;
     const str = String(dateStr).trim();
 
-    // 1. Dạng d-m-Y hoặc d/m/Y
+    // 1. Dạng d-m-Y hoặc d/m/Y (có hoặc không có giờ)
     if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(str)) {
         const [datePart, timePart] = str.split(' ');
         const separator = datePart.includes('-') ? '-' : '/';
@@ -45,25 +55,44 @@ export function parseDate(dateStr: string | null | undefined): Date | null {
 }
 
 /**
- * Format ngày hiển thị chuẩn dạng: "21-08-2026"
- * Nếu includeWeekday = true: "Thứ Sáu, 21-08-2026"
+ * Format ngày hiển thị:
+ * - Mặc định: "21-08-2026"
+ * - Hỗ trợ option separator: formatDate(date, '/') => "21/08/2026"
+ * - Hỗ trợ option includeWeekday: formatDate(date, { includeWeekday: true, separator: '/' }) => "Thứ Sáu, 21/08/2026"
  */
-export function formatDate(dateStr: string | null | undefined, includeWeekday: boolean = false): string {
+export function formatDate(
+    dateStr: string | null | undefined,
+    options?: DateFormatOptions | boolean | string
+): string {
     if (!dateStr) return '---';
 
     const d = parseDate(dateStr);
     if (!d) return String(dateStr);
 
+    let separator = '-';
+    let includeWeekday = false;
+
+    if (typeof options === 'boolean') {
+        includeWeekday = options;
+    } else if (typeof options === 'string') {
+        separator = options;
+    } else if (options && typeof options === 'object') {
+        if (options.separator) separator = options.separator;
+        if (options.includeWeekday !== undefined) includeWeekday = options.includeWeekday;
+    }
+
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
 
+    const formattedDate = `${day}${separator}${month}${separator}${year}`;
+
     if (includeWeekday) {
         const dayName = WEEKDAY_NAMES[d.getDay()];
-        return `${dayName}, ${day}-${month}-${year}`;
+        return `${dayName}, ${formattedDate}`;
     }
 
-    return `${day}-${month}-${year}`;
+    return formattedDate;
 }
 
 /**
@@ -80,13 +109,29 @@ export function toISODateString(dateStr: string | null | undefined): string {
 }
 
 /**
- * Format ngày giờ hiển thị chuẩn dạng: "21-08-2026 22:00"
+ * Format ngày giờ hiển thị:
+ * - Mặc định: "21-08-2026 22:00"
+ * - Option separator: formatDateTime(dt, '/') => "21/08/2026 22:00"
+ * - Option timeFirst: formatDateTime(dt, { timeFirst: true }) => "22:00 21-08-2026"
  */
-export function formatDateTime(dtStr: string | null | undefined): string {
+export function formatDateTime(
+    dtStr: string | null | undefined,
+    options?: DateTimeFormatOptions | string
+): string {
     if (!dtStr) return '---';
 
     const d = parseDate(dtStr);
     if (!d) return String(dtStr);
+
+    let separator = '-';
+    let timeFirst = false;
+
+    if (typeof options === 'string') {
+        separator = options;
+    } else if (options && typeof options === 'object') {
+        if (options.separator) separator = options.separator;
+        if (options.timeFirst !== undefined) timeFirst = options.timeFirst;
+    }
 
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -94,7 +139,14 @@ export function formatDateTime(dtStr: string | null | undefined): string {
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
 
-    return `${day}-${month}-${year} ${hours}:${minutes}`;
+    const formattedDate = `${day}${separator}${month}${separator}${year}`;
+    const formattedTime = `${hours}:${minutes}`;
+
+    if (timeFirst) {
+        return `${formattedTime} ${formattedDate}`;
+    }
+
+    return `${formattedDate} ${formattedTime}`;
 }
 
 /**

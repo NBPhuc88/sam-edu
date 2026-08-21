@@ -97,7 +97,6 @@ const adminNav: NavItem[] = [
         label: 'Quản Lý Trung Tâm',
         icon: Users,
         children: [
-            { label: 'Trung Tâm', path: '/centers' },
             { label: 'Giáo Viên', path: '/teachers' },
             { label: 'Học Sinh', path: '/students' },
         ],
