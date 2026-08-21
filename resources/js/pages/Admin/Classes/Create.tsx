@@ -105,12 +105,16 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         e.preventDefault();
         setIsSubmitting(true);
 
-        const validSubjects = subjectRows
-            .filter((r) => r.subject_id && r.teacher_id)
-            .map((r) => ({
-                subject_id: Number(r.subject_id),
-                teacher_id: Number(r.teacher_id),
-            }));
+        const subjectMap = new Map<number, number>();
+        subjectRows.forEach((r) => {
+            if (r.subject_id && r.teacher_id) {
+                subjectMap.set(Number(r.subject_id), Number(r.teacher_id));
+            }
+        });
+        const validSubjects = Array.from(subjectMap.entries()).map(([subject_id, teacher_id]) => ({
+            subject_id,
+            teacher_id,
+        }));
 
         router.post(
             '/classes',

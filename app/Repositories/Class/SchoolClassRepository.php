@@ -172,19 +172,40 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void
     {
-        // Xóa các liên kết class_subjects cũ của lớp
-        ClassSubject::where('class_id', $schoolClass->id)->delete();
+        // 1. Lọc và loại bỏ trùng lặp theo subject_id
+        $uniqueSubjects = [];
 
-        // Tạo các liên kết môn học & giáo viên mới
         foreach ($subjectsWithTeachers as $item) {
             if (! empty($item['subject_id']) && ! empty($item['teacher_id'])) {
-                ClassSubject::create([
-                    'class_id'   => $schoolClass->id,
-                    'subject_id' => (int) $item['subject_id'],
-                    'teacher_id' => (int) $item['teacher_id'],
-                    'status'     => 'active',
-                ]);
+                $subjectId                  = (int) $item['subject_id'];
+                $teacherId                  = (int) $item['teacher_id'];
+                $uniqueSubjects[$subjectId] = $teacherId;
             }
+        }
+
+        $activeSubjectIds = array_keys($uniqueSubjects);
+
+        // 2. Xóa các môn học không còn được phân công cho lớp này
+        if (! empty($activeSubjectIds)) {
+            ClassSubject::where('class_id', $schoolClass->id)
+                ->whereNotIn('subject_id', $activeSubjectIds)
+                ->delete();
+        } else {
+            ClassSubject::where('class_id', $schoolClass->id)->delete();
+        }
+
+        // 3. Cập nhật hoặc tạo mới (updateOrCreate) để bảo toàn ID và không gây Duplicate Entry
+        foreach ($uniqueSubjects as $subjectId => $teacherId) {
+            ClassSubject::updateOrCreate(
+                [
+                    'class_id'   => $schoolClass->id,
+                    'subject_id' => $subjectId,
+                ],
+                [
+                    'teacher_id' => $teacherId,
+                    'status'     => 'active',
+                ]
+            );
         }
     }
 
