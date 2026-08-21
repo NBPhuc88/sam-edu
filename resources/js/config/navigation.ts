@@ -57,8 +57,6 @@ const superAdminNav: NavItem[] = [
         children: [
             { label: 'Lịch Học', path: '/schedules' },
             { label: 'Buổi Học', path: '/sessions' },
-            { label: 'Điểm Danh', path: '/attendance' },
-            { label: 'Đổi Lịch Học', path: '/reschedules' },
             { label: 'Ngày Lễ', path: '/holidays' },
         ],
     },
@@ -119,8 +117,6 @@ const adminNav: NavItem[] = [
         children: [
             { label: 'Lịch Học', path: '/schedules' },
             { label: 'Buổi Học', path: '/sessions' },
-            { label: 'Điểm Danh', path: '/attendance' },
-            { label: 'Đổi Lịch', path: '/reschedules' },
         ],
     },
     {
@@ -155,7 +151,6 @@ const teacherNav: NavItem[] = [
             { label: 'Lớp Học Của Tôi', path: '/classes' },
             { label: 'Học Sinh Của Tôi', path: '/students' },
             { label: 'Lịch Dạy', path: '/schedules' },
-            { label: 'Điểm Danh', path: '/attendance' },
         ],
     },
     {
