@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Plus, Trash2, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -14,7 +14,7 @@ interface Props {
     onChangeCorrectAnswer: (answer: string) => void;
 }
 
-const DEFAULT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const DEFAULT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
 export default function SingleChoiceEditor({
     options = [],
@@ -22,14 +22,39 @@ export default function SingleChoiceEditor({
     onChangeOptions,
     onChangeCorrectAnswer,
 }: Props) {
-    const safeOptions: Option[] = options && options.length > 0
-        ? options
+    const radioGroupName = useId();
+
+    // Safely normalize options whether passed as array of objects, array of strings, or object map
+    let rawOptionsList: any[] = [];
+    if (Array.isArray(options)) {
+        rawOptionsList = options;
+    } else if (options && typeof options === 'object') {
+        rawOptionsList = Object.entries(options).map(([key, val]) => {
+            if (val && typeof val === 'object') {
+                return { id: key, ...(val as object) };
+            }
+            return { id: key, text: String(val) };
+        });
+    }
+
+    const safeOptions: Option[] = rawOptionsList.length > 0
+        ? rawOptionsList.map((opt: any, idx: number) => {
+            if (typeof opt === 'string') {
+                const defaultId = DEFAULT_LABELS[idx] || `OPT_${idx + 1}`;
+                return { id: defaultId, text: opt };
+            }
+            const id = String(opt?.id ?? opt?.key ?? opt?.value ?? DEFAULT_LABELS[idx] ?? `OPT_${idx + 1}`);
+            const text = String(opt?.text ?? opt?.label ?? opt?.content ?? opt?.value ?? '');
+            return { id, text };
+        })
         : [
             { id: 'A', text: '' },
             { id: 'B', text: '' },
             { id: 'C', text: '' },
             { id: 'D', text: '' },
         ];
+
+    const safeCorrectAnswer = correctAnswer ? String(correctAnswer).trim() : '';
 
     const handleAddOption = () => {
         const nextIndex = safeOptions.length;
@@ -45,7 +70,7 @@ export default function SingleChoiceEditor({
         const newOptions = safeOptions.filter((_, i) => i !== index);
         onChangeOptions(newOptions);
 
-        if (correctAnswer === removed.id) {
+        if (safeCorrectAnswer === removed.id) {
             onChangeCorrectAnswer(newOptions[0]?.id || '');
         }
     };
@@ -75,7 +100,7 @@ export default function SingleChoiceEditor({
 
             <div className="space-y-2.5">
                 {safeOptions.map((opt, idx) => {
-                    const isCorrect = correctAnswer === opt.id;
+                    const isCorrect = Boolean(safeCorrectAnswer && safeCorrectAnswer === opt.id);
                     return (
                         <div
                             key={opt.id || idx}
@@ -86,10 +111,11 @@ export default function SingleChoiceEditor({
                             }`}
                         >
                             {/* Radio button for Correct Answer */}
-                            <label className="flex cursor-pointer items-center gap-2 select-none shrink-0">
+                            <label className="flex cursor-pointer items-center gap-2 select-none shrink-0" title="Đặt làm đáp án đúng">
                                 <input
                                     type="radio"
-                                    name={`single_choice_answer_${opt.id}`}
+                                    name={radioGroupName}
+                                    value={opt.id}
                                     checked={isCorrect}
                                     onChange={() => onChangeCorrectAnswer(opt.id)}
                                     className="h-4 w-4 shrink-0 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -115,12 +141,21 @@ export default function SingleChoiceEditor({
                                 required
                             />
 
-                            {/* Correct Indicator Badge */}
-                            {isCorrect && (
+                            {/* Correct Indicator Badge / Click to select */}
+                            {isCorrect ? (
                                 <span className="hidden sm:inline-flex shrink-0 items-center gap-1 text-2xs font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-md whitespace-nowrap">
                                     <CheckCircle className="h-3 w-3 text-emerald-600" />
                                     Đáp Án Đúng
                                 </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => onChangeCorrectAnswer(opt.id)}
+                                    className="hidden sm:inline-flex shrink-0 items-center gap-1 text-2xs font-medium text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap"
+                                    title="Chọn phương án này làm đáp án đúng"
+                                >
+                                    Chọn đáp án
+                                </button>
                             )}
 
                             {/* Delete Option */}
@@ -139,7 +174,7 @@ export default function SingleChoiceEditor({
                 })}
             </div>
 
-            {!correctAnswer && (
+            {!safeCorrectAnswer && (
                 <p className="text-xs text-amber-600 font-medium">
                     ⚠️ Vui lòng tích chọn 1 phương án làm đáp án đúng.
                 </p>

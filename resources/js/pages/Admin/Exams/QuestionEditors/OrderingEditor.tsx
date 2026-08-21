@@ -20,8 +20,28 @@ export default function OrderingEditor({
     onChangeOptions,
     onChangeCorrectAnswer,
 }: Props) {
-    const safeOptions: FragmentItem[] = options && options.length > 0
-        ? options
+    // Safely normalize options whether passed as array of objects, array of strings, or object map
+    let rawOptionsList: any[] = [];
+    if (Array.isArray(options)) {
+        rawOptionsList = options;
+    } else if (options && typeof options === 'object') {
+        rawOptionsList = Object.entries(options).map(([key, val]) => {
+            if (val && typeof val === 'object') {
+                return { id: key, ...(val as object) };
+            }
+            return { id: key, text: String(val) };
+        });
+    }
+
+    const safeOptions: FragmentItem[] = rawOptionsList.length > 0
+        ? rawOptionsList.map((opt: any, idx: number) => {
+            if (typeof opt === 'string') {
+                return { id: `t${idx + 1}`, text: opt };
+            }
+            const id = String(opt?.id ?? opt?.key ?? opt?.value ?? `t${idx + 1}`);
+            const text = String(opt?.text ?? opt?.label ?? opt?.content ?? opt?.value ?? '');
+            return { id, text };
+        })
         : [
             { id: 't1', text: '这本书' },
             { id: 't2', text: '请你' },
@@ -30,8 +50,8 @@ export default function OrderingEditor({
         ];
 
     // Ensure correctAnswer has all ids in correct order
-    const safeCorrectOrder = correctAnswer && correctAnswer.length > 0
-        ? correctAnswer
+    const safeCorrectOrder = Array.isArray(correctAnswer) && correctAnswer.length > 0
+        ? correctAnswer.map(String)
         : safeOptions.map((o) => o.id);
 
     const handleAddFragment = () => {

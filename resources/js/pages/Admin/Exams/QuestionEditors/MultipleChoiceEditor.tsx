@@ -16,7 +16,7 @@ interface Props {
     onChangeMetadata: (metadata: any) => void;
 }
 
-const DEFAULT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const DEFAULT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
 export default function MultipleChoiceEditor({
     options = [],
@@ -26,8 +26,29 @@ export default function MultipleChoiceEditor({
     onChangeCorrectAnswer,
     onChangeMetadata,
 }: Props) {
-    const safeOptions: Option[] = options && options.length > 0
-        ? options
+    // Safely normalize options whether passed as array of objects, array of strings, or object map
+    let rawOptionsList: any[] = [];
+    if (Array.isArray(options)) {
+        rawOptionsList = options;
+    } else if (options && typeof options === 'object') {
+        rawOptionsList = Object.entries(options).map(([key, val]) => {
+            if (val && typeof val === 'object') {
+                return { id: key, ...(val as object) };
+            }
+            return { id: key, text: String(val) };
+        });
+    }
+
+    const safeOptions: Option[] = rawOptionsList.length > 0
+        ? rawOptionsList.map((opt: any, idx: number) => {
+            if (typeof opt === 'string') {
+                const defaultId = DEFAULT_LABELS[idx] || `OPT_${idx + 1}`;
+                return { id: defaultId, text: opt };
+            }
+            const id = String(opt?.id ?? opt?.key ?? opt?.value ?? DEFAULT_LABELS[idx] ?? `OPT_${idx + 1}`);
+            const text = String(opt?.text ?? opt?.label ?? opt?.content ?? opt?.value ?? '');
+            return { id, text };
+        })
         : [
             { id: 'A', text: '' },
             { id: 'B', text: '' },
@@ -36,7 +57,9 @@ export default function MultipleChoiceEditor({
             { id: 'E', text: '' },
         ];
 
-    const safeCorrectAnswer: string[] = Array.isArray(correctAnswer) ? correctAnswer : [];
+    const safeCorrectAnswer: string[] = Array.isArray(correctAnswer)
+        ? correctAnswer.map(String)
+        : (correctAnswer ? [String(correctAnswer)] : []);
 
     const handleAddOption = () => {
         const nextIndex = safeOptions.length;
@@ -124,7 +147,7 @@ export default function MultipleChoiceEditor({
                             }`}
                         >
                             {/* Checkbox for Multiple Correct Answers */}
-                            <label className="flex cursor-pointer items-center gap-2 select-none shrink-0">
+                            <label className="flex cursor-pointer items-center gap-2 select-none shrink-0" title="Đặt làm đáp án đúng">
                                 <input
                                     type="checkbox"
                                     checked={isCorrect}
@@ -152,12 +175,21 @@ export default function MultipleChoiceEditor({
                                 required
                             />
 
-                            {/* Correct Indicator Badge */}
-                            {isCorrect && (
+                            {/* Correct Indicator Badge / Click button */}
+                            {isCorrect ? (
                                 <span className="hidden sm:inline-flex shrink-0 items-center gap-1 text-2xs font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-md whitespace-nowrap">
                                     <CheckSquare className="h-3 w-3 text-indigo-600" />
                                     Đáp Án Đúng
                                 </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => handleToggleCorrect(opt.id)}
+                                    className="hidden sm:inline-flex shrink-0 items-center gap-1 text-2xs font-medium text-gray-400 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap"
+                                    title="Chọn phương án này làm đáp án đúng"
+                                >
+                                    Chọn đáp án
+                                </button>
                             )}
 
                             {/* Delete Option */}

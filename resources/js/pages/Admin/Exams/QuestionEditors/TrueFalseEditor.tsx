@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { HelpCircle } from 'lucide-react';
 
 interface Props {
@@ -45,6 +45,7 @@ export default function TrueFalseEditor({
     onChangeMetadata,
     onChangeOptions,
 }: Props) {
+    const radioGroupName = useId();
     const currentVariantId = metadata.variant || 'T_F_NG';
     const currentVariant = VARIANTS.find((v) => v.id === currentVariantId) || VARIANTS[0];
 
@@ -87,7 +88,7 @@ export default function TrueFalseEditor({
                 </p>
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                     {currentVariant.options.map((opt) => {
-                        const isSelected = correctAnswer === opt.id;
+                        const isSelected = Boolean(correctAnswer && String(correctAnswer).trim() === opt.id);
                         return (
                             <label
                                 key={opt.id}
@@ -107,7 +108,8 @@ export default function TrueFalseEditor({
                                     </span>
                                     <input
                                         type="radio"
-                                        name="tfng_correct_answer"
+                                        name={radioGroupName}
+                                        value={opt.id}
                                         checked={isSelected}
                                         onChange={() => onChangeCorrectAnswer(opt.id)}
                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"

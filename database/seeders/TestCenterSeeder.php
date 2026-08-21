@@ -599,8 +599,8 @@ class TestCenterSeeder extends Seeder
     {
         if ($type === 'true_false') {
             return [
-                [['key' => 'T', 'text' => 'True'], ['key' => 'F', 'text' => 'False']],
-                $qNum % 2 === 0 ? 'T' : 'F',
+                [['id' => 'TRUE', 'text' => 'True'], ['id' => 'FALSE', 'text' => 'False']],
+                $qNum % 2 === 0 ? 'TRUE' : 'FALSE',
             ];
         }
 
@@ -628,7 +628,7 @@ class TestCenterSeeder extends Seeder
         $options  = [];
 
         foreach ($rawSet as $key => $text) {
-            $options[] = ['key' => $key, 'text' => $text];
+            $options[] = ['id' => $key, 'text' => $text];
         }
 
         $correctKeys = array_keys($rawSet);

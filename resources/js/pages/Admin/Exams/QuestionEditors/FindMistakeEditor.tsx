@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -21,8 +21,14 @@ export default function FindMistakeEditor({
     onChangeOptions,
     onChangeCorrectAnswer,
 }: Props) {
+    const radioGroupName = useId();
+
     const segments: SentenceSegment[] = options?.sentence_segments && options.sentence_segments.length > 0
-        ? options.sentence_segments
+        ? options.sentence_segments.map((seg: any, idx: number) => ({
+            id: String(seg.id || `s${idx + 1}`),
+            text: String(seg.text ?? ''),
+            underlined: Boolean(seg.underlined),
+        }))
         : [
             { id: 's1', text: 'Although he ', underlined: false },
             { id: 'A', text: 'was exhausted', underlined: true },
@@ -36,6 +42,7 @@ export default function FindMistakeEditor({
         ];
 
     const underlinedSegments = segments.filter((s) => s.underlined);
+    const safeCorrectAnswer = correctAnswer ? String(correctAnswer).trim() : '';
 
     const handleAddSegment = () => {
         const nextId = `s${segments.length + 1}`;
@@ -49,7 +56,7 @@ export default function FindMistakeEditor({
         const updated = segments.filter((_, i) => i !== index);
         onChangeOptions({ sentence_segments: updated });
 
-        if (correctAnswer === removed.id) {
+        if (safeCorrectAnswer === removed.id) {
             onChangeCorrectAnswer(updated.find((s) => s.underlined)?.id || '');
         }
     };
@@ -93,7 +100,7 @@ export default function FindMistakeEditor({
                 <div className="rounded-lg bg-white p-3.5 border border-rose-200/70 text-sm font-medium text-gray-900 leading-relaxed shadow-2xs">
                     {segments.map((seg, i) => {
                         if (seg.underlined) {
-                            const isSelectedWrong = correctAnswer === seg.id;
+                            const isSelectedWrong = safeCorrectAnswer === seg.id;
                             return (
                                 <span
                                     key={i}
@@ -190,7 +197,7 @@ export default function FindMistakeEditor({
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
                     {underlinedSegments.map((s) => {
-                        const isCorrect = correctAnswer === s.id;
+                        const isCorrect = safeCorrectAnswer === s.id;
                         return (
                             <label
                                 key={s.id}
@@ -202,7 +209,8 @@ export default function FindMistakeEditor({
                             >
                                 <input
                                     type="radio"
-                                    name="find_mistake_correct_answer"
+                                    name={radioGroupName}
+                                    value={s.id}
                                     checked={isCorrect}
                                     onChange={() => onChangeCorrectAnswer(s.id)}
                                     className="h-4 w-4 text-rose-600 focus:ring-rose-500"

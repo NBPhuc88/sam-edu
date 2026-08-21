@@ -309,11 +309,13 @@ export default function TakeExam({
                                                 {/* 1. Single Choice */}
                                                 {q.question_type === 'single_choice' && (
                                                     <div className="space-y-2.5">
-                                                        {(q.options || []).map((opt: any) => {
-                                                            const isSelected = currentVal === opt.id;
+                                                        {(q.options || []).map((opt: any, idx: number) => {
+                                                            const optId = String(opt?.id ?? opt?.key ?? opt?.value ?? String.fromCharCode(65 + idx));
+                                                            const optText = String(opt?.text ?? opt?.label ?? opt?.content ?? (typeof opt === 'string' ? opt : ''));
+                                                            const isSelected = String(currentVal) === optId;
                                                             return (
                                                                 <label
-                                                                    key={opt.id}
+                                                                    key={optId || idx}
                                                                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                                                                         isSelected
                                                                             ? 'border-emerald-500 bg-emerald-50/60 shadow-2xs'
@@ -323,16 +325,16 @@ export default function TakeExam({
                                                                     <input
                                                                         type="radio"
                                                                         name={`question_${q.id}`}
-                                                                        value={opt.id}
+                                                                        value={optId}
                                                                         checked={isSelected}
-                                                                        onChange={() => handleAnswerChange(q.id!, opt.id)}
+                                                                        onChange={() => handleAnswerChange(q.id!, optId)}
                                                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {opt.id}.
+                                                                        {optId}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
-                                                                        {opt.text}
+                                                                        {optText}
                                                                     </span>
                                                                 </label>
                                                             );
@@ -343,21 +345,23 @@ export default function TakeExam({
                                                 {/* 2. Multiple Choice */}
                                                 {q.question_type === 'multiple_choice' && (
                                                     <div className="space-y-2.5">
-                                                        {(q.options || []).map((opt: any) => {
-                                                            const selectedArr: string[] = Array.isArray(currentVal) ? currentVal : [];
-                                                            const isChecked = selectedArr.includes(opt.id);
+                                                        {(q.options || []).map((opt: any, idx: number) => {
+                                                            const optId = String(opt?.id ?? opt?.key ?? opt?.value ?? String.fromCharCode(65 + idx));
+                                                            const optText = String(opt?.text ?? opt?.label ?? opt?.content ?? (typeof opt === 'string' ? opt : ''));
+                                                            const selectedArr: string[] = Array.isArray(currentVal) ? currentVal.map(String) : [];
+                                                            const isChecked = selectedArr.includes(optId);
 
                                                             const toggleChoice = () => {
                                                                 if (isChecked) {
-                                                                    handleAnswerChange(q.id!, selectedArr.filter((x) => x !== opt.id));
+                                                                    handleAnswerChange(q.id!, selectedArr.filter((x) => x !== optId));
                                                                 } else {
-                                                                    handleAnswerChange(q.id!, [...selectedArr, opt.id]);
+                                                                    handleAnswerChange(q.id!, [...selectedArr, optId]);
                                                                 }
                                                             };
 
                                                             return (
                                                                 <label
-                                                                    key={opt.id}
+                                                                    key={optId || idx}
                                                                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                                                                         isChecked
                                                                             ? 'border-indigo-500 bg-indigo-50/60 shadow-2xs'
@@ -371,10 +375,10 @@ export default function TakeExam({
                                                                         className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {opt.id}.
+                                                                        {optId}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
-                                                                        {opt.text}
+                                                                        {optText}
                                                                     </span>
                                                                 </label>
                                                             );

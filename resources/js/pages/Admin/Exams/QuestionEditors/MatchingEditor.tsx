@@ -26,16 +26,24 @@ export default function MatchingEditor({
     onChangeOptions,
     onChangeCorrectAnswer,
 }: Props) {
-    const leftItems: Item[] = options?.left_items?.length > 0
-        ? options.left_items
+    const leftItems: Item[] = options?.left_items && options.left_items.length > 0
+        ? options.left_items.map((item: any, idx: number) => ({
+            id: String(item?.id ?? item?.key ?? `L${idx + 1}`),
+            label: String(item?.label ?? item?.text ?? item?.name ?? ''),
+            text: String(item?.text ?? item?.label ?? ''),
+        }))
         : [
             { id: 'L1', label: 'Vế 1 (Cột Trái)' },
             { id: 'L2', label: 'Vế 2 (Cột Trái)' },
             { id: 'L3', label: 'Vế 3 (Cột Trái)' },
         ];
 
-    const rightItems: Item[] = options?.right_items?.length > 0
-        ? options.right_items
+    const rightItems: Item[] = options?.right_items && options.right_items.length > 0
+        ? options.right_items.map((item: any, idx: number) => ({
+            id: String(item?.id ?? item?.key ?? `R${idx + 1}`),
+            text: String(item?.text ?? item?.label ?? item?.name ?? ''),
+            label: String(item?.label ?? item?.text ?? ''),
+        }))
         : [
             { id: 'R1', text: 'Ý nghĩa / Tiêu đề i (Cột Phải)' },
             { id: 'R2', text: 'Ý nghĩa / Tiêu đề ii (Cột Phải)' },
