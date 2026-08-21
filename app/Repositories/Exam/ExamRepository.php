@@ -291,8 +291,12 @@ class ExamRepository implements ExamRepositoryInterface
                 ];
 
                 if ($qId && in_array($qId, $existingQuestionIds, true)) {
-                    ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->update($payload);
-                    $incomingQuestionIds[] = $qId;
+                    $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
+
+                    if ($existingQ) {
+                        $existingQ->update($payload);
+                        $incomingQuestionIds[] = $qId;
+                    }
                 } else {
                     $newQuestion           = ExamQuestion::create($payload);
                     $incomingQuestionIds[] = $newQuestion->id;
@@ -338,9 +342,14 @@ class ExamRepository implements ExamRepositoryInterface
                 ];
 
                 if ($secId && in_array($secId, $existingSectionIds, true)) {
-                    ExamSection::where('id', $secId)->where('exam_id', $exam->id)->update($sectionPayload);
-                    $section              = ExamSection::find($secId);
-                    $incomingSectionIds[] = $secId;
+                    $section = ExamSection::where('id', $secId)->where('exam_id', $exam->id)->first();
+
+                    if ($section) {
+                        $section->update($sectionPayload);
+                    } else {
+                        $section = ExamSection::create($sectionPayload);
+                    }
+                    $incomingSectionIds[] = $section->id;
                 } else {
                     $section              = ExamSection::create($sectionPayload);
                     $incomingSectionIds[] = $section->id;
@@ -377,8 +386,12 @@ class ExamRepository implements ExamRepositoryInterface
                     ];
 
                     if ($qId && in_array($qId, $existingQuestionIds, true)) {
-                        ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->update($questionPayload);
-                        $incomingQuestionIds[] = $qId;
+                        $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
+
+                        if ($existingQ) {
+                            $existingQ->update($questionPayload);
+                            $incomingQuestionIds[] = $qId;
+                        }
                     } else {
                         $newQuestion           = ExamQuestion::create($questionPayload);
                         $incomingQuestionIds[] = $newQuestion->id;

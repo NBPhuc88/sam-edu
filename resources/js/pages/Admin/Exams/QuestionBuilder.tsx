@@ -776,7 +776,8 @@ export default function QuestionBuilder({
                                                 {secQuestions.map((q, qIndex) => {
                                                     const qKey = getQuestionKey(secIdx, qIndex);
                                                     const isExpanded = expandedQuestionKeys.includes(qKey);
-                                                    const typeInfo = QUESTION_TYPES.find((t) => t.type === q.question_type) || QUESTION_TYPES[0];
+                                                    const normalizedType: QuestionType = (q.question_type as string) === 'true_false' ? 'true_false_not_given' : (q.question_type || 'single_choice');
+                                                    const typeInfo = QUESTION_TYPES.find((t) => t.type === normalizedType) || QUESTION_TYPES[0];
                                                     const isListening = section.skill === 'listening';
 
                                                     return (
@@ -801,7 +802,7 @@ export default function QuestionBuilder({
 
                                                                     <div className="flex flex-wrap items-center gap-2">
                                                                         <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold border ${typeInfo.badgeColor}`}>
-                                                                            {getTypeIcon(q.question_type)}
+                                                                            {getTypeIcon(normalizedType)}
                                                                             {typeInfo.label}
                                                                         </span>
                                                                         <span className="text-xs text-gray-400 font-mono">
@@ -889,7 +890,7 @@ export default function QuestionBuilder({
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs font-bold text-gray-700">Kiểu Mẫu Câu:</span>
                                                                             <select
-                                                                                value={q.question_type}
+                                                                                value={normalizedType}
                                                                                 onChange={(e) => {
                                                                                     const newType = e.target.value as QuestionType;
                                                                                     handleUpdateQuestion(secIdx, qIndex, {
@@ -943,7 +944,7 @@ export default function QuestionBuilder({
                                                                             <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
                                                                                 Nội Dung Câu Hỏi / Đề Bài (*)
                                                                             </label>
-                                                                            {q.question_type !== 'diagram_labelling' && (
+                                                                            {normalizedType !== 'diagram_labelling' && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => toggleImageAttachment(secIdx, qIndex)}
@@ -967,7 +968,7 @@ export default function QuestionBuilder({
                                                                     </div>
 
                                                                     {/* Image Attachment */}
-                                                                    {q.question_type !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
+                                                                    {normalizedType !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
                                                                         <div className="space-y-2">
                                                                             <MediaUploader
                                                                                 value={q.image_url}
@@ -982,7 +983,7 @@ export default function QuestionBuilder({
 
                                                                     {/* Type Specific Editor */}
                                                                     <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
-                                                                        {q.question_type === 'single_choice' && (
+                                                                        {normalizedType === 'single_choice' && (
                                                                             <SingleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer}
@@ -991,7 +992,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'multiple_choice' && (
+                                                                        {normalizedType === 'multiple_choice' && (
                                                                             <MultipleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1002,7 +1003,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'true_false_not_given' && (
+                                                                        {normalizedType === 'true_false_not_given' && (
                                                                             <TrueFalseEditor
                                                                                 correctAnswer={q.correct_answer}
                                                                                 metadata={q.metadata || {}}
@@ -1012,7 +1013,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'fill_in_blank' && (
+                                                                        {normalizedType === 'fill_in_blank' && (
                                                                             <FillInBlankEditor
                                                                                 content={q.content}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1023,7 +1024,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'matching' && (
+                                                                        {normalizedType === 'matching' && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1032,7 +1033,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'matching_image' && (
+                                                                        {normalizedType === 'matching_image' && (
                                                                             <MatchingImageEditor
                                                                                 options={q.options || { sentences: [], images: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1041,7 +1042,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'matching_sentences' && (
+                                                                        {normalizedType === 'matching_sentences' && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1050,7 +1051,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'ordering' && (
+                                                                        {normalizedType === 'ordering' && (
                                                                             <OrderingEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1059,7 +1060,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'diagram_labelling' && (
+                                                                        {normalizedType === 'diagram_labelling' && (
                                                                             <DiagramLabellingEditor
                                                                                 imageUrl={q.image_url || ''}
                                                                                 options={q.options || { labels: [], map_pins: [] }}
@@ -1070,7 +1071,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'find_mistake' && (
+                                                                        {normalizedType === 'find_mistake' && (
                                                                             <FindMistakeEditor
                                                                                 options={q.options || { sentence_segments: [] }}
                                                                                 correctAnswer={q.correct_answer}
@@ -1079,14 +1080,14 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'essay' && (
+                                                                        {normalizedType === 'essay' && (
                                                                             <EssayEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
                                                                             />
                                                                         )}
 
-                                                                        {q.question_type === 'audio_record' && (
+                                                                        {normalizedType === 'audio_record' && (
                                                                             <AudioRecordEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 audioUrl={q.audio_url}

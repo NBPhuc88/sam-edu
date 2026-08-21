@@ -31,9 +31,9 @@ class ExamQuestion extends Model
     {
         return [
             'score'          => 'decimal:2',
-            'options'        => 'array',
-            'correct_answer' => 'array',
-            'metadata'       => 'array',
+            'options'        => 'json',
+            'correct_answer' => 'json',
+            'metadata'       => 'json',
             'order_index'    => 'integer',
         ];
     }

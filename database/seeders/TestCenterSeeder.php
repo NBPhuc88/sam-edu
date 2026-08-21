@@ -553,7 +553,7 @@ class TestCenterSeeder extends Seeder
      */
     private function insertSectionsAndQuestions(int $examId, array $sections): void
     {
-        $questionTypes = ['single_choice', 'multiple_choice', 'true_false'];
+        $questionTypes = ['single_choice', 'multiple_choice', 'true_false_not_given'];
 
         foreach ($sections as $sectionOrder => $sectionDef) {
             $sectionId = DB::table('exam_sections')->insertGetId([
@@ -597,9 +597,9 @@ class TestCenterSeeder extends Seeder
      */
     private function buildQuestionOptions(string $type, string $skill, int $qNum): array
     {
-        if ($type === 'true_false') {
+        if ($type === 'true_false_not_given' || $type === 'true_false') {
             return [
-                [['id' => 'TRUE', 'text' => 'True'], ['id' => 'FALSE', 'text' => 'False']],
+                [['id' => 'TRUE', 'label' => 'TRUE (Đúng)'], ['id' => 'FALSE', 'label' => 'FALSE (Sai)'], ['id' => 'NOT_GIVEN', 'label' => 'NOT GIVEN (Không có thông tin)']],
                 $qNum % 2 === 0 ? 'TRUE' : 'FALSE',
             ];
         }
