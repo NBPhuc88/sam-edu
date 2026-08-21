@@ -43,7 +43,7 @@ class ExamRepository implements ExamRepositoryInterface
                 'description',
                 'exam_type',
                 'duration_minutes',
-                'total_score',
+                'max_score',
                 'pass_score',
                 'status',
                 'created_at'
@@ -110,7 +110,7 @@ class ExamRepository implements ExamRepositoryInterface
                 'description',
                 'exam_type',
                 'duration_minutes',
-                'total_score',
+                'max_score',
                 'pass_score',
                 'status',
                 'created_at'

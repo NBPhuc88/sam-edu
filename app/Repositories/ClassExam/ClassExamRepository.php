@@ -30,7 +30,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'start_time',
                 'end_time',
                 'duration_minutes',
-                'total_score',
+                'max_score',
                 'status',
                 'created_at'
             )
@@ -100,7 +100,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'start_time',
                 'end_time',
                 'duration_minutes',
-                'total_score',
+                'max_score',
                 'status',
                 'note',
                 'created_at'
@@ -179,7 +179,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'schoolClass:id,center_id,name,code,teacher_id',
                 'schoolClass.students:id,student_code,full_name,email,phone',
                 'schoolClass.center:id,name,code',
-                'exam:id,subject_id,name,code,duration_minutes,total_score,pass_score',
+                'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
                 'exam.subject:id,name,code',
                 'exam.sections:id,exam_id,title,description,skill,order_index',
                 'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
@@ -198,7 +198,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             ->with([
                 'schoolClass:id,center_id,name,code,teacher_id',
                 'schoolClass.center:id,name,code',
-                'exam:id,subject_id,name,code,duration_minutes,total_score,pass_score',
+                'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
                 'exam.subject:id,name,code',
                 'exam.sections:id,exam_id,title,description,skill,order_index',
                 'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
