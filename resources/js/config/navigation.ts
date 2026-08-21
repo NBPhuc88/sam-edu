@@ -64,6 +64,7 @@ const superAdminNav: NavItem[] = [
         label: 'Thi & Kiểm Tra',
         icon: FileCheck,
         children: [
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams' },
             { label: 'Vào Phòng Thi', path: '/exam-room' },
             { label: 'Kho Đề Thi', path: '/exams' },
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams' },
@@ -122,6 +123,8 @@ const adminNav: NavItem[] = [
         label: 'Thi & Kiểm Tra',
         icon: FileCheck,
         children: [
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams' },
+            { label: 'Vào Phòng Thi', path: '/exam-room' },
             { label: 'Kho Đề Thi', path: '/exams' },
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams' },
             { label: 'Kết Quả Thi', path: '/exam-results' },
@@ -156,6 +159,8 @@ const teacherNav: NavItem[] = [
         label: 'Thi & Điểm Số',
         icon: FileCheck,
         children: [
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams' },
+            { label: 'Vào Phòng Thi', path: '/exam-room' },
             { label: 'Kỳ Thi', path: '/exams' },
             { label: 'Nhập Điểm Thi', path: '/exam-results' },
         ],
@@ -163,9 +168,11 @@ const teacherNav: NavItem[] = [
     { label: 'Thông Báo', path: '/notifications', icon: Bell },
 ];
 
-// ─── Student Navigation (Chỉ Dashboard và Chat nhóm lớp) ─────────────────────
+// ─── Student Navigation ───────────────────────────────────────────────────────
 const studentNav: NavItem[] = [
     { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', icon: FileCheck },
+    { label: 'Vào Phòng Thi', path: '/exam-room', icon: Zap },
     { label: 'Trò Chuyện Lớp Học', path: '/classes', icon: MessageSquare },
 ];
 

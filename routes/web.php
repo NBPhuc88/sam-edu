@@ -237,6 +237,11 @@ Route::middleware('auth.any')->group(function () {
     Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio');
     Route::get('/class-exams/audio-stream', [\App\Http\Controllers\OnlineExamController::class, 'streamAudio'])->name('online-exam.audio-stream');
 
+    // Practice & Mock Exam Routes (Thi Thử & Luyện Tập)
+    Route::get('/practice-exams', [\App\Http\Controllers\PracticeExamController::class, 'index'])->name('practice-exams.index');
+    Route::get('/exams/{id}/practice', [\App\Http\Controllers\PracticeExamController::class, 'show'])->name('practice-exams.show');
+    Route::post('/exams/{id}/practice-submit', [\App\Http\Controllers\PracticeExamController::class, 'submit'])->name('practice-exams.submit');
+
     // General Media Upload API
     Route::post('/api/uploads/media', [\App\Http\Controllers\MediaUploadController::class, 'upload'])->name('uploads.media');
 });

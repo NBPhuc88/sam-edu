@@ -45,6 +45,7 @@ export default function ExamCreate({
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
     const [shuffleOptions, setShuffleOptions] = useState(false);
     const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
+    const [isPractice, setIsPractice] = useState(false);
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>('draft');
 
@@ -76,7 +77,7 @@ export default function ExamCreate({
                 center_id: centerId ? Number(centerId) : null,
                 subject_id: subjectId ? Number(subjectId) : null,
                 name: name.trim(),
-                code: code.trim(),
+                code: code.trim() || null,
                 exam_type: examType,
                 duration_minutes: durationMinutes ? Number(durationMinutes) : null,
                 max_score: calculatedMaxScore,
@@ -84,6 +85,7 @@ export default function ExamCreate({
                 shuffle_questions: shuffleQuestions,
                 shuffle_options: shuffleOptions,
                 max_attempts: maxAttempts ? Number(maxAttempts) : 1,
+                is_practice: isPractice,
                 description: description.trim() || null,
                 status,
                 sections: sections.map((sec, sIdx) => ({
@@ -352,10 +354,10 @@ export default function ExamCreate({
                                 </select>
                             </div>
 
-                            {/* Shuffle Toggles */}
+                            {/* Shuffle & Practice Toggles */}
                             <div className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 border border-slate-200 md:col-span-3">
                                 <span className="text-xs font-bold uppercase tracking-wider text-gray-700">
-                                    Tùy Chọn Chống Gian Lận & Xáo Trộn Đề Thi
+                                    Cấu Hình Đề Thi & Chế Độ Thi Thử
                                 </span>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <label className="flex cursor-pointer items-center gap-2.5 select-none">
@@ -381,6 +383,19 @@ export default function ExamCreate({
                                         <Shuffle className="h-4 w-4 text-emerald-600" />
                                         <span className="text-xs font-semibold text-gray-800">
                                             Đảo thứ tự các phương án A, B, C, D (Shuffle Options)
+                                        </span>
+                                    </label>
+
+                                    <label className="flex cursor-pointer items-center gap-2.5 select-none sm:col-span-2 pt-2 border-t border-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={isPractice}
+                                            onChange={(e) => setIsPractice(e.target.checked)}
+                                            className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <Award className="h-4 w-4 text-blue-600" />
+                                        <span className="text-xs font-bold text-blue-900">
+                                            Cho phép Thi Thử / Luyện Tập Tự Do (Đề thi này sẽ xuất hiện trong danh sách Thi Thử)
                                         </span>
                                     </label>
                                 </div>

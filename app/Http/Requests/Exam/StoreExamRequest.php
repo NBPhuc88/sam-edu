@@ -38,6 +38,7 @@ class StoreExamRequest extends FormRequest
             'shuffle_questions' => ['nullable', 'boolean'],
             'shuffle_options'   => ['nullable', 'boolean'],
             'max_attempts'      => ['nullable', 'integer', 'min:1', 'max:100'],
+            'is_practice'       => ['nullable', 'boolean'],
             'description'       => ['nullable', 'string'],
             'exam_date'         => ['nullable', 'date'],
             'start_time'        => ['nullable', 'date_format:H:i,H:i:s'],

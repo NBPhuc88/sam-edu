@@ -92,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Session\ClassSessionServiceInterface::class, \App\Services\Session\ClassSessionService::class);
         $this->app->bind(\App\Services\Subscription\SubscriptionPlanServiceInterface::class, \App\Services\Subscription\SubscriptionPlanService::class);
         $this->app->bind(\App\Services\Exam\ExamServiceInterface::class, \App\Services\Exam\ExamService::class);
+        $this->app->bind(\App\Services\Exam\PracticeExamServiceInterface::class, \App\Services\Exam\PracticeExamService::class);
         $this->app->bind(\App\Services\ClassExam\ClassExamServiceInterface::class, \App\Services\ClassExam\ClassExamService::class);
         $this->app->bind(\App\Services\OnlineExam\OnlineExamServiceInterface::class, \App\Services\OnlineExam\OnlineExamService::class);
         $this->app->bind(\App\Services\Media\MediaUploadServiceInterface::class, \App\Services\Media\MediaUploadService::class);

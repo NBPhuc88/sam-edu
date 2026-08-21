@@ -27,6 +27,7 @@ class Exam extends Model
         'shuffle_questions',
         'shuffle_options',
         'max_attempts',
+        'is_practice',
         'description',
         'exam_date',
         'start_time',
@@ -46,6 +47,7 @@ class Exam extends Model
             'max_attempts'      => 'integer',
             'shuffle_questions' => 'boolean',
             'shuffle_options'   => 'boolean',
+            'is_practice'       => 'boolean',
             'created_at'        => 'datetime:d-m-Y H:i',
             'updated_at'        => 'datetime:d-m-Y H:i',
         ];

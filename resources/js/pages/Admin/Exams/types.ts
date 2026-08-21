@@ -277,6 +277,7 @@ export interface Exam {
     shuffle_questions: boolean;
     shuffle_options: boolean;
     max_attempts: number;
+    is_practice?: boolean;
     description: string | null;
     exam_date: string | null;
     start_time: string | null;

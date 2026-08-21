@@ -192,15 +192,28 @@ export default function ExamIndex({
                         </p>
                     </div>
 
-                    <Link href="/exams/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Tạo Đề Thi Mới
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2.5">
+                        <Link href="/practice-exams">
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                className="!border-blue-300 !text-blue-700 hover:!bg-blue-50"
+                                icon={<Award className="h-4.5 w-4.5 text-blue-600" />}
+                            >
+                                Phòng Thi Thử
+                            </Button>
+                        </Link>
+
+                        <Link href="/exams/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Tạo Đề Thi Mới
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* KPI Stat Cards */}
@@ -425,9 +438,17 @@ export default function ExamIndex({
                                             </td>
                                             <td>
                                                 <div className="space-y-0.5">
-                                                    <span className="font-bold text-gray-900 block">
-                                                        {exam.name}
-                                                    </span>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-bold text-gray-900">
+                                                            {exam.name}
+                                                        </span>
+                                                        {exam.is_practice && (
+                                                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">
+                                                                <Award className="h-3 w-3 text-blue-600" />
+                                                                Thi Thử
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {exam.description && (
                                                         <span className="text-2xs text-gray-500 line-clamp-1">
                                                             {exam.description}
@@ -490,6 +511,18 @@ export default function ExamIndex({
                                             </td>
                                             <td className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <Link href={`/exams/${exam.id}/practice`}>
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            className="!border-blue-300 !text-blue-700 hover:!bg-blue-50"
+                                                            icon={<Award className="h-3.5 w-3.5 text-blue-600" />}
+                                                            title="Thi thử / Làm thử bài thi này"
+                                                        >
+                                                            Thi Thử
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         type="button"
                                                         variant="success"
