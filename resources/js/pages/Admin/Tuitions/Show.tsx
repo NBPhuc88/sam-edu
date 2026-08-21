@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
+import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
@@ -497,11 +498,10 @@ return;
                         <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ngày Thu Tiền (*)
                         </label>
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={addDate}
-                            onChange={(e) => setAddDate(e.target.value)}
-                            className="!py-2.5 !text-sm"
+                            onChange={(val) => setAddDate(val)}
+                            className="!py-2.5 !text-sm w-full"
                             required
                         />
                     </div>
@@ -597,11 +597,10 @@ return;
                         <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                             Ngày Thu Tiền (*)
                         </label>
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={editDate}
-                            onChange={(e) => setEditDate(e.target.value)}
-                            className="!py-2.5 !text-sm"
+                            onChange={(val) => setEditDate(val)}
+                            className="!py-2.5 !text-sm w-full"
                             required
                         />
                     </div>

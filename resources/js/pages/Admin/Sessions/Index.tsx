@@ -15,6 +15,7 @@ import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
@@ -392,14 +393,14 @@ export default function SessionIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Từ ngày
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={dateFrom}
-                                    onChange={(e) => {
-                                        setDateFrom(e.target.value);
+                                    onChange={(val) => {
+                                        setDateFrom(val);
                                         setSessionDate('');
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full"
+                                    placeholder="dd-mm-yyyy"
                                 />
                             </div>
 
@@ -407,14 +408,14 @@ export default function SessionIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Đến ngày
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={dateTo}
-                                    onChange={(e) => {
-                                        setDateTo(e.target.value);
+                                    onChange={(val) => {
+                                        setDateTo(val);
                                         setSessionDate('');
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full"
+                                    placeholder="dd-mm-yyyy"
                                 />
                             </div>
 

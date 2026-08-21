@@ -3,6 +3,7 @@ import { ArrowLeft, Save, User, BookOpen } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 
@@ -264,11 +265,10 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Sinh
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={dateOfBirth}
-                                    onChange={(e) => setDateOfBirth(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setDateOfBirth(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 
@@ -293,11 +293,10 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Bắt Đầu Làm Việc
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={hireDate}
-                                    onChange={(e) => setHireDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setHireDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 

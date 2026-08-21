@@ -8,6 +8,7 @@ import {
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
+import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
 import AppLayout from '../../../layouts/AppLayout';
 
@@ -269,11 +270,10 @@ export const Create: React.FC<CreateProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Hạn Chót Đóng Học Phí (Nếu có)
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setDueDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                                 {errors.due_date && (
                                     <p className="mt-1.5 text-xs text-red-600">{errors.due_date}</p>
@@ -347,11 +347,10 @@ export const Create: React.FC<CreateProps> = ({
                                     <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Ngày Thu Tiền (*)
                                     </label>
-                                    <Input
-                                        type="date"
+                                    <DatePicker
                                         value={initialDate}
-                                        onChange={(e) => setInitialDate(e.target.value)}
-                                        className="!py-3 !text-sm"
+                                        onChange={(val) => setInitialDate(val)}
+                                        className="!py-3 !text-sm w-full"
                                         required={hasInitialPayment}
                                     />
                                 </div>

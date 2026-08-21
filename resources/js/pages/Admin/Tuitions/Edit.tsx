@@ -3,6 +3,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
+import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
 import AppLayout from '../../../layouts/AppLayout';
 
@@ -234,11 +235,10 @@ export const Edit: React.FC<EditProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Hạn Chót Đóng Học Phí
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setDueDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 

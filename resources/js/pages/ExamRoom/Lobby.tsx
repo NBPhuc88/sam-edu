@@ -17,6 +17,7 @@ import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate, formatDateTime } from '@/lib/date';
 import { ClassExam, ClassExamSubmission } from './types';
 
 interface Props {
@@ -107,7 +108,7 @@ export default function Lobby({
                         <div>
                             <p className="font-bold">Bài thi chưa đến giờ mở làm bài</p>
                             <p className="mt-0.5 text-2xs opacity-80">
-                                Thời gian mở thi dự kiến: {classExam.valid_from ? new Date(classExam.valid_from).toLocaleString('vi-VN') : classExam.exam_date}. Vui lòng quay lại đúng giờ!
+                                Thời gian mở thi dự kiến: {classExam.valid_from ? formatDateTime(classExam.valid_from) : formatDate(classExam.exam_date)}. Vui lòng quay lại đúng giờ!
                             </p>
                         </div>
                     </div>

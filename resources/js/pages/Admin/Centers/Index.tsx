@@ -8,6 +8,7 @@ import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import Pagination from '../../../components/ui/Pagination';
 import AppLayout from '../../../layouts/AppLayout';
+import { formatDate } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -189,11 +190,7 @@ return;
                                                 {center.expires_at ? (
                                                     <div className="flex items-center gap-1.5 text-gray-700">
                                                         <Calendar className="h-4 w-4 text-gray-400" />
-                                                        {new Date(
-                                                            center.expires_at,
-                                                        ).toLocaleDateString(
-                                                            'vi-VN',
-                                                        )}
+                                                        {formatDate(center.expires_at)}
                                                     </div>
                                                 ) : (
                                                     <span className="text-gray-400">

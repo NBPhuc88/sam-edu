@@ -21,6 +21,7 @@ import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
@@ -658,11 +659,11 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                 Ngày học <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="date"
+                            <DatePicker
                                 value={data.session_date}
-                                onChange={(e) => setData('session_date', e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                onChange={(val) => setData('session_date', val)}
+                                className="w-full"
+                                placeholder="dd-mm-yyyy"
                                 required
                             />
                             {errors.session_date && (

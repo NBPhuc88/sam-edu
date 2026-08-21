@@ -3,6 +3,7 @@ import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2, Calendar } from
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 
@@ -351,11 +352,10 @@ export default function ClassEdit({
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Bắt Đầu
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setStartDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 
@@ -364,11 +364,10 @@ export default function ClassEdit({
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Kết Thúc (Dự kiến)
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setEndDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                                 {errors.end_date && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.end_date}</p>

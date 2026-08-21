@@ -14,6 +14,7 @@ import {
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import DatePicker from '@/components/ui/DatePicker';
 import { Center, ClassExam, Exam, SchoolClass } from './types';
 
 interface Props {
@@ -279,12 +280,11 @@ export default function AssignExamModal({
                             <Calendar className="h-3.5 w-3.5 text-gray-500" />
                             <span>Ngày Thi (*)</span>
                         </label>
-                        <Input
-                            type="date"
+                        <DatePicker
                             value={examDate}
-                            onChange={(e) => setExamDate(e.target.value)}
+                            onChange={(val) => setExamDate(val)}
                             required
-                            className="!h-10 !text-xs font-semibold"
+                            className="!h-10 !text-xs font-semibold w-full"
                         />
                         {errors.exam_date && <p className="mt-1 text-2xs text-red-600">{errors.exam_date}</p>}
                     </div>

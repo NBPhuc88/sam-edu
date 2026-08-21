@@ -21,11 +21,13 @@ import {
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import { parseDate, toISODateString } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -219,6 +221,13 @@ function calculateEstimatedEndDate(
         return null;
     }
 
+    const parsedStart = parseDate(startDateStr);
+    if (!parsedStart) {
+        return null;
+    }
+
+    const startIso = toISODateString(startDateStr);
+
     const enabledDays = Object.entries(weeklyTimes)
         .filter(([, conf]) => conf.enabled && conf.slots.length > 0)
         .map(([day]) => Number(day));
@@ -227,27 +236,34 @@ function calculateEstimatedEndDate(
         return null;
     }
 
-    const fullOffDatesSet = new Set(offDays.filter((s) => s.is_full_day && s.date).map((s) => s.date));
-    const holidayDatesSet = new Set(holidayDates);
+    const fullOffDatesSet = new Set(
+        offDays.filter((s) => s.is_full_day && s.date).map((s) => toISODateString(s.date))
+    );
+    const holidayDatesSet = new Set(holidayDates.map((h) => toISODateString(h)));
 
     const extraDaysByDate: Record<string, ExtraDayItem[]> = {};
     for (const extra of extraDays) {
-        if (extra.date && extra.start_time && extra.end_time && extra.date >= startDateStr) {
-            if (!extraDaysByDate[extra.date]) {
-                extraDaysByDate[extra.date] = [];
+        const extraIso = toISODateString(extra.date);
+        if (extraIso && extra.start_time && extra.end_time && extraIso >= startIso) {
+            if (!extraDaysByDate[extraIso]) {
+                extraDaysByDate[extraIso] = [];
             }
-            extraDaysByDate[extra.date].push(extra);
+            extraDaysByDate[extraIso].push(extra);
         }
     }
 
     let createdCount = 0;
-    const curr = new Date(startDateStr);
+    const curr = new Date(parsedStart.getFullYear(), parsedStart.getMonth(), parsedStart.getDate());
     let lastDate: string | null = null;
     let loopGuard = 0;
 
     while (createdCount < totalSessions && loopGuard < 1500) {
         loopGuard++;
-        const ymd = curr.toISOString().split('T')[0];
+        const y = curr.getFullYear();
+        const m = String(curr.getMonth() + 1).padStart(2, '0');
+        const d = String(curr.getDate()).padStart(2, '0');
+        const ymd = `${y}-${m}-${d}`;
+
         const jsDay = curr.getDay();
         const isoDay = jsDay === 0 ? 7 : jsDay;
 
@@ -271,7 +287,7 @@ function calculateEstimatedEndDate(
             const slots = weeklyTimes[isoDay]?.slots || [];
             for (const slot of slots) {
                 const isSlotOff = offDays.some(
-                    (o) => !o.is_full_day && o.date === ymd && o.start_time === slot.start_time
+                    (o) => !o.is_full_day && toISODateString(o.date) === ymd && o.start_time === slot.start_time
                 );
                 const isAlreadyCoveredByExtra = extraDaysByDate[ymd]?.some(
                     (e) => e.start_time === slot.start_time
@@ -903,11 +919,10 @@ export default function ScheduleCreate({
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Bắt Đầu Học <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    onChange={(val) => setStartDate(val)}
+                                    className="w-full !py-3"
                                     required
                                 />
                                 {errors.start_date && (
@@ -1158,13 +1173,12 @@ export default function ScheduleCreate({
                                         className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3.5 sm:flex-row sm:items-center"
                                     >
                                         <div className="w-full sm:w-44">
-                                            <input
-                                                type="date"
+                                            <DatePicker
                                                 value={off.date}
-                                                onChange={(e) =>
-                                                    handleOffDayChange(idx, 'date', e.target.value)
+                                                onChange={(val) =>
+                                                    handleOffDayChange(idx, 'date', val)
                                                 }
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                                                className="w-full !py-2"
                                                 required
                                             />
                                         </div>
@@ -1266,13 +1280,12 @@ export default function ScheduleCreate({
                                         className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-purple-50/30 p-3.5 sm:flex-row sm:items-center"
                                     >
                                         <div className="w-full sm:w-44">
-                                            <input
-                                                type="date"
+                                            <DatePicker
                                                 value={extra.date}
-                                                onChange={(e) =>
-                                                    handleExtraDayChange(idx, 'date', e.target.value)
+                                                onChange={(val) =>
+                                                    handleExtraDayChange(idx, 'date', val)
                                                 }
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-mono text-gray-900"
+                                                className="w-full !py-2"
                                                 required
                                             />
                                         </div>

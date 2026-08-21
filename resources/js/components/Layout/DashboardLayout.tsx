@@ -14,6 +14,7 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { formatDate } from '@/lib/date';
 
 interface AuthUser {
     id: number;
@@ -141,7 +142,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 Trung tâm <strong>{center!.name}</strong> (
                                 {center!.code})
                                 {center!.expires_at
-                                    ? ` · Hạn dùng: ${new Date(center!.expires_at).toLocaleDateString('vi-VN')}`
+                                    ? ` · Hạn dùng: ${formatDate(center!.expires_at)}`
                                     : ''}
                                 {center!.is_expired
                                     ? ' — ĐÃ HẾT HẠN DỊCH VỤ!'

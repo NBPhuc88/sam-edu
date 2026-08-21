@@ -3,7 +3,9 @@ import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import DatePicker from '../ui/DatePicker';
 import Input from '../ui/Input';
+import { toISODateString } from '@/lib/date';
 
 export interface CenterFormData {
     id?: number;
@@ -63,7 +65,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     const [formData, setFormData] = useState<CenterFormData>(() => {
         const defaultPlan = initialValues?.subscription_plan || 'monthly';
         const defaultExpires = initialValues?.expires_at
-            ? new Date(initialValues.expires_at).toISOString().split('T')[0]
+            ? toISODateString(initialValues.expires_at)
             : mode === 'create'
               ? calculateExpirationDate(defaultPlan)
               : '';
@@ -129,11 +131,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
                 // Normalize date string for fair comparison if key is expires_at
                 if (k === 'expires_at') {
-                    const origDateStr = originalValue
-                        ? new Date(originalValue as string)
-                              .toISOString()
-                              .split('T')[0]
-                        : '';
+                    const origDateStr = originalValue ? toISODateString(originalValue as string) : '';
 
                     if (currentValue !== origDateStr) {
                         changedPayload[k] = currentValue as any;
@@ -322,13 +320,11 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <label className="mb-2 block text-sm font-semibold text-gray-800">
                             Ngày Hết Hạn Gói Cước
                         </label>
-                        <Input
-                            type="date"
-                            name="expires_at"
+                        <DatePicker
                             value={formData.expires_at}
-                            onChange={handleChange}
+                            onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
                             disabled={!isSuperAdmin}
-                            className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="!py-3 !text-sm w-full"
                         />
                     </div>
 

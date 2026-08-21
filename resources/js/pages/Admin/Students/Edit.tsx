@@ -3,6 +3,7 @@ import { ArrowLeft, Save, User, HeartHandshake, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 
@@ -246,11 +247,10 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Sinh
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={dateOfBirth}
-                                    onChange={(e) => setDateOfBirth(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setDateOfBirth(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 
@@ -343,11 +343,10 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Nhập Học
                                 </label>
-                                <Input
-                                    type="date"
+                                <DatePicker
                                     value={admissionDate}
-                                    onChange={(e) => setAdmissionDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    onChange={(val) => setAdmissionDate(val)}
+                                    className="!py-3 !text-sm w-full"
                                 />
                             </div>
 

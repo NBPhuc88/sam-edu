@@ -16,6 +16,7 @@ import type { Column } from '@/components/ui/DataTable';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate } from '@/lib/date';
 
 interface SchoolClass {
     id: number;
@@ -174,11 +175,7 @@ export default function ClassStudentsPage({
             header: 'Ngày ghi danh',
             cell: (row) => (
                 <span className="text-sm font-mono text-gray-600">
-                    {row.pivot?.enrolled_at
-                        ? new Date(row.pivot.enrolled_at).toLocaleDateString(
-                              'vi-VN',
-                          )
-                        : '—'}
+                    {row.pivot?.enrolled_at ? formatDate(row.pivot.enrolled_at) : '—'}
                 </span>
             ),
         },

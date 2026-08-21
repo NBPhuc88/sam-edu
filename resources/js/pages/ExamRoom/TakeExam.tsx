@@ -22,6 +22,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AudioRecorder from './components/AudioRecorder';
+import { parseDate } from '@/lib/date';
 import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData, QuestionType, Student } from './types';
 
 interface Props {
@@ -62,7 +63,9 @@ export default function TakeExam({
     const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
     const totalSecondsAllocated = durationMinutes * 60;
 
-    const startedAt = submission.started_at ? new Date(submission.started_at).getTime() : new Date().getTime();
+    const startedAt = submission.started_at
+        ? parseDate(submission.started_at)?.getTime() || new Date().getTime()
+        : new Date().getTime();
 
     const calculateRemainingSeconds = () => {
         const now = new Date().getTime();
