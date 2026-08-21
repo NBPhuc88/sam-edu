@@ -70,7 +70,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
             {
                 center_id: centerId ? Number(centerId) : undefined,
                 full_name: fullName,
-                username,
+                username: username || undefined,
                 email: email || undefined,
                 password: password || undefined,
                 phone: phone || undefined,
@@ -178,14 +178,13 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                             {/* Username */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Tên Đăng Nhập (@username) <span className="text-red-500">*</span>
+                                    Tên Đăng Nhập (@username) <span className="text-xs font-normal text-gray-500">(Tùy chọn)</span>
                                 </label>
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    placeholder="Ví dụ: hs_tranmai"
+                                    placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
                                     className="!py-3 !text-sm"
-                                    required
                                 />
                                 {errors.username && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.username}</p>
@@ -195,13 +194,13 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                             {/* Password */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mật Khẩu Đăng Nhập (Mặc định: 12345678)
+                                    Mật Khẩu Đăng Nhập <span className="text-xs font-normal text-gray-500">(Tùy chọn)</span>
                                 </label>
                                 <Input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
+                                    placeholder="•••••••• (để trống nếu chưa cấp)"
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.password && (

@@ -41,7 +41,7 @@ interface StudentClassTag {
 interface Student {
     id: number;
     student_code: string;
-    username: string;
+    username: string | null;
     full_name: string;
     email: string | null;
     phone: string | null;
@@ -439,7 +439,11 @@ return;
 
                                             <td className="px-6 py-4">
                                                 <div className="font-mono font-medium text-gray-800">
-                                                    @{student.username}
+                                                    {student.username ? (
+                                                        `@${student.username}`
+                                                    ) : (
+                                                        <span className="text-xs italic text-gray-400">Chưa cấp tài khoản</span>
+                                                    )}
                                                 </div>
                                                 <div className="mt-0.5 text-xs text-gray-500">
                                                     {student.phone && <span>{student.phone}</span>}

@@ -15,7 +15,7 @@ interface Center {
 interface Student {
     id: number;
     student_code: string;
-    username: string;
+    username: string | null;
     full_name: string;
     email: string | null;
     phone: string | null;
@@ -68,7 +68,7 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
         const payload: any = {
             center_id: Number(centerId),
             full_name: fullName,
-            username,
+            username: username ? username.trim() : null,
             email: email || null,
             student_code: studentCode,
             phone: phone || null,
@@ -97,7 +97,7 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
             <Head title={`Chỉnh Sửa Học Sinh: ${student.full_name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">
-                {/* Top bar */}
+                {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/students">
@@ -107,10 +107,10 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                         </Link>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
-                                Chỉnh Sửa Học Sinh: {student.full_name}
+                                Chỉnh Sửa: {student.full_name}
                             </h1>
                             <p className="text-sm text-gray-500">
-                                Cập nhật thông tin học viên, thông tin phụ huynh hoặc trạng thái học tập.
+                                Cập nhật thông tin học viên, mã học sinh và thông tin liên hệ phụ huynh.
                             </p>
                         </div>
                     </div>
@@ -124,30 +124,29 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                             1. Thông Tin Học Sinh & Tài Khoản
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection (Super Admin only) */}
-                            {isSuperAdmin && (
-                                <div className="md:col-span-2">
-                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={centerId}
-                                        onChange={(e) => setCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
-                                    >
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.center_id && (
-                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                    )}
-                                </div>
-                            )}
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Center */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={centerId}
+                                    onChange={(e) => setCenterId(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    required
+                                >
+                                    <option value="">-- Chọn Trung Tâm --</option>
+                                    {centers.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} ({c.code})
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.center_id && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                )}
+                            </div>
 
                             {/* Full Name */}
                             <div>
@@ -157,7 +156,8 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                                 <Input
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    placeholder="Ví dụ: Trần Thị Mai"
+                                    className="!py-3 !text-sm font-medium"
                                     required
                                 />
                                 {errors.full_name && (
@@ -168,7 +168,7 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                             {/* Student Code */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mã Học Sinh
+                                    Mã Học Sinh (Không thể thay đổi)
                                 </label>
                                 <Input
                                     value={studentCode}
@@ -180,13 +180,13 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
                             {/* Username */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Tên Đăng Nhập (@username) <span className="text-red-500">*</span>
+                                    Tên Đăng Nhập (@username) <span className="text-xs font-normal text-gray-500">(Tùy chọn)</span>
                                 </label>
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
                                     className="!py-3 !text-sm"
-                                    required
                                 />
                                 {errors.username && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.username}</p>

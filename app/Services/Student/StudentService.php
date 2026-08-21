@@ -159,10 +159,10 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $password = ! empty($data['password']) ? Hash::make($data['password']) : Hash::make('12345678');
+        $password = ! empty($data['password']) ? Hash::make($data['password']) : null;
 
         return $this->studentRepository->create([
-            'username'            => trim($data['username']),
+            'username'            => ! empty($data['username']) ? trim($data['username']) : null,
             'email'               => ! empty($data['email']) ? trim($data['email']) : null,
             'password'            => $password,
             'status'              => $data['status'] ?? 'active',
@@ -205,7 +205,7 @@ class StudentService implements StudentServiceInterface
 
         $updateData = [
             'center_id'           => $data['center_id'] ?? $student->center_id,
-            'username'            => isset($data['username']) ? trim($data['username']) : $student->username,
+            'username'            => array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $student->username,
             'email'               => array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $student->email,
             'status'              => $data['status'] ?? $student->status,
             'student_code'        => isset($data['student_code']) ? trim($data['student_code']) : $student->student_code,

@@ -23,8 +23,7 @@ class UpdateStudentRequest extends FormRequest
             'center_id' => ['sometimes', 'required', 'integer', 'exists:centers,id'],
             'full_name' => ['sometimes', 'required', 'string', 'max:255'],
             'username'  => [
-                'sometimes',
-                'required',
+                'nullable',
                 'string',
                 'max:100',
                 Rule::unique('students', 'username')->ignore($studentId),
