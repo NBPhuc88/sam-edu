@@ -7,6 +7,7 @@ import {
     Shuffle,
     RotateCcw,
     Calculator,
+    Award,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
