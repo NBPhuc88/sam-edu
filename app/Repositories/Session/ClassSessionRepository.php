@@ -178,7 +178,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code',
                 'classSubject.teacher:id,full_name,teacher_code',
-                'classSchedule:id,weekday,start_time,end_time',
+                'classSchedule:id,weeks,room_id',
                 'teacher:id,full_name,teacher_code',
                 'room:id,name,code',
                 'attendances:id,session_id,student_id,status,note,marked_at',

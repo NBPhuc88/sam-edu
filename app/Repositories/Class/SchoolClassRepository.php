@@ -377,21 +377,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
-     * @param  int                                                                      $classId
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     * @param  int                            $classId
+     * @return \Illuminate\Support\Collection
      */
-    public function getClassWeeklySchedules(int $classId): \Illuminate\Database\Eloquent\Collection
+    public function getClassWeeklySchedules(int $classId): \Illuminate\Support\Collection
     {
-        return ClassSchedule::query()
-            ->select(
-                'id',
-                'class_subject_id',
-                'weekday',
-                'start_time',
-                'end_time',
-                'room_id',
-                'status'
-            )
+        $schedules = ClassSchedule::query()
             ->whereHas('classSubject', function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             })
@@ -402,9 +393,39 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'room:id,name',
             ])
             ->where('status', 'active')
-            ->orderBy('weekday')
-            ->orderBy('start_time')
             ->get();
+
+        $result = collect();
+
+        foreach ($schedules as $schedule) {
+            $weeks = is_array($schedule->weeks) ? $schedule->weeks : (json_decode($schedule->weeks ?? '[]', true) ?? []);
+
+            foreach ($weeks as $weekday => $slots) {
+                if (!is_array($slots)) {
+                    continue;
+                }
+
+                foreach ($slots as $slot) {
+                    if (!is_array($slot) || count($slot) < 2) {
+                        continue;
+                    }
+
+                    $result->push((object) [
+                        'id'               => $schedule->id,
+                        'class_subject_id' => $schedule->class_subject_id,
+                        'weekday'          => (int) $weekday,
+                        'start_time'       => $slot[0],
+                        'end_time'         => $slot[1],
+                        'room_id'          => $schedule->room_id,
+                        'status'           => $schedule->status,
+                        'classSubject'     => $schedule->classSubject,
+                        'room'             => $schedule->room,
+                    ]);
+                }
+            }
+        }
+
+        return $result->sortBy(['weekday', 'start_time'])->values();
     }
 
     /**

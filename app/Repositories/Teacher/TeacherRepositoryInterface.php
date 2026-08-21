@@ -90,10 +90,10 @@ interface TeacherRepositoryInterface
     public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int                                                                      $teacherId
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     * @param  int                            $teacherId
+     * @return \Illuminate\Support\Collection
      */
-    public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Database\Eloquent\Collection;
+    public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Support\Collection;
 
     /**
      * @param  ?array<int>                                                        $allowedCenterIds

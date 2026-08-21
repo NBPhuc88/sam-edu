@@ -108,10 +108,10 @@ interface SchoolClassRepositoryInterface
     public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int                                                                      $classId
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     * @param  int                            $classId
+     * @return \Illuminate\Support\Collection
      */
-    public function getClassWeeklySchedules(int $classId): \Illuminate\Database\Eloquent\Collection;
+    public function getClassWeeklySchedules(int $classId): \Illuminate\Support\Collection;
 
     /**
      * @param  int         $classId

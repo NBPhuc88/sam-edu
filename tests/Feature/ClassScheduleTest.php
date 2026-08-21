@@ -565,3 +565,88 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
     expect($makeupSession)->not->toBeNull()
         ->and($makeupSession->topic)->toBe('Buổi học bổ sung / bù');
 });
+
+test('repositories correctly retrieve schedules and sessions with updated schema', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000088',
+        'name'   => 'Trung Tâm Test Repo',
+        'email'  => 'center88@test.com',
+        'phone'  => '0901234588',
+        'status' => 'active',
+    ]);
+
+    $teacher = Teacher::create([
+        'center_id'    => $center->id,
+        'teacher_code' => 'GV000000088',
+        'username'     => 'teacher_test_88',
+        'first_name'   => 'Repo',
+        'last_name'    => 'Teacher',
+        'full_name'    => 'Teacher Repo',
+        'email'        => 'teacher88@test.com',
+        'password'     => 'password123',
+        'status'       => 'active',
+    ]);
+
+    $subject = Subject::create([
+        'center_id'        => $center->id,
+        'code'             => 'S000000088',
+        'name'             => 'Môn Học Test Repo',
+        'total_sessions'   => 10,
+        'duration_minutes' => 90,
+        'tuition_fee'      => 1000000,
+        'status'           => 'active',
+    ]);
+
+    $class = SchoolClass::create([
+        'center_id'    => $center->id,
+        'code'         => 'C000000088',
+        'name'         => 'Lớp Test Repo',
+        'max_students' => 20,
+        'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'superadmin_test_88',
+        'full_name'  => 'Super Admin Test 88',
+        'email'      => 'superadmin88@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000088',
+    ]);
+
+    $service = app(ClassScheduleServiceInterface::class);
+
+    $schedule = $service->createSchedule([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'start_date' => '2026-09-01',
+        'weeks'      => [
+            '2' => [['18:00', '19:30'], ['19:30', '21:00']],
+            '4' => [['18:00', '19:30']],
+        ],
+        'status' => 'active',
+    ], $admin);
+
+    $firstSession = ClassSession::where('class_schedule_id', $schedule->id)->first();
+    expect($firstSession)->not->toBeNull();
+
+    // 1. Test ClassSessionRepository::findWithDetails
+    $sessionRepo  = app(\App\Repositories\Session\ClassSessionRepositoryInterface::class);
+    $foundSession = $sessionRepo->findWithDetails($firstSession->id);
+    expect($foundSession)->not->toBeNull()
+        ->and($foundSession->classSchedule)->not->toBeNull()
+        ->and($foundSession->classSchedule->weeks)->toHaveKey('2');
+
+    // 2. Test SchoolClassRepository::getClassWeeklySchedules
+    $classRepo   = app(\App\Repositories\Class\SchoolClassRepositoryInterface::class);
+    $classWeekly = $classRepo->getClassWeeklySchedules($class->id);
+    expect($classWeekly)->toHaveCount(3); // 2 slots on Tuesday + 1 slot on Thursday
+    expect($classWeekly->first()->weekday)->toBe(2);
+
+    // 3. Test TeacherRepository::getTeacherWeeklySchedules
+    $teacherRepo   = app(\App\Repositories\Teacher\TeacherRepositoryInterface::class);
+    $teacherWeekly = $teacherRepo->getTeacherWeeklySchedules($teacher->id);
+    expect($teacherWeekly)->toHaveCount(3);
+    expect($teacherWeekly->first()->weekday)->toBe(2);
+});
