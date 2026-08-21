@@ -163,25 +163,32 @@ export default function SessionIndex({
         ? rooms.filter((r) => String(r.center_id) === selectedCenterId)
         : rooms;
 
+    const cleanParams = (raw: Record<string, any>) => {
+        const cleaned: Record<string, any> = {};
+        Object.entries(raw).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+                cleaned[key] = val;
+            }
+        });
+        return cleaned;
+    };
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(
-            '/sessions',
-            {
-                search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                teacher_id: selectedTeacherId || undefined,
-                room_id: selectedRoomId || undefined,
-                session_date: sessionDate || undefined,
-                date_from: dateFrom || undefined,
-                date_to: dateTo || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
-                per_page: filters.per_page || 20,
-            },
-            { preserveState: true },
-        );
+        const params = cleanParams({
+            search,
+            center_id: selectedCenterId,
+            class_id: selectedClassId,
+            subject_id: selectedSubjectId,
+            teacher_id: selectedTeacherId,
+            room_id: selectedRoomId,
+            session_date: sessionDate,
+            date_from: dateFrom,
+            date_to: dateTo,
+            status: selectedStatus,
+            per_page: filters.per_page !== 20 ? filters.per_page : undefined,
+        });
+        router.get('/sessions', params, { preserveState: true });
     };
 
     const handleResetFilter = () => {
@@ -203,18 +210,16 @@ export default function SessionIndex({
         setSessionDate(today);
         setDateFrom('');
         setDateTo('');
-        router.get(
-            '/sessions',
-            {
-                session_date: today,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                teacher_id: selectedTeacherId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
-            },
-            { preserveState: true },
-        );
+        const params = cleanParams({
+            session_date: today,
+            center_id: selectedCenterId,
+            class_id: selectedClassId,
+            subject_id: selectedSubjectId,
+            teacher_id: selectedTeacherId,
+            status: selectedStatus,
+            per_page: filters.per_page !== 20 ? filters.per_page : undefined,
+        });
+        router.get('/sessions', params, { preserveState: true });
     };
 
     const getStatusBadge = (status: string) => {

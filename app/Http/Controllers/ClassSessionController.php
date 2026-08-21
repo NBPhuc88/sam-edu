@@ -82,19 +82,19 @@ class ClassSessionController extends Controller
             'subjects' => $formData['subjects'],
             'teachers' => $formData['teachers'],
             'rooms'    => $formData['rooms'],
-            'filters'  => [
-                'search'       => $search ?? '',
+            'filters'  => array_filter([
+                'search'       => $search,
                 'center_id'    => $centerId,
                 'class_id'     => $classId,
                 'subject_id'   => $subjectId,
                 'teacher_id'   => $teacherId,
                 'room_id'      => $roomId,
-                'session_date' => $sessionDate ?? '',
-                'date_from'    => $dateFrom ?? '',
-                'date_to'      => $dateTo ?? '',
-                'status'       => $status ?? 'all',
-                'per_page'     => $perPage,
-            ],
+                'session_date' => $sessionDate,
+                'date_from'    => $dateFrom,
+                'date_to'      => $dateTo,
+                'status'       => ($status && $status !== 'all') ? $status : null,
+                'per_page'     => $perPage !== 20 ? $perPage : null,
+            ], fn ($val) => $val !== null && $val !== ''),
         ]);
     }
 

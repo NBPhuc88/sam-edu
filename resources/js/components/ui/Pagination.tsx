@@ -31,16 +31,49 @@ export const Pagination: React.FC<PaginationProps> = ({
         return null;
     }
 
+    const cleanParams = (params: Record<string, any>) => {
+        const cleaned: Record<string, any> = {};
+        Object.entries(params).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+                cleaned[key] = val;
+            }
+        });
+        return cleaned;
+    };
+
     const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newPerPage = parseInt(e.target.value, 10);
         if (onPerPageChange) {
             onPerPageChange(newPerPage);
         } else {
+            const params = cleanParams(currentParams);
+            if (newPerPage !== 20) {
+                params.per_page = newPerPage;
+            } else {
+                delete params.per_page;
+            }
             router.get(
                 window.location.pathname,
-                { ...currentParams, per_page: newPerPage, page: 1 },
+                params,
                 { preserveState: true }
             );
+        }
+    };
+
+    const cleanLinkUrl = (url: string | null): string | null => {
+        if (!url) return null;
+        try {
+            const parsed = new URL(url, window.location.origin);
+            const keysToDelete: string[] = [];
+            parsed.searchParams.forEach((value, key) => {
+                if (value === '' || value === 'null' || value === 'undefined' || value === 'all') {
+                    keysToDelete.push(key);
+                }
+            });
+            keysToDelete.forEach((key) => parsed.searchParams.delete(key));
+            return parsed.pathname + (parsed.search ? parsed.search : '');
+        } catch {
+            return url;
         }
     };
 
@@ -71,11 +104,12 @@ export const Pagination: React.FC<PaginationProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
-                {links.map((link, idx) =>
-                    link.url ? (
+                {links.map((link, idx) => {
+                    const cleanedUrl = cleanLinkUrl(link.url);
+                    return cleanedUrl ? (
                         <Link
                             key={idx}
-                            href={link.url}
+                            href={cleanedUrl}
                             className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                                 link.active
                                     ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
@@ -93,8 +127,8 @@ export const Pagination: React.FC<PaginationProps> = ({
                                 __html: link.label,
                             }}
                         />
-                    )
-                )}
+                    );
+                })}
             </div>
         </div>
     );
