@@ -344,59 +344,57 @@ class TestCenterSeeder extends Seeder
     // ─────────────────────────────────────────────────────────────────────────
     // LỊCH HỌC (3 buổi tối/tuần, giáo viên không trùng)
     //
-    // Sắp xếp: Mỗi lớp học 3 buổi tối/tuần (18:00 – 19:30)
-    // Giáo viên không trùng lịch vì 5 lớp – 5 giáo viên riêng biệt.
-    // Phân bổ ngày trong tuần để không cùng phòng cùng lúc.
+    // Schema mới: 1 bản ghi per lớp với cột weeks (JSON map).
+    // Format weeks: {"dayKey": [["HH:MM", "HH:MM"], ...], ...}
+    // dayKey: "1"=Mon, "2"=Tue, "3"=Wed, "4"=Thu, "5"=Fri, "6"=Sat, "7"=Sun
     //
-    // Lớp 1: Thứ 2, 4, 6  (Mon=1, Wed=3, Fri=5)
-    // Lớp 2: Thứ 2, 4, 6  (khác giờ: 19:30–21:00)
-    // Lớp 3: Thứ 3, 5, 7  (Tue=2, Thu=4, Sat=6) — 18:00–19:30
-    // Lớp 4: Thứ 3, 5, 7  (19:30–21:00)
-    // Lớp 5: Thứ 2, 4, 6  (không trùng phòng vì dùng phòng riêng) — 18:00–19:30
-    //
-    // Vì mỗi lớp đã có giáo viên riêng, giáo viên KHÔNG bao giờ trùng lịch.
-    // Phòng học được phân biệt theo index lớp.
+    // Lớp 1 (Mất Gốc)  : Thứ 2-4-6, 18:00–19:30
+    // Lớp 2 (Cơ Bản)   : Thứ 3-5-7, 18:00–19:30
+    // Lớp 3 (Giao Tiếp): Thứ 2-4-6, 19:30–21:00
+    // Lớp 4 (Nâng Cao) : Thứ 3-5-7, 19:30–21:00
+    // Lớp 5 (IELTS)    : Thứ 2-4-6, 20:00–21:30
     // ─────────────────────────────────────────────────────────────────────────
 
     private function createSchedules(array $classes, array $rooms): void
     {
-        $this->command->info('  → Tạo lịch học (3 buổi/tuần, sắp xếp không trùng)...');
+        $this->command->info('  → Tạo lịch học (3 buổi/tuần, schema weeks JSON mới)...');
 
         /**
-         * weekday: 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat, 7=Sun
+         * weeks format: {"dayKey": [["HH:MM", "HH:MM"], ...]}
+         * dayKey: "1"=Mon, "2"=Tue, "3"=Wed, "4"=Thu, "5"=Fri, "6"=Sat, "7"=Sun
          * Phân bổ để giáo viên và phòng học không xung đột:
          * - Lớp 0,2,4: Thứ 2-4-6
          * - Lớp 1,3:   Thứ 3-5-7
-         * - Giờ xen kẽ: lớp chẵn 18:00, lớp lẻ 19:30
          */
         $scheduleMap = [
-            0 => ['weekdays' => [1, 3, 5], 'start' => '18:00:00', 'end' => '19:30:00'],
-            1 => ['weekdays' => [2, 4, 6], 'start' => '18:00:00', 'end' => '19:30:00'],
-            2 => ['weekdays' => [1, 3, 5], 'start' => '19:30:00', 'end' => '21:00:00'],
-            3 => ['weekdays' => [2, 4, 6], 'start' => '19:30:00', 'end' => '21:00:00'],
-            4 => ['weekdays' => [1, 3, 5], 'start' => '20:00:00', 'end' => '21:30:00'],
+            0 => ['weekdays' => ['1', '3', '5'], 'start' => '18:00', 'end' => '19:30'],
+            1 => ['weekdays' => ['2', '4', '6'], 'start' => '18:00', 'end' => '19:30'],
+            2 => ['weekdays' => ['1', '3', '5'], 'start' => '19:30', 'end' => '21:00'],
+            3 => ['weekdays' => ['2', '4', '6'], 'start' => '19:30', 'end' => '21:00'],
+            4 => ['weekdays' => ['1', '3', '5'], 'start' => '20:00', 'end' => '21:30'],
         ];
 
         foreach ($classes as $i => $class) {
-            $schedule   = $scheduleMap[$i];
-            $room       = $rooms[$i];
-            $effectFrom = Carbon::parse($class->start_date)->format('Y-m-d');
-            $effectTo   = Carbon::parse($class->start_date)->addMonths(4)->format('Y-m-d');
+            $schedule = $scheduleMap[$i];
+            $room     = $rooms[$i];
 
-            foreach ($schedule['weekdays'] as $weekday) {
-                DB::table('class_schedules')->insert([
-                    'class_subject_id' => $class->class_subject_id,
-                    'weekday'          => $weekday,
-                    'start_time'       => $schedule['start'],
-                    'end_time'         => $schedule['end'],
-                    'room_id'          => $room->id,
-                    'effective_from'   => $effectFrom,
-                    'effective_to'     => $effectTo,
-                    'status'           => 'active',
-                    'created_at'       => $this->now,
-                    'updated_at'       => $this->now,
-                ]);
+            // Xây dựng weeks JSON: {"1": [["18:00", "19:30"]], "3": [...], ...}
+            $weeks = [];
+
+            foreach ($schedule['weekdays'] as $dayKey) {
+                $weeks[$dayKey] = [[$schedule['start'], $schedule['end']]];
             }
+
+            DB::table('class_schedules')->insert([
+                'class_subject_id' => $class->class_subject_id,
+                'weeks'            => json_encode($weeks),
+                'off_days'         => null,
+                'extra_days'       => null,
+                'room_id'          => $room->id,
+                'status'           => 'active',
+                'created_at'       => $this->now,
+                'updated_at'       => $this->now,
+            ]);
         }
     }
 
