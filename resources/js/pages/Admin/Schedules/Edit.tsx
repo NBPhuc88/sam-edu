@@ -11,6 +11,9 @@ import {
     Coffee,
     CalendarPlus,
     Sparkles,
+    Check,
+    AlertCircle,
+    Edit3,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -18,6 +21,8 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import CustomTimePicker from '@/components/ui/CustomTimePicker';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 
 interface Center {
     id: number;
@@ -134,6 +139,81 @@ const WEEKDAYS = [
     { id: 6, label: 'Thứ 7' },
     { id: 7, label: 'Chủ Nhật' },
 ];
+
+const TIME_PRESETS = [
+    { label: 'Sáng ca 1 (08:00 - 10:00)', start: '08:00', end: '10:00' },
+    { label: 'Sáng ca 2 (10:00 - 12:00)', start: '10:00', end: '12:00' },
+    { label: 'Chiều ca 1 (14:00 - 16:00)', start: '14:00', end: '16:00' },
+    { label: 'Chiều ca 2 (16:00 - 18:00)', start: '16:00', end: '18:00' },
+    { label: 'Tối ca 1 (18:00 - 20:00)', start: '18:00', end: '20:00' },
+    { label: 'Tối ca 2 (19:30 - 21:00)', start: '19:30', end: '21:00' },
+];
+
+const HOURS = Array.from({ length: 18 }, (_, i) => String(i + 6).padStart(2, '0')); // 06..23
+const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
+
+const HOUR_OPTIONS = HOURS.map((h) => ({ value: h, label: h }));
+const MINUTE_OPTIONS = MINUTES.map((m) => ({ value: m, label: m }));
+
+export interface SlotOverlapError {
+    dayId: number;
+    dayLabel: string;
+    message: string;
+}
+
+export const validateWeeklyTimes = (
+    weeklyTimes: Record<number, { enabled: boolean; slots: WeekDaySlot[] }>
+): SlotOverlapError[] => {
+    const errors: SlotOverlapError[] = [];
+    const DAY_LABELS: Record<number, string> = {
+        1: 'Thứ 2',
+        2: 'Thứ 3',
+        3: 'Thứ 4',
+        4: 'Thứ 5',
+        5: 'Thứ 6',
+        6: 'Thứ 7',
+        7: 'Chủ Nhật',
+    };
+
+    Object.entries(weeklyTimes).forEach(([dayStr, conf]) => {
+        if (!conf.enabled || !conf.slots || conf.slots.length === 0) return;
+        const dayId = Number(dayStr);
+        const dayLabel = DAY_LABELS[dayId] || `Thứ ${dayId}`;
+        const slots = conf.slots;
+
+        for (let i = 0; i < slots.length; i++) {
+            const s1 = slots[i];
+            const start1 = s1.start_time ? String(s1.start_time).slice(0, 5) : '';
+            const end1 = s1.end_time ? String(s1.end_time).slice(0, 5) : '';
+
+            if (start1 && end1 && start1 >= end1) {
+                errors.push({
+                    dayId,
+                    dayLabel,
+                    message: `Ca ${i + 1} (${start1} - ${end1}): Giờ kết thúc phải sau giờ bắt đầu.`,
+                });
+            }
+
+            for (let j = i + 1; j < slots.length; j++) {
+                const s2 = slots[j];
+                const start2 = s2.start_time ? String(s2.start_time).slice(0, 5) : '';
+                const end2 = s2.end_time ? String(s2.end_time).slice(0, 5) : '';
+
+                if (start1 && end1 && start2 && end2) {
+                    if (start1 < end2 && start2 < end1) {
+                        errors.push({
+                            dayId,
+                            dayLabel,
+                            message: `Các ca học bị trùng giờ: Ca ${i + 1} (${start1} - ${end1}) trùng với Ca ${j + 1} (${start2} - ${end2}).`,
+                        });
+                    }
+                }
+            }
+        }
+    });
+
+    return errors;
+};
 
 function calculateEstimatedEndDate(
     startDateStr: string,
@@ -278,6 +358,15 @@ export default function ScheduleEdit({
     const [availableHolidays, setAvailableHolidays] = useState<VNHoliday[]>([]);
     const [selectedHolidayDates, setSelectedHolidayDates] = useState<Set<string>>(new Set());
     const [isLoadingHolidays, setIsLoadingHolidays] = useState<boolean>(false);
+
+    // Time slot picker modal state (explicit Save button)
+    const [slotModalOpen, setSlotModalOpen] = useState<boolean>(false);
+    const [editingDayId, setEditingDayId] = useState<number | null>(null);
+    const [editingSlotIdx, setEditingSlotIdx] = useState<number | null>(null);
+    const [modalStartTime, setModalStartTime] = useState<string>('18:00');
+    const [modalEndTime, setModalEndTime] = useState<string>('20:00');
+    const [modalSlotError, setModalSlotError] = useState<string | null>(null);
+    const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -463,8 +552,112 @@ export default function ScheduleEdit({
         setShowHolidayModal(false);
     };
 
+    const slotOverlapErrors = React.useMemo(() => {
+        return validateWeeklyTimes(weeklyTimes);
+    }, [weeklyTimes]);
+
+    const openSlotModal = (dayId: number, slotIdx: number | null = null, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setEditingDayId(dayId);
+        setEditingSlotIdx(slotIdx);
+        setModalSlotError(null);
+
+        const dayConf = weeklyTimes[dayId];
+        if (slotIdx !== null && dayConf?.slots[slotIdx]) {
+            setModalStartTime(dayConf.slots[slotIdx].start_time);
+            setModalEndTime(dayConf.slots[slotIdx].end_time);
+        } else {
+            const existing = dayConf?.slots || [];
+            if (existing.length > 0) {
+                const lastEnd = existing[existing.length - 1].end_time;
+                if (lastEnd === '10:00') {
+                    setModalStartTime('10:00');
+                    setModalEndTime('12:00');
+                } else if (lastEnd === '16:00') {
+                    setModalStartTime('16:00');
+                    setModalEndTime('18:00');
+                } else if (lastEnd === '20:00') {
+                    setModalStartTime('20:00');
+                    setModalEndTime('21:30');
+                } else {
+                    setModalStartTime('18:00');
+                    setModalEndTime('20:00');
+                }
+            } else {
+                setModalStartTime('18:00');
+                setModalEndTime('20:00');
+            }
+        }
+        setSlotModalOpen(true);
+    };
+
+    const handleSaveModalSlot = () => {
+        if (!editingDayId) return;
+
+        const start = modalStartTime ? String(modalStartTime).slice(0, 5) : '';
+        const end = modalEndTime ? String(modalEndTime).slice(0, 5) : '';
+
+        if (!start || !end) {
+            setModalSlotError('Vui lòng chọn hoặc nhập đầy đủ giờ bắt đầu và kết thúc.');
+            return;
+        }
+
+        if (start >= end) {
+            setModalSlotError('Giờ kết thúc phải sau giờ bắt đầu!');
+            return;
+        }
+
+        const dayConf = weeklyTimes[editingDayId];
+        const existingSlots = dayConf?.slots || [];
+
+        for (let idx = 0; idx < existingSlots.length; idx++) {
+            if (editingSlotIdx !== null && idx === editingSlotIdx) continue;
+            const s = existingSlots[idx];
+            const sStart = s.start_time ? String(s.start_time).slice(0, 5) : '';
+            const sEnd = s.end_time ? String(s.end_time).slice(0, 5) : '';
+
+            if (sStart && sEnd && start < sEnd && sStart < end) {
+                const dayLabel = WEEKDAYS.find((d) => d.id === editingDayId)?.label || `Thứ ${editingDayId}`;
+                setModalSlotError(`Khung giờ ${start} - ${end} bị trùng/chồng chéo với Ca ${idx + 1} (${sStart} - ${sEnd}) của ${dayLabel}!`);
+                return;
+            }
+        }
+
+        setWeeklyTimes((prev) => {
+            const currentConf = prev[editingDayId];
+            const updatedSlots = [...currentConf.slots];
+
+            if (editingSlotIdx !== null) {
+                updatedSlots[editingSlotIdx] = { start_time: start, end_time: end };
+            } else {
+                updatedSlots.push({ start_time: start, end_time: end });
+            }
+
+            return {
+                ...prev,
+                [editingDayId]: {
+                    ...currentConf,
+                    enabled: true,
+                    slots: updatedSlots,
+                },
+            };
+        });
+
+        setModalSlotError(null);
+        setFormSubmitError(null);
+        setSlotModalOpen(false);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setFormSubmitError(null);
+
+        const slotErrors = validateWeeklyTimes(weeklyTimes);
+        if (slotErrors.length > 0) {
+            setFormSubmitError(`Không thể lưu lịch học: ${slotErrors[0].message}`);
+            return;
+        }
+
         setIsSubmitting(true);
 
         const weeksPayload: Record<string, [string, string][]> = {};
@@ -508,7 +701,7 @@ export default function ScheduleEdit({
         <AppLayout title="Cập Nhật Lịch Học - Hệ Thống Giáo Dục Sam">
             <Head title="Cập Nhật Lịch Học" />
 
-            <div className="mx-auto max-w-4xl space-y-6">
+            <div className="mx-auto max-w-6xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/schedules">
@@ -601,11 +794,11 @@ export default function ScheduleEdit({
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Ngày Bắt Đầu Môn Học <span className="text-red-500">*</span>
                                 </label>
-                                <Input
+                                <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 />
                                 {errors.start_date && (
@@ -618,23 +811,30 @@ export default function ScheduleEdit({
                                     <label className="text-sm font-semibold text-gray-800">
                                         Ngày Kết Thúc (Dự kiến)
                                     </label>
+                                    {totalSessions && totalSessions > 0 && !endDate && (
+                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                            ✨ Tự động theo {totalSessions} buổi
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="relative w-full">
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    />
                                     {endDate && (
                                         <button
                                             type="button"
                                             onClick={() => setEndDate('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 shadow-xs"
                                             title="Xóa ngày cố định để hệ thống tự động tính theo số buổi"
                                         >
                                             Xóa (Tự động tính)
                                         </button>
                                     )}
                                 </div>
-                                <Input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="!py-3 !text-sm"
-                                />
                                 {totalSessions && totalSessions > 0 ? (
                                     <div className="mt-1.5 text-xs">
                                         {endDate ? (
@@ -672,16 +872,27 @@ export default function ScheduleEdit({
                             </div>
                         </div>
 
+                        {formSubmitError && (
+                            <div className="mb-5 flex items-center gap-2.5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
+                                <span>{formSubmitError}</span>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
                                 const conf = weeklyTimes[day.id];
+                                const dayErrors = slotOverlapErrors.filter((err) => err.dayId === day.id);
+                                const hasError = dayErrors.length > 0;
 
                                 return (
                                     <div
                                         key={day.id}
                                         onClick={() => toggleWeekday(day.id)}
                                         className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                            conf.enabled
+                                            hasError
+                                                ? 'border-red-400 bg-red-50/50 shadow-xs'
+                                                : conf.enabled
                                                 ? 'border-emerald-500 bg-emerald-50/40 shadow-xs'
                                                 : 'border-gray-200 bg-white opacity-70 hover:opacity-100'
                                         }`}
@@ -705,51 +916,80 @@ export default function ScheduleEdit({
                                                 {conf.slots.map((slot, sIdx) => (
                                                     <div key={sIdx} className="rounded-lg bg-white p-2.5 shadow-xs border border-emerald-200/80">
                                                         <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
-                                                            <span>Ca {sIdx + 1}</span>
-                                                            {conf.slots.length > 1 && (
+                                                            <span className="flex items-center gap-1">
+                                                                <span>Ca {sIdx + 1}</span>
+                                                                <span className="font-mono text-gray-500">({slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)})</span>
+                                                            </span>
+                                                            <div className="flex items-center gap-1.5">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={(e) => handleRemoveSlot(day.id, sIdx, e)}
-                                                                    className="text-red-500 hover:text-red-700 text-xs"
-                                                                    title="Xóa ca này"
+                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                    className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-0.5"
+                                                                    title="Chỉnh sửa giờ trong popup có nút Lưu"
                                                                 >
-                                                                    Xóa ca
+                                                                    <Edit3 className="h-3 w-3" />
+                                                                    Sửa
                                                                 </button>
-                                                            )}
+                                                                {conf.slots.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => handleRemoveSlot(day.id, sIdx, e)}
+                                                                        className="text-red-500 hover:text-red-700 text-xs"
+                                                                        title="Xóa ca này"
+                                                                    >
+                                                                        Xóa
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
+
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] text-gray-500">Bắt đầu</label>
-                                                                <input
-                                                                    type="time"
-                                                                    value={slot.start_time}
-                                                                    onChange={(e) =>
-                                                                        handleSlotChange(day.id, sIdx, 'start_time', e.target.value)
-                                                                    }
-                                                                    className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-mono font-medium text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                                />
+                                                                <label className="mb-1 block text-[10px] text-gray-500 font-medium">Bắt đầu</label>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                    title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
+                                                                >
+                                                                    <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                                                    <span>{slot.start_time?.slice(0, 5) || '18:00'}</span>
+                                                                </button>
                                                             </div>
                                                             <div>
-                                                                <label className="mb-1 block text-[10px] text-gray-500">Kết thúc</label>
-                                                                <input
-                                                                    type="time"
-                                                                    value={slot.end_time}
-                                                                    onChange={(e) =>
-                                                                        handleSlotChange(day.id, sIdx, 'end_time', e.target.value)
-                                                                    }
-                                                                    className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-mono font-medium text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                                                />
+                                                                <label className="mb-1 block text-[10px] text-gray-500 font-medium">Kết thúc</label>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                    title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
+                                                                >
+                                                                    <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                                                    <span>{slot.end_time?.slice(0, 5) || '20:00'}</span>
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ))}
 
+                                                {hasError && (
+                                                    <div className="space-y-1">
+                                                        {dayErrors.map((err, eIdx) => (
+                                                            <div key={eIdx} className="flex items-start gap-1 rounded-md bg-red-100 p-2 text-[11px] font-semibold text-red-800">
+                                                                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 mt-0.5" />
+                                                                <span>{err.message}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => handleAddSlot(day.id, e)}
-                                                    className="w-full rounded-md border border-dashed border-emerald-300 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50"
+                                                    onClick={(e) => openSlotModal(day.id, null, e)}
+                                                    className="w-full rounded-md border border-dashed border-emerald-300 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50 flex items-center justify-center gap-1"
                                                 >
-                                                    + Thêm ca học trong ngày
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    Thêm / Chọn giờ ca học (Có nút Lưu)
                                                 </button>
                                             </div>
                                         )}
@@ -827,23 +1067,21 @@ export default function ScheduleEdit({
                                         </div>
 
                                         {!off.is_full_day && (
-                                            <div className="flex items-center gap-1.5">
-                                                <input
-                                                    type="time"
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <CustomTimePicker
+                                                    className="w-24 shrink-0"
                                                     value={off.start_time || '18:00'}
-                                                    onChange={(e) =>
-                                                        handleOffDayChange(idx, 'start_time', e.target.value)
+                                                    onChange={(val) =>
+                                                        handleOffDayChange(idx, 'start_time', val)
                                                     }
-                                                    className="w-24 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono text-gray-900"
                                                 />
                                                 <span className="text-xs text-gray-400">-</span>
-                                                <input
-                                                    type="time"
+                                                <CustomTimePicker
+                                                    className="w-24 shrink-0"
                                                     value={off.end_time || '20:00'}
-                                                    onChange={(e) =>
-                                                        handleOffDayChange(idx, 'end_time', e.target.value)
+                                                    onChange={(val) =>
+                                                        handleOffDayChange(idx, 'end_time', val)
                                                     }
-                                                    className="w-24 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-mono text-gray-900"
                                                 />
                                             </div>
                                         )}
@@ -920,25 +1158,21 @@ export default function ScheduleEdit({
                                                 required
                                             />
                                         </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <input
-                                                type="time"
-                                                value={extra.start_time}
-                                                onChange={(e) =>
-                                                    handleExtraDayChange(idx, 'start_time', e.target.value)
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <CustomTimePicker
+                                                className="w-24 shrink-0"
+                                                value={extra.start_time || '08:00'}
+                                                onChange={(val) =>
+                                                    handleExtraDayChange(idx, 'start_time', val)
                                                 }
-                                                className="w-28 rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-mono text-gray-900"
-                                                required
                                             />
                                             <span className="text-sm text-gray-400">-</span>
-                                            <input
-                                                type="time"
-                                                value={extra.end_time}
-                                                onChange={(e) =>
-                                                    handleExtraDayChange(idx, 'end_time', e.target.value)
+                                            <CustomTimePicker
+                                                className="w-24 shrink-0"
+                                                value={extra.end_time || '10:00'}
+                                                onChange={(val) =>
+                                                    handleExtraDayChange(idx, 'end_time', val)
                                                 }
-                                                className="w-28 rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-mono text-gray-900"
-                                                required
                                             />
                                         </div>
                                         <div className="flex-1 text-xs text-gray-500 italic">
@@ -981,6 +1215,145 @@ export default function ScheduleEdit({
                     </div>
                 </form>
             </div>
+            {/* Time Slot Setup Modal (Explicit Save Button) */}
+            <Modal
+                isOpen={slotModalOpen}
+                onClose={() => {
+                    setSlotModalOpen(false);
+                    setModalSlotError(null);
+                }}
+                title={`Cấu Hình Khung Giờ Ca Học - ${WEEKDAYS.find((d) => d.id === editingDayId)?.label || ''}`}
+                footer={
+                    <div className="flex items-center justify-end gap-3 w-full">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="md"
+                            onClick={() => {
+                                setSlotModalOpen(false);
+                                setModalSlotError(null);
+                            }}
+                        >
+                            Hủy Bỏ
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="success"
+                            size="md"
+                            icon={<Check className="h-5 w-5" />}
+                            onClick={handleSaveModalSlot}
+                        >
+                            Lưu Ca Học
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-5">
+                    <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-700">
+                            Gợi Ý Khung Giờ Nhanh:
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {TIME_PRESETS.map((p, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => {
+                                        setModalStartTime(p.start);
+                                        setModalEndTime(p.end);
+                                        setModalSlotError(null);
+                                    }}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                                        modalStartTime === p.start && modalEndTime === p.end
+                                            ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-800 ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-900">
+                            Tùy Chỉnh Giờ Ca Học:
+                        </h4>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="mb-1.5 block text-xs font-bold text-gray-700 uppercase">
+                                    Giờ Bắt Đầu
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <ScrollableSelect
+                                        label="GIỜ"
+                                        value={modalStartTime.slice(0, 5).split(':')[0] || '18'}
+                                        options={HOUR_OPTIONS}
+                                        onChange={(val) => {
+                                            const m = modalStartTime.slice(0, 5).split(':')[1] || '00';
+                                            setModalStartTime(`${val}:${m}`);
+                                            setModalSlotError(null);
+                                        }}
+                                        placement="top"
+                                        maxHeightClass="max-h-36"
+                                    />
+                                    <ScrollableSelect
+                                        label="PHÚT"
+                                        value={modalStartTime.slice(0, 5).split(':')[1] || '00'}
+                                        options={MINUTE_OPTIONS}
+                                        onChange={(val) => {
+                                            const h = modalStartTime.slice(0, 5).split(':')[0] || '18';
+                                            setModalStartTime(`${h}:${val}`);
+                                            setModalSlotError(null);
+                                        }}
+                                        placement="top"
+                                        maxHeightClass="max-h-36"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-xs font-bold text-gray-700 uppercase">
+                                    Giờ Kết Thúc
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <ScrollableSelect
+                                        label="GIỜ"
+                                        value={modalEndTime.slice(0, 5).split(':')[0] || '20'}
+                                        options={HOUR_OPTIONS}
+                                        onChange={(val) => {
+                                            const m = modalEndTime.slice(0, 5).split(':')[1] || '00';
+                                            setModalEndTime(`${val}:${m}`);
+                                            setModalSlotError(null);
+                                        }}
+                                        placement="top"
+                                        maxHeightClass="max-h-36"
+                                    />
+                                    <ScrollableSelect
+                                        label="PHÚT"
+                                        value={modalEndTime.slice(0, 5).split(':')[1] || '00'}
+                                        options={MINUTE_OPTIONS}
+                                        onChange={(val) => {
+                                            const h = modalEndTime.slice(0, 5).split(':')[0] || '20';
+                                            setModalEndTime(`${h}:${val}`);
+                                            setModalSlotError(null);
+                                        }}
+                                        placement="top"
+                                        maxHeightClass="max-h-36"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {modalSlotError && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700">
+                            <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
+                            <span>{modalSlotError}</span>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </AppLayout>
     );
 }

@@ -17,6 +17,7 @@ use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -178,7 +179,61 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         ksort($normalized);
 
+        $this->validateWeeksOverlap($normalized);
+
         return $normalized;
+    }
+
+    /**
+     * Kiểm tra và không cho phép nhập trùng hoặc chồng chéo các ca học trong cùng một ngày
+     * @param array<string, array<int, array{0: string, 1: string}>> $normalizedWeeks
+     */
+    protected function validateWeeksOverlap(array $normalizedWeeks): void
+    {
+        $weekdayNames = [
+            '1' => 'Thứ 2',
+            '2' => 'Thứ 3',
+            '3' => 'Thứ 4',
+            '4' => 'Thứ 5',
+            '5' => 'Thứ 6',
+            '6' => 'Thứ 7',
+            '7' => 'Chủ Nhật',
+        ];
+
+        foreach ($normalizedWeeks as $dayKey => $slots) {
+            if (! is_array($slots)) {
+                continue;
+            }
+
+            $dayLabel = $weekdayNames[(string) $dayKey] ?? "Thứ {$dayKey}";
+            $count    = count($slots);
+
+            for ($i = 0; $i < $count; $i++) {
+                $s1     = $slots[$i];
+                $start1 = substr((string) ($s1[0] ?? ''), 0, 5);
+                $end1   = substr((string) ($s1[1] ?? ''), 0, 5);
+
+                if (! empty($start1) && ! empty($end1) && $start1 >= $end1) {
+                    throw ValidationException::withMessages([
+                        'weeks' => "Trong {$dayLabel}, Ca " . ($i + 1) . " ({$start1} - {$end1}) có giờ kết thúc phải sau giờ bắt đầu.",
+                    ]);
+                }
+
+                for ($j = $i + 1; $j < $count; $j++) {
+                    $s2     = $slots[$j];
+                    $start2 = substr((string) ($s2[0] ?? ''), 0, 5);
+                    $end2   = substr((string) ($s2[1] ?? ''), 0, 5);
+
+                    if (! empty($start1) && ! empty($end1) && ! empty($start2) && ! empty($end2)) {
+                        if ($start1 < $end2 && $start2 < $end1) {
+                            throw ValidationException::withMessages([
+                                'weeks' => "Trong {$dayLabel}, các ca học không được trùng hoặc chồng chéo thời gian: Ca " . ($i + 1) . " ({$start1} - {$end1}) bị trùng với Ca " . ($j + 1) . " ({$start2} - {$end2}).",
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
