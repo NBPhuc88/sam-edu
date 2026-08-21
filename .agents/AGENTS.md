@@ -54,7 +54,14 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >   - **Học sinh (`students`)**: `HS000000001` (hoặc `STD000000001`)
 >   - **Quản trị viên (`admins`)**: `ADM000000001`
 > - **Xử lý Backend**: Trong Service/Repository, khi trường `code` rỗng hoặc null, tự động tính toán mã kế tiếp duy nhất theo tiền tố quy định và đảm bảo không bị trùng lặp.
-> - **Giao diện Frontend**: Không đặt thuộc tính `required` bắt buộc ở ô nhập mã; hiển thị placeholder rõ ràng: *"Để trống để tự động sinh mã (VD: R000000001)"*.
+> [!IMPORTANT]
+> **7. QUY TẮC KIỂU DỮ LIỆU CỘT `status` (STATUS DATA TYPES)**:
+>
+> - **Bảng `classes` & `students` sử dụng kiểu số nguyên `tinyint`**:
+>   - **`classes.status`**: `0` = Tạm ngưng (`inactive`), `1` = Đang học (`active`), `2` = Đã hoàn thành (`completed`).
+>   - **`students.status`**: `0` = Tạm ngưng/Khóa (`inactive`), `1` = Đang học (`active`), `2` = Đã tốt nghiệp (`graduated`).
+> - **Khi viết truy vấn Backend**: Bắt buộc so sánh bằng số nguyên: `->where('status', 1)` hoặc `->whereIn('status', [1, 2])`. **Tuyệt đối không so sánh bằng chuỗi** `where('status', 'active')` để tránh lỗi so sánh kiểu MySQL làm mất dữ liệu.
+> - Chi tiết toàn bộ các bảng xem tại: [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/php/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
 
 ---
 
