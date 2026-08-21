@@ -507,10 +507,14 @@ export default function ScheduleCreate({
             const res = await fetch(`/api/vietnam-holidays?year=${year}`);
             if (res.ok) {
                 const data = await res.json();
-                setAvailableHolidays(data.holidays || []);
-                // Pre-select holidays that are already in offDays
-                const existing = new Set(offDays.filter((o) => o.is_full_day).map((o) => o.date));
-                setSelectedHolidayDates(existing);
+                const holidaysList = data.holidays || [];
+                setAvailableHolidays(holidaysList);
+                const existing = new Set(scheduleHolidays.map((h) => h.date));
+                if (existing.size === 0) {
+                    setSelectedHolidayDates(new Set(holidaysList.map((h: any) => h.date)));
+                } else {
+                    setSelectedHolidayDates(existing);
+                }
             }
         } catch (err) {
             console.error('Lỗi khi tải ngày lễ:', err);

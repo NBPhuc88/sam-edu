@@ -525,9 +525,14 @@ export default function ScheduleEdit({
             const res = await fetch(`/api/vietnam-holidays?year=${year}`);
             if (res.ok) {
                 const data = await res.json();
-                setAvailableHolidays(data.holidays || []);
-                const existing = new Set(offDays.filter((o) => o.is_full_day).map((o) => o.date));
-                setSelectedHolidayDates(existing);
+                const holidaysList = data.holidays || [];
+                setAvailableHolidays(holidaysList);
+                const existing = new Set(scheduleHolidays.map((h) => h.date));
+                if (existing.size === 0) {
+                    setSelectedHolidayDates(new Set(holidaysList.map((h: any) => h.date)));
+                } else {
+                    setSelectedHolidayDates(existing);
+                }
             }
         } catch (err) {
             console.error('Lỗi khi tải ngày lễ:', err);
@@ -1259,6 +1264,76 @@ export default function ScheduleEdit({
                     </div>
                 </form>
             </div>
+
+            {/* Holiday Picker Modal */}
+            <Modal
+                isOpen={showHolidayModal}
+                onClose={() => setShowHolidayModal(false)}
+                title="Chọn Ngày Nghỉ Lễ Việt Nam"
+                maxWidth="md"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                        Tick chọn các ngày lễ mà trung tâm sẽ cho học sinh nghỉ học (hệ thống tự động bỏ qua khi sinh ca học):
+                    </p>
+
+                    {isLoadingHolidays ? (
+                        <div className="py-8 text-center text-sm text-gray-400">Đang tải danh sách ngày lễ...</div>
+                    ) : availableHolidays.length > 0 ? (
+                        <div className="max-h-80 overflow-y-auto space-y-2 border border-gray-100 rounded-lg p-2">
+                            {availableHolidays.map((h) => {
+                                const isChecked = selectedHolidayDates.has(h.date);
+                                return (
+                                    <label
+                                        key={h.date}
+                                        onClick={() => handleToggleHolidaySelection(h.date)}
+                                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                                            isChecked
+                                                ? 'border-emerald-500 bg-emerald-50/60'
+                                                : 'border-gray-200 bg-white hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => {}}
+                                                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                            />
+                                            <div>
+                                                <div className="text-sm font-bold text-gray-900">{h.name}</div>
+                                                <div className="text-xs font-mono text-gray-500">{h.date}</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="py-8 text-center text-sm text-gray-400">Không tìm thấy ngày lễ nào.</div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setShowHolidayModal(false)}
+                        >
+                            Đóng
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="success"
+                            size="md"
+                            onClick={handleApplyHolidays}
+                        >
+                            Áp Dụng ({selectedHolidayDates.size} ngày)
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* Time Slot Setup Modal (Explicit Save Button) */}
             <Modal
                 isOpen={slotModalOpen}
