@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import axios from 'axios';
 import {
     AlertCircle,
     ArrowLeft,
@@ -119,6 +120,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     // Submission & Result State
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [result, setResult] = useState<{
         summary: ResultSummary;
         graded_questions: GradedQuestion[];
@@ -175,29 +177,19 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     const handleSubmitExam = async () => {
         setSubmitConfirmOpen(false);
         setIsSubmitting(true);
+        setErrorMessage(null);
 
         try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-            const response = await fetch(`/exams/${exam.id}/practice-submit`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: JSON.stringify({ answers }),
+            const response = await axios.post(`/exams/${exam.id}/practice-submit`, {
+                answers,
             });
 
-            if (!response.ok) {
-                throw new Error('Lỗi khi nộp bài thi thử.');
-            }
-
-            const data = await response.json();
-            setResult(data);
+            setResult(response.data);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Submit error:', error);
-            alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
+            const msg = error?.response?.data?.message || 'Có lỗi xảy ra khi nộp bài thi thử. Vui lòng thử lại!';
+            setErrorMessage(msg);
         } finally {
             setIsSubmitting(false);
         }
@@ -1050,6 +1042,33 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang Chấm Điểm...' : 'Nộp Bài & Xem Điểm'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Error Feedback Modal */}
+            <Modal
+                isOpen={Boolean(errorMessage)}
+                onClose={() => setErrorMessage(null)}
+                title="Thông Báo Lỗi"
+                size="sm"
+            >
+                <div className="space-y-4 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                        <AlertCircle className="h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-800">
+                        {errorMessage}
+                    </p>
+                    <div className="pt-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full justify-center"
+                            onClick={() => setErrorMessage(null)}
+                        >
+                            Đóng
                         </Button>
                     </div>
                 </div>
