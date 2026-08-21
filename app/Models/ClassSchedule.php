@@ -15,6 +15,7 @@ class ClassSchedule extends Model
         'class_subject_id',
         'weeks',
         'auto_holidays',
+        'excluded_holiday_ids',
         'holidays',
         'off_days',
         'extra_days',
@@ -25,11 +26,12 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
-            'weeks'         => 'array',
-            'auto_holidays' => 'boolean',
-            'holidays'      => 'array',
-            'off_days'      => 'array',
-            'extra_days'    => 'array',
+            'weeks'                => 'array',
+            'auto_holidays'        => 'boolean',
+            'excluded_holiday_ids' => 'array',
+            'holidays'             => 'array',
+            'off_days'             => 'array',
+            'extra_days'           => 'array',
         ];
     }
 

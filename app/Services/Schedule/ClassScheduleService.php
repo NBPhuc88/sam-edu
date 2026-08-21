@@ -9,6 +9,7 @@ use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
+use App\Repositories\Holiday\HolidayRepositoryInterface;
 use App\Repositories\Room\RoomRepositoryInterface;
 use App\Repositories\Schedule\ClassScheduleRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
@@ -30,7 +31,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         protected RoomRepositoryInterface $roomRepository,
         protected TeacherRepositoryInterface $teacherRepository,
         protected SubjectRepositoryInterface $subjectRepository,
-        protected ClassSessionRepositoryInterface $sessionRepository
+        protected ClassSessionRepositoryInterface $sessionRepository,
+        protected HolidayRepositoryInterface $holidayRepository
     ) {
     }
 
@@ -336,19 +338,36 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? []);
             $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
             $autoHolidays        = isset($data['auto_holidays']) ? (bool) $data['auto_holidays'] : true;
-            $holidays            = $data['holidays'] ?? [];
+            $excludedHolidayIds  = ! empty($data['excluded_holiday_ids']) ? array_map('intval', (array) $data['excluded_holiday_ids']) : [];
+
+            // Lấy danh sách ngày lễ trong khoảng thời gian, loại bỏ các ngày lễ bị loại trừ
+            $holidays = [];
+
+            if ($autoHolidays) {
+                $maxScanEnd      = ! empty($data['end_date']) ? $data['end_date'] : now()->addYears(2)->toDateString();
+                $holidaysInRange = $this->holidayRepository->getInRange($data['start_date'], $maxScanEnd);
+                $excludedSet     = array_flip($excludedHolidayIds);
+                $holidays        = $holidaysInRange
+                    ->filter(fn ($h) => ! isset($excludedSet[(int) $h->id]))
+                    ->map(fn ($h) => [
+                        'id'   => $h->id,
+                        'name' => $h->name,
+                        'date' => $h->date instanceof \DateTimeInterface ? $h->date->format('Y-m-d') : (string) $h->date,
+                    ])->values()->toArray();
+            }
 
             // 2. Tạo hoặc cập nhật bản ghi ClassSchedule duy nhất
             $schedule = ClassSchedule::updateOrCreate(
                 ['class_subject_id' => $classSubject->id],
                 [
-                    'weeks'         => $normalizedWeeks,
-                    'auto_holidays' => $autoHolidays,
-                    'holidays'      => $holidays,
-                    'off_days'      => $normalizedOffDays,
-                    'extra_days'    => $normalizedExtraDays,
-                    'room_id'       => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                    'status'        => $data['status'] ?? 'active',
+                    'weeks'                => $normalizedWeeks,
+                    'auto_holidays'        => $autoHolidays,
+                    'excluded_holiday_ids' => $excludedHolidayIds,
+                    'holidays'             => $holidays,
+                    'off_days'             => $normalizedOffDays,
+                    'extra_days'           => $normalizedExtraDays,
+                    'room_id'              => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
+                    'status'               => $data['status'] ?? 'active',
                 ]
             );
 
@@ -469,16 +488,34 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? $schedule->off_days ?? []);
             $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? $schedule->extra_days ?? []);
             $autoHolidays        = array_key_exists('auto_holidays', $data) ? (bool) $data['auto_holidays'] : (bool) ($schedule->auto_holidays ?? true);
-            $holidays            = array_key_exists('holidays', $data) ? $data['holidays'] : ($schedule->holidays ?? []);
+            $excludedHolidayIds  = array_key_exists('excluded_holiday_ids', $data)
+                ? array_map('intval', (array) $data['excluded_holiday_ids'])
+                : (is_array($schedule->excluded_holiday_ids) ? $schedule->excluded_holiday_ids : []);
+
+            $holidays = [];
+
+            if ($autoHolidays) {
+                $maxScanEnd      = ! empty($data['end_date']) ? $data['end_date'] : now()->addYears(2)->toDateString();
+                $holidaysInRange = $this->holidayRepository->getInRange($startDate, $maxScanEnd);
+                $excludedSet     = array_flip(array_map('intval', $excludedHolidayIds));
+                $holidays        = $holidaysInRange
+                    ->filter(fn ($h) => ! isset($excludedSet[(int) $h->id]))
+                    ->map(fn ($h) => [
+                        'id'   => $h->id,
+                        'name' => $h->name,
+                        'date' => $h->date instanceof \DateTimeInterface ? $h->date->format('Y-m-d') : (string) $h->date,
+                    ])->values()->toArray();
+            }
 
             $schedule->update([
-                'weeks'         => $normalizedWeeks,
-                'auto_holidays' => $autoHolidays,
-                'holidays'      => $holidays,
-                'off_days'      => $normalizedOffDays,
-                'extra_days'    => $normalizedExtraDays,
-                'room_id'       => $roomId,
-                'status'        => $data['status'] ?? $schedule->status,
+                'weeks'                => $normalizedWeeks,
+                'auto_holidays'        => $autoHolidays,
+                'excluded_holiday_ids' => $excludedHolidayIds,
+                'holidays'             => $holidays,
+                'off_days'             => $normalizedOffDays,
+                'extra_days'           => $normalizedExtraDays,
+                'room_id'              => $roomId,
+                'status'               => $data['status'] ?? $schedule->status,
             ]);
 
             // 4. Tính toán danh sách ca học tương lai mới
@@ -1025,8 +1062,25 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedWeeks     = $schedule->weeks ?? [];
             $normalizedOffDays   = $schedule->off_days ?? [];
             $normalizedExtraDays = $schedule->extra_days ?? [];
-            $holidays            = $schedule->holidays ?? [];
             $autoHolidays        = (bool) ($schedule->auto_holidays ?? true);
+            $excludedHolidayIds  = is_array($schedule->excluded_holiday_ids) ? $schedule->excluded_holiday_ids : [];
+
+            $holidays = [];
+
+            if ($autoHolidays) {
+                $maxScanEnd      = ! empty($endDate) ? $endDate : now()->addYears(2)->toDateString();
+                $holidaysInRange = $this->holidayRepository->getInRange($startDate, $maxScanEnd);
+                $excludedSet     = array_flip(array_map('intval', $excludedHolidayIds));
+                $holidays        = $holidaysInRange
+                    ->filter(fn ($h) => ! isset($excludedSet[(int) $h->id]))
+                    ->map(fn ($h) => [
+                        'id'   => $h->id,
+                        'name' => $h->name,
+                        'date' => $h->date instanceof \DateTimeInterface ? $h->date->format('Y-m-d') : (string) $h->date,
+                    ])->values()->toArray();
+
+                $schedule->update(['holidays' => $holidays]);
+            }
 
             $sessionResult = $this->calculateSessionsPayload(
                 $classSubject,

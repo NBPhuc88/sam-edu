@@ -356,6 +356,11 @@ export default function ScheduleEdit({
     const [extraDays, setExtraDays] = useState<ExtraDayItem[]>(initialExtraDays);
 
     // Holiday picker modal state & Auto holidays toggle
+    const initialExcludedIds = React.useMemo(
+        () => new Set<number>((schedule.excluded_holiday_ids || []).map(Number)),
+        [schedule]
+    );
+    const [excludedHolidayIds, setExcludedHolidayIds] = useState<Set<number>>(initialExcludedIds);
     const [autoHolidays, setAutoHolidays] = useState<boolean>(
         schedule.auto_holidays !== undefined ? Boolean(schedule.auto_holidays) : true
     );
@@ -525,14 +530,14 @@ export default function ScheduleEdit({
             const res = await fetch(`/api/vietnam-holidays?year=${year}`);
             if (res.ok) {
                 const data = await res.json();
-                const holidaysList = data.holidays || [];
+                const holidaysList: VNHoliday[] = data.holidays || [];
                 setAvailableHolidays(holidaysList);
-                const existing = new Set(scheduleHolidays.map((h) => h.date));
-                if (existing.size === 0) {
-                    setSelectedHolidayDates(new Set(holidaysList.map((h: any) => h.date)));
-                } else {
-                    setSelectedHolidayDates(existing);
-                }
+                const activeDates = new Set(
+                    holidaysList
+                        .filter((h) => !excludedHolidayIds.has(h.id))
+                        .map((h) => h.date)
+                );
+                setSelectedHolidayDates(activeDates);
             }
         } catch (err) {
             console.error('Lỗi khi tải ngày lễ:', err);
@@ -552,6 +557,13 @@ export default function ScheduleEdit({
     };
 
     const handleApplyHolidays = () => {
+        const newExcluded = new Set<number>();
+        availableHolidays.forEach((h) => {
+            if (!selectedHolidayDates.has(h.date)) {
+                newExcluded.add(h.id);
+            }
+        });
+        setExcludedHolidayIds(newExcluded);
         const selected = availableHolidays.filter((h) => selectedHolidayDates.has(h.date));
         setScheduleHolidays(selected);
         setAutoHolidays(true);
@@ -694,7 +706,7 @@ export default function ScheduleEdit({
                 end_date: endDate || null,
                 weeks: weeksPayload,
                 auto_holidays: autoHolidays,
-                holidays: scheduleHolidays.length > 0 ? scheduleHolidays : null,
+                excluded_holiday_ids: Array.from(excludedHolidayIds),
                 off_days: offDaysPayload,
                 extra_days: extraDaysPayload,
                 status,
@@ -1065,20 +1077,12 @@ export default function ScheduleEdit({
                             </label>
                         </div>
 
-                        {/* Selected Holidays badges if customized */}
-                        {scheduleHolidays.length > 0 && (
-                            <div className="mb-4 rounded-lg border border-gray-200 bg-slate-50 p-3">
-                                <span className="mb-2 block text-xs font-bold text-gray-700">
-                                    Các ngày lễ đã chọn riêng ({scheduleHolidays.length} ngày):
+                        {/* Excluded Holidays Notice if customized */}
+                        {excludedHolidayIds.size > 0 && (
+                            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900">
+                                <span className="font-bold">
+                                    Lưu ý: Lớp đang loại trừ không nghỉ {excludedHolidayIds.size} ngày lễ (vẫn học bình thường).
                                 </span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {scheduleHolidays.map((h, hIdx) => (
-                                        <span key={hIdx} className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-900">
-                                            <span>{h.name}</span>
-                                            <span className="font-mono text-emerald-700">({h.date})</span>
-                                        </span>
-                                    ))}
-                                </div>
                             </div>
                         )}
 

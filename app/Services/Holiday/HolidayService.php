@@ -106,7 +106,7 @@ class HolidayService implements HolidayServiceInterface
         $holiday = $this->holidayRepository->create($data);
 
         $targetDate = $dateCarbon->format('Y-m-d');
-        SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('created', $targetDate);
+        SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('created', $targetDate, null, null, (int) $holiday->id);
 
         return $holiday;
     }
@@ -137,7 +137,7 @@ class HolidayService implements HolidayServiceInterface
         $updated = $this->holidayRepository->update($id, $data);
         $newDate = $updated->date instanceof \DateTimeInterface ? $updated->date->format('Y-m-d') : (string) $updated->date;
 
-        SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('updated', $newDate, $oldDate);
+        SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('updated', $newDate, $oldDate, null, (int) $id);
 
         return $updated;
     }
@@ -162,7 +162,7 @@ class HolidayService implements HolidayServiceInterface
         $deleted = $this->holidayRepository->delete($id);
 
         if ($deleted) {
-            SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('deleted', $targetDate);
+            SyncAffectedSchedulesAfterHolidayChangeJob::dispatch('deleted', $targetDate, null, null, (int) $id);
         }
 
         return $deleted;
