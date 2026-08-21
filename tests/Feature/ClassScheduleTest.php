@@ -484,3 +484,84 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         ->count();
     expect($friFutureCount)->toBeGreaterThan(0);
 });
+
+test('generates exactly total_sessions when extra_days (makeup days) are added', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000099',
+        'name'   => 'Trung Tâm Test Extra Day',
+        'email'  => 'center99@test.com',
+        'phone'  => '0901234599',
+        'status' => 'active',
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'superadmin_test_99',
+        'full_name'  => 'Super Admin Test 99',
+        'email'      => 'superadmin99@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000099',
+    ]);
+
+    $teacher = Teacher::create([
+        'center_id'    => $center->id,
+        'teacher_code' => 'GV000000099',
+        'username'     => 'teacher_test_99',
+        'first_name'   => 'Extra',
+        'last_name'    => 'Teacher',
+        'full_name'    => 'Teacher Extra',
+        'email'        => 'teacher99@test.com',
+        'password'     => 'password123',
+        'status'       => 'active',
+    ]);
+
+    $subject = Subject::create([
+        'center_id'        => $center->id,
+        'code'             => 'S000000099',
+        'name'             => 'Môn Học 60 Buổi',
+        'total_sessions'   => 60,
+        'duration_minutes' => 90,
+        'tuition_fee'      => 4000000,
+        'status'           => 'active',
+    ]);
+
+    $class = SchoolClass::create([
+        'center_id'    => $center->id,
+        'code'         => 'C000000099',
+        'name'         => 'Lớp Test Extra 60 Buổi',
+        'max_students' => 25,
+        'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    $service = app(ClassScheduleServiceInterface::class);
+
+    $schedule = $service->createSchedule([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'start_date' => '2026-09-01',
+        'end_date'   => null,
+        'weeks'      => [
+            '1' => [['18:00', '20:00']],
+            '3' => [['18:00', '20:00']],
+            '5' => [['18:00', '20:00']],
+        ],
+        'extra_days' => [
+            ['date' => '2026-09-06', 'start_time' => '08:00', 'end_time' => '10:00'], // Chủ nhật học bù
+        ],
+        'status' => 'active',
+    ], $admin);
+
+    $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
+    $totalCount   = ClassSession::where('class_subject_id', $classSubject->id)->count();
+
+    // Phải sinh đúng 60 buổi, không được thành 61 buổi
+    expect($totalCount)->toBe(60);
+
+    // Có chứa buổi học bù vào 2026-09-06
+    $makeupSession = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('session_date', '2026-09-06')
+        ->first();
+    expect($makeupSession)->not->toBeNull()
+        ->and($makeupSession->topic)->toBe('Buổi học bổ sung / bù');
+});

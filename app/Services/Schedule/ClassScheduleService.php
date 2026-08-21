@@ -835,7 +835,23 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $currentDate     = $scanStart->copy();
         $now             = now()->toDateTimeString();
 
-        // 1. Sinh ca học theo chu kỳ tuần (weeks JSON)
+        // 3. Map extra_days theo ngày [dateStr => [[startTime, endTime], ...]]
+        $extraDaysByDate = [];
+
+        foreach ($extraDays as $extra) {
+            $specDateStr = $extra['date'] ?? null;
+            $specStart   = ! empty($extra['start_time']) ? substr((string) $extra['start_time'], 0, 5) : null;
+            $specEnd     = ! empty($extra['end_time']) ? substr((string) $extra['end_time'], 0, 5) : null;
+
+            if ($specDateStr && $specStart && $specEnd && $specDateStr >= $actualScanStart) {
+                $extraDaysByDate[$specDateStr][] = [
+                    'start_time' => $specStart,
+                    'end_time'   => $specEnd,
+                ];
+            }
+        }
+
+        // 4. Sinh ca học theo chu kỳ tuần kết hợp ngày bù (extra_days) theo thứ tự thời gian
         if (! $endDateStr) {
             if ($targetRemainingCount !== null) {
                 // Đã xác định số buổi cần tạo (VD: 60 buổi hoặc còn 45 buổi)
@@ -845,6 +861,39 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     $dayKey  = (string) $currentDate->dayOfWeekIso; // 1 = Mon .. 7 = Sun
                     $dateStr = $currentDate->format('Y-m-d');
 
+                    // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
+                    if (isset($extraDaysByDate[$dateStr])) {
+                        foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
+                            $startTime = $extraSlot['start_time'];
+                            $endTime   = $extraSlot['end_time'];
+                            $slotKey   = "{$dateStr}_{$startTime}";
+
+                            if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                                $seenDateTime[$slotKey] = true;
+                                $sessions[]             = [
+                                    'class_subject_id'  => $classSubject->id,
+                                    'class_schedule_id' => $scheduleId,
+                                    'teacher_id'        => $teacherId,
+                                    'room_id'           => $roomId,
+                                    'session_date'      => $dateStr,
+                                    'start_time'        => $startTime,
+                                    'end_time'          => $endTime,
+                                    'status'            => 'scheduled',
+                                    'topic'             => 'Buổi học bổ sung / bù',
+                                    'note'              => null,
+                                    'created_at'        => $now,
+                                    'updated_at'        => $now,
+                                ];
+                                $lastSessionDate = $dateStr;
+
+                                if (count($sessions) >= $targetRemainingCount) {
+                                    break 2;
+                                }
+                            }
+                        }
+                    }
+
+                    // 4.2 Thêm các ca học theo chu kỳ tuần nếu ngày này không phải ngày nghỉ
                     if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
                         foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                             $slotKey = "{$dateStr}_{$startTime}";
@@ -884,6 +933,35 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     $dayKey  = (string) $currentDate->dayOfWeekIso;
                     $dateStr = $currentDate->format('Y-m-d');
 
+                    // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
+                    if (isset($extraDaysByDate[$dateStr])) {
+                        foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
+                            $startTime = $extraSlot['start_time'];
+                            $endTime   = $extraSlot['end_time'];
+                            $slotKey   = "{$dateStr}_{$startTime}";
+
+                            if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                                $seenDateTime[$slotKey] = true;
+                                $sessions[]             = [
+                                    'class_subject_id'  => $classSubject->id,
+                                    'class_schedule_id' => $scheduleId,
+                                    'teacher_id'        => $teacherId,
+                                    'room_id'           => $roomId,
+                                    'session_date'      => $dateStr,
+                                    'start_time'        => $startTime,
+                                    'end_time'          => $endTime,
+                                    'status'            => 'scheduled',
+                                    'topic'             => 'Buổi học bổ sung / bù',
+                                    'note'              => null,
+                                    'created_at'        => $now,
+                                    'updated_at'        => $now,
+                                ];
+                                $lastSessionDate = $dateStr;
+                            }
+                        }
+                    }
+
+                    // 4.2 Thêm các ca học theo chu kỳ tuần
                     if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
                         foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                             $slotKey = "{$dateStr}_{$startTime}";
@@ -920,6 +998,35 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $dayKey  = (string) $currentDate->dayOfWeekIso;
                 $dateStr = $currentDate->format('Y-m-d');
 
+                // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
+                if (isset($extraDaysByDate[$dateStr])) {
+                    foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
+                        $startTime = $extraSlot['start_time'];
+                        $endTime   = $extraSlot['end_time'];
+                        $slotKey   = "{$dateStr}_{$startTime}";
+
+                        if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                            $seenDateTime[$slotKey] = true;
+                            $sessions[]             = [
+                                'class_subject_id'  => $classSubject->id,
+                                'class_schedule_id' => $scheduleId,
+                                'teacher_id'        => $teacherId,
+                                'room_id'           => $roomId,
+                                'session_date'      => $dateStr,
+                                'start_time'        => $startTime,
+                                'end_time'          => $endTime,
+                                'status'            => 'scheduled',
+                                'topic'             => 'Buổi học bổ sung / bù',
+                                'note'              => null,
+                                'created_at'        => $now,
+                                'updated_at'        => $now,
+                            ];
+                            $lastSessionDate = $dateStr;
+                        }
+                    }
+                }
+
+                // 4.2 Thêm các ca học theo chu kỳ tuần
                 if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
                     foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
                         $slotKey = "{$dateStr}_{$startTime}";
@@ -946,39 +1053,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 }
 
                 $currentDate->addDay();
-            }
-        }
-
-        // 2. Thêm các buổi học bù cố định (extra_days)
-        foreach ($extraDays as $extra) {
-            $specDateStr = $extra['date'] ?? null;
-            $specStart   = $extra['start_time'] ?? null;
-            $specEnd     = $extra['end_time'] ?? null;
-
-            if ($specDateStr && $specStart && $specEnd && $specDateStr >= $actualScanStart) {
-                $key = "{$specDateStr}_{$specStart}";
-
-                if (! isset($seenDateTime[$key]) && ! isset($existingPastKeys[$key])) {
-                    $seenDateTime[$key] = true;
-                    $sessions[]         = [
-                        'class_subject_id'  => $classSubject->id,
-                        'class_schedule_id' => $scheduleId,
-                        'teacher_id'        => $teacherId,
-                        'room_id'           => $roomId,
-                        'session_date'      => $specDateStr,
-                        'start_time'        => $specStart,
-                        'end_time'          => $specEnd,
-                        'status'            => 'scheduled',
-                        'topic'             => 'Buổi học bổ sung / bù',
-                        'note'              => null,
-                        'created_at'        => $now,
-                        'updated_at'        => $now,
-                    ];
-
-                    if ($lastSessionDate === null || $specDateStr > $lastSessionDate) {
-                        $lastSessionDate = $specDateStr;
-                    }
-                }
             }
         }
 

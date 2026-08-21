@@ -204,7 +204,9 @@ function calculateEstimatedEndDate(
     startDateStr: string,
     weeklyTimes: Record<number, { enabled: boolean; slots: WeekDaySlot[] }>,
     totalSessions: number,
-    offDays: OffDayItem[]
+    offDays: OffDayItem[],
+    extraDays: ExtraDayItem[] = [],
+    holidayDates: string[] = []
 ): string | null {
     if (!startDateStr || !totalSessions || totalSessions <= 0) {
         return null;
@@ -214,11 +216,22 @@ function calculateEstimatedEndDate(
         .filter(([, conf]) => conf.enabled && conf.slots.length > 0)
         .map(([day]) => Number(day));
 
-    if (enabledDays.length === 0) {
+    if (enabledDays.length === 0 && extraDays.length === 0) {
         return null;
     }
 
     const fullOffDatesSet = new Set(offDays.filter((s) => s.is_full_day && s.date).map((s) => s.date));
+    const holidayDatesSet = new Set(holidayDates);
+
+    const extraDaysByDate: Record<string, ExtraDayItem[]> = {};
+    for (const extra of extraDays) {
+        if (extra.date && extra.start_time && extra.end_time && extra.date >= startDateStr) {
+            if (!extraDaysByDate[extra.date]) {
+                extraDaysByDate[extra.date] = [];
+            }
+            extraDaysByDate[extra.date].push(extra);
+        }
+    }
 
     let createdCount = 0;
     const curr = new Date(startDateStr);
@@ -231,13 +244,32 @@ function calculateEstimatedEndDate(
         const jsDay = curr.getDay();
         const isoDay = jsDay === 0 ? 7 : jsDay;
 
-        if (enabledDays.includes(isoDay) && !fullOffDatesSet.has(ymd)) {
+        // 1. Thêm các buổi học bù/bổ sung trên ngày này
+        if (extraDaysByDate[ymd]) {
+            for (const _extra of extraDaysByDate[ymd]) {
+                createdCount++;
+                lastDate = ymd;
+                if (createdCount >= totalSessions) {
+                    break;
+                }
+            }
+        }
+
+        if (createdCount >= totalSessions) {
+            break;
+        }
+
+        // 2. Thêm các ca học định kỳ trong tuần (nếu không phải ngày nghỉ/ngày lễ)
+        if (enabledDays.includes(isoDay) && !fullOffDatesSet.has(ymd) && !holidayDatesSet.has(ymd)) {
             const slots = weeklyTimes[isoDay]?.slots || [];
             for (const slot of slots) {
                 const isSlotOff = offDays.some(
                     (o) => !o.is_full_day && o.date === ymd && o.start_time === slot.start_time
                 );
-                if (!isSlotOff) {
+                const isAlreadyCoveredByExtra = extraDaysByDate[ymd]?.some(
+                    (e) => e.start_time === slot.start_time
+                );
+                if (!isSlotOff && !isAlreadyCoveredByExtra) {
                     createdCount++;
                     lastDate = ymd;
                     if (createdCount >= totalSessions) {
@@ -388,12 +420,26 @@ export default function ScheduleCreate({
         .filter((w) => w.enabled)
         .reduce((sum, w) => sum + w.slots.length, 0);
 
+    const activeHolidayDates = React.useMemo(() => {
+        if (!autoHolidays) return [];
+        return scheduleHolidays
+            .filter((h) => !excludedHolidayIds.has(h.id))
+            .map((h) => h.date);
+    }, [autoHolidays, scheduleHolidays, excludedHolidayIds]);
+
     const estimatedEndDate = React.useMemo(() => {
         if (!totalSessions || !startDate) {
             return null;
         }
-        return calculateEstimatedEndDate(startDate, weeklyTimes, totalSessions, offDays);
-    }, [startDate, weeklyTimes, totalSessions, offDays]);
+        return calculateEstimatedEndDate(
+            startDate,
+            weeklyTimes,
+            totalSessions,
+            offDays,
+            extraDays,
+            activeHolidayDates
+        );
+    }, [startDate, weeklyTimes, totalSessions, offDays, extraDays, activeHolidayDates]);
 
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
