@@ -230,7 +230,8 @@ class HolidayService implements HolidayServiceInterface
     /**
      * @return Collection<int, Holiday>
      */
-    public function getAll(): Collection {
+    public function getAll(): Collection
+    {
         return $this->holidayRepository->getAll();
     }
 }

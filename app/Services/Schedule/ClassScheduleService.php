@@ -439,10 +439,20 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'status'     => $data['status'] ?? $classSubject->status,
                 ]);
 
-                $schedule->update([
+                $scheduleUpdate = [
                     'room_id' => $roomId,
                     'status'  => $data['status'] ?? $schedule->status,
-                ]);
+                ];
+
+                if (array_key_exists('auto_holidays', $data)) {
+                    $scheduleUpdate['auto_holidays'] = (bool) $data['auto_holidays'];
+                }
+
+                if (array_key_exists('excluded_holiday_ids', $data)) {
+                    $scheduleUpdate['excluded_holiday_ids'] = array_map('intval', (array) $data['excluded_holiday_ids']);
+                }
+
+                $schedule->update($scheduleUpdate);
 
                 // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
                 ClassSession::where('class_subject_id', $classSubject->id)
@@ -700,6 +710,26 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $newExtra = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
 
             if ($oldExtra !== $newExtra) {
+                return true;
+            }
+        }
+
+        if (array_key_exists('auto_holidays', $data)) {
+            $oldAuto = (bool) ($schedule->auto_holidays ?? true);
+            $newAuto = (bool) $data['auto_holidays'];
+
+            if ($oldAuto !== $newAuto) {
+                return true;
+            }
+        }
+
+        if (array_key_exists('excluded_holiday_ids', $data)) {
+            $oldExcluded = array_map('intval', (array) ($schedule->excluded_holiday_ids ?? []));
+            sort($oldExcluded);
+            $newExcluded = array_map('intval', (array) $data['excluded_holiday_ids']);
+            sort($newExcluded);
+
+            if ($oldExcluded !== $newExcluded) {
                 return true;
             }
         }

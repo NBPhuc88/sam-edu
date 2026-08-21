@@ -74,4 +74,9 @@ interface HolidayServiceInterface
      * @return list<int>
      */
     public function getAvailableYears(): array;
+
+    /**
+     * @return Collection<int, Holiday>
+     */
+    public function getAll(): Collection;
 }

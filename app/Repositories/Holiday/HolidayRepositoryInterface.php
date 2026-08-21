@@ -71,4 +71,9 @@ interface HolidayRepositoryInterface
      * @return list<int>
      */
     public function getDistinctYears(): array;
+
+    /**
+     * @return Collection<int, Holiday>
+     */
+    public function getAll(): Collection;
 }
