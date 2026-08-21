@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Pagination, { PaginationLink } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { parseDate, WEEKDAY_NAMES } from '@/lib/date';
 
 interface Holiday {
     id: number;
@@ -169,14 +170,13 @@ export default function Index({
 
     const formatDateVietnamese = (dateStr: string) => {
         if (!dateStr) return '';
-        const d = new Date(dateStr);
-        const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-        const dayOfWeek = dayNames[d.getDay()];
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]} (${dayOfWeek})`;
-        }
-        return dateStr;
+        const d = parseDate(dateStr);
+        if (!d) return dateStr;
+        const dayOfWeek = WEEKDAY_NAMES[d.getDay()];
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year} (${dayOfWeek})`;
     };
 
     return (

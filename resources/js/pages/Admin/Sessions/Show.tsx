@@ -24,6 +24,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate, formatTime, formatDateTime } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -134,16 +135,6 @@ interface Props {
     rooms: Room[];
 }
 
-const WEEKDAY_NAMES = [
-    'Chủ Nhật',
-    'Thứ Hai',
-    'Thứ Ba',
-    'Thứ Tư',
-    'Thứ Năm',
-    'Thứ Sáu',
-    'Thứ Bảy',
-];
-
 export default function SessionShow({ session, teachers = [], rooms = [] }: Props) {
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
     const [isContentModalOpen, setIsContentModalOpen] = useState(false);
@@ -201,43 +192,6 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                 setIsContentModalOpen(false);
             },
         });
-    };
-
-    const formatDate = (dateStr: string | null) => {
-        if (!dateStr) {
-return '---';
-}
-
-        const d = new Date(dateStr);
-        const dayName = WEEKDAY_NAMES[d.getDay()];
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-
-        return `${dayName}, ${day}/${month}/${year}`;
-    };
-
-    const formatTime = (timeStr: string | null) => {
-        if (!timeStr) {
-return '';
-}
-
-        return timeStr.substring(0, 5);
-    };
-
-    const formatDateTime = (dtStr: string) => {
-        if (!dtStr) {
-return '---';
-}
-
-        const d = new Date(dtStr);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-
-        return `${hours}:${minutes} - ${day}/${month}/${year}`;
     };
 
     const getStatusBadge = (status: string) => {

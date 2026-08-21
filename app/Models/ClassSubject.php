@@ -26,8 +26,10 @@ class ClassSubject extends Model
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
-            'end_date'   => 'date',
+            'start_date' => 'date:d-m-Y',
+            'end_date'   => 'date:d-m-Y',
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
         ];
     }
 

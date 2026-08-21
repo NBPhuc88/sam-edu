@@ -28,7 +28,9 @@ class ExamResult extends Model
     {
         return [
             'score'      => 'decimal:2',
-            'entered_at' => 'datetime',
+            'entered_at' => 'datetime:d-m-Y H:i',
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
         ];
     }
 

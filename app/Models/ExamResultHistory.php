@@ -29,7 +29,7 @@ class ExamResultHistory extends Model
         return [
             'old_score'  => 'decimal:2',
             'new_score'  => 'decimal:2',
-            'created_at' => 'datetime',
+            'created_at' => 'datetime:d-m-Y H:i',
         ];
     }
 

@@ -42,10 +42,12 @@ class Teacher extends Authenticatable
     protected function casts(): array
     {
         return [
-            'last_login_at' => 'datetime',
-            'date_of_birth' => 'date',
-            'hire_date'     => 'date',
+            'last_login_at' => 'datetime:d-m-Y H:i',
+            'date_of_birth' => 'date:d-m-Y',
+            'hire_date'     => 'date:d-m-Y',
             'password'      => 'hashed',
+            'created_at'    => 'datetime:d-m-Y H:i',
+            'updated_at'    => 'datetime:d-m-Y H:i',
         ];
     }
 

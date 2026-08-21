@@ -37,9 +37,11 @@ class Holiday extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'date'         => 'date:Y-m-d',
+        'date'         => 'date:d-m-Y',
         'year'         => 'integer',
         'is_lunar'     => 'boolean',
         'is_recurring' => 'boolean',
+        'created_at'   => 'datetime:d-m-Y H:i',
+        'updated_at'   => 'datetime:d-m-Y H:i',
     ];
 }

@@ -28,14 +28,16 @@ class ClassExamSubmission extends Model
     protected function casts(): array
     {
         return [
-            'started_at'            => 'datetime',
-            'submitted_at'          => 'datetime',
+            'started_at'            => 'datetime:d-m-Y H:i',
+            'submitted_at'          => 'datetime:d-m-Y H:i',
             'duration_seconds_used' => 'integer',
             'score'                 => 'decimal:2',
             'total_correct'         => 'integer',
             'total_questions'       => 'integer',
             'answers'               => 'array',
             'grading_details'       => 'array',
+            'created_at'            => 'datetime:d-m-Y H:i',
+            'updated_at'            => 'datetime:d-m-Y H:i',
         ];
     }
 

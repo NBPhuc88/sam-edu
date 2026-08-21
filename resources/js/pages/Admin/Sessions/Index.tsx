@@ -18,6 +18,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate, formatTime } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -112,16 +113,6 @@ interface Props {
         per_page?: number;
     };
 }
-
-const WEEKDAY_NAMES = [
-    'Chủ Nhật',
-    'Thứ Hai',
-    'Thứ Ba',
-    'Thứ Tư',
-    'Thứ Năm',
-    'Thứ Sáu',
-    'Thứ Bảy',
-];
 
 export default function SessionIndex({
     sessions,
@@ -239,28 +230,6 @@ export default function SessionIndex({
             default:
                 return <Badge variant="info">{status}</Badge>;
         }
-    };
-
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) {
-return '---';
-}
-
-        const d = new Date(dateStr);
-        const dayName = WEEKDAY_NAMES[d.getDay()];
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-
-        return `${dayName}, ${day}/${month}/${year}`;
-    };
-
-    const formatTime = (timeStr: string) => {
-        if (!timeStr) {
-return '';
-}
-
-        return timeStr.substring(0, 5);
     };
 
     return (

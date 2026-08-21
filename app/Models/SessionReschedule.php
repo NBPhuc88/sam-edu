@@ -29,9 +29,11 @@ class SessionReschedule extends Model
     protected function casts(): array
     {
         return [
-            'old_date'   => 'date',
-            'new_date'   => 'date',
-            'changed_at' => 'datetime',
+            'old_date'   => 'date:d-m-Y',
+            'new_date'   => 'date:d-m-Y',
+            'changed_at' => 'datetime:d-m-Y H:i',
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
         ];
     }
 

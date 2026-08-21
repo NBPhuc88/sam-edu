@@ -46,10 +46,12 @@ class Student extends Authenticatable
     {
         return [
             'status'         => \App\Enums\EntityStatus::class,
-            'last_login_at'  => 'datetime',
-            'date_of_birth'  => 'date',
-            'admission_date' => 'date',
+            'last_login_at'  => 'datetime:d-m-Y H:i',
+            'date_of_birth'  => 'date:d-m-Y',
+            'admission_date' => 'date:d-m-Y',
             'password'       => 'hashed',
+            'created_at'     => 'datetime:d-m-Y H:i',
+            'updated_at'     => 'datetime:d-m-Y H:i',
         ];
     }
 

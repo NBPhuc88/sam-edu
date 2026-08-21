@@ -33,9 +33,11 @@ class Admin extends Authenticatable
     protected function casts(): array
     {
         return [
-            'last_login_at' => 'datetime',
+            'last_login_at' => 'datetime:d-m-Y H:i',
             'password'      => 'hashed',
             'role'          => 'string',
+            'created_at'    => 'datetime:d-m-Y H:i',
+            'updated_at'    => 'datetime:d-m-Y H:i',
         ];
     }
 

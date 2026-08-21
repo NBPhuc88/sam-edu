@@ -50,7 +50,9 @@ class StudentTuition extends Model
         'total_amount'     => 'decimal:2',
         'paid_amount'      => 'decimal:2',
         'remaining_amount' => 'decimal:2',
-        'due_date'         => 'date:Y-m-d',
+        'due_date'         => 'date:d-m-Y',
+        'created_at'       => 'datetime:d-m-Y H:i',
+        'updated_at'       => 'datetime:d-m-Y H:i',
     ];
 
     /**

@@ -39,13 +39,15 @@ class Exam extends Model
     protected function casts(): array
     {
         return [
-            'exam_date'         => 'date',
+            'exam_date'         => 'date:d-m-Y',
             'max_score'         => 'decimal:2',
             'pass_score'        => 'decimal:2',
             'duration_minutes'  => 'integer',
             'max_attempts'      => 'integer',
             'shuffle_questions' => 'boolean',
             'shuffle_options'   => 'boolean',
+            'created_at'        => 'datetime:d-m-Y H:i',
+            'updated_at'        => 'datetime:d-m-Y H:i',
         ];
     }
 

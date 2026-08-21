@@ -29,8 +29,10 @@ class CenterSubscription extends Model
         return [
             'price'         => 'decimal:2',
             'duration_days' => 'integer',
-            'starts_at'     => 'datetime',
-            'ends_at'       => 'datetime',
+            'starts_at'     => 'datetime:d-m-Y H:i',
+            'ends_at'       => 'datetime:d-m-Y H:i',
+            'created_at'    => 'datetime:d-m-Y H:i',
+            'updated_at'    => 'datetime:d-m-Y H:i',
         ];
     }
 

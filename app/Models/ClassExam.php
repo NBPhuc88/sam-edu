@@ -35,12 +35,14 @@ class ClassExam extends Model
     protected function casts(): array
     {
         return [
-            'exam_date'        => 'date',
-            'valid_from'       => 'datetime',
-            'valid_to'         => 'datetime',
+            'exam_date'        => 'date:d-m-Y',
+            'valid_from'       => 'datetime:d-m-Y H:i',
+            'valid_to'         => 'datetime:d-m-Y H:i',
             'duration_minutes' => 'integer',
             'max_score'        => 'decimal:2',
             'pass_score'       => 'decimal:2',
+            'created_at'       => 'datetime:d-m-Y H:i',
+            'updated_at'       => 'datetime:d-m-Y H:i',
         ];
     }
 

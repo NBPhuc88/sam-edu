@@ -27,7 +27,9 @@ class ClassSession extends Model
     protected function casts(): array
     {
         return [
-            'session_date' => 'date',
+            'session_date' => 'date:d-m-Y',
+            'created_at'   => 'datetime:d-m-Y H:i',
+            'updated_at'   => 'datetime:d-m-Y H:i',
         ];
     }
 

@@ -29,9 +29,11 @@ class RefreshToken extends Model
     protected function casts(): array
     {
         return [
-            'expires_at'   => 'datetime',
-            'revoked_at'   => 'datetime',
-            'last_used_at' => 'datetime',
+            'expires_at'   => 'datetime:d-m-Y H:i',
+            'revoked_at'   => 'datetime:d-m-Y H:i',
+            'last_used_at' => 'datetime:d-m-Y H:i',
+            'created_at'   => 'datetime:d-m-Y H:i',
+            'updated_at'   => 'datetime:d-m-Y H:i',
         ];
     }
 

@@ -22,8 +22,10 @@ class ClassStudent extends Model
     protected function casts(): array
     {
         return [
-            'enrolled_at' => 'datetime',
-            'left_at'     => 'datetime',
+            'enrolled_at' => 'datetime:d-m-Y H:i',
+            'left_at'     => 'datetime:d-m-Y H:i',
+            'created_at'  => 'datetime:d-m-Y H:i',
+            'updated_at'  => 'datetime:d-m-Y H:i',
         ];
     }
 
