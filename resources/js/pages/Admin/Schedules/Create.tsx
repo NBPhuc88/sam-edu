@@ -10,6 +10,7 @@ import {
     Square,
     Coffee,
     CalendarPlus,
+    CalendarDays,
     Sparkles,
     Calendar,
     Check,
@@ -278,7 +279,9 @@ export default function ScheduleCreate({
     // Extra days (make-up sessions)
     const [extraDays, setExtraDays] = useState<ExtraDayItem[]>([]);
 
-    // Holiday picker modal state
+    // Holiday picker modal state & Auto holidays toggle
+    const [autoHolidays, setAutoHolidays] = useState<boolean>(true);
+    const [scheduleHolidays, setScheduleHolidays] = useState<VNHoliday[]>([]);
     const [showHolidayModal, setShowHolidayModal] = useState<boolean>(false);
     const [availableHolidays, setAvailableHolidays] = useState<VNHoliday[]>([]);
     const [selectedHolidayDates, setSelectedHolidayDates] = useState<Set<string>>(new Set());
@@ -527,17 +530,9 @@ export default function ScheduleCreate({
     };
 
     const handleApplyHolidays = () => {
-        // Keep non-holiday custom off days
-        const holidayDatesMap = new Map(availableHolidays.map((h) => [h.date, h.name]));
-        const nonHolidays = offDays.filter((o) => !holidayDatesMap.has(o.date));
-
-        const newHolidaysOff: OffDayItem[] = Array.from(selectedHolidayDates).map((date) => ({
-            date,
-            is_full_day: true,
-            reason: holidayDatesMap.get(date) || 'Nghỉ Lễ Việt Nam',
-        }));
-
-        setOffDays([...nonHolidays, ...newHolidaysOff]);
+        const selected = availableHolidays.filter((h) => selectedHolidayDates.has(h.date));
+        setScheduleHolidays(selected);
+        setAutoHolidays(true);
         setShowHolidayModal(false);
     };
 
@@ -678,6 +673,8 @@ export default function ScheduleCreate({
                 start_date: startDate,
                 end_date: endDate || null,
                 weeks: weeksPayload,
+                auto_holidays: autoHolidays,
+                holidays: scheduleHolidays.length > 0 ? scheduleHolidays : null,
                 off_days: offDaysPayload,
                 extra_days: extraDaysPayload,
                 status,
@@ -1025,10 +1022,10 @@ export default function ScheduleCreate({
                             <div>
                                 <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                                     <Coffee className="h-5 w-5 text-amber-600" />
-                                    3. Cấu Hình Ngày Nghỉ (Cả ngày hoặc Khung giờ cụ thể)
+                                    3. Cấu Hình Ngày Nghỉ Của Lớp & Nghỉ Lễ
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Bỏ qua ca học vào các ngày nghỉ lễ hoặc khung giờ nghỉ cụ thể.
+                                    Bỏ qua ca học vào các ngày nghỉ lễ quốc gia hoặc ngày nghỉ riêng của lớp.
                                 </p>
                             </div>
 
@@ -1040,7 +1037,7 @@ export default function ScheduleCreate({
                                     icon={<Sparkles className="h-4 w-4 text-emerald-600" />}
                                     onClick={handleOpenHolidayModal}
                                 >
-                                    Nạp Ngày Lễ VN
+                                    Chọn Ngày Lễ Áp Dụng
                                 </Button>
                                 <Button
                                     type="button"
@@ -1049,10 +1046,51 @@ export default function ScheduleCreate({
                                     icon={<Plus className="h-4 w-4 text-amber-600" />}
                                     onClick={handleAddOffDay}
                                 >
-                                    Thêm Ngày Nghỉ
+                                    Thêm Ngày Nghỉ Của Lớp
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Holiday toggle switch */}
+                        <div className="mb-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+                            <div className="flex items-center gap-3">
+                                <CalendarDays className="h-5 w-5 text-emerald-600 shrink-0" />
+                                <div>
+                                    <span className="text-xs font-bold uppercase text-emerald-950">
+                                        Tự Động Nghỉ Theo Ngày Lễ Quốc Gia (Khuyên dùng)
+                                    </span>
+                                    <p className="text-[11px] text-emerald-800">
+                                        Hệ thống tự động bỏ qua các ca học định kỳ rơi vào ngày lễ và tự dời sang ngày tiếp theo (Lưu riêng trong trường holidays).
+                                    </p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex cursor-pointer items-center shrink-0">
+                                <input
+                                    type="checkbox"
+                                    checked={autoHolidays}
+                                    onChange={(e) => setAutoHolidays(e.target.checked)}
+                                    className="peer sr-only"
+                                />
+                                <div className="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-hidden"></div>
+                            </label>
+                        </div>
+
+                        {/* Selected Holidays badges if customized */}
+                        {scheduleHolidays.length > 0 && (
+                            <div className="mb-4 rounded-lg border border-gray-200 bg-slate-50 p-3">
+                                <span className="mb-2 block text-xs font-bold text-gray-700">
+                                    Các ngày lễ đã chọn riêng ({scheduleHolidays.length} ngày):
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {scheduleHolidays.map((h, hIdx) => (
+                                        <span key={hIdx} className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-900">
+                                            <span>{h.name}</span>
+                                            <span className="font-mono text-emerald-700">({h.date})</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {offDays.length > 0 ? (
                             <div className="space-y-3">

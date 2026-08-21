@@ -14,6 +14,8 @@ class ClassSchedule extends Model
     protected $fillable = [
         'class_subject_id',
         'weeks',
+        'auto_holidays',
+        'holidays',
         'off_days',
         'extra_days',
         'room_id',
@@ -23,9 +25,11 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
-            'weeks'      => 'array',
-            'off_days'   => 'array',
-            'extra_days' => 'array',
+            'weeks'         => 'array',
+            'auto_holidays' => 'boolean',
+            'holidays'      => 'array',
+            'off_days'      => 'array',
+            'extra_days'    => 'array',
         ];
     }
 

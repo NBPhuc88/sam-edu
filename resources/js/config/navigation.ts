@@ -59,6 +59,7 @@ const superAdminNav: NavItem[] = [
             { label: 'Buổi Học', path: '/sessions' },
             { label: 'Điểm Danh', path: '/attendance' },
             { label: 'Đổi Lịch Học', path: '/reschedules' },
+            { label: 'Ngày Lễ', path: '/holidays' },
         ],
     },
     {

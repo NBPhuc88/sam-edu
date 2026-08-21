@@ -76,4 +76,12 @@ interface ClassScheduleServiceInterface
      * @return array{kept: int, deleted: int, created: int}
      */
     public function syncSessionsWithChunking(int $classSubjectId, array $newFutureSlots, string $fromDate): array;
+
+    /**
+     * Tái sinh các ca học tương lai khi cấu hình lịch hoặc ngày lễ thay đổi.
+     *
+     * @param  ClassSchedule      $schedule
+     * @return ClassSchedule|null
+     */
+    public function regenerateFutureSessions(ClassSchedule $schedule): ?ClassSchedule;
 }

@@ -335,16 +335,20 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedWeeks     = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? []);
             $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? []);
             $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
+            $autoHolidays        = isset($data['auto_holidays']) ? (bool) $data['auto_holidays'] : true;
+            $holidays            = $data['holidays'] ?? [];
 
             // 2. Tạo hoặc cập nhật bản ghi ClassSchedule duy nhất
             $schedule = ClassSchedule::updateOrCreate(
                 ['class_subject_id' => $classSubject->id],
                 [
-                    'weeks'      => $normalizedWeeks,
-                    'off_days'   => $normalizedOffDays,
-                    'extra_days' => $normalizedExtraDays,
-                    'room_id'    => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                    'status'     => $data['status'] ?? 'active',
+                    'weeks'         => $normalizedWeeks,
+                    'auto_holidays' => $autoHolidays,
+                    'holidays'      => $holidays,
+                    'off_days'      => $normalizedOffDays,
+                    'extra_days'    => $normalizedExtraDays,
+                    'room_id'       => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
+                    'status'        => $data['status'] ?? 'active',
                 ]
             );
 
@@ -359,7 +363,11 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $data['end_date'] ?? null,
                 $teacherId,
                 ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                $subject?->total_sessions
+                $subject?->total_sessions,
+                null,
+                [],
+                $holidays,
+                $autoHolidays
             );
 
             $finalEndDate = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
@@ -460,13 +468,17 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedWeeks     = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? $schedule->weeks ?? []);
             $normalizedOffDays   = $this->normalizeOffDays($data['off_days'] ?? $data['off_sessions'] ?? $schedule->off_days ?? []);
             $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? $schedule->extra_days ?? []);
+            $autoHolidays        = array_key_exists('auto_holidays', $data) ? (bool) $data['auto_holidays'] : (bool) ($schedule->auto_holidays ?? true);
+            $holidays            = array_key_exists('holidays', $data) ? $data['holidays'] : ($schedule->holidays ?? []);
 
             $schedule->update([
-                'weeks'      => $normalizedWeeks,
-                'off_days'   => $normalizedOffDays,
-                'extra_days' => $normalizedExtraDays,
-                'room_id'    => $roomId,
-                'status'     => $data['status'] ?? $schedule->status,
+                'weeks'         => $normalizedWeeks,
+                'auto_holidays' => $autoHolidays,
+                'holidays'      => $holidays,
+                'off_days'      => $normalizedOffDays,
+                'extra_days'    => $normalizedExtraDays,
+                'room_id'       => $roomId,
+                'status'        => $data['status'] ?? $schedule->status,
             ]);
 
             // 4. Tính toán danh sách ca học tương lai mới
@@ -482,7 +494,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $roomId,
                 $neededFutureSessions,
                 $scanStartDate,
-                $pastSessionKeys
+                $pastSessionKeys,
+                $holidays,
+                $autoHolidays
             );
 
             // 5. Đồng bộ các ca học tương lai (Giữ trùng, Xóa khác, Thêm thiếu) với chunk 1000 items
@@ -715,6 +729,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
      * @param  ?int                                                                                        $targetRemainingCount
      * @param  ?string                                                                                     $scanStartDateStr
      * @param  array<string, bool>                                                                         $existingPastKeys
+     * @param  array                                                                                       $holidays
+     * @param  bool                                                                                        $autoHolidays
      * @return array{sessions: array<int, array<string, mixed>>, calculated_end_date: ?string, count: int}
      */
     protected function calculateSessionsPayload(
@@ -729,7 +745,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         ?int $roomId = null,
         ?int $targetRemainingCount = null,
         ?string $scanStartDateStr = null,
-        array $existingPastKeys = []
+        array $existingPastKeys = [],
+        array $holidays = [],
+        bool $autoHolidays = true
     ): array {
         $actualScanStart = $scanStartDateStr ?: $startDateStr;
 
@@ -743,12 +761,22 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         $scanStart = Carbon::parse($actualScanStart);
 
-        // Tạo map tra cứu nhanh cho off_days:
-        // 1. $fullOffDays = ['2026-09-02' => true] (nghỉ cả ngày)
-        // 2. $slotOffDays = ['2026-09-04_08:00' => true] (nghỉ theo khung giờ bắt đầu)
+        // Tạo map tra cứu nhanh cho off_days và holidays:
         $fullOffDays = [];
         $slotOffDays = [];
 
+        // 1. Áp dụng holidays nếu autoHolidays = true
+        if ($autoHolidays && ! empty($holidays)) {
+            foreach ($holidays as $h) {
+                $hDate = is_array($h) ? ($h['date'] ?? null) : (string) $h;
+
+                if ($hDate) {
+                    $fullOffDays[$hDate] = true;
+                }
+            }
+        }
+
+        // 2. Áp dụng off_days (ngày nghỉ riêng của lớp)
         foreach ($offDays as $off) {
             $d = $off['date'] ?? null;
 
@@ -950,5 +978,96 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $this->sessionRepository->deleteFutureSessionsByScheduleId($schedule->id, now()->toDateString());
 
         return $this->scheduleRepository->delete($schedule->id);
+    }
+
+    /**
+     * Tái sinh các ca học tương lai khi cấu hình lịch hoặc ngày lễ thay đổi.
+     *
+     * @param  ClassSchedule      $schedule
+     * @return ClassSchedule|null
+     */
+    public function regenerateFutureSessions(ClassSchedule $schedule): ?ClassSchedule
+    {
+        $classSubject = $schedule->classSubject;
+
+        if (! $classSubject || $schedule->status !== 'active') {
+            return null;
+        }
+
+        return DB::transaction(function () use ($schedule, $classSubject) {
+            $teacherId = $classSubject->teacher_id;
+            $roomId    = $schedule->room_id;
+            $startDate = $classSubject->start_date?->format('Y-m-d') ?: now()->toDateString();
+            $endDate   = $classSubject->end_date?->format('Y-m-d');
+            $subject   = $classSubject->subject;
+            $today     = now()->toDateString();
+
+            $pastSessionsCursor = $this->sessionRepository->getPastSessionsCursor($classSubject->id, $today);
+            $pastSessionsCount  = 0;
+            $pastSessionKeys    = [];
+
+            foreach ($pastSessionsCursor as $ps) {
+                $pastSessionsCount++;
+                $pDate                                 = $ps->session_date instanceof \DateTimeInterface ? $ps->session_date->format('Y-m-d') : (string) $ps->session_date;
+                $pStart                                = substr((string) $ps->start_time, 0, 5);
+                $pastSessionKeys["{$pDate}_{$pStart}"] = true;
+            }
+
+            $scanStartDate = ($startDate && $startDate > $today) ? $startDate : $today;
+
+            $totalSessions        = $subject?->total_sessions;
+            $neededFutureSessions = null;
+
+            if ($totalSessions && $totalSessions > 0) {
+                $neededFutureSessions = max(0, $totalSessions - $pastSessionsCount);
+            }
+
+            $normalizedWeeks     = $schedule->weeks ?? [];
+            $normalizedOffDays   = $schedule->off_days ?? [];
+            $normalizedExtraDays = $schedule->extra_days ?? [];
+            $holidays            = $schedule->holidays ?? [];
+            $autoHolidays        = (bool) ($schedule->auto_holidays ?? true);
+
+            $sessionResult = $this->calculateSessionsPayload(
+                $classSubject,
+                $schedule->id,
+                $normalizedWeeks,
+                $normalizedOffDays,
+                $normalizedExtraDays,
+                $startDate,
+                $endDate,
+                (int) $teacherId,
+                $roomId,
+                $neededFutureSessions,
+                $scanStartDate,
+                $pastSessionKeys,
+                $holidays,
+                $autoHolidays
+            );
+
+            $this->syncSessionsWithChunking(
+                $classSubject->id,
+                $sessionResult['sessions'],
+                $scanStartDate
+            );
+
+            $lastSession = $this->sessionRepository->getLatestSession($classSubject->id);
+
+            $finalEndDate = ! empty($endDate)
+                ? $endDate
+                : ($lastSession?->session_date instanceof \DateTimeInterface
+                    ? $lastSession->session_date->format('Y-m-d')
+                    : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']));
+
+            $this->scheduleRepository->updateClassSubject($classSubject->id, [
+                'end_date' => $finalEndDate,
+            ]);
+
+            if ($classSubject->schoolClass) {
+                $this->syncSchoolClassDates($classSubject->schoolClass, $startDate, $finalEndDate);
+            }
+
+            return $schedule->refresh();
+        });
     }
 }
