@@ -21,7 +21,7 @@ class UpdateClassScheduleRequest extends FormRequest
             'room_id'                 => ['nullable', 'integer', 'exists:rooms,id'],
             'start_date'              => ['sometimes', 'required', 'date'],
             'end_date'                => ['nullable', 'date', 'after_or_equal:start_date'],
-            'weeks'                   => ['sometimes', 'required', 'array'],
+            'weeks'                   => ['nullable', 'array'],
             'auto_holidays'           => ['nullable', 'boolean'],
             'excluded_holiday_ids'    => ['nullable', 'array'],
             'excluded_holiday_ids.*'  => ['integer'],
@@ -46,7 +46,6 @@ class UpdateClassScheduleRequest extends FormRequest
             'teacher_id.required'     => 'Vui lòng chọn giáo viên giảng dạy.',
             'start_date.required'     => 'Vui lòng chọn ngày bắt đầu.',
             'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
-            'weeks.required'          => 'Vui lòng thiết lập ít nhất 1 khung giờ học trong tuần.',
         ];
     }
 }

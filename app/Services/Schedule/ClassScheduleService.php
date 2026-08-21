@@ -866,7 +866,60 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
         }
 
-        // 4. Sinh ca học theo chu kỳ tuần kết hợp ngày bù (extra_days) theo thứ tự thời gian
+        // 4. Nếu không chọn ngày học nào trong tuần (empty weeks), chỉ sinh ca học từ ngày học bù (extra_days)
+        if (empty($weeks)) {
+            $sortedExtraDays = $extraDays;
+            usort($sortedExtraDays, function ($a, $b) {
+                $dateCmp = strcmp($a['date'] ?? '', $b['date'] ?? '');
+
+                if ($dateCmp !== 0) {
+                    return $dateCmp;
+                }
+
+                return strcmp($a['start_time'] ?? '', $b['start_time'] ?? '');
+            });
+
+            foreach ($sortedExtraDays as $extra) {
+                $specDateStr = $extra['date'] ?? null;
+                $specStart   = ! empty($extra['start_time']) ? substr((string) $extra['start_time'], 0, 5) : null;
+                $specEnd     = ! empty($extra['end_time']) ? substr((string) $extra['end_time'], 0, 5) : null;
+
+                if ($specDateStr && $specStart && $specEnd && $specDateStr >= $actualScanStart) {
+                    $slotKey = "{$specDateStr}_{$specStart}";
+
+                    if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                        $seenDateTime[$slotKey] = true;
+                        $sessions[]             = [
+                            'class_subject_id'  => $classSubject->id,
+                            'class_schedule_id' => $scheduleId,
+                            'teacher_id'        => $teacherId,
+                            'room_id'           => $roomId,
+                            'session_date'      => $specDateStr,
+                            'start_time'        => $specStart,
+                            'end_time'          => $specEnd,
+                            'status'            => 'scheduled',
+                            'topic'             => 'Buổi học bổ sung / bù',
+                            'note'              => null,
+                            'created_at'        => $now,
+                            'updated_at'        => $now,
+                        ];
+                        $lastSessionDate = $specDateStr;
+
+                        if ($targetRemainingCount !== null && count($sessions) >= $targetRemainingCount) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return [
+                'sessions'            => $sessions,
+                'calculated_end_date' => $lastSessionDate ?: $actualScanStart,
+                'count'               => count($sessions),
+            ];
+        }
+
+        // 5. Sinh ca học theo chu kỳ tuần kết hợp ngày bù (extra_days) theo thứ tự thời gian
         if ($targetRemainingCount !== null) {
             // Đã xác định số buổi cần tạo (VD: 60 buổi hoặc còn 45 buổi)
             $maxSafetyDate = $scanStart->copy()->addYears(5);

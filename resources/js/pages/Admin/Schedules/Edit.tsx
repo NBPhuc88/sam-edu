@@ -255,8 +255,14 @@ function calculateEstimatedEndDate(
         .filter(([, conf]) => conf.enabled && conf.slots.length > 0)
         .map(([day]) => Number(day));
 
-    if (enabledDays.length === 0 && extraDays.length === 0) {
-        return null;
+    if (enabledDays.length === 0) {
+        if (extraDays.length === 0) {
+            return null;
+        }
+        const sortedExtra = [...extraDays]
+            .filter((e) => e.date && e.date >= startDateStr)
+            .sort((a, b) => a.date.localeCompare(b.date));
+        return sortedExtra.length > 0 ? sortedExtra[sortedExtra.length - 1].date : null;
     }
 
     const fullOffDatesSet = new Set(offDays.filter((s) => s.is_full_day && s.date).map((s) => s.date));
