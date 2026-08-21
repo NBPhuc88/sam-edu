@@ -22,12 +22,12 @@ class UpdateClassSessionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_date' => ['required', 'date_format:Y-m-d'],
-            'start_time'   => ['required', 'string', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'end_time'     => ['required', 'string', 'regex:/^\d{2}:\d{2}(:\d{2})?$/', 'after:start_time'],
-            'teacher_id'   => ['required', 'integer', 'exists:teachers,id'],
+            'session_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
+            'start_time'   => ['sometimes', 'required', 'string', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'end_time'     => ['sometimes', 'required', 'string', 'regex:/^\d{2}:\d{2}(:\d{2})?$/', 'after:start_time'],
+            'teacher_id'   => ['sometimes', 'required', 'integer', 'exists:teachers,id'],
             'room_id'      => ['nullable', 'integer', 'exists:rooms,id'],
-            'status'       => ['required', 'string', 'in:scheduled,in_progress,completed,cancelled'],
+            'status'       => ['sometimes', 'required', 'string', 'in:scheduled,in_progress,completed,cancelled'],
             'topic'        => ['nullable', 'string', 'max:255'],
             'note'         => ['nullable', 'string', 'max:1000'],
             'reason'       => ['nullable', 'string', 'max:500'],

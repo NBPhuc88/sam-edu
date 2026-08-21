@@ -146,6 +146,7 @@ const WEEKDAY_NAMES = [
 
 export default function SessionShow({ session, teachers = [], rooms = [] }: Props) {
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+    const [isContentModalOpen, setIsContentModalOpen] = useState(false);
 
     const subject = session.class_subject?.subject;
     const schoolClass = session.class_subject?.school_class;
@@ -169,8 +170,6 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         teacher_id: session.teacher_id ? String(session.teacher_id) : '',
         room_id: session.room_id ? String(session.room_id) : '',
         status: session.status || 'scheduled',
-        topic: session.topic || '',
-        note: session.note || '',
         reason: '',
     });
 
@@ -179,6 +178,27 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         patch(`/sessions/${session.id}`, {
             onSuccess: () => {
                 setIsRescheduleModalOpen(false);
+            },
+        });
+    };
+
+    // Topic & Note content form state
+    const {
+        data: contentData,
+        setData: setContentData,
+        patch: patchContent,
+        processing: contentProcessing,
+        errors: contentErrors,
+    } = useForm({
+        topic: session.topic || '',
+        note: session.note || '',
+    });
+
+    const handleContentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        patchContent(`/sessions/${session.id}`, {
+            onSuccess: () => {
+                setIsContentModalOpen(false);
             },
         });
     };
@@ -308,6 +328,15 @@ return '---';
 
                     <div className="flex flex-wrap items-center gap-3">
                         <Button
+                            variant="secondary"
+                            size="md"
+                            icon={<BookOpen className="h-4.5 w-4.5 text-emerald-600" />}
+                            onClick={() => setIsContentModalOpen(true)}
+                        >
+                            Chủ Đề & Ghi Chú
+                        </Button>
+
+                        <Button
                             variant="edit"
                             size="md"
                             icon={<Edit3 className="h-4.5 w-4.5" />}
@@ -417,12 +446,21 @@ return '---';
                 </div>
 
                 {/* Topic & Notes Box */}
-                {(session.topic || session.note) && (
+                {session.topic || session.note ? (
                     <Card className="border border-gray-100 p-5 shadow-xs bg-slate-50/50">
-                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-2.5">
-                            <BookOpen className="h-4 w-4 text-emerald-600" />
-                            Nội Dung & Ghi Chú Buổi Học
-                        </h3>
+                        <div className="flex items-center justify-between mb-2.5">
+                            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <BookOpen className="h-4 w-4 text-emerald-600" />
+                                Nội Dung & Ghi Chú Buổi Học
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsContentModalOpen(true)}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+                            >
+                                <Edit3 className="h-3.5 w-3.5" /> Chỉnh sửa
+                            </button>
+                        </div>
                         {session.topic && (
                             <p className="text-sm text-gray-800 font-medium mb-2">
                                 <span className="text-gray-500">Chủ đề / Bài học:</span> {session.topic}
@@ -438,6 +476,26 @@ return '---';
                                 </p>
                             </div>
                         )}
+                    </Card>
+                ) : (
+                    <Card className="border border-dashed border-gray-200 p-4 shadow-2xs bg-slate-50/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                <BookOpen className="h-4.5 w-4.5" />
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-800">Chưa có chủ đề & ghi chú buổi học</h4>
+                                <p className="text-[11px] text-gray-500">Thêm chủ đề bài giảng hoặc dặn dò để học sinh chuẩn bị bài trước khi đến lớp.</p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            icon={<Edit3 className="h-3.5 w-3.5 text-emerald-600" />}
+                            onClick={() => setIsContentModalOpen(true)}
+                        >
+                            Thêm Chủ Đề / Ghi Chú
+                        </Button>
                     </Card>
                 )}
 
@@ -640,13 +698,6 @@ return '---';
                 title="Đổi Lịch Dạy & Phân Công Ca Học"
             >
                 <form onSubmit={handleRescheduleSubmit} className="space-y-4">
-                    <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-                        <div>
-                            <strong>Lưu ý:</strong> Khi bạn thay đổi ngày học, khung giờ, giáo viên hoặc phòng học, hệ thống sẽ tự động lưu lại một bản ghi vào nhật ký lịch sử đổi lịch.
-                        </div>
-                    </div>
-
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {/* Session Date */}
                         <div>
@@ -766,42 +817,10 @@ return '---';
                         </div>
                     </div>
 
-                    {/* Topic */}
-                    <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Chủ đề bài giảng / Bài học
-                        </label>
-                        <Input
-                            placeholder="Ví dụ: Bài 3: Phép nhân phân số và luyện tập"
-                            value={data.topic}
-                            onChange={(e) => setData('topic', e.target.value)}
-                        />
-                        {errors.topic && (
-                            <p className="mt-1 text-xs text-red-600">{errors.topic}</p>
-                        )}
-                    </div>
-
-                    {/* Note */}
-                    <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Ghi chú / Dặn dò buổi học (Học sinh & Giáo viên đều xem được)
-                        </label>
-                        <textarea
-                            rows={3}
-                            placeholder="Ví dụ: Nhớ mang sách bài tập tập 2, làm bài tập trước khi đến lớp, chuẩn bị bài thuyết trình..."
-                            value={data.note}
-                            onChange={(e) => setData('note', e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                        />
-                        {errors.note && (
-                            <p className="mt-1 text-xs text-red-600">{errors.note}</p>
-                        )}
-                    </div>
-
                     {/* Reason */}
                     <div>
                         <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                            Lý do đổi lịch / Ghi chú thay đổi
+                            Lý do đổi lịch
                         </label>
                         <textarea
                             rows={2}
@@ -834,6 +853,69 @@ return '---';
                             icon={<Save className="h-4 w-4" />}
                         >
                             Lưu Thay Đổi
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal: Update Topic & Notes */}
+            <Modal
+                isOpen={isContentModalOpen}
+                onClose={() => setIsContentModalOpen(false)}
+                title="Chủ Đề & Ghi Chú Buổi Học"
+            >
+                <form onSubmit={handleContentSubmit} className="space-y-4">
+                    {/* Topic */}
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                            Chủ đề bài giảng / Bài học
+                        </label>
+                        <Input
+                            placeholder="Ví dụ: Bài 3: Phép nhân phân số và luyện tập"
+                            value={contentData.topic}
+                            onChange={(e) => setContentData('topic', e.target.value)}
+                        />
+                        {contentErrors.topic && (
+                            <p className="mt-1 text-xs text-red-600">{contentErrors.topic}</p>
+                        )}
+                    </div>
+
+                    {/* Note */}
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                            Ghi chú / Dặn dò buổi học
+                        </label>
+                        <textarea
+                            rows={4}
+                            placeholder="Ví dụ: Nhớ mang sách bài tập tập 2, làm bài tập trước khi đến lớp, chuẩn bị bài thuyết trình..."
+                            value={contentData.note}
+                            onChange={(e) => setContentData('note', e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        />
+                        {contentErrors.note && (
+                            <p className="mt-1 text-xs text-red-600">{contentErrors.note}</p>
+                        )}
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setIsContentModalOpen(false)}
+                            disabled={contentProcessing}
+                        >
+                            Hủy Bỏ
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="md"
+                            isLoading={contentProcessing}
+                            icon={<Save className="h-4 w-4" />}
+                        >
+                            Lưu Ghi Chú
                         </Button>
                     </div>
                 </form>
