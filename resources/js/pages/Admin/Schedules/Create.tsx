@@ -1123,10 +1123,10 @@ export default function ScheduleCreate({
                                 <CalendarDays className="h-5 w-5 text-emerald-600 shrink-0" />
                                 <div>
                                     <span className="text-xs font-bold uppercase text-emerald-950">
-                                        Tự Động Nghỉ Theo Ngày Lễ Quốc Gia (Khuyên dùng)
+                                        Tự Động Nghỉ Theo Ngày Lễ Quốc Gia
                                     </span>
                                     <p className="text-[11px] text-emerald-800">
-                                        Hệ thống tự động bỏ qua các ca học định kỳ rơi vào ngày lễ và tự dời sang ngày tiếp theo (Lưu riêng trong trường holidays).
+                                        Hệ thống tự động bỏ qua các ca học định kỳ rơi vào ngày lễ và tự dời sang ngày tiếp theo
                                     </p>
                                 </div>
                             </div>
