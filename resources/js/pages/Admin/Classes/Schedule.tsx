@@ -20,6 +20,7 @@ import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString, formatTime } from '@/lib/date';
 
@@ -152,9 +153,9 @@ export default function ClassSchedulePage({
         );
     };
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.value) {
-            handleNavigateWeek(e.target.value);
+    const handleDateChange = (dateStr: string) => {
+        if (dateStr) {
+            handleNavigateWeek(dateStr);
         }
     };
 
@@ -370,14 +371,12 @@ export default function ClassSchedulePage({
 
                             <div className="ml-2 flex items-center gap-2 border-l border-gray-200 pl-3">
                                 <span className="text-xs font-semibold text-gray-500">
-                                    Chọn ngày:
-                                </span>
-                                <input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={handleDateChange}
-                                    className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-800 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                />
+                                     Chọn ngày:
+                                 </span>
+                                 <DatePicker
+                                     value={selectedDate}
+                                     onChange={handleDateChange}
+                                 />
                             </div>
                         </div>
 

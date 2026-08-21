@@ -18,6 +18,7 @@ import {
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString, formatTime } from '@/lib/date';
@@ -161,9 +162,9 @@ export default function TeacherSchedulePage({
         );
     };
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.value) {
-            handleNavigateWeek(e.target.value);
+    const handleDateChange = (dateStr: string) => {
+        if (dateStr) {
+            handleNavigateWeek(dateStr);
         }
     };
 
@@ -353,11 +354,9 @@ export default function TeacherSchedulePage({
                                 <span className="text-xs font-semibold text-gray-500">
                                     Chọn ngày:
                                 </span>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={selectedDate}
                                     onChange={handleDateChange}
-                                    className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-800 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
