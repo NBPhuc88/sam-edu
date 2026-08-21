@@ -116,7 +116,7 @@ class ClassSessionController extends Controller
         $user    = $this->getAuthUser();
         $session = $this->sessionService->updateOrRescheduleSession($id, $request->validated(), $user);
 
-        $dateFormatted = $session->session_date ? \Carbon\Carbon::parse($session->session_date)->format('d/m/Y') : '';
+        $dateFormatted = $session->session_date ? \Carbon\Carbon::parse($session->session_date)->format('d-m-Y') : '';
 
         return redirect()->route('sessions.show', ['id' => $id])
             ->with('success', "Cập nhật / Đổi lịch buổi học ngày {$dateFormatted} thành công!");

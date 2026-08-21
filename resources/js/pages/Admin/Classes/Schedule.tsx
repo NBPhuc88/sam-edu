@@ -21,6 +21,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { toISODateString, formatTime } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -229,7 +230,7 @@ export default function ClassSchedulePage({
         return sessions.filter((s) => {
             const sStart = formatTime(s.start_time);
             const sEnd = formatTime(s.end_time);
-            const sDate = s.session_date ? s.session_date.substring(0, 10) : '';
+            const sDate = toISODateString(s.session_date);
 
             return sDate === dateRaw && sStart === slot.start_time && sEnd === slot.end_time;
         });

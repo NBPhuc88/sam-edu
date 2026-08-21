@@ -388,6 +388,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
                 'teacher:id,full_name,teacher_code',
                 'room:id,name',
             ])
@@ -422,12 +423,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             $weeks = is_array($schedule->weeks) ? $schedule->weeks : (json_decode($schedule->weeks ?? '[]', true) ?? []);
 
             foreach ($weeks as $weekday => $slots) {
-                if (!is_array($slots)) {
+                if (! is_array($slots)) {
                     continue;
                 }
 
                 foreach ($slots as $slot) {
-                    if (!is_array($slot) || count($slot) < 2) {
+                    if (! is_array($slot) || count($slot) < 2) {
                         continue;
                     }
 
@@ -439,6 +440,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                         'end_time'         => $slot[1],
                         'room_id'          => $schedule->room_id,
                         'status'           => $schedule->status,
+                        'class_subject'    => $schedule->classSubject,
                         'classSubject'     => $schedule->classSubject,
                         'room'             => $schedule->room,
                     ]);

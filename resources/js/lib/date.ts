@@ -10,17 +10,18 @@ export const WEEKDAY_NAMES = [
 
 /**
  * Parse chuỗi ngày an toàn hỗ trợ các định dạng:
- * - d-m-Y (ví dụ: '21-08-2026', '21-08-2026 22:00')
+ * - d-m-Y hoặc d/m/Y (ví dụ: '21-08-2026', '21-08-2026 22:00')
  * - Y-m-d (ví dụ: '2026-08-21', '2026-08-21T00:00:00.000000Z')
  */
 export function parseDate(dateStr: string | null | undefined): Date | null {
     if (!dateStr) return null;
     const str = String(dateStr).trim();
 
-    // 1. Dạng d-m-Y hoặc d-m-Y H:i
-    if (/^\d{2}-\d{2}-\d{4}/.test(str)) {
+    // 1. Dạng d-m-Y hoặc d/m/Y
+    if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(str)) {
         const [datePart, timePart] = str.split(' ');
-        const [d, m, y] = datePart.split('-').map(Number);
+        const separator = datePart.includes('-') ? '-' : '/';
+        const [d, m, y] = datePart.split(separator).map(Number);
         if (timePart && timePart.includes(':')) {
             const [hours, minutes] = timePart.split(':').map(Number);
             return new Date(y, m - 1, d, hours || 0, minutes || 0);
@@ -44,24 +45,42 @@ export function parseDate(dateStr: string | null | undefined): Date | null {
 }
 
 /**
- * Format ngày hiển thị dạng: "Thứ Sáu, 21/08/2026"
+ * Format ngày hiển thị chuẩn dạng: "21-08-2026"
+ * Nếu includeWeekday = true: "Thứ Sáu, 21-08-2026"
  */
-export function formatDate(dateStr: string | null | undefined): string {
+export function formatDate(dateStr: string | null | undefined, includeWeekday: boolean = false): string {
     if (!dateStr) return '---';
 
     const d = parseDate(dateStr);
     if (!d) return String(dateStr);
 
-    const dayName = WEEKDAY_NAMES[d.getDay()];
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
 
-    return `${dayName}, ${day}/${month}/${year}`;
+    if (includeWeekday) {
+        const dayName = WEEKDAY_NAMES[d.getDay()];
+        return `${dayName}, ${day}-${month}-${year}`;
+    }
+
+    return `${day}-${month}-${year}`;
 }
 
 /**
- * Format ngày giờ hiển thị dạng: "22:00 - 21/08/2026"
+ * Chuyển đổi an toàn chuỗi ngày thành dạng "YYYY-MM-DD"
+ */
+export function toISODateString(dateStr: string | null | undefined): string {
+    if (!dateStr) return '';
+    const d = parseDate(dateStr);
+    if (!d) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+/**
+ * Format ngày giờ hiển thị chuẩn dạng: "21-08-2026 22:00"
  */
 export function formatDateTime(dtStr: string | null | undefined): string {
     if (!dtStr) return '---';
@@ -75,7 +94,7 @@ export function formatDateTime(dtStr: string | null | undefined): string {
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
 
-    return `${hours}:${minutes} - ${day}/${month}/${year}`;
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
 /**

@@ -279,7 +279,7 @@ class TeacherService implements TeacherServiceInterface
             $weekDays[] = [
                 'weekday_number' => $isoWeekday,
                 'weekday_label'  => $dayNames[$isoWeekday] ?? "Thứ {$isoWeekday}",
-                'date_formatted' => $day->format('d/m/Y'),
+                'date_formatted' => $day->format('d-m-Y'),
                 'date_raw'       => $day->format('Y-m-d'),
                 'is_today'       => $day->isToday(),
             ];

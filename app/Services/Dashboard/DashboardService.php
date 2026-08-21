@@ -392,7 +392,7 @@ class DashboardService implements DashboardServiceInterface
                 'score'        => (float) $res->score,
                 'grade'        => $res->grade ?? 'Đạt',
                 'comment'      => $res->comment ?? '',
-                'exam_date'    => $res->exam->exam_date ? $res->exam->exam_date->format('d/m/Y') : date('d/m/Y'),
+                'exam_date'    => $res->exam->exam_date ? $res->exam->exam_date->format('d-m-Y') : date('d-m-Y'),
             ];
         }
 

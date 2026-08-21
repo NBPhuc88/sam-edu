@@ -68,10 +68,10 @@ class AttendanceService implements AttendanceServiceInterface
                 'gender'               => $student->gender,
                 'status'               => $att ? $att->status : 'present',
                 'note'                 => $att ? $att->note : '',
-                'check_in_at'          => $att?->check_in_at?->format('H:i d/m/Y'),
+                'check_in_at'          => $att?->check_in_at?->format('d-m-Y H:i'),
                 'marked_by_teacher_id' => $att?->marked_by_teacher_id,
                 'marked_by_admin_id'   => $att?->marked_by_admin_id,
-                'marked_at'            => $att?->marked_at?->format('H:i d/m/Y'),
+                'marked_at'            => $att?->marked_at?->format('d-m-Y H:i'),
             ];
         });
 
