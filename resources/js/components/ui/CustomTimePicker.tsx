@@ -9,6 +9,7 @@ export interface CustomTimePickerProps {
     className?: string;
     buttonClassName?: string;
     disabled?: boolean;
+    placement?: 'top' | 'bottom' | 'auto';
 }
 
 const HOURS = Array.from({ length: 18 }, (_, i) => String(i + 6).padStart(2, '0')); // 06..23
@@ -31,6 +32,7 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     className = '',
     buttonClassName = '',
     disabled = false,
+    placement = 'top',
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const initialTime = value ? value.slice(0, 5) : '18:00';
@@ -78,6 +80,10 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     const displayTime = `${selectedHour}:${selectedMinute}`;
 
+    const placementClass = placement === 'bottom'
+        ? 'top-full mt-1.5'
+        : 'bottom-full mb-1.5';
+
     return (
         <div ref={containerRef} className={`relative inline-block ${className ? className : 'w-full'}`}>
             {label && (
@@ -98,9 +104,9 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
                 <span className="text-xs font-bold font-mono text-gray-900">{displayTime}</span>
             </button>
 
-            {/* Custom Popover Dropdown with explicit SAVE button */}
+            {/* Custom Popover Dropdown (Defaults to opening TOP / above the input) */}
             {isOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-gray-200 bg-white p-3.5 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
+                <div className={`absolute left-0 ${placementClass} z-50 w-64 rounded-xl border border-gray-200 bg-white p-3.5 shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100`}>
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
                         <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
                             Chọn Giờ Lớp Học

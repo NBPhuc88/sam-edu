@@ -130,6 +130,22 @@ export interface SlotOverlapError {
     message: string;
 }
 
+function ensureEndTimeAfterStart(newStart: string, currentEnd: string, defaultDuration = 120): string {
+    if (!newStart) return currentEnd;
+    const [sH, sM] = newStart.split(':').map((v) => parseInt(v, 10) || 0);
+    const [eH, eM] = (currentEnd || '00:00').split(':').map((v) => parseInt(v, 10) || 0);
+    const startTotal = sH * 60 + sM;
+    const endTotal = eH * 60 + eM;
+
+    if (endTotal <= startTotal) {
+        const targetTotal = Math.min(23 * 60 + 55, startTotal + defaultDuration);
+        const targetH = Math.floor(targetTotal / 60);
+        const targetM = targetTotal % 60;
+        return `${String(targetH).padStart(2, '0')}:${String(targetM).padStart(2, '0')}`;
+    }
+    return currentEnd;
+}
+
 export const validateWeeklyTimes = (
     weeklyTimes: Record<number, { enabled: boolean; slots: WeekDaySlot[] }>
 ): SlotOverlapError[] => {
@@ -474,6 +490,10 @@ export default function ScheduleCreate({
     const handleOffDayChange = (index: number, field: keyof OffDayItem, val: any) => {
         const updated = [...offDays];
         updated[index] = { ...updated[index], [field]: val };
+        if (field === 'start_time') {
+            const currentEnd = updated[index].end_time || '20:00';
+            updated[index].end_time = ensureEndTimeAfterStart(val, currentEnd);
+        }
         setOffDays(updated);
     };
 
@@ -496,6 +516,10 @@ export default function ScheduleCreate({
     const handleExtraDayChange = (index: number, field: keyof ExtraDayItem, val: string) => {
         const updated = [...extraDays];
         updated[index] = { ...updated[index], [field]: val };
+        if (field === 'start_time') {
+            const currentEnd = updated[index].end_time || '10:00';
+            updated[index].end_time = ensureEndTimeAfterStart(val, currentEnd);
+        }
         setExtraDays(updated);
     };
 
@@ -1428,7 +1452,10 @@ export default function ScheduleCreate({
                                         options={HOUR_OPTIONS}
                                         onChange={(val) => {
                                             const m = modalStartTime.slice(0, 5).split(':')[1] || '00';
-                                            setModalStartTime(`${val}:${m}`);
+                                            const newStart = `${val}:${m}`;
+                                            const newEnd = ensureEndTimeAfterStart(newStart, modalEndTime);
+                                            setModalStartTime(newStart);
+                                            setModalEndTime(newEnd);
                                             setModalSlotError(null);
                                         }}
                                         placement="top"
@@ -1440,7 +1467,10 @@ export default function ScheduleCreate({
                                         options={MINUTE_OPTIONS}
                                         onChange={(val) => {
                                             const h = modalStartTime.slice(0, 5).split(':')[0] || '18';
-                                            setModalStartTime(`${h}:${val}`);
+                                            const newStart = `${h}:${val}`;
+                                            const newEnd = ensureEndTimeAfterStart(newStart, modalEndTime);
+                                            setModalStartTime(newStart);
+                                            setModalEndTime(newEnd);
                                             setModalSlotError(null);
                                         }}
                                         placement="top"
