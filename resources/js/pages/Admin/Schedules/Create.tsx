@@ -16,6 +16,7 @@ import {
     Check,
     AlertCircle,
     Edit3,
+    BookOpen,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
@@ -37,6 +38,7 @@ interface SchoolClass {
     name: string;
     code: string;
     center_id: number;
+    center?: Center;
     class_subjects?: {
         id: number;
         subject?: { id: number; name: string; code: string };
@@ -63,6 +65,7 @@ interface Teacher {
 interface Room {
     id: number;
     name: string;
+    capacity?: number | null;
     center_id: number;
 }
 
@@ -95,8 +98,12 @@ interface ExtraDayItem {
 }
 
 interface VNHoliday {
+    id?: number;
     date: string;
     name: string;
+    is_lunar?: boolean;
+    is_recurring?: boolean;
+    reason?: string;
 }
 
 const WEEKDAYS = [
@@ -422,7 +429,7 @@ export default function ScheduleCreate({
     const activeHolidayDates = React.useMemo(() => {
         if (!autoHolidays) return [];
         return scheduleHolidays
-            .filter((h) => !excludedHolidayIds.has(h.id))
+            .filter((h) => (h.id ? !excludedHolidayIds.has(h.id) : true))
             .map((h) => h.date);
     }, [autoHolidays, scheduleHolidays, excludedHolidayIds]);
 
@@ -573,15 +580,14 @@ export default function ScheduleCreate({
         setShowHolidayModal(true);
         setIsLoadingHolidays(true);
         try {
-            const year = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear();
-            const res = await fetch(`/api/vietnam-holidays?year=${year}`);
+            const res = await fetch(`/api/vietnam-holidays`);
             if (res.ok) {
                 const data = await res.json();
                 const holidaysList: VNHoliday[] = data.holidays || [];
                 setAvailableHolidays(holidaysList);
                 const activeDates = new Set(
                     holidaysList
-                        .filter((h) => !excludedHolidayIds.has(h.id))
+                        .filter((h) => (h.id ? !excludedHolidayIds.has(h.id) : true))
                         .map((h) => h.date)
                 );
                 setSelectedHolidayDates(activeDates);
@@ -606,7 +612,7 @@ export default function ScheduleCreate({
     const handleApplyHolidays = () => {
         const newExcluded = new Set<number>();
         availableHolidays.forEach((h) => {
-            if (!selectedHolidayDates.has(h.date)) {
+            if (!selectedHolidayDates.has(h.date) && h.id !== undefined) {
                 newExcluded.add(h.id);
             }
         });
@@ -967,13 +973,12 @@ export default function ScheduleCreate({
                                     <div
                                         key={day.id}
                                         onClick={() => toggleWeekday(day.id)}
-                                        className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                            hasError
-                                                ? 'border-red-400 bg-red-50/50 shadow-xs'
-                                                : conf.enabled
+                                        className={`cursor-pointer rounded-xl border p-4 transition-all ${hasError
+                                            ? 'border-red-400 bg-red-50/50 shadow-xs'
+                                            : conf.enabled
                                                 ? 'border-emerald-500 bg-emerald-50/40 shadow-xs'
                                                 : 'border-gray-200 bg-white opacity-70 hover:opacity-100'
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-bold text-gray-900">
@@ -1354,17 +1359,16 @@ export default function ScheduleCreate({
                                     <label
                                         key={h.date}
                                         onClick={() => handleToggleHolidaySelection(h.date)}
-                                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                                            isChecked
-                                                ? 'border-emerald-500 bg-emerald-50/60'
-                                                : 'border-gray-200 bg-white hover:bg-gray-50'
-                                        }`}
+                                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${isChecked
+                                            ? 'border-emerald-500 bg-emerald-50/60'
+                                            : 'border-gray-200 bg-white hover:bg-gray-50'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
                                                 checked={isChecked}
-                                                onChange={() => {}}
+                                                onChange={() => { }}
                                                 className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                             />
                                             <div>
@@ -1449,11 +1453,10 @@ export default function ScheduleCreate({
                                         setModalEndTime(p.end);
                                         setModalSlotError(null);
                                     }}
-                                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                                        modalStartTime === p.start && modalEndTime === p.end
-                                            ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-800 ring-2 ring-emerald-500/20'
-                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-slate-50'
-                                    }`}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${modalStartTime === p.start && modalEndTime === p.end
+                                        ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-800 ring-2 ring-emerald-500/20'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-slate-50'
+                                        }`}
                                 >
                                     {p.label}
                                 </button>

@@ -17,7 +17,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
-import Pagination from '@/components/ui/Pagination';
+import Pagination, { PaginationLink } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Holiday {
@@ -40,6 +40,7 @@ interface Props {
         total: number;
         from: number;
         to: number;
+        links?: PaginationLink[];
     };
     selectedYear: number;
     availableYears: number[];
@@ -376,15 +377,12 @@ export default function Index({
                     {holidays.last_page > 1 && (
                         <div className="border-t border-gray-100 px-5 py-3.5">
                             <Pagination
-                                currentPage={holidays.current_page}
-                                totalPages={holidays.last_page}
-                                onPageChange={(page) =>
-                                    router.get(
-                                        '/holidays',
-                                        { year: activeYear, search: searchTerm, page },
-                                        { preserveState: true }
-                                    )
-                                }
+                                links={holidays.links || []}
+                                from={holidays.from}
+                                to={holidays.to}
+                                total={holidays.total}
+                                perPage={holidays.per_page}
+                                currentParams={{ year: activeYear, search: searchTerm }}
                             />
                         </div>
                     )}

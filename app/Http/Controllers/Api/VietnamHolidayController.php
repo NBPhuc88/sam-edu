@@ -20,15 +20,9 @@ class VietnamHolidayController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $year = (int) ($request->input('year') ?: now()->year);
+        $holidays = $this->holidayService->getAll();
 
-        if ($year < 2020 || $year > 2050) {
-            $year = (int) now()->year;
-        }
-
-        $holidays = $this->holidayService->getHolidaysByYear($year);
-
-        $formatted = $holidays->map(fn ($h) => [
+        $formatted = $holidays->map(fn($h) => [
             'id'           => $h->id,
             'name'         => $h->name,
             'date'         => $h->date instanceof \DateTimeInterface ? $h->date->format('Y-m-d') : (string) $h->date,
@@ -38,7 +32,6 @@ class VietnamHolidayController extends Controller
         ])->values();
 
         return response()->json([
-            'year'     => $year,
             'holidays' => $formatted,
         ]);
     }

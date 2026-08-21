@@ -226,4 +226,11 @@ class HolidayService implements HolidayServiceInterface
 
         return array_values($allYears);
     }
+
+    /**
+     * @return Collection<int, Holiday>
+     */
+    public function getAll(): Collection {
+        return $this->holidayRepository->getAll();
+    }
 }

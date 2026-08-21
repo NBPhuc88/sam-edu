@@ -136,4 +136,15 @@ class HolidayRepository implements HolidayRepositoryInterface
             ->values()
             ->toArray();
     }
+
+    /**
+     * @return Collection<int, Holiday>
+     */
+    public function getAll(): Collection
+    {
+        return Holiday::whereBetween('date', [
+            now()->toDateString(),
+            now()->addYear()->endOfYear()->toDateString()
+        ])->orderBy('date', 'asc')->get();
+    }
 }

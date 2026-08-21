@@ -123,6 +123,9 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                 'weeks',
                 'off_days',
                 'extra_days',
+                'holidays',
+                'auto_holidays',
+                'excluded_holiday_ids',
                 'room_id',
                 'status',
                 'created_at'
