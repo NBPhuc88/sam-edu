@@ -605,7 +605,7 @@ export default function ScheduleIndex({
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono text-gray-600">
-                                            {ses.start_time.slice(0, 5)} - {ses.end_time.slice(0, 5)}
+                                            {ses.start_time ? String(ses.start_time).slice(0, 5) : '--:--'} - {ses.end_time ? String(ses.end_time).slice(0, 5) : '--:--'}
                                         </span>
                                         <Badge variant={ses.status === 'scheduled' ? 'active' : 'info'}>
                                             {ses.status === 'scheduled' ? 'Đã lên lịch' : ses.status}

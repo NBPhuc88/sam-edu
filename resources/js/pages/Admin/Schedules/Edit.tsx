@@ -233,8 +233,8 @@ export default function ScheduleEdit({
                     base[dayNum] = {
                         enabled: true,
                         slots: slots.map((s) => ({
-                            start_time: s[0] ? s[0].slice(0, 5) : '18:00',
-                            end_time: s[1] ? s[1].slice(0, 5) : '20:00',
+                            start_time: s[0] ? String(s[0]).slice(0, 5) : '18:00',
+                            end_time: s[1] ? String(s[1]).slice(0, 5) : '20:00',
                         })),
                     };
                 }
