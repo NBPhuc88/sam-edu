@@ -13,7 +13,7 @@ Hệ thống Quản lý Giáo dục **Sam Edu** vừa nhận được thông tin
 | **Địa chỉ** | {{ $center->address ?? 'Chưa cập nhật' }} |
 | **Gói dịch vụ** | **{{ strtoupper($center->subscription_plan) }}** |
 | **Trạng thái** | {{ $center->status }} |
-| **Thời gian đăng ký** | {{ $center->created_at ? $center->created_at->format('H:i:s d/m/Y') : now()->format('H:i:s d/m/Y') }} |
+| **Thời gian đăng ký** | {{ $center->created_at ? $center->created_at->format('d-m-Y H:i:s') : now()->format('d-m-Y H:i:s') }} |
 </x-mail::table>
 
 Vui lòng truy cập trang Quản trị Admin để kiểm tra và liên hệ kích hoạt tài khoản cho trung tâm.

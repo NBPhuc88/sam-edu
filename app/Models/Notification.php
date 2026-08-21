@@ -20,6 +20,14 @@ class Notification extends Model
         'created_by_teacher_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
+        ];
+    }
+
     /**
      * @return BelongsTo<Center, $this>
      */

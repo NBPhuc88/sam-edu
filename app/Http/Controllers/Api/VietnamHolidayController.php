@@ -22,7 +22,7 @@ class VietnamHolidayController extends Controller
     {
         $holidays = $this->holidayService->getAll();
 
-        $formatted = $holidays->map(fn($h) => [
+        $formatted = $holidays->map(fn ($h) => [
             'id'           => $h->id,
             'name'         => $h->name,
             'date'         => $h->date instanceof \DateTimeInterface ? $h->date->format('Y-m-d') : (string) $h->date,

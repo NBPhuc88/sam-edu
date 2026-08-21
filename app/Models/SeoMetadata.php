@@ -32,6 +32,14 @@ class SeoMetadata extends Model
         'canonical_url',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
+        ];
+    }
+
     /**
      * Lấy dữ liệu SEO theo route name hiện tại, với fallback mặc định.
      * @param ?string $routeName

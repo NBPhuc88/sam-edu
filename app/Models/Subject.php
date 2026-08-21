@@ -38,11 +38,17 @@ class Subject extends Model
         'status',
     ];
 
-    protected $casts = [
-        'total_sessions'   => 'integer',
-        'duration_minutes' => 'integer',
-        'tuition_fee'      => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'total_sessions'   => 'integer',
+            'duration_minutes' => 'integer',
+            'tuition_fee'      => 'decimal:2',
+            'created_at'       => 'datetime:d-m-Y H:i',
+            'updated_at'       => 'datetime:d-m-Y H:i',
+            'deleted_at'       => 'datetime:d-m-Y H:i',
+        ];
+    }
 
     /**
      * @return BelongsTo<Center, $this>

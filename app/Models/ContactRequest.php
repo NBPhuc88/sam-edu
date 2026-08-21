@@ -31,4 +31,12 @@ class ContactRequest extends Model
         'status',
         'admin_note',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
+        ];
+    }
 }

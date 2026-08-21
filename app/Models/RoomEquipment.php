@@ -26,7 +26,10 @@ class RoomEquipment extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
+            'quantity'   => 'integer',
+            'created_at' => 'datetime:d-m-Y H:i',
+            'updated_at' => 'datetime:d-m-Y H:i',
+            'deleted_at' => 'datetime:d-m-Y H:i',
         ];
     }
 

@@ -15,7 +15,7 @@ Hệ thống Quản lý Giáo dục **Sam Edu** xin thông báo: Thông tin củ
 | **Địa chỉ** | {{ $center->address ?? 'Chưa cập nhật' }} |
 | **Trạng thái** | {{ $center->status === 'active' ? 'Đang hoạt động' : ($center->status === 'expired' ? 'Đã hết hạn' : $center->status) }} |
 | **Gói dịch vụ** | **{{ strtoupper($center->subscription_plan ?? 'N/A') }}** |
-| **Thời gian cập nhật** | {{ now()->format('H:i:s d/m/Y') }} |
+| **Thời gian cập nhật** | {{ now()->format('d-m-Y H:i:s') }} |
 </x-mail::table>
 
 Nếu có thắc mắc hoặc cần hỗ trợ về thông tin này, vui lòng liên hệ ngay với Quản trị viên hệ thống Sam Edu.
