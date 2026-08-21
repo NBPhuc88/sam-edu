@@ -339,9 +339,6 @@ export default function ScheduleEdit({
     const [startDate, setStartDate] = useState<string>(
         classSubject?.start_date ? String(classSubject.start_date).slice(0, 10) : ''
     );
-    const [endDate, setEndDate] = useState<string>(
-        classSubject?.end_date ? String(classSubject.end_date).slice(0, 10) : ''
-    );
     const [status] = useState<string>(schedule.status || 'active');
 
     const initialWeeklyTimes = React.useMemo(() => {
@@ -773,7 +770,6 @@ export default function ScheduleEdit({
                 teacher_id: Number(selectedTeacherId),
                 room_id: selectedRoomId ? Number(selectedRoomId) : null,
                 start_date: startDate,
-                end_date: endDate || null,
                 weeks: weeksPayload,
                 auto_holidays: autoHolidays,
                 excluded_holiday_ids: Array.from(excludedHolidayIds),
@@ -896,52 +892,32 @@ export default function ScheduleEdit({
                                 )}
                             </div>
 
+                            {/* End Date (Read-only, auto calculated from last session) */}
                             <div>
                                 <div className="mb-2 flex items-center justify-between">
                                     <label className="text-sm font-semibold text-gray-800">
                                         Ngày Kết Thúc (Dự kiến)
                                     </label>
-                                    {totalSessions && totalSessions > 0 && !endDate && (
-                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                            ✨ Tự động theo {totalSessions} buổi
-                                        </span>
-                                    )}
+                                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                        ✨ Tự động theo ca cuối
+                                    </span>
                                 </div>
-                                <div className="relative w-full">
-                                    <input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    />
-                                    {endDate && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setEndDate('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 shadow-xs"
-                                            title="Xóa ngày cố định để hệ thống tự động tính theo số buổi"
-                                        >
-                                            Xóa (Tự động tính)
-                                        </button>
-                                    )}
-                                </div>
-                                {totalSessions && totalSessions > 0 ? (
-                                    <div className="mt-1.5 text-xs">
-                                        {endDate ? (
-                                            <span className="text-gray-500">
-                                                Đang đặt ngày kết thúc cố định. (Nếu để trống, sinh đúng <strong>{totalSessions} buổi</strong> dự kiến đến <strong>{estimatedEndDate || '...'}</strong>).
-                                            </span>
-                                        ) : (
-                                            <span className="font-medium text-emerald-700">
-                                                Môn học gồm <strong>{totalSessions} buổi</strong>. Tự động tính ngày kết thúc là <strong>{estimatedEndDate || '...'}</strong>.
-                                            </span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="mt-1.5 text-xs text-gray-400">
-                                        (Tùy chọn) Để trống sẽ tự động tính toán.
-                                    </p>
-                                )}
+                                <input
+                                    type="text"
+                                    value={
+                                        estimatedEndDate
+                                            ? `Dự kiến: ${estimatedEndDate}`
+                                            : classSubject?.end_date
+                                            ? `Hiện tại: ${String(classSubject.end_date).slice(0, 10)}`
+                                            : 'Chưa xác định (vui lòng chọn ngày bắt đầu & lịch)'
+                                    }
+                                    disabled
+                                    readOnly
+                                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-xs cursor-not-allowed"
+                                />
+                                <p className="mt-1.5 text-xs text-gray-500">
+                                    Hệ thống tự động tính ngày kết thúc dựa trên ngày diễn ra ca học cuối cùng {totalSessions ? `(đủ ${totalSessions} buổi)` : ''}.
+                                </p>
                             </div>
                         </div>
                     </Card>

@@ -305,7 +305,6 @@ export default function ScheduleCreate({
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
     const [selectedRoomId, setSelectedRoomId] = useState<string>('');
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState<string>('');
     const [status] = useState<string>('active');
 
     // Weekly schedules: Map of weekday -> { enabled: boolean, slots: [{start_time, end_time}] }
@@ -753,7 +752,6 @@ export default function ScheduleCreate({
                 teacher_id: Number(selectedTeacherId),
                 room_id: selectedRoomId ? Number(selectedRoomId) : null,
                 start_date: startDate,
-                end_date: endDate || null,
                 weeks: weeksPayload,
                 auto_holidays: autoHolidays,
                 excluded_holiday_ids: Array.from(excludedHolidayIds),
@@ -773,31 +771,34 @@ export default function ScheduleCreate({
 
             <div className="mx-auto max-w-6xl space-y-6">
                 {/* Header Top Bar */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Link href="/schedules">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Thiết Lập Lịch Học Mới</h1>
-                            <p className="text-sm text-gray-500">
-                                Đặt lịch định kỳ theo thứ, hỗ trợ nhiều ca/ngày, cấu hình ngày nghỉ linh hoạt và tự động sinh ca học.
-                            </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/schedules"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-xs transition-colors"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Link>
+                            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                                Thiết Lập Lịch Học Mới
+                            </h1>
                         </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Tạo chu kỳ học tập theo tuần, hệ thống sẽ tự động tính toán ngày kết thúc và sinh toàn bộ ca học tương ứng.
+                        </p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Section 1: Thông tin Lớp & Môn Học */}
+                    {/* Section 1: Thông tin Lớp học & Môn học */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
-                            <GraduationCap className="h-5 w-5 text-emerald-600" />
+                        <h2 className="mb-4 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                            <BookOpen className="h-5 w-5 text-emerald-600" />
                             1. Thông Tin Lớp Học & Môn Học
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             {/* Class Selection */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -809,10 +810,10 @@ export default function ScheduleCreate({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="">-- Chọn Lớp Học --</option>
+                                    <option value="">-- Chọn lớp học --</option>
                                     {classes.map((c) => (
                                         <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
+                                            {c.name} ({c.code}) - {c.center?.name || 'Trung tâm'}
                                         </option>
                                     ))}
                                 </select>
@@ -831,11 +832,12 @@ export default function ScheduleCreate({
                                     onChange={(e) => handleSubjectChange(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
+                                    disabled={!selectedClassId}
                                 >
-                                    <option value="">-- Chọn Môn Học --</option>
+                                    <option value="">-- Chọn môn học --</option>
                                     {displaySubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
-                                            {s.name} ({s.code}){s.total_sessions ? ` - ${s.total_sessions} buổi` : ''}
+                                            {s.name} ({s.code}) - {s.total_sessions ? `${s.total_sessions} buổi` : 'N/A'}
                                         </option>
                                     ))}
                                 </select>
@@ -847,15 +849,16 @@ export default function ScheduleCreate({
                             {/* Teacher Selection */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Giáo Viên Giảng Dạy <span className="text-red-500">*</span>
+                                    Giáo Viên Phụ Trách <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={selectedTeacherId}
                                     onChange={(e) => setSelectedTeacherId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
+                                    disabled={!selectedClassId}
                                 >
-                                    <option value="">-- Chọn Giáo Viên --</option>
+                                    <option value="">-- Chọn giáo viên --</option>
                                     {displayTeachers.map((t) => (
                                         <option key={t.id} value={t.id}>
                                             {t.full_name} ({t.teacher_code})
@@ -877,19 +880,22 @@ export default function ScheduleCreate({
                                     onChange={(e) => setSelectedRoomId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Chưa Chọn Phòng (Online / Linh hoạt) --</option>
+                                    <option value="">-- Chưa chỉ định phòng học cố định --</option>
                                     {displayRooms.map((r) => (
                                         <option key={r.id} value={r.id}>
-                                            {r.name}
+                                            {r.name} (Sức chứa: {r.capacity} học sinh)
                                         </option>
                                     ))}
                                 </select>
+                                {errors.room_id && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.room_id}</p>
+                                )}
                             </div>
 
                             {/* Start Date */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Ngày Bắt Đầu Môn Học <span className="text-red-500">*</span>
+                                    Ngày Bắt Đầu Học <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="date"
@@ -903,53 +909,26 @@ export default function ScheduleCreate({
                                 )}
                             </div>
 
-                            {/* End Date */}
+                            {/* End Date (Read-only, auto calculated from last session) */}
                             <div>
                                 <div className="mb-2 flex items-center justify-between">
                                     <label className="text-sm font-semibold text-gray-800">
                                         Ngày Kết Thúc (Dự kiến)
                                     </label>
-                                    {totalSessions && totalSessions > 0 && !endDate && (
-                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                            ✨ Tự động theo {totalSessions} buổi
-                                        </span>
-                                    )}
+                                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                        ✨ Tự động theo ca cuối
+                                    </span>
                                 </div>
-                                <div className="relative w-full">
-                                    <input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    />
-                                    {endDate && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setEndDate('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 shadow-xs"
-                                            title="Xóa ngày cố định để hệ thống tự động tính theo số buổi"
-                                        >
-                                            Xóa (Tự động tính)
-                                        </button>
-                                    )}
-                                </div>
-                                {totalSessions && totalSessions > 0 ? (
-                                    <div className="mt-1.5 text-xs">
-                                        {endDate ? (
-                                            <span className="text-gray-500">
-                                                Đang đặt ngày kết thúc cố định. (Nếu để trống, sinh đúng <strong>{totalSessions} buổi</strong> dự kiến đến <strong>{estimatedEndDate || '...'}</strong>).
-                                            </span>
-                                        ) : (
-                                            <span className="font-medium text-emerald-700">
-                                                Môn học gồm <strong>{totalSessions} buổi</strong>. Tự động tính ngày kết thúc là <strong>{estimatedEndDate || '...'}</strong>.
-                                            </span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="mt-1.5 text-xs text-gray-400">
-                                        (Tùy chọn) Để trống sẽ tự động tạo lịch trong 12 tuần.
-                                    </p>
-                                )}
+                                <input
+                                    type="text"
+                                    value={estimatedEndDate ? `Dự kiến: ${estimatedEndDate}` : 'Chưa xác định (vui lòng chọn ngày bắt đầu & lịch)'}
+                                    disabled
+                                    readOnly
+                                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-xs cursor-not-allowed"
+                                />
+                                <p className="mt-1.5 text-xs text-gray-500">
+                                    Hệ thống tự động tính ngày kết thúc dựa trên ngày diễn ra ca học cuối cùng {totalSessions ? `(đủ ${totalSessions} buổi)` : ''}.
+                                </p>
                             </div>
                         </div>
                     </Card>
@@ -1345,7 +1324,7 @@ export default function ScheduleCreate({
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            {totalSessions && totalSessions > 0 && !endDate
+                            {totalSessions && totalSessions > 0
                                 ? `Tạo & Sinh ${totalSessions} Ca Học`
                                 : 'Tạo & Sinh Ca Học'}
                         </Button>

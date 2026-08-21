@@ -379,7 +379,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $normalizedOffDays,
                 $normalizedExtraDays,
                 $data['start_date'],
-                $data['end_date'] ?? null,
                 $teacherId,
                 ! empty($data['room_id']) ? (int) $data['room_id'] : null,
                 $subject?->total_sessions,
@@ -389,7 +388,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $autoHolidays
             );
 
-            $finalEndDate = ! empty($data['end_date']) ? $data['end_date'] : $sessionResult['calculated_end_date'];
+            $finalEndDate = $sessionResult['calculated_end_date'];
 
             // 4. Cập nhật ngày bắt đầu và kết thúc vào class_subject
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
@@ -458,7 +457,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 return $schedule->refresh();
             }
 
-            // Khi có thay đổi về ngày bắt đầu, ngày kết thúc, weeks, off_days hoặc extra_days:
+            // Khi có thay đổi về ngày bắt đầu, weeks, off_days hoặc extra_days:
             $today = now()->toDateString();
 
             // 1. Stream các buổi học trong quá khứ / đã điểm danh / hoàn thành bằng cursor() để tiết kiệm RAM
@@ -495,7 +494,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $holidays = [];
 
             if ($autoHolidays) {
-                $maxScanEnd      = ! empty($data['end_date']) ? $data['end_date'] : now()->addYears(2)->toDateString();
+                $maxScanEnd      = now()->addYears(2)->toDateString();
                 $holidaysInRange = $this->holidayRepository->getInRange($startDate, $maxScanEnd);
                 $excludedSet     = array_flip(array_map('intval', $excludedHolidayIds));
                 $holidays        = $holidaysInRange
@@ -526,7 +525,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $normalizedOffDays,
                 $normalizedExtraDays,
                 $startDate,
-                $data['end_date'] ?? null,
                 $teacherId,
                 $roomId,
                 $neededFutureSessions,
@@ -546,11 +544,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             // 6. Tính toán lại ngày kết thúc từ buổi học cuối cùng trong DB qua repository
             $lastSession = $this->sessionRepository->getLatestSession($classSubject->id);
 
-            $finalEndDate = ! empty($data['end_date'])
-                ? $data['end_date']
-                : ($lastSession?->session_date instanceof \DateTimeInterface
-                    ? $lastSession->session_date->format('Y-m-d')
-                    : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']));
+            $finalEndDate = $lastSession?->session_date instanceof \DateTimeInterface
+                ? $lastSession->session_date->format('Y-m-d')
+                : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']);
 
             // Cập nhật class_subject
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
@@ -681,15 +677,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             return true;
         }
 
-        if (array_key_exists('end_date', $data)) {
-            $oldEndDate = $classSubject->end_date?->format('Y-m-d');
-            $newEndDate = ! empty($data['end_date']) ? Carbon::parse($data['end_date'])->format('Y-m-d') : null;
-
-            if ($oldEndDate !== $newEndDate) {
-                return true;
-            }
-        }
-
         if (array_key_exists('weeks', $data) || array_key_exists('weekly_schedules', $data)) {
             $oldWeeks = $schedule->weeks ?? [];
             $newWeeks = $this->normalizeWeeks($data['weeks'] ?? $data['weekly_schedules'] ?? []);
@@ -752,7 +739,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     }
 
     /**
-     * Tính toán thuần danh sách ca học (ClassSession payload) và ngày kết thúc dự kiến.
+     * Tính toán thuần danh sách ca học (ClassSession payload) và ngày kết thúc dự kiến (ngày của ca học cuối cùng).
      *
      * @param  ClassSubject                                                                                $classSubject
      * @param  int                                                                                         $scheduleId
@@ -760,7 +747,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
      * @param  array<int, array{date: string, start_time: ?string, end_time: ?string}>                     $offDays
      * @param  array<int, array{date: string, start_time: string, end_time: string}>                       $extraDays
      * @param  string                                                                                      $startDateStr
-     * @param  ?string                                                                                     $endDateStr
      * @param  int                                                                                         $teacherId
      * @param  ?int                                                                                        $roomId
      * @param  ?int                                                                                        $targetRemainingCount
@@ -777,7 +763,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         array $offDays,
         array $extraDays,
         string $startDateStr,
-        ?string $endDateStr = null,
         int $teacherId = 0,
         ?int $roomId = null,
         ?int $targetRemainingCount = null,
@@ -852,147 +837,81 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         }
 
         // 4. Sinh ca học theo chu kỳ tuần kết hợp ngày bù (extra_days) theo thứ tự thời gian
-        if (! $endDateStr) {
-            if ($targetRemainingCount !== null) {
-                // Đã xác định số buổi cần tạo (VD: 60 buổi hoặc còn 45 buổi)
-                $maxSafetyDate = $scanStart->copy()->addYears(5);
+        if ($targetRemainingCount !== null) {
+            // Đã xác định số buổi cần tạo (VD: 60 buổi hoặc còn 45 buổi)
+            $maxSafetyDate = $scanStart->copy()->addYears(5);
 
-                while (count($sessions) < $targetRemainingCount && $currentDate->lte($maxSafetyDate)) {
-                    $dayKey  = (string) $currentDate->dayOfWeekIso; // 1 = Mon .. 7 = Sun
-                    $dateStr = $currentDate->format('Y-m-d');
+            while (count($sessions) < $targetRemainingCount && $currentDate->lte($maxSafetyDate)) {
+                $dayKey  = (string) $currentDate->dayOfWeekIso; // 1 = Mon .. 7 = Sun
+                $dateStr = $currentDate->format('Y-m-d');
 
-                    // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
-                    if (isset($extraDaysByDate[$dateStr])) {
-                        foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
-                            $startTime = $extraSlot['start_time'];
-                            $endTime   = $extraSlot['end_time'];
-                            $slotKey   = "{$dateStr}_{$startTime}";
+                // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
+                if (isset($extraDaysByDate[$dateStr])) {
+                    foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
+                        $startTime = $extraSlot['start_time'];
+                        $endTime   = $extraSlot['end_time'];
+                        $slotKey   = "{$dateStr}_{$startTime}";
 
-                            if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
-                                $seenDateTime[$slotKey] = true;
-                                $sessions[]             = [
-                                    'class_subject_id'  => $classSubject->id,
-                                    'class_schedule_id' => $scheduleId,
-                                    'teacher_id'        => $teacherId,
-                                    'room_id'           => $roomId,
-                                    'session_date'      => $dateStr,
-                                    'start_time'        => $startTime,
-                                    'end_time'          => $endTime,
-                                    'status'            => 'scheduled',
-                                    'topic'             => 'Buổi học bổ sung / bù',
-                                    'note'              => null,
-                                    'created_at'        => $now,
-                                    'updated_at'        => $now,
-                                ];
-                                $lastSessionDate = $dateStr;
+                        if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                            $seenDateTime[$slotKey] = true;
+                            $sessions[]             = [
+                                'class_subject_id'  => $classSubject->id,
+                                'class_schedule_id' => $scheduleId,
+                                'teacher_id'        => $teacherId,
+                                'room_id'           => $roomId,
+                                'session_date'      => $dateStr,
+                                'start_time'        => $startTime,
+                                'end_time'          => $endTime,
+                                'status'            => 'scheduled',
+                                'topic'             => 'Buổi học bổ sung / bù',
+                                'note'              => null,
+                                'created_at'        => $now,
+                                'updated_at'        => $now,
+                            ];
+                            $lastSessionDate = $dateStr;
 
-                                if (count($sessions) >= $targetRemainingCount) {
-                                    break 2;
-                                }
+                            if (count($sessions) >= $targetRemainingCount) {
+                                break 2;
                             }
                         }
                     }
-
-                    // 4.2 Thêm các ca học theo chu kỳ tuần nếu ngày này không phải ngày nghỉ
-                    if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
-                        foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
-                            $slotKey = "{$dateStr}_{$startTime}";
-
-                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
-                                $seenDateTime[$slotKey] = true;
-                                $sessions[]             = [
-                                    'class_subject_id'  => $classSubject->id,
-                                    'class_schedule_id' => $scheduleId,
-                                    'teacher_id'        => $teacherId,
-                                    'room_id'           => $roomId,
-                                    'session_date'      => $dateStr,
-                                    'start_time'        => $startTime,
-                                    'end_time'          => $endTime,
-                                    'status'            => 'scheduled',
-                                    'topic'             => null,
-                                    'note'              => null,
-                                    'created_at'        => $now,
-                                    'updated_at'        => $now,
-                                ];
-                                $lastSessionDate = $dateStr;
-
-                                if (count($sessions) >= $targetRemainingCount) {
-                                    break 2;
-                                }
-                            }
-                        }
-                    }
-
-                    $currentDate->addDay();
                 }
-            } else {
-                // Môn học không cấu hình số buổi -> mặc định 12 tuần
-                $endDate = $scanStart->copy()->addWeeks(12);
 
-                while ($currentDate->lte($endDate)) {
-                    $dayKey  = (string) $currentDate->dayOfWeekIso;
-                    $dateStr = $currentDate->format('Y-m-d');
+                // 4.2 Thêm các ca học theo chu kỳ tuần nếu ngày này không phải ngày nghỉ
+                if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
+                    foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                        $slotKey = "{$dateStr}_{$startTime}";
 
-                    // 4.1 Thêm các buổi học bù/bổ sung (extra_days) vào ngày này
-                    if (isset($extraDaysByDate[$dateStr])) {
-                        foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
-                            $startTime = $extraSlot['start_time'];
-                            $endTime   = $extraSlot['end_time'];
-                            $slotKey   = "{$dateStr}_{$startTime}";
+                        if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
+                            $seenDateTime[$slotKey] = true;
+                            $sessions[]             = [
+                                'class_subject_id'  => $classSubject->id,
+                                'class_schedule_id' => $scheduleId,
+                                'teacher_id'        => $teacherId,
+                                'room_id'           => $roomId,
+                                'session_date'      => $dateStr,
+                                'start_time'        => $startTime,
+                                'end_time'          => $endTime,
+                                'status'            => 'scheduled',
+                                'topic'             => null,
+                                'note'              => null,
+                                'created_at'        => $now,
+                                'updated_at'        => $now,
+                            ];
+                            $lastSessionDate = $dateStr;
 
-                            if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
-                                $seenDateTime[$slotKey] = true;
-                                $sessions[]             = [
-                                    'class_subject_id'  => $classSubject->id,
-                                    'class_schedule_id' => $scheduleId,
-                                    'teacher_id'        => $teacherId,
-                                    'room_id'           => $roomId,
-                                    'session_date'      => $dateStr,
-                                    'start_time'        => $startTime,
-                                    'end_time'          => $endTime,
-                                    'status'            => 'scheduled',
-                                    'topic'             => 'Buổi học bổ sung / bù',
-                                    'note'              => null,
-                                    'created_at'        => $now,
-                                    'updated_at'        => $now,
-                                ];
-                                $lastSessionDate = $dateStr;
+                            if (count($sessions) >= $targetRemainingCount) {
+                                break 2;
                             }
                         }
                     }
-
-                    // 4.2 Thêm các ca học theo chu kỳ tuần
-                    if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
-                        foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
-                            $slotKey = "{$dateStr}_{$startTime}";
-
-                            if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
-                                $seenDateTime[$slotKey] = true;
-                                $sessions[]             = [
-                                    'class_subject_id'  => $classSubject->id,
-                                    'class_schedule_id' => $scheduleId,
-                                    'teacher_id'        => $teacherId,
-                                    'room_id'           => $roomId,
-                                    'session_date'      => $dateStr,
-                                    'start_time'        => $startTime,
-                                    'end_time'          => $endTime,
-                                    'status'            => 'scheduled',
-                                    'topic'             => null,
-                                    'note'              => null,
-                                    'created_at'        => $now,
-                                    'updated_at'        => $now,
-                                ];
-                                $lastSessionDate = $dateStr;
-                            }
-                        }
-                    }
-
-                    $currentDate->addDay();
                 }
+
+                $currentDate->addDay();
             }
         } else {
-            // Có ngày kết thúc cụ thể
-            $endDate = Carbon::parse($endDateStr);
+            // Môn học không cấu hình số buổi -> mặc định 12 tuần
+            $endDate = $scanStart->copy()->addWeeks(12);
 
             while ($currentDate->lte($endDate)) {
                 $dayKey  = (string) $currentDate->dayOfWeekIso;
@@ -1067,7 +986,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             return $cmp;
         });
 
-        $calculatedEndDate = $endDateStr ?: $lastSessionDate;
+        $calculatedEndDate = $lastSessionDate;
 
         return [
             'sessions'            => $sessions,
@@ -1109,7 +1028,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $teacherId = $classSubject->teacher_id;
             $roomId    = $schedule->room_id;
             $startDate = $classSubject->start_date?->format('Y-m-d') ?: now()->toDateString();
-            $endDate   = $classSubject->end_date?->format('Y-m-d');
             $subject   = $classSubject->subject;
             $today     = now()->toDateString();
 
@@ -1142,7 +1060,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $holidays = [];
 
             if ($autoHolidays) {
-                $maxScanEnd      = ! empty($endDate) ? $endDate : now()->addYears(2)->toDateString();
+                $maxScanEnd      = now()->addYears(2)->toDateString();
                 $holidaysInRange = $this->holidayRepository->getInRange($startDate, $maxScanEnd);
                 $excludedSet     = array_flip(array_map('intval', $excludedHolidayIds));
                 $holidays        = $holidaysInRange
@@ -1163,7 +1081,6 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $normalizedOffDays,
                 $normalizedExtraDays,
                 $startDate,
-                $endDate,
                 (int) $teacherId,
                 $roomId,
                 $neededFutureSessions,
@@ -1181,11 +1098,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
             $lastSession = $this->sessionRepository->getLatestSession($classSubject->id);
 
-            $finalEndDate = ! empty($endDate)
-                ? $endDate
-                : ($lastSession?->session_date instanceof \DateTimeInterface
-                    ? $lastSession->session_date->format('Y-m-d')
-                    : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']));
+            $finalEndDate = $lastSession?->session_date instanceof \DateTimeInterface
+                ? $lastSession->session_date->format('Y-m-d')
+                : ($lastSession?->session_date ?: $sessionResult['calculated_end_date']);
 
             $this->scheduleRepository->updateClassSubject($classSubject->id, [
                 'end_date' => $finalEndDate,
