@@ -11,6 +11,7 @@ use App\Repositories\ClassExam\ClassExamRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
@@ -54,6 +55,16 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         if ($student) {
             $submission = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
+
+            // Phục hồi draft answers từ Redis Cache nếu đang làm bài
+            if ($submission && $submission->status === 'in_progress') {
+                $cacheKey      = "exam_draft:submission:{$submission->id}";
+                $cachedAnswers = Cache::get($cacheKey);
+
+                if ($cachedAnswers !== null && is_array($cachedAnswers)) {
+                    $submission->answers = $cachedAnswers;
+                }
+            }
         }
 
         // Kiểm tra hiệu lực thời gian bài thi
@@ -117,6 +128,14 @@ class OnlineExamService implements OnlineExamServiceInterface
         $existing = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
 
         if ($existing && $existing->status === 'in_progress') {
+            // Nạp draft từ Redis Cache nếu có
+            $cacheKey      = "exam_draft:submission:{$existing->id}";
+            $cachedAnswers = Cache::get($cacheKey);
+
+            if ($cachedAnswers !== null && is_array($cachedAnswers)) {
+                $existing->answers = $cachedAnswers;
+            }
+
             return $existing;
         }
 
@@ -159,9 +178,13 @@ class OnlineExamService implements OnlineExamServiceInterface
             return false;
         }
 
-        $this->classExamRepository->updateSubmission($submission, [
-            'answers' => $answers,
-        ]);
+        // Tính thời gian TTL lưu Redis = thời gian làm bài + 20 phút
+        $durationMinutes = $submission->classExam?->duration_minutes ?? $submission->classExam?->exam?->duration_minutes ?? 45;
+        $ttlMinutes      = (int) $durationMinutes + 20;
+        $cacheKey        = "exam_draft:submission:{$submission->id}";
+
+        // Chỉ lưu vào Redis Cache với TTL để tăng tốc phản hồi tối đa và giảm tải DB
+        Cache::put($cacheKey, $answers, now()->addMinutes($ttlMinutes));
 
         return true;
     }
@@ -181,6 +204,20 @@ class OnlineExamService implements OnlineExamServiceInterface
         if (in_array($submission->status, ['submitted', 'timeout_submitted', 'missed'], true)) {
             return $submission;
         }
+
+        $cacheKey = "exam_draft:submission:{$submission->id}";
+
+        // Nếu answers rỗng (ví dụ timeout submit), ưu tiên lấy từ Redis Cache
+        if (empty($answers)) {
+            $cachedAnswers = Cache::get($cacheKey);
+
+            if (! empty($cachedAnswers) && is_array($cachedAnswers)) {
+                $answers = $cachedAnswers;
+            }
+        }
+
+        // Xóa draft khỏi Redis Cache sau khi nộp bài
+        Cache::forget($cacheKey);
 
         return DB::transaction(function () use ($submission, $answers, $isTimeout) {
             $now          = Carbon::now();

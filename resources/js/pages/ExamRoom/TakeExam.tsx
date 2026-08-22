@@ -60,60 +60,9 @@ export default function TakeExam({
         });
     });
 
-    // ─── Cache Key & TTL Configuration (Thời gian làm bài + 20 phút) ───
-    const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
-    const totalSecondsAllocated = durationMinutes * 60;
-    const ttlMs = (durationMinutes + 20) * 60 * 1000;
-    const storageKey = `sam_exam_draft_${classExam.id}_${submission.id}_${student.id}`;
-
-    // Clean expired drafts from other old exams in LocalStorage
-    const cleanExpiredDrafts = () => {
-        try {
-            if (typeof window === 'undefined' || !window.localStorage) return;
-            const now = Date.now();
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('sam_exam_draft_')) {
-                    const raw = localStorage.getItem(key);
-                    if (raw) {
-                        try {
-                            const parsed = JSON.parse(raw);
-                            if (parsed && parsed.expires_at && now > parsed.expires_at) {
-                                localStorage.removeItem(key);
-                            }
-                        } catch {
-                            // ignore parsing error
-                        }
-                    }
-                }
-            }
-        } catch {
-            // ignore localStorage access error
-        }
-    };
-
-    // Answers State: { [question_id]: answer_value } with Cache Hydration
+    // Answers State initialized directly from Redis Cache / Server Submission
     const [answers, setAnswers] = useState<Record<number | string, any>>(() => {
-        cleanExpiredDrafts();
-        let initialAnswers = submission.answers || {};
-        try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-                const cachedRaw = localStorage.getItem(storageKey);
-                if (cachedRaw) {
-                    const cached = JSON.parse(cachedRaw);
-                    const now = Date.now();
-                    // Check if cache is still within valid TTL (Thời gian làm bài + 20p)
-                    if (cached && cached.expires_at && now <= cached.expires_at && cached.answers) {
-                        initialAnswers = { ...initialAnswers, ...cached.answers };
-                    } else {
-                        localStorage.removeItem(storageKey);
-                    }
-                }
-            }
-        } catch {
-            // ignore
-        }
-        return initialAnswers;
+        return submission.answers || {};
     });
 
     // Auto-Save Status: 'saved' | 'saving' | 'offline'
@@ -125,6 +74,9 @@ export default function TakeExam({
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
     // ─── Countdown Timer Setup With Server Clock Drift Sync ───
+    const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
+    const totalSecondsAllocated = durationMinutes * 60;
+
     const startedAtTimestamp = submission.started_at
         ? parseDate(submission.started_at)?.getTime() || new Date(submission.started_at).getTime()
         : Date.now();
@@ -142,7 +94,7 @@ export default function TakeExam({
     const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingSeconds);
     const hasAutoSubmittedRef = useRef(false);
 
-    // ─── Background Server AutoSave Function ───
+    // ─── Background Server AutoSave (Saves into Redis Cache with TTL) ───
     const syncToServer = useCallback(async (currentAnswers: Record<number | string, any>) => {
         setAutoSaveStatus('saving');
         try {
@@ -168,31 +120,14 @@ export default function TakeExam({
         }
     }, [classExam.id, submission.id]);
 
-    // ─── Dual Persistence Effect: LocalStorage (0ms) + Server Debounce (2.5s) ───
+    // ─── Debounced AutoSave to Redis Server (2.0s) ───
     useEffect(() => {
-        const expiresAtMs = startedAtTimestamp + ttlMs;
-
-        // 1. Immediately persist to LocalStorage
-        try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-                localStorage.setItem(storageKey, JSON.stringify({
-                    answers,
-                    started_at: submission.started_at,
-                    expires_at: expiresAtMs,
-                    saved_at: Date.now(),
-                }));
-            }
-        } catch {
-            // storage full or disabled
-        }
-
         // Avoid triggering background autosave on initial load mount
         if (isFirstMount.current) {
             isFirstMount.current = false;
             return;
         }
 
-        // 2. Debounce sync to Server (2.5s)
         setAutoSaveStatus('saving');
         if (autoSaveTimeoutRef.current) {
             clearTimeout(autoSaveTimeoutRef.current);
@@ -200,14 +135,14 @@ export default function TakeExam({
 
         autoSaveTimeoutRef.current = setTimeout(() => {
             syncToServer(answers);
-        }, 2500);
+        }, 2000);
 
         return () => {
             if (autoSaveTimeoutRef.current) {
                 clearTimeout(autoSaveTimeoutRef.current);
             }
         };
-    }, [answers, storageKey, syncToServer, startedAtTimestamp, submission.started_at, ttlMs]);
+    }, [answers, syncToServer]);
 
     // ─── Timer Interval ───
     useEffect(() => {
@@ -225,19 +160,7 @@ export default function TakeExam({
         return () => clearInterval(interval);
     }, [calculateRemainingSeconds]);
 
-    // Clear draft cache upon final submission
-    const clearDraftStorage = () => {
-        try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-                localStorage.removeItem(storageKey);
-            }
-        } catch {
-            // ignore
-        }
-    };
-
     const handleAutoSubmitTimeout = () => {
-        clearDraftStorage();
         setIsSubmitting(true);
         router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
             answers,
@@ -246,7 +169,6 @@ export default function TakeExam({
     };
 
     const handleManualSubmit = () => {
-        clearDraftStorage();
         setIsSubmitting(true);
         router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
             answers,

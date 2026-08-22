@@ -114,8 +114,25 @@ test('student can autosave progress during exam', function () {
             'success' => true,
         ]);
 
+    // Verify Redis Cache stores the draft answers immediately with 0 DB overhead
+    $cacheKey = "exam_draft:submission:{$submission->id}";
+    expect(\Illuminate\Support\Facades\Cache::has($cacheKey))->toBeTrue();
+    expect(\Illuminate\Support\Facades\Cache::get($cacheKey))->toEqual($draftAnswers);
+
+    // Verify submitting the exam persists draft answers to DB and cleans Redis
+    $submitResponse = $this->actingAs($student, 'student')
+        ->post(route('online-exam.submit', [
+            'id'           => $classExam->id,
+            'submissionId' => $submission->id,
+        ]), [
+            'answers' => $draftAnswers,
+        ]);
+
+    $submitResponse->assertRedirect();
     $submission->refresh();
     expect($submission->answers)->toEqual($draftAnswers);
+    expect($submission->status)->toBe('submitted');
+    expect(\Illuminate\Support\Facades\Cache::has($cacheKey))->toBeFalse();
 });
 
 test('student cannot autosave on another students submission', function () {
