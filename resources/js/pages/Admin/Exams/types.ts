@@ -5,6 +5,7 @@ export type QuestionType =
     | 'multiple_choice'
     | 'true_false_not_given'
     | 'fill_in_blank'
+    | 'drag_drop_cloze'
     | 'matching'
     | 'matching_image'
     | 'matching_sentences'
@@ -43,12 +44,13 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'Headphones',
         color: 'blue',
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-        description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, gán nhãn sơ đồ, ghép câu với hình',
+        description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, kéo thả từ, gán nhãn sơ đồ, ghép câu với hình',
         supportedQuestionTypes: [
             'single_choice',
             'multiple_choice',
             'true_false_not_given',
             'fill_in_blank',
+            'drag_drop_cloze',
             'matching',
             'matching_image',
             'diagram_labelling',
@@ -61,11 +63,12 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'BookOpen',
         color: 'emerald',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề, ghép câu với hình, ghép vế câu, tìm lỗi sai',
+        description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề, kéo thả từ vào chỗ trống, ghép câu với hình, ghép vế câu, tìm lỗi sai',
         supportedQuestionTypes: [
             'single_choice',
             'multiple_choice',
             'true_false_not_given',
+            'drag_drop_cloze',
             'matching',
             'matching_image',
             'matching_sentences',
@@ -81,10 +84,11 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         iconName: 'PenTool',
         color: 'amber',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-        description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, ghép câu, điền từ hoặc viết lại câu',
+        description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, ghép câu, kéo thả từ, điền từ hoặc viết lại câu',
         supportedQuestionTypes: [
             'essay',
             'ordering',
+            'drag_drop_cloze',
             'matching_sentences',
             'fill_in_blank',
             'find_mistake',
@@ -138,6 +142,15 @@ export const QUESTION_TYPES: QuestionTypeMeta[] = [
         description: 'Điền từ vào các vị trí [blank_1], [blank_2] trong đoạn văn',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
         iconName: 'FileText',
+        autoGraded: true,
+        skills: ['listening', 'reading', 'writing'],
+    },
+    {
+        type: 'drag_drop_cloze',
+        label: 'Kéo - Thả từ vào chỗ trống',
+        description: 'Kéo thả các từ khóa từ kho từ cho sẵn vào các vị trí [blank_1], [blank_2] trong đoạn văn',
+        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        iconName: 'Move',
         autoGraded: true,
         skills: ['listening', 'reading', 'writing'],
     },

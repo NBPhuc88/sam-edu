@@ -55,6 +55,61 @@ export default function ExamResult({
 
     const isManualPending = submission.requires_manual_grading && !submission.is_graded;
 
+    const renderFormattedAnswer = (ans: any, q: ExamQuestionData, isCorrectBox = false) => {
+        if (!ans) {
+            return (
+                <span className={isCorrectBox ? 'text-emerald-700 font-medium' : 'text-gray-400 italic'}>
+                    {isCorrectBox ? 'Cần giáo viên chấm' : '(Chưa trả lời)'}
+                </span>
+            );
+        }
+
+        if (q.question_type === 'audio_record') {
+            return (
+                <div className="space-y-1.5">
+                    <span className="text-2xs text-emerald-700 font-bold">🎧 Bản ghi âm bài làm:</span>
+                    <audio
+                        src={`/class-exams/audio-stream?path=${encodeURIComponent(ans)}`}
+                        controls
+                        className="w-full h-8"
+                    />
+                </div>
+            );
+        }
+
+        if (q.question_type === 'drag_drop_cloze' && typeof ans === 'object') {
+            const wordsList: Array<{ id: string; text: string }> = q.options?.words || [];
+            return (
+                <div className="space-y-1.5">
+                    {Object.entries(ans).map(([bKey, wordId]) => {
+                        const wordObj = wordsList.find((w) => w.id === wordId);
+                        const wordText = wordObj ? wordObj.text : String(wordId);
+                        return (
+                            <div key={bKey} className="flex items-center gap-2 text-xs font-semibold">
+                                <span className="font-mono text-2xs bg-slate-200/80 text-slate-800 px-1.5 py-0.5 rounded-md font-bold">
+                                    [{bKey}]:
+                                </span>
+                                <span className={isCorrectBox ? 'text-emerald-950 font-bold' : 'text-gray-900 font-bold'}>
+                                    {wordText}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        if (typeof ans === 'object') {
+            return (
+                <pre className={`text-2xs font-mono p-2 rounded border overflow-x-auto ${isCorrectBox ? 'bg-white border-emerald-200 text-emerald-900' : 'bg-slate-50 border-gray-200'}`}>
+                    {JSON.stringify(ans, null, 2)}
+                </pre>
+            );
+        }
+
+        return <span className={isCorrectBox ? 'text-emerald-900 font-bold' : 'text-gray-900 font-semibold'}>{String(ans)}</span>;
+    };
+
     return (
         <AppLayout title={`Kết Quả Bài Thi: ${classExam.title} - Hệ Thống Giáo Dục Sam`}>
             <Head title={`Kết Quả Bài Thi: ${classExam.title}`} />
@@ -303,28 +358,7 @@ export default function ExamResult({
                                                         Câu trả lời của bạn:
                                                     </span>
                                                     <div className="font-semibold text-gray-900">
-                                                        {q.question_type === 'audio_record' ? (
-                                                            userAns ? (
-                                                                <div className="space-y-1.5">
-                                                                    <span className="text-2xs text-emerald-700 font-bold">🎧 Bản ghi âm bài làm:</span>
-                                                                    <audio
-                                                                        src={`/class-exams/audio-stream?path=${encodeURIComponent(userAns)}`}
-                                                                        controls
-                                                                        className="w-full h-8"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Chưa ghi âm</span>
-                                                            )
-                                                        ) : typeof userAns === 'object' ? (
-                                                            <pre className="text-2xs font-mono bg-slate-50 p-2 rounded border overflow-x-auto">
-                                                                {JSON.stringify(userAns, null, 2)}
-                                                            </pre>
-                                                        ) : (
-                                                            <span className={userAns ? 'text-gray-900' : 'text-gray-400 italic'}>
-                                                                {userAns || '(Chưa trả lời)'}
-                                                            </span>
-                                                        )}
+                                                        {renderFormattedAnswer(userAns, q, false)}
                                                     </div>
                                                 </div>
 
@@ -334,13 +368,7 @@ export default function ExamResult({
                                                         Đáp án đúng hệ thống:
                                                     </span>
                                                     <div className="font-bold text-emerald-900">
-                                                        {typeof correctAns === 'object' ? (
-                                                            <pre className="text-2xs font-mono bg-white p-2 rounded border border-emerald-200 overflow-x-auto text-emerald-900">
-                                                                {JSON.stringify(correctAns, null, 2)}
-                                                            </pre>
-                                                        ) : (
-                                                            <span>{correctAns || 'Cần giáo viên chấm'}</span>
-                                                        )}
+                                                        {renderFormattedAnswer(correctAns, q, true)}
                                                     </div>
                                                 </div>
                                             </div>

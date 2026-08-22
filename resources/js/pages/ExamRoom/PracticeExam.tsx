@@ -26,6 +26,7 @@ import SortableOrderingList from './components/SortableOrderingList';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
 import MatchingAnswerForm from './components/MatchingAnswerForm';
 import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
+import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
 
 interface QuestionItem {
@@ -482,6 +483,17 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                         options={q.options}
                         value={String(currentVal || '')}
                         onChange={(ans) => handleAnswerChange(q.id, ans)}
+                    />
+                );
+            }
+
+            case 'drag_drop_cloze': {
+                return (
+                    <DragDropClozeQuestion
+                        content={q.content}
+                        options={q.options}
+                        userAnswers={currentVal || {}}
+                        onChange={(newMap) => handleAnswerChange(q.id, newMap)}
                     />
                 );
             }
@@ -1034,6 +1046,8 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 <div className="text-sm sm:text-base font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
                                     {currentQuestion.question_type === 'fill_in_blank'
                                         ? renderFillInBlankContent(currentQuestion.content)
+                                        : currentQuestion.question_type === 'drag_drop_cloze'
+                                        ? null
                                         : currentQuestion.content}
                                 </div>
                             </div>

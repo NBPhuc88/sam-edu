@@ -1079,6 +1079,33 @@ class TestCenterSeeder extends Seeder
             'explanation' => 'Khớp đúng mô tả hoạt động học tập với hình ảnh tương ứng (1-A, 2-B, 3-C).',
         ]);
 
+        // 6b. Drag & Drop Cloze (Kéo thả từ vào chỗ trống)
+        ExamQuestion::create([
+            'exam_id'       => $exam->id,
+            'section_id'    => $secReading->id,
+            'code'          => 'Q06B_DRAG_CLOZE',
+            'title'         => 'Kéo thả từ vào chỗ trống trong đoạn văn về Di sản Thiên nhiên Vịnh Hạ Long',
+            'question_type' => 'drag_drop_cloze',
+            'skill'         => 'reading',
+            'content'       => 'Ha Long Bay is a famous tourist [blank_1] in Quang Ninh province, Vietnam. It features thousands of limestone [blank_2] in various shapes and sizes. Visitors from all over the world come to admire this magnificent natural [blank_3].',
+            'score'         => 3.0,
+            'options'       => [
+                'words' => [
+                    ['id' => 'w1', 'text' => 'destination'],
+                    ['id' => 'w2', 'text' => 'islands'],
+                    ['id' => 'w3', 'text' => 'wonder'],
+                    ['id' => 'w4', 'text' => 'mountain'],
+                    ['id' => 'w5', 'text' => 'building'],
+                ],
+            ],
+            'correct_answer' => [
+                'blank_1' => 'w1',
+                'blank_2' => 'w2',
+                'blank_3' => 'w3',
+            ],
+            'explanation' => 'Vị trí 1 điền destination (điểm đến du lịch), vị trí 2 điền islands (hòn đảo đá vôi), vị trí 3 điền wonder (kỳ quan thiên nhiên).',
+        ]);
+
         // ── Section 2: Nghe Hiểu (Listening) ──
         $secListening = ExamSection::create([
             'exam_id'     => $exam->id,

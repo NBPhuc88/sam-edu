@@ -14,6 +14,7 @@ import SortableOrderingList from './components/SortableOrderingList';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
 import MatchingAnswerForm from './components/MatchingAnswerForm';
 import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
+import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
 import { parseDate } from '@/lib/date';
 import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData, QuestionType, Student } from './types';
@@ -284,7 +285,7 @@ export default function TakeExam({
                                                             userAnswers={currentVal || {}}
                                                             onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
                                                         />
-                                                    ) : (
+                                                    ) : q.question_type === 'drag_drop_cloze' ? null : (
                                                         q.content
                                                     )}
                                                 </div>
@@ -409,7 +410,17 @@ export default function TakeExam({
                                                     </div>
                                                 )}
 
-                                                {/* 4. Matching */}
+                                                {/* 4. Drag Drop Cloze */}
+                                                {q.question_type === 'drag_drop_cloze' && (
+                                                    <DragDropClozeQuestion
+                                                        content={q.content}
+                                                        options={q.options}
+                                                        userAnswers={currentVal || {}}
+                                                        onChange={(newMap) => handleAnswerChange(q.id!, newMap)}
+                                                    />
+                                                )}
+
+                                                {/* 5. Matching */}
                                                 {(q.question_type === 'matching' || q.question_type === 'matching_sentences') && (
                                                     <MatchingAnswerForm
                                                         options={q.options}

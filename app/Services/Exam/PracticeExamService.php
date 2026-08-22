@@ -287,6 +287,7 @@ class PracticeExamService implements PracticeExamServiceInterface
                     case 'matching_image':
                     case 'matching_sentences':
                     case 'diagram_labelling':
+                    case 'drag_drop_cloze':
                         if (is_array($userAns) && is_array($correctAns)) {
                             $totalPairs   = count($correctAns);
                             $correctPairs = 0;

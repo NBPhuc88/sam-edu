@@ -34,6 +34,7 @@ import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
 import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
 import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
 import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
+import DragDropClozeEditor from './QuestionEditors/DragDropClozeEditor';
 import MatchingEditor from './QuestionEditors/MatchingEditor';
 import MatchingImageEditor from './QuestionEditors/MatchingImageEditor';
 import OrderingEditor from './QuestionEditors/OrderingEditor';
@@ -348,6 +349,14 @@ export default function QuestionBuilder({
                     { id: 'FALSE', label: 'FALSE' },
                     { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
                 ];
+            case 'drag_drop_cloze':
+                return {
+                    words: [
+                        { id: 'w1', text: 'destination' },
+                        { id: 'w2', text: 'islands' },
+                        { id: 'w3', text: 'mountain' },
+                    ],
+                };
             case 'matching':
                 return {
                     left_items: [
@@ -429,6 +438,10 @@ export default function QuestionBuilder({
             case 'fill_in_blank':
                 return {
                     blank_1: { accepted_answers: [''], case_sensitive: false },
+                };
+            case 'drag_drop_cloze':
+                return {
+                    blank_1: 'w1',
                 };
             case 'matching':
                 return { L1: 'R1', L2: 'R2', L3: 'R3' };
@@ -1036,6 +1049,18 @@ export default function QuestionBuilder({
                                                                                 onInsertBlank={() => handleInsertBlankTag(secIdx, qIndex)}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
                                                                                 onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
+                                                                            />
+                                                                        )}
+
+                                                                        {normalizedType === 'drag_drop_cloze' && (
+                                                                            <DragDropClozeEditor
+                                                                                content={q.content || ''}
+                                                                                options={q.options || { words: [] }}
+                                                                                correctAnswer={q.correct_answer || {}}
+                                                                                onInsertBlank={() => handleInsertBlankTag(secIdx, qIndex)}
+                                                                                onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
+                                                                                onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 

@@ -5,6 +5,7 @@ export type QuestionType =
     | 'multiple_choice'
     | 'true_false_not_given'
     | 'fill_in_blank'
+    | 'drag_drop_cloze'
     | 'matching'
     | 'matching_sentences'
     | 'matching_image'

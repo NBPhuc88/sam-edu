@@ -34,6 +34,7 @@ Quy tắc cốt lõi: **Mỗi câu hỏi phải thuộc về đúng một kỹ n
 | `multiple_choice` – Trắc nghiệm nhiều đáp án | ✅ | ✅ | ❌ | ❌ | ✅ |
 | `true_false_not_given` – Đúng / Sai / Không đề cập | ✅ | ✅ | ❌ | ❌ | ✅ |
 | `fill_in_blank` – Điền vào chỗ trống | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `drag_drop_cloze` – Kéo thả từ vào chỗ trống | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `matching` – Nối cặp / Ghép tiêu đề | ✅ | ✅ | ❌ | ❌ | ✅ |
 | `ordering` – Sắp xếp thứ tự / Ghép câu | ❌ | ✅ | ✅ | ❌ | ✅ |
 | `diagram_labelling` – Gán nhãn sơ đồ / Bản đồ | ✅ | ❌ | ❌ | ❌ | ✅ |

@@ -347,6 +347,7 @@ class OnlineExamService implements OnlineExamServiceInterface
                     case 'matching':
                     case 'matching_image':
                     case 'matching_sentences':
+                    case 'drag_drop_cloze':
                         if (is_array($userAns) && is_array($correctAns)) {
                             $allPairsCorrect = true;
 
