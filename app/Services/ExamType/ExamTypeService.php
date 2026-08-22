@@ -184,11 +184,6 @@ class ExamTypeService implements ExamTypeServiceInterface
     {
         $examType = $this->findExamType($id, $admin);
 
-        // Sub-admin không được xóa loại đề thi dùng chung (center_id is null)
-        if ($admin && ! $admin->isSuperAdmin() && $examType->center_id === null) {
-            throw new AccessDeniedHttpException('Bạn không có quyền xóa loại đề thi chung của hệ thống.');
-        }
-
         return $this->examTypeRepository->delete($examType->id);
     }
 
