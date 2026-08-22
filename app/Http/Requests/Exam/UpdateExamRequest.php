@@ -41,7 +41,7 @@ class UpdateExamRequest extends FormRequest
                     return $query->whereNull('deleted_at');
                 })->ignore($examId),
             ],
-            'exam_type'         => ['sometimes', 'required', 'string', 'in:general,ielts,hsk,toeic,custom,midterm,final,quiz,test,15_min,45_min,practice'],
+            'exam_type'         => ['sometimes', 'required', 'string', 'max:50'],
             'duration_minutes'  => ['nullable', 'integer', 'min:1', 'max:600'],
             'max_score'         => ['sometimes', 'required', 'numeric', 'min:0.1', 'max:1000'],
             'pass_score'        => ['nullable', 'numeric', 'min:0', 'max:1000'],
@@ -98,6 +98,30 @@ class UpdateExamRequest extends FormRequest
     /**
      * @return array<string, string>
      */
+    public function attributes(): array
+    {
+        return [
+            'center_id'                             => 'Trung tâm đào tạo',
+            'subject_id'                            => 'Môn học',
+            'class_id'                              => 'Lớp học',
+            'name'                                  => 'Tên bài kiểm tra',
+            'code'                                  => 'Mã bài kiểm tra',
+            'exam_type'                             => 'Loại bài kiểm tra',
+            'duration_minutes'                      => 'Thời gian làm bài',
+            'max_score'                             => 'Điểm tối đa',
+            'pass_score'                            => 'Điểm đạt',
+            'sections.*.title'                      => 'Tiêu đề phần thi',
+            'sections.*.skill'                      => 'Kỹ năng phần thi',
+            'sections.*.questions.*.question_type'  => 'Kiểu câu hỏi',
+            'sections.*.questions.*.content'        => 'Nội dung câu hỏi',
+            'sections.*.questions.*.score'          => 'Điểm câu hỏi',
+            'sections.*.questions.*.correct_answer' => 'Đáp án đúng',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [
@@ -106,7 +130,6 @@ class UpdateExamRequest extends FormRequest
             'name.required'                           => 'Vui lòng nhập tên bài kiểm tra.',
             'code.unique'                             => 'Mã bài kiểm tra đã tồn tại trong trung tâm này.',
             'exam_type.required'                      => 'Vui lòng chọn loại bài kiểm tra.',
-            'exam_type.in'                            => 'Loại bài kiểm tra đã chọn không hợp lệ.',
             'max_score.required'                      => 'Vui lòng nhập điểm tối đa của bài thi.',
             'max_score.numeric'                       => 'Điểm tối đa phải là dạng số.',
             'pass_score.numeric'                      => 'Điểm đạt phải là dạng số.',
@@ -118,73 +141,40 @@ class UpdateExamRequest extends FormRequest
     }
 
     /**
-     * Custom lại toàn bộ message dạng mảng sections.X.questions.Y thành tiếng Việt thân thiện
      * @param \Illuminate\Validation\Validator $validator
      */
     public function withValidator(\Illuminate\Validation\Validator $validator): void
     {
         $validator->after(function (\Illuminate\Validation\Validator $validator) {
-            $messages       = $validator->messages();
-            $customMessages = [];
+            $sections = $this->input('sections', []);
 
-            foreach ($messages->toArray() as $key => $errors) {
-                // sections.0.questions.2.question_type -> Câu số 3 của Phần 1
-                if (preg_match('/^sections\.(\d+)\.questions\.(\d+)\.(.+)$/', $key, $matches)) {
-                    $secNum = ((int) $matches[1]) + 1;
-                    $qNum   = ((int) $matches[2]) + 1;
-                    $field  = $matches[3];
+            if (is_array($sections)) {
+                foreach ($sections as $sIdx => $sec) {
+                    $secNum    = $sIdx + 1;
+                    $questions = $sec['questions'] ?? [];
 
-                    $fieldLabel = match ($field) {
-                        'question_type'  => 'Kiểu câu hỏi',
-                        'content'        => 'Nội dung',
-                        'score'          => 'Điểm',
-                        'code'           => 'Mã câu hỏi',
-                        'skill'          => 'Kỹ năng',
-                        'options'        => 'Đáp án lựa chọn',
-                        'correct_answer' => 'Đáp án đúng',
-                        default          => $field,
-                    };
+                    if (is_array($questions)) {
+                        foreach ($questions as $qIdx => $q) {
+                            $qNum       = $qIdx + 1;
+                            $qType      = $q['question_type'] ?? '';
+                            $correctAns = $q['correct_answer'] ?? null;
 
-                    foreach ($errors as $error) {
-                        if (str_contains($error, 'invalid') || str_contains($error, 'không hợp lệ') || str_contains($error, 'in:')) {
-                            $customMessages[$key][] = "{$fieldLabel} của câu số {$qNum} phần {$secNum} không hợp lệ.";
-                        } elseif (str_contains($error, 'required') || str_contains($error, 'không được để trống')) {
-                            $customMessages[$key][] = "Vui lòng nhập {$fieldLabel} của câu số {$qNum} phần {$secNum}.";
-                        } else {
-                            $customMessages[$key][] = "Câu số {$qNum} phần {$secNum}: {$error}";
+                            if (in_array($qType, ['true_false', 'true_false_not_given', 'single_choice', 'find_mistake'], true)) {
+                                if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            } elseif ($qType === 'multiple_choice') {
+                                if (empty($correctAns) || (is_array($correctAns) && count(array_filter($correctAns)) === 0)) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn ít nhất 1 đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
                         }
-                    }
-                }
-                // sections.0.title -> Tiêu đề của Phần 1
-                elseif (preg_match('/^sections\.(\d+)\.(.+)$/', $key, $matches)) {
-                    $secNum = ((int) $matches[1]) + 1;
-                    $field  = $matches[2];
-
-                    $fieldLabel = match ($field) {
-                        'title'       => 'Tiêu đề',
-                        'skill'       => 'Kỹ năng',
-                        'description' => 'Mô tả',
-                        default       => $field,
-                    };
-
-                    foreach ($errors as $error) {
-                        if (str_contains($error, 'invalid') || str_contains($error, 'không hợp lệ')) {
-                            $customMessages[$key][] = "{$fieldLabel} của phần {$secNum} không hợp lệ.";
-                        } elseif (str_contains($error, 'required') || str_contains($error, 'không được để trống')) {
-                            $customMessages[$key][] = "Vui lòng nhập {$fieldLabel} của phần {$secNum}.";
-                        } else {
-                            $customMessages[$key][] = "Phần {$secNum}: {$error}";
-                        }
-                    }
-                }
-            }
-
-            if (! empty($customMessages)) {
-                foreach ($customMessages as $key => $errList) {
-                    $messages->forget($key);
-
-                    foreach ($errList as $errMsg) {
-                        $messages->add($key, $errMsg);
                     }
                 }
             }

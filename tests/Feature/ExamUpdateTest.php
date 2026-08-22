@@ -82,11 +82,12 @@ test('admin can update exam basic info and sections', function () {
                 'order_index' => 0,
                 'questions'   => [
                     [
-                        'id'            => $q1->id,
-                        'code'          => 'Q000000088',
-                        'question_type' => 'single_choice',
-                        'content'       => 'Câu hỏi 1 đã sửa',
-                        'score'         => 5.0,
+                        'id'             => $q1->id,
+                        'code'           => 'Q000000088',
+                        'question_type'  => 'single_choice',
+                        'content'        => 'Câu hỏi 1 đã sửa',
+                        'score'          => 5.0,
+                        'correct_answer' => 'A',
                     ],
                     [
                         'code'          => 'Q000000089',

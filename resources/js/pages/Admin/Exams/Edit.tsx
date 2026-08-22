@@ -39,7 +39,7 @@ export default function ExamEdit({
     const [subjectId, setSubjectId] = useState<string>(exam.subject_id ? String(exam.subject_id) : '');
     const [name, setName] = useState(exam.name || '');
     const [code, setCode] = useState(exam.code || '');
-    const [examType, setExamType] = useState<'general' | 'ielts' | 'hsk' | 'toeic' | 'custom'>(exam.exam_type || 'general');
+    const [examType, setExamType] = useState<string>(exam.exam_type || 'general');
     const [durationMinutes, setDurationMinutes] = useState<number | string>(exam.duration_minutes || 45);
     const [passScore, setPassScore] = useState<number | string>(exam.pass_score || '');
     const [shuffleQuestions, setShuffleQuestions] = useState(Boolean(exam.shuffle_questions));
@@ -321,7 +321,7 @@ export default function ExamEdit({
                                 </label>
                                 <select
                                     value={examType}
-                                    onChange={(e) => setExamType(e.target.value as any)}
+                                    onChange={(e) => setExamType(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
@@ -329,7 +329,13 @@ export default function ExamEdit({
                                     <option value="ielts">IELTS Mock Test (Listening / Reading / Writing / Speaking)</option>
                                     <option value="hsk">HSK Đề Thi Chuẩn Hóa (Tiếng Trung)</option>
                                     <option value="toeic">TOEIC Practice Test</option>
+                                    <option value="midterm">Giữa Kỳ (Midterm Exam)</option>
+                                    <option value="final">Cuối Kỳ (Final Exam)</option>
+                                    <option value="quiz">Kiểm Tra 15 Phút / Quiz</option>
                                     <option value="custom">Tuỳ Chỉnh Khác</option>
+                                    {!['general', 'ielts', 'hsk', 'toeic', 'midterm', 'final', 'quiz', 'custom'].includes(examType) && (
+                                        <option value={examType}>{examType}</option>
+                                    )}
                                 </select>
                                 {errors.exam_type && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.exam_type}</p>
