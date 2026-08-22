@@ -572,6 +572,51 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                     )}
                 </div>
 
+                {/* Bottom Action Bar */}
+                {filteredModules.length > 0 && (
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-xs">
+                        <div className="text-sm text-gray-600">
+                            Đang cấu hình: <strong className="text-gray-900">{roles.find((r) => r.key === selectedRole)?.name}</strong> — Đã chọn <strong>{activeRolePermissions.length}</strong> / {totalPermissionsCount} quyền
+                            {isDirty && (
+                                <span className="ml-2 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                    Có thay đổi chưa lưu
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <Button
+                                variant="secondary"
+                                onClick={handleSync}
+                                disabled={isSyncing}
+                                className="flex items-center gap-2"
+                            >
+                                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                                <span>Đồng Bộ Quyền Mới</span>
+                            </Button>
+
+                            <Button
+                                variant="danger"
+                                onClick={() => setResetModalOpen(true)}
+                                className="flex items-center gap-2"
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                                <span>Khôi Phục Mặc Định</span>
+                            </Button>
+
+                            <Button
+                                variant="success"
+                                onClick={handleSave}
+                                disabled={isSaving || isSuperAdminRole || !isDirty}
+                                className="flex items-center gap-2 shadow-sm"
+                            >
+                                <Save className={`h-4 w-4 ${isSaving ? 'animate-spin' : ''}`} />
+                                <span>{isDirty ? 'Lưu Thay Đổi (*)' : 'Lưu Thay Đổi'}</span>
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Reset Confirmation Modal */}
                 <Modal
                     isOpen={resetModalOpen}
