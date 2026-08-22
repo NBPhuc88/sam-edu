@@ -113,7 +113,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     // Current State
     const [answers, setAnswers] = useState<Record<number, any>>({});
     const [flaggedQuestions, setFlaggedQuestions] = useState<number[]>([]);
-    const [activeSectionIdx, setActiveSectionIdx] = useState(0);
     const [activeQuestionId, setActiveQuestionId] = useState<number | null>(
         allQuestions.length > 0 ? allQuestions[0].id : null,
     );
@@ -273,13 +272,16 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
         setTimeLeft((exam.duration_minutes || 45) * 60);
         setIsPaused(false);
         setResult(null);
-        setActiveSectionIdx(0);
         setActiveQuestionId(allQuestions.length > 0 ? allQuestions[0].id : null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const currentSection = exam.sections[activeSectionIdx] || exam.sections[0];
     const currentQuestion = allQuestions.find((q) => q.id === activeQuestionId) || allQuestions[0];
+    const computedSectionIdx = (exam.sections || []).findIndex((sec) =>
+        (sec.questions || []).some((q) => q.id === currentQuestion?.id)
+    );
+    const activeSectionIdx = computedSectionIdx >= 0 ? computedSectionIdx : 0;
+    const currentSection = exam.sections[activeSectionIdx] || exam.sections[0];
 
     // ==========================================
     // RENDER QUESTION RUNNER
@@ -941,7 +943,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         key={sec.id || sIdx}
                                         type="button"
                                         onClick={() => {
-                                            setActiveSectionIdx(sIdx);
                                             if (sec.questions && sec.questions.length > 0) {
                                                 setActiveQuestionId(sec.questions[0].id);
                                             }
@@ -972,12 +973,19 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         {allQuestions.findIndex((q) => q.id === currentQuestion.id) + 1}
                                     </span>
                                     <div>
-                                        <span className="font-mono text-xs font-bold text-gray-500">
-                                            {currentQuestion.code || `Câu ${allQuestions.findIndex((q) => q.id === currentQuestion.id) + 1}`}
-                                        </span>
-                                        <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded ml-2 font-bold">
-                                            {currentQuestion.score} điểm
-                                        </span>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-mono text-xs font-bold text-gray-500">
+                                                {currentQuestion.code || `Câu ${allQuestions.findIndex((q) => q.id === currentQuestion.id) + 1}`}
+                                            </span>
+                                            {currentSection && (
+                                                <span className="text-2xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {currentSection.title}
+                                                </span>
+                                            )}
+                                            <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                                                {currentQuestion.score} điểm
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1118,7 +1126,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                     key={q.id}
                                                     type="button"
                                                     onClick={() => {
-                                                        setActiveSectionIdx(sIdx);
                                                         setActiveQuestionId(q.id);
                                                     }}
                                                     className={`relative flex h-9 w-full items-center justify-center rounded-xl font-mono text-xs font-bold transition-all ${isActive
