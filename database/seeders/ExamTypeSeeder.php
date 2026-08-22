@@ -2,17 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Models\Center;
 use App\Models\ExamType;
 use Illuminate\Database\Seeder;
 
 class ExamTypeSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Standard exam type templates to seed for each center.
+     *
+     * @return array<int, array<string, string>>
      */
-    public function run(): void
+    public static function getDefaultExamTypes(): array
     {
-        $types = [
+        return [
             [
                 'code'        => 'general',
                 'name'        => 'Đề Thi Chung / Tổng Hợp (General Test)',
@@ -62,16 +65,30 @@ class ExamTypeSeeder extends Seeder
                 'status'      => 'active',
             ],
         ];
+    }
 
-        foreach ($types as $type) {
-            ExamType::updateOrCreate(
-                ['center_id' => null, 'code' => $type['code']],
-                [
-                    'name'        => $type['name'],
-                    'description' => $type['description'],
-                    'status'      => $type['status'],
-                ]
-            );
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $centers   = Center::all();
+        $templates = self::getDefaultExamTypes();
+
+        foreach ($centers as $center) {
+            foreach ($templates as $template) {
+                ExamType::updateOrCreate(
+                    [
+                        'center_id' => $center->id,
+                        'code'      => $template['code'],
+                    ],
+                    [
+                        'name'        => $template['name'],
+                        'description' => $template['description'],
+                        'status'      => $template['status'],
+                    ]
+                );
+            }
         }
     }
 }

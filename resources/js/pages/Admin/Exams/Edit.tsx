@@ -20,6 +20,7 @@ import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './type
 
 interface ExamTypeItem {
     id: number;
+    center_id?: number | null;
     code: string;
     name: string;
 }
@@ -90,6 +91,10 @@ export default function ExamEdit({
     const filteredSubjects = centerId
         ? subjects.filter((s) => String(s.center_id) === String(centerId))
         : subjects;
+
+    const filteredExamTypes = centerId
+        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(centerId))
+        : exam_types;
 
     // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
@@ -333,8 +338,8 @@ export default function ExamEdit({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    {exam_types.length > 0 ? (
-                                        exam_types.map((t) => (
+                                    {filteredExamTypes.length > 0 ? (
+                                        filteredExamTypes.map((t) => (
                                             <option key={t.id} value={t.code}>
                                                 {t.name}
                                             </option>
@@ -351,7 +356,7 @@ export default function ExamEdit({
                                             <option value="custom">Tuỳ Chỉnh Khác</option>
                                         </>
                                     )}
-                                    {examType && !exam_types.some((t) => t.code === examType) && (
+                                    {examType && !filteredExamTypes.some((t) => t.code === examType) && (
                                         <option value={examType}>{examType}</option>
                                     )}
                                 </select>

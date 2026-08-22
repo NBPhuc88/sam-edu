@@ -36,13 +36,14 @@ test('super admin can view exam types list', function () {
     $response = $this->actingAs($admin, 'admin')->get(route('exam-types.index'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
+    $response->assertInertia(
+        fn ($page) => $page
         ->component('Admin/ExamTypes/Index')
         ->has('examTypes.data', 1)
     );
 });
 
-test('super admin can create system-wide and center-specific exam types', function () {
+test('super admin can create exam type for a center', function () {
     $admin = Admin::create([
         'username'   => 'super_admin_create_test',
         'full_name'  => 'Super Admin Create',
@@ -60,23 +61,6 @@ test('super admin can create system-wide and center-specific exam types', functi
         'status' => 'active',
     ]);
 
-    // Create system-wide exam type (center_id is null)
-    $response = $this->actingAs($admin, 'admin')->post(route('exam-types.store'), [
-        'center_id'   => null,
-        'name'        => 'Loại Đề Thi Mẫu Toàn Hệ Thống',
-        'code'        => 'SYS_EXAM_1',
-        'description' => 'Mô tả loại đề',
-        'status'      => 'active',
-    ]);
-
-    $response->assertRedirect(route('exam-types.index'));
-    $this->assertDatabaseHas('exam_types', [
-        'center_id' => null,
-        'code'      => 'SYS_EXAM_1',
-        'name'      => 'Loại Đề Thi Mẫu Toàn Hệ Thống',
-    ]);
-
-    // Create center-specific exam type
     $responseCenter = $this->actingAs($admin, 'admin')->post(route('exam-types.store'), [
         'center_id'   => $center->id,
         'name'        => 'Loại Đề Thi Riêng Của Trung Tâm',
@@ -134,8 +118,16 @@ test('admin can update and delete exam type', function () {
         'admin_code' => 'ADM000000096',
     ]);
 
+    $center = Center::create([
+        'code'   => 'CTR000000096',
+        'name'   => 'Trung Tâm Delete Test',
+        'email'  => 'center96@test.com',
+        'phone'  => '0901234596',
+        'status' => 'active',
+    ]);
+
     $examType = ExamType::create([
-        'center_id' => null,
+        'center_id' => $center->id,
         'code'      => 'UPDATE_TEST',
         'name'      => 'Tên Ban Đầu',
         'status'    => 'active',

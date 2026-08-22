@@ -94,32 +94,31 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
                         {isSuperAdmin ? (
                             <div>
                                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                                    Phạm vi áp dụng / Trung tâm
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    required
                                 >
-                                    <option value="">🌐 Toàn hệ thống (Dùng chung cho tất cả các trung tâm)</option>
+                                    <option value="">-- Chọn Trung Tâm --</option>
                                     {centers.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             🏫 {c.name} ({c.code})
                                         </option>
                                     ))}
                                 </select>
+                                {errors.center_id && <p className="text-xs text-red-600 mt-1">{errors.center_id}</p>}
                             </div>
                         ) : (
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                    Phạm vi áp dụng
+                                    Trung Tâm Đào Tạo
                                 </label>
                                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-800 font-medium flex items-center gap-2">
-                                    {examType.center_id === null ? (
-                                        <span>🌐 Loại đề dùng chung toàn hệ thống</span>
-                                    ) : (
-                                        <span>🏫 {examType.center?.name || `Trung tâm #${examType.center_id}`}</span>
-                                    )}
+                                    <Building2 className="w-4 h-4 text-emerald-600" />
+                                    <span>{examType.center?.name || `Trung tâm #${examType.center_id}`}</span>
                                 </div>
                             </div>
                         )}

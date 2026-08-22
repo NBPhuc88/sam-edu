@@ -231,7 +231,7 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
                                     <th className="w-12 text-center">STT</th>
                                     <th>Mã Loại</th>
                                     <th>Tên Loại Đề Thi</th>
-                                    <th>Phạm Vi Áp Dụng</th>
+                                    <th>Trung Tâm</th>
                                     <th className="text-center whitespace-nowrap">Số Đề Thi Đang Dùng</th>
                                     <th className="text-center">Trạng Thái</th>
                                     <th className="text-right">Thao Tác</th>
@@ -290,19 +290,12 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
                                                     </div>
                                                 </td>
 
-                                                {/* Scope / Center */}
+                                                {/* Center */}
                                                 <td>
-                                                    {isSystemType ? (
-                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200">
-                                                            <Globe className="w-3.5 h-3.5" />
-                                                            Toàn hệ thống (Mẫu)
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 border border-emerald-200">
-                                                            <Building2 className="w-3.5 h-3.5" />
-                                                            {type.center?.name || `Trung tâm #${type.center_id}`}
-                                                        </span>
-                                                    )}
+                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 border border-emerald-200">
+                                                        <Building2 className="w-3.5 h-3.5" />
+                                                        {type.center?.name || `Trung tâm #${type.center_id}`}
+                                                    </span>
                                                 </td>
 
                                                 {/* Exams count */}

@@ -12,7 +12,7 @@ return new class () extends Migration {
     {
         Schema::create('exam_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('center_id')->nullable()->constrained('centers')->nullOnDelete();
+            $table->foreignId('center_id')->constrained('centers')->cascadeOnDelete();
             $table->string('code', 50);
             $table->string('name', 255);
             $table->text('description')->nullable();

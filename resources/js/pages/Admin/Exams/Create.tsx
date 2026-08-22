@@ -21,6 +21,7 @@ import { Center, ExamSectionData, Subject } from './types';
 
 interface ExamTypeItem {
     id: number;
+    center_id?: number | null;
     code: string;
     name: string;
 }
@@ -73,6 +74,10 @@ export default function ExamCreate({
     const filteredSubjects = centerId
         ? subjects.filter((s) => String(s.center_id) === String(centerId))
         : subjects;
+
+    const filteredExamTypes = centerId
+        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(centerId))
+        : exam_types;
 
     // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
@@ -231,28 +236,21 @@ export default function ExamCreate({
                         </div>
                     )}
 
-                    {/* Card 1: Exam Metadata */}
-                    <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                                <FileCheck className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">
-                                    1. Thông Tin & Cấu Hình Đề Thi
-                                </h2>
-                                <p className="text-xs text-gray-500">
-                                    Xác định phạm vi trung tâm, môn học, thang điểm và các quy chế làm bài
-                                </p>
-                            </div>
+                    <Card className="border-gray-200 bg-white p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h2 className="text-base font-bold text-gray-900">
+                                1. Thông Tin Chung Của Đề Thi
+                            </h2>
+                            <span className="text-xs text-gray-400">
+                                * Trường bắt buộc
+                            </span>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 items-start">
-                            {/* Center Selection (Super Admin only) */}
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                             {isSuperAdmin && (
                                 <div>
                                     <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                        Trung Tâm <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={centerId}
@@ -262,9 +260,8 @@ export default function ExamCreate({
                                         }}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                         required
-                                        disabled={centers.length === 0}
                                     >
-                                        <option value="">-- Chọn Trung tâm --</option>
+                                        <option value="">-- Chọn Trung Tâm --</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -277,29 +274,24 @@ export default function ExamCreate({
                                 </div>
                             )}
 
-                            {/* Subject Selection */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Môn Học (Tùy chọn)
+                                    Môn Học / Chương Trình
                                 </label>
                                 <select
                                     value={subjectId}
                                     onChange={(e) => setSubjectId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Dành cho toàn bộ môn học --</option>
+                                    <option value="">-- Chọn Môn Học (Tùy chọn) --</option>
                                     {filteredSubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.code})
                                         </option>
                                     ))}
                                 </select>
-                                {errors.subject_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.subject_id}</p>
-                                )}
                             </div>
 
-                            {/* Exam Type */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Loại Đề Thi <span className="text-red-500">*</span>
@@ -310,8 +302,8 @@ export default function ExamCreate({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    {exam_types.length > 0 ? (
-                                        exam_types.map((t) => (
+                                    {filteredExamTypes.length > 0 ? (
+                                        filteredExamTypes.map((t) => (
                                             <option key={t.id} value={t.code}>
                                                 {t.name}
                                             </option>
@@ -328,7 +320,7 @@ export default function ExamCreate({
                                             <option value="custom">Tuỳ Chỉnh Khác</option>
                                         </>
                                     )}
-                                    {examType && !exam_types.some((t) => t.code === examType) && (
+                                    {examType && !filteredExamTypes.some((t) => t.code === examType) && (
                                         <option value={examType}>{examType}</option>
                                     )}
                                 </select>

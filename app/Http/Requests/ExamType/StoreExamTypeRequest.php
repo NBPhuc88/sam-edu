@@ -16,8 +16,10 @@ class StoreExamTypeRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isSuperAdmin = auth('admin')->user()?->isSuperAdmin() ?? false;
+
         return [
-            'center_id'   => ['nullable', 'integer', 'exists:centers,id'],
+            'center_id'   => [$isSuperAdmin ? 'required' : 'nullable', 'integer', 'exists:centers,id'],
             'name'        => ['required', 'string', 'max:255'],
             'code'        => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
@@ -45,10 +47,11 @@ class StoreExamTypeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'center_id.exists' => 'Trung tâm đã chọn không tồn tại.',
-            'name.required'    => 'Vui lòng nhập tên loại đề thi.',
-            'code.max'         => 'Mã loại đề thi không được vượt quá 50 ký tự.',
-            'status.in'        => 'Trạng thái không hợp lệ.',
+            'center_id.required' => 'Vui lòng chọn Trung tâm áp dụng loại đề thi.',
+            'center_id.exists'   => 'Trung tâm đã chọn không tồn tại.',
+            'name.required'      => 'Vui lòng nhập tên loại đề thi.',
+            'code.max'           => 'Mã loại đề thi không được vượt quá 50 ký tự.',
+            'status.in'          => 'Trạng thái không hợp lệ.',
         ];
     }
 }

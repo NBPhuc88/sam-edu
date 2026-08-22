@@ -37,17 +37,10 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
             ->withCount('exams');
 
         if ($centerIds !== null) {
-            // Cho phép xem các loại đề thi của trung tâm này VÀ các loại đề thi dùng chung (center_id is null)
             if (is_array($centerIds)) {
-                $query->where(function ($q) use ($centerIds) {
-                    $q->whereIn('center_id', $centerIds)
-                        ->orWhereNull('center_id');
-                });
+                $query->whereIn('center_id', $centerIds);
             } else {
-                $query->where(function ($q) use ($centerIds) {
-                    $q->where('center_id', $centerIds)
-                        ->orWhereNull('center_id');
-                });
+                $query->where('center_id', $centerIds);
             }
         }
 
@@ -68,7 +61,8 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
             });
         }
 
-        return $query->orderByRaw('center_id IS NULL DESC, id ASC')
+        return $query->orderBy('center_id', 'asc')
+            ->orderBy('id', 'asc')
             ->paginate($perPage, ['*'], 'page', $page);
     }
 
@@ -84,19 +78,13 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {
-                $query->where(function ($q) use ($centerIds) {
-                    $q->whereIn('center_id', $centerIds)
-                        ->orWhereNull('center_id');
-                });
+                $query->whereIn('center_id', $centerIds);
             } else {
-                $query->where(function ($q) use ($centerIds) {
-                    $q->where('center_id', $centerIds)
-                        ->orWhereNull('center_id');
-                });
+                $query->where('center_id', $centerIds);
             }
         }
 
-        return $query->orderByRaw('center_id IS NULL DESC, name ASC')->get();
+        return $query->orderBy('name', 'asc')->get();
     }
 
     /**

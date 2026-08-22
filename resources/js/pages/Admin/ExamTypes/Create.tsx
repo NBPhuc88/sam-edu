@@ -83,23 +83,22 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
                         {isSuperAdmin && (
                             <div>
                                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                                    Phạm vi áp dụng / Trung tâm
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    required
                                 >
-                                    <option value="">🌐 Toàn hệ thống (Dùng chung cho tất cả các trung tâm)</option>
+                                    <option value="">-- Chọn Trung Tâm --</option>
                                     {centers.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             🏫 {c.name} ({c.code})
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Loại đề thi dùng chung sẽ hiển thị cho mọi giáo viên và trung tâm khi tạo đề thi.
-                                </p>
+                                {errors.center_id && <p className="text-xs text-red-600 mt-1">{errors.center_id}</p>}
                             </div>
                         )}
 
