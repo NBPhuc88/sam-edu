@@ -80,6 +80,7 @@ interface Props {
 }
 
 export default function StudentIndex({ students, centers = [], classes = [], filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -277,14 +278,16 @@ return;
                         >
                             Tệp Mẫu CSV
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            icon={<Upload className="h-4.5 w-4.5" />}
-                            onClick={() => setIsImportModalOpen(true)}
-                        >
-                            Import CSV
-                        </Button>
+                        {can('students.create') && (
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                icon={<Upload className="h-4.5 w-4.5" />}
+                                onClick={() => setIsImportModalOpen(true)}
+                            >
+                                Import CSV
+                            </Button>
+                        )}
                         <Button
                             variant="secondary"
                             size="md"
@@ -293,15 +296,17 @@ return;
                         >
                             Export CSV
                         </Button>
-                        <Link href="/students/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                icon={<Plus className="h-4.5 w-4.5" />}
-                            >
-                                Thêm Học Sinh Mới
-                            </Button>
-                        </Link>
+                        {can('students.create') && (
+                            <Link href="/students/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<Plus className="h-4.5 w-4.5" />}
+                                >
+                                    Thêm Học Sinh Mới
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -399,7 +404,9 @@ return;
                                     <th className="px-6 py-4">Trung Tâm</th>
                                     <th className="px-6 py-4">Ngày Nhập Học</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('students.edit') || can('students.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -495,35 +502,41 @@ return;
                                                 {getStatusBadge(student.status)}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/students/${student.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-4 w-4" />}
-                                                            title="Sửa thông tin học sinh"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-4 w-4" />}
-                                                        onClick={() => openDeleteModal(student)}
-                                                        title="Xóa học sinh"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('students.edit') || can('students.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can('students.edit') && (
+                                                            <Link href={`/students/${student.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-4 w-4" />}
+                                                                    title="Sửa thông tin học sinh"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('students.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-4 w-4" />}
+                                                                onClick={() => openDeleteModal(student)}
+                                                                title="Xóa học sinh"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={can('students.edit') || can('students.delete') ? 7 : 6}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

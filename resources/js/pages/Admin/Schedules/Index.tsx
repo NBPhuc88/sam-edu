@@ -125,6 +125,7 @@ export default function ScheduleIndex({
     subjects = [],
     filters,
 }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -251,15 +252,17 @@ export default function ScheduleIndex({
                         </p>
                     </div>
 
-                    <Link href="/schedules/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Tạo Lịch Học Mới
-                        </Button>
-                    </Link>
+                    {can('schedules.create') && (
+                        <Link href="/schedules/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Tạo Lịch Học Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Filter Box */}
@@ -380,7 +383,9 @@ export default function ScheduleIndex({
                                     <th className="px-6 py-4">Thời Gian Áp Dụng</th>
                                     <th className="px-6 py-4">Ca Học Đã Sinh</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('schedules.edit') || can('schedules.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -468,35 +473,41 @@ export default function ScheduleIndex({
                                                 )}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/schedules/${sch.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-4 w-4" />}
-                                                            title="Sửa lịch học"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-4 w-4" />}
-                                                        onClick={() => openDeleteModal(sch)}
-                                                        title="Xóa lịch học"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('schedules.edit') || can('schedules.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can('schedules.edit') && (
+                                                            <Link href={`/schedules/${sch.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-4 w-4" />}
+                                                                    title="Sửa lịch học"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('schedules.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-4 w-4" />}
+                                                                onClick={() => openDeleteModal(sch)}
+                                                                title="Xóa lịch học"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={(isSuperAdmin ? 1 : 0) + 6 + (can('schedules.edit') || can('schedules.delete') ? 1 : 0)}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

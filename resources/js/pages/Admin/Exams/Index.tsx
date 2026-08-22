@@ -56,6 +56,7 @@ export default function ExamIndex({
     stats,
     filters,
 }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -205,15 +206,17 @@ export default function ExamIndex({
                             </Button>
                         </Link>
 
-                        <Link href="/exams/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                icon={<Plus className="h-4.5 w-4.5" />}
-                            >
-                                Tạo Đề Thi Mới
-                            </Button>
-                        </Link>
+                        {can('exams.create') && (
+                            <Link href="/exams/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<Plus className="h-4.5 w-4.5" />}
+                                >
+                                    Tạo Đề Thi Mới
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -401,13 +404,15 @@ export default function ExamIndex({
                                     <th>Thời Lượng & Số Câu</th>
                                     <th>Điểm Tối Đa</th>
                                     <th>Trạng Thái</th>
-                                    <th className="text-right">Thao Tác</th>
+                                    {(can('exams.edit') || can('exams.delete')) && (
+                                        <th className="text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {exams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('exams.edit') || can('exams.delete') ? 9 : 8} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -510,55 +515,61 @@ export default function ExamIndex({
                                             <td>
                                                 {getStatusBadge(exam.status)}
                                             </td>
-                                            <td className="text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/exams/${exam.id}/practice`}>
+                                            {(can('exams.edit') || can('exams.delete')) && (
+                                                <td className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/exams/${exam.id}/practice`}>
+                                                            <Button
+                                                                type="button"
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                className="!border-blue-300 !text-blue-700 hover:!bg-blue-50"
+                                                                icon={<Award className="h-3.5 w-3.5 text-blue-600" />}
+                                                                title="Thi thử / Làm thử bài thi này"
+                                                            >
+                                                                Thi Thử
+                                                            </Button>
+                                                        </Link>
                                                         <Button
                                                             type="button"
-                                                            variant="secondary"
+                                                            variant="success"
                                                             size="sm"
-                                                            className="!border-blue-300 !text-blue-700 hover:!bg-blue-50"
-                                                            icon={<Award className="h-3.5 w-3.5 text-blue-600" />}
-                                                            title="Thi thử / Làm thử bài thi này"
+                                                            icon={<Users className="h-3.5 w-3.5" />}
+                                                            onClick={() => {
+                                                                setAssigningExamId(exam.id);
+                                                                setAssignModalOpen(true);
+                                                            }}
+                                                            title="Gán đề thi này cho một lớp học"
                                                         >
-                                                            Thi Thử
+                                                            Gán Lớp
                                                         </Button>
-                                                    </Link>
-                                                    <Button
-                                                        type="button"
-                                                        variant="success"
-                                                        size="sm"
-                                                        icon={<Users className="h-3.5 w-3.5" />}
-                                                        onClick={() => {
-                                                            setAssigningExamId(exam.id);
-                                                            setAssignModalOpen(true);
-                                                        }}
-                                                        title="Gán đề thi này cho một lớp học"
-                                                    >
-                                                        Gán Lớp
-                                                    </Button>
-                                                    <Link href={`/exams/${exam.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                            title="Chỉnh sửa bài kiểm tra"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        type="button"
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                        onClick={() => openDeleteModal(exam)}
-                                                        title="Xóa bài kiểm tra"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                                        {can('exams.edit') && (
+                                                            <Link href={`/exams/${exam.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    title="Chỉnh sửa bài kiểm tra"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('exams.delete') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                onClick={() => openDeleteModal(exam)}
+                                                                title="Xóa bài kiểm tra"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}
@@ -610,11 +621,13 @@ export default function ExamIndex({
                                 Thời lượng: <span className="font-semibold text-gray-800">{selectedExamQuestions?.duration_minutes || 45} phút</span> • Điểm tối đa: <span className="font-semibold text-emerald-700">{selectedExamQuestions?.max_score}</span>
                             </p>
                         </div>
-                        <Link href={`/exams/${selectedExamQuestions?.id}/edit`}>
-                            <Button variant="edit" size="sm" icon={<Edit2 className="h-3.5 w-3.5" />}>
-                                Soạn Thảo Câu Hỏi
-                            </Button>
-                        </Link>
+                        {can('exams.edit') && (
+                            <Link href={`/exams/${selectedExamQuestions?.id}/edit`}>
+                                <Button variant="edit" size="sm" icon={<Edit2 className="h-3.5 w-3.5" />}>
+                                    Soạn Thảo Câu Hỏi
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     <div className="max-h-[60vh] overflow-y-auto space-y-3 p-1">

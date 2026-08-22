@@ -55,6 +55,7 @@ export default function ClassExamIndex({
     stats,
     filters,
 }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -188,14 +189,16 @@ export default function ClassExamIndex({
                                 Đến Kho Đề Thi
                             </Button>
                         </Link>
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                            onClick={openCreateModal}
-                        >
-                            Gán Đề Thi Cho Lớp
-                        </Button>
+                        {can('class-exams.create') && (
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                                onClick={openCreateModal}
+                            >
+                                Gán Đề Thi Cho Lớp
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -383,13 +386,15 @@ export default function ClassExamIndex({
                                     <th>Thời Lượng</th>
                                     <th>Thang Điểm</th>
                                     <th>Trạng Thái</th>
-                                    <th className="text-right">Thao Tác</th>
+                                    {(can('class-exams.edit') || can('class-exams.delete')) && (
+                                        <th className="text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {classExams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('class-exams.edit') || can('class-exams.delete') ? 10 : 9} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -398,16 +403,18 @@ export default function ClassExamIndex({
                                                 <p className="mt-1 text-xs text-gray-400">
                                                     Hãy chọn đề thi từ Kho đề thi mẫu và gán vào lớp học để lên lịch thi.
                                                 </p>
-                                                <div className="mt-4">
-                                                    <Button
-                                                        variant="success"
-                                                        size="sm"
-                                                        icon={<Plus className="h-4 w-4" />}
-                                                        onClick={openCreateModal}
-                                                    >
-                                                        Gán Đề Thi Ngay
-                                                    </Button>
-                                                </div>
+                                                {can('class-exams.create') && (
+                                                    <div className="mt-4">
+                                                        <Button
+                                                            variant="success"
+                                                            size="sm"
+                                                            icon={<Plus className="h-4 w-4" />}
+                                                            onClick={openCreateModal}
+                                                        >
+                                                            Gán Đề Thi Ngay
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -494,41 +501,47 @@ export default function ClassExamIndex({
                                                 <td>
                                                     {getStatusBadge(item.status)}
                                                 </td>
-                                                <td className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Link href={`/class-exams/${item.id}/room`}>
-                                                            <Button
-                                                                type="button"
-                                                                variant="success"
-                                                                size="sm"
-                                                                icon={<PlayCircle className="h-3.5 w-3.5" />}
-                                                                title="Vào phòng thi"
-                                                            >
-                                                                Phòng Thi
-                                                            </Button>
-                                                        </Link>
-                                                        <Button
-                                                            type="button"
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                            onClick={() => openEditModal(item)}
-                                                            title="Sửa lịch thi"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                            onClick={() => openDeleteDialog(item)}
-                                                            title="Hủy kỳ thi"
-                                                        >
-                                                            Xóa
-                                                        </Button>
-                                                    </div>
-                                                </td>
+                                                {(can('class-exams.edit') || can('class-exams.delete')) && (
+                                                    <td className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Link href={`/class-exams/${item.id}/room`}>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="success"
+                                                                    size="sm"
+                                                                    icon={<PlayCircle className="h-3.5 w-3.5" />}
+                                                                    title="Vào phòng thi"
+                                                                >
+                                                                    Phòng Thi
+                                                                </Button>
+                                                            </Link>
+                                                            {can('class-exams.edit') && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    onClick={() => openEditModal(item)}
+                                                                    title="Sửa lịch thi"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            )}
+                                                            {can('class-exams.delete') && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                    icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                    onClick={() => openDeleteDialog(item)}
+                                                                    title="Hủy kỳ thi"
+                                                                >
+                                                                    Xóa
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })

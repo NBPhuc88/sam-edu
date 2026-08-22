@@ -62,6 +62,7 @@ interface Props {
 }
 
 export default function TeacherIndex({ teachers, centers = [], filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -229,14 +230,16 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                         >
                             Tệp Mẫu CSV
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            icon={<Upload className="h-4.5 w-4.5" />}
-                            onClick={() => setIsImportModalOpen(true)}
-                        >
-                            Import CSV
-                        </Button>
+                        {can('teachers.create') && (
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                icon={<Upload className="h-4.5 w-4.5" />}
+                                onClick={() => setIsImportModalOpen(true)}
+                            >
+                                Import CSV
+                            </Button>
+                        )}
                         <Button
                             variant="secondary"
                             size="md"
@@ -245,15 +248,17 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                         >
                             Export CSV
                         </Button>
-                        <Link href="/teachers/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                icon={<Plus className="h-4.5 w-4.5" />}
-                            >
-                                Thêm Giáo Viên Mới
-                            </Button>
-                        </Link>
+                        {can('teachers.create') && (
+                            <Link href="/teachers/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<Plus className="h-4.5 w-4.5" />}
+                                >
+                                    Thêm Giáo Viên Mới
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -335,7 +340,9 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                     <th className="px-6 py-4">Chuyên Môn</th>
                                     <th className="px-6 py-4">Ngày Vào Làm</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('teachers.edit') || can('teachers.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -402,45 +409,51 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                                 {getStatusBadge(teacher.status)}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/teachers/${teacher.id}/schedule`}>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            icon={<Calendar className="h-4 w-4 text-emerald-600" />}
-                                                            title="Xem thời khóa biểu / lịch dạy của giáo viên"
-                                                        >
-                                                            Lịch Dạy
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/teachers/${teacher.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-4 w-4" />}
-                                                            title="Sửa thông tin giáo viên"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-4 w-4" />}
-                                                        onClick={() => openDeleteModal(teacher)}
-                                                        title="Xóa giáo viên"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('teachers.edit') || can('teachers.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/teachers/${teacher.id}/schedule`}>
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                                title="Xem thời khóa biểu / lịch dạy của giáo viên"
+                                                            >
+                                                                Lịch Dạy
+                                                            </Button>
+                                                        </Link>
+                                                        {can('teachers.edit') && (
+                                                            <Link href={`/teachers/${teacher.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-4 w-4" />}
+                                                                    title="Sửa thông tin giáo viên"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('teachers.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-4 w-4" />}
+                                                                onClick={() => openDeleteModal(teacher)}
+                                                                title="Xóa giáo viên"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={can('teachers.edit') || can('teachers.delete') ? 7 : 6}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

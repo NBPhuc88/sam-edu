@@ -80,6 +80,7 @@ interface Props {
 }
 
 export default function ClassIndex({ classes, centers = [], filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -167,15 +168,17 @@ return;
                         </p>
                     </div>
 
-                    <Link href="/classes/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Thêm Lớp Học Mới
-                        </Button>
-                    </Link>
+                    {can('classes.create') && (
+                        <Link href="/classes/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Thêm Lớp Học Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Filter Box */}
@@ -256,7 +259,9 @@ return;
                                     <th className="px-6 py-4">Sĩ Số</th>
                                     <th className="px-6 py-4">Thời Gian</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('classes.edit') || can('classes.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -340,65 +345,71 @@ return;
                                                 {getStatusBadge(cls.status)}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/classes/${cls.id}/schedule`}>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            icon={<Calendar className="h-4 w-4 text-emerald-600" />}
-                                                            title="Xem thời khóa biểu lớp học"
-                                                        >
-                                                            Lịch Học
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/classes/${cls.id}/students`}>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            icon={<Users className="h-4 w-4" />}
-                                                            title="Danh sách học sinh"
-                                                        >
-                                                            Học Sinh
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/classes/${cls.id}/chat`}>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            icon={<MessageSquare className="h-4 w-4 text-blue-600" />}
-                                                            title="Nhóm chat lớp"
-                                                        >
-                                                            Chat
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/classes/${cls.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-4 w-4" />}
-                                                            title="Sửa lớp học"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-4 w-4" />}
-                                                        onClick={() => openDeleteModal(cls)}
-                                                        title="Xóa lớp học"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('classes.edit') || can('classes.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/classes/${cls.id}/schedule`}>
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                                title="Xem thời khóa biểu lớp học"
+                                                            >
+                                                                Lịch Học
+                                                            </Button>
+                                                        </Link>
+                                                        <Link href={`/classes/${cls.id}/students`}>
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<Users className="h-4 w-4" />}
+                                                                title="Danh sách học sinh"
+                                                            >
+                                                                Học Sinh
+                                                            </Button>
+                                                        </Link>
+                                                        <Link href={`/classes/${cls.id}/chat`}>
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<MessageSquare className="h-4 w-4 text-blue-600" />}
+                                                                title="Nhóm chat lớp"
+                                                            >
+                                                                Chat
+                                                            </Button>
+                                                        </Link>
+                                                        {can('classes.edit') && (
+                                                            <Link href={`/classes/${cls.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-4 w-4" />}
+                                                                    title="Sửa lớp học"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('classes.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-4 w-4" />}
+                                                                onClick={() => openDeleteModal(cls)}
+                                                                title="Xóa lớp học"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={can('classes.edit') || can('classes.delete') ? 7 : 6}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

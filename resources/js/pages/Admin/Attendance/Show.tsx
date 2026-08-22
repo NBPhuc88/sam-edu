@@ -86,6 +86,7 @@ export default function AttendanceShowPage({
     students: initialStudents = [],
     totalStudents,
 }: Props) {
+    const { can } = usePermission();
     const [students, setStudents] = useState<StudentAttendanceItem[]>(initialStudents);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -181,27 +182,29 @@ export default function AttendanceShowPage({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="md"
-                            icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                            onClick={handleMarkAllPresent}
-                        >
-                            Tất Cả Có Mặt
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="success"
-                            size="md"
-                            icon={<Save className="h-4 w-4" />}
-                            isLoading={isSaving}
-                            onClick={handleSubmit}
-                        >
-                            Lưu Điểm Danh
-                        </Button>
-                    </div>
+                    {can('attendance.save') && (
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                onClick={handleMarkAllPresent}
+                            >
+                                Tất Cả Có Mặt
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="success"
+                                size="md"
+                                icon={<Save className="h-4 w-4" />}
+                                isLoading={isSaving}
+                                onClick={handleSubmit}
+                            >
+                                Lưu Điểm Danh
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Counters Card */}
@@ -384,15 +387,17 @@ export default function AttendanceShowPage({
                                 <div className="text-xs text-gray-500">
                                     Đang xem {students.length} học sinh trong ca học
                                 </div>
-                                <Button
-                                    type="submit"
-                                    variant="success"
-                                    size="md"
-                                    icon={<Save className="h-4 w-4" />}
-                                    isLoading={isSaving}
-                                >
-                                    Lưu Điểm Danh
-                                </Button>
+                                {can('attendance.save') && (
+                                    <Button
+                                        type="submit"
+                                        variant="success"
+                                        size="md"
+                                        icon={<Save className="h-4 w-4" />}
+                                        isLoading={isSaving}
+                                    >
+                                        Lưu Điểm Danh
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </form>

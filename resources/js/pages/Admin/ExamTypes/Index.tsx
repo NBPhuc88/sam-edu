@@ -56,6 +56,7 @@ interface Props {
 }
 
 export default function ExamTypeIndex({ examTypes, centers = [], filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -133,18 +134,20 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
-                        <Link href="/exam-types/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                className="whitespace-nowrap"
-                                icon={<Plus className="h-4.5 w-4.5" />}
-                            >
-                                Thêm Loại Đề Thi Mới
-                            </Button>
-                        </Link>
-                    </div>
+                    {can('exam-types.create') && (
+                        <div className="flex items-center gap-2.5">
+                            <Link href="/exam-types/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    className="whitespace-nowrap"
+                                    icon={<Plus className="h-4.5 w-4.5" />}
+                                >
+                                    Thêm Loại Đề Thi Mới
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filter Card */}
@@ -235,13 +238,15 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
                                     <th>Trung Tâm</th>
                                     <th className="text-center whitespace-nowrap">Số Đề Thi Đang Dùng</th>
                                     <th className="text-center">Trạng Thái</th>
-                                    <th className="text-right">Thao Tác</th>
+                                    {(can('exam-types.edit') || can('exam-types.delete')) && (
+                                        <th className="text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {examTypes.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('exam-types.edit') || can('exam-types.delete') ? 7 : 6} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <Layers className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -317,30 +322,36 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
                                                 </td>
 
                                                 {/* Action Buttons: Sửa & Xóa */}
-                                                <td className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Link href={`/exam-types/${type.id}/edit`}>
-                                                            <Button
-                                                                variant="edit"
-                                                                size="sm"
-                                                                icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                                title="Chỉnh sửa loại đề thi"
-                                                            >
-                                                                Sửa
-                                                            </Button>
-                                                        </Link>
+                                                {(can('exam-types.edit') || can('exam-types.delete')) && (
+                                                    <td className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {can('exam-types.edit') && (
+                                                                <Link href={`/exam-types/${type.id}/edit`}>
+                                                                    <Button
+                                                                        variant="edit"
+                                                                        size="sm"
+                                                                        icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                        title="Chỉnh sửa loại đề thi"
+                                                                    >
+                                                                        Sửa
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
 
-                                                        <Button
-                                                            variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                            onClick={() => openDeleteModal(type)}
-                                                            title="Xóa loại đề thi"
-                                                        >
-                                                            Xóa
-                                                        </Button>
-                                                    </div>
-                                                </td>
+                                                            {can('exam-types.delete') && (
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                    icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                    onClick={() => openDeleteModal(type)}
+                                                                    title="Xóa loại đề thi"
+                                                                >
+                                                                    Xóa
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })

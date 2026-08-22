@@ -59,6 +59,7 @@ export default function Index({
     availableYears,
     filters,
 }: Props) {
+    const { can } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [activeYear, setActiveYear] = useState<number>(selectedYear || new Date().getFullYear());
 
@@ -205,26 +206,30 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleSeedDefaults}
-                            disabled={isSeeding}
-                            className="flex items-center gap-2 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
-                        >
-                            <Sparkles className={`h-4 w-4 text-emerald-600 ${isSeeding ? 'animate-spin' : ''}`} />
-                            <span>Khởi Tạo Ngày Lễ Năm {activeYear}</span>
-                        </Button>
+                        {can('holidays.create') && (
+                            <>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleSeedDefaults}
+                                    disabled={isSeeding}
+                                    className="flex items-center gap-2 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                                >
+                                    <Sparkles className={`h-4 w-4 text-emerald-600 ${isSeeding ? 'animate-spin' : ''}`} />
+                                    <span>Khởi Tạo Ngày Lễ Năm {activeYear}</span>
+                                </Button>
 
-                        <Button
-                            type="button"
-                            variant="success"
-                            onClick={openCreateModal}
-                            className="flex items-center gap-2"
-                        >
-                            <Plus className="h-4 w-4" />
-                            <span>Thêm Ngày Lễ</span>
-                        </Button>
+                                <Button
+                                    type="button"
+                                    variant="success"
+                                    onClick={openCreateModal}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    <span>Thêm Ngày Lễ</span>
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -293,13 +298,15 @@ export default function Index({
                                     <th className="px-5 py-3.5">Tên Ngày Nghỉ Lễ</th>
                                     <th className="px-5 py-3.5">Phân Loại</th>
                                     <th className="px-5 py-3.5">Mô Tả / Ghi Chú</th>
-                                    <th className="px-5 py-3.5 text-right">Thao Tác</th>
+                                    {(can('holidays.edit') || can('holidays.delete')) && (
+                                        <th className="px-5 py-3.5 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {holidays.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-5 py-12 text-center text-gray-400">
+                                        <td colSpan={can('holidays.edit') || can('holidays.delete') ? 6 : 5} className="px-5 py-12 text-center text-gray-400">
                                             <div className="flex flex-col items-center justify-center gap-2">
                                                 <Calendar className="h-10 w-10 text-gray-300" />
                                                 <p className="text-sm font-medium text-gray-600">
@@ -345,30 +352,36 @@ export default function Index({
                                             <td className="max-w-xs truncate px-5 py-3.5 text-gray-500">
                                                 {item.description || '—'}
                                             </td>
-                                            <td className="px-5 py-3.5 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        type="button"
-                                                        variant="edit"
-                                                        onClick={() => openEditModal(item)}
-                                                        className="px-2.5 py-1 text-xs"
-                                                        title="Chỉnh sửa ngày lễ"
-                                                    >
-                                                        <Edit3 className="h-3.5 w-3.5" />
-                                                        <span>Sửa</span>
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant="danger"
-                                                        onClick={() => setDeletingHoliday(item)}
-                                                        className="px-2.5 py-1 text-xs"
-                                                        title="Xóa ngày lễ"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                        <span>Xóa</span>
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('holidays.edit') || can('holidays.delete')) && (
+                                                <td className="px-5 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        {can('holidays.edit') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="edit"
+                                                                onClick={() => openEditModal(item)}
+                                                                className="px-2.5 py-1 text-xs"
+                                                                title="Chỉnh sửa ngày lễ"
+                                                            >
+                                                                <Edit3 className="h-3.5 w-3.5" />
+                                                                <span>Sửa</span>
+                                                            </Button>
+                                                        )}
+                                                        {can('holidays.delete') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="danger"
+                                                                onClick={() => setDeletingHoliday(item)}
+                                                                className="px-2.5 py-1 text-xs"
+                                                                title="Xóa ngày lễ"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                <span>Xóa</span>
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}

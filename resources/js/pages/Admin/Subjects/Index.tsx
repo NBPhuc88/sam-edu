@@ -56,6 +56,7 @@ interface Props {
 }
 
 export default function SubjectIndex({ subjects, centers = [], filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -151,15 +152,17 @@ return;
                         </p>
                     </div>
 
-                    <Link href="/subjects/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Thêm Môn Học Mới
-                        </Button>
-                    </Link>
+                    {can('subjects.create') && (
+                        <Link href="/subjects/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Thêm Môn Học Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Filter Box */}
@@ -239,7 +242,9 @@ return;
                                     <th className="px-6 py-4">Thời Lượng / Buổi</th>
                                     <th className="px-6 py-4">Học Phí Mặc Định</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('subjects.edit') || can('subjects.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -290,45 +295,51 @@ return;
                                                 {getStatusBadge(sub.status)}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/sessions?subject_id=${sub.id}`}>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            icon={<Calendar className="h-4 w-4 text-emerald-600" />}
-                                                            title="Xem danh sách ca/buổi học của môn này"
-                                                        >
-                                                            Buổi Học
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/subjects/${sub.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-4 w-4" />}
-                                                            title="Sửa môn học"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-4 w-4" />}
-                                                        onClick={() => openDeleteModal(sub)}
-                                                        title="Xóa môn học"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('subjects.edit') || can('subjects.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/sessions?subject_id=${sub.id}`}>
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                                title="Xem danh sách ca/buổi học của môn này"
+                                                            >
+                                                                Buổi Học
+                                                            </Button>
+                                                        </Link>
+                                                        {can('subjects.edit') && (
+                                                            <Link href={`/subjects/${sub.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-4 w-4" />}
+                                                                    title="Sửa môn học"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('subjects.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-4 w-4" />}
+                                                                onClick={() => openDeleteModal(sub)}
+                                                                title="Xóa môn học"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={can('subjects.edit') || can('subjects.delete') ? 7 : 6}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

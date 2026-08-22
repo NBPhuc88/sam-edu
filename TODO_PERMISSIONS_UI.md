@@ -25,26 +25,24 @@ const { can } = usePermission();
 
 ## 2. Trạng Thái Hiện Tại
 
-- **Đã hoàn thành 100% (2 trang)**:
+- **Đã hoàn thành 100% (17 trang)**:
   - [x] [`resources/js/pages/Admin/Centers/Index.tsx`](resources/js/pages/Admin/Centers/Index.tsx) (`centers.create`, `centers.edit`, `centers.delete`)
   - [x] [`resources/js/pages/Admin/Admins/Index.tsx`](resources/js/pages/Admin/Admins/Index.tsx) (`admins.create`, `admins.edit`, `admins.delete`)
-
-- **Cần thực hiện tiếp (15 trang)**:
-  - [ ] `Admin/Plans/Index.tsx`
-  - [ ] `Admin/Teachers/Index.tsx`
-  - [ ] `Admin/Students/Index.tsx`
-  - [ ] `Admin/Subjects/Index.tsx`
-  - [ ] `Admin/Rooms/Index.tsx`
-  - [ ] `Admin/Classes/Index.tsx`
-  - [ ] `Admin/Holidays/Index.tsx`
-  - [ ] `Admin/Exams/Index.tsx`
-  - [ ] `Admin/ExamTypes/Index.tsx`
-  - [ ] `Admin/ClassExams/Index.tsx`
-  - [ ] `Admin/Tuitions/Index.tsx`
-  - [ ] `Admin/Sessions/Index.tsx`
-  - [ ] `Admin/Schedules/Index.tsx`
-  - [ ] `Admin/Tuitions/Show.tsx`
-  - [ ] `Admin/Attendance/Show.tsx`
+  - [x] `Admin/Plans/Index.tsx` (`plans.create`, `plans.edit`, `plans.delete`)
+  - [x] `Admin/Teachers/Index.tsx` (`teachers.create`, `teachers.edit`, `teachers.delete`)
+  - [x] `Admin/Students/Index.tsx` (`students.create`, `students.edit`, `students.delete`)
+  - [x] `Admin/Subjects/Index.tsx` (`subjects.create`, `subjects.edit`, `subjects.delete`)
+  - [x] `Admin/Rooms/Index.tsx` (`rooms.create`, `rooms.edit`, `rooms.delete`)
+  - [x] `Admin/Classes/Index.tsx` (`classes.create`, `classes.edit`, `classes.delete`)
+  - [x] `Admin/Holidays/Index.tsx` (`holidays.create`, `holidays.edit`, `holidays.delete`)
+  - [x] `Admin/Exams/Index.tsx` (`exams.create`, `exams.edit`, `exams.delete`)
+  - [x] `Admin/ExamTypes/Index.tsx` (`exam-types.create`, `exam-types.edit`, `exam-types.delete`)
+  - [x] `Admin/ClassExams/Index.tsx` (`class-exams.create`, `class-exams.edit`, `class-exams.delete`)
+  - [x] `Admin/Tuitions/Index.tsx` (`tuitions.create`, `tuitions.edit`, `tuitions.delete`)
+  - [x] `Admin/Sessions/Index.tsx` (`sessions.edit`)
+  - [x] `Admin/Schedules/Index.tsx` (`schedules.create`, `schedules.edit`, `schedules.delete`)
+  - [x] `Admin/Tuitions/Show.tsx` (`tuitions.payments`, `tuitions.edit`, `tuitions.delete`)
+  - [x] `Admin/Attendance/Show.tsx` (`attendance.save`)
 
 ---
 

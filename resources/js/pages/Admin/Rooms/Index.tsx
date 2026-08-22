@@ -80,6 +80,7 @@ interface Props {
 }
 
 export default function RoomIndex({ rooms, centers = [], stats, filters }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -186,15 +187,17 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                         </p>
                     </div>
 
-                    <Link href="/rooms/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Thêm Phòng Học Mới
-                        </Button>
-                    </Link>
+                    {can('rooms.create') && (
+                        <Link href="/rooms/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Thêm Phòng Học Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* KPI Stat Cards */}
@@ -357,13 +360,15 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     <th>Thiết Bị & Cơ Sở Vật Chất</th>
                                     <th>Vị Trí / Tầng</th>
                                     <th>Trạng Thái</th>
-                                    <th className="text-right">Thao Tác</th>
+                                    {(can('rooms.edit') || can('rooms.delete')) && (
+                                        <th className="text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {rooms.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('rooms.edit') || can('rooms.delete') ? 9 : 8} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <DoorOpen className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -446,30 +451,36 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                             <td>
                                                 {getStatusBadge(room.status)}
                                             </td>
-                                            <td className="text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/rooms/${room.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                            title="Chỉnh sửa phòng học"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        type="button"
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                        onClick={() => openDeleteModal(room)}
-                                                        title="Xóa phòng học"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('rooms.edit') || can('rooms.delete')) && (
+                                                <td className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can('rooms.edit') && (
+                                                            <Link href={`/rooms/${room.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    title="Chỉnh sửa phòng học"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('rooms.delete') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                onClick={() => openDeleteModal(room)}
+                                                                title="Xóa phòng học"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}
@@ -563,13 +574,15 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                         </p>
                     )}
 
-                    <div className="flex justify-end pt-3 border-t border-gray-100">
-                        <Link href={`/rooms/${selectedRoomEquipment?.id}/edit`}>
-                            <Button variant="edit" size="sm" icon={<Edit2 className="h-4 w-4" />}>
-                                Chỉnh Sửa Thiết Bị
-                            </Button>
-                        </Link>
-                    </div>
+                    {can('rooms.edit') && (
+                        <div className="flex justify-end pt-3 border-t border-gray-100">
+                            <Link href={`/rooms/${selectedRoomEquipment?.id}/edit`}>
+                                <Button variant="edit" size="sm" icon={<Edit2 className="h-4 w-4" />}>
+                                    Chỉnh Sửa Thiết Bị
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </Modal>
 

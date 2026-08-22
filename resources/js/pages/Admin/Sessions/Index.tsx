@@ -125,6 +125,7 @@ export default function SessionIndex({
     rooms = [],
     filters,
 }: Props) {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -612,16 +613,18 @@ export default function SessionIndex({
                                                             </button>
                                                         </Link>
 
-                                                        <Link href={`/sessions/${session.id}`}>
-                                                            <button
-                                                                type="button"
-                                                                title="Chi tiết & Đổi lịch"
-                                                                className="flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100"
-                                                            >
-                                                                <Eye className="h-3.5 w-3.5" />
-                                                                <span>Chi Tiết / Đổi Lịch</span>
-                                                            </button>
-                                                        </Link>
+                                                        {can('sessions.edit') && (
+                                                            <Link href={`/sessions/${session.id}`}>
+                                                                <button
+                                                                    type="button"
+                                                                    title="Chi tiết & Đổi lịch"
+                                                                    className="flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100"
+                                                                >
+                                                                    <Eye className="h-3.5 w-3.5" />
+                                                                    <span>Chi Tiết / Đổi Lịch</span>
+                                                                </button>
+                                                            </Link>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

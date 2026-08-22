@@ -93,6 +93,7 @@ export const Index: React.FC<IndexProps> = ({
     classes,
     filters,
 }) => {
+    const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -195,15 +196,17 @@ return;
                             Theo dõi các khoản học phí, các đợt đóng tiền từng phần và công nợ của học sinh theo từng lớp học.
                         </p>
                     </div>
-                    <Link href="/tuitions/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Tạo Khoản Thu Học Phí Mới
-                        </Button>
-                    </Link>
+                    {can('tuitions.create') && (
+                        <Link href="/tuitions/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Tạo Khoản Thu Học Phí Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* 5 Summary Statistics Cards */}
@@ -403,7 +406,9 @@ return;
                                     <th className="px-6 py-4">Còn Nợ</th>
                                     <th className="px-6 py-4">Tiến Độ & Trạng Thái</th>
                                     <th className="px-6 py-4">Hạn Đóng</th>
-                                    <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    {(can('tuitions.edit') || can('tuitions.delete')) && (
+                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -493,48 +498,54 @@ return;
                                                     )}
                                                 </td>
 
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Link href={`/tuitions/${item.id}`}>
-                                                            <Button
-                                                                variant="success"
-                                                                size="sm"
-                                                                icon={<Eye className="h-4 w-4" />}
-                                                                title="Xem chi tiết & Đợt đóng tiền"
-                                                            >
-                                                                Chi tiết
-                                                            </Button>
-                                                        </Link>
+                                                {(can('tuitions.edit') || can('tuitions.delete')) && (
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Link href={`/tuitions/${item.id}`}>
+                                                                <Button
+                                                                    variant="success"
+                                                                    size="sm"
+                                                                    icon={<Eye className="h-4 w-4" />}
+                                                                    title="Xem chi tiết & Đợt đóng tiền"
+                                                                >
+                                                                    Chi tiết
+                                                                </Button>
+                                                            </Link>
 
-                                                        <Link href={`/tuitions/${item.id}/edit`}>
-                                                            <Button
-                                                                variant="edit"
-                                                                size="sm"
-                                                                icon={<Edit2 className="h-4 w-4" />}
-                                                                title="Chỉnh sửa thông tin"
-                                                            >
-                                                                Sửa
-                                                            </Button>
-                                                        </Link>
+                                                            {can('tuitions.edit') && (
+                                                                <Link href={`/tuitions/${item.id}/edit`}>
+                                                                    <Button
+                                                                        variant="edit"
+                                                                        size="sm"
+                                                                        icon={<Edit2 className="h-4 w-4" />}
+                                                                        title="Chỉnh sửa thông tin"
+                                                                    >
+                                                                        Sửa
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
 
-                                                        <Button
-                                                            variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-4 w-4" />}
-                                                            onClick={() => openDeleteModal(item)}
-                                                            title="Xóa hồ sơ học phí"
-                                                        >
-                                                            Xóa
-                                                        </Button>
-                                                    </div>
-                                                </td>
+                                                            {can('tuitions.delete') && (
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                    icon={<Trash2 className="h-4 w-4" />}
+                                                                    onClick={() => openDeleteModal(item)}
+                                                                    title="Xóa hồ sơ học phí"
+                                                                >
+                                                                    Xóa
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={can('tuitions.edit') || can('tuitions.delete') ? 8 : 7}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

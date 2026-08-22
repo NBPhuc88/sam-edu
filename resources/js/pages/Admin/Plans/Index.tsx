@@ -67,6 +67,7 @@ interface Props {
 }
 
 export default function PlanIndex({ plans, stats, filters }: Props) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
     const [selectedType, setSelectedType] = useState<string>(filters.type || 'all');
 
@@ -169,18 +170,20 @@ return 'Miễn phí (0đ)';
                             Cấu hình các gói cước đăng ký & gia hạn dịch vụ phần mềm cho Trung tâm giáo dục.
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Link href="/plans/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                icon={<Plus className="h-4 w-4" />}
-                                className="shadow-sm hover:shadow-md transition-shadow"
-                            >
-                                Tạo Gói Cước Mới
-                            </Button>
-                        </Link>
-                    </div>
+                    {can('plans.create') && (
+                        <div className="flex items-center gap-3">
+                            <Link href="/plans/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<Plus className="h-4 w-4" />}
+                                    className="shadow-sm hover:shadow-md transition-shadow"
+                                >
+                                    Tạo Gói Cước Mới
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
                 {/* Statistics Cards */}
@@ -289,13 +292,15 @@ return 'Miễn phí (0đ)';
                                     <th className="px-4 py-3.5">Giới Hạn</th>
                                     <th className="px-4 py-3.5">Tính Năng</th>
                                     <th className="px-4 py-3.5">Huy Hiệu</th>
-                                    <th className="px-4 py-3.5 text-right">Thao Tác</th>
+                                    {(can('plans.edit') || can('plans.delete')) && (
+                                        <th className="px-4 py-3.5 text-right">Thao Tác</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {plans.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                                        <td colSpan={can('plans.edit') || can('plans.delete') ? 8 : 7} className="px-4 py-12 text-center text-gray-400">
                                             <AlertCircle className="mx-auto h-8 w-8 text-gray-300" />
                                             <p className="mt-2 text-base font-medium text-gray-600">
                                                 Không tìm thấy gói cước nào
@@ -418,29 +423,35 @@ return 'Miễn phí (0đ)';
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="px-4 py-3.5 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Link href={`/plans/${plan.id}/edit`}>
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                            title="Chỉnh sửa gói cước"
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                        onClick={() => openDeleteModal(plan)}
-                                                        title="Xóa gói cước"
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('plans.edit') || can('plans.delete')) && (
+                                                <td className="px-4 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        {can('plans.edit') && (
+                                                            <Link href={`/plans/${plan.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    title="Chỉnh sửa gói cước"
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('plans.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                onClick={() => openDeleteModal(plan)}
+                                                                title="Xóa gói cước"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}

@@ -78,6 +78,7 @@ interface ShowProps {
 }
 
 export const Show: React.FC<ShowProps> = ({ tuition }) => {
+    const { can } = usePermission();
     // Add Payment Modal State
     const [addPaymentOpen, setAddPaymentOpen] = useState(false);
     const [addAmount, setAddAmount] = useState<string>(
@@ -263,22 +264,26 @@ return;
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                        <Link href={`/tuitions/${tuition.id}/edit`}>
-                            <Button variant="edit" size="md" icon={<Edit2 className="h-4 w-4" />}>
-                                Chỉnh Sửa Hồ Sơ
+                        {can('tuitions.edit') && (
+                            <Link href={`/tuitions/${tuition.id}/edit`}>
+                                <Button variant="edit" size="md" icon={<Edit2 className="h-4 w-4" />}>
+                                    Chỉnh Sửa Hồ Sơ
+                                </Button>
+                            </Link>
+                        )}
+                        {can('tuitions.payments') && (
+                            <Button
+                                variant="success"
+                                size="md"
+                                onClick={() => {
+                                    setAddAmount(String(Math.max(0, remaining)));
+                                    setAddPaymentOpen(true);
+                                }}
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Thu Tiền Đợt Mới
                             </Button>
-                        </Link>
-                        <Button
-                            variant="success"
-                            size="md"
-                            onClick={() => {
-                                setAddAmount(String(Math.max(0, remaining)));
-                                setAddPaymentOpen(true);
-                            }}
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Thu Tiền Đợt Mới
-                        </Button>
+                        )}
                     </div>
                 </div>
 
@@ -383,17 +388,19 @@ return;
                                     Danh sách các lần nộp tiền học phí của học sinh cho khóa học này.
                                 </p>
                             </div>
-                            <Button
-                                variant="success"
-                                size="sm"
-                                onClick={() => {
-                                    setAddAmount(String(Math.max(0, remaining)));
-                                    setAddPaymentOpen(true);
-                                }}
-                                icon={<Plus className="h-4 w-4" />}
-                            >
-                                Thu Đợt Mới
-                            </Button>
+                            {can('tuitions.payments') && (
+                                <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => {
+                                        setAddAmount(String(Math.max(0, remaining)));
+                                        setAddPaymentOpen(true);
+                                    }}
+                                    icon={<Plus className="h-4 w-4" />}
+                                >
+                                    Thu Đợt Mới
+                                </Button>
+                            )}
                         </div>
 
                         <div className="overflow-x-auto">
@@ -406,7 +413,9 @@ return;
                                         <th className="px-4 py-3.5">Hình Thức</th>
                                         <th className="px-4 py-3.5">Mã Phiếu / GD</th>
                                         <th className="px-4 py-3.5">Ghi Chú</th>
-                                        <th className="px-4 py-3.5 text-right">Thao Tác</th>
+                                        {(can('tuitions.edit') || can('tuitions.delete')) && (
+                                            <th className="px-4 py-3.5 text-right">Thao Tác</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -433,29 +442,35 @@ return;
                                                 <td className="px-4 py-3.5 text-gray-500 text-xs">
                                                     {p.note || '-'}
                                                 </td>
-                                                <td className="px-4 py-3.5 text-right">
-                                                    <div className="flex items-center justify-end gap-1.5">
-                                                        <button
-                                                            onClick={() => openEditModal(p)}
-                                                            className="rounded-md p-1.5 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                                                            title="Sửa đợt đóng"
-                                                        >
-                                                            <Edit2 className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => openDeletePaymentModal(p)}
-                                                            className="rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                            title="Xóa đợt đóng"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                                {(can('tuitions.edit') || can('tuitions.delete')) && (
+                                                    <td className="px-4 py-3.5 text-right">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            {can('tuitions.edit') && (
+                                                                <button
+                                                                    onClick={() => openEditModal(p)}
+                                                                    className="rounded-md p-1.5 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                                                                    title="Sửa đợt đóng"
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            {can('tuitions.delete') && (
+                                                                <button
+                                                                    onClick={() => openDeletePaymentModal(p)}
+                                                                    className="rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                                    title="Xóa đợt đóng"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
+                                            <td colSpan={can('tuitions.edit') || can('tuitions.delete') ? 7 : 6} className="px-4 py-8 text-center text-sm text-gray-400">
                                                 Chưa có đợt thu học phí nào được ghi nhận. Bấm <strong>"Thu Đợt Mới"</strong> để ghi nhận tiền đã nộp.
                                             </td>
                                         </tr>
