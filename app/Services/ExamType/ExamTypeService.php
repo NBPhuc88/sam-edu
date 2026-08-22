@@ -154,19 +154,13 @@ class ExamTypeService implements ExamTypeServiceInterface
 
         $centerId = $examType->center_id;
 
-        if ($admin && $admin->isSuperAdmin() && array_key_exists('center_id', $data)) {
-            $centerId = $data['center_id'] ? (int) $data['center_id'] : null;
-        }
-
-        $code = ! empty($data['code']) ? trim($data['code']) : $examType->code;
-
-        if ($code !== $examType->code && $this->examTypeRepository->codeExists($centerId, $code, $examType->id)) {
-            throw new AccessDeniedHttpException("Mã loại đề thi '{$code}' đã tồn tại.");
+        if ($admin && $admin->isSuperAdmin() && array_key_exists('center_id', $data) && ! empty($data['center_id'])) {
+            $centerId = (int) $data['center_id'];
         }
 
         $payload = [
             'center_id'   => $centerId,
-            'code'        => $code,
+            'code'        => $examType->code,
             'name'        => isset($data['name']) ? trim($data['name']) : $examType->name,
             'description' => array_key_exists('description', $data) ? $data['description'] : $examType->description,
             'status'      => $data['status'] ?? $examType->status,

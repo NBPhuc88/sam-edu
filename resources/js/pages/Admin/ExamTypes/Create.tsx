@@ -26,7 +26,6 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
         !isSuperAdmin && userCenterId ? String(userCenterId) : '',
     );
     const [name, setName] = useState<string>('');
-    const [code, setCode] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [status, setStatus] = useState<string>('active');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +39,6 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
             {
                 center_id: centerId ? Number(centerId) : null,
                 name,
-                code: code ? code.trim() : undefined,
                 description: description || undefined,
                 status,
             },
@@ -122,16 +120,14 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
                             {/* Code */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                                    Mã Loại Đề (Tùy chọn)
+                                    Mã Loại Đề
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="Để trống hệ thống tự sinh EXT00000000X"
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    className="text-gray-900 font-mono text-sm"
+                                    value="[Hệ thống tự động sinh mã]"
+                                    disabled
+                                    className="bg-gray-100 text-gray-500 font-mono text-sm cursor-not-allowed border-dashed"
                                 />
-                                {errors.code && <p className="text-xs text-red-600 mt-1">{errors.code}</p>}
                             </div>
 
                             {/* Status */}

@@ -37,7 +37,6 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
         examType.center_id ? String(examType.center_id) : '',
     );
     const [name, setName] = useState<string>(examType.name || '');
-    const [code, setCode] = useState<string>(examType.code || '');
     const [description, setDescription] = useState<string>(examType.description || '');
     const [status, setStatus] = useState<string>(examType.status || 'active');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +50,6 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
             {
                 center_id: centerId ? Number(centerId) : null,
                 name,
-                code: code ? code.trim() : undefined,
                 description: description || undefined,
                 status,
             },
@@ -143,16 +141,14 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
                             {/* Code */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                                    Mã Loại Đề Thi <span className="text-red-500">*</span>
+                                    Mã Loại Đề Thi
                                 </label>
                                 <Input
                                     type="text"
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    className="text-gray-900 font-mono text-sm"
-                                    required
+                                    value={examType.code}
+                                    disabled
+                                    className="bg-gray-100 text-gray-500 font-mono text-sm cursor-not-allowed"
                                 />
-                                {errors.code && <p className="text-xs text-red-600 mt-1">{errors.code}</p>}
                             </div>
 
                             {/* Status */}
