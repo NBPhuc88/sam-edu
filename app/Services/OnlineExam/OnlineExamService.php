@@ -463,8 +463,8 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         if ($teacher) {
             $cls = $classExam->schoolClass;
-            // Giáo viên chủ nhiệm hoặc dạy môn trong lớp
-            $isAssigned = $cls && ($cls->teacher_id === $teacher->id || $cls->classSubjects()->where('teacher_id', $teacher->id)->exists() || $classExam->created_by_teacher_id === $teacher->id);
+            // Giáo viên dạy môn trong lớp hoặc là người tạo bài thi
+            $isAssigned = $cls && ($cls->classSubjects()->where('teacher_id', $teacher->id)->exists() || $classExam->created_by_teacher_id === $teacher->id);
 
             if ($isAssigned) {
                 return;

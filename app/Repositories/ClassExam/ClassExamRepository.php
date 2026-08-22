@@ -176,7 +176,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         return ClassExam::query()
             ->select('id', 'code', 'access_code', 'class_id', 'exam_id', 'title', 'exam_date', 'start_time', 'end_time', 'valid_from', 'valid_to', 'duration_minutes', 'max_score', 'pass_score', 'status', 'created_by_teacher_id', 'created_by_admin_id', 'created_at')
             ->with([
-                'schoolClass:id,center_id,name,code,teacher_id',
+                'schoolClass:id,center_id,name,code',
                 'schoolClass.students:id,student_code,full_name,email,phone',
                 'schoolClass.center:id,name,code',
                 'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
@@ -196,7 +196,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         return ClassExam::query()
             ->select('id', 'code', 'access_code', 'class_id', 'exam_id', 'title', 'exam_date', 'start_time', 'end_time', 'valid_from', 'valid_to', 'duration_minutes', 'max_score', 'pass_score', 'status', 'created_by_teacher_id', 'created_by_admin_id', 'created_at')
             ->with([
-                'schoolClass:id,center_id,name,code,teacher_id',
+                'schoolClass:id,center_id,name,code',
                 'schoolClass.center:id,name,code',
                 'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
                 'exam.subject:id,name,code',
