@@ -575,11 +575,10 @@ function RenderFillInBlankQuestion({ content, userAnswers, onChange }: { content
     const parts = (content || '').split(/(\[[^\]]+\])/g);
     let blankCounter = 0;
 
-    const handleBlankChange = (tagKey: string, fallbackKey: string, val: string) => {
+    const handleBlankChange = (tagKey: string, val: string) => {
         onChange({
             ...userAnswers,
             [tagKey]: val,
-            [fallbackKey]: val,
         });
     };
 
@@ -593,8 +592,8 @@ function RenderFillInBlankQuestion({ content, userAnswers, onChange }: { content
                     <span className="text-xs font-bold text-gray-500 font-mono">(1)</span>
                     <input
                         type="text"
-                        value={userAnswers['blank_1'] || userAnswers['0'] || ''}
-                        onChange={(e) => handleBlankChange('blank_1', '0', e.target.value)}
+                        value={userAnswers['blank_1'] ?? userAnswers['0'] ?? ''}
+                        onChange={(e) => handleBlankChange('blank_1', e.target.value)}
                         placeholder="Nhập câu trả lời..."
                         className="w-full rounded-lg border border-amber-300 bg-amber-50/40 px-3 py-1.5 font-mono text-xs font-bold text-gray-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden"
                     />
@@ -614,14 +613,14 @@ function RenderFillInBlankQuestion({ content, userAnswers, onChange }: { content
                     const isBlankNum = /^blank_(\d+)$/i.exec(rawKey);
                     const tagKey = isBlankNum ? `blank_${isBlankNum[1]}` : `blank_${currentIdx}`;
                     const fallbackKey = String(currentIdx - 1);
-                    const currentVal = userAnswers[tagKey] || userAnswers[fallbackKey] || userAnswers[String(currentIdx)] || '';
+                    const currentVal = userAnswers[tagKey] ?? userAnswers[fallbackKey] ?? '';
 
                     return (
                         <input
                             key={pIdx}
                             type="text"
                             value={currentVal}
-                            onChange={(e) => handleBlankChange(tagKey, fallbackKey, e.target.value)}
+                            onChange={(e) => handleBlankChange(tagKey, e.target.value)}
                             placeholder={`(${currentIdx})`}
                             className="mx-1.5 inline-block w-32 rounded-lg border border-amber-300 bg-amber-50/50 px-2.5 py-1 font-mono text-xs font-bold text-gray-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         />

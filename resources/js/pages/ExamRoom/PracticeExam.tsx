@@ -445,7 +445,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {slots.map((slot) => {
-                                const currentAnswer = userObj[slot.tagKey] || userObj[slot.fallbackKey] || userObj[String(slot.index)] || '';
+                                const currentAnswer = userObj[slot.tagKey] ?? userObj[slot.fallbackKey] ?? '';
                                 return (
                                     <div
                                         key={slot.tagKey}
@@ -462,8 +462,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                 handleAnswerChange(q.id, {
                                                     ...userObj,
                                                     [slot.tagKey]: val,
-                                                    [slot.fallbackKey]: val,
-                                                    [String(slot.index)]: val,
                                                 });
                                             }}
                                             placeholder={`Nhập câu trả lời cho vị trí (${slot.index})...`}
