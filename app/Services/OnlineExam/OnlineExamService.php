@@ -166,15 +166,21 @@ class OnlineExamService implements OnlineExamServiceInterface
             // Tự động chấm điểm các câu hỏi
             $gradingResult = $this->gradeExam($submission->classExam, $answers);
 
+            $requiresManual = $gradingResult['requires_manual_grading'];
+            $isGraded       = ! $requiresManual; // Nếu không có câu tự luận/nói thì coi như đã chấm xong
+
             return $this->classExamRepository->updateSubmission($submission, [
-                'submitted_at'          => $now,
-                'duration_seconds_used' => $durationSecs,
-                'score'                 => $gradingResult['total_score'],
-                'total_correct'         => $gradingResult['total_correct'],
-                'total_questions'       => $gradingResult['total_questions'],
-                'status'                => $isTimeout ? 'timeout_submitted' : 'submitted',
-                'answers'               => $answers,
-                'grading_details'       => $gradingResult['details'],
+                'submitted_at'            => $now,
+                'duration_seconds_used'   => $durationSecs,
+                'score'                   => $gradingResult['total_score'],
+                'total_correct'           => $gradingResult['total_correct'],
+                'total_questions'         => $gradingResult['total_questions'],
+                'status'                  => $isTimeout ? 'timeout_submitted' : 'submitted',
+                'is_graded'               => $isGraded,
+                'requires_manual_grading' => $requiresManual,
+                'graded_at'               => $isGraded ? $now : null,
+                'answers'                 => $answers,
+                'grading_details'         => $gradingResult['details'],
             ]);
         });
     }
@@ -252,21 +258,22 @@ class OnlineExamService implements OnlineExamServiceInterface
     /**
      * Thuật toán chấm điểm tự động.
      *
-     * @param  array<string, mixed>                                                                                   $userAnswers
-     * @param  ClassExam                                                                                              $classExam
-     * @return array{total_score: float, total_correct: int, total_questions: int, details: array<int|string, mixed>}
+     * @param  array<string, mixed>                                                                                                                  $userAnswers
+     * @param  ClassExam                                                                                                                             $classExam
+     * @return array{total_score: float, total_correct: int, total_questions: int, requires_manual_grading: bool, details: array<int|string, mixed>}
      */
     protected function gradeExam(ClassExam $classExam, array $userAnswers): array
     {
-        $totalScore     = 0.0;
-        $totalCorrect   = 0;
-        $totalQuestions = 0;
-        $details        = [];
+        $totalScore            = 0.0;
+        $totalCorrect          = 0;
+        $totalQuestions        = 0;
+        $requiresManualGrading = false;
+        $details               = [];
 
         $exam = $classExam->exam;
 
         if (! $exam) {
-            return ['total_score' => 0, 'total_correct' => 0, 'total_questions' => 0, 'details' => []];
+            return ['total_score' => 0, 'total_correct' => 0, 'total_questions' => 0, 'requires_manual_grading' => false, 'details' => []];
         }
 
         foreach ($exam->sections as $section) {
@@ -388,8 +395,9 @@ class OnlineExamService implements OnlineExamServiceInterface
                     case 'essay':
                     case 'audio_record':
                         // Tự luận và Ghi âm nói tạm thời lưu lại bài làm, giáo viên chấm điểm sau
-                        $isCorrect   = false;
-                        $scoreEarned = 0.0;
+                        $requiresManualGrading = true;
+                        $isCorrect             = false;
+                        $scoreEarned           = 0.0;
 
                         break;
                 }
@@ -413,10 +421,11 @@ class OnlineExamService implements OnlineExamServiceInterface
         }
 
         return [
-            'total_score'     => round($totalScore, 2),
-            'total_correct'   => $totalCorrect,
-            'total_questions' => $totalQuestions,
-            'details'         => $details,
+            'total_score'             => round($totalScore, 2),
+            'total_correct'           => $totalCorrect,
+            'total_questions'         => $totalQuestions,
+            'requires_manual_grading' => $requiresManualGrading,
+            'details'                 => $details,
         ];
     }
 

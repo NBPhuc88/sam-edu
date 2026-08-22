@@ -109,6 +109,10 @@ export interface ClassExamSubmission {
     total_correct: number;
     total_questions: number;
     status: 'in_progress' | 'submitted' | 'timeout_submitted' | 'missed';
+    is_graded?: boolean;
+    requires_manual_grading?: boolean;
+    graded_at?: string | null;
+    teacher_feedback?: string | null;
     answers?: Record<number | string, any>;
     grading_details?: Record<number | string, any>;
     student?: Student;

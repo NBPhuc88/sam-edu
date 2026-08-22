@@ -226,6 +226,13 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\ClassExamController::class, 'destroy'])->name('destroy');
     });
 
+    // Teacher & Admin Exam Grading Routes (Chấm bài thi theo lớp)
+    Route::prefix('grading')->name('grading.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GradingController::class, 'index'])->name('index');
+        Route::get('/submissions/{id}', [\App\Http\Controllers\GradingController::class, 'show'])->name('show');
+        Route::post('/submissions/{id}', [\App\Http\Controllers\GradingController::class, 'grade'])->name('grade');
+    });
+
     // Online Exam Taking & Review Routes (Student & Teacher)
     Route::get('/exam-room', [\App\Http\Controllers\OnlineExamController::class, 'enterCode'])->name('online-exam.enter');
     Route::post('/exam-room/join', [\App\Http\Controllers\OnlineExamController::class, 'joinRoom'])->name('online-exam.join');

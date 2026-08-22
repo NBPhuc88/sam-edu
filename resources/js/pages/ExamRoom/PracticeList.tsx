@@ -89,13 +89,13 @@ export default function PracticeList({
             case 'ielts':
                 return <Badge variant="danger">IELTS Simulation</Badge>;
             case 'toeic':
-                return <Badge variant="primary">TOEIC Exam</Badge>;
+                return <Badge variant="pending">TOEIC Exam</Badge>;
             case 'hsk':
-                return <Badge variant="warning">HSK Test</Badge>;
+                return <Badge variant="expired">HSK Test</Badge>;
             case 'general':
-                return <Badge variant="info">Định Kỳ / Chung</Badge>;
+                return <Badge variant="active">Định Kỳ / Chung</Badge>;
             default:
-                return <Badge variant="secondary">Tự Do</Badge>;
+                return <Badge variant="info">Tự Do</Badge>;
         }
     };
 
@@ -358,7 +358,7 @@ export default function PracticeList({
                     isOpen={startModalOpen}
                     onClose={() => setStartModalOpen(false)}
                     title="Xác Nhận Bắt Đầu Thi Thử"
-                    size="md"
+                    maxWidth="md"
                 >
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900">

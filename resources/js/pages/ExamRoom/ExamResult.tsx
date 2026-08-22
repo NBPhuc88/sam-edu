@@ -53,6 +53,8 @@ export default function ExamResult({
         ? Math.round((submission.total_correct / submission.total_questions) * 100)
         : 0;
 
+    const isManualPending = submission.requires_manual_grading && !submission.is_graded;
+
     return (
         <AppLayout title={`Kết Quả Bài Thi: ${classExam.title} - Hệ Thống Giáo Dục Sam`}>
             <Head title={`Kết Quả Bài Thi: ${classExam.title}`} />
@@ -60,9 +62,11 @@ export default function ExamResult({
             <div className="mx-auto max-w-4xl space-y-6 py-6 px-4">
                 {/* Result Overview Banner */}
                 <div className={`rounded-3xl p-8 text-white shadow-md relative overflow-hidden ${
-                    isPassed
+                    isManualPending
+                        ? 'bg-linear-to-r from-amber-700 to-orange-800'
+                        : isPassed
                         ? 'bg-linear-to-r from-emerald-700 to-teal-800'
-                        : 'bg-linear-to-r from-amber-700 to-rose-800'
+                        : 'bg-linear-to-r from-rose-700 to-red-800'
                 }`}>
                     <div className="relative z-10 space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -71,19 +75,30 @@ export default function ExamResult({
                                 <span>{classExam.title}</span>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                                isPassed ? 'bg-emerald-400/30 text-emerald-100 border border-emerald-300/40' : 'bg-red-400/30 text-red-100 border border-red-300/40'
+                                isManualPending
+                                    ? 'bg-amber-400/30 text-amber-100 border border-amber-300/40'
+                                    : isPassed
+                                    ? 'bg-emerald-400/30 text-emerald-100 border border-emerald-300/40'
+                                    : 'bg-red-400/30 text-red-100 border border-red-300/40'
                             }`}>
-                                {isPassed ? '✓ ĐẠT YÊU CẦU' : '✗ CHƯA ĐẠT'}
+                                {isManualPending ? '⏳ ĐANG CHỜ GIÁO VIÊN CHẤM' : isPassed ? '✓ ĐẠT YÊU CẦU' : '✗ CHƯA ĐẠT'}
                             </span>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-white/15 pb-4">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Điểm Số Đạt Được</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider opacity-80">
+                                    {isManualPending ? 'Điểm Trắc Nghiệm Tạm Tính' : 'Điểm Số Chính Thức'}
+                                </p>
                                 <div className="mt-1 flex items-baseline gap-2">
                                     <span className="text-5xl font-black">{studentScore}</span>
                                     <span className="text-xl font-bold opacity-75">/ {maxScore} điểm</span>
                                 </div>
+                                {isManualPending && (
+                                    <p className="text-2xs text-amber-200 mt-1 font-semibold">
+                                        * Điểm tổng kết chính thức sẽ được công bố sau khi giáo viên chấm xong phần Viết & Nói.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-6 text-xs font-medium">
@@ -107,11 +122,39 @@ export default function ExamResult({
                                 Thí sinh: <strong>{submission.student?.full_name}</strong> ({submission.student?.student_code || submission.student?.username})
                             </span>
                             <span>
-                                Trạng thái nộp: {submission.status === 'timeout_submitted' ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
+                                Trạng thái: {submission.status === 'timeout_submitted' ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
                             </span>
                         </div>
                     </div>
                 </div>
+
+                {/* Manual Grading Pending Notice Banner */}
+                {isManualPending && (
+                    <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-xs flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="text-xs space-y-1">
+                            <p className="font-bold text-amber-950">
+                                Bài thi có câu hỏi Tự luận (Viết) hoặc Ghi âm (Nói) đang được giáo viên chấm điểm
+                            </p>
+                            <p className="text-amber-800 leading-relaxed">
+                                Điểm số trắc nghiệm đã được hệ thống ghi nhận. Giáo viên phụ trách sẽ chấm và nhận xét chi tiết cho bài làm tự luận của bạn trong thời gian sớm nhất.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Overall Teacher Feedback Card (if graded) */}
+                {submission.teacher_feedback && (
+                    <Card className="border-emerald-200 bg-emerald-50/40 p-5 shadow-xs space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
+                            <FileCheck className="h-4 w-4 text-emerald-700" />
+                            <span>Nhận Xét Của Giáo Viên:</span>
+                        </div>
+                        <p className="text-xs text-emerald-950 whitespace-pre-wrap leading-relaxed bg-white p-3.5 rounded-xl border border-emerald-100 shadow-2xs font-medium">
+                            {submission.teacher_feedback}
+                        </p>
+                    </Card>
+                )}
 
                 {/* Filter & Navigation Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -177,6 +220,7 @@ export default function ExamResult({
                                 {(section.questions || []).map((q, qIdx) => {
                                     const grade = gradingDetails[q.id!] || {};
                                     const isCorrect = grade.is_correct === true;
+                                    const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
                                     const userAns = grade.user_answer;
                                     const correctAns = grade.correct_answer;
 
@@ -187,7 +231,9 @@ export default function ExamResult({
                                         <Card
                                             key={q.id || qIdx}
                                             className={`border p-5 shadow-xs space-y-4 transition-all ${
-                                                isCorrect
+                                                isManual && !submission.is_graded
+                                                    ? 'border-amber-200 bg-amber-50/20'
+                                                    : isCorrect
                                                     ? 'border-emerald-200 bg-emerald-50/20'
                                                     : 'border-rose-200 bg-rose-50/20'
                                             }`}
@@ -196,20 +242,30 @@ export default function ExamResult({
                                             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-white font-mono text-xs font-bold ${
-                                                        isCorrect ? 'bg-emerald-600' : 'bg-rose-600'
+                                                        isManual && !submission.is_graded
+                                                            ? 'bg-amber-600'
+                                                            : isCorrect
+                                                            ? 'bg-emerald-600'
+                                                            : 'bg-rose-600'
                                                     }`}>
-                                                        {isCorrect ? '✓' : '✗'}
+                                                        {isManual && !submission.is_graded ? '✍️' : isCorrect ? '✓' : '✗'}
                                                     </span>
                                                     <span className="text-xs font-bold text-gray-800">
                                                         Câu hỏi (Điểm: {grade.score_earned || 0} / {q.score}đ)
                                                     </span>
                                                 </div>
                                                 <span className={`text-2xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                                    isCorrect
+                                                    isManual && !submission.is_graded
+                                                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                                        : isCorrect
                                                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                         : 'bg-rose-100 text-rose-800 border border-rose-200'
                                                 }`}>
-                                                    {isCorrect ? 'Chính xác' : 'Chưa chính xác'}
+                                                    {isManual && !submission.is_graded
+                                                        ? 'Chờ giáo viên chấm'
+                                                        : isCorrect
+                                                        ? 'Chính xác'
+                                                        : 'Chưa chính xác'}
                                                 </span>
                                             </div>
 
@@ -281,6 +337,16 @@ export default function ExamResult({
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {/* Teacher Comment on Question */}
+                                            {grade.teacher_comment && (
+                                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-950 space-y-1">
+                                                    <span className="text-2xs font-bold uppercase tracking-wider text-emerald-800 block">
+                                                        💬 Nhận xét của giáo viên:
+                                                    </span>
+                                                    <p className="text-xs font-semibold">{grade.teacher_comment}</p>
+                                                </div>
+                                            )}
 
                                             {/* Explanation */}
                                             {q.explanation && (

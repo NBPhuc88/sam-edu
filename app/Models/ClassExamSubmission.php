@@ -21,6 +21,12 @@ class ClassExamSubmission extends Model
         'total_correct',
         'total_questions',
         'status',
+        'is_graded',
+        'requires_manual_grading',
+        'graded_at',
+        'graded_by_teacher_id',
+        'graded_by_admin_id',
+        'teacher_feedback',
         'answers',
         'grading_details',
     ];
@@ -28,16 +34,19 @@ class ClassExamSubmission extends Model
     protected function casts(): array
     {
         return [
-            'started_at'            => 'datetime:d-m-Y H:i',
-            'submitted_at'          => 'datetime:d-m-Y H:i',
-            'duration_seconds_used' => 'integer',
-            'score'                 => 'decimal:2',
-            'total_correct'         => 'integer',
-            'total_questions'       => 'integer',
-            'answers'               => 'array',
-            'grading_details'       => 'array',
-            'created_at'            => 'datetime:d-m-Y H:i',
-            'updated_at'            => 'datetime:d-m-Y H:i',
+            'started_at'              => 'datetime:d-m-Y H:i',
+            'submitted_at'            => 'datetime:d-m-Y H:i',
+            'graded_at'               => 'datetime:d-m-Y H:i',
+            'duration_seconds_used'   => 'integer',
+            'score'                   => 'decimal:2',
+            'total_correct'           => 'integer',
+            'total_questions'         => 'integer',
+            'is_graded'               => 'boolean',
+            'requires_manual_grading' => 'boolean',
+            'answers'                 => 'array',
+            'grading_details'         => 'array',
+            'created_at'              => 'datetime:d-m-Y H:i',
+            'updated_at'              => 'datetime:d-m-Y H:i',
         ];
     }
 
@@ -55,5 +64,21 @@ class ClassExamSubmission extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class, 'student_id');
+    }
+
+    /**
+     * @return BelongsTo<Teacher, $this>
+     */
+    public function gradedByTeacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'graded_by_teacher_id');
+    }
+
+    /**
+     * @return BelongsTo<Admin, $this>
+     */
+    public function gradedByAdmin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'graded_by_admin_id');
     }
 }

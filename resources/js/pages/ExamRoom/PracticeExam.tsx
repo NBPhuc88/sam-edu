@@ -1011,7 +1011,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 isOpen={submitConfirmOpen}
                 onClose={() => setSubmitConfirmOpen(false)}
                 title="Xác Nhận Nộp Bài Thi Thử"
-                size="md"
+                maxWidth="md"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
@@ -1052,7 +1052,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 isOpen={Boolean(errorMessage)}
                 onClose={() => setErrorMessage(null)}
                 title="Thông Báo Lỗi"
-                size="sm"
+                maxWidth="sm"
             >
                 <div className="space-y-4 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
