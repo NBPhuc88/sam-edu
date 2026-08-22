@@ -17,7 +17,12 @@ class UpdateExamRequest extends FormRequest
      */
     public function rules(): array
     {
-        $examId = (int) $this->route('exam');
+        $examId   = (int) ($this->route('id') ?? $this->route('exam'));
+        $centerId = $this->input('center_id');
+
+        if (! $centerId && $examId) {
+            $centerId = \App\Models\Exam::where('id', $examId)->value('center_id');
+        }
 
         return [
             'center_id'  => ['sometimes', 'required', 'integer', 'exists:centers,id'],
@@ -28,11 +33,12 @@ class UpdateExamRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:50',
-                Rule::unique('exams', 'code')->where(function ($query) {
-                    $centerId = $this->input('center_id') ?? $this->route('exam')?->center_id;
+                Rule::unique('exams', 'code')->where(function ($query) use ($centerId) {
+                    if ($centerId) {
+                        $query->where('center_id', $centerId);
+                    }
 
-                    return $query->where('center_id', $centerId)
-                        ->whereNull('deleted_at');
+                    return $query->whereNull('deleted_at');
                 })->ignore($examId),
             ],
             'exam_type'         => ['sometimes', 'required', 'string', 'in:general,ielts,hsk,toeic,custom'],

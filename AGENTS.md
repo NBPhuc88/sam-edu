@@ -77,9 +77,12 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Artisan & Docker Commands
 
-- Environment: When the project is at `~/Desktop/web/projects/sam-edu`, backend commands run inside the Docker container `php83` located at `~/Desktop/web/docker`:
-  - Interactive: `cd ~/Desktop/web/docker && docker compose exec php83 bash` -> `cd sam-edu`
+- **Môi trường 1 (`~/Desktop/web/projects/sam-edu`)**:
   - Direct execution: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan <command>`
+  - Wayfinder generation: `docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan wayfinder:generate`
+- **Môi trường 2 (`~/Desktop/php/projects/sam-edu`)**:
+  - Direct execution: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan <command>`
+  - Wayfinder generation: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan wayfinder:generate`
 - Run Artisan commands directly via the command line (e.g., `php artisan route:list`). Use `php artisan list` to discover available commands and `php artisan [command] --help` to check parameters.
 - Inspect routes with `php artisan route:list`. Filter with: `--method=GET`, `--name=users`, `--path=api`, `--except-vendor`, `--only-vendor`.
 - Read configuration values using dot notation: `php artisan config:show app.name`, `php artisan config:show database.default`. Or read config files directly from the `config/` directory.

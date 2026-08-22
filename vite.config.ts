@@ -34,7 +34,6 @@ export default defineConfig({
         tailwindcss(),
         wayfinder({
             formVariants: true,
-            command: 'docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan wayfinder:generate',
         }),
     ],
     build: {

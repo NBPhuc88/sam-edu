@@ -9,6 +9,7 @@ use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -160,16 +161,18 @@ class ExamService implements ExamServiceInterface
             'created_by'       => $admin?->id,
         ];
 
-        $exam = $this->examRepository->create($payload);
+        return DB::transaction(function () use ($payload, $data) {
+            $exam = $this->examRepository->create($payload);
 
-        // Đồng bộ phần thi & câu hỏi nếu có
-        if (! empty($data['sections']) && is_array($data['sections'])) {
-            $this->examRepository->syncSections($exam, $data['sections']);
-        } elseif (! empty($data['questions']) && is_array($data['questions'])) {
-            $this->examRepository->syncQuestions($exam, $data['questions']);
-        }
+            // Đồng bộ phần thi & câu hỏi nếu có
+            if (! empty($data['sections']) && is_array($data['sections'])) {
+                $this->examRepository->syncSections($exam, $data['sections']);
+            } elseif (! empty($data['questions']) && is_array($data['questions'])) {
+                $this->examRepository->syncQuestions($exam, $data['questions']);
+            }
 
-        return $exam->fresh(['subject', 'sections.questions']);
+            return $exam->fresh(['subject', 'sections.questions']);
+        });
     }
 
     /**
@@ -211,16 +214,18 @@ class ExamService implements ExamServiceInterface
             'status'           => $data['status'] ?? $exam->status,
         ];
 
-        $updated = $this->examRepository->update($id, $payload);
+        return DB::transaction(function () use ($id, $payload, $data) {
+            $updated = $this->examRepository->update($id, $payload);
 
-        // Đồng bộ lại phần thi / câu hỏi nếu được truyền lên
-        if (array_key_exists('sections', $data) && is_array($data['sections'])) {
-            $this->examRepository->syncSections($updated, $data['sections']);
-        } elseif (array_key_exists('questions', $data) && is_array($data['questions'])) {
-            $this->examRepository->syncQuestions($updated, $data['questions']);
-        }
+            // Đồng bộ lại phần thi / câu hỏi nếu được truyền lên
+            if (array_key_exists('sections', $data) && is_array($data['sections'])) {
+                $this->examRepository->syncSections($updated, $data['sections']);
+            } elseif (array_key_exists('questions', $data) && is_array($data['questions'])) {
+                $this->examRepository->syncQuestions($updated, $data['questions']);
+            }
 
-        return $updated->fresh(['subject', 'sections.questions']);
+            return $updated->fresh(['subject', 'sections.questions']);
+        });
     }
 
     /**

@@ -7,7 +7,6 @@ use App\Models\ExamQuestion;
 use App\Models\ExamSection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 class ExamRepository implements ExamRepositoryInterface
 {
@@ -259,57 +258,55 @@ class ExamRepository implements ExamRepositoryInterface
      */
     public function syncQuestions(Exam $exam, array $questions): void
     {
-        DB::transaction(function () use ($exam, $questions) {
-            $existingQuestionIds = $exam->questions()->pluck('id')->toArray();
-            $incomingQuestionIds = [];
+        $existingQuestionIds = $exam->questions()->pluck('id')->toArray();
+        $incomingQuestionIds = [];
 
-            foreach ($questions as $index => $qData) {
-                $qId = ! empty($qData['id']) ? (int) $qData['id'] : null;
+        foreach ($questions as $index => $qData) {
+            $qId = ! empty($qData['id']) ? (int) $qData['id'] : null;
 
-                // Tự động sinh mã câu hỏi nếu chưa có
-                $qCode = trim($qData['code'] ?? '');
+            // Tự động sinh mã câu hỏi nếu chưa có
+            $qCode = trim($qData['code'] ?? '');
 
-                if (empty($qCode)) {
-                    $qCode = sprintf('Q%09d', ($index + 1));
-                }
-
-                $payload = [
-                    'exam_id'        => $exam->id,
-                    'section_id'     => ! empty($qData['section_id']) ? (int) $qData['section_id'] : null,
-                    'code'           => $qCode,
-                    'question_type'  => $qData['question_type'] ?? 'single_choice',
-                    'skill'          => ! empty($qData['skill']) ? $qData['skill'] : 'reading',
-                    'content'        => $qData['content'] ?? '',
-                    'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
-                    'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
-                    'score'          => isset($qData['score']) ? (float) $qData['score'] : 1.00,
-                    'options'        => $qData['options'] ?? null,
-                    'correct_answer' => $qData['correct_answer'] ?? null,
-                    'explanation'    => ! empty($qData['explanation']) ? $qData['explanation'] : null,
-                    'metadata'       => $qData['metadata'] ?? null,
-                    'order_index'    => isset($qData['order_index']) ? (int) $qData['order_index'] : $index,
-                ];
-
-                if ($qId && in_array($qId, $existingQuestionIds, true)) {
-                    $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
-
-                    if ($existingQ) {
-                        $existingQ->update($payload);
-                        $incomingQuestionIds[] = $qId;
-                    }
-                } else {
-                    $newQuestion           = ExamQuestion::create($payload);
-                    $incomingQuestionIds[] = $newQuestion->id;
-                }
+            if (empty($qCode)) {
+                $qCode = sprintf('Q%09d', ($index + 1));
             }
 
-            // Xóa các câu hỏi không còn nằm trong danh sách gửi lên
-            $toDelete = array_diff($existingQuestionIds, $incomingQuestionIds);
+            $payload = [
+                'exam_id'        => $exam->id,
+                'section_id'     => ! empty($qData['section_id']) ? (int) $qData['section_id'] : null,
+                'code'           => $qCode,
+                'question_type'  => $qData['question_type'] ?? 'single_choice',
+                'skill'          => ! empty($qData['skill']) ? $qData['skill'] : 'reading',
+                'content'        => $qData['content'] ?? '',
+                'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
+                'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
+                'score'          => isset($qData['score']) ? (float) $qData['score'] : 1.00,
+                'options'        => $qData['options'] ?? null,
+                'correct_answer' => $qData['correct_answer'] ?? null,
+                'explanation'    => ! empty($qData['explanation']) ? $qData['explanation'] : null,
+                'metadata'       => $qData['metadata'] ?? null,
+                'order_index'    => isset($qData['order_index']) ? (int) $qData['order_index'] : $index,
+            ];
 
-            if (! empty($toDelete)) {
-                ExamQuestion::whereIn('id', $toDelete)->where('exam_id', $exam->id)->delete();
+            if ($qId && in_array($qId, $existingQuestionIds, true)) {
+                $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
+
+                if ($existingQ) {
+                    $existingQ->update($payload);
+                    $incomingQuestionIds[] = $qId;
+                }
+            } else {
+                $newQuestion           = ExamQuestion::create($payload);
+                $incomingQuestionIds[] = $newQuestion->id;
             }
-        });
+        }
+
+        // Xóa các câu hỏi không còn nằm trong danh sách gửi lên
+        $toDelete = array_diff($existingQuestionIds, $incomingQuestionIds);
+
+        if (! empty($toDelete)) {
+            ExamQuestion::whereIn('id', $toDelete)->where('exam_id', $exam->id)->delete();
+        }
     }
 
     /**
@@ -321,98 +318,96 @@ class ExamRepository implements ExamRepositoryInterface
      */
     public function syncSections(Exam $exam, array $sections): void
     {
-        DB::transaction(function () use ($exam, $sections) {
-            $existingSectionIds  = $exam->sections()->pluck('id')->toArray();
-            $existingQuestionIds = $exam->questions()->pluck('id')->toArray();
+        $existingSectionIds  = $exam->sections()->pluck('id')->toArray();
+        $existingQuestionIds = $exam->questions()->pluck('id')->toArray();
 
-            $incomingSectionIds  = [];
-            $incomingQuestionIds = [];
+        $incomingSectionIds  = [];
+        $incomingQuestionIds = [];
 
-            $globalQuestionIndex = 0;
+        $globalQuestionIndex = 0;
 
-            foreach ($sections as $sectionIndex => $secData) {
-                $secId = ! empty($secData['id']) ? (int) $secData['id'] : null;
+        foreach ($sections as $sectionIndex => $secData) {
+            $secId = ! empty($secData['id']) ? (int) $secData['id'] : null;
 
-                $sectionPayload = [
-                    'exam_id'     => $exam->id,
-                    'title'       => trim($secData['title'] ?? ('Phần ' . ($sectionIndex + 1))),
-                    'description' => ! empty($secData['description']) ? trim($secData['description']) : null,
-                    'skill'       => ! empty($secData['skill']) ? $secData['skill'] : 'reading',
-                    'order_index' => isset($secData['order_index']) ? (int) $secData['order_index'] : $sectionIndex,
+            $sectionPayload = [
+                'exam_id'     => $exam->id,
+                'title'       => trim($secData['title'] ?? ('Phần ' . ($sectionIndex + 1))),
+                'description' => ! empty($secData['description']) ? trim($secData['description']) : null,
+                'skill'       => ! empty($secData['skill']) ? $secData['skill'] : 'reading',
+                'order_index' => isset($secData['order_index']) ? (int) $secData['order_index'] : $sectionIndex,
+            ];
+
+            if ($secId && in_array($secId, $existingSectionIds, true)) {
+                $section = ExamSection::where('id', $secId)->where('exam_id', $exam->id)->first();
+
+                if ($section) {
+                    $section->update($sectionPayload);
+                } else {
+                    $section = ExamSection::create($sectionPayload);
+                }
+                $incomingSectionIds[] = $section->id;
+            } else {
+                $section              = ExamSection::create($sectionPayload);
+                $incomingSectionIds[] = $section->id;
+            }
+
+            // Xử lý các câu hỏi thuộc Section này
+            $secQuestions = $secData['questions'] ?? [];
+
+            foreach ($secQuestions as $qLocalIndex => $qData) {
+                $globalQuestionIndex++;
+                $qId = ! empty($qData['id']) ? (int) $qData['id'] : null;
+
+                $qCode = trim($qData['code'] ?? '');
+
+                if (empty($qCode)) {
+                    $qCode = sprintf('Q%09d', $globalQuestionIndex);
+                }
+
+                $questionPayload = [
+                    'exam_id'        => $exam->id,
+                    'section_id'     => $section->id,
+                    'code'           => $qCode,
+                    'question_type'  => $qData['question_type'] ?? 'single_choice',
+                    'skill'          => $section->skill,
+                    'content'        => $qData['content'] ?? '',
+                    'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
+                    'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
+                    'score'          => isset($qData['score']) ? (float) $qData['score'] : 1.00,
+                    'options'        => $qData['options'] ?? null,
+                    'correct_answer' => $qData['correct_answer'] ?? null,
+                    'explanation'    => ! empty($qData['explanation']) ? $qData['explanation'] : null,
+                    'metadata'       => $qData['metadata'] ?? null,
+                    'order_index'    => isset($qData['order_index']) ? (int) $qData['order_index'] : $qLocalIndex,
                 ];
 
-                if ($secId && in_array($secId, $existingSectionIds, true)) {
-                    $section = ExamSection::where('id', $secId)->where('exam_id', $exam->id)->first();
+                if ($qId && in_array($qId, $existingQuestionIds, true)) {
+                    $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
 
-                    if ($section) {
-                        $section->update($sectionPayload);
-                    } else {
-                        $section = ExamSection::create($sectionPayload);
+                    if ($existingQ) {
+                        $existingQ->update($questionPayload);
+                        $incomingQuestionIds[] = $qId;
                     }
-                    $incomingSectionIds[] = $section->id;
                 } else {
-                    $section              = ExamSection::create($sectionPayload);
-                    $incomingSectionIds[] = $section->id;
-                }
-
-                // Xử lý các câu hỏi thuộc Section này
-                $secQuestions = $secData['questions'] ?? [];
-
-                foreach ($secQuestions as $qLocalIndex => $qData) {
-                    $globalQuestionIndex++;
-                    $qId = ! empty($qData['id']) ? (int) $qData['id'] : null;
-
-                    $qCode = trim($qData['code'] ?? '');
-
-                    if (empty($qCode)) {
-                        $qCode = sprintf('Q%09d', $globalQuestionIndex);
-                    }
-
-                    $questionPayload = [
-                        'exam_id'        => $exam->id,
-                        'section_id'     => $section->id,
-                        'code'           => $qCode,
-                        'question_type'  => $qData['question_type'] ?? 'single_choice',
-                        'skill'          => $section->skill,
-                        'content'        => $qData['content'] ?? '',
-                        'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
-                        'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
-                        'score'          => isset($qData['score']) ? (float) $qData['score'] : 1.00,
-                        'options'        => $qData['options'] ?? null,
-                        'correct_answer' => $qData['correct_answer'] ?? null,
-                        'explanation'    => ! empty($qData['explanation']) ? $qData['explanation'] : null,
-                        'metadata'       => $qData['metadata'] ?? null,
-                        'order_index'    => isset($qData['order_index']) ? (int) $qData['order_index'] : $qLocalIndex,
-                    ];
-
-                    if ($qId && in_array($qId, $existingQuestionIds, true)) {
-                        $existingQ = ExamQuestion::where('id', $qId)->where('exam_id', $exam->id)->first();
-
-                        if ($existingQ) {
-                            $existingQ->update($questionPayload);
-                            $incomingQuestionIds[] = $qId;
-                        }
-                    } else {
-                        $newQuestion           = ExamQuestion::create($questionPayload);
-                        $incomingQuestionIds[] = $newQuestion->id;
-                    }
+                    $newQuestion           = ExamQuestion::create($questionPayload);
+                    $incomingQuestionIds[] = $newQuestion->id;
                 }
             }
+        }
 
-            // Xóa các câu hỏi không còn nằm trong danh sách
-            $questionsToDelete = array_diff($existingQuestionIds, $incomingQuestionIds);
+        // Xóa các câu hỏi không còn nằm trong danh sách
+        $questionsToDelete = array_diff($existingQuestionIds, $incomingQuestionIds);
 
-            if (! empty($questionsToDelete)) {
-                ExamQuestion::whereIn('id', $questionsToDelete)->where('exam_id', $exam->id)->delete();
-            }
+        if (! empty($questionsToDelete)) {
+            ExamQuestion::whereIn('id', $questionsToDelete)->where('exam_id', $exam->id)->delete();
+        }
 
-            // Xóa các section không còn nằm trong danh sách
-            $sectionsToDelete = array_diff($existingSectionIds, $incomingSectionIds);
+        // Xóa các section không còn nằm trong danh sách
+        $sectionsToDelete = array_diff($existingSectionIds, $incomingSectionIds);
 
-            if (! empty($sectionsToDelete)) {
-                ExamSection::whereIn('id', $sectionsToDelete)->where('exam_id', $exam->id)->delete();
-            }
-        });
+        if (! empty($sectionsToDelete)) {
+            ExamSection::whereIn('id', $sectionsToDelete)->where('exam_id', $exam->id)->delete();
+        }
     }
 
     /**
