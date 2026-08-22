@@ -256,15 +256,15 @@ export default function Index({
 
                         {/* Search Bar */}
                         <form onSubmit={handleSearch} className="flex items-center gap-2">
-                            <div className="relative w-64">
+                            <div className="w-64">
                                 <Input
                                     type="text"
                                     placeholder="Tìm tên ngày lễ..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9 text-xs"
+                                    icon={<Search className="h-4 w-4 text-gray-400" />}
+                                    className="!text-xs"
                                 />
-                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                             </div>
                             <Button type="submit" variant="secondary" className="px-3 py-2 text-xs">
                                 Tìm
