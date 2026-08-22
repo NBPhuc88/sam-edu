@@ -236,10 +236,10 @@ class PracticeExamService implements PracticeExamServiceInterface
                     case 'single_choice':
                     case 'true_false_not_given':
                     case 'find_mistake':
-                        $cleanUser    = trim(strtoupper((string) $userAns));
-                        $cleanCorrect = trim(strtoupper((string) $correctAns));
+                        $cleanUser    = is_scalar($userAns) ? trim(strtoupper((string) $userAns)) : '';
+                        $cleanCorrect = is_scalar($correctAns) ? trim(strtoupper((string) $correctAns)) : '';
 
-                        if ($cleanUser === $cleanCorrect) {
+                        if ($cleanUser !== '' && $cleanUser === $cleanCorrect) {
                             $isCorrect   = true;
                             $earnedScore = $qScore;
                         }
@@ -247,12 +247,34 @@ class PracticeExamService implements PracticeExamServiceInterface
                         break;
 
                     case 'multiple_choice':
-                        $userArr    = is_array($userAns) ? array_map('strval', $userAns) : [strval($userAns)];
-                        $correctArr = is_array($correctAns) ? array_map('strval', $correctAns) : [strval($correctAns)];
+                        $userArr = [];
+
+                        if (is_array($userAns)) {
+                            foreach ($userAns as $uItem) {
+                                if (is_scalar($uItem)) {
+                                    $userArr[] = (string) $uItem;
+                                }
+                            }
+                        } elseif (is_scalar($userAns)) {
+                            $userArr = [(string) $userAns];
+                        }
+
+                        $correctArr = [];
+
+                        if (is_array($correctAns)) {
+                            foreach ($correctAns as $cItem) {
+                                if (is_scalar($cItem)) {
+                                    $correctArr[] = (string) $cItem;
+                                }
+                            }
+                        } elseif (is_scalar($correctAns)) {
+                            $correctArr = [(string) $correctAns];
+                        }
+
                         sort($userArr);
                         sort($correctArr);
 
-                        if ($userArr == $correctArr) {
+                        if (! empty($userArr) && $userArr === $correctArr) {
                             $isCorrect   = true;
                             $earnedScore = $qScore;
                         }
@@ -265,10 +287,34 @@ class PracticeExamService implements PracticeExamServiceInterface
                             $correctBlanks = 0;
 
                             foreach ($correctAns as $blankKey => $correctVal) {
-                                $uVal = trim(mb_strtolower((string) ($userAns[$blankKey] ?? '')));
-                                $cVal = trim(mb_strtolower((string) $correctVal));
+                                $rawUser = $userAns[$blankKey] ?? null;
+                                $uVal    = is_scalar($rawUser) ? trim((string) $rawUser) : '';
 
-                                if ($uVal === $cVal && $uVal !== '') {
+                                if (is_array($correctVal)) {
+                                    $accepted   = $correctVal['accepted_answers'] ?? [];
+                                    $isCaseSens = $correctVal['case_sensitive'] ?? false;
+                                } else {
+                                    $accepted   = is_scalar($correctVal) ? [(string) $correctVal] : [];
+                                    $isCaseSens = false;
+                                }
+
+                                $matched = false;
+
+                                foreach ($accepted as $acc) {
+                                    $accStr = is_scalar($acc) ? trim((string) $acc) : '';
+
+                                    if ($accStr === '') {
+                                        continue;
+                                    }
+
+                                    if ($isCaseSens ? ($uVal === $accStr) : (mb_strtolower($uVal) === mb_strtolower($accStr))) {
+                                        $matched = true;
+
+                                        break;
+                                    }
+                                }
+
+                                if ($matched && $uVal !== '') {
                                     $correctBlanks++;
                                 }
                             }
@@ -293,7 +339,9 @@ class PracticeExamService implements PracticeExamServiceInterface
                             $correctPairs = 0;
 
                             foreach ($correctAns as $k => $v) {
-                                if (isset($userAns[$k]) && (string) $userAns[$k] === (string) $v) {
+                                $uVal = $userAns[$k] ?? null;
+
+                                if ($uVal !== null && is_scalar($uVal) && is_scalar($v) && (string) $uVal === (string) $v) {
                                     $correctPairs++;
                                 }
                             }
@@ -309,10 +357,26 @@ class PracticeExamService implements PracticeExamServiceInterface
                         break;
 
                     case 'ordering':
-                        $userOrder    = is_array($userAns) ? array_map('strval', $userAns) : [];
-                        $correctOrder = is_array($correctAns) ? array_map('strval', $correctAns) : [];
+                        $userOrder = [];
 
-                        if ($userOrder === $correctOrder && ! empty($userOrder)) {
+                        if (is_array($userAns)) {
+                            foreach ($userAns as $item) {
+                                if (is_scalar($item)) {
+                                    $userOrder[] = (string) $item;
+                                }
+                            }
+                        }
+                        $correctOrder = [];
+
+                        if (is_array($correctAns)) {
+                            foreach ($correctAns as $item) {
+                                if (is_scalar($item)) {
+                                    $correctOrder[] = (string) $item;
+                                }
+                            }
+                        }
+
+                        if (! empty($userOrder) && $userOrder === $correctOrder) {
                             $isCorrect   = true;
                             $earnedScore = $qScore;
                         }

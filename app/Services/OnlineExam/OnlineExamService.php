@@ -290,7 +290,10 @@ class OnlineExamService implements OnlineExamServiceInterface
                     case 'single_choice':
                     case 'true_false_not_given':
                     case 'find_mistake':
-                        if ($userAns !== null && trim((string) $userAns) === trim((string) $correctAns)) {
+                        $cleanU = is_scalar($userAns) ? trim((string) $userAns) : '';
+                        $cleanC = is_scalar($correctAns) ? trim((string) $correctAns) : '';
+
+                        if ($cleanU !== '' && $cleanU === $cleanC) {
                             $isCorrect   = true;
                             $scoreEarned = $qScore;
                         }
@@ -299,12 +302,12 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                     case 'multiple_choice':
                         if (is_array($userAns) && is_array($correctAns)) {
-                            $uSorted = $userAns;
-                            $cSorted = $correctAns;
+                            $uSorted = array_values(array_map('strval', array_filter($userAns, 'is_scalar')));
+                            $cSorted = array_values(array_map('strval', array_filter($correctAns, 'is_scalar')));
                             sort($uSorted);
                             sort($cSorted);
 
-                            if ($uSorted === $cSorted) {
+                            if (! empty($uSorted) && $uSorted === $cSorted) {
                                 $isCorrect   = true;
                                 $scoreEarned = $qScore;
                             }
@@ -317,14 +320,27 @@ class OnlineExamService implements OnlineExamServiceInterface
                             $allBlanksCorrect = true;
 
                             foreach ($correctAns as $bKey => $bData) {
-                                $uVal       = trim((string) ($userAns[$bKey] ?? ''));
-                                $accepted   = $bData['accepted_answers'] ?? [];
-                                $isCaseSens = $bData['case_sensitive'] ?? false;
+                                $rawU = $userAns[$bKey] ?? null;
+                                $uVal = is_scalar($rawU) ? trim((string) $rawU) : '';
+
+                                if (is_array($bData)) {
+                                    $accepted   = $bData['accepted_answers'] ?? [];
+                                    $isCaseSens = $bData['case_sensitive'] ?? false;
+                                } else {
+                                    $accepted   = is_scalar($bData) ? [(string) $bData] : [];
+                                    $isCaseSens = false;
+                                }
 
                                 $matched = false;
 
                                 foreach ($accepted as $acc) {
-                                    if ($isCaseSens ? ($uVal === trim((string) $acc)) : (mb_strtolower($uVal) === mb_strtolower(trim((string) $acc)))) {
+                                    $accStr = is_scalar($acc) ? trim((string) $acc) : '';
+
+                                    if ($accStr === '') {
+                                        continue;
+                                    }
+
+                                    if ($isCaseSens ? ($uVal === $accStr) : (mb_strtolower($uVal) === mb_strtolower($accStr))) {
                                         $matched = true;
 
                                         break;
@@ -352,7 +368,9 @@ class OnlineExamService implements OnlineExamServiceInterface
                             $allPairsCorrect = true;
 
                             foreach ($correctAns as $lKey => $rVal) {
-                                if (($userAns[$lKey] ?? null) !== $rVal) {
+                                $uVal = $userAns[$lKey] ?? null;
+
+                                if ($uVal === null || ! is_scalar($uVal) || ! is_scalar($rVal) || (string) $uVal !== (string) $rVal) {
                                     $allPairsCorrect = false;
                                 }
                             }
@@ -367,7 +385,10 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                     case 'ordering':
                         if (is_array($userAns) && is_array($correctAns)) {
-                            if ($userAns === $correctAns) {
+                            $uOrder = array_values(array_map('strval', array_filter($userAns, 'is_scalar')));
+                            $cOrder = array_values(array_map('strval', array_filter($correctAns, 'is_scalar')));
+
+                            if (! empty($uOrder) && $uOrder === $cOrder) {
                                 $isCorrect   = true;
                                 $scoreEarned = $qScore;
                             }

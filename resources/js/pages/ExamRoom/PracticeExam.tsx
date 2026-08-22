@@ -28,6 +28,7 @@ import MatchingAnswerForm from './components/MatchingAnswerForm';
 import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
+import QuestionReviewDetail from './components/QuestionReviewDetail';
 
 interface QuestionItem {
     id: number;
@@ -796,11 +797,11 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                     {gq.title}
                                                 </h4>
                                             )}
-                                            <div className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                                {gq.question_type === 'fill_in_blank'
-                                                    ? renderFillInBlankContent(gq.content)
-                                                    : gq.content}
-                                            </div>
+                                            {gq.question_type !== 'fill_in_blank' && gq.question_type !== 'drag_drop_cloze' && (
+                                                <div className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                                    {gq.content}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Audio Track */}
@@ -810,26 +811,8 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                             </div>
                                         )}
 
-                                        {/* Answer comparison */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-200 text-xs">
-                                            <div>
-                                                <span className="block text-2xs text-gray-500 font-bold uppercase mb-1">
-                                                    Đáp Án Bạn Đã Chọn:
-                                                </span>
-                                                <span className={`font-mono font-bold ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                                    {gq.user_answer ? JSON.stringify(gq.user_answer) : '(Chưa chọn)'}
-                                                </span>
-                                            </div>
-
-                                            <div>
-                                                <span className="block text-2xs text-gray-500 font-bold uppercase mb-1">
-                                                    Đáp Án Chuẩn Của Đề:
-                                                </span>
-                                                <span className="font-mono font-bold text-emerald-700">
-                                                    {JSON.stringify(gq.correct_answer)}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        {/* Visual Interactive Review UI with Color Highlights */}
+                                        <QuestionReviewDetail question={gq} />
 
                                         {/* Explanation */}
                                         {gq.explanation && (
