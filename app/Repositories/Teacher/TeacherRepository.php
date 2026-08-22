@@ -259,8 +259,18 @@ class TeacherRepository implements TeacherRepositoryInterface
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'teacher:id,full_name,teacher_code,phone',
                 'room:id,name',
+                'reschedules' => function ($q) {
+                    $q->orderBy('changed_at', 'desc');
+                },
+                'reschedules.oldRoom:id,name',
+                'reschedules.newRoom:id,name',
             ])
-            ->whereBetween('session_date', [$startDate, $endDate])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('session_date', [$startDate, $endDate])
+                    ->orWhereHas('reschedules', function ($rq) use ($startDate, $endDate) {
+                        $rq->whereBetween('old_date', [$startDate, $endDate]);
+                    });
+            })
             ->orderBy('session_date')
             ->orderBy('start_time')
             ->get();

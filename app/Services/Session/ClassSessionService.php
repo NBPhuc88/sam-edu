@@ -205,6 +205,8 @@ class ClassSessionService implements ClassSessionServiceInterface
 
         if (isset($data['status'])) {
             $updateData['status'] = $data['status'];
+        } elseif ($hasScheduleChanged && ($session->status === 'rescheduled' || $session->status === 'scheduled')) {
+            $updateData['status'] = 'scheduled';
         }
 
         if (array_key_exists('topic', $data)) {

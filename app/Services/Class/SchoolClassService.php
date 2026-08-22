@@ -294,12 +294,88 @@ class SchoolClassService implements SchoolClassServiceInterface
             ];
         }
 
-        // Lấy danh sách ca học thực tế trong tuần
-        $sessions = $this->schoolClassRepository->getClassSessionsBetweenDates(
+        $startDateStr = $startOfWeek->format('Y-m-d');
+        $endDateStr   = $endOfWeek->format('Y-m-d');
+
+        // Lấy danh sách ca học thực tế trong tuần (bao gồm cả ca học có old_date thuộc tuần này)
+        $rawSessions = $this->schoolClassRepository->getClassSessionsBetweenDates(
             $classId,
-            $startOfWeek->format('Y-m-d'),
-            $endOfWeek->format('Y-m-d')
+            $startDateStr,
+            $endDateStr
         );
+
+        $processedSessions = [];
+
+        foreach ($rawSessions as $session) {
+            $sessionDateStr = $session->session_date ? Carbon::parse($session->session_date)->format('Y-m-d') : '';
+
+            // 1. Nếu có lịch sử đổi lịch mà old_date nằm trong tuần này, thêm slot cũ (đã dời) vào timetable
+            if ($session->reschedules && $session->reschedules->isNotEmpty()) {
+                foreach ($session->reschedules as $reschedule) {
+                    $oldDateStr = $reschedule->old_date ? Carbon::parse($reschedule->old_date)->format('Y-m-d') : '';
+                    $newDateStr = $reschedule->new_date ? Carbon::parse($reschedule->new_date)->format('Y-m-d') : '';
+
+                    if ($oldDateStr >= $startDateStr && $oldDateStr <= $endDateStr) {
+                        $oldStartTime = substr((string) $reschedule->old_start_time, 0, 5);
+                        $oldEndTime   = substr((string) $reschedule->old_end_time, 0, 5);
+                        $newStartTime = substr((string) $reschedule->new_start_time, 0, 5);
+                        $newEndTime   = substr((string) $reschedule->new_end_time, 0, 5);
+
+                        $processedSessions[] = [
+                            'id'                      => "rescheduled-old-{$session->id}-{$reschedule->id}",
+                            'original_session_id'     => $session->id,
+                            'class_subject_id'        => $session->class_subject_id,
+                            'teacher_id'              => $session->teacher_id,
+                            'room_id'                 => $reschedule->old_room_id ?? $session->room_id,
+                            'session_date'            => $oldDateStr,
+                            'start_time'              => $oldStartTime,
+                            'end_time'                => $oldEndTime,
+                            'status'                  => 'rescheduled',
+                            'topic'                   => $session->topic,
+                            'note'                    => $session->note,
+                            'is_rescheduled_old_slot' => true,
+                            'reschedule_info'         => [
+                                'new_date'       => Carbon::parse($newDateStr)->format('d-m-Y'),
+                                'new_start_time' => $newStartTime,
+                                'new_end_time'   => $newEndTime,
+                                'reason'         => $reschedule->reason,
+                            ],
+                            'class_subject' => $session->classSubject,
+                            'teacher'       => $session->teacher,
+                            'room'          => $reschedule->oldRoom ?? $session->room,
+                        ];
+                    }
+                }
+            }
+
+            // 2. Thêm ca học ở new_date (nếu session_date nằm trong tuần này)
+            if ($sessionDateStr >= $startDateStr && $sessionDateStr <= $endDateStr) {
+                $sessionArr = $session->toArray();
+
+                if ($session->reschedules && $session->reschedules->isNotEmpty()) {
+                    $latestReschedule = $session->reschedules->first();
+                    $oldDateStr       = $latestReschedule->old_date ? Carbon::parse($latestReschedule->old_date)->format('Y-m-d') : '';
+                    $oldStartTime     = substr((string) $latestReschedule->old_start_time, 0, 5);
+                    $oldEndTime       = substr((string) $latestReschedule->old_end_time, 0, 5);
+
+                    $sessionArr['is_rescheduled_new_slot'] = true;
+
+                    // Tại ngày mới (new_date), ca học là ca dự kiến diễn ra
+                    if ($sessionArr['status'] === 'rescheduled') {
+                        $sessionArr['status'] = 'scheduled';
+                    }
+
+                    $sessionArr['reschedule_from_info'] = [
+                        'old_date'       => Carbon::parse($oldDateStr)->format('d-m-Y'),
+                        'old_start_time' => $oldStartTime,
+                        'old_end_time'   => $oldEndTime,
+                        'reason'         => $latestReschedule->reason,
+                    ];
+                }
+
+                $processedSessions[] = $sessionArr;
+            }
+        }
 
         // Lấy lịch học cố định hàng tuần
         $recurringSchedules = $this->schoolClassRepository->getClassWeeklySchedules($classId);
@@ -307,9 +383,9 @@ class SchoolClassService implements SchoolClassServiceInterface
         // Trích xuất các khung giờ học (Time slots) duy nhất
         $timeSlotSet = [];
 
-        foreach ($sessions as $session) {
-            $start = substr((string) $session->start_time, 0, 5);
-            $end   = substr((string) $session->end_time, 0, 5);
+        foreach ($processedSessions as $sessItem) {
+            $start = substr((string) $sessItem['start_time'], 0, 5);
+            $end   = substr((string) $sessItem['end_time'], 0, 5);
             $key   = "{$start} - {$end}";
 
             $timeSlotSet[$key] = [
@@ -346,7 +422,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             'currentWeek'        => Carbon::today()->format('Y-m-d'),
             'selectedDate'       => $baseDate->format('Y-m-d'),
             'timeSlots'          => array_values($timeSlotSet),
-            'sessions'           => $sessions,
+            'sessions'           => $processedSessions,
             'recurringSchedules' => $recurringSchedules,
         ];
     }

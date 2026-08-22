@@ -56,8 +56,18 @@ interface RoomInfo {
     equipments?: RoomEquipment[];
 }
 
+interface RescheduleInfo {
+    new_date?: string;
+    new_start_time?: string;
+    new_end_time?: string;
+    old_date?: string;
+    old_start_time?: string;
+    old_end_time?: string;
+    reason?: string | null;
+}
+
 interface TeacherSession {
-    id: number;
+    id: number | string;
     class_subject_id: number;
     class_schedule_id: number | null;
     teacher_id: number;
@@ -68,15 +78,19 @@ interface TeacherSession {
     status: string;
     topic: string | null;
     note: string | null;
-    session_order: number;
-    total_sessions: number | null;
-    student_count: number;
-    max_students: number | null;
-    class_name: string;
-    class_code: string;
-    subject_name: string;
-    subject_code: string;
-    room_info: RoomInfo | null;
+    session_order?: number;
+    total_sessions?: number | null;
+    student_count?: number;
+    max_students?: number | null;
+    class_name?: string;
+    class_code?: string;
+    subject_name?: string;
+    subject_code?: string;
+    room_info?: RoomInfo | null;
+    is_rescheduled_old_slot?: boolean;
+    is_rescheduled_new_slot?: boolean;
+    reschedule_info?: RescheduleInfo;
+    reschedule_from_info?: RescheduleInfo;
 }
 
 interface WeekDay {
@@ -182,7 +196,7 @@ export default function TeacherSchedulePage({
         setSelectedSession(null);
     };
 
-    const handleGoToAttendance = (sessionId: number) => {
+    const handleGoToAttendance = (sessionId: number | string) => {
         router.get(`/attendance/session/${sessionId}`);
     };
 
@@ -221,35 +235,87 @@ export default function TeacherSchedulePage({
         switch (status) {
             case 'completed':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                    <span className="inline-flex items-center rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
                         Đã dạy
                     </span>
                 );
             case 'planned':
             case 'active':
+            case 'scheduled':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800">
+                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
                         Dự kiến
                     </span>
                 );
             case 'cancelled':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">
+                    <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
                         Nghỉ dạy
                     </span>
                 );
             case 'rescheduled':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                    <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
                         Đã đổi lịch
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                    <span className="inline-flex items-center rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 border border-gray-200">
                         {status}
                     </span>
                 );
+        }
+    };
+
+    const getSessionCardStyle = (status: string, isOldSlot?: boolean) => {
+        if (isOldSlot) {
+            return {
+                container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
+                subjectText: 'text-amber-900',
+                subjectIcon: 'text-amber-600',
+                orderText: 'text-amber-800',
+            };
+        }
+
+        switch (status) {
+            case 'completed':
+                return {
+                    container: 'border-emerald-200 bg-emerald-50/80 hover:border-emerald-400 hover:bg-emerald-100/70 shadow-2xs',
+                    subjectText: 'text-emerald-900',
+                    subjectIcon: 'text-emerald-600',
+                    orderText: 'text-emerald-800',
+                };
+            case 'planned':
+            case 'active':
+            case 'scheduled':
+                return {
+                    container: 'border-blue-200 bg-blue-50/80 hover:border-blue-400 hover:bg-blue-100/70 shadow-2xs',
+                    subjectText: 'text-blue-900',
+                    subjectIcon: 'text-blue-600',
+                    orderText: 'text-blue-800',
+                };
+            case 'cancelled':
+                return {
+                    container: 'border-red-200 bg-red-50/80 hover:border-red-400 hover:bg-red-100/70 shadow-2xs',
+                    subjectText: 'text-red-900',
+                    subjectIcon: 'text-red-600',
+                    orderText: 'text-red-800',
+                };
+            case 'rescheduled':
+                return {
+                    container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
+                    subjectText: 'text-amber-900',
+                    subjectIcon: 'text-amber-600',
+                    orderText: 'text-amber-800',
+                };
+            default:
+                return {
+                    container: 'border-gray-200 bg-gray-50/80 hover:border-gray-300 hover:bg-gray-100/70 shadow-2xs',
+                    subjectText: 'text-gray-800',
+                    subjectIcon: 'text-gray-500',
+                    orderText: 'text-gray-700',
+                };
         }
     };
 
@@ -488,55 +554,70 @@ export default function TeacherSchedulePage({
                                                             /* Sessions View (Ca dạy cụ thể - click mở popup) */
                                                             cellSessions && cellSessions.length > 0 ? (
                                                                 <div className="space-y-2">
-                                                                    {cellSessions.map((session) => (
-                                                                        <div
-                                                                            key={session.id}
-                                                                            onClick={() => handleOpenDetailModal(session)}
-                                                                            role="button"
-                                                                            tabIndex={0}
-                                                                            onKeyDown={(e) => {
-                                                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                                                    handleOpenDetailModal(session);
-                                                                                }
-                                                                            }}
-                                                                            className="group relative cursor-pointer rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 shadow-xs transition-all hover:border-emerald-500 hover:bg-emerald-100/60 hover:shadow-md"
-                                                                            title="Click để xem thông tin lớp, phòng học và điểm danh"
-                                                                        >
-                                                                            {/* CLASS NAME AS PRIMARY HEADER */}
-                                                                            <div className="flex items-start justify-between gap-1">
-                                                                                <div className="font-bold text-gray-900 leading-tight group-hover:text-emerald-900">
-                                                                                    {session.class_name}
-                                                                                </div>
-                                                                                {getSessionStatusBadge(session.status)}
-                                                                            </div>
+                                                                    {cellSessions.map((session) => {
+                                                                        const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot);
 
-                                                                            {/* Subject name below class */}
-                                                                            <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-800">
-                                                                                <BookOpen className="h-3 w-3 shrink-0 text-emerald-600" />
-                                                                                <span className="truncate">{session.subject_name}</span>
-                                                                            </div>
-
-                                                                            {/* Class code & Session info */}
-                                                                            <div className="mt-2 space-y-1 text-xs text-gray-600">
-                                                                                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                                                                                    <span className="flex items-center gap-1">
-                                                                                        <Users className="h-3 w-3 text-gray-400" />
-                                                                                        {session.student_count} HS
-                                                                                    </span>
-                                                                                    <span className="font-medium text-emerald-700">
-                                                                                        Buổi {session.session_order}{session.total_sessions ? `/${session.total_sessions}` : ''}
-                                                                                    </span>
-                                                                                </div>
-
-                                                                                {session.room_info && (
-                                                                                    <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600">
-                                                                                        <DoorOpen className="h-3 w-3 shrink-0 text-gray-400" />
-                                                                                        <span className="truncate">{session.room_info.name}</span>
+                                                                        return (
+                                                                            <div
+                                                                                key={session.id}
+                                                                                onClick={() => {
+                                                                                    if (!session.is_rescheduled_old_slot) {
+                                                                                        handleOpenDetailModal(session);
+                                                                                    }
+                                                                                }}
+                                                                                className={`group relative cursor-pointer rounded-lg border p-2.5 transition-all ${cardStyle.container}`}
+                                                                                title="Click để xem thông tin lớp, phòng học và điểm danh"
+                                                                            >
+                                                                                {/* CLASS NAME AS PRIMARY HEADER */}
+                                                                                <div className="flex items-start justify-between gap-1">
+                                                                                    <div className="font-bold text-gray-900 leading-tight">
+                                                                                        {session.class_name}
                                                                                     </div>
-                                                                                )}
+                                                                                    {getSessionStatusBadge(session.status)}
+                                                                                </div>
+
+                                                                                {/* Subject name below class */}
+                                                                                <div className={`mt-1 flex items-center gap-1 text-xs font-semibold ${cardStyle.subjectText}`}>
+                                                                                    <BookOpen className={`h-3 w-3 shrink-0 ${cardStyle.subjectIcon}`} />
+                                                                                    <span className="truncate">{session.subject_name}</span>
+                                                                                </div>
+
+                                                                                {/* Class code & Session info */}
+                                                                                <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                                                                    <div className="flex items-center justify-between text-[11px] text-gray-500">
+                                                                                        <span className="flex items-center gap-1">
+                                                                                            <Users className="h-3 w-3 text-gray-400" />
+                                                                                            {session.student_count ?? 0} HS
+                                                                                        </span>
+                                                                                        {session.session_order && (
+                                                                                            <span className={`font-medium ${cardStyle.orderText}`}>
+                                                                                                Buổi {session.session_order}{session.total_sessions ? `/${session.total_sessions}` : ''}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+
+                                                                                    {session.room_info && (
+                                                                                        <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600">
+                                                                                            <DoorOpen className="h-3 w-3 shrink-0 text-gray-400" />
+                                                                                            <span className="truncate">{session.room_info.name}</span>
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                    {session.is_rescheduled_old_slot && session.reschedule_info && (
+                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
+                                                                                            ↗ Dời sang: {session.reschedule_info.new_date} ({formatTime(session.reschedule_info.new_start_time || '')})
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                    {session.reschedule_from_info && (
+                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
+                                                                                            ↩ Dời từ: {session.reschedule_from_info.old_date} ({formatTime(session.reschedule_from_info.old_start_time || '')})
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    ))}
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex h-full min-h-[70px] items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50/50 p-2 text-center text-xs text-gray-300">
