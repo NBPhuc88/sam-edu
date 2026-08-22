@@ -22,8 +22,9 @@ interface MatchingImageOptions {
 interface Props {
     options: MatchingImageOptions;
     correctAnswer: Record<string, string>;
-    onChangeOptions: (options: MatchingImageOptions) => void;
-    onChangeCorrectAnswer: (answer: Record<string, string>) => void;
+    onChangeOptions?: (options: MatchingImageOptions) => void;
+    onChangeCorrectAnswer?: (answer: Record<string, string>) => void;
+    onChangeQuestion?: (fields: { options?: MatchingImageOptions; correct_answer?: Record<string, string> }) => void;
 }
 
 export default function MatchingImageEditor({
@@ -31,6 +32,7 @@ export default function MatchingImageEditor({
     correctAnswer = {},
     onChangeOptions,
     onChangeCorrectAnswer,
+    onChangeQuestion,
 }: Props) {
     const sentences: LeftItem[] = options?.sentences?.length > 0
         ? options.sentences
@@ -49,62 +51,89 @@ export default function MatchingImageEditor({
             { id: 'IMG_D', image_url: '', label: 'Hình D (tùy chọn thừa)' },
         ];
 
+    const updateAll = (newOptions: MatchingImageOptions, newAns: Record<string, string>) => {
+        if (onChangeQuestion) {
+            onChangeQuestion({ options: newOptions, correct_answer: newAns });
+        } else {
+            onChangeOptions?.(newOptions);
+            onChangeCorrectAnswer?.(newAns);
+        }
+    };
+
     const handleAddSentence = () => {
-        const nextId = `S${sentences.length + 1}`;
+        const numbers = sentences.map((s) => {
+            const m = String(s.id).match(/^S(\d+)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+        });
+        const maxNum = numbers.length > 0 ? Math.max(...numbers, 0) : 0;
+        const nextId = `S${maxNum + 1}`;
         const updated = [...sentences, { id: nextId, text: '' }];
-        onChangeOptions({ ...options, sentences: updated, images });
+        updateAll({ ...options, sentences: updated, images }, correctAnswer);
     };
 
     const handleRemoveSentence = (index: number) => {
         if (sentences.length <= 1) return;
         const removed = sentences[index];
         const updated = sentences.filter((_, i) => i !== index);
-        onChangeOptions({ ...options, sentences: updated, images });
-
         const newAns = { ...correctAnswer };
         delete newAns[removed.id];
-        onChangeCorrectAnswer(newAns);
+        updateAll({ ...options, sentences: updated, images }, newAns);
     };
 
     const handleSentenceTextChange = (index: number, text: string) => {
         const updated = [...sentences];
         updated[index] = { ...updated[index], text };
-        onChangeOptions({ ...options, sentences: updated, images });
+        updateAll({ ...options, sentences: updated, images }, correctAnswer);
     };
 
     const handleAddImage = () => {
-        const char = String.fromCharCode(65 + images.length);
+        const usedLetters = new Set(
+            images.map((img) => {
+                const m = String(img.id).match(/^IMG_([A-Z])$/i);
+                return m ? m[1].toUpperCase() : '';
+            }).filter(Boolean)
+        );
+        let char = 'A';
+        for (let i = 0; i < 26; i++) {
+            const candidate = String.fromCharCode(65 + i);
+            if (!usedLetters.has(candidate)) {
+                char = candidate;
+                break;
+            }
+        }
         const nextId = `IMG_${char}`;
         const updated = [...images, { id: nextId, image_url: '', label: `Hình ${char}` }];
-        onChangeOptions({ ...options, sentences, images: updated });
+        updateAll({ ...options, sentences, images: updated }, correctAnswer);
     };
 
     const handleRemoveImage = (index: number) => {
         if (images.length <= 1) return;
         const removed = images[index];
         const updated = images.filter((_, i) => i !== index);
-        onChangeOptions({ ...options, sentences, images: updated });
-
         const newAns = { ...correctAnswer };
         Object.keys(newAns).forEach((k) => {
             if (newAns[k] === removed.id) {
                 delete newAns[k];
             }
         });
-        onChangeCorrectAnswer(newAns);
+        updateAll({ ...options, sentences, images: updated }, newAns);
     };
 
     const handleImageChange = (index: number, fields: Partial<ImageItem>) => {
         const updated = [...images];
         updated[index] = { ...updated[index], ...fields };
-        onChangeOptions({ ...options, sentences, images: updated });
+        updateAll({ ...options, sentences, images: updated }, correctAnswer);
     };
 
     const handlePairChange = (sentenceId: string, imageId: string) => {
-        onChangeCorrectAnswer({
+        const newAns = {
             ...correctAnswer,
             [sentenceId]: imageId,
-        });
+        };
+        if (!imageId) {
+            delete newAns[sentenceId];
+        }
+        updateAll({ ...options, sentences, images }, newAns);
     };
 
     return (
@@ -180,53 +209,57 @@ export default function MatchingImageEditor({
                     </div>
 
                     <div className="space-y-2.5">
-                        {images.map((item, idx) => (
-                            <div key={item.id} className="bg-white p-2.5 rounded-xl border border-gray-200 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-mono text-xs font-bold border border-teal-200">
-                                        {String.fromCharCode(65 + idx)}
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={item.label || ''}
-                                        onChange={(e) => handleImageChange(idx, { label: e.target.value })}
-                                        placeholder={`Tên / Nhãn (VD: Hình ${String.fromCharCode(65 + idx)})`}
-                                        className="w-1/3 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                                    />
-                                    <div className="flex-1">
-                                        <MediaUploader
-                                            compact={true}
-                                            value={item.image_url}
-                                            onChange={(url) => handleImageChange(idx, { image_url: url })}
-                                            objectType="matching"
-                                            objectId={`img_${String.fromCharCode(65 + idx)}`}
-                                            subId={item.id}
-                                            placeholder="URL ảnh hoặc chọn tải lên..."
+                        {images.map((item, idx) => {
+                            const letter = String.fromCharCode(65 + idx);
+                            return (
+                                <div key={item.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs space-y-2.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-mono text-xs font-bold border border-teal-200">
+                                            {letter}
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={item.label || ''}
+                                            onChange={(e) => handleImageChange(idx, { label: e.target.value })}
+                                            placeholder={`Hình ${letter}`}
+                                            className="w-24 sm:w-28 shrink-0 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-900 focus:border-teal-500 focus:outline-hidden"
                                         />
+                                        <div className="flex-1 min-w-0">
+                                            <MediaUploader
+                                                compact={true}
+                                                value={item.image_url}
+                                                onChange={(url) => handleImageChange(idx, { image_url: url })}
+                                                objectType="matching"
+                                                objectId={`img_${letter}`}
+                                                subId={item.id}
+                                                placeholder="URL ảnh hoặc chọn tải lên..."
+                                            />
+                                        </div>
+                                        {images.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(idx)}
+                                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
+                                                title="Xóa hình này"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        )}
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveImage(idx)}
-                                        disabled={images.length <= 1}
-                                        className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-20"
-                                        title="Xóa hình này"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
-                                </div>
 
-                                {item.image_url && (
-                                    <div className="h-20 w-full rounded-lg bg-slate-50 border border-gray-100 flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src={item.image_url}
-                                            alt={item.label || 'Preview'}
-                                            className="max-h-20 max-w-full object-contain"
-                                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                    {item.image_url && (
+                                        <div className="h-28 w-full rounded-lg bg-slate-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+                                            <img
+                                                src={item.image_url}
+                                                alt={item.label || `Hình ${letter}`}
+                                                className="max-h-28 max-w-full object-contain"
+                                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

@@ -16,8 +16,9 @@ interface MatchingOptions {
 interface Props {
     options: MatchingOptions;
     correctAnswer: Record<string, string>;
-    onChangeOptions: (options: MatchingOptions) => void;
-    onChangeCorrectAnswer: (answer: Record<string, string>) => void;
+    onChangeOptions?: (options: MatchingOptions) => void;
+    onChangeCorrectAnswer?: (answer: Record<string, string>) => void;
+    onChangeQuestion?: (fields: { options?: MatchingOptions; correct_answer?: Record<string, string> }) => void;
 }
 
 export default function MatchingEditor({
@@ -25,6 +26,7 @@ export default function MatchingEditor({
     correctAnswer = {},
     onChangeOptions,
     onChangeCorrectAnswer,
+    onChangeQuestion,
 }: Props) {
     const leftItems: Item[] = options?.left_items && options.left_items.length > 0
         ? options.left_items.map((item: any, idx: number) => ({
@@ -33,9 +35,9 @@ export default function MatchingEditor({
             text: String(item?.text ?? item?.label ?? ''),
         }))
         : [
-            { id: 'L1', label: 'Vế 1 (Cột Trái)' },
-            { id: 'L2', label: 'Vế 2 (Cột Trái)' },
-            { id: 'L3', label: 'Vế 3 (Cột Trái)' },
+            { id: 'L1', label: 'Vế 1 (Cột Trái)', text: 'Vế 1 (Cột Trái)' },
+            { id: 'L2', label: 'Vế 2 (Cột Trái)', text: 'Vế 2 (Cột Trái)' },
+            { id: 'L3', label: 'Vế 3 (Cột Trái)', text: 'Vế 3 (Cột Trái)' },
         ];
 
     const rightItems: Item[] = options?.right_items && options.right_items.length > 0
@@ -45,67 +47,86 @@ export default function MatchingEditor({
             label: String(item?.label ?? item?.text ?? ''),
         }))
         : [
-            { id: 'R1', text: 'Ý nghĩa / Tiêu đề i (Cột Phải)' },
-            { id: 'R2', text: 'Ý nghĩa / Tiêu đề ii (Cột Phải)' },
-            { id: 'R3', text: 'Ý nghĩa / Tiêu đề iii (Cột Phải)' },
-            { id: 'R4', text: 'Ý nghĩa / Tiêu đề iv (Cột Phải - tùy chọn thừa)' },
+            { id: 'R1', text: 'Ý nghĩa / Tiêu đề i (Cột Phải)', label: 'Ý nghĩa / Tiêu đề i (Cột Phải)' },
+            { id: 'R2', text: 'Ý nghĩa / Tiêu đề ii (Cột Phải)', label: 'Ý nghĩa / Tiêu đề ii (Cột Phải)' },
+            { id: 'R3', text: 'Ý nghĩa / Tiêu đề iii (Cột Phải)', label: 'Ý nghĩa / Tiêu đề iii (Cột Phải)' },
+            { id: 'R4', text: 'Ý nghĩa / Tiêu đề iv (Cột Phải - tùy chọn thừa)', label: 'Ý nghĩa / Tiêu đề iv (Cột Phải - tùy chọn thừa)' },
         ];
 
+    const updateAll = (newOptions: MatchingOptions, newAns: Record<string, string>) => {
+        if (onChangeQuestion) {
+            onChangeQuestion({ options: newOptions, correct_answer: newAns });
+        } else {
+            onChangeOptions?.(newOptions);
+            onChangeCorrectAnswer?.(newAns);
+        }
+    };
+
     const handleAddLeft = () => {
-        const nextId = `L${leftItems.length + 1}`;
-        const updated = [...leftItems, { id: nextId, label: '' }];
-        onChangeOptions({ ...options, left_items: updated, right_items: rightItems });
+        const numbers = leftItems.map((i) => {
+            const m = String(i.id).match(/^L(\d+)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+        });
+        const maxNum = numbers.length > 0 ? Math.max(...numbers, 0) : 0;
+        const nextId = `L${maxNum + 1}`;
+        const updated = [...leftItems, { id: nextId, label: '', text: '' }];
+        updateAll({ ...options, left_items: updated, right_items: rightItems }, correctAnswer);
     };
 
     const handleRemoveLeft = (index: number) => {
         if (leftItems.length <= 1) return;
         const removed = leftItems[index];
         const updated = leftItems.filter((_, i) => i !== index);
-        onChangeOptions({ ...options, left_items: updated, right_items: rightItems });
-
         const newAns = { ...correctAnswer };
         delete newAns[removed.id];
-        onChangeCorrectAnswer(newAns);
+        updateAll({ ...options, left_items: updated, right_items: rightItems }, newAns);
     };
 
     const handleLeftTextChange = (index: number, text: string) => {
         const updated = [...leftItems];
-        updated[index] = { ...updated[index], label: text };
-        onChangeOptions({ ...options, left_items: updated, right_items: rightItems });
+        updated[index] = { ...updated[index], label: text, text };
+        updateAll({ ...options, left_items: updated, right_items: rightItems }, correctAnswer);
     };
 
     const handleAddRight = () => {
-        const nextId = `R${rightItems.length + 1}`;
-        const updated = [...rightItems, { id: nextId, text: '' }];
-        onChangeOptions({ ...options, left_items: leftItems, right_items: updated });
+        const numbers = rightItems.map((i) => {
+            const m = String(i.id).match(/^R(\d+)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+        });
+        const maxNum = numbers.length > 0 ? Math.max(...numbers, 0) : 0;
+        const nextId = `R${maxNum + 1}`;
+        const updated = [...rightItems, { id: nextId, text: '', label: '' }];
+        updateAll({ ...options, left_items: leftItems, right_items: updated }, correctAnswer);
     };
 
     const handleRemoveRight = (index: number) => {
         if (rightItems.length <= 1) return;
         const removed = rightItems[index];
         const updated = rightItems.filter((_, i) => i !== index);
-        onChangeOptions({ ...options, left_items: leftItems, right_items: updated });
-
         const newAns = { ...correctAnswer };
         Object.keys(newAns).forEach((k) => {
             if (newAns[k] === removed.id) {
                 delete newAns[k];
             }
         });
-        onChangeCorrectAnswer(newAns);
+        updateAll({ ...options, left_items: leftItems, right_items: updated }, newAns);
     };
 
     const handleRightTextChange = (index: number, text: string) => {
         const updated = [...rightItems];
-        updated[index] = { ...updated[index], text };
-        onChangeOptions({ ...options, left_items: leftItems, right_items: updated });
+        updated[index] = { ...updated[index], text, label: text };
+        updateAll({ ...options, left_items: leftItems, right_items: updated }, correctAnswer);
     };
 
     const handlePairChange = (leftId: string, rightId: string) => {
-        onChangeCorrectAnswer({
+        const newAns = {
             ...correctAnswer,
             [leftId]: rightId,
-        });
+        };
+        if (!rightId) {
+            delete newAns[leftId];
+        }
+        updateAll({ ...options, left_items: leftItems, right_items: rightItems }, newAns);
     };
 
     return (

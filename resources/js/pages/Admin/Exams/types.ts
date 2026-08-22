@@ -219,6 +219,7 @@ export interface ExamQuestionData {
     id?: number;
     section_id?: number;
     code?: string;
+    title?: string | null;
     skill?: ExamSkill;
     question_type: QuestionType;
     content: string;

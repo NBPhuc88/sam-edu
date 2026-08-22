@@ -99,7 +99,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     if (compact) {
         return (
-            <div className={`flex items-center gap-2 ${className}`}>
+            <div className={`flex items-center gap-1.5 min-w-0 ${className}`}>
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -107,36 +107,55 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                     accept={accept}
                     className="hidden"
                 />
-                <input
-                    type="text"
-                    value={value || ''}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                />
-                <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    title="Tải file từ máy tính"
-                >
-                    {uploading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
-                    ) : (
-                        <Upload className="h-3.5 w-3.5 text-gray-600" />
-                    )}
-                    <span>{uploading ? `${progress}%` : 'Tải lên'}</span>
-                </button>
-                {value && (
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        className="p-1 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100"
-                        title="Xóa ảnh"
-                    >
-                        <X className="h-3.5 w-3.5" />
-                    </button>
+
+                {value ? (
+                    <div className="flex-1 flex items-center justify-between gap-2 rounded-lg border border-teal-200 bg-teal-50/50 px-2.5 py-1 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <img
+                                src={value}
+                                alt="Preview"
+                                className="h-6 w-6 rounded object-cover border border-teal-200 bg-white shrink-0"
+                                onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                }}
+                            />
+                            <span className="text-2xs font-mono text-teal-900 truncate" title={value}>
+                                {value}
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleClear}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center text-teal-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                            title="Xóa ảnh này"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <input
+                            type="text"
+                            value=""
+                            onChange={(e) => onChange(e.target.value)}
+                            placeholder={placeholder}
+                            className="flex-1 min-w-0 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 focus:border-teal-500 focus:outline-hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
+                            title="Tải file từ máy tính"
+                        >
+                            {uploading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-600" />
+                            ) : (
+                                <Upload className="h-3.5 w-3.5 text-gray-600" />
+                            )}
+                            <span>{uploading ? `${progress}%` : 'Tải lên'}</span>
+                        </button>
+                    </>
                 )}
             </div>
         );
@@ -144,50 +163,53 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     return (
         <div className={`rounded-xl border border-gray-200 bg-white p-3.5 space-y-3 ${className}`}>
-            {/* Header with Mode Switch */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept={accept}
+                className="hidden"
+            />
+
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700">
                     <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
                     <span>{label}</span>
                 </label>
-                <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 text-2xs font-semibold">
-                    <button
-                        type="button"
-                        onClick={() => setMode('upload')}
-                        className={`px-2 py-1 rounded-md transition-all ${
-                            mode === 'upload'
-                                ? 'bg-white text-emerald-700 font-bold shadow-xs'
-                                : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                    >
-                        Tải file lên
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setMode('url')}
-                        className={`px-2 py-1 rounded-md transition-all ${
-                            mode === 'url'
-                                ? 'bg-white text-emerald-700 font-bold shadow-xs'
-                                : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                    >
-                        Nhập link URL
-                    </button>
-                </div>
+
+                {!value && (
+                    <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 text-2xs font-semibold">
+                        <button
+                            type="button"
+                            onClick={() => setMode('upload')}
+                            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                mode === 'upload'
+                                    ? 'bg-white text-emerald-700 font-bold shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                        >
+                            Tải file lên
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMode('url')}
+                            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                                mode === 'url'
+                                    ? 'bg-white text-emerald-700 font-bold shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                        >
+                            Nhập link URL
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {/* Upload Area */}
-            {mode === 'upload' ? (
-                <div>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept={accept}
-                        className="hidden"
-                    />
-
-                    {!value ? (
+            {/* When NO image attached: Show Upload Dropzone or URL Input */}
+            {!value && (
+                <>
+                    {mode === 'upload' ? (
                         <div
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={handleDrop}
@@ -215,30 +237,19 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 </div>
                             )}
                         </div>
-                    ) : null}
-                </div>
-            ) : (
-                <div>
-                    <div className="relative flex items-center">
-                        <LinkIcon className="absolute left-3 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            value={value || ''}
-                            onChange={(e) => onChange(e.target.value)}
-                            placeholder={placeholder}
-                            className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-8 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                        />
-                        {value && (
-                            <button
-                                type="button"
-                                onClick={handleClear}
-                                className="absolute right-2.5 text-gray-400 hover:text-gray-600"
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </button>
-                        )}
-                    </div>
-                </div>
+                    ) : (
+                        <div className="relative flex items-center">
+                            <LinkIcon className="absolute left-3 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                value=""
+                                onChange={(e) => onChange(e.target.value)}
+                                placeholder={placeholder}
+                                className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                            />
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Error message */}
@@ -246,14 +257,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <p className="text-2xs font-semibold text-red-600">{errorMsg}</p>
             )}
 
-            {/* Preview Box */}
+            {/* Preview Box with Single Delete Icon */}
             {value && (
-                <div className="relative rounded-xl border border-gray-200 bg-slate-50 p-2.5 flex items-center justify-between">
+                <div className="relative rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                         <img
                             src={value}
                             alt="Preview"
-                            className="h-14 w-14 rounded-lg object-cover border border-gray-200 bg-white"
+                            className="h-14 w-14 rounded-lg object-cover border border-emerald-200 bg-white shrink-0"
                             onError={(e) => {
                                 (e.target as HTMLElement).style.display = 'none';
                             }}
@@ -262,10 +273,10 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             <div className="flex items-center gap-1.5">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                                 <span className="text-xs font-bold text-gray-800 truncate">
-                                    Đã gắn ảnh
+                                    Đã đính kèm ảnh
                                 </span>
                             </div>
-                            <span className="text-2xs text-gray-500 truncate block max-w-xs font-mono">
+                            <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={value}>
                                 {value}
                             </span>
                         </div>
@@ -275,14 +286,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 px-2 py-1 rounded bg-white border border-gray-200 hover:bg-gray-50"
+                            className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 px-2.5 py-1 rounded-lg bg-white border border-emerald-200 hover:bg-emerald-50 cursor-pointer transition-colors"
                         >
                             Đổi ảnh
                         </button>
                         <button
                             type="button"
                             onClick={handleClear}
-                            className="text-2xs font-semibold text-red-600 hover:text-red-800 px-2 py-1 rounded bg-white border border-gray-200 hover:bg-red-50"
+                            className="text-2xs font-semibold text-red-600 hover:text-red-800 px-2.5 py-1 rounded-lg bg-white border border-red-200 hover:bg-red-50 cursor-pointer transition-colors"
                         >
                             Xóa
                         </button>

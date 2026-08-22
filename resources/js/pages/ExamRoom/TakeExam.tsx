@@ -1,27 +1,20 @@
 import { Head, router } from '@inertiajs/react';
 import {
     Clock,
-    Award,
     FileCheck,
     Send,
-    AlertCircle,
-    CheckCircle2,
-    BookOpen,
-    Headphones,
-    PenTool,
-    Mic,
-    HelpCircle,
-    ArrowRight,
-    ArrowUpDown,
-    Check,
     Volume2,
-    Image as ImageIcon,
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AudioRecorder from './components/AudioRecorder';
+import SortableOrderingList from './components/SortableOrderingList';
+import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
+import MatchingAnswerForm from './components/MatchingAnswerForm';
+import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
+import FindMistakeQuestion from './components/FindMistakeQuestion';
 import { parseDate } from '@/lib/date';
 import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData, QuestionType, Student } from './types';
 
@@ -277,17 +270,24 @@ export default function TakeExam({
                                                 </span>
                                             </div>
 
-                                            {/* Question Content */}
-                                            <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
-                                                {q.question_type === 'fill_in_blank' ? (
-                                                    <RenderFillInBlankQuestion
-                                                        content={q.content}
-                                                        userAnswers={currentVal || {}}
-                                                        onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
-                                                    />
-                                                ) : (
-                                                    q.content
+                                            {/* Question Title & Content */}
+                                            <div className="space-y-2">
+                                                {q.title && (
+                                                    <h3 className="text-base font-bold text-gray-900 leading-snug">
+                                                        {q.title}
+                                                    </h3>
                                                 )}
+                                                <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                                    {q.question_type === 'fill_in_blank' ? (
+                                                        <RenderFillInBlankQuestion
+                                                            content={q.content}
+                                                            userAnswers={currentVal || {}}
+                                                            onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
+                                                        />
+                                                    ) : (
+                                                        q.content
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Audio / Image Attachment */}
@@ -411,7 +411,7 @@ export default function TakeExam({
 
                                                 {/* 4. Matching */}
                                                 {(q.question_type === 'matching' || q.question_type === 'matching_sentences') && (
-                                                    <RenderMatchingAnswerForm
+                                                    <MatchingAnswerForm
                                                         options={q.options}
                                                         userAnswers={currentVal || {}}
                                                         onChange={(newMap) => handleAnswerChange(q.id!, newMap)}
@@ -420,7 +420,7 @@ export default function TakeExam({
 
                                                 {/* 5. Matching Image */}
                                                 {q.question_type === 'matching_image' && (
-                                                    <RenderMatchingImageAnswerForm
+                                                    <MatchingImageAnswerForm
                                                         options={q.options}
                                                         userAnswers={currentVal || {}}
                                                         onChange={(newMap) => handleAnswerChange(q.id!, newMap)}
@@ -429,28 +429,34 @@ export default function TakeExam({
 
                                                 {/* 6. Find Mistake */}
                                                 {q.question_type === 'find_mistake' && (
-                                                    <div className="space-y-3">
-                                                        <p className="text-2xs text-gray-500 font-semibold">Chọn phần gạch chân chứa lỗi sai:</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {['A', 'B', 'C', 'D'].map((char) => (
-                                                                <button
-                                                                    key={char}
-                                                                    type="button"
-                                                                    onClick={() => handleAnswerChange(q.id!, char)}
-                                                                    className={`h-10 w-10 rounded-xl border text-xs font-bold transition-all ${
-                                                                        currentVal === char
-                                                                            ? 'border-rose-600 bg-rose-600 text-white shadow-xs'
-                                                                            : 'border-gray-200 bg-white text-gray-800 hover:bg-slate-50'
-                                                                    }`}
-                                                                >
-                                                                    {char}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
+                                                    <FindMistakeQuestion
+                                                        content={q.content}
+                                                        options={q.options}
+                                                        value={String(currentVal || '')}
+                                                        onChange={(ans) => handleAnswerChange(q.id!, ans)}
+                                                    />
                                                 )}
 
-                                                {/* 7. Essay Writing */}
+                                                {/* 7. Ordering (Drag and Drop) */}
+                                                {q.question_type === 'ordering' && (
+                                                    <SortableOrderingList
+                                                        options={q.options}
+                                                        value={Array.isArray(currentVal) ? currentVal : []}
+                                                        onChange={(sortedIds) => handleAnswerChange(q.id!, sortedIds)}
+                                                    />
+                                                )}
+
+                                                {/* 8. Diagram Labelling */}
+                                                {q.question_type === 'diagram_labelling' && (
+                                                    <DiagramLabellingQuestion
+                                                        imageUrl={q.image_url}
+                                                        options={q.options}
+                                                        value={currentVal || {}}
+                                                        onChange={(newMap) => handleAnswerChange(q.id!, newMap)}
+                                                    />
+                                                )}
+
+                                                {/* 9. Essay Writing */}
                                                 {q.question_type === 'essay' && (
                                                     <div className="space-y-2">
                                                         <textarea
@@ -466,7 +472,7 @@ export default function TakeExam({
                                                     </div>
                                                 )}
 
-                                                {/* 8. Speaking Audio Recording */}
+                                                {/* 10. Speaking Audio Recording */}
                                                 {q.question_type === 'audio_record' && (
                                                     <AudioRecorder
                                                         classExamId={classExam.id}
@@ -613,109 +619,5 @@ function RenderFillInBlankQuestion({ content, userAnswers, onChange }: { content
                 return <span key={pIdx}>{part}</span>;
             })}
         </span>
-    );
-}
-
-// ─── Sub-component: Matching Answer Form ───
-function RenderMatchingAnswerForm({ options, userAnswers, onChange }: { options: any; userAnswers: Record<string, string>; onChange: (ans: Record<string, string>) => void }) {
-    const leftItems: any[] = options?.left_items || [];
-    const rightItems: any[] = options?.right_items || [];
-
-    const handlePairChange = (lId: string, rId: string) => {
-        onChange({
-            ...userAnswers,
-            [lId]: rId,
-        });
-    };
-
-    return (
-        <div className="space-y-3 rounded-xl bg-slate-50 p-3.5 border border-slate-200">
-            <p className="text-2xs font-bold uppercase tracking-wider text-gray-600">Ghép nối các cặp tương ứng:</p>
-            <div className="space-y-2">
-                {leftItems.map((lItem, idx) => {
-                    const selectedRight = userAnswers[lItem.id] || '';
-                    return (
-                        <div key={lItem.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white p-2.5 rounded-lg border border-gray-200 text-xs">
-                            <span className="font-semibold text-gray-800 flex-1">
-                                {idx + 1}. {lItem.label || lItem.text}
-                            </span>
-                            <div className="flex items-center gap-2 w-full sm:w-1/2">
-                                <ArrowRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                <select
-                                    value={selectedRight}
-                                    onChange={(e) => handlePairChange(lItem.id, e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-900 focus:outline-hidden"
-                                >
-                                    <option value="">-- Chọn vế ghép --</option>
-                                    {rightItems.map((rItem) => (
-                                        <option key={rItem.id} value={rItem.id}>
-                                            {rItem.text}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-// ─── Sub-component: Matching Image Answer Form ───
-function RenderMatchingImageAnswerForm({ options, userAnswers, onChange }: { options: any; userAnswers: Record<string, string>; onChange: (ans: Record<string, string>) => void }) {
-    const sentences: any[] = options?.sentences || [];
-    const images: any[] = options?.images || [];
-
-    const handlePairChange = (sId: string, imgId: string) => {
-        onChange({
-            ...userAnswers,
-            [sId]: imgId,
-        });
-    };
-
-    return (
-        <div className="space-y-4 rounded-xl bg-slate-50 p-4 border border-slate-200">
-            {/* Images Preview Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {images.map((img, idx) => (
-                    <div key={img.id} className="bg-white p-2 rounded-xl border border-gray-200 text-center space-y-1">
-                        <span className="font-mono text-xs font-bold text-teal-700">{img.label || `Hình ${String.fromCharCode(65 + idx)}`}</span>
-                        {img.image_url && (
-                            <img src={img.image_url} alt={img.label} className="h-24 w-full object-contain rounded-lg bg-slate-50" />
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            {/* Pairing */}
-            <div className="space-y-2">
-                {sentences.map((sent, idx) => {
-                    const selectedImg = userAnswers[sent.id] || '';
-                    return (
-                        <div key={sent.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white p-2.5 rounded-lg border border-gray-200 text-xs">
-                            <span className="font-semibold text-gray-800 flex-1">
-                                Câu {idx + 1}: {sent.text}
-                            </span>
-                            <div className="flex items-center gap-2 w-full sm:w-48">
-                                <ArrowRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                <select
-                                    value={selectedImg}
-                                    onChange={(e) => handlePairChange(sent.id, e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-900 focus:outline-hidden"
-                                >
-                                    <option value="">-- Chọn hình --</option>
-                                    {images.map((img, imgIdx) => (
-                                        <option key={img.id} value={img.id}>
-                                            {img.label || `Hình ${String.fromCharCode(65 + imgIdx)}`}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
     );
 }

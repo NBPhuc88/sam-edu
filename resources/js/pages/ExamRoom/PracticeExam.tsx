@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import {
     AlertCircle,
@@ -6,7 +6,6 @@ import {
     Award,
     CheckCircle2,
     Clock,
-    Eye,
     Flag,
     HelpCircle,
     Home,
@@ -18,16 +17,22 @@ import {
     Volume2,
     XCircle,
 } from 'lucide-react';
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import { ExamSkill, QuestionType } from '../Admin/Exams/types';
+import SortableOrderingList from './components/SortableOrderingList';
+import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
+import MatchingAnswerForm from './components/MatchingAnswerForm';
+import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
+import FindMistakeQuestion from './components/FindMistakeQuestion';
 
 interface QuestionItem {
     id: number;
     section_id: number;
     code?: string;
+    title?: string | null;
     question_type: QuestionType;
     skill?: ExamSkill;
     content: string;
@@ -73,6 +78,7 @@ interface GradedQuestion {
     id: number;
     section_id: number;
     code?: string;
+    title?: string | null;
     question_type: QuestionType;
     skill?: ExamSkill;
     content: string;
@@ -294,11 +300,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             return (
                                 <label
                                     key={optId || idx}
-                                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                                        isSelected
-                                            ? 'border-emerald-500 bg-emerald-50/70 text-emerald-950 font-semibold shadow-2xs'
-                                            : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
-                                    }`}
+                                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${isSelected
+                                        ? 'border-emerald-500 bg-emerald-50/70 text-emerald-950 font-semibold shadow-2xs'
+                                        : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
+                                        }`}
                                 >
                                     <input
                                         type="radio"
@@ -341,11 +346,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             return (
                                 <label
                                     key={optId || idx}
-                                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                                        isChecked
-                                            ? 'border-indigo-500 bg-indigo-50/70 text-indigo-950 font-semibold shadow-2xs'
-                                            : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
-                                    }`}
+                                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${isChecked
+                                        ? 'border-indigo-500 bg-indigo-50/70 text-indigo-950 font-semibold shadow-2xs'
+                                        : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
+                                        }`}
                                 >
                                     <input
                                         type="checkbox"
@@ -366,9 +370,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
             case 'true_false_not_given': {
                 const tfOptions = [
-                    { id: 'TRUE', label: 'TRUE (Đúng)' },
-                    { id: 'FALSE', label: 'FALSE (Sai)' },
-                    { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
+                    { id: 'TRUE', label: 'TRUE' },
+                    { id: 'FALSE', label: 'FALSE' },
+                    { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
                 ];
 
                 return (
@@ -378,11 +382,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             return (
                                 <label
                                     key={opt.id}
-                                    className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl border cursor-pointer text-center transition-all ${
-                                        isSelected
-                                            ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold shadow-2xs'
-                                            : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
-                                    }`}
+                                    className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl border cursor-pointer text-center transition-all ${isSelected
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold shadow-2xs'
+                                        : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
+                                        }`}
                                 >
                                     <input
                                         type="radio"
@@ -471,52 +474,98 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
             }
 
             case 'find_mistake': {
-                const segs = q.options?.sentence_segments || [];
-                const underlined = segs.filter((s: any) => s.underlined);
-
                 return (
-                    <div className="space-y-3">
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 leading-relaxed text-sm font-medium">
-                            {segs.map((seg: any, idx: number) => {
-                                if (seg.underlined) {
-                                    const isChosen = currentVal === seg.id;
-                                    return (
-                                        <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => handleAnswerChange(q.id, seg.id)}
-                                            className={`inline-flex flex-col items-center mx-1 px-2 py-0.5 rounded border transition-all ${
-                                                isChosen
-                                                    ? 'border-rose-600 bg-rose-100 text-rose-950 font-bold shadow-2xs'
-                                                    : 'border-gray-300 bg-white text-gray-900 underline underline-offset-4 decoration-rose-500 decoration-2 hover:bg-rose-50/50'
-                                            }`}
-                                        >
-                                            <span>{seg.text}</span>
-                                            <span className="text-2xs font-mono font-bold text-rose-600">({seg.id})</span>
-                                        </button>
-                                    );
-                                }
-                                return <span key={idx}>{seg.text}</span>;
-                            })}
-                        </div>
+                    <FindMistakeQuestion
+                        content={q.content}
+                        options={q.options}
+                        value={String(currentVal || '')}
+                        onChange={(ans) => handleAnswerChange(q.id, ans)}
+                    />
+                );
+            }
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-bold text-gray-700">Chọn đáp án sai:</span>
-                            {underlined.map((s: any) => (
-                                <button
-                                    key={s.id}
-                                    type="button"
-                                    onClick={() => handleAnswerChange(q.id, s.id)}
-                                    className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                                        currentVal === s.id
-                                            ? 'border-rose-600 bg-rose-600 text-white'
-                                            : 'border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    ({s.id}) {s.text}
-                                </button>
-                            ))}
+            case 'matching':
+            case 'matching_sentences': {
+                return (
+                    <MatchingAnswerForm
+                        options={q.options}
+                        userAnswers={currentVal || {}}
+                        onChange={(newMap) => handleAnswerChange(q.id, newMap)}
+                    />
+                );
+            }
+
+            case 'matching_image': {
+                return (
+                    <MatchingImageAnswerForm
+                        options={q.options}
+                        userAnswers={currentVal || {}}
+                        onChange={(newMap) => handleAnswerChange(q.id, newMap)}
+                    />
+                );
+            }
+
+            case 'ordering': {
+                return (
+                    <SortableOrderingList
+                        options={q.options}
+                        value={Array.isArray(currentVal) ? currentVal : []}
+                        onChange={(sortedIds) => handleAnswerChange(q.id, sortedIds)}
+                    />
+                );
+            }
+
+            case 'diagram_labelling': {
+                return (
+                    <DiagramLabellingQuestion
+                        imageUrl={q.image_url}
+                        options={q.options}
+                        value={currentVal || {}}
+                        onChange={(newMap) => handleAnswerChange(q.id, newMap)}
+                    />
+                );
+            }
+
+            case 'essay': {
+                const textVal = String(currentVal || '');
+                const wordCount = textVal.trim().split(/\s+/).filter(Boolean).length;
+                return (
+                    <div className="space-y-3 rounded-2xl bg-slate-50 p-4 border border-slate-200">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold uppercase tracking-wider text-gray-700">
+                                Viết bài luận / bài văn tự luận:
+                            </label>
+                            <span className="text-2xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">
+                                Số từ đã viết: <strong className="text-emerald-700">{wordCount}</strong> từ
+                            </span>
                         </div>
+                        <textarea
+                            rows={8}
+                            value={textVal}
+                            onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                            placeholder="Nhập nội dung bài văn tự luận của bạn tại đây..."
+                            className="w-full rounded-xl border border-gray-300 bg-white p-3.5 text-sm text-gray-900 leading-relaxed focus:border-emerald-500 focus:outline-hidden shadow-2xs"
+                        />
+                    </div>
+                );
+            }
+
+            case 'audio_record': {
+                return (
+                    <div className="space-y-3 rounded-2xl bg-pink-50/60 p-4 border border-pink-200">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-pink-900">
+                            <span>🎙️ Phần thi Nói / Ghi âm phát âm (Speaking)</span>
+                        </div>
+                        <p className="text-xs text-pink-800 leading-relaxed">
+                            Đối với chế độ thi thử (Practice Exam), bạn có thể tự luyện nói theo chủ đề trên. Khi làm bài thi chính thức trong lớp, hệ thống sẽ mở tính năng ghi âm trực tiếp qua Micro.
+                        </p>
+                        <textarea
+                            rows={3}
+                            value={currentVal || ''}
+                            onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                            placeholder="Ghi chú dàn ý câu trả lời Speaking của bạn (tùy chọn)..."
+                            className="w-full rounded-xl border border-pink-300 bg-white p-3 text-xs text-gray-900 focus:border-pink-500 focus:outline-hidden"
+                        />
                     </div>
                 );
             }
@@ -645,36 +694,32 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             <button
                                 type="button"
                                 onClick={() => setReviewFilter('all')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                    reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-100'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-100'
+                                    }`}
                             >
                                 Tất cả ({result.summary.total_questions})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setReviewFilter('correct')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                    reviewFilter === 'correct' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'correct' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'
+                                    }`}
                             >
                                 Đúng ({result.summary.correct_count})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setReviewFilter('incorrect')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                    reviewFilter === 'incorrect' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'incorrect' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'
+                                    }`}
                             >
                                 Sai ({result.summary.incorrect_count})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setReviewFilter('skipped')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                    reviewFilter === 'skipped' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'skipped' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'
+                                    }`}
                             >
                                 Chưa làm ({result.summary.skipped_count})
                             </button>
@@ -690,22 +735,20 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             return (
                                 <Card
                                     key={gq.id}
-                                    className={`p-5 sm:p-6 border transition-all ${
-                                        isCorrect
-                                            ? 'border-emerald-200 bg-white'
-                                            : isSkipped
+                                    className={`p-5 sm:p-6 border transition-all ${isCorrect
+                                        ? 'border-emerald-200 bg-white'
+                                        : isSkipped
                                             ? 'border-amber-200 bg-white'
                                             : 'border-rose-200 bg-white'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="space-y-4">
                                         {/* Header */}
                                         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                                             <div className="flex items-center gap-2.5">
                                                 <span
-                                                    className={`flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-extrabold text-white ${
-                                                        isCorrect ? 'bg-emerald-600' : isSkipped ? 'bg-amber-500' : 'bg-rose-600'
-                                                    }`}
+                                                    className={`flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-extrabold text-white ${isCorrect ? 'bg-emerald-600' : isSkipped ? 'bg-amber-500' : 'bg-rose-600'
+                                                        }`}
                                                 >
                                                     {idx + 1}
                                                 </span>
@@ -716,13 +759,12 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
                                             <div className="flex items-center gap-2">
                                                 <span
-                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                                                        isCorrect
-                                                            ? 'bg-emerald-100 text-emerald-800'
-                                                            : isSkipped
+                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${isCorrect
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : isSkipped
                                                             ? 'bg-amber-100 text-amber-800'
                                                             : 'bg-rose-100 text-rose-800'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {isCorrect ? 'Chính xác' : isSkipped ? 'Chưa trả lời' : 'Chưa đúng'}
                                                 </span>
@@ -733,11 +775,18 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                             </div>
                                         </div>
 
-                                        {/* Content */}
-                                        <div className="text-sm font-medium text-gray-900 whitespace-pre-wrap">
-                                            {gq.question_type === 'fill_in_blank'
-                                                ? renderFillInBlankContent(gq.content)
-                                                : gq.content}
+                                        {/* Title & Content */}
+                                        <div className="space-y-1.5">
+                                            {gq.title && (
+                                                <h4 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
+                                                    {gq.title}
+                                                </h4>
+                                            )}
+                                            <div className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                                {gq.question_type === 'fill_in_blank'
+                                                    ? renderFillInBlankContent(gq.content)
+                                                    : gq.content}
+                                            </div>
                                         </div>
 
                                         {/* Audio Track */}
@@ -825,11 +874,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                     {/* Center: Timer */}
                     <div className="flex items-center gap-2">
                         <div
-                            className={`flex items-center gap-2 rounded-xl px-4 py-2 font-mono text-base sm:text-lg font-extrabold transition-all border ${
-                                timeLeft <= 300
-                                    ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse'
-                                    : 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                            }`}
+                            className={`flex items-center gap-2 rounded-xl px-4 py-2 font-mono text-base sm:text-lg font-extrabold transition-all border ${timeLeft <= 300
+                                ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse'
+                                : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                }`}
                         >
                             <Clock className="h-5 w-5 shrink-0" />
                             <span>{formatTime(timeLeft)}</span>
@@ -898,11 +946,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                 setActiveQuestionId(sec.questions[0].id);
                                             }
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                                            isActive
-                                                ? 'bg-emerald-600 text-white shadow-2xs'
-                                                : 'text-gray-700 hover:bg-slate-100'
-                                        }`}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold shrink-0 transition-all ${isActive
+                                            ? 'bg-emerald-600 text-white shadow-2xs'
+                                            : 'text-gray-700 hover:bg-slate-100'
+                                            }`}
                                     >
                                         <Layers className="h-4 w-4" />
                                         <span>{sec.title}</span>
@@ -937,11 +984,10 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => toggleFlag(currentQuestion.id)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                                        flaggedQuestions.includes(currentQuestion.id)
-                                            ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-2xs'
-                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-slate-50'
-                                    }`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${flaggedQuestions.includes(currentQuestion.id)
+                                        ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-2xs'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-slate-50'
+                                        }`}
                                 >
                                     <Flag className={`h-4 w-4 ${flaggedQuestions.includes(currentQuestion.id) ? 'fill-current text-amber-500' : ''}`} />
                                     <span>{flaggedQuestions.includes(currentQuestion.id) ? 'Đã đánh dấu cờ' : 'Đánh dấu xem lại'}</span>
@@ -970,11 +1016,18 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 </div>
                             )}
 
-                            {/* Question Content */}
-                            <div className="text-base font-semibold text-gray-900 leading-relaxed whitespace-pre-wrap">
-                                {currentQuestion.question_type === 'fill_in_blank'
-                                    ? renderFillInBlankContent(currentQuestion.content)
-                                    : currentQuestion.content}
+                            {/* Question Title & Content */}
+                            <div className="space-y-2">
+                                {currentQuestion.title && (
+                                    <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug">
+                                        {currentQuestion.title}
+                                    </h3>
+                                )}
+                                <div className="text-sm sm:text-base font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {currentQuestion.question_type === 'fill_in_blank'
+                                        ? renderFillInBlankContent(currentQuestion.content)
+                                        : currentQuestion.content}
+                                </div>
                             </div>
 
                             {/* Interactive Input Form */}
@@ -1068,15 +1121,13 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                         setActiveSectionIdx(sIdx);
                                                         setActiveQuestionId(q.id);
                                                     }}
-                                                    className={`relative flex h-9 w-full items-center justify-center rounded-xl font-mono text-xs font-bold transition-all ${
-                                                        isActive
-                                                            ? 'ring-2 ring-emerald-600 ring-offset-1 font-extrabold shadow-sm'
-                                                            : ''
-                                                    } ${
-                                                        isAnswered
+                                                    className={`relative flex h-9 w-full items-center justify-center rounded-xl font-mono text-xs font-bold transition-all ${isActive
+                                                        ? 'ring-2 ring-emerald-600 ring-offset-1 font-extrabold shadow-sm'
+                                                        : ''
+                                                        } ${isAnswered
                                                             ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                                             : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {globalIdx}
                                                     {isFlagged && (

@@ -572,7 +572,7 @@ export default function ExamEdit({
                             isLoading={isSubmitting}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            Cập Nhật Đề Thi Vào Kho ({sections.length} phần thi • {totalQuestionsCount} câu • {calculatedMaxScore} điểm)
+                            Cập Nhật Đề Thi
                         </Button>
                     </div>
                 </form>

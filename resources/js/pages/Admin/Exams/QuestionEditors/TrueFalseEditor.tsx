@@ -14,18 +14,18 @@ const VARIANTS = [
         id: 'T_F_NG',
         label: 'IELTS: TRUE / FALSE / NOT GIVEN',
         options: [
-            { id: 'TRUE', label: 'TRUE (Đúng với thông tin bài đọc)' },
-            { id: 'FALSE', label: 'FALSE (Ngược lại với thông tin bài đọc)' },
-            { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
+            { id: 'TRUE', label: 'TRUE' },
+            { id: 'FALSE', label: 'FALSE' },
+            { id: 'NOT_GIVEN', label: 'NOT' },
         ],
     },
     {
         id: 'Y_N_NG',
         label: 'IELTS: YES / NO / NOT GIVEN',
         options: [
-            { id: 'YES', label: 'YES (Phù hợp với quan điểm tác giả)' },
-            { id: 'NO', label: 'NO (Ngược lại với quan điểm tác giả)' },
-            { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không rõ quan điểm)' },
+            { id: 'YES', label: 'YES' },
+            { id: 'NO', label: 'NO' },
+            { id: 'NOT_GIVEN', label: 'NOT' },
         ],
     },
     {
@@ -92,17 +92,15 @@ export default function TrueFalseEditor({
                         return (
                             <label
                                 key={opt.id}
-                                className={`flex cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all ${
-                                    isSelected
+                                className={`flex cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all ${isSelected
                                         ? 'border-emerald-500 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-500'
                                         : 'border-gray-200 bg-white hover:border-gray-300'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <span
-                                        className={`font-mono text-sm font-extrabold ${
-                                            isSelected ? 'text-emerald-800' : 'text-gray-800'
-                                        }`}
+                                        className={`font-mono text-sm font-extrabold ${isSelected ? 'text-emerald-800' : 'text-gray-800'
+                                            }`}
                                     >
                                         {opt.id}
                                     </span>

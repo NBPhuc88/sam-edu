@@ -953,6 +953,7 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secReading->id,
             'code'          => 'Q01_SINGLE',
+            'title'         => 'Mục tiêu của chương trình chìm trong môi trường ngôn ngữ (Language Immersion)',
             'question_type' => 'single_choice',
             'skill'         => 'reading',
             'content'       => 'What is the primary objective of language immersion programs in modern education?',
@@ -972,6 +973,7 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secReading->id,
             'code'          => 'Q02_MULTI',
+            'title'         => 'Chiến lược tăng tốc độ đọc hiểu văn bản (Speed Reading Strategies)',
             'question_type' => 'multiple_choice',
             'skill'         => 'reading',
             'content'       => 'Which of the following strategies are proven to enhance reading speed without sacrificing comprehension? (Choose 2 answers)',
@@ -991,6 +993,7 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secReading->id,
             'code'          => 'Q03_TFNG',
+            'title'         => 'Phương pháp lặp lại ngắt quãng trong học tập (Spaced Repetition Method)',
             'question_type' => 'true_false_not_given',
             'skill'         => 'reading',
             'content'       => 'According to the research passage, consistent daily exposure of 30 minutes yields higher retention rates than cramming for 5 hours once a week.',
@@ -1009,6 +1012,7 @@ class TestCenterSeeder extends Seeder
             'exam_id'        => $exam->id,
             'section_id'     => $secReading->id,
             'code'           => 'Q04_BLANK',
+            'title'          => 'Hoàn thành đoạn văn về tiến độ dự án nghiên cứu (Research Team Completion)',
             'question_type'  => 'fill_in_blank',
             'skill'          => 'reading',
             'content'        => 'Despite facing unexpected obstacles, the research team [insisted] on completing their comprehensive survey before the final [deadline].',
@@ -1023,47 +1027,63 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secReading->id,
             'code'          => 'Q05_MISTAKE',
+            'title'         => 'Tìm và phát hiện lỗi sai ngữ pháp trong câu (Grammar Error Identification)',
             'question_type' => 'find_mistake',
             'skill'         => 'reading',
-            'content'       => 'She {does not}(A) know how {to explain}(B) the complex situation {clearly}(C) to {he}(D).',
+            'content'       => 'She does not know how to explain the complex situation clearly to he.',
             'score'         => 2.0,
             'options'       => [
-                ['key' => 'A', 'text' => 'does not'],
-                ['key' => 'B', 'text' => 'to explain'],
-                ['key' => 'C', 'text' => 'clearly'],
-                ['key' => 'D', 'text' => 'he'],
+                'sentence_segments' => [
+                    ['text' => 'She ', 'underlined' => false],
+                    ['text' => 'does not', 'underlined' => true, 'id' => 'A'],
+                    ['text' => ' know how ', 'underlined' => false],
+                    ['text' => 'to explain', 'underlined' => true, 'id' => 'B'],
+                    ['text' => ' the complex situation ', 'underlined' => false],
+                    ['text' => 'clearly', 'underlined' => true, 'id' => 'C'],
+                    ['text' => ' to ', 'underlined' => false],
+                    ['text' => 'he', 'underlined' => true, 'id' => 'D'],
+                    ['text' => '.', 'underlined' => false],
+                ],
             ],
             'correct_answer' => 'D',
             'explanation'    => 'Lỗi ở phương án D: Giới từ "to" phải đi kèm đại từ tân ngữ "him" thay vì đại từ nhân xưng chủ ngữ "he".',
         ]);
 
-        // 6. Matching Image (Có đáp án đầy đủ: ['1' => '1', '2' => '2', '3' => '3'])
+        // 6. Matching Image (Có đáp án đầy đủ: ['1' => 'A', '2' => 'B', '3' => 'C'])
         ExamQuestion::create([
             'exam_id'       => $exam->id,
             'section_id'    => $secReading->id,
             'code'          => 'Q06_MATCH_IMG',
+            'title'         => 'Ghép nối các hoạt động học tập với hình ảnh minh họa (Study Activities Pairing)',
             'question_type' => 'matching_image',
             'skill'         => 'reading',
-            'content'       => 'Ghép các mô tả hoạt động học tập tương ứng với bức hình minh họa phù hợp:',
+            'content'       => 'Quan sát các bức ảnh minh họa và ghép nối từng hoạt động học tập với bức hình tương ứng:',
             'score'         => 3.0,
             'options'       => [
-                ['id' => '1', 'text' => 'Học viên thảo luận nhóm giải quyết bài tập dự án', 'image_url' => 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400'],
-                ['id' => '2', 'text' => 'Giáo viên hướng dẫn chỉnh sửa phát âm trực tiếp trên lớp', 'image_url' => 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400'],
-                ['id' => '3', 'text' => 'Học sinh làm bài thi trắc nghiệm trên hệ thống máy tính', 'image_url' => 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400'],
+                'sentences' => [
+                    ['id' => '1', 'text' => 'Học viên thảo luận nhóm giải quyết bài tập dự án'],
+                    ['id' => '2', 'text' => 'Giáo viên hướng dẫn chỉnh sửa phát âm trực tiếp trên lớp'],
+                    ['id' => '3', 'text' => 'Học sinh làm bài thi trắc nghiệm trên hệ thống máy tính'],
+                ],
+                'images' => [
+                    ['id' => 'A', 'label' => 'Hình A', 'image_url' => 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400'],
+                    ['id' => 'B', 'label' => 'Hình B', 'image_url' => 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400'],
+                    ['id' => 'C', 'label' => 'Hình C', 'image_url' => 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400'],
+                ],
             ],
             'correct_answer' => [
-                '1' => '1',
-                '2' => '2',
-                '3' => '3',
+                '1' => 'A',
+                '2' => 'B',
+                '3' => 'C',
             ],
-            'explanation' => 'Khớp đúng mô tả hoạt động học tập với hình ảnh tương ứng.',
+            'explanation' => 'Khớp đúng mô tả hoạt động học tập với hình ảnh tương ứng (1-A, 2-B, 3-C).',
         ]);
 
         // ── Section 2: Nghe Hiểu (Listening) ──
         $secListening = ExamSection::create([
             'exam_id'     => $exam->id,
             'title'       => 'Phần 2: Kỹ Năng Nghe Hiểu (Listening Comprehension)',
-            'description' => 'Lắng nghe đoạn băng audio và hoàn thành các câu hỏi nối từ và sắp xếp quy trình.',
+            'description' => 'Lắng nghe đoạn băng audio và hoàn thành các câu hỏi nối từ, sắp xếp quy trình và gán nhãn sơ đồ.',
             'skill'       => 'listening',
             'order_index' => 1,
         ]);
@@ -1073,21 +1093,30 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secListening->id,
             'code'          => 'Q07_MATCHING',
+            'title'         => 'Ghép nối các thuật ngữ ngôn ngữ học với định nghĩa tương ứng (Linguistics Terminology)',
             'question_type' => 'matching',
             'skill'         => 'listening',
             'content'       => 'Ghép các thuật ngữ ngôn ngữ học với định nghĩa chính xác được nêu trong bài nghe:',
             'score'         => 3.0,
             'options'       => [
-                ['left' => 'Phonetics', 'right' => 'Nghiên cứu về âm thanh lời nói con người'],
-                ['left' => 'Syntax', 'right' => 'Quy tắc kết hợp từ thành câu hoàn chỉnh'],
-                ['left' => 'Semantics', 'right' => 'Nghiên cứu về ngữ nghĩa của từ ngữ và câu'],
-                ['left' => 'Pragmatics', 'right' => 'Nghiên cứu về ngữ cảnh sử dụng trong giao tiếp thực tế'],
+                'left_items' => [
+                    ['id' => '1', 'text' => 'Phonetics (Ngữ âm học)'],
+                    ['id' => '2', 'text' => 'Syntax (Cú pháp học)'],
+                    ['id' => '3', 'text' => 'Semantics (Ngữ nghĩa học)'],
+                    ['id' => '4', 'text' => 'Pragmatics (Ngữ dụng học)'],
+                ],
+                'right_items' => [
+                    ['id' => 'a', 'text' => 'Nghiên cứu về âm thanh lời nói con người'],
+                    ['id' => 'b', 'text' => 'Quy tắc kết hợp từ thành câu hoàn chỉnh'],
+                    ['id' => 'c', 'text' => 'Nghiên cứu về ngữ nghĩa của từ ngữ và câu'],
+                    ['id' => 'd', 'text' => 'Nghiên cứu về ngữ cảnh sử dụng trong giao tiếp thực tế'],
+                ],
             ],
             'correct_answer' => [
-                'Phonetics'  => 'Nghiên cứu về âm thanh lời nói con người',
-                'Syntax'     => 'Quy tắc kết hợp từ thành câu hoàn chỉnh',
-                'Semantics'  => 'Nghiên cứu về ngữ nghĩa của từ ngữ và câu',
-                'Pragmatics' => 'Nghiên cứu về ngữ cảnh sử dụng trong giao tiếp thực tế',
+                '1' => 'a',
+                '2' => 'b',
+                '3' => 'c',
+                '4' => 'd',
             ],
             'explanation' => 'Khớp đúng thuật ngữ: Phonetics (âm thanh), Syntax (cú pháp), Semantics (ngữ nghĩa), Pragmatics (ngữ dụng).',
         ]);
@@ -1097,9 +1126,10 @@ class TestCenterSeeder extends Seeder
             'exam_id'       => $exam->id,
             'section_id'    => $secListening->id,
             'code'          => 'Q08_ORDER',
+            'title'         => 'Sắp xếp các bước chuẩn bị bài thuyết trình theo thứ tự logic (Presentation Steps Order)',
             'question_type' => 'ordering',
             'skill'         => 'listening',
-            'content'       => 'Sắp xếp 4 bước chuẩn bị bài phát biểu trước đám đông theo đúng thứ tự logic được trình bày:',
+            'content'       => 'Sắp xếp 4 bước chuẩn bị bài phát biểu trước đám đông theo đúng thứ tự logic được trình bày trong bài nghe:',
             'score'         => 2.0,
             'options'       => [
                 ['id' => '1', 'text' => 'Phân tích chân dung thính giả và xác định mục tiêu bài phát biểu'],
@@ -1111,6 +1141,37 @@ class TestCenterSeeder extends Seeder
             'explanation'    => 'Trình tự bài thuyết trình chuẩn: Phân tích thính giả -> Xây dựng dàn ý -> Luyện tập -> Trình bày thực tế.',
         ]);
 
+        // 9. Diagram Labelling
+        ExamQuestion::create([
+            'exam_id'       => $exam->id,
+            'section_id'    => $secListening->id,
+            'code'          => 'Q09_DIAGRAM',
+            'title'         => 'Gán nhãn các vị trí trong sơ đồ thư viện trung tâm (Library Floor Plan)',
+            'question_type' => 'diagram_labelling',
+            'skill'         => 'listening',
+            'content'       => 'Lắng nghe phần hướng dẫn chỉ đường trong tòa nhà và chọn nhãn vị trí tương ứng cho các điểm A, B, C trên sơ đồ:',
+            'score'         => 3.0,
+            'image_url'     => 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600',
+            'options'       => [
+                'pins' => [
+                    ['id' => 'A', 'label' => 'Khu vực A (Phía Tây)'],
+                    ['id' => 'B', 'label' => 'Khu vực B (Trung tâm)'],
+                    ['id' => 'C', 'label' => 'Khu vực C (Tầng lửng)'],
+                ],
+                'labels' => [
+                    ['id' => '1', 'text' => 'Khu vực máy tính tra cứu (Digital Hub)'],
+                    ['id' => '2', 'text' => 'Phòng tự học yên tĩnh (Silent Study Room)'],
+                    ['id' => '3', 'text' => 'Quầy mượn trả tài liệu (Help Desk)'],
+                ],
+            ],
+            'correct_answer' => [
+                'A' => '1',
+                'B' => '3',
+                'C' => '2',
+            ],
+            'explanation' => 'Theo bản đồ và hướng dẫn: Vị trí A là Digital Hub (1), B là Help Desk (3), C là Silent Study Room (2).',
+        ]);
+
         // ── Section 3: Viết & Nói (Writing & Speaking - Chấm thủ công, không có đáp án tự động) ──
         $secSpeakingWriting = ExamSection::create([
             'exam_id'     => $exam->id,
@@ -1120,11 +1181,12 @@ class TestCenterSeeder extends Seeder
             'order_index' => 2,
         ]);
 
-        // 9. Essay (Viết - Không có correct_answer, giáo viên chấm tay)
+        // 10. Essay (Viết - Không có correct_answer, giáo viên chấm tay)
         ExamQuestion::create([
             'exam_id'        => $exam->id,
             'section_id'     => $secSpeakingWriting->id,
-            'code'           => 'Q09_ESSAY',
+            'code'           => 'Q10_ESSAY',
+            'title'          => 'Nghị luận về tác động của AI trong giáo dục ngôn ngữ (AI in Language Education)',
             'question_type'  => 'essay',
             'skill'          => 'writing',
             'content'        => 'Many people believe that artificial intelligence will transform education in unprecedented ways. Discuss the potential advantages and disadvantages of integrating AI tutoring systems in language learning. (Write at least 180 words).',
@@ -1134,11 +1196,12 @@ class TestCenterSeeder extends Seeder
             'explanation'    => 'Giáo viên đánh giá bài luận dựa trên 4 tiêu chí: Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Accuracy.',
         ]);
 
-        // 10. Audio Record (Nói - Không có correct_answer, giáo viên chấm tay)
+        // 11. Audio Record (Nói - Không có correct_answer, giáo viên chấm tay)
         ExamQuestion::create([
             'exam_id'        => $exam->id,
             'section_id'     => $secSpeakingWriting->id,
-            'code'           => 'Q10_SPEAKING',
+            'code'           => 'Q11_SPEAKING',
+            'title'          => 'Kể về trải nghiệm vượt qua thử thách học ngôn ngữ (Speaking Challenge Experience)',
             'question_type'  => 'audio_record',
             'skill'          => 'speaking',
             'content'        => 'Describe a challenging language learning experience you encountered and how you successfully overcame it. You should speak clearly into your microphone for 1.5 to 2 minutes.',

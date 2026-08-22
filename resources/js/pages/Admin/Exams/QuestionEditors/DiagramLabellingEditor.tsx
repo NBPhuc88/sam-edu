@@ -18,8 +18,9 @@ interface Props {
     options: DiagramOptions;
     correctAnswer: Record<string, string>;
     onChangeImageUrl: (url: string) => void;
-    onChangeOptions: (options: DiagramOptions) => void;
-    onChangeCorrectAnswer: (answer: Record<string, string>) => void;
+    onChangeOptions?: (options: DiagramOptions) => void;
+    onChangeCorrectAnswer?: (answer: Record<string, string>) => void;
+    onChangeQuestion?: (fields: { options?: DiagramOptions; correct_answer?: Record<string, string> }) => void;
 }
 
 export default function DiagramLabellingEditor({
@@ -29,6 +30,7 @@ export default function DiagramLabellingEditor({
     onChangeImageUrl,
     onChangeOptions,
     onChangeCorrectAnswer,
+    onChangeQuestion,
 }: Props) {
     const labels: LabelItem[] = options?.labels?.length > 0
         ? options.labels
@@ -42,39 +44,55 @@ export default function DiagramLabellingEditor({
         ? options.map_pins
         : ['A', 'B', 'C', 'D', 'E', 'F'];
 
+    const updateAll = (newOptions: DiagramOptions, newAns: Record<string, string>) => {
+        if (onChangeQuestion) {
+            onChangeQuestion({ options: newOptions, correct_answer: newAns });
+        } else {
+            onChangeOptions?.(newOptions);
+            onChangeCorrectAnswer?.(newAns);
+        }
+    };
+
     const handleAddLabel = () => {
-        const nextId = `loc_${labels.length + 1}`;
+        const numbers = labels.map((l) => {
+            const m = String(l.id).match(/^loc_(\d+)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+        });
+        const maxNum = numbers.length > 0 ? Math.max(...numbers, 0) : 0;
+        const nextId = `loc_${maxNum + 1}`;
         const updated = [...labels, { id: nextId, text: '' }];
-        onChangeOptions({ ...options, labels: updated, map_pins: mapPins });
+        updateAll({ ...options, labels: updated, map_pins: mapPins }, correctAnswer);
     };
 
     const handleRemoveLabel = (index: number) => {
         if (labels.length <= 1) return;
         const removed = labels[index];
         const updated = labels.filter((_, i) => i !== index);
-        onChangeOptions({ ...options, labels: updated, map_pins: mapPins });
-
         const newAns = { ...correctAnswer };
         delete newAns[removed.id];
-        onChangeCorrectAnswer(newAns);
+        updateAll({ ...options, labels: updated, map_pins: mapPins }, newAns);
     };
 
     const handleLabelTextChange = (index: number, text: string) => {
         const updated = [...labels];
         updated[index] = { ...updated[index], text };
-        onChangeOptions({ ...options, labels: updated, map_pins: mapPins });
+        updateAll({ ...options, labels: updated, map_pins: mapPins }, correctAnswer);
     };
 
     const handlePinsChange = (text: string) => {
         const pins = text.split(',').map((p) => p.trim().toUpperCase()).filter(Boolean);
-        onChangeOptions({ ...options, labels, map_pins: pins });
+        updateAll({ ...options, labels, map_pins: pins }, correctAnswer);
     };
 
     const handleMatchPin = (labelId: string, pin: string) => {
-        onChangeCorrectAnswer({
+        const newAns = {
             ...correctAnswer,
             [labelId]: pin,
-        });
+        };
+        if (!pin) {
+            delete newAns[labelId];
+        }
+        updateAll({ ...options, labels, map_pins: mapPins }, newAns);
     };
 
     return (

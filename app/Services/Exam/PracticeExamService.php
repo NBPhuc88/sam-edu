@@ -341,6 +341,7 @@ class PracticeExamService implements PracticeExamServiceInterface
                 'id'             => $question->id,
                 'section_id'     => $question->section_id,
                 'code'           => $question->code,
+                'title'          => $question->title,
                 'question_type'  => $question->question_type,
                 'skill'          => $question->skill,
                 'content'        => $question->content,

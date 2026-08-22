@@ -14,6 +14,7 @@ class ExamQuestion extends Model
         'exam_id',
         'section_id',
         'code',
+        'title',
         'question_type',
         'skill',
         'content',

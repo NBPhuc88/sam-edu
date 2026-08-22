@@ -223,9 +223,9 @@ Mỗi câu hỏi lưu trong bảng `exam_questions` với cấu trúc:
     "variant": "T_F_NG"
   },
   "options": [
-    { "id": "TRUE", "label": "True (Đúng)" },
-    { "id": "FALSE", "label": "False (Sai)" },
-    { "id": "NOT_GIVEN", "label": "Not Given (Không có thông tin)" }
+    { "id": "TRUE", "label": "True" },
+    { "id": "FALSE", "label": "False" },
+    { "id": "NOT_GIVEN", "label": "Not Given" }
   ],
   "correct_answer": "FALSE",
   "explanation": "Paragraph 2 states that half of the building survived the fire."

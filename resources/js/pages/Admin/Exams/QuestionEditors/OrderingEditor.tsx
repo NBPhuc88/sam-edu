@@ -10,8 +10,9 @@ interface FragmentItem {
 interface Props {
     options: FragmentItem[];
     correctAnswer: string[];
-    onChangeOptions: (options: FragmentItem[]) => void;
-    onChangeCorrectAnswer: (answer: string[]) => void;
+    onChangeOptions?: (options: FragmentItem[]) => void;
+    onChangeCorrectAnswer?: (answer: string[]) => void;
+    onChangeQuestion?: (fields: { options?: FragmentItem[]; correct_answer?: string[] }) => void;
 }
 
 export default function OrderingEditor({
@@ -19,6 +20,7 @@ export default function OrderingEditor({
     correctAnswer = [],
     onChangeOptions,
     onChangeCorrectAnswer,
+    onChangeQuestion,
 }: Props) {
     // Safely normalize options whether passed as array of objects, array of strings, or object map
     let rawOptionsList: any[] = [];
@@ -54,25 +56,38 @@ export default function OrderingEditor({
         ? correctAnswer.map(String)
         : safeOptions.map((o) => o.id);
 
+    const updateAll = (newOptions: FragmentItem[], newAns: string[]) => {
+        if (onChangeQuestion) {
+            onChangeQuestion({ options: newOptions, correct_answer: newAns });
+        } else {
+            onChangeOptions?.(newOptions);
+            onChangeCorrectAnswer?.(newAns);
+        }
+    };
+
     const handleAddFragment = () => {
-        const nextId = `t${safeOptions.length + 1}`;
+        const numbers = safeOptions.map((o) => {
+            const m = String(o.id).match(/^t(\d+)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+        });
+        const maxNum = numbers.length > 0 ? Math.max(...numbers, 0) : 0;
+        const nextId = `t${maxNum + 1}`;
         const newOptions = [...safeOptions, { id: nextId, text: '' }];
-        onChangeOptions(newOptions);
-        onChangeCorrectAnswer([...safeCorrectOrder, nextId]);
+        updateAll(newOptions, [...safeCorrectOrder, nextId]);
     };
 
     const handleRemoveFragment = (index: number) => {
         if (safeOptions.length <= 2) return;
         const removed = safeOptions[index];
         const newOptions = safeOptions.filter((_, i) => i !== index);
-        onChangeOptions(newOptions);
-        onChangeCorrectAnswer(safeCorrectOrder.filter((id) => id !== removed.id));
+        const newAns = safeCorrectOrder.filter((id) => id !== removed.id);
+        updateAll(newOptions, newAns);
     };
 
     const handleTextChange = (index: number, text: string) => {
         const newOptions = [...safeOptions];
         newOptions[index] = { ...newOptions[index], text };
-        onChangeOptions(newOptions);
+        updateAll(newOptions, safeCorrectOrder);
     };
 
     const moveOrder = (fromIdx: number, toIdx: number) => {
@@ -80,7 +95,7 @@ export default function OrderingEditor({
         const newOrder = [...safeCorrectOrder];
         const [moved] = newOrder.splice(fromIdx, 1);
         newOrder.splice(toIdx, 0, moved);
-        onChangeCorrectAnswer(newOrder);
+        updateAll(safeOptions, newOrder);
     };
 
     // Helper map

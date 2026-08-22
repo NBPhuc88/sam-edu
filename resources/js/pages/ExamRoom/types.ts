@@ -17,6 +17,8 @@ export type QuestionType =
 export interface ExamQuestionData {
     id?: number;
     section_id?: number | null;
+    code?: string;
+    title?: string | null;
     question_type: QuestionType;
     skill: SkillType;
     content: string;

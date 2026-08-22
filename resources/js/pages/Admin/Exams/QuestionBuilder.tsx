@@ -343,8 +343,8 @@ export default function QuestionBuilder({
                 ];
             case 'true_false_not_given':
                 return [
-                    { id: 'TRUE', label: 'TRUE (Đúng)' },
-                    { id: 'FALSE', label: 'FALSE (Sai)' },
+                    { id: 'TRUE', label: 'TRUE' },
+                    { id: 'FALSE', label: 'FALSE' },
                     { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
                 ];
             case 'matching':
@@ -1030,6 +1030,7 @@ export default function QuestionBuilder({
                                                                                 correctAnswer={q.correct_answer || {}}
                                                                                 onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 
@@ -1039,6 +1040,7 @@ export default function QuestionBuilder({
                                                                                 correctAnswer={q.correct_answer || {}}
                                                                                 onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 
@@ -1048,6 +1050,7 @@ export default function QuestionBuilder({
                                                                                 correctAnswer={q.correct_answer || {}}
                                                                                 onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 
@@ -1057,6 +1060,7 @@ export default function QuestionBuilder({
                                                                                 correctAnswer={q.correct_answer || []}
                                                                                 onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 
@@ -1068,6 +1072,7 @@ export default function QuestionBuilder({
                                                                                 onChangeImageUrl={(url) => handleUpdateQuestion(secIdx, qIndex, { image_url: url })}
                                                                                 onChangeOptions={(opts) => handleUpdateQuestion(secIdx, qIndex, { options: opts })}
                                                                                 onChangeCorrectAnswer={(ans) => handleUpdateQuestion(secIdx, qIndex, { correct_answer: ans })}
+                                                                                onChangeQuestion={(fields) => handleUpdateQuestion(secIdx, qIndex, fields)}
                                                                             />
                                                                         )}
 
