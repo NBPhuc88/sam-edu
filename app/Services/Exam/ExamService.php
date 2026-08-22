@@ -147,18 +147,22 @@ class ExamService implements ExamServiceInterface
         }
 
         $payload = [
-            'center_id'        => $centerId,
-            'subject_id'       => (int) $data['subject_id'],
-            'class_id'         => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
-            'name'             => trim($data['name']),
-            'code'             => $code,
-            'exam_type'        => $data['exam_type'] ?? 'midterm',
-            'description'      => $data['description'] ?? null,
-            'duration_minutes' => (int) ($data['duration_minutes'] ?? 45),
-            'max_score'        => (float) ($data['max_score'] ?? 10.0),
-            'pass_score'       => (float) ($data['pass_score'] ?? 5.0),
-            'status'           => $data['status'] ?? 'draft',
-            'created_by'       => $admin?->id,
+            'center_id'           => $centerId,
+            'subject_id'          => (int) $data['subject_id'],
+            'class_id'            => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
+            'name'                => trim($data['name']),
+            'code'                => $code,
+            'exam_type'           => $data['exam_type'] ?? 'general',
+            'description'         => $data['description'] ?? null,
+            'duration_minutes'    => (int) ($data['duration_minutes'] ?? 45),
+            'max_score'           => (float) ($data['max_score'] ?? 10.0),
+            'pass_score'          => (float) ($data['pass_score'] ?? 5.0),
+            'shuffle_questions'   => ! empty($data['shuffle_questions']),
+            'shuffle_options'     => ! empty($data['shuffle_options']),
+            'max_attempts'        => isset($data['max_attempts']) ? (int) $data['max_attempts'] : 1,
+            'is_practice'         => ! empty($data['is_practice']),
+            'status'              => $data['status'] ?? 'draft',
+            'created_by_admin_id' => $admin?->id,
         ];
 
         return DB::transaction(function () use ($payload, $data) {
@@ -194,24 +198,28 @@ class ExamService implements ExamServiceInterface
             }
         }
 
-        $code = isset($data['code']) ? trim($data['code']) : $exam->code;
+        $code = ! empty($data['code']) ? trim($data['code']) : $exam->code;
 
         if ($code !== $exam->code && $this->examRepository->codeExists((int) ($data['center_id'] ?? $exam->center_id), $code, $exam->id)) {
             throw new AccessDeniedHttpException("Mã đề thi '{$code}' đã tồn tại trong trung tâm.");
         }
 
         $payload = [
-            'center_id'        => $data['center_id'] ?? $exam->center_id,
-            'subject_id'       => isset($data['subject_id']) ? (int) $data['subject_id'] : $exam->subject_id,
-            'class_id'         => array_key_exists('class_id', $data) ? ($data['class_id'] ? (int) $data['class_id'] : null) : $exam->class_id,
-            'name'             => isset($data['name']) ? trim($data['name']) : $exam->name,
-            'code'             => $code,
-            'exam_type'        => $data['exam_type'] ?? $exam->exam_type,
-            'description'      => array_key_exists('description', $data) ? $data['description'] : $exam->description,
-            'duration_minutes' => isset($data['duration_minutes']) ? (int) $data['duration_minutes'] : $exam->duration_minutes,
-            'max_score'        => isset($data['max_score']) ? (float) $data['max_score'] : $exam->max_score,
-            'pass_score'       => isset($data['pass_score']) ? (float) $data['pass_score'] : $exam->pass_score,
-            'status'           => $data['status'] ?? $exam->status,
+            'center_id'         => $data['center_id'] ?? $exam->center_id,
+            'subject_id'        => isset($data['subject_id']) ? (int) $data['subject_id'] : $exam->subject_id,
+            'class_id'          => array_key_exists('class_id', $data) ? ($data['class_id'] ? (int) $data['class_id'] : null) : $exam->class_id,
+            'name'              => isset($data['name']) ? trim($data['name']) : $exam->name,
+            'code'              => $code,
+            'exam_type'         => $data['exam_type'] ?? $exam->exam_type,
+            'description'       => array_key_exists('description', $data) ? $data['description'] : $exam->description,
+            'duration_minutes'  => isset($data['duration_minutes']) ? (int) $data['duration_minutes'] : $exam->duration_minutes,
+            'max_score'         => isset($data['max_score']) ? (float) $data['max_score'] : $exam->max_score,
+            'pass_score'        => isset($data['pass_score']) ? (float) $data['pass_score'] : $exam->pass_score,
+            'shuffle_questions' => array_key_exists('shuffle_questions', $data) ? (bool) $data['shuffle_questions'] : (bool) $exam->shuffle_questions,
+            'shuffle_options'   => array_key_exists('shuffle_options', $data) ? (bool) $data['shuffle_options'] : (bool) $exam->shuffle_options,
+            'max_attempts'      => isset($data['max_attempts']) ? (int) $data['max_attempts'] : (int) ($exam->max_attempts ?? 1),
+            'is_practice'       => array_key_exists('is_practice', $data) ? (bool) $data['is_practice'] : (bool) $exam->is_practice,
+            'status'            => $data['status'] ?? $exam->status,
         ];
 
         return DB::transaction(function () use ($id, $payload, $data) {

@@ -8,6 +8,7 @@ import {
     RotateCcw,
     Calculator,
     Award,
+    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -16,7 +17,6 @@ import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './types';
-import { getDirtyFields } from '@/lib/dirty-tracker';
 
 interface Props {
     exam: Exam;
@@ -96,11 +96,11 @@ export default function ExamEdit({
         e.preventDefault();
         setIsSubmitting(true);
 
-        const currentPayload = {
+        const payload = {
             center_id: centerId ? Number(centerId) : null,
             subject_id: subjectId ? Number(subjectId) : null,
             name: name.trim(),
-            code: code.trim(),
+            code: code.trim() || null,
             exam_type: examType,
             duration_minutes: durationMinutes ? Number(durationMinutes) : null,
             max_score: calculatedMaxScore,
@@ -112,44 +112,32 @@ export default function ExamEdit({
             description: description.trim() || null,
             status,
             sections: sections.map((sec, sIdx) => ({
-                ...sec,
+                id: sec.id || undefined,
+                title: (sec.title || '').trim(),
+                description: (sec.description || '').trim() || null,
+                skill: sec.skill || 'reading',
                 order_index: sIdx,
                 questions: (sec.questions || []).map((q, qIdx) => ({
-                    ...q,
-                    skill: sec.skill,
-                    order_index: qIdx,
+                    id: q.id || undefined,
+                    code: (q.code || '').trim() || null,
+                    question_type: q.question_type || 'single_choice',
+                    skill: sec.skill || 'reading',
+                    content: q.content || '',
+                    image_url: q.image_url || null,
+                    audio_url: q.audio_url || null,
                     score: Number(q.score) || 1,
+                    options: q.options ?? null,
+                    correct_answer: q.correct_answer ?? null,
+                    explanation: q.explanation || null,
+                    metadata: q.metadata ?? null,
+                    order_index: qIdx,
                 })),
             })),
         };
 
-        const initialPayload = {
-            center_id: exam.center_id ? Number(exam.center_id) : null,
-            subject_id: exam.subject_id ? Number(exam.subject_id) : null,
-            name: (exam.name || '').trim(),
-            code: (exam.code || '').trim(),
-            exam_type: exam.exam_type || 'general',
-            duration_minutes: exam.duration_minutes ? Number(exam.duration_minutes) : null,
-            max_score: Number(exam.max_score) || 10,
-            pass_score: exam.pass_score ? Number(exam.pass_score) : null,
-            shuffle_questions: Boolean(exam.shuffle_questions),
-            shuffle_options: Boolean(exam.shuffle_options),
-            max_attempts: exam.max_attempts ? Number(exam.max_attempts) : 1,
-            description: (exam.description || '').trim() || null,
-            status: exam.status || 'draft',
-            sections: exam.sections || [],
-        };
-
-        const dirtyPayload = getDirtyFields(initialPayload, currentPayload);
-
-        // Always ensure sections are included if modified or if any structural change
-        if (!dirtyPayload.sections && JSON.stringify(initialPayload.sections) !== JSON.stringify(currentPayload.sections)) {
-            dirtyPayload.sections = currentPayload.sections;
-        }
-
         router.patch(
             `/exams/${exam.id}`,
-            dirtyPayload as any,
+            payload as any,
             {
                 onFinish: () => setIsSubmitting(false),
             },
@@ -185,6 +173,20 @@ export default function ExamEdit({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Error Alert Banner */}
+                    {Object.keys(errors).length > 0 && (
+                        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-xs">
+                            <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="font-semibold">Vui lòng kiểm tra các thông tin chưa hợp lệ:</p>
+                                <ul className="list-inside list-disc text-xs space-y-0.5">
+                                    {Object.entries(errors).map(([key, msg]) => (
+                                        <li key={key}>{msg}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                     {/* Card 1: Exam Metadata */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4">
