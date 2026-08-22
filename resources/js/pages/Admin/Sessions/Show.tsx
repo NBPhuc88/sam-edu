@@ -6,10 +6,10 @@ import {
     User,
     BookOpen,
     ArrowLeft,
+    ArrowRight,
     CheckSquare,
     Edit3,
     History,
-    AlertCircle,
     UserCheck,
     CheckCircle2,
     XCircle,
@@ -604,7 +604,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                                             <div>
                                                                 <span className="text-gray-400">Ngày:</span>{' '}
                                                                 <span className="line-through text-red-600">{formatDate(log.old_date)}</span>{' '}
-                                                                $\rightarrow${' '}
+                                                                <ArrowRight className="inline-block mx-1 h-3.5 w-3.5 text-gray-400 align-middle" />{' '}
                                                                 <span className="font-bold text-emerald-700">{formatDate(log.new_date)}</span>
                                                             </div>
                                                         )}
@@ -615,7 +615,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                                                 <span className="line-through text-red-600">
                                                                     {formatTime(log.old_start_time)} - {formatTime(log.old_end_time)}
                                                                 </span>{' '}
-                                                                $\rightarrow${' '}
+                                                                <ArrowRight className="inline-block mx-1 h-3.5 w-3.5 text-gray-400 align-middle" />{' '}
                                                                 <span className="font-bold text-emerald-700">
                                                                     {formatTime(log.new_start_time)} - {formatTime(log.new_end_time)}
                                                                 </span>
@@ -626,7 +626,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                                             <div>
                                                                 <span className="text-gray-400">Phòng:</span>{' '}
                                                                 <span className="line-through text-red-600">{log.old_room?.name ?? 'Chưa gán'}</span>{' '}
-                                                                $\rightarrow${' '}
+                                                                <ArrowRight className="inline-block mx-1 h-3.5 w-3.5 text-gray-400 align-middle" />{' '}
                                                                 <span className="font-bold text-emerald-700">{log.new_room?.name ?? 'Chưa gán'}</span>
                                                             </div>
                                                         )}
