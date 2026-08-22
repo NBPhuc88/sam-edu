@@ -2,10 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Admin;
-use App\Models\Center;
-
-use App\Models\SchoolClass;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
 use Illuminate\Database\Seeder;
@@ -13,33 +9,33 @@ use Illuminate\Database\Seeder;
 class SystemContentSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's global configuration, SEO, plans and permissions.
      */
     public function run(): void
     {
-        // System Settings Banners & Contact Info
+        // 1. System Settings & Contact Info
         $settings = [
             [
                 'key'         => 'hero_title',
-                'value'       => 'Giải Pháp Quản Lý Giáo Dục',
+                'value'       => 'Hệ Thống Quản Lý Giáo Dục Đa Trung Tâm Sam',
                 'group'       => 'homepage',
                 'description' => 'Tiêu đề banner chính',
             ],
             [
                 'key'         => 'hero_subtitle',
-                'value'       => 'Hệ thống tối ưu hóa quy trình quản lý học sinh, sắp xếp lịch học, điểm danh thông minh và tự động gia hạn gói dịch vụ qua ZaloPay QR Code.',
+                'value'       => 'Giải pháp SaaS toàn diện tối ưu hóa quy trình quản lý học viên, sắp xếp thời khóa biểu thông minh, điểm danh, tổ chức kỳ thi 4 kỹ năng và thu học phí tự động.',
                 'group'       => 'homepage',
                 'description' => 'Mô tả banner chính',
             ],
             [
                 'key'         => 'promo_banner_text',
-                'value'       => 'Chương trình Khuyến Mãi 2026 - Giảm 30% khi đăng ký gói 1 năm + 14 ngày dùng thử miễn phí',
+                'value'       => 'Chương trình Khuyến Mãi 2026 - Giảm 30% khi đăng ký gói 1 năm + 14 ngày trải nghiệm dùng thử miễn phí',
                 'group'       => 'promotions',
                 'description' => 'Thông báo banner khuyến mãi',
             ],
             [
                 'key'         => 'company_name',
-                'value'       => 'Công ty Cổ phần Giáo dục Sam',
+                'value'       => 'Công ty Cổ phần Công nghệ Giáo dục Sam (Sam Edu JSC)',
                 'group'       => 'company',
                 'description' => 'Tên công ty',
             ],
@@ -57,7 +53,7 @@ class SystemContentSeeder extends Seeder
             ],
             [
                 'key'         => 'contact_email',
-                'value'       => 'phucstt01@gmail.com',
+                'value'       => 'support@sam-edu.vn',
                 'group'       => 'contact',
                 'description' => 'Email hỗ trợ',
             ],
@@ -67,17 +63,19 @@ class SystemContentSeeder extends Seeder
             SystemSetting::updateOrCreate(['key' => $setting['key']], $setting);
         }
 
-        // Seed Default SEO Metadata using dedicated Seeder
+        // 2. Seed Default SEO Metadata
         $this->call(SeoMetadataSeeder::class);
 
-        // Clean old subscription plans
+        // 3. Seed Permissions & Role Bindings
+        $this->call(PermissionSeeder::class);
+
+        // 4. Subscription Plans
         SubscriptionPlan::query()->delete();
 
-        // Subscription Plans with integrated yearly_price
         $plans = [
             [
                 'code'          => 'trial_14d',
-                'name'          => 'Gói Dùng Thử (Trial)',
+                'name'          => 'Gói Dùng Thử (Trial 14 Ngày)',
                 'price'         => 0,
                 'yearly_price'  => 0,
                 'duration_days' => 14,
@@ -106,7 +104,8 @@ class SystemContentSeeder extends Seeder
                     'Thời hạn 30 ngày / tháng',
                     'Quản lý 1 trung tâm đào tạo',
                     'Tối đa 200 học sinh cùng lúc & 15 lớp học cùng lúc',
-                    'Điểm danh, Sĩ số & Học phí cơ bản',
+                    'Điểm danh, Sĩ số & Quản lý thu học phí',
+                    'Tổ chức bài kiểm tra & chấm điểm trực tuyến',
                     'Hỗ trợ hotline 24/7',
                 ],
                 'badge_text'  => 'PHỔ BIẾN NHẤT',
@@ -123,12 +122,31 @@ class SystemContentSeeder extends Seeder
                 'features'      => [
                     'Tiết kiệm 20% khi thanh toán cả năm (8.640.000đ/năm)',
                     'Thời hạn 30 ngày / tháng',
-                    'Quản lý đa trung tâm đào tạo',
+                    'Quản lý trung tâm quy mô vừa và lớn',
                     'Tối đa 500 học sinh cùng lúc & 40 lớp học cùng lúc',
-                    'Báo cáo thống kê & Điểm thi chuyên sâu',
+                    'Báo cáo thống kê chuyên sâu & Phân tích chuyên cần',
+                    'Ngân hàng đề thi 9 dạng câu hỏi & Kỳ thi 4 kỹ năng',
                     'Cổng thanh toán ZaloPay QR Code v2',
                 ],
                 'badge_text'  => 'DOANH NGHIỆP',
+                'is_featured' => false,
+            ],
+            [
+                'code'          => 'enterprise',
+                'name'          => 'Gói Doanh Nghiệp (Enterprise)',
+                'price'         => 2000000,
+                'yearly_price'  => 19200000,
+                'duration_days' => 30,
+                'max_students'  => 2000,
+                'max_classes'   => 150,
+                'features'      => [
+                    'Hệ thống chuỗi trung tâm đào tạo lớn',
+                    'Tối đa 2.000 học sinh cùng lúc & 150 lớp học cùng lúc',
+                    'Tích hợp tên miền riêng & Tùy biến thương hiệu',
+                    'Hạ tầng server riêng biệt & SLA 99.9%',
+                    'Dedicated Account Manager hỗ trợ 1-1',
+                ],
+                'badge_text'  => 'KHÔNG GIỚI HẠN',
                 'is_featured' => false,
             ],
         ];
@@ -136,71 +154,5 @@ class SystemContentSeeder extends Seeder
         foreach ($plans as $plan) {
             SubscriptionPlan::create($plan);
         }
-
-        // Sample Centers & Classes for Statistics Demo
-        $center1 = Center::updateOrCreate(['code' => 'CENTER-01'], [
-            'name'              => 'Trung tâm Giáo dục Sam - Cầu Giấy',
-            'phone'             => '024.3333.8888',
-            'email'             => 'caugiay@giaoducsam.vn',
-            'address'           => '100 Cầu Giấy, Hà Nội',
-            'status'            => 'active',
-            'subscription_plan' => 'yearly',
-            'expires_at'        => now()->addMonths(12),
-        ]);
-
-        $center2 = Center::updateOrCreate(['code' => 'CENTER-02'], [
-            'name'              => 'Trung tâm Giáo dục Sam - Đống Đa',
-            'phone'             => '024.3333.9999',
-            'email'             => 'dongda@giaoducsam.vn',
-            'address'           => '50 Chùa Bộc, Hà Nội',
-            'status'            => 'active',
-            'subscription_plan' => 'trial_14d',
-            'expires_at'        => now()->addDays(14),
-        ]);
-
-        // Admin 1: Super Admin (Quyền cao nhất - quản lý toàn hệ thống)
-        $superAdmin = Admin::updateOrCreate(['username' => 'admin'], [
-            'admin_code' => 'ADM-001',
-            'username'   => 'admin',
-            'email'      => 'phuc.nb140198@gmail.com',
-            'password'   => bcrypt('admin140198'),
-            'full_name'  => 'Ban Quản trị Tối cao',
-            'role'       => 'super_admin', // Lưu trực tiếp vào cột role - không dùng RBAC
-            'status'     => 'active',
-        ]);
-
-        // Admin 2: Center Admin (Quyền vừa - được phân công quản lý trung tâm)
-        $centerAdmin = Admin::updateOrCreate(['username' => 'centeradmin'], [
-            'admin_code' => 'ADM-002',
-            'username'   => 'centeradmin',
-            'email'      => 'admin.caugiay@giaoducsam.vn',
-            'password'   => bcrypt('admin140198'),
-            'full_name'  => 'Quản lý Trung tâm Cầu Giấy',
-            'role'       => 'admin', // Lưu trực tiếp vào cột role
-            'status'     => 'active',
-        ]);
-        $centerAdmin->centers()->sync([$center1->id]);
-
-        // Sample Classes
-        SchoolClass::updateOrCreate(['code' => 'TQ-01'], [
-            'center_id'    => $center1->id,
-            'name'         => 'Tiếng Trung Sơ Cấp K1',
-            'max_students' => 25,
-            'status'       => 1,
-        ]);
-
-        SchoolClass::updateOrCreate(['code' => 'ENG-10'], [
-            'center_id'    => $center1->id,
-            'name'         => 'Tiếng Anh Giao Tiếp B1',
-            'max_students' => 30,
-            'status'       => 1,
-        ]);
-
-        SchoolClass::updateOrCreate(['code' => 'MATH-12'], [
-            'center_id'    => $center2->id,
-            'name'         => 'Toán Học Lớp 12 Nâng Cao',
-            'max_students' => 20,
-            'status'       => 1,
-        ]);
     }
 }
