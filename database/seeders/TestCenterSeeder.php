@@ -56,11 +56,11 @@ class TestCenterSeeder extends Seeder
             $nationalHolidays = $this->createNationalHolidays();
 
             // 3. Khởi tạo 3 Trung tâm
-            $centersData = $this->getCentersConfiguration();
+            $centersData    = $this->getCentersConfiguration();
             $createdCenters = [];
 
             foreach ($centersData as $cIdx => $cConfig) {
-                $this->command->info("🏢 [2/9] Khởi tạo Trung tâm #" . ($cIdx + 1) . ": {$cConfig['name']}...");
+                $this->command->info('🏢 [2/9] Khởi tạo Trung tâm #' . ($cIdx + 1) . ": {$cConfig['name']}...");
                 $createdCenters[] = $this->seedCenterComplete($cConfig, $nationalHolidays, $superAdmin);
             }
 
@@ -169,6 +169,7 @@ class TestCenterSeeder extends Seeder
         ];
 
         $results = [];
+
         foreach ($holidays as $h) {
             $results[] = Holiday::updateOrCreate(
                 [
@@ -395,6 +396,7 @@ class TestCenterSeeder extends Seeder
 
     /**
      * @return array<string, ExamType>
+     * @param  Center                  $center
      */
     private function createExamTypesForCenter(Center $center): array
     {
@@ -425,10 +427,13 @@ class TestCenterSeeder extends Seeder
 
     /**
      * @return array<int, Room>
+     * @param  Center           $center
+     * @param  array            $roomsData
      */
     private function createRoomsForCenter(Center $center, array $roomsData): array
     {
         $rooms = [];
+
         foreach ($roomsData as $r) {
             $room = Room::updateOrCreate(
                 [
@@ -436,9 +441,9 @@ class TestCenterSeeder extends Seeder
                     'name'      => $r['name'],
                 ],
                 [
-                    'code'       => $r['code'],
-                    'capacity'   => $r['capacity'],
-                    'status'     => 'active',
+                    'code'     => $r['code'],
+                    'capacity' => $r['capacity'],
+                    'status'   => 'active',
                 ]
             );
 
@@ -468,10 +473,13 @@ class TestCenterSeeder extends Seeder
 
     /**
      * @return array<int, Subject>
+     * @param  Center              $center
+     * @param  array               $subjectsData
      */
     private function createSubjectsForCenter(Center $center, array $subjectsData): array
     {
         $subjects = [];
+
         foreach ($subjectsData as $s) {
             $subject = Subject::updateOrCreate(
                 [
@@ -499,6 +507,8 @@ class TestCenterSeeder extends Seeder
 
     /**
      * @return array<int, Teacher>
+     * @param  Center              $center
+     * @param  string              $prefix
      */
     private function createTeachersForCenter(Center $center, string $prefix): array
     {
@@ -510,10 +520,11 @@ class TestCenterSeeder extends Seeder
         ];
 
         $teachers = [];
+
         foreach ($teacherNames as $idx => [$fn, $ln, $spec]) {
-            $num = $idx + 1;
+            $num      = $idx + 1;
             $username = "{$prefix}_{$num}";
-            $code = sprintf('T%09d', ($center->id * 100) + $num);
+            $code     = sprintf('T%09d', ($center->id * 100) + $num);
             $fullName = "{$fn} {$ln}";
 
             $teacher = Teacher::updateOrCreate(
@@ -544,31 +555,33 @@ class TestCenterSeeder extends Seeder
 
     /**
      * @return array<int, Student>
+     * @param  Center              $center
+     * @param  string              $prefix
      */
     private function createStudentsForCenter(Center $center, string $prefix): array
     {
-        $firstNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ'];
+        $firstNames  = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ'];
         $middleNames = ['Văn', 'Thị', 'Đức', 'Hải', 'Quang', 'Minh', 'Ngọc', 'Thu', 'Hữu', 'Bảo', 'Gia', 'Khánh'];
-        $lastNames = ['Nam', 'An', 'Bình', 'Cường', 'Dương', 'Hà', 'Huy', 'Khoa', 'Linh', 'Long', 'My', 'Phong', 'Trang', 'Tú', 'Uyên', 'Vy', 'Đạt', 'Dũng'];
+        $lastNames   = ['Nam', 'An', 'Bình', 'Cường', 'Dương', 'Hà', 'Huy', 'Khoa', 'Linh', 'Long', 'My', 'Phong', 'Trang', 'Tú', 'Uyên', 'Vy', 'Đạt', 'Dũng'];
 
         $relationships = ['Bố', 'Mẹ', 'Người giám hộ'];
 
-        $students = [];
+        $students      = [];
         $totalStudents = 18; // 18 học sinh cho mỗi trung tâm
 
         for ($i = 1; $i <= $totalStudents; $i++) {
-            $fn = $firstNames[($i + $center->id) % count($firstNames)] . ' ' . $middleNames[($i * 2 + $center->id) % count($middleNames)];
-            $ln = $lastNames[($i * 3 + $center->id) % count($lastNames)];
+            $fn       = $firstNames[($i + $center->id) % count($firstNames)] . ' ' . $middleNames[($i * 2 + $center->id) % count($middleNames)];
+            $ln       = $lastNames[($i * 3 + $center->id) % count($lastNames)];
             $fullName = "{$fn} {$ln}";
 
             $username = "{$prefix}_" . sprintf('%02d', $i);
-            $code = sprintf('STD%09d', ($center->id * 1000) + $i);
-            $gender = $i % 2 === 0 ? 'female' : 'male';
-            $dob = Carbon::now()->subYears(15 + ($i % 6))->subDays($i * 12)->toDateString();
+            $code     = sprintf('STD%09d', ($center->id * 1000) + $i);
+            $gender   = $i % 2 === 0 ? 'female' : 'male';
+            $dob      = Carbon::now()->subYears(15 + ($i % 6))->subDays($i * 12)->toDateString();
 
-            $parentName = "Phụ huynh " . ($gender === 'female' ? "Mẹ em " : "Bố em ") . $ln;
+            $parentName  = 'Phụ huynh ' . ($gender === 'female' ? 'Mẹ em ' : 'Bố em ') . $ln;
             $parentPhone = '098' . sprintf('%07d', ($center->id * 100000) + $i);
-            $parentRel = $relationships[$i % count($relationships)];
+            $parentRel   = $relationships[$i % count($relationships)];
 
             $student = Student::updateOrCreate(
                 ['username' => $username],
@@ -583,7 +596,7 @@ class TestCenterSeeder extends Seeder
                     'password'            => Hash::make('password'),
                     'date_of_birth'       => $dob,
                     'gender'              => $gender,
-                    'address'             => "Số " . ($i * 12) . " Đường số {$i}, " . $center->name,
+                    'address'             => 'Số ' . ($i * 12) . " Đường số {$i}, " . $center->name,
                     'parent_name'         => $parentName,
                     'parent_phone'        => $parentPhone,
                     'parent_relationship' => $parentRel,
@@ -602,10 +615,13 @@ class TestCenterSeeder extends Seeder
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * @param array<int, Subject> $subjects
-     * @param array<int, Teacher> $teachers
-     * @param array<int, Room>    $rooms
-     * @param array<int, Student> $students
+     * @param  array<int, Subject>     $subjects
+     * @param  array<int, Teacher>     $teachers
+     * @param  array<int, Room>        $rooms
+     * @param  array<int, Student>     $students
+     * @param  Center                  $center
+     * @param  string                  $classPrefix
+     * @param  array                   $nationalHolidays
      * @return array<int, SchoolClass>
      */
     private function createClassesAndSchedules(
@@ -617,13 +633,13 @@ class TestCenterSeeder extends Seeder
         string $classPrefix,
         array $nationalHolidays
     ): array {
-        $classes = [];
+        $classes    = [];
         $holidayIds = array_map(fn ($h) => $h->id, $nationalHolidays);
 
         foreach ($subjects as $idx => $subject) {
-            $teacher = $teachers[$idx % count($teachers)];
-            $room = $rooms[$idx % count($rooms)];
-            $classNum = $idx + 1;
+            $teacher   = $teachers[$idx % count($teachers)];
+            $room      = $rooms[$idx % count($rooms)];
+            $classNum  = $idx + 1;
             $classCode = sprintf('C%09d', ($center->id * 100) + $classNum);
             $className = "Lớp {$subject->name} - K{$classNum} ({$classPrefix})";
 
@@ -645,6 +661,7 @@ class TestCenterSeeder extends Seeder
 
             // 2. Ghi danh học sinh vào lớp (10-12 học sinh mỗi lớp)
             $enrolledStudents = array_slice($students, ($idx * 4) % count($students), 10);
+
             foreach ($enrolledStudents as $std) {
                 DB::table('class_students')->updateOrInsert(
                     [
@@ -671,10 +688,11 @@ class TestCenterSeeder extends Seeder
 
             // 4. Lịch học cố định hàng tuần (2-4-6 hoặc 3-5-7)
             $daysOfWeek = $idx % 2 === 0 ? [1, 3, 5] : [2, 4, 6]; // 1: Thứ 2, 3: Thứ 4...
-            $startTime = $idx % 2 === 0 ? '18:00' : '19:45';
-            $endTime   = $idx % 2 === 0 ? '19:30' : '21:15';
+            $startTime  = $idx % 2 === 0 ? '18:00' : '19:45';
+            $endTime    = $idx % 2 === 0 ? '19:30' : '21:15';
 
             $weeksJson = [];
+
             foreach ($daysOfWeek as $dow) {
                 $weeksJson[(string) $dow] = [
                     [
@@ -696,16 +714,16 @@ class TestCenterSeeder extends Seeder
             ]);
 
             // 5. Sinh chuỗi Ca học thực tế (12 buổi đã qua, 12 buổi sắp tới)
-            $currentDate = clone $startDate;
+            $currentDate  = clone $startDate;
             $sessionCount = 0;
-            $maxSessions = 24;
+            $maxSessions  = 24;
 
             while ($currentDate->lte($endDate) && $sessionCount < $maxSessions) {
                 $dow = $currentDate->dayOfWeekIso - 1; // 0 = Thứ 2, 1 = Thứ 3, ...
 
                 if (in_array($dow, $daysOfWeek, true)) {
                     $sessionCount++;
-                    $isPast = $currentDate->lt(Carbon::now());
+                    $isPast        = $currentDate->lt(Carbon::now());
                     $sessionStatus = $isPast ? 'completed' : 'scheduled';
 
                     $sessionId = DB::table('class_sessions')->insertGetId([
@@ -726,14 +744,14 @@ class TestCenterSeeder extends Seeder
                     if ($isPast) {
                         foreach ($enrolledStudents as $sIdx => $std) {
                             $attStatus = 'present';
-                            $attNote = 'Tham gia đầy đủ, làm bài tốt.';
+                            $attNote   = 'Tham gia đầy đủ, làm bài tốt.';
 
                             if ($sIdx % 7 === 0) {
                                 $attStatus = 'late';
-                                $attNote = 'Đến muộn 10 phút vì kẹt xe.';
+                                $attNote   = 'Đến muộn 10 phút vì kẹt xe.';
                             } elseif ($sIdx % 9 === 0) {
                                 $attStatus = 'absent';
-                                $attNote = 'Nghỉ học có phép (báo trước).';
+                                $attNote   = 'Nghỉ học có phép (báo trước).';
                             }
 
                             DB::table('attendances')->insert([
@@ -869,23 +887,23 @@ class TestCenterSeeder extends Seeder
             $grade = $score >= 8.5 ? 'Giỏi' : ($score >= 7.0 ? 'Khá' : 'Trung Bình');
 
             DB::table('class_exam_submissions')->insert([
-                'class_exam_id'          => $classExamId,
-                'student_id'             => $studentId,
-                'attempt_number'         => 1,
-                'started_at'             => Carbon::now()->subDays(2)->toDateTimeString(),
-                'submitted_at'           => Carbon::now()->subDays(2)->addMinutes(40)->toDateTimeString(),
-                'duration_seconds_used'  => 2400,
-                'score'                  => $score,
-                'total_correct'          => 8,
-                'total_questions'        => 10,
-                'status'                 => 'submitted',
-                'is_graded'              => true,
-                'graded_at'              => Carbon::now()->subDays(1)->toDateTimeString(),
-                'graded_by_teacher_id'   => $teachers[0]->id,
-                'answers'                => json_encode(['answers' => ['Q01_SINGLE' => 'B', 'Q02_MULTI' => ['A', 'C'], 'Q03_BLANK' => ['insisted', 'deadline']]]),
-                'teacher_feedback'       => "Học sinh làm bài cẩn thận, ngữ pháp chuẩn xác. Đạt điểm {$score}.",
-                'created_at'             => $this->now,
-                'updated_at'             => $this->now,
+                'class_exam_id'         => $classExamId,
+                'student_id'            => $studentId,
+                'attempt_number'        => 1,
+                'started_at'            => Carbon::now()->subDays(2)->toDateTimeString(),
+                'submitted_at'          => Carbon::now()->subDays(2)->addMinutes(40)->toDateTimeString(),
+                'duration_seconds_used' => 2400,
+                'score'                 => $score,
+                'total_correct'         => 8,
+                'total_questions'       => 10,
+                'status'                => 'submitted',
+                'is_graded'             => true,
+                'graded_at'             => Carbon::now()->subDays(1)->toDateTimeString(),
+                'graded_by_teacher_id'  => $teachers[0]->id,
+                'answers'               => json_encode(['answers' => ['Q01_SINGLE' => 'B', 'Q02_MULTI' => ['A', 'C'], 'Q03_BLANK' => ['insisted', 'deadline']]]),
+                'teacher_feedback'      => "Học sinh làm bài cẩn thận, ngữ pháp chuẩn xác. Đạt điểm {$score}.",
+                'created_at'            => $this->now,
+                'updated_at'            => $this->now,
             ]);
 
             $resultId = DB::table('exam_results')->insertGetId([
@@ -946,7 +964,7 @@ class TestCenterSeeder extends Seeder
                 ['key' => 'D', 'text' => 'To prepare students exclusively for multiple-choice standardized tests'],
             ],
             'correct_answer' => 'B',
-            'explanation'   => 'Language immersion provides authentic communicative context facilitating natural language acquisition.',
+            'explanation'    => 'Language immersion provides authentic communicative context facilitating natural language acquisition.',
         ]);
 
         // 2. Multiple Choice (Có đáp án đầy đủ: ['A', 'C'])
@@ -965,7 +983,7 @@ class TestCenterSeeder extends Seeder
                 ['key' => 'D', 'text' => 'Translating each English word into native language immediately'],
             ],
             'correct_answer' => ['A', 'C'],
-            'explanation'   => 'Minimizing sub-vocalization and expanding peripheral vision to read in chunks significantly increase reading speed and comprehension.',
+            'explanation'    => 'Minimizing sub-vocalization and expanding peripheral vision to read in chunks significantly increase reading speed and comprehension.',
         ]);
 
         // 3. True / False / Not Given (Có đáp án đầy đủ: 'TRUE')
@@ -983,21 +1001,21 @@ class TestCenterSeeder extends Seeder
                 ['key' => 'NOT_GIVEN', 'text' => 'Not Given (Thông tin không được đề cập)'],
             ],
             'correct_answer' => 'TRUE',
-            'explanation'   => 'Spaced repetition (30 mins daily) is confirmed in pedagogical studies to yield superior long-term memory retention.',
+            'explanation'    => 'Spaced repetition (30 mins daily) is confirmed in pedagogical studies to yield superior long-term memory retention.',
         ]);
 
         // 4. Fill in the Blank (Có đáp án đầy đủ: ['insisted', 'deadline'])
         ExamQuestion::create([
-            'exam_id'       => $exam->id,
-            'section_id'    => $secReading->id,
-            'code'          => 'Q04_BLANK',
-            'question_type' => 'fill_in_blank',
-            'skill'         => 'reading',
-            'content'       => 'Despite facing unexpected obstacles, the research team [insisted] on completing their comprehensive survey before the final [deadline].',
-            'score'         => 2.0,
-            'options'       => null,
+            'exam_id'        => $exam->id,
+            'section_id'     => $secReading->id,
+            'code'           => 'Q04_BLANK',
+            'question_type'  => 'fill_in_blank',
+            'skill'          => 'reading',
+            'content'        => 'Despite facing unexpected obstacles, the research team [insisted] on completing their comprehensive survey before the final [deadline].',
+            'score'          => 2.0,
+            'options'        => null,
             'correct_answer' => ['insisted', 'deadline'],
-            'explanation'   => 'Các từ cần điền chính xác theo ngữ cảnh câu: insisted, deadline.',
+            'explanation'    => 'Các từ cần điền chính xác theo ngữ cảnh câu: insisted, deadline.',
         ]);
 
         // 5. Find Mistake (Có đáp án đầy đủ: 'D')
@@ -1016,7 +1034,7 @@ class TestCenterSeeder extends Seeder
                 ['key' => 'D', 'text' => 'he'],
             ],
             'correct_answer' => 'D',
-            'explanation'   => 'Lỗi ở phương án D: Giới từ "to" phải đi kèm đại từ tân ngữ "him" thay vì đại từ nhân xưng chủ ngữ "he".',
+            'explanation'    => 'Lỗi ở phương án D: Giới từ "to" phải đi kèm đại từ tân ngữ "him" thay vì đại từ nhân xưng chủ ngữ "he".',
         ]);
 
         // 6. Matching Image (Có đáp án đầy đủ: ['1' => '1', '2' => '2', '3' => '3'])
@@ -1038,7 +1056,7 @@ class TestCenterSeeder extends Seeder
                 '2' => '2',
                 '3' => '3',
             ],
-            'explanation'   => 'Khớp đúng mô tả hoạt động học tập với hình ảnh tương ứng.',
+            'explanation' => 'Khớp đúng mô tả hoạt động học tập với hình ảnh tương ứng.',
         ]);
 
         // ── Section 2: Nghe Hiểu (Listening) ──
@@ -1071,7 +1089,7 @@ class TestCenterSeeder extends Seeder
                 'Semantics'  => 'Nghiên cứu về ngữ nghĩa của từ ngữ và câu',
                 'Pragmatics' => 'Nghiên cứu về ngữ cảnh sử dụng trong giao tiếp thực tế',
             ],
-            'explanation'   => 'Khớp đúng thuật ngữ: Phonetics (âm thanh), Syntax (cú pháp), Semantics (ngữ nghĩa), Pragmatics (ngữ dụng).',
+            'explanation' => 'Khớp đúng thuật ngữ: Phonetics (âm thanh), Syntax (cú pháp), Semantics (ngữ nghĩa), Pragmatics (ngữ dụng).',
         ]);
 
         // 8. Ordering (Có đáp án đầy đủ: ['1', '2', '3', '4'])
@@ -1090,7 +1108,7 @@ class TestCenterSeeder extends Seeder
                 ['id' => '4', 'text' => 'Thực hiện bài thuyết trình tự tin và phản hồi câu hỏi giao lưu'],
             ],
             'correct_answer' => ['1', '2', '3', '4'],
-            'explanation'   => 'Trình tự bài thuyết trình chuẩn: Phân tích thính giả -> Xây dựng dàn ý -> Luyện tập -> Trình bày thực tế.',
+            'explanation'    => 'Trình tự bài thuyết trình chuẩn: Phân tích thính giả -> Xây dựng dàn ý -> Luyện tập -> Trình bày thực tế.',
         ]);
 
         // ── Section 3: Viết & Nói (Writing & Speaking - Chấm thủ công, không có đáp án tự động) ──
@@ -1139,15 +1157,15 @@ class TestCenterSeeder extends Seeder
     {
         foreach ($classes as $cIdx => $schoolClass) {
             $enrolled = DB::table('class_students')->where('class_id', $schoolClass->id)->pluck('student_id')->toArray();
-            $fee = $schoolClass->subject ? $schoolClass->subject->tuition_fee : 3000000;
+            $fee      = $schoolClass->subject ? $schoolClass->subject->tuition_fee : 3000000;
 
             foreach ($enrolled as $sIdx => $studentId) {
                 $isFullPaid = $sIdx % 3 === 0;
                 $isPartial  = $sIdx % 3 === 1;
 
-                $paidAmount = $isFullPaid ? $fee : ($isPartial ? $fee / 2 : 0);
+                $paidAmount      = $isFullPaid ? $fee : ($isPartial ? $fee / 2 : 0);
                 $remainingAmount = $fee - $paidAmount;
-                $tuitionStatus = $isFullPaid ? 'completed' : ($isPartial ? 'partial' : 'pending');
+                $tuitionStatus   = $isFullPaid ? 'completed' : ($isPartial ? 'partial' : 'pending');
 
                 $tuitionId = DB::table('student_tuitions')->insertGetId([
                     'center_id'        => $center->id,
@@ -1192,19 +1210,19 @@ class TestCenterSeeder extends Seeder
 
         foreach (array_slice($students, 0, 5) as $idx => $student) {
             DB::table('student_notes')->insert([
-                'student_id'          => $student->id,
-                'teacher_id'          => $teacher->id,
-                'content'             => "Em {$student->full_name} tiếp thu bài rất nhanh, tích cực tham gia xây dựng bài học trên lớp.",
-                'created_by_admin_id' => null,
-                'created_at'          => $this->now,
-                'updated_at'          => $this->now,
+                'student_id'            => $student->id,
+                'content'               => "Em {$student->full_name} tiếp thu bài rất nhanh, tích cực tham gia xây dựng bài học trên lớp.",
+                'created_by_teacher_id' => $teacher->id,
+                'created_by_admin_id'   => null,
+                'created_at'            => $this->now,
+                'updated_at'            => $this->now,
             ]);
 
             DB::table('student_documents')->insert([
                 'student_id'             => $student->id,
                 'document_type'          => 'material',
-                'file_name'              => "Tong_hop_tu_vung_unit_" . ($idx + 1) . ".pdf",
-                'file_path'              => "documents/samples/unit_" . ($idx + 1) . ".pdf",
+                'file_name'              => 'Tong_hop_tu_vung_unit_' . ($idx + 1) . '.pdf',
+                'file_path'              => 'documents/samples/unit_' . ($idx + 1) . '.pdf',
                 'file_size'              => 1024 * (500 + $idx * 100),
                 'mime_type'              => 'application/pdf',
                 'uploaded_by_teacher_id' => $teacher->id,
@@ -1233,12 +1251,13 @@ class TestCenterSeeder extends Seeder
             DB::table('contact_requests')->updateOrInsert(
                 ['phone' => $phone],
                 [
-                    'name'       => $name,
-                    'email'      => $email,
-                    'message'    => $msg,
-                    'status'     => $idx % 2 === 0 ? 'contacted' : 'pending',
-                    'created_at' => $this->now,
-                    'updated_at' => $this->now,
+                    'full_name'   => $name,
+                    'email'       => $email,
+                    'center_name' => 'Trung tâm Ngoại ngữ Sam',
+                    'message'     => $msg,
+                    'status'      => $idx % 2 === 0 ? 'contacted' : 'pending',
+                    'created_at'  => $this->now,
+                    'updated_at'  => $this->now,
                 ]
             );
         }
@@ -1263,6 +1282,7 @@ class TestCenterSeeder extends Seeder
 
         foreach ($centers as $center) {
             $adminIds = DB::table('admin_centers')->where('center_id', $center->id)->pluck('admin_id')->toArray();
+
             foreach ($adminIds as $aId) {
                 DB::table('notification_recipients')->insert([
                     'notification_id' => $notifId,
