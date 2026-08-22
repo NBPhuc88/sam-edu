@@ -909,7 +909,6 @@ class TestCenterSeeder extends Seeder
                     'reason'              => 'Cộng điểm thưởng phát biểu tích cực trong giờ học.',
                     'changed_by_admin_id' => $subAdmin->id,
                     'created_at'          => $this->now,
-                    'updated_at'          => $this->now,
                 ]);
             }
         }
@@ -1148,7 +1147,7 @@ class TestCenterSeeder extends Seeder
 
                 $paidAmount = $isFullPaid ? $fee : ($isPartial ? $fee / 2 : 0);
                 $remainingAmount = $fee - $paidAmount;
-                $tuitionStatus = $isFullPaid ? 'paid' : ($isPartial ? 'partial' : 'unpaid');
+                $tuitionStatus = $isFullPaid ? 'completed' : ($isPartial ? 'partial' : 'pending');
 
                 $tuitionId = DB::table('student_tuitions')->insertGetId([
                     'center_id'        => $center->id,
