@@ -171,15 +171,15 @@ export default function ExamIndex({
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'published':
-                return <Badge variant="active">Đã xuất bản</Badge>;
+                return <Badge variant="active" className="whitespace-nowrap">Đã xuất bản</Badge>;
             case 'draft':
-                return <Badge variant="pending">Bản nháp</Badge>;
+                return <Badge variant="pending" className="whitespace-nowrap">Bản nháp</Badge>;
             case 'completed':
-                return <Badge variant="info">Hoàn thành</Badge>;
+                return <Badge variant="info" className="whitespace-nowrap">Hoàn thành</Badge>;
             case 'cancelled':
-                return <Badge variant="expired">Đã hủy</Badge>;
+                return <Badge variant="expired" className="whitespace-nowrap">Đã hủy</Badge>;
             default:
-                return <Badge variant="info">{status}</Badge>;
+                return <Badge variant="info" className="whitespace-nowrap">{status}</Badge>;
         }
     };
 
@@ -187,18 +187,19 @@ export default function ExamIndex({
         const typeName = exam.examType?.name || (typeof exam.exam_type === 'object' ? exam.exam_type?.name : exam.exam_type) || 'Chung';
         const typeCode = (exam.examType?.code || (typeof exam.exam_type === 'object' ? exam.exam_type?.code : exam.exam_type) || '').toLowerCase();
 
-        switch (typeCode) {
-            case 'ielts':
-                return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">{typeName}</span>;
-            case 'hsk':
-                return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-2xs font-bold text-red-700 border border-red-200">{typeName}</span>;
-            case 'toeic':
-                return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-2xs font-bold text-purple-700 border border-purple-200">{typeName}</span>;
-            case 'custom':
-                return <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-2xs font-bold text-teal-700 border border-teal-200">{typeName}</span>;
-            default:
-                return <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-2xs font-semibold text-gray-700 border border-gray-200">{typeName}</span>;
-        }
+        let badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
+        if (typeCode === 'ielts') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+        else if (typeCode === 'hsk') badgeClass = 'bg-red-50 text-red-700 border-red-200';
+        else if (typeCode === 'toeic') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+        else if (typeCode === 'custom') badgeClass = 'bg-teal-50 text-teal-700 border-teal-200';
+
+        return (
+            <Tooltip content={typeName}>
+                <span className={`inline-block max-w-[150px] truncate rounded-md px-2.5 py-1 text-2xs font-bold border align-middle ${badgeClass}`}>
+                    {typeName}
+                </span>
+            </Tooltip>
+        );
     };
 
     return (
@@ -420,13 +421,12 @@ export default function ExamIndex({
                             <thead>
                                 <tr>
                                     <th className="w-12 text-center">STT</th>
-                                    <th>Mã Đề Thi</th>
-                                    <th>Tên Đề Thi</th>
-                                    <th>Trung Tâm / Môn Học</th>
-                                    <th>Loại Đề Thi</th>
-                                    <th>Thời Lượng & Số Câu</th>
-                                    <th>Điểm Tối Đa</th>
-                                    <th>Trạng Thái</th>
+                                    <th className="w-32">Mã Đề</th>
+                                    <th>Tên Đề Thi & Môn Học</th>
+                                    <th className="w-36 text-center">Loại Đề Thi</th>
+                                    <th className="w-36">Thời Lượng & Số Câu</th>
+                                    <th className="w-28">Điểm Tối Đa</th>
+                                    <th className="w-28 text-center">Trạng Thái</th>
                                     {(can('exams.edit') || can('exams.delete')) && (
                                         <th className="text-right">Thao Tác</th>
                                     )}
@@ -435,7 +435,7 @@ export default function ExamIndex({
                             <tbody>
                                 {exams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={can('exams.edit') || can('exams.delete') ? 9 : 8} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('exams.edit') || can('exams.delete') ? 8 : 7} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -461,96 +461,100 @@ export default function ExamIndex({
                                                 {(exams.current_page - 1) * 15 + (idx + 1)}
                                             </td>
                                             <td>
-                                                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-emerald-800 border border-emerald-200/60">
+                                                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 font-mono text-xs font-bold text-emerald-800 border border-emerald-200/60 whitespace-nowrap">
                                                     {exam.code}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div className="space-y-0.5 max-w-xs">
+                                                <div className="space-y-1 py-1 max-w-sm">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <TruncatedText
                                                             text={exam.name}
                                                             maxLines={2}
-                                                            className="font-bold text-gray-900"
+                                                            className="font-bold text-gray-900 text-sm leading-snug"
                                                         />
                                                         {exam.is_practice && (
-                                                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200 shrink-0">
+                                                            <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200 shrink-0">
                                                                 <Award className="h-3 w-3 text-blue-600" />
                                                                 Thi Thử
                                                             </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-600 flex-wrap">
+                                                        {exam.subject && (
+                                                            <Tooltip content={`Môn: ${exam.subject.name}`}>
+                                                                <span className="rounded-md bg-purple-50 px-2 py-0.5 text-purple-700 font-semibold border border-purple-200/60 inline-block max-w-[200px] truncate align-middle">
+                                                                    Môn: {exam.subject.name}
+                                                                </span>
+                                                            </Tooltip>
+                                                        )}
+                                                        {exam.schoolClass && (
+                                                            <Tooltip content={`Lớp: ${exam.schoolClass.name}`}>
+                                                                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-blue-700 font-semibold border border-blue-200/60 inline-block max-w-[160px] truncate align-middle">
+                                                                    Lớp: {exam.schoolClass.name}
+                                                                </span>
+                                                            </Tooltip>
+                                                        )}
+                                                        {isSuperAdmin && exam.center && (
+                                                            <Tooltip content={`Trung tâm: ${exam.center.name}`}>
+                                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 font-medium border border-slate-200 inline-block max-w-[160px] truncate align-middle">
+                                                                    {exam.center.name}
+                                                                </span>
+                                                            </Tooltip>
                                                         )}
                                                     </div>
                                                     {exam.description && (
                                                         <TruncatedText
                                                             text={exam.description}
                                                             maxLines={1}
-                                                            className="text-2xs text-gray-500"
+                                                            className="text-2xs text-gray-400"
                                                         />
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>
-                                                <div className="space-y-1 text-xs max-w-[220px]">
-                                                    <TruncatedText
-                                                        text={exam.center?.name || 'N/A'}
-                                                        maxLines={1}
-                                                        className="font-medium text-gray-800"
-                                                    />
-                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-500 flex-wrap">
-                                                        {exam.schoolClass && (
-                                                            <Tooltip content={`Lớp: ${exam.schoolClass.name}`}>
-                                                                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium max-w-[140px] truncate inline-block">
-                                                                    Lớp: {exam.schoolClass.name}
-                                                                </span>
-                                                            </Tooltip>
-                                                        )}
-                                                        {exam.subject && (
-                                                            <Tooltip content={`Môn: ${exam.subject.name}`}>
-                                                                <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700 font-medium max-w-[140px] truncate inline-block">
-                                                                    Môn: {exam.subject.name}
-                                                                </span>
-                                                            </Tooltip>
-                                                        )}
-                                                    </div>
+                                            <td className="text-center">
+                                                <div className="inline-flex justify-center">
+                                                    {getExamTypeBadge(exam)}
                                                 </div>
                                             </td>
                                             <td>
-                                                {getExamTypeBadge(exam)}
-                                            </td>
-                                            <td>
                                                 <div className="space-y-1 text-xs">
-                                                    <div className="flex items-center gap-1 text-gray-700">
+                                                    <div className="flex items-center gap-1 font-semibold text-gray-700 whitespace-nowrap">
                                                         <Clock className="h-3.5 w-3.5 text-gray-400" />
-                                                        <span className="font-semibold">{exam.duration_minutes || 45}</span> phút
+                                                        <span>{exam.duration_minutes || 45} phút</span>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => openQuestionsModal(exam)}
-                                                        className="inline-flex items-center gap-1 text-2xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
+                                                        className="inline-flex items-center gap-1 text-2xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 transition-colors whitespace-nowrap"
                                                     >
                                                         <HelpCircle className="h-3 w-3 text-emerald-600" />
-                                                        <span>{exam.questions_count || (exam.questions ? exam.questions.length : 0)} câu hỏi</span>
+                                                        <span>{exam.questions_count ?? (exam.questions ? exam.questions.length : 0)} câu hỏi</span>
                                                         <Eye className="h-2.5 w-2.5 ml-0.5" />
                                                     </button>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
-                                                    <Award className="h-3.5 w-3.5 text-amber-500" />
-                                                    <span>{exam.max_score}</span>
+                                                <div className="text-xs space-y-0.5">
+                                                    <div className="flex items-center gap-1 font-black text-gray-900 text-sm whitespace-nowrap">
+                                                        <Award className="h-3.5 w-3.5 text-amber-500" />
+                                                        <span>{exam.max_score}đ</span>
+                                                    </div>
                                                     {exam.pass_score && (
-                                                        <span className="text-2xs font-normal text-gray-500">
-                                                            (Đạt: {exam.pass_score})
+                                                        <span className="text-2xs font-medium text-gray-500 whitespace-nowrap block">
+                                                            (Đạt: {exam.pass_score}đ)
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>
-                                                {getStatusBadge(exam.status)}
+                                            <td className="text-center">
+                                                <div className="inline-flex justify-center">
+                                                    {getStatusBadge(exam.status)}
+                                                </div>
                                             </td>
                                             {(can('exams.edit') || can('exams.delete')) && (
                                                 <td className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
+                                                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                                                         <Link href={`/exams/${exam.id}/practice`}>
                                                             <Button
                                                                 type="button"
