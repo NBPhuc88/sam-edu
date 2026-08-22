@@ -32,5 +32,7 @@ interface ChatServiceInterface
      */
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?array;
 
-    public function getClassWithCenter(int $classId): \App\Models\SchoolClass;
+    public function getClassWithCenter(int $classId, mixed $user = null): \App\Models\SchoolClass;
+
+    public function authorizeAccess(int $classId, mixed $user = null): \App\Models\SchoolClass;
 }

@@ -4,10 +4,14 @@ namespace App\Services\Chat;
 
 use App\Events\ClassChatMessagePinned;
 use App\Events\ClassChatMessageSent;
+use App\Models\Admin;
 use App\Models\ClassChatMessage;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\Teacher;
 use App\Repositories\Chat\ChatRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 
 class ChatService implements ChatServiceInterface
@@ -18,9 +22,63 @@ class ChatService implements ChatServiceInterface
     ) {
     }
 
-    public function getClassWithCenter(int $classId): SchoolClass
+    public function authorizeAccess(int $classId, mixed $user = null): SchoolClass
     {
-        return $this->schoolClassRepository->findWithCenter($classId);
+        $schoolClass = $this->schoolClassRepository->findWithCenter($classId);
+
+        if (! $user) {
+            $user = Auth::guard('admin')->user()
+                ?? Auth::guard('teacher')->user()
+                ?? Auth::guard('student')->user();
+        }
+
+        if (! $user) {
+            abort(403, 'Bạn chưa đăng nhập hoặc không có quyền truy cập nhóm chat này.');
+        }
+
+        if ($user instanceof Admin) {
+            if ($user->isSuperAdmin()) {
+                return $schoolClass;
+            }
+
+            $hasCenter = $user->centers()->where('centers.id', $schoolClass->center_id)->exists();
+
+            if (! $hasCenter) {
+                abort(403, 'Bạn không có quyền truy cập nhóm chat của lớp học thuộc trung tâm khác.');
+            }
+
+            return $schoolClass;
+        }
+
+        if ($user instanceof Teacher) {
+            $isAssigned = ($user->center_id === $schoolClass->center_id)
+                || $schoolClass->classSubjects()->where('teacher_id', $user->id)->exists()
+                || $schoolClass->classSessions()->where('teacher_id', $user->id)->exists();
+
+            if (! $isAssigned) {
+                abort(403, 'Bạn không có quyền truy cập nhóm chat của lớp học này.');
+            }
+
+            return $schoolClass;
+        }
+
+        if ($user instanceof Student) {
+            $isEnrolled = ($user->center_id === $schoolClass->center_id)
+                && $schoolClass->students()->where('students.id', $user->id)->exists();
+
+            if (! $isEnrolled) {
+                abort(403, 'Bạn không phải là học sinh của lớp học này.');
+            }
+
+            return $schoolClass;
+        }
+
+        abort(403, 'Không có quyền truy cập.');
+    }
+
+    public function getClassWithCenter(int $classId, mixed $user = null): SchoolClass
+    {
+        return $this->authorizeAccess($classId, $user);
     }
 
     /**

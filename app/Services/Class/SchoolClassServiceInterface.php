@@ -61,9 +61,9 @@ interface SchoolClassServiceInterface
      */
     public function deleteClass(int $id, ?Admin $admin = null): bool;
 
-    public function getClassWithCenter(int $classId): SchoolClass;
+    public function getClassWithCenter(int $classId, ?Admin $admin = null): SchoolClass;
 
-    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null): LengthAwarePaginator;
 
     /**
      * @param  int                  $classId

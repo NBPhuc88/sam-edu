@@ -22,7 +22,7 @@ class ChatController extends Controller
 
     public function index(Request $request, int $classId): InertiaResponse
     {
-        $schoolClass   = $this->chatService->getClassWithCenter($classId);
+        $schoolClass   = $this->chatService->authorizeAccess($classId);
         $currentUser   = $this->getCurrentUserSenderInfo();
         $messages      = $this->chatService->getRecentMessages($classId);
         $pinnedMessage = $this->chatService->getPinnedMessage($classId);
@@ -37,6 +37,8 @@ class ChatController extends Controller
 
     public function getMessages(int $classId): JsonResponse
     {
+        $this->chatService->authorizeAccess($classId);
+
         $messages      = $this->chatService->getRecentMessages($classId);
         $pinnedMessage = $this->chatService->getPinnedMessage($classId);
 
@@ -48,7 +50,7 @@ class ChatController extends Controller
 
     public function sendMessage(SendClassChatMessageRequest $request, int $classId): JsonResponse
     {
-        $schoolClass = $this->chatService->getClassWithCenter($classId);
+        $schoolClass = $this->chatService->authorizeAccess($classId);
         $senderInfo  = $this->getCurrentUserSenderInfo();
         $messageText = (string) $request->input('message');
 
@@ -62,6 +64,7 @@ class ChatController extends Controller
 
     public function togglePin(Request $request, int $classId, int $messageId): JsonResponse
     {
+        $this->chatService->authorizeAccess($classId);
         $senderInfo = $this->getCurrentUserSenderInfo();
 
         if (! in_array($senderInfo['sender_type'], ['admin', 'teacher'])) {

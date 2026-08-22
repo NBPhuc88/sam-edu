@@ -12,6 +12,9 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+use App\Models\Admin;
+use Illuminate\Support\Facades\Auth;
+
 class SchoolClassStudentController extends Controller
 {
     public function __construct(
@@ -20,9 +23,18 @@ class SchoolClassStudentController extends Controller
     ) {
     }
 
+    protected function getAuthAdmin(): ?Admin
+    {
+        /** @var Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
+
+        return $admin;
+    }
+
     public function index(FilterClassStudentRequest $request, int $classId): InertiaResponse
     {
-        $schoolClass = $this->schoolClassService->getClassWithCenter($classId);
+        $admin       = $this->getAuthAdmin();
+        $schoolClass = $this->schoolClassService->getClassWithCenter($classId, $admin);
 
         $search  = $request->input('search');
         $page    = $request->integer('page', 1);
@@ -32,7 +44,8 @@ class SchoolClassStudentController extends Controller
             $classId,
             is_string($search) ? $search : null,
             $perPage,
-            $page
+            $page,
+            $admin
         );
 
         return Inertia::render('Admin/Classes/Students', [
@@ -47,7 +60,8 @@ class SchoolClassStudentController extends Controller
 
     public function export(int $classId): StreamedResponse
     {
-        $schoolClass = $this->schoolClassService->getClassWithCenter($classId);
+        $admin       = $this->getAuthAdmin();
+        $schoolClass = $this->schoolClassService->getClassWithCenter($classId, $admin);
         $fileName    = 'danh_sach_hoc_sinh_lop_' . Str::slug($schoolClass->code) . '_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
@@ -74,6 +88,9 @@ class SchoolClassStudentController extends Controller
 
     public function import(ImportCsvRequest $request, int $classId): RedirectResponse
     {
+        $admin = $this->getAuthAdmin();
+        $this->schoolClassService->findClass($classId, $admin);
+
         $file = $request->file('file');
 
         if (! $file) {

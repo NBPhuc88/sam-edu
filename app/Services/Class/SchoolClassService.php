@@ -235,14 +235,20 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->delete($schoolClass->id);
     }
 
-    public function getClassWithCenter(int $classId): SchoolClass
+    public function getClassWithCenter(int $classId, ?Admin $admin = null): SchoolClass
     {
+        if ($admin !== null) {
+            $schoolClass = $this->findClass($classId, $admin);
+
+            return $this->schoolClassRepository->findWithCenter($schoolClass->id);
+        }
+
         return $this->schoolClassRepository->findWithCenter($classId);
     }
 
-    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null): LengthAwarePaginator
     {
-        $schoolClass = $this->schoolClassRepository->findWithCenter($classId);
+        $schoolClass = $this->getClassWithCenter($classId, $admin);
 
         return $this->schoolClassRepository->getPaginatedClassStudents($schoolClass, $search, $perPage, $page);
     }
