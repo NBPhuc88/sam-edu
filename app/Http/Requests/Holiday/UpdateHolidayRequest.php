@@ -15,6 +15,26 @@ class UpdateHolidayRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('date') && is_string($this->date)) {
+            $rawDate = trim($this->date);
+
+            // Chuẩn hóa nếu ngày được gửi lên dưới dạng d-m-Y hoặc d/m/Y
+            if (preg_match('/^(\d{1,2})[-|\/](\d{1,2})[-|\/](\d{4})$/', $rawDate, $matches)) {
+                $d = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                $m = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                $y = $matches[3];
+                $this->merge([
+                    'date' => "{$y}-{$m}-{$d}",
+                ]);
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

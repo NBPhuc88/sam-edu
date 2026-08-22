@@ -20,7 +20,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Pagination, { PaginationLink } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
-import { parseDate, WEEKDAY_NAMES } from '@/lib/date';
+import { parseDate, toISODateString, WEEKDAY_NAMES } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Holiday {
@@ -125,9 +125,9 @@ export default function Index({
         setEditingHoliday(holiday);
         setData({
             name: holiday.name,
-            date: holiday.date,
-            is_lunar: holiday.is_lunar,
-            is_recurring: holiday.is_recurring,
+            date: toISODateString(holiday.date),
+            is_lunar: Boolean(holiday.is_lunar),
+            is_recurring: Boolean(holiday.is_recurring),
             description: holiday.description || '',
         });
         setIsCreateModalOpen(true);
