@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import {
     Clock,
     FileCheck,
+    FileText,
     Send,
     Volume2,
 } from 'lucide-react';
@@ -215,7 +216,7 @@ export default function TakeExam({
                         return (
                             <div key={section.id || sIdx} className="space-y-4">
                                 {/* Section Header Card */}
-                                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-2">
+                                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs space-y-3">
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                             <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-black ${
@@ -239,9 +240,15 @@ export default function TakeExam({
                                     </div>
 
                                     {section.description && (
-                                        <p className="text-xs text-gray-600 bg-slate-50 p-3 rounded-xl border border-slate-200 whitespace-pre-wrap">
-                                            {section.description}
-                                        </p>
+                                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-1.5">
+                                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-900">
+                                                <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                                                <span>Mô Tả / Đoạn Văn Bản Hướng Dẫn Chung Cho Phần Này</span>
+                                            </div>
+                                            <div className="text-xs sm:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                                {section.description}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
 
@@ -262,8 +269,8 @@ export default function TakeExam({
                                                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-white font-mono text-xs font-bold">
                                                         {qGlobalNum}
                                                     </span>
-                                                    <span className="text-xs font-bold text-gray-700">
-                                                        Câu {qGlobalNum}
+                                                    <span className="text-xs sm:text-sm font-bold text-gray-900">
+                                                        {q.title || q.code || `Câu ${qGlobalNum}`}
                                                     </span>
                                                 </div>
                                                 <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -271,24 +278,17 @@ export default function TakeExam({
                                                 </span>
                                             </div>
 
-                                            {/* Question Title & Content */}
-                                            <div className="space-y-2">
-                                                {q.title && (
-                                                    <h3 className="text-base font-bold text-gray-900 leading-snug">
-                                                        {q.title}
-                                                    </h3>
+                                            {/* Question Content */}
+                                            <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                                {q.question_type === 'fill_in_blank' ? (
+                                                    <RenderFillInBlankQuestion
+                                                        content={q.content}
+                                                        userAnswers={currentVal || {}}
+                                                        onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
+                                                    />
+                                                ) : q.question_type === 'drag_drop_cloze' ? null : (
+                                                    q.content
                                                 )}
-                                                <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
-                                                    {q.question_type === 'fill_in_blank' ? (
-                                                        <RenderFillInBlankQuestion
-                                                            content={q.content}
-                                                            userAnswers={currentVal || {}}
-                                                            onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
-                                                        />
-                                                    ) : q.question_type === 'drag_drop_cloze' ? null : (
-                                                        q.content
-                                                    )}
-                                                </div>
                                             </div>
 
                                             {/* Audio / Image Attachment */}

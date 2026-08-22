@@ -746,9 +746,6 @@ export default function QuestionBuilder({
                                                             {secConfig.icon}
                                                             {secConfig.name}
                                                         </span>
-                                                        <span className="text-3xs text-gray-400 font-medium" title="Kỹ năng đã cố định cho phần này. Để đổi kỹ năng, vui lòng xóa và thêm phần mới.">
-                                                            (Cố định)
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>

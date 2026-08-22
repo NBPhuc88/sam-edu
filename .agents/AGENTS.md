@@ -246,4 +246,11 @@ Mọi chỉnh sửa mã nguồn trước khi hoàn tất CẦN đảm bảo các
 > - Các câu hỏi trong cùng một phần thi (`Section`) phải được hiển thị tập trung trên cùng một trang, không cuộn dài toàn bộ bài thi.
 > - Bắt buộc sử dụng `<ExamSectionTabs />` ở đầu trang và `<ExamSectionPagination />` ở chân trang để chuyển phần mượt mà.
 
+> [!IMPORTANT]
+> **4. HIỂN THỊ ĐỊNH DANH CÂU HỎI TRONG HEADER (QUESTION HEADER IDENTIFICATION RULE)**:
+> - Định danh câu hỏi (`q.title || q.code`, ví dụ `Q04_BLANK`) và Tên phần thi (`section.title`) được hiển thị gọn gàng, tinh tế ngay trên **Thanh Header của thẻ câu hỏi** cùng với số thứ tự và điểm số.
+> - Thân thẻ câu hỏi trực tiếp hiển thị **Nội dung câu hỏi / Đề bài** (`content`) và **Vùng tương tác đáp án**, tránh tạo thêm các thẻ tiêu đề `<h3>` trùng lặp bên trong.
+
+
+
 

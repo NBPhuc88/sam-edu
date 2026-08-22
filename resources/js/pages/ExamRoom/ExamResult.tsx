@@ -5,6 +5,7 @@ import {
     XCircle,
     Clock,
     FileCheck,
+    FileText,
     ArrowLeft,
     HelpCircle,
     Volume2,
@@ -299,8 +300,14 @@ export default function ExamResult({
                         </div>
 
                         {activeSection.description && (
-                            <div className="p-3.5 bg-slate-50 rounded-xl text-xs font-medium text-gray-700 whitespace-pre-wrap leading-relaxed border border-slate-200">
-                                {activeSection.description}
+                            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-1.5">
+                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-900">
+                                    <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                                    <span>Mô Tả / Đoạn Văn Bản Hướng Dẫn Chung Cho Phần Này</span>
+                                </div>
+                                <div className="text-xs sm:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {activeSection.description}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -343,8 +350,11 @@ export default function ExamResult({
                                         >
                                             {isManual && !submission.is_graded ? '✍️' : isCorrect ? '✓' : '✗'}
                                         </span>
-                                        <span className="text-xs font-bold text-gray-800">
-                                            Câu hỏi {qIdx + 1} (Điểm: {grade.score_earned || 0} / {q.score}đ)
+                                        <span className="text-xs sm:text-sm font-bold text-gray-900">
+                                            {q.title || q.code || `Câu ${qIdx + 1}`}
+                                        </span>
+                                        <span className="text-2xs font-bold text-gray-600">
+                                            (Điểm: {grade.score_earned || 0} / {q.score}đ)
                                         </span>
                                     </div>
                                     <span
@@ -364,19 +374,12 @@ export default function ExamResult({
                                     </span>
                                 </div>
 
-                                {/* Question Title & Content */}
-                                <div className="space-y-1.5">
-                                    {q.title && (
-                                        <h4 className="text-sm font-bold text-gray-900 leading-snug">
-                                            {q.title}
-                                        </h4>
-                                    )}
-                                    {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
-                                        <p className="text-xs font-semibold text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                            {q.content}
-                                        </p>
-                                    )}
-                                </div>
+                                {/* Question Content */}
+                                {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                        {q.content}
+                                    </p>
+                                )}
 
                                 {/* Audio / Image */}
                                 {q.audio_url && (

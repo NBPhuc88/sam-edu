@@ -6,6 +6,7 @@ import {
     Award,
     CheckCircle2,
     Clock,
+    FileText,
     Flag,
     HelpCircle,
     Home,
@@ -819,8 +820,14 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             </div>
 
                             {activeSec.description && (
-                                <div className="p-3.5 bg-slate-50 rounded-xl text-xs font-medium text-gray-700 whitespace-pre-wrap leading-relaxed border border-slate-200">
-                                    {activeSec.description}
+                                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-1.5">
+                                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-900">
+                                        <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                                        <span>Mô Tả / Đoạn Văn Bản Hướng Dẫn Chung Cho Phần Này</span>
+                                    </div>
+                                    <div className="text-xs sm:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                        {activeSec.description}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -854,8 +861,8 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                                 >
                                                     {idx + 1}
                                                 </span>
-                                                <span className="font-mono text-xs font-bold text-gray-500">
-                                                    {gq.code || `Q${idx + 1}`}
+                                                <span className="text-xs sm:text-sm font-bold text-gray-900">
+                                                    {gq.title || gq.code || `Câu ${idx + 1}`}
                                                 </span>
                                             </div>
 
@@ -878,19 +885,12 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                             </div>
                                         </div>
 
-                                        {/* Title & Content */}
-                                        <div className="space-y-1.5">
-                                            {gq.title && (
-                                                <h4 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
-                                                    {gq.title}
-                                                </h4>
-                                            )}
-                                            {gq.question_type !== 'fill_in_blank' && gq.question_type !== 'drag_drop_cloze' && (
-                                                <div className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                                    {gq.content}
-                                                </div>
-                                            )}
-                                        </div>
+                                        {/* Content */}
+                                        {gq.question_type !== 'fill_in_blank' && gq.question_type !== 'drag_drop_cloze' && (
+                                            <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                                {gq.content}
+                                            </div>
+                                        )}
 
                                         {/* Audio Track */}
                                         {gq.audio_url && (
@@ -1078,6 +1078,19 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                         </div>
                     )}
 
+                    {/* Passage / Section Description Card if available */}
+                    {currentSection?.description && (
+                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 sm:p-5 space-y-1.5 shadow-2xs">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-900">
+                                <FileText className="h-4 w-4 text-indigo-600 shrink-0" />
+                                <span>Mô Tả / Đoạn Văn Bản Hướng Dẫn Chung Cho Phần Này</span>
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                {currentSection.description}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Active Question Box */}
                     {currentQuestion ? (
                         <Card className="p-6 sm:p-8 border-gray-200 bg-white shadow-xs space-y-6">
@@ -1089,14 +1102,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                     </span>
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-mono text-xs font-bold text-gray-500">
-                                                {currentQuestion.code || `Câu ${allQuestions.findIndex((q) => q.id === currentQuestion.id) + 1}`}
+                                            <span className="text-xs sm:text-sm font-bold text-gray-900">
+                                                {currentQuestion.title || currentQuestion.code || `Câu ${allQuestions.findIndex((q) => q.id === currentQuestion.id) + 1}`}
                                             </span>
-                                            {currentSection && (
-                                                <span className="text-2xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                                    {currentSection.title}
-                                                </span>
-                                            )}
                                             <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
                                                 {currentQuestion.score} điểm
                                             </span>
@@ -1139,20 +1147,13 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 </div>
                             )}
 
-                            {/* Question Title & Content */}
-                            <div className="space-y-2">
-                                {currentQuestion.title && (
-                                    <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug">
-                                        {currentQuestion.title}
-                                    </h3>
-                                )}
-                                <div className="text-sm sm:text-base font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                    {currentQuestion.question_type === 'fill_in_blank'
-                                        ? renderFillInBlankContent(currentQuestion.content)
-                                        : currentQuestion.question_type === 'drag_drop_cloze'
-                                        ? null
-                                        : currentQuestion.content}
-                                </div>
+                            {/* Question Content */}
+                            <div className="text-sm sm:text-base font-semibold text-gray-900 leading-relaxed whitespace-pre-wrap">
+                                {currentQuestion.question_type === 'fill_in_blank'
+                                    ? renderFillInBlankContent(currentQuestion.content)
+                                    : currentQuestion.question_type === 'drag_drop_cloze'
+                                    ? null
+                                    : currentQuestion.content}
                             </div>
 
                             {/* Interactive Input Form */}

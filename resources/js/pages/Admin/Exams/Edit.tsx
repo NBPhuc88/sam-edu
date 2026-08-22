@@ -135,6 +135,7 @@ export default function ExamEdit({
                 questions: (sec.questions || []).map((q, qIdx) => ({
                     id: q.id || undefined,
                     code: (q.code || '').trim() || null,
+                    title: (q.title || '').trim() || null,
                     question_type: q.question_type || 'single_choice',
                     skill: sec.skill || 'reading',
                     content: q.content || '',

@@ -114,6 +114,7 @@ export default function ExamCreate({
                 order_index: sIdx,
                 questions: (sec.questions || []).map((q, qIdx) => ({
                     code: q.code || null,
+                    title: (q.title || '').trim() || null,
                     question_type: q.question_type,
                     skill: sec.skill,
                     content: q.content,
