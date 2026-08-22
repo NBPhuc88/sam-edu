@@ -9,6 +9,7 @@ import {
     Layers,
     Calculator,
     Award,
+    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -31,27 +32,33 @@ export default function ExamCreate({
 }: Props) {
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
-    const userCenterId = auth?.user?.center_id;
 
     // Exam Metadata State
-    const [centerId, setCenterId] = useState<string>(
-        !isSuperAdmin && userCenterId ? String(userCenterId) : (centers.length > 0 ? String(centers[0].id) : ''),
-    );
+    const [centerId, setCenterId] = useState<string>(auth?.user?.center_id ? String(auth.user.center_id) : '');
     const [subjectId, setSubjectId] = useState<string>('');
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
     const [examType, setExamType] = useState<'general' | 'ielts' | 'hsk' | 'toeic' | 'custom'>('general');
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
-    const [passScore, setPassScore] = useState<number | string>(5);
+    const [passScore, setPassScore] = useState<number | string>('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
     const [shuffleOptions, setShuffleOptions] = useState(false);
     const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
     const [isPractice, setIsPractice] = useState(false);
     const [description, setDescription] = useState('');
-    const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>('draft');
+    const [status, setStatus] = useState<'draft' | 'published'>('draft');
 
-    // Sections State (Initialize empty - user will add sections dynamically)
-    const [sections, setSections] = useState<ExamSectionData[]>([]);
+    // Sections State
+    const [sections, setSections] = useState<ExamSectionData[]>([
+        {
+            tempId: 'sec_1',
+            title: 'Phần 1: Kỹ Năng Đọc Hiểu',
+            description: null,
+            skill: 'reading',
+            order_index: 0,
+            questions: [],
+        },
+    ]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,7 +66,7 @@ export default function ExamCreate({
         ? subjects.filter((s) => String(s.center_id) === String(centerId))
         : subjects;
 
-    // Total questions & total score across all sections
+    // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
     const totalScore = sections.reduce(
         (sum, sec) => sum + (sec.questions || []).reduce((qSum, q) => qSum + (Number(q.score) || 0), 0),
@@ -72,38 +79,104 @@ export default function ExamCreate({
         e.preventDefault();
         setIsSubmitting(true);
 
-        router.post(
-            '/exams',
-            {
-                center_id: centerId ? Number(centerId) : null,
-                subject_id: subjectId ? Number(subjectId) : null,
-                name: name.trim(),
-                code: code.trim() || null,
-                exam_type: examType,
-                duration_minutes: durationMinutes ? Number(durationMinutes) : null,
-                max_score: calculatedMaxScore,
-                pass_score: passScore ? Number(passScore) : null,
-                shuffle_questions: shuffleQuestions,
-                shuffle_options: shuffleOptions,
-                max_attempts: maxAttempts ? Number(maxAttempts) : 1,
-                is_practice: isPractice,
-                description: description.trim() || null,
-                status,
-                sections: sections.map((sec, sIdx) => ({
-                    ...sec,
-                    order_index: sIdx,
-                    questions: (sec.questions || []).map((q, qIdx) => ({
-                        ...q,
-                        skill: sec.skill,
-                        order_index: qIdx,
-                        score: Number(q.score) || 1,
-                    })),
+        const payload = {
+            center_id: centerId ? Number(centerId) : null,
+            subject_id: subjectId ? Number(subjectId) : null,
+            name: name.trim(),
+            code: code.trim() || null,
+            exam_type: examType,
+            duration_minutes: durationMinutes ? Number(durationMinutes) : null,
+            max_score: calculatedMaxScore,
+            pass_score: passScore ? Number(passScore) : null,
+            shuffle_questions: shuffleQuestions,
+            shuffle_options: shuffleOptions,
+            max_attempts: maxAttempts ? Number(maxAttempts) : 1,
+            is_practice: isPractice,
+            description: description.trim() || null,
+            status,
+            sections: sections.map((sec, sIdx) => ({
+                title: sec.title,
+                description: sec.description || null,
+                skill: sec.skill,
+                order_index: sIdx,
+                questions: (sec.questions || []).map((q, qIdx) => ({
+                    code: q.code || null,
+                    question_type: q.question_type,
+                    skill: sec.skill,
+                    content: q.content,
+                    image_url: q.image_url || null,
+                    audio_url: q.audio_url || null,
+                    score: Number(q.score) || 1,
+                    options: q.options ?? null,
+                    correct_answer: q.correct_answer ?? null,
+                    explanation: q.explanation || null,
+                    metadata: q.metadata ?? null,
+                    order_index: qIdx,
                 })),
-            },
-            {
-                onFinish: () => setIsSubmitting(false),
-            },
-        );
+            })),
+        };
+
+        router.post('/exams', payload as any, {
+            onFinish: () => setIsSubmitting(false),
+        });
+    };
+
+    const formatValidationError = (key: string, msg: string): string => {
+        if (
+            !msg.includes('sections.') &&
+            !msg.includes('questions.') &&
+            !msg.toLowerCase().includes('the selected') &&
+            !msg.toLowerCase().includes('is invalid') &&
+            !msg.toLowerCase().includes('field is required')
+        ) {
+            return msg;
+        }
+
+        const qMatch = key.match(/^sections\.(\d+)\.questions\.(\d+)\.(.+)$/);
+        if (qMatch) {
+            const secNum = parseInt(qMatch[1], 10) + 1;
+            const qNum = parseInt(qMatch[2], 10) + 1;
+            const field = qMatch[3];
+            const fieldMap: Record<string, string> = {
+                question_type: 'Kiểu câu hỏi',
+                content: 'Nội dung câu hỏi',
+                score: 'Điểm',
+                options: 'Đáp án lựa chọn',
+                correct_answer: 'Đáp án đúng',
+                code: 'Mã câu hỏi',
+                skill: 'Kỹ năng',
+            };
+            const fieldLabel = fieldMap[field] || field;
+            return `${fieldLabel} của câu số ${qNum} phần ${secNum} không hợp lệ.`;
+        }
+
+        const sMatch = key.match(/^sections\.(\d+)\.(.+)$/);
+        if (sMatch) {
+            const secNum = parseInt(sMatch[1], 10) + 1;
+            const field = sMatch[2];
+            const fieldMap: Record<string, string> = {
+                title: 'Tiêu đề',
+                skill: 'Kỹ năng',
+                description: 'Mô tả',
+            };
+            const fieldLabel = fieldMap[field] || field;
+            return `${fieldLabel} của phần ${secNum} không hợp lệ.`;
+        }
+
+        if (key === 'exam_type') {
+            return 'Loại bài kiểm tra đã chọn không hợp lệ.';
+        }
+        if (key === 'center_id') {
+            return 'Vui lòng chọn Trung tâm đào tạo.';
+        }
+        if (key === 'name') {
+            return 'Vui lòng nhập tên bài kiểm tra.';
+        }
+        if (key === 'code') {
+            return 'Mã bài kiểm tra không hợp lệ hoặc đã tồn tại.';
+        }
+
+        return msg;
     };
 
     return (
@@ -135,6 +208,21 @@ export default function ExamCreate({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Error Alert Banner */}
+                    {Object.keys(errors).length > 0 && (
+                        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-xs">
+                            <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="font-semibold">Vui lòng kiểm tra các thông tin chưa hợp lệ:</p>
+                                <ul className="list-inside list-disc text-xs space-y-1">
+                                    {Object.entries(errors).map(([key, msg]) => (
+                                        <li key={key}>{formatValidationError(key, msg)}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Card 1: Exam Metadata */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4">

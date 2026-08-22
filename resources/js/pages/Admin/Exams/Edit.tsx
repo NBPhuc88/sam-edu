@@ -144,6 +144,65 @@ export default function ExamEdit({
         );
     };
 
+    const formatValidationError = (key: string, msg: string): string => {
+        // If message is already clean Vietnamese without dot notation and english keywords
+        if (
+            !msg.includes('sections.') &&
+            !msg.includes('questions.') &&
+            !msg.toLowerCase().includes('the selected') &&
+            !msg.toLowerCase().includes('is invalid') &&
+            !msg.toLowerCase().includes('field is required')
+        ) {
+            return msg;
+        }
+
+        const qMatch = key.match(/^sections\.(\d+)\.questions\.(\d+)\.(.+)$/);
+        if (qMatch) {
+            const secNum = parseInt(qMatch[1], 10) + 1;
+            const qNum = parseInt(qMatch[2], 10) + 1;
+            const field = qMatch[3];
+            const fieldMap: Record<string, string> = {
+                question_type: 'Kiểu câu hỏi',
+                content: 'Nội dung câu hỏi',
+                score: 'Điểm',
+                options: 'Đáp án lựa chọn',
+                correct_answer: 'Đáp án đúng',
+                code: 'Mã câu hỏi',
+                skill: 'Kỹ năng',
+            };
+            const fieldLabel = fieldMap[field] || field;
+            return `${fieldLabel} của câu số ${qNum} phần ${secNum} không hợp lệ.`;
+        }
+
+        const sMatch = key.match(/^sections\.(\d+)\.(.+)$/);
+        if (sMatch) {
+            const secNum = parseInt(sMatch[1], 10) + 1;
+            const field = sMatch[2];
+            const fieldMap: Record<string, string> = {
+                title: 'Tiêu đề',
+                skill: 'Kỹ năng',
+                description: 'Mô tả',
+            };
+            const fieldLabel = fieldMap[field] || field;
+            return `${fieldLabel} của phần ${secNum} không hợp lệ.`;
+        }
+
+        if (key === 'exam_type') {
+            return 'Loại bài kiểm tra đã chọn không hợp lệ.';
+        }
+        if (key === 'center_id') {
+            return 'Vui lòng chọn Trung tâm đào tạo.';
+        }
+        if (key === 'name') {
+            return 'Vui lòng nhập tên bài kiểm tra.';
+        }
+        if (key === 'code') {
+            return 'Mã bài kiểm tra không hợp lệ hoặc đã tồn tại.';
+        }
+
+        return msg;
+    };
+
     return (
         <AppLayout title={`Chỉnh Sửa Đề Thi: ${exam.name} - Kho Đề Thi - Hệ Thống Giáo Dục Sam`}>
             <Head title={`Chỉnh Sửa: ${exam.name} - Kho Đề Thi`} />
@@ -179,9 +238,9 @@ export default function ExamEdit({
                             <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
                             <div className="space-y-1">
                                 <p className="font-semibold">Vui lòng kiểm tra các thông tin chưa hợp lệ:</p>
-                                <ul className="list-inside list-disc text-xs space-y-0.5">
+                                <ul className="list-inside list-disc text-xs space-y-1">
                                     {Object.entries(errors).map(([key, msg]) => (
-                                        <li key={key}>{msg}</li>
+                                        <li key={key}>{formatValidationError(key, msg)}</li>
                                     ))}
                                 </ul>
                             </div>
