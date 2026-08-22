@@ -1,12 +1,15 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
+    CheckCircle2,
     Clock,
+    CloudUpload,
     FileCheck,
     FileText,
     Send,
     Volume2,
 } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -25,6 +28,17 @@ interface Props {
     submission: ClassExamSubmission;
     serverTime: string;
     student: Student;
+}
+
+function getCsrfToken(): string {
+    if (typeof document === 'undefined') return '';
+    const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+    if (meta?.content) return meta.content;
+
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+
+    return '';
 }
 
 export default function TakeExam({
@@ -46,31 +60,156 @@ export default function TakeExam({
         });
     });
 
-    // Answers State: { [question_id]: answer_value }
+    // ─── Cache Key & TTL Configuration (Thời gian làm bài + 20 phút) ───
+    const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
+    const totalSecondsAllocated = durationMinutes * 60;
+    const ttlMs = (durationMinutes + 20) * 60 * 1000;
+    const storageKey = `sam_exam_draft_${classExam.id}_${submission.id}_${student.id}`;
+
+    // Clean expired drafts from other old exams in LocalStorage
+    const cleanExpiredDrafts = () => {
+        try {
+            if (typeof window === 'undefined' || !window.localStorage) return;
+            const now = Date.now();
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('sam_exam_draft_')) {
+                    const raw = localStorage.getItem(key);
+                    if (raw) {
+                        try {
+                            const parsed = JSON.parse(raw);
+                            if (parsed && parsed.expires_at && now > parsed.expires_at) {
+                                localStorage.removeItem(key);
+                            }
+                        } catch {
+                            // ignore parsing error
+                        }
+                    }
+                }
+            }
+        } catch {
+            // ignore localStorage access error
+        }
+    };
+
+    // Answers State: { [question_id]: answer_value } with Cache Hydration
     const [answers, setAnswers] = useState<Record<number | string, any>>(() => {
-        return submission.answers || {};
+        cleanExpiredDrafts();
+        let initialAnswers = submission.answers || {};
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const cachedRaw = localStorage.getItem(storageKey);
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw);
+                    const now = Date.now();
+                    // Check if cache is still within valid TTL (Thời gian làm bài + 20p)
+                    if (cached && cached.expires_at && now <= cached.expires_at && cached.answers) {
+                        initialAnswers = { ...initialAnswers, ...cached.answers };
+                    } else {
+                        localStorage.removeItem(storageKey);
+                    }
+                }
+            }
+        } catch {
+            // ignore
+        }
+        return initialAnswers;
     });
+
+    // Auto-Save Status: 'saved' | 'saving' | 'offline'
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'offline'>('saved');
+    const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isFirstMount = useRef(true);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
-    // ─── Countdown Timer Setup ───
-    const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
-    const totalSecondsAllocated = durationMinutes * 60;
+    // ─── Countdown Timer Setup With Server Clock Drift Sync ───
+    const startedAtTimestamp = submission.started_at
+        ? parseDate(submission.started_at)?.getTime() || new Date(submission.started_at).getTime()
+        : Date.now();
 
-    const startedAt = submission.started_at
-        ? parseDate(submission.started_at)?.getTime() || new Date().getTime()
-        : new Date().getTime();
+    const serverOffsetMs = serverTime
+        ? (parseDate(serverTime)?.getTime() || new Date(serverTime).getTime()) - Date.now()
+        : 0;
 
-    const calculateRemainingSeconds = () => {
-        const now = new Date().getTime();
-        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+    const calculateRemainingSeconds = useCallback(() => {
+        const effectiveNow = Date.now() + serverOffsetMs;
+        const elapsedSeconds = Math.max(0, Math.floor((effectiveNow - startedAtTimestamp) / 1000));
         return Math.max(0, totalSecondsAllocated - elapsedSeconds);
-    };
+    }, [serverOffsetMs, startedAtTimestamp, totalSecondsAllocated]);
 
     const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingSeconds);
     const hasAutoSubmittedRef = useRef(false);
 
+    // ─── Background Server AutoSave Function ───
+    const syncToServer = useCallback(async (currentAnswers: Record<number | string, any>) => {
+        setAutoSaveStatus('saving');
+        try {
+            const token = getCsrfToken();
+            const res = await fetch(`/class-exams/${classExam.id}/autosave/${submission.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-XSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ answers: currentAnswers }),
+            });
+
+            if (res.ok) {
+                setAutoSaveStatus('saved');
+            } else {
+                setAutoSaveStatus('offline');
+            }
+        } catch {
+            setAutoSaveStatus('offline');
+        }
+    }, [classExam.id, submission.id]);
+
+    // ─── Dual Persistence Effect: LocalStorage (0ms) + Server Debounce (2.5s) ───
+    useEffect(() => {
+        const expiresAtMs = startedAtTimestamp + ttlMs;
+
+        // 1. Immediately persist to LocalStorage
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.setItem(storageKey, JSON.stringify({
+                    answers,
+                    started_at: submission.started_at,
+                    expires_at: expiresAtMs,
+                    saved_at: Date.now(),
+                }));
+            }
+        } catch {
+            // storage full or disabled
+        }
+
+        // Avoid triggering background autosave on initial load mount
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
+
+        // 2. Debounce sync to Server (2.5s)
+        setAutoSaveStatus('saving');
+        if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+        }
+
+        autoSaveTimeoutRef.current = setTimeout(() => {
+            syncToServer(answers);
+        }, 2500);
+
+        return () => {
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
+        };
+    }, [answers, storageKey, syncToServer, startedAtTimestamp, submission.started_at, ttlMs]);
+
+    // ─── Timer Interval ───
     useEffect(() => {
         const interval = window.setInterval(() => {
             const rem = calculateRemainingSeconds();
@@ -84,9 +223,21 @@ export default function TakeExam({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [calculateRemainingSeconds]);
+
+    // Clear draft cache upon final submission
+    const clearDraftStorage = () => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.removeItem(storageKey);
+            }
+        } catch {
+            // ignore
+        }
+    };
 
     const handleAutoSubmitTimeout = () => {
+        clearDraftStorage();
         setIsSubmitting(true);
         router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
             answers,
@@ -95,6 +246,7 @@ export default function TakeExam({
     };
 
     const handleManualSubmit = () => {
+        clearDraftStorage();
         setIsSubmitting(true);
         router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
             answers,
@@ -159,9 +311,31 @@ export default function TakeExam({
                             <h1 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-1">
                                 {classExam.title}
                             </h1>
-                            <p className="text-2xs text-gray-500 font-medium">
-                                Thí sinh: <strong className="text-gray-800">{student.full_name}</strong> ({student.student_code || student.username})
-                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-2xs text-gray-500 font-medium">
+                                    Thí sinh: <strong className="text-gray-800">{student.full_name}</strong> ({student.student_code || student.username})
+                                </p>
+                                
+                                {/* Auto-Save Status Indicator */}
+                                {autoSaveStatus === 'saving' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-2xs font-semibold animate-pulse">
+                                        <CloudUpload className="h-3 w-3 text-amber-600 animate-bounce" />
+                                        Đang lưu...
+                                    </span>
+                                )}
+                                {autoSaveStatus === 'saved' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-2xs font-medium">
+                                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                        Đã tự động lưu
+                                    </span>
+                                )}
+                                {autoSaveStatus === 'offline' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-2xs font-medium">
+                                        <AlertTriangle className="h-3 w-3 text-rose-600" />
+                                        Đã lưu máy (Mất mạng)
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 

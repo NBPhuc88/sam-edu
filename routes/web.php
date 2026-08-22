@@ -257,6 +257,7 @@ Route::middleware(['auth.any', 'auto.permission'])->group(function () {
     Route::get('/class-exams/{id}/room', [\App\Http\Controllers\OnlineExamController::class, 'showLobby'])->name('online-exam.lobby');
     Route::post('/class-exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'startExam'])->name('online-exam.start');
     Route::get('/class-exams/{id}/take/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'takeExam'])->name('online-exam.take');
+    Route::post('/class-exams/{id}/autosave/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'autoSave'])->name('online-exam.autosave');
     Route::post('/class-exams/{id}/submit/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'submitExam'])->name('online-exam.submit');
     Route::get('/class-exams/{id}/results/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'showResult'])->name('online-exam.result');
     Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio');

@@ -144,6 +144,30 @@ class OnlineExamController extends Controller
     }
 
     /**
+     * Tự động lưu tiến độ đáp án của học sinh khi đang làm bài thi.
+     * @param int     $id
+     * @param int     $submissionId
+     * @param Request $request
+     */
+    public function autoSave(int $id, int $submissionId, Request $request): JsonResponse
+    {
+        /** @var Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if (! $student) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $answers = $request->input('answers', []);
+        $saved   = $this->onlineExamService->autoSaveProgress($submissionId, $answers, $student);
+
+        return response()->json([
+            'success'  => $saved,
+            'saved_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    /**
      * Nộp bài thi.
      * @param int     $id
      * @param int     $submissionId

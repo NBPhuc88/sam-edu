@@ -63,6 +63,15 @@ interface OnlineExamServiceInterface
     public function streamSpeakingAudio(string $path): BinaryFileResponse;
 
     /**
+     * Tự động lưu tiến độ đáp án tạm thời khi học sinh đang làm bài thi.
+     *
+     * @param int                  $submissionId
+     * @param array<string, mixed> $answers
+     * @param Student              $student
+     */
+    public function autoSaveProgress(int $submissionId, array $answers, Student $student): bool;
+
+    /**
      * Xem kết quả bài thi chi tiết và đáp án.
      * @param int      $submissionId
      * @param ?Student $student

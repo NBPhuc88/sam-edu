@@ -142,6 +142,30 @@ class OnlineExamService implements OnlineExamServiceInterface
         ]);
     }
 
+    public function autoSaveProgress(int $submissionId, array $answers, Student $student): bool
+    {
+        $submission = $this->classExamRepository->findSubmissionForGrading($submissionId);
+
+        if (! $submission) {
+            throw new ModelNotFoundException("Không tìm thấy bài làm thi #{$submissionId}");
+        }
+
+        if ($submission->student_id !== $student->id) {
+            throw ValidationException::withMessages(['unauthorized' => 'Bạn không có quyền lưu bài làm này.']);
+        }
+
+        // Chỉ cho phép autosave khi bài thi đang làm
+        if ($submission->status !== 'in_progress') {
+            return false;
+        }
+
+        $this->classExamRepository->updateSubmission($submission, [
+            'answers' => $answers,
+        ]);
+
+        return true;
+    }
+
     public function submitExamAttempt(int $submissionId, array $answers, Student $student, bool $isTimeout = false): ClassExamSubmission
     {
         $submission = $this->classExamRepository->findSubmissionForGrading($submissionId);
