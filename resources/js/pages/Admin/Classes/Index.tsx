@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import { formatDate } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -255,13 +256,12 @@ return;
                             <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
                                     <th className="px-6 py-4">Lớp Học</th>
-                                    <th className="px-6 py-4">Trung Tâm</th>
+                                    {isSuperAdmin && <th className="px-6 py-4">Trung Tâm</th>}
                                     <th className="px-6 py-4">Môn Học & Giáo Viên Phụ Trách</th>
-                                    <th className="px-6 py-4">Sĩ Số</th>
-                                    <th className="px-6 py-4">Thời Gian</th>
-                                    <th className="px-6 py-4">Trạng Thái</th>
+                                    <th className="px-6 py-4 whitespace-nowrap">Sĩ Số</th>
+                                    <th className="px-6 py-4 whitespace-nowrap">Trạng Thái</th>
                                     {(can('classes.edit') || can('classes.delete')) && (
-                                        <th className="px-6 py-4 text-right">Thao Tác</th>
+                                        <th className="px-6 py-4 text-right whitespace-nowrap">Thao Tác</th>
                                     )}
                                 </tr>
                             </thead>
@@ -273,56 +273,68 @@ return;
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
                                             <td className="px-6 py-4">
-                                                <div className="max-w-xs space-y-0.5">
+                                                <div className="min-w-[200px] max-w-xs space-y-1">
                                                     <TruncatedText
                                                         text={cls.name}
                                                         maxLines={2}
                                                         className="font-bold text-gray-900"
                                                     />
-                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                        Mã: {cls.code}
+                                                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                                                        <span className="font-mono text-gray-400">
+                                                            {cls.code}
+                                                        </span>
+                                                        {(cls.start_date || cls.end_date) && (
+                                                            <span className="inline-flex items-center gap-1 text-gray-500 font-mono text-[11px]">
+                                                                <Calendar className="h-3 w-3 text-gray-400 shrink-0" />
+                                                                {formatDate(cls.start_date, '/')}
+                                                                {cls.end_date ? ` - ${formatDate(cls.end_date, '/')}` : ''}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     {cls.description && (
                                                         <TruncatedText
                                                             text={cls.description}
                                                             maxLines={1}
-                                                            className="mt-1 text-xs text-gray-500"
+                                                            className="text-xs text-gray-500"
                                                         />
                                                     )}
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-[200px] space-y-0.5">
-                                                    <TruncatedText
-                                                        text={cls.center?.name || 'N/A'}
-                                                        maxLines={1}
-                                                        className="font-semibold text-gray-800"
-                                                    />
-                                                    {cls.center?.code && (
-                                                        <div className="font-mono text-xs text-gray-400">
-                                                            {cls.center.code}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
+                                            {isSuperAdmin && (
+                                                <td className="px-6 py-4">
+                                                    <div className="max-w-[200px] space-y-0.5">
+                                                        <TruncatedText
+                                                            text={cls.center?.name || 'N/A'}
+                                                            maxLines={1}
+                                                            className="font-semibold text-gray-800"
+                                                        />
+                                                        {cls.center?.code && (
+                                                            <div className="font-mono text-xs text-gray-400">
+                                                                {cls.center.code}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
 
                                             <td className="px-6 py-4">
                                                 {cls.class_subjects && cls.class_subjects.length > 0 ? (
-                                                    <div className="flex flex-col gap-1.5 max-w-[240px]">
+                                                    <div className="flex flex-wrap gap-1.5 max-w-sm">
                                                         {cls.class_subjects.map((cs) => {
                                                             const subjectName = cs.subject?.name || 'Môn học';
                                                             const teacherName = cs.teacher?.full_name ? `GV ${cs.teacher.full_name}` : 'Chưa gán';
                                                             return (
                                                                 <Tooltip
                                                                     key={cs.id}
-                                                                    content={`${subjectName}: ${teacherName}`}
+                                                                    content={`${subjectName} • ${teacherName}`}
                                                                 >
-                                                                    <div className="flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs truncate">
-                                                                        <span className="font-bold text-gray-800 truncate">
-                                                                            {subjectName}:
+                                                                    <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-slate-50/80 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-slate-100 hover:border-gray-300">
+                                                                        <span className="font-semibold text-gray-800 truncate max-w-[140px]">
+                                                                            {subjectName}
                                                                         </span>
-                                                                        <span className="text-emerald-700 font-medium truncate">
+                                                                        <span className="text-gray-300">•</span>
+                                                                        <span className="text-emerald-700 truncate max-w-[120px]">
                                                                             {teacherName}
                                                                         </span>
                                                                     </div>
@@ -331,11 +343,11 @@ return;
                                                         })}
                                                     </div>
                                                 ) : (
-                                                    <span className="italic text-gray-400">Chưa gán môn & giáo viên</span>
+                                                    <span className="italic text-xs text-gray-400">Chưa gán môn & giáo viên</span>
                                                 )}
                                             </td>
 
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-1.5 font-semibold text-gray-800">
                                                     <Users className="h-4 w-4 text-gray-400" />
                                                     <span>{cls.students_count || 0}</span>
@@ -347,76 +359,63 @@ return;
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-4 text-xs text-gray-600">
-                                                {cls.start_date || cls.end_date ? (
-                                                    <div>
-                                                        <div>Từ: {cls.start_date || '...'}</div>
-                                                        <div>Đến: {cls.end_date || '...'}</div>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400">-</span>
-                                                )}
-                                            </td>
-
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 {getStatusBadge(cls.status)}
                                             </td>
 
                                             {(can('classes.edit') || can('classes.delete')) && (
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Link href={`/classes/${cls.id}/schedule`}>
-                                                            <Button
-                                                                variant="secondary"
-                                                                size="sm"
-                                                                icon={<Calendar className="h-4 w-4 text-emerald-600" />}
-                                                                title="Xem thời khóa biểu lớp học"
+                                                <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Tooltip content="Xem thời khóa biểu lớp học">
+                                                            <Link
+                                                                href={`/classes/${cls.id}/schedule`}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shadow-2xs"
                                                             >
-                                                                Lịch Học
-                                                            </Button>
-                                                        </Link>
-                                                        <Link href={`/classes/${cls.id}/students`}>
-                                                            <Button
-                                                                variant="secondary"
-                                                                size="sm"
-                                                                icon={<Users className="h-4 w-4" />}
-                                                                title="Danh sách học sinh"
-                                                            >
-                                                                Học Sinh
-                                                            </Button>
-                                                        </Link>
-                                                        <Link href={`/classes/${cls.id}/chat`}>
-                                                            <Button
-                                                                variant="secondary"
-                                                                size="sm"
-                                                                icon={<MessageSquare className="h-4 w-4 text-blue-600" />}
-                                                                title="Nhóm chat lớp"
-                                                            >
-                                                                Chat
-                                                            </Button>
-                                                        </Link>
-                                                        {can('classes.edit') && (
-                                                            <Link href={`/classes/${cls.id}/edit`}>
-                                                                <Button
-                                                                    variant="edit"
-                                                                    size="sm"
-                                                                    icon={<Edit2 className="h-4 w-4" />}
-                                                                    title="Sửa lớp học"
-                                                                >
-                                                                    Sửa
-                                                                </Button>
+                                                                <Calendar className="h-4 w-4" />
                                                             </Link>
+                                                        </Tooltip>
+                                                        <Tooltip content="Danh sách học sinh trong lớp">
+                                                            <Link
+                                                                href={`/classes/${cls.id}/students`}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-2xs"
+                                                            >
+                                                                <Users className="h-4 w-4" />
+                                                            </Link>
+                                                        </Tooltip>
+                                                        <Tooltip content="Nhóm chat trao đổi lớp học">
+                                                            <Link
+                                                                href={`/classes/${cls.id}/chat`}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors shadow-2xs"
+                                                            >
+                                                                <MessageSquare className="h-4 w-4" />
+                                                            </Link>
+                                                        </Tooltip>
+                                                        {can('classes.edit') && (
+                                                            <Tooltip content="Chỉnh sửa lớp học">
+                                                                <Link href={`/classes/${cls.id}/edit`}>
+                                                                    <Button
+                                                                        variant="edit"
+                                                                        size="sm"
+                                                                        icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                        className="h-8 px-2.5 text-xs"
+                                                                    >
+                                                                        Sửa
+                                                                    </Button>
+                                                                </Link>
+                                                            </Tooltip>
                                                         )}
                                                         {can('classes.delete') && (
-                                                            <Button
-                                                                variant="danger"
-                                                                size="sm"
-                                                                icon={<Trash2 className="h-4 w-4" />}
-                                                                onClick={() => openDeleteModal(cls)}
-                                                                title="Xóa lớp học"
-                                                            >
-                                                                Xóa
-                                                            </Button>
+                                                            <Tooltip content="Xóa lớp học">
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                    icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                    onClick={() => openDeleteModal(cls)}
+                                                                    className="h-8 px-2.5 text-xs"
+                                                                >
+                                                                    Xóa
+                                                                </Button>
+                                                            </Tooltip>
                                                         )}
                                                     </div>
                                                 </td>
@@ -426,7 +425,7 @@ return;
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={can('classes.edit') || can('classes.delete') ? 7 : 6}
+                                            colSpan={(isSuperAdmin ? 1 : 0) + 4 + (can('classes.edit') || can('classes.delete') ? 1 : 0)}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">
