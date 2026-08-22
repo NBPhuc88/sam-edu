@@ -99,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Holiday\HolidayServiceInterface::class, \App\Services\Holiday\HolidayService::class);
         $this->app->bind(\App\Services\Grading\GradingServiceInterface::class, \App\Services\Grading\GradingService::class);
         $this->app->bind(\App\Services\ExamType\ExamTypeServiceInterface::class, \App\Services\ExamType\ExamTypeService::class);
+        $this->app->bind(\App\Services\Permission\PermissionServiceInterface::class, \App\Services\Permission\PermissionService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
@@ -126,6 +127,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Holiday\HolidayRepositoryInterface::class, \App\Repositories\Holiday\HolidayRepository::class);
         $this->app->bind(\App\Repositories\Grading\GradingRepositoryInterface::class, \App\Repositories\Grading\GradingRepository::class);
         $this->app->bind(\App\Repositories\ExamType\ExamTypeRepositoryInterface::class, \App\Repositories\ExamType\ExamTypeRepository::class);
+        $this->app->bind(\App\Repositories\Permission\PermissionRepositoryInterface::class, \App\Repositories\Permission\PermissionRepository::class);
     }
 
     /**

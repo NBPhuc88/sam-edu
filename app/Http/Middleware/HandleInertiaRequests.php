@@ -82,6 +82,13 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        $permissions = [];
+        if ($user && $role) {
+            $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+            $adminRole = $role === 'admin' ? ($user->role ?? 'admin') : null;
+            $permissions = $permissionService->getPermissionsForUser($role, $adminRole);
+        }
+
         $routeName = $request->route()?->getName();
 
         if (! $routeName || ! in_array($routeName, ['home', 'services', 'about', 'contact'], true)) {
@@ -102,8 +109,9 @@ class HandleInertiaRequests extends Middleware
             'name'               => config('app.name'),
             'subscription_plans' => SubscriptionPlan::orderBy('price', 'asc')->get(),
             'auth'               => [
-                'user' => $userData,
-                'role' => $role,
+                'user'        => $userData,
+                'role'        => $role,
+                'permissions' => $permissions,
             ],
             'contactInfo' => [
                 'company_name' => SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam'),

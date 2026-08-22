@@ -52,11 +52,19 @@ Route::get('/force-change-password', [PasswordResetController::class, 'showForce
 Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update');
 
 // ─── Protected Routes (Bất kỳ guard nào: admin | center | teacher | student) ──
-Route::middleware('auth.any')->group(function () {
+Route::middleware(['auth.any', 'auto.permission'])->group(function () {
 
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
+
+    // System Permissions Management Routes (Super Admin)
+    Route::prefix('permissions')->name('permissions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PermissionController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\PermissionController::class, 'update'])->name('edit');
+        Route::post('/reset', [\App\Http\Controllers\PermissionController::class, 'reset'])->name('reset');
+        Route::post('/sync', [\App\Http\Controllers\PermissionController::class, 'sync'])->name('sync');
+    });
 
     // SaaS Subscription Plans Configuration Routes (Super Admin)
     Route::prefix('plans')->name('plans.')->group(function () {

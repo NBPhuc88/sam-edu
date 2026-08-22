@@ -1,0 +1,123 @@
+<?php
+
+use App\Models\Admin;
+use App\Models\Center;
+use App\Models\Permission;
+use App\Models\Student;
+use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+});
+
+test('permissions are seeded successfully with granular crud codes', function () {
+    expect(Permission::count())->toBeGreaterThan(50);
+    expect(Permission::where('code', 'students.index')->exists())->toBeTrue();
+    expect(Permission::where('code', 'students.create')->exists())->toBeTrue();
+    expect(Permission::where('code', 'students.edit')->exists())->toBeTrue();
+    expect(Permission::where('code', 'students.delete')->exists())->toBeTrue();
+});
+
+test('super admin can access permissions management page', function () {
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_perm_test',
+        'full_name'  => 'Super Admin Perm Test',
+        'email'      => 'superadmin_perm@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000088',
+    ]);
+
+    $response = $this->actingAs($superAdmin, 'admin')->get(route('permissions.index'));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->component('Admin/Permissions/Index')
+            ->has('modules')
+            ->has('roleGrants')
+            ->has('roles')
+    );
+});
+
+test('super admin can update role permissions', function () {
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_update_perm',
+        'full_name'  => 'Super Admin Update',
+        'email'      => 'superadmin_upd@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000087',
+    ]);
+
+    $response = $this->actingAs($superAdmin, 'admin')->post(route('permissions.edit'), [
+        'role'        => 'teacher',
+        'permissions' => ['dashboard.index', 'students.index'],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+
+    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeTrue();
+    expect($permissionService->roleHasPermission('teacher', 'exams.create'))->toBeFalse();
+});
+
+test('student accessing unauthorized route receives 404', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000086',
+        'name'   => 'Trung Tâm Student Test',
+        'email'  => 'center86@test.com',
+        'phone'  => '0901234586',
+        'status' => 'active',
+    ]);
+
+    $student = Student::create([
+        'student_code' => 'HS000000086',
+        'first_name'   => 'Học Sinh',
+        'last_name'    => 'Test',
+        'full_name'    => 'Học Sinh Test Quyền',
+        'username'     => 'student_perm_test',
+        'password'     => 'password123',
+        'center_id'    => $center->id,
+        'status'       => 1,
+    ]);
+
+    // Học sinh không có quyền xem trang giáo viên teachers.index → nhận 404
+    $response = $this->actingAs($student, 'student')->get(route('teachers.index'));
+
+    $response->assertStatus(404);
+});
+
+test('teacher can access allowed route but receives 404 on disallowed create route', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000085',
+        'name'   => 'Trung Tâm Teacher Test',
+        'email'  => 'center85@test.com',
+        'phone'  => '0901234585',
+        'status' => 'active',
+    ]);
+
+    $teacher = Teacher::create([
+        'teacher_code' => 'GV000000085',
+        'first_name'   => 'Giáo Viên',
+        'last_name'    => 'Test',
+        'full_name'    => 'Giáo Viên Test Quyền',
+        'username'     => 'teacher_perm_test',
+        'password'     => 'password123',
+        'center_id'    => $center->id,
+        'status'       => 'active',
+    ]);
+
+    // Giáo viên có quyền xem students.index
+    $allowedResponse = $this->actingAs($teacher, 'teacher')->get(route('students.index'));
+    $allowedResponse->assertOk();
+
+    // Giáo viên mặc định không có quyền tạo mới học sinh students.create → nhận 404
+    $disallowedResponse = $this->actingAs($teacher, 'teacher')->get(route('students.create'));
+    $disallowedResponse->assertStatus(404);
+});

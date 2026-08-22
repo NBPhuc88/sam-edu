@@ -185,8 +185,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     open,
     onClose,
 }) => {
-    const { url } = usePage();
-    const navItems = getNavigationItems(role, adminRole);
+    const { url, props } = usePage<any>();
+    const permissions: string[] = props.auth?.permissions || [];
+    const navItems = getNavigationItems(role, adminRole, permissions);
 
     return (
         <>
