@@ -191,3 +191,59 @@ Mọi chỉnh sửa mã nguồn trước khi hoàn tất CẦN đảm bảo các
 - **PHP Formatting**: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 vendor/bin/pint <files>`
 - **Backend Tests**: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan test --compact`
 
+---
+
+## 9. Quy Chuẩn Kiến Trúc Component Toàn Dự Án (3-Layer Component Architecture)
+
+> [!IMPORTANT]
+> **NGHIÊM CẤM VIẾT CODE GIAO DIỆN INLINE TRÙNG LẶP (DRY RULE)**:
+> Mọi mẫu thiết kế hoặc thành phần giao diện xuất hiện từ 2 màn hình trở lên bắt buộc phải sử dụng hoặc tách thành component dùng chung theo đúng phân tầng kiến trúc sau:
+
+### 1. Tầng 1: Base UI Kit (`resources/js/components/ui/`)
+- Chứa các component nguyên tử độc lập nghiệp vụ:
+  - `<Button variant="success|edit|danger|secondary" />`
+  - `<Card />`, `<Modal />`, `<ConfirmDialog />`, `<Badge />`, `<Toast />`, `<Tooltip />`
+  - `<Input />`, `<DatePicker />`, `<CustomTimePicker />`, `<ScrollableSelect />`, `<MediaUploader />`
+  - `<Pagination />`, `<DataTable />`, `<CustomPieChart />`
+
+### 2. Tầng 2: Common Pattern Components (`resources/js/components/common/`)
+- Đóng gói các khối giao diện chuẩn hóa dùng cho tất cả các trang CRUD Quản trị:
+  - **`PageHeader.tsx`**: Tiêu đề trang, breadcrumb, subtitle và nhóm nút thao tác (Thêm mới, Xuất dữ liệu).
+  - **`FilterBar.tsx`**: Thanh tìm kiếm từ khóa, bộ lọc dropdown, nút Đặt lại bộ lọc (`onReset`).
+  - **`StatMetricCard.tsx`**: Thẻ thống kê chỉ số số lượng / tài chính kèm icon và badge % tăng giảm.
+  - **`StatusBadge.tsx`**: Huy hiệu trạng thái tự động ánh xạ theo [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/web/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
+  - **`EmptyState.tsx`**: Khung hiển thị danh sách rỗng kèm icon minh họa và nút CTA hành động.
+  - **`FormFooterActions.tsx`**: Thanh chân form chứa nút "Hủy" (`variant="secondary"`) và "Lưu/Cập nhật" (`variant="success"`/`variant="edit"`).
+
+### 3. Tầng 3: Domain Module Components (`resources/js/pages/[Module]/components/`)
+- Chứa các component chuyên sâu phục vụ nghiệp vụ của từng Module cụ thể (Đề thi, Điểm danh, Lịch học, Học phí).
+
+---
+
+## 10. Quy Chuẩn Hệ Thống Đề Thi & Bài Thi (Exam System Conventions)
+
+> [!IMPORTANT]
+> **1. QUY TẮC BỘ 3 COMPONENT CHO MỖI DẠNG CÂU HỎI (TRIAD ARCHITECTURE RULE)**:
+> Mỗi dạng câu hỏi trong hệ thống bắt buộc phải được tổ chức thành đủ 3 component độc lập và có tính module hóa cao:
+> 1. **Soạn thảo (Admin Question Builder)**: `Admin/Exams/QuestionEditors/[Type]Editor.tsx`
+> 2. **Làm bài thi (Interactive Runner)**: `ExamRoom/components/runners/[Type]Runner.tsx` (hoặc routing qua `QuestionRunnerRouter.tsx`)
+> 3. **Xem lại kết quả & Lời giải (Interactive Reviewer)**: `ExamRoom/components/reviews/[Type]Review.tsx` (routing qua `QuestionReviewDetail.tsx`)
+
+> [!IMPORTANT]
+> **2. QUY CHUẨN MÀU SẮC KHI XEM LẠI KẾT QUẢ THI (EXAM REVIEW COLOR CODING)**:
+> - **Đáp án đúng / Lựa chọn chính xác**: Viền và nền **Màu Xanh Lá Cây** (`border-2 border-emerald-500 bg-emerald-50 text-emerald-950 font-bold`) kèm huy hiệu `✓ Chính xác`.
+> - **Đáp án học sinh chọn sai**: Viền và nền **Màu Đỏ** (`border-2 border-rose-400 bg-rose-50 text-rose-950 font-bold`) kèm huy hiệu `✗ Chưa đúng` và ghi chú đáp án đúng chuẩn màu xanh.
+> - **Dạng câu Ghép Nối (Matching)**: Hiển thị 2 cột như lúc làm bài:
+>   - **Dây nối Xanh liền** (`#10b981`): Nối các cặp học sinh đã ghép đúng.
+>   - **Dây nối Đỏ liền** (`#ef4444`): Nối các cặp học sinh đã ghép sai.
+>   - **Dây nối Xanh nét đứt** (`#10b981`, dashed): Chỉ dẫn cặp nối đúng chuẩn của đề thi.
+> - **Dạng câu Sắp Xếp (Ordering)**:
+>   - Đúng 100%: Chỉ hiển thị duy nhất **1 hàng màu Xanh Lá Cây**.
+>   - Có lỗi sai: Hiển thị rõ **2 khối riêng biệt** (Khối 1: `✗ Thứ tự bạn đã chọn` có vị trí sai màu đỏ; Khối 2: `✓ Thứ tự đúng chuẩn của đề` màu xanh lá cây).
+
+> [!IMPORTANT]
+> **3. QUY CHUẨN PHÂN TRANG THEO PHẦN THI (SECTION-BASED PAGINATION RULE)**:
+> - Các câu hỏi trong cùng một phần thi (`Section`) phải được hiển thị tập trung trên cùng một trang, không cuộn dài toàn bộ bài thi.
+> - Bắt buộc sử dụng `<ExamSectionTabs />` ở đầu trang và `<ExamSectionPagination />` ở chân trang để chuyển phần mượt mà.
+
+
