@@ -10,24 +10,12 @@ use App\Repositories\Holiday\HolidayRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class HolidayService implements HolidayServiceInterface
 {
     public function __construct(
         protected HolidayRepositoryInterface $holidayRepository
     ) {
-    }
-
-    /**
-     * Chỉ Super Admin mới có quyền quản trị ngày lễ
-     * @param ?Admin $admin
-     */
-    protected function authorizeSuperAdmin(?Admin $admin): void
-    {
-        if (! $admin || ! $admin->isSuperAdmin()) {
-            throw new AccessDeniedHttpException('Chỉ Quản trị viên cấp cao (Super Admin) mới có quyền quản lý Ngày Lễ.');
-        }
     }
 
     /**
@@ -40,8 +28,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function getPaginatedHolidays(?int $year = null, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null): LengthAwarePaginator
     {
-        $this->authorizeSuperAdmin($admin);
-
         return $this->holidayRepository->paginate($year, $search, $perPage, $page);
     }
 
@@ -86,8 +72,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function findHoliday(int $id, ?Admin $admin = null): ?Holiday
     {
-        $this->authorizeSuperAdmin($admin);
-
         return $this->holidayRepository->find($id);
     }
 
@@ -98,8 +82,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function createHoliday(array $data, ?Admin $admin = null): Holiday
     {
-        $this->authorizeSuperAdmin($admin);
-
         $dateCarbon   = Carbon::parse($data['date']);
         $data['year'] = (int) $dateCarbon->year;
 
@@ -119,8 +101,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function updateHoliday(int $id, array $data, ?Admin $admin = null): Holiday
     {
-        $this->authorizeSuperAdmin($admin);
-
         $holiday = $this->holidayRepository->find($id);
 
         if (! $holiday) {
@@ -149,8 +129,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function deleteHoliday(int $id, ?Admin $admin = null): bool
     {
-        $this->authorizeSuperAdmin($admin);
-
         $holiday = $this->holidayRepository->find($id);
 
         if (! $holiday) {
@@ -178,10 +156,6 @@ class HolidayService implements HolidayServiceInterface
      */
     public function seedDefaultHolidaysForYear(int $year, ?Admin $admin = null, bool $checkAuth = true): int
     {
-        if ($checkAuth) {
-            $this->authorizeSuperAdmin($admin);
-        }
-
         $defaults = VietnamHolidayHelper::getHolidaysForYear($year);
         $now      = now();
         $records  = [];

@@ -31,4 +31,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return null;
+            }
+
+            $statusCode = $e->getStatusCode();
+
+            if (in_array($statusCode, [403, 404, 500, 503], true)) {
+                $message = $e->getMessage();
+
+                return \Inertia\Inertia::render('Error', [
+                    'status'  => $statusCode,
+                    'message' => $message ?: null,
+                ])->toResponse($request)->setStatusCode($statusCode);
+            }
+
+            return null;
+        });
     })->create();
