@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -255,28 +256,38 @@ return;
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900">
-                                                    {sub.name}
-                                                </div>
-                                                <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                    Mã: {sub.code}
-                                                </div>
-                                                {sub.description && (
-                                                    <div className="mt-1 line-clamp-1 text-xs text-gray-500">
-                                                        {sub.description}
+                                                <div className="max-w-xs space-y-0.5">
+                                                    <TruncatedText
+                                                        text={sub.name}
+                                                        maxLines={2}
+                                                        className="font-bold text-gray-900"
+                                                    />
+                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
+                                                        Mã: {sub.code}
                                                     </div>
-                                                )}
+                                                    {sub.description && (
+                                                        <TruncatedText
+                                                            text={sub.description}
+                                                            maxLines={1}
+                                                            className="mt-1 text-xs text-gray-500"
+                                                        />
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-800">
-                                                    {sub.center?.name || 'N/A'}
+                                                <div className="max-w-[200px] space-y-0.5">
+                                                    <TruncatedText
+                                                        text={sub.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="font-semibold text-gray-800"
+                                                    />
+                                                    {sub.center?.code && (
+                                                        <div className="font-mono text-xs text-gray-400">
+                                                            {sub.center.code}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {sub.center?.code && (
-                                                    <div className="font-mono text-xs text-gray-400">
-                                                        {sub.center.code}
-                                                    </div>
-                                                )}
                                             </td>
 
                                             <td className="px-6 py-4 font-semibold text-gray-800">

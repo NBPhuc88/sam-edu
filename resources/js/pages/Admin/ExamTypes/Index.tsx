@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -284,24 +285,30 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
 
                                                 {/* Name & Description */}
                                                 <td>
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-bold text-gray-900">
-                                                            {type.name}
-                                                        </div>
+                                                    <div className="max-w-xs space-y-0.5">
+                                                        <TruncatedText
+                                                            text={type.name}
+                                                            maxLines={2}
+                                                            className="font-bold text-gray-900"
+                                                        />
                                                         {type.description && (
-                                                            <div className="text-2xs text-gray-500 line-clamp-1">
-                                                                {type.description}
-                                                            </div>
+                                                            <TruncatedText
+                                                                text={type.description}
+                                                                maxLines={1}
+                                                                className="text-2xs text-gray-500"
+                                                            />
                                                         )}
                                                     </div>
                                                 </td>
 
                                                 {/* Center */}
                                                 <td>
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 border border-emerald-200">
-                                                        <Building2 className="w-3.5 h-3.5" />
-                                                        {type.center?.name || `Trung tâm #${type.center_id}`}
-                                                    </span>
+                                                    <Tooltip content={type.center?.name || `Trung tâm #${type.center_id}`}>
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 border border-emerald-200 max-w-[200px] truncate">
+                                                            <Building2 className="w-3.5 h-3.5 shrink-0" />
+                                                            <span className="truncate">{type.center?.name || `Trung tâm #${type.center_id}`}</span>
+                                                        </span>
+                                                    </Tooltip>
                                                 </td>
 
                                                 {/* Exams count */}

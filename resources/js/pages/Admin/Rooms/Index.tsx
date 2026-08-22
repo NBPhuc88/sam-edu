@@ -21,6 +21,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -399,14 +400,22 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="font-bold text-gray-900">
-                                                    {room.name}
-                                                </span>
+                                                <div className="max-w-[200px]">
+                                                    <TruncatedText
+                                                        text={room.name}
+                                                        maxLines={1}
+                                                        className="font-bold text-gray-900"
+                                                    />
+                                                </div>
                                             </td>
                                             <td>
-                                                <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                                <div className="flex items-center gap-1.5 text-xs text-gray-600 max-w-[200px]">
                                                     <Building2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                                    <span>{room.center?.name || 'N/A'}</span>
+                                                    <TruncatedText
+                                                        text={room.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="truncate"
+                                                    />
                                                 </div>
                                             </td>
                                             <td>
@@ -440,9 +449,13 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                             </td>
                                             <td>
                                                 {room.location ? (
-                                                    <div className="flex items-center gap-1 text-xs text-gray-700">
+                                                    <div className="flex items-center gap-1 text-xs text-gray-700 max-w-[160px]">
                                                         <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                                                        <span>{room.location}</span>
+                                                        <TruncatedText
+                                                            text={room.location}
+                                                            maxLines={1}
+                                                            className="truncate"
+                                                        />
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-gray-400 italic">Chưa ghi chú</span>

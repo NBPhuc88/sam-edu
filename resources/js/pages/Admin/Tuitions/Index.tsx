@@ -20,6 +20,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
+import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -425,26 +426,33 @@ return;
                                                 className="transition-colors hover:bg-slate-50/80"
                                             >
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900">
-                                                        {item.student?.full_name ?? 'N/A'}
-                                                    </div>
-                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                        {item.student?.student_code ?? ''}
-                                                        {item.student?.phone && ` • ${item.student.phone}`}
+                                                    <div className="max-w-xs">
+                                                        <TruncatedText
+                                                            text={item.student?.full_name ?? 'N/A'}
+                                                            maxLines={1}
+                                                            className="font-bold text-gray-900"
+                                                        />
+                                                        <div className="mt-0.5 font-mono text-xs text-gray-400">
+                                                            {item.student?.student_code ?? ''}
+                                                            {item.student?.phone && ` • ${item.student.phone}`}
+                                                        </div>
                                                     </div>
                                                 </td>
 
                                                 <td className="px-6 py-4">
-                                                    <div className="font-semibold text-gray-800">
-                                                        {item.school_class?.name ?? 'Chưa gán lớp'}
-                                                    </div>
-                                                    <div className="mt-0.5 text-xs text-gray-500">
-                                                        {item.title || item.school_class?.code || ''}
-                                                        {item.center && (
-                                                            <span className="ml-1 text-gray-400">
-                                                                ({item.center.name})
-                                                            </span>
-                                                        )}
+                                                    <div className="max-w-[220px]">
+                                                        <TruncatedText
+                                                            text={item.school_class?.name ?? 'Chưa gán lớp'}
+                                                            maxLines={1}
+                                                            className="font-semibold text-gray-800"
+                                                        />
+                                                        <div className="mt-0.5 text-xs text-gray-500">
+                                                            <TruncatedText
+                                                                text={`${item.title || item.school_class?.code || ''}${item.center ? ` (${item.center.name})` : ''}`}
+                                                                maxLines={1}
+                                                                className="text-xs text-gray-500"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </td>
 

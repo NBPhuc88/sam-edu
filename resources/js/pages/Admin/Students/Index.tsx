@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -421,23 +422,28 @@ return;
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
                                                         {student.full_name?.charAt(0) || 'H'}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-bold text-gray-900">
-                                                            {student.full_name}
-                                                        </div>
+                                                    <div className="max-w-xs">
+                                                        <TruncatedText
+                                                            text={student.full_name}
+                                                            maxLines={1}
+                                                            className="font-bold text-gray-900"
+                                                        />
                                                         <div className="font-mono text-xs text-gray-400">
                                                             Mã: {student.student_code} • {getGenderLabel(student.gender)}
                                                         </div>
                                                         {student.classes && student.classes.length > 0 && (
                                                             <div className="mt-1 flex flex-wrap gap-1">
                                                                 {student.classes.map((cls) => (
-                                                                    <span
+                                                                    <Tooltip
                                                                         key={cls.id}
-                                                                        className="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-                                                                        title={`Lớp: ${cls.name} (${cls.code})`}
+                                                                        content={`Lớp: ${cls.name} (${cls.code})`}
                                                                     >
-                                                                        {cls.name}
-                                                                    </span>
+                                                                        <span
+                                                                            className="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 max-w-[120px] truncate"
+                                                                        >
+                                                                            {cls.name}
+                                                                        </span>
+                                                                    </Tooltip>
                                                                 ))}
                                                             </div>
                                                         )}
@@ -453,7 +459,7 @@ return;
                                                         <span className="text-xs italic text-gray-400">Chưa cấp tài khoản</span>
                                                     )}
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-gray-500">
+                                                <div className="mt-0.5 text-xs text-gray-500 max-w-[200px] truncate">
                                                     {student.phone && <span>{student.phone}</span>}
                                                     {student.email && (
                                                         <span>{student.phone ? ' • ' : ''}{student.email}</span>
@@ -463,15 +469,12 @@ return;
 
                                             <td className="px-6 py-4">
                                                 {student.parent_name ? (
-                                                    <div>
-                                                        <div className="font-semibold text-gray-800">
-                                                            {student.parent_name}
-                                                            {student.parent_relationship && (
-                                                                <span className="ml-1 text-xs font-normal text-gray-400">
-                                                                    ({student.parent_relationship})
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                    <div className="max-w-[180px]">
+                                                        <TruncatedText
+                                                            text={`${student.parent_name}${student.parent_relationship ? ` (${student.parent_relationship})` : ''}`}
+                                                            maxLines={1}
+                                                            className="font-semibold text-gray-800"
+                                                        />
                                                         {student.parent_phone && (
                                                             <div className="font-mono text-xs text-gray-500">
                                                                 {student.parent_phone}
@@ -484,14 +487,18 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-800">
-                                                    {student.center?.name || 'N/A'}
+                                                <div className="max-w-[180px]">
+                                                    <TruncatedText
+                                                        text={student.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="font-semibold text-gray-800"
+                                                    />
+                                                    {student.center?.code && (
+                                                        <div className="font-mono text-xs text-gray-400">
+                                                            {student.center.code}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {student.center?.code && (
-                                                    <div className="font-mono text-xs text-gray-400">
-                                                        {student.center.code}
-                                                    </div>
-                                                )}
                                             </td>
 
                                             <td className="px-6 py-4 font-mono text-gray-600">

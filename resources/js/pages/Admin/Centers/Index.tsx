@@ -7,6 +7,7 @@ import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import Pagination from '../../../components/ui/Pagination';
+import { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 import { usePermission } from '@/hooks/usePermission';
@@ -152,11 +153,15 @@ return;
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900">
-                                                    {center.name}
-                                                </div>
-                                                <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                    {center.code}
+                                                <div className="max-w-xs space-y-0.5">
+                                                    <TruncatedText
+                                                        text={center.name}
+                                                        maxLines={2}
+                                                        className="font-bold text-gray-900"
+                                                    />
+                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
+                                                        {center.code}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -164,8 +169,10 @@ return;
                                                     {center.phone ||
                                                         'Chưa cập nhật'}
                                                 </div>
-                                                <div className="text-xs text-gray-400">
-                                                    {center.email || 'N/A'}
+                                                <div className="text-xs text-gray-400 max-w-[180px] truncate">
+                                                    <TruncatedText
+                                                        text={center.email || 'N/A'}
+                                                    />
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">

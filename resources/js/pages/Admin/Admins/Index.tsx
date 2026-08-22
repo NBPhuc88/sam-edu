@@ -14,6 +14,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
+import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import { usePermission } from '@/hooks/usePermission';
 
@@ -250,10 +251,12 @@ return;
                                                             .charAt(0)
                                                             .toUpperCase()}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-bold text-gray-900">
-                                                            {admin.full_name}
-                                                        </div>
+                                                    <div className="max-w-xs">
+                                                        <TruncatedText
+                                                            text={admin.full_name}
+                                                            maxLines={1}
+                                                            className="font-bold text-gray-900"
+                                                        />
                                                         <div className="text-xs font-mono text-gray-400">
                                                             @{admin.username} ·{' '}
                                                             {admin.admin_code}
@@ -276,7 +279,7 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="text-sm font-semibold text-gray-900">
+                                                <div className="text-sm font-semibold text-gray-900 max-w-[200px] truncate">
                                                     {admin.email ?? '---'}
                                                 </div>
                                                 <div className="text-xs text-gray-400">
@@ -295,9 +298,11 @@ return;
                                                         Chưa phân công
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                                                        {admin.centers[0].name} ({admin.centers[0].code})
-                                                    </span>
+                                                    <Tooltip content={`${admin.centers[0].name} (${admin.centers[0].code})`}>
+                                                        <span className="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-800 max-w-[200px] truncate">
+                                                            {admin.centers[0].name} ({admin.centers[0].code})
+                                                        </span>
+                                                    </Tooltip>
                                                 )}
                                             </td>
 

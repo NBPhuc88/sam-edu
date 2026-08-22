@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -357,10 +358,12 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800">
                                                         {teacher.full_name?.charAt(0) || 'G'}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-bold text-gray-900">
-                                                            {teacher.full_name}
-                                                        </div>
+                                                    <div className="max-w-xs">
+                                                        <TruncatedText
+                                                            text={teacher.full_name}
+                                                            maxLines={1}
+                                                            className="font-bold text-gray-900"
+                                                        />
                                                         <div className="font-mono text-xs text-gray-400">
                                                             Mã: {teacher.teacher_code} • {getGenderLabel(teacher.gender)}
                                                         </div>
@@ -372,7 +375,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                                 <div className="font-mono font-medium text-gray-800">
                                                     @{teacher.username}
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-gray-500">
+                                                <div className="mt-0.5 text-xs text-gray-500 max-w-[200px] truncate">
                                                     {teacher.phone && <span>{teacher.phone}</span>}
                                                     {teacher.email && (
                                                         <span>{teacher.phone ? ' • ' : ''}{teacher.email}</span>
@@ -381,21 +384,27 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-800">
-                                                    {teacher.center?.name || 'N/A'}
+                                                <div className="max-w-[180px]">
+                                                    <TruncatedText
+                                                        text={teacher.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="font-semibold text-gray-800"
+                                                    />
+                                                    {teacher.center?.code && (
+                                                        <div className="font-mono text-xs text-gray-400">
+                                                            {teacher.center.code}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {teacher.center?.code && (
-                                                    <div className="font-mono text-xs text-gray-400">
-                                                        {teacher.center.code}
-                                                    </div>
-                                                )}
                                             </td>
 
                                             <td className="px-6 py-4">
                                                 {teacher.specialization ? (
-                                                    <span className="inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                        {teacher.specialization}
-                                                    </span>
+                                                    <Tooltip content={teacher.specialization}>
+                                                        <span className="inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 max-w-[160px] truncate">
+                                                            {teacher.specialization}
+                                                        </span>
+                                                    </Tooltip>
                                                 ) : (
                                                     <span className="italic text-gray-400">Chưa thiết lập</span>
                                                 )}

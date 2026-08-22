@@ -22,6 +22,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from './AssignExamModal';
 import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
@@ -430,10 +431,12 @@ export default function ClassExamIndex({
                                                     {rowNum}
                                                 </td>
                                                 <td>
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-bold text-gray-900 text-sm">
-                                                            {item.title}
-                                                        </div>
+                                                    <div className="max-w-xs space-y-0.5">
+                                                        <TruncatedText
+                                                            text={item.title}
+                                                            maxLines={2}
+                                                            className="font-bold text-gray-900 text-sm"
+                                                        />
                                                         <div className="font-mono text-2xs text-gray-500">
                                                             Mã: {item.code || `CE${item.id}`}
                                                         </div>
@@ -445,26 +448,38 @@ export default function ClassExamIndex({
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div className="space-y-0.5">
+                                                    <div className="max-w-[200px] space-y-0.5">
                                                         <div className="font-bold text-gray-800 text-xs flex items-center gap-1.5">
-                                                            <Users className="h-3.5 w-3.5 text-emerald-600" />
-                                                            {cls?.name || 'N/A'}
+                                                            <Users className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                                            <TruncatedText
+                                                                text={cls?.name || 'N/A'}
+                                                                maxLines={1}
+                                                                className="font-bold text-gray-800 text-xs"
+                                                            />
                                                         </div>
-                                                        <div className="text-2xs text-gray-500">
-                                                            {cls?.center?.name || ''}
-                                                        </div>
+                                                        <TruncatedText
+                                                            text={cls?.center?.name || ''}
+                                                            maxLines={1}
+                                                            className="text-2xs text-gray-500"
+                                                        />
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div className="space-y-0.5">
+                                                    <div className="max-w-[200px] space-y-0.5">
                                                         <div className="font-semibold text-blue-900 text-xs flex items-center gap-1">
-                                                            <BookOpen className="h-3 w-3 text-blue-600" />
-                                                            {ex?.name || 'Đề thi không xác định'}
+                                                            <BookOpen className="h-3 w-3 text-blue-600 shrink-0" />
+                                                            <TruncatedText
+                                                                text={ex?.name || 'Đề thi không xác định'}
+                                                                maxLines={1}
+                                                                className="font-semibold text-blue-900 text-xs"
+                                                            />
                                                         </div>
                                                         {ex?.subject && (
-                                                            <span className="text-3xs bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">
-                                                                {ex.subject.name}
-                                                            </span>
+                                                            <Tooltip content={`Môn học: ${ex.subject.name}`}>
+                                                                <span className="text-3xs bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 inline-block max-w-[150px] truncate">
+                                                                    {ex.subject.name}
+                                                                </span>
+                                                            </Tooltip>
                                                         )}
                                                     </div>
                                                 </td>

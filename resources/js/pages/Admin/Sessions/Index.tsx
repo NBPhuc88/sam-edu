@@ -18,6 +18,7 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate, formatTime } from '@/lib/date';
 
@@ -527,22 +528,28 @@ export default function SessionIndex({
                                                         </span>
                                                     </div>
                                                     {session.topic && (
-                                                        <div className="mt-1 max-w-xs truncate text-xs text-gray-500" title={session.topic}>
-                                                            📝 {session.topic}
+                                                        <div className="mt-1 max-w-xs">
+                                                            <TruncatedText
+                                                                text={`📝 ${session.topic}`}
+                                                                maxLines={1}
+                                                                className="text-xs text-gray-500"
+                                                            />
                                                         </div>
                                                     )}
                                                 </td>
 
                                                 {/* Subject */}
                                                 <td className="px-4 py-3.5">
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 max-w-[200px]">
                                                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
                                                             <BookOpen className="h-4 w-4" />
                                                         </div>
-                                                        <div>
-                                                            <div className="font-bold text-gray-900">
-                                                                {subject?.name ?? '---'}
-                                                            </div>
+                                                        <div className="min-w-0">
+                                                            <TruncatedText
+                                                                text={subject?.name ?? '---'}
+                                                                maxLines={1}
+                                                                className="font-bold text-gray-900"
+                                                            />
                                                             <div className="text-xs text-gray-400">
                                                                 {subject?.code}
                                                             </div>
@@ -552,29 +559,41 @@ export default function SessionIndex({
 
                                                 {/* Class & Center */}
                                                 <td className="px-4 py-3.5">
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 max-w-[200px]">
                                                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                                                             <GraduationCap className="h-4 w-4" />
                                                         </div>
-                                                        <div>
-                                                            <div className="font-bold text-gray-900">
-                                                                {schoolClass?.name ?? '---'}
-                                                            </div>
-                                                            <div className="text-xs text-gray-500">
-                                                                {schoolClass?.center?.name}
-                                                            </div>
+                                                        <div className="min-w-0">
+                                                            <TruncatedText
+                                                                text={schoolClass?.name ?? '---'}
+                                                                maxLines={1}
+                                                                className="font-bold text-gray-900"
+                                                            />
+                                                            <TruncatedText
+                                                                text={schoolClass?.center?.name}
+                                                                maxLines={1}
+                                                                className="text-xs text-gray-500"
+                                                            />
                                                         </div>
                                                     </div>
                                                 </td>
 
                                                 {/* Teacher & Room */}
                                                 <td className="px-4 py-3.5">
-                                                    <div className="font-semibold text-gray-900">
-                                                        {teacher?.full_name ?? 'Chưa phân công'}
-                                                    </div>
-                                                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
-                                                        <DoorOpen className="h-3.5 w-3.5 text-gray-400" />
-                                                        <span>{room?.name ?? 'Chưa gán phòng'}</span>
+                                                    <div className="max-w-[180px]">
+                                                        <TruncatedText
+                                                            text={teacher?.full_name ?? 'Chưa phân công'}
+                                                            maxLines={1}
+                                                            className="font-semibold text-gray-900"
+                                                        />
+                                                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
+                                                            <DoorOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                                            <TruncatedText
+                                                                text={room?.name ?? 'Chưa gán phòng'}
+                                                                maxLines={1}
+                                                                className="truncate"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </td>
 

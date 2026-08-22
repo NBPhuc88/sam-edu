@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -272,46 +273,62 @@ return;
                                             className="transition-colors hover:bg-slate-50/80"
                                         >
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-900">
-                                                    {cls.name}
-                                                </div>
-                                                <div className="mt-0.5 font-mono text-xs text-gray-400">
-                                                    Mã: {cls.code}
-                                                </div>
-                                                {cls.description && (
-                                                    <div className="mt-1 line-clamp-1 text-xs text-gray-500">
-                                                        {cls.description}
+                                                <div className="max-w-xs space-y-0.5">
+                                                    <TruncatedText
+                                                        text={cls.name}
+                                                        maxLines={2}
+                                                        className="font-bold text-gray-900"
+                                                    />
+                                                    <div className="mt-0.5 font-mono text-xs text-gray-400">
+                                                        Mã: {cls.code}
                                                     </div>
-                                                )}
+                                                    {cls.description && (
+                                                        <TruncatedText
+                                                            text={cls.description}
+                                                            maxLines={1}
+                                                            className="mt-1 text-xs text-gray-500"
+                                                        />
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-800">
-                                                    {cls.center?.name || 'N/A'}
+                                                <div className="max-w-[200px] space-y-0.5">
+                                                    <TruncatedText
+                                                        text={cls.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="font-semibold text-gray-800"
+                                                    />
+                                                    {cls.center?.code && (
+                                                        <div className="font-mono text-xs text-gray-400">
+                                                            {cls.center.code}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {cls.center?.code && (
-                                                    <div className="font-mono text-xs text-gray-400">
-                                                        {cls.center.code}
-                                                    </div>
-                                                )}
                                             </td>
 
                                             <td className="px-6 py-4">
                                                 {cls.class_subjects && cls.class_subjects.length > 0 ? (
-                                                    <div className="flex flex-col gap-1.5">
-                                                        {cls.class_subjects.map((cs) => (
-                                                            <div
-                                                                key={cs.id}
-                                                                className="flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs"
-                                                            >
-                                                                <span className="font-bold text-gray-800">
-                                                                    {cs.subject?.name || 'Môn học'}:
-                                                                </span>
-                                                                <span className="text-emerald-700 font-medium">
-                                                                    GV {cs.teacher?.full_name || 'Chưa gán'}
-                                                                </span>
-                                                            </div>
-                                                        ))}
+                                                    <div className="flex flex-col gap-1.5 max-w-[240px]">
+                                                        {cls.class_subjects.map((cs) => {
+                                                            const subjectName = cs.subject?.name || 'Môn học';
+                                                            const teacherName = cs.teacher?.full_name ? `GV ${cs.teacher.full_name}` : 'Chưa gán';
+                                                            return (
+                                                                <Tooltip
+                                                                    key={cs.id}
+                                                                    content={`${subjectName}: ${teacherName}`}
+                                                                >
+                                                                    <div className="flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs truncate">
+                                                                        <span className="font-bold text-gray-800 truncate">
+                                                                            {subjectName}:
+                                                                        </span>
+                                                                        <span className="text-emerald-700 font-medium truncate">
+                                                                            {teacherName}
+                                                                        </span>
+                                                                    </div>
+                                                                </Tooltip>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <span className="italic text-gray-400">Chưa gán môn & giáo viên</span>

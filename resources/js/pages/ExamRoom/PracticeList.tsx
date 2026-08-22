@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { Center, Exam, PaginatedData, Subject } from '../Admin/Exams/types';
 
@@ -281,26 +282,36 @@ export default function PracticeList({
                                         </div>
 
                                         <div>
-                                            <h3 className="text-base font-bold text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
-                                                {exam.name}
-                                            </h3>
+                                            <TruncatedText
+                                                text={exam.name}
+                                                maxLines={2}
+                                                className="text-base font-bold text-gray-900 group-hover:text-emerald-700 transition-colors"
+                                            />
                                             {exam.subject && (
                                                 <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-                                                    <BookOpen className="h-3.5 w-3.5 text-gray-400" />
-                                                    <span className="font-medium">{exam.subject.name}</span>
+                                                    <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                                    <TruncatedText
+                                                        text={exam.subject.name}
+                                                        maxLines={1}
+                                                        className="font-medium truncate max-w-[140px]"
+                                                    />
                                                     {exam.center && (
-                                                        <span className="text-2xs text-gray-400">
-                                                            • {exam.center.name}
-                                                        </span>
+                                                        <TruncatedText
+                                                            text={`• ${exam.center.name}`}
+                                                            maxLines={1}
+                                                            className="text-2xs text-gray-400 truncate max-w-[120px]"
+                                                        />
                                                     )}
                                                 </div>
                                             )}
                                         </div>
 
                                         {exam.description && (
-                                            <p className="text-xs text-gray-600 line-clamp-2">
-                                                {exam.description}
-                                            </p>
+                                            <TruncatedText
+                                                text={exam.description}
+                                                maxLines={2}
+                                                className="text-xs text-gray-600"
+                                            />
                                         )}
 
                                         {/* Specs Grid */}

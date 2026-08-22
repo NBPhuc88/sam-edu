@@ -22,6 +22,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from '../ClassExams/AssignExamModal';
 import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
@@ -465,40 +466,50 @@ export default function ExamIndex({
                                                 </span>
                                             </td>
                                             <td>
-                                                <div className="space-y-0.5">
+                                                <div className="space-y-0.5 max-w-xs">
                                                     <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="font-bold text-gray-900">
-                                                            {exam.name}
-                                                        </span>
+                                                        <TruncatedText
+                                                            text={exam.name}
+                                                            maxLines={2}
+                                                            className="font-bold text-gray-900"
+                                                        />
                                                         {exam.is_practice && (
-                                                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">
+                                                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200 shrink-0">
                                                                 <Award className="h-3 w-3 text-blue-600" />
                                                                 Thi Thử
                                                             </span>
                                                         )}
                                                     </div>
                                                     {exam.description && (
-                                                        <span className="text-2xs text-gray-500 line-clamp-1">
-                                                            {exam.description}
-                                                        </span>
+                                                        <TruncatedText
+                                                            text={exam.description}
+                                                            maxLines={1}
+                                                            className="text-2xs text-gray-500"
+                                                        />
                                                     )}
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="space-y-1 text-xs">
-                                                    <div className="font-medium text-gray-800">
-                                                        {exam.center?.name || 'N/A'}
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-500">
+                                                <div className="space-y-1 text-xs max-w-[220px]">
+                                                    <TruncatedText
+                                                        text={exam.center?.name || 'N/A'}
+                                                        maxLines={1}
+                                                        className="font-medium text-gray-800"
+                                                    />
+                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-500 flex-wrap">
                                                         {exam.schoolClass && (
-                                                            <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium">
-                                                                Lớp: {exam.schoolClass.name}
-                                                            </span>
+                                                            <Tooltip content={`Lớp: ${exam.schoolClass.name}`}>
+                                                                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium max-w-[140px] truncate inline-block">
+                                                                    Lớp: {exam.schoolClass.name}
+                                                                </span>
+                                                            </Tooltip>
                                                         )}
                                                         {exam.subject && (
-                                                            <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700 font-medium">
-                                                                Môn: {exam.subject.name}
-                                                            </span>
+                                                            <Tooltip content={`Môn: ${exam.subject.name}`}>
+                                                                <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700 font-medium max-w-[140px] truncate inline-block">
+                                                                    Môn: {exam.subject.name}
+                                                                </span>
+                                                            </Tooltip>
                                                         )}
                                                     </div>
                                                 </div>

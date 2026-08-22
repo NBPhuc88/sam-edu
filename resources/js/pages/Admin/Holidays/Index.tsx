@@ -19,6 +19,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Pagination, { PaginationLink } from '@/components/ui/Pagination';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { parseDate, toISODateString, WEEKDAY_NAMES } from '@/lib/date';
 
@@ -329,7 +330,13 @@ export default function Index({
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3.5 font-semibold text-emerald-950">
-                                                {item.name}
+                                                <div className="max-w-xs">
+                                                    <TruncatedText
+                                                        text={item.name}
+                                                        maxLines={1}
+                                                        className="font-semibold text-emerald-950"
+                                                    />
+                                                </div>
                                             </td>
                                             <td className="px-5 py-3.5">
                                                 {item.is_lunar ? (
@@ -348,8 +355,14 @@ export default function Index({
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="max-w-xs truncate px-5 py-3.5 text-gray-500">
-                                                {item.description || '—'}
+                                            <td className="px-5 py-3.5 text-gray-500">
+                                                <div className="max-w-xs">
+                                                    <TruncatedText
+                                                        text={item.description || '—'}
+                                                        maxLines={1}
+                                                        className="text-gray-500 text-sm"
+                                                    />
+                                                </div>
                                             </td>
                                             {(can('holidays.edit') || can('holidays.delete')) && (
                                                 <td className="px-5 py-3.5 text-right">
