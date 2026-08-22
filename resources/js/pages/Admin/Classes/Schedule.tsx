@@ -377,7 +377,7 @@ export default function ClassSchedulePage({
                                 Thêm Lịch Học
                             </Button>
                         </Link>
-                        <Button
+                        {/* <Button
                             variant="secondary"
                             size="sm"
                             icon={<Printer className="h-4 w-4" />}
@@ -385,7 +385,7 @@ export default function ClassSchedulePage({
                             title="In thời khóa biểu"
                         >
                             In Lịch
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
 
@@ -431,12 +431,12 @@ export default function ClassSchedulePage({
 
                             <div className="ml-2 flex items-center gap-2 border-l border-gray-200 pl-3">
                                 <span className="text-xs font-semibold text-gray-500">
-                                     Chọn ngày:
-                                 </span>
-                                 <DatePicker
-                                     value={selectedDate}
-                                     onChange={handleDateChange}
-                                 />
+                                    Chọn ngày:
+                                </span>
+                                <DatePicker
+                                    value={selectedDate}
+                                    onChange={handleDateChange}
+                                />
                             </div>
                         </div>
 
@@ -453,22 +453,20 @@ export default function ClassSchedulePage({
                             <button
                                 type="button"
                                 onClick={() => setViewMode('sessions')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    viewMode === 'sessions'
-                                        ? 'bg-white text-emerald-700 shadow-xs'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${viewMode === 'sessions'
+                                    ? 'bg-white text-emerald-700 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                    }`}
                             >
                                 Ca học trong tuần
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setViewMode('recurring')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    viewMode === 'recurring'
-                                        ? 'bg-white text-emerald-700 shadow-xs'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${viewMode === 'recurring'
+                                    ? 'bg-white text-emerald-700 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                    }`}
                             >
                                 Lịch cố định hàng tuần
                             </button>
@@ -498,11 +496,10 @@ export default function ClassSchedulePage({
                                     {weekDays.map((day) => (
                                         <th
                                             key={day.weekday_number}
-                                            className={`border-r border-slate-700 px-3 py-2 text-center text-sm font-bold tracking-wide transition-colors ${
-                                                day.is_today
-                                                    ? 'bg-emerald-700 text-white'
-                                                    : 'text-slate-100'
-                                            }`}
+                                            className={`border-r border-slate-700 px-3 py-2 text-center text-sm font-bold tracking-wide transition-colors ${day.is_today
+                                                ? 'bg-emerald-700 text-white'
+                                                : 'text-slate-100'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-center gap-1.5">
                                                 <span>{day.weekday_label}</span>
@@ -521,11 +518,10 @@ export default function ClassSchedulePage({
                                     {weekDays.map((day) => (
                                         <th
                                             key={`date-${day.weekday_number}`}
-                                            className={`border-r border-gray-200 px-3 py-2 text-center text-xs font-mono font-bold ${
-                                                day.is_today
-                                                    ? 'bg-emerald-50 text-emerald-800'
-                                                    : 'text-gray-600'
-                                            }`}
+                                            className={`border-r border-gray-200 px-3 py-2 text-center text-xs font-mono font-bold ${day.is_today
+                                                ? 'bg-emerald-50 text-emerald-800'
+                                                : 'text-gray-600'
+                                                }`}
                                         >
                                             {day.date_formatted}
                                         </th>
@@ -538,9 +534,8 @@ export default function ClassSchedulePage({
                                     timeSlots.map((slot, slotIdx) => (
                                         <tr
                                             key={slot.label}
-                                            className={`transition-colors ${
-                                                slotIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'
-                                            }`}
+                                            className={`transition-colors ${slotIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'
+                                                }`}
                                         >
                                             {/* LEFT COLUMN: THỜI GIAN BẮT ĐẦU VÀ KẾT THÚC */}
                                             <td className="border-r border-gray-200 bg-slate-50/80 px-4 py-4 text-center font-mono text-xs font-bold text-gray-900 shadow-inner">
@@ -559,9 +554,8 @@ export default function ClassSchedulePage({
                                                 return (
                                                     <td
                                                         key={`${slot.label}-${day.weekday_number}`}
-                                                        className={`min-w-[170px] max-w-[220px] border-r border-gray-200 p-2.5 align-top ${
-                                                            day.is_today ? 'bg-emerald-50/20' : ''
-                                                        }`}
+                                                        className={`min-w-[170px] max-w-[220px] border-r border-gray-200 p-2.5 align-top ${day.is_today ? 'bg-emerald-50/20' : ''
+                                                            }`}
                                                     >
                                                         {viewMode === 'sessions' ? (
                                                             /* Sessions View (Ca học thực tế có ngày tháng) */

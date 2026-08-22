@@ -696,8 +696,8 @@ class TestCenterSeeder extends Seeder
             foreach ($daysOfWeek as $dow) {
                 $weeksJson[(string) $dow] = [
                     [
-                        'start_time' => $startTime,
-                        'end_time'   => $endTime,
+                        $startTime,
+                        $endTime,
                     ],
                 ];
             }

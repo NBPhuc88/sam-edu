@@ -162,11 +162,16 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
                 if (is_array($value)) {
                     foreach ($value as $slot) {
-                        if (is_array($slot) && count($slot) >= 2) {
-                            $normalized[$dayKey][] = [
-                                substr((string) $slot[0], 0, 5),
-                                substr((string) $slot[1], 0, 5),
-                            ];
+                        if (is_array($slot)) {
+                            $start = $slot['start_time'] ?? $slot['start'] ?? $slot[0] ?? null;
+                            $end   = $slot['end_time'] ?? $slot['end'] ?? $slot[1] ?? null;
+
+                            if (! empty($start) && ! empty($end)) {
+                                $normalized[$dayKey][] = [
+                                    substr((string) $start, 0, 5),
+                                    substr((string) $end, 0, 5),
+                                ];
+                            }
                         }
                     }
                 }

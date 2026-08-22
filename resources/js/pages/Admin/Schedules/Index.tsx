@@ -432,17 +432,24 @@ export default function ScheduleIndex({
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-1.5 max-w-xs">
                                                     {sch.weeks && Object.keys(sch.weeks).length > 0 ? (
-                                                        Object.entries(sch.weeks).map(([dayKey, slots]) => (
-                                                            <div
-                                                                key={dayKey}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
-                                                            >
-                                                                <span className="font-bold">{getWeekdayLabel(Number(dayKey))}:</span>
-                                                                <span className="font-mono">
-                                                                    {slots.map((s) => `${s[0]} - ${s[1]}`).join(', ')}
-                                                                </span>
-                                                            </div>
-                                                        ))
+                                                        Object.entries(sch.weeks).map(([dayKey, slots]) => {
+                                                            if (!Array.isArray(slots) || slots.length === 0) return null;
+                                                            return (
+                                                                <div
+                                                                    key={dayKey}
+                                                                    className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
+                                                                >
+                                                                    <span className="font-bold">{getWeekdayLabel(Number(dayKey))}:</span>
+                                                                    <span className="font-mono">
+                                                                        {slots.map((s: any) => {
+                                                                            const start = Array.isArray(s) ? s[0] : (s?.start_time || s?.start || '');
+                                                                            const end = Array.isArray(s) ? s[1] : (s?.end_time || s?.end || '');
+                                                                            return `${String(start).slice(0, 5)} - ${String(end).slice(0, 5)}`;
+                                                                        }).join(', ')}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })
                                                     ) : (
                                                         <span className="text-xs text-gray-400 italic">Chưa đặt lịch tuần</span>
                                                     )}

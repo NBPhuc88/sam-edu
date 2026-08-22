@@ -387,10 +387,14 @@ export default function ScheduleEdit({
                 if (base[dayNum] && Array.isArray(slots) && slots.length > 0) {
                     base[dayNum] = {
                         enabled: true,
-                        slots: slots.map((s) => ({
-                            start_time: s[0] ? String(s[0]).slice(0, 5) : '18:00',
-                            end_time: s[1] ? String(s[1]).slice(0, 5) : '20:00',
-                        })),
+                        slots: slots.map((s: any) => {
+                            const start = Array.isArray(s) ? s[0] : (s?.start_time || s?.start);
+                            const end = Array.isArray(s) ? s[1] : (s?.end_time || s?.end);
+                            return {
+                                start_time: start ? String(start).slice(0, 5) : '18:00',
+                                end_time: end ? String(end).slice(0, 5) : '20:00',
+                            };
+                        }),
                     };
                 }
             });

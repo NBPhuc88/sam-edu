@@ -26,13 +26,57 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
-            'weeks'                => 'array',
             'auto_holidays'        => 'boolean',
             'excluded_holiday_ids' => 'array',
             'holidays'             => 'array',
             'off_days'             => 'array',
             'extra_days'           => 'array',
         ];
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<array<string, array<int, array{0: string, 1: string}>>, mixed>
+     */
+    protected function weeks(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function ($value) {
+                if (empty($value)) {
+                    return [];
+                }
+
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+                if (! is_array($decoded)) {
+                    return [];
+                }
+
+                $normalized = [];
+
+                foreach ($decoded as $key => $slots) {
+                    $dayKey = (string) $key;
+
+                    if (is_array($slots)) {
+                        foreach ($slots as $slot) {
+                            if (is_array($slot)) {
+                                $start = $slot['start_time'] ?? $slot['start'] ?? $slot[0] ?? null;
+                                $end   = $slot['end_time'] ?? $slot['end'] ?? $slot[1] ?? null;
+
+                                if (! empty($start) && ! empty($end)) {
+                                    $normalized[$dayKey][] = [
+                                        substr((string) $start, 0, 5),
+                                        substr((string) $end, 0, 5),
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return $normalized;
+            },
+            set: fn ($value) => is_string($value) ? $value : json_encode($value ?: new \stdClass()),
+        );
     }
 
     /**
