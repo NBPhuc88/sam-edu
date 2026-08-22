@@ -244,11 +244,10 @@ export default function Index({
                                     key={year}
                                     type="button"
                                     onClick={() => handleYearChange(year)}
-                                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                                        activeYear === year
-                                            ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/20'
-                                            : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
-                                    }`}
+                                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${activeYear === year
+                                        ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/20'
+                                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
+                                        }`}
                                 >
                                     {year}
                                 </button>
@@ -402,14 +401,6 @@ export default function Index({
                         </div>
                     )}
                 </Card>
-
-                {/* Information Note */}
-                <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-900">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                    <div>
-                        <span className="font-bold">Cơ chế đồng bộ tự động:</span> Khi bạn Thêm, Sửa hoặc Xóa bất kỳ ngày lễ nào, hệ thống sẽ tự động kích hoạt tiến trình ngầm (Queue Job) để quét lại toàn bộ các lịch học đang mở có áp dụng ngày nghỉ lễ và tự động điều chỉnh dời ca học cho chuẩn xác.
-                    </div>
-                </div>
             </div>
 
             {/* Create / Edit Holiday Modal */}
