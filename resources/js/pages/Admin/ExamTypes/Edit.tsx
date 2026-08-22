@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Layers, Building2 } from 'lucide-react';
+import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -14,13 +14,16 @@ interface Center {
 
 interface ExamType {
     id: number;
-    center_id: number | null;
+    center_id: number;
     code: string;
     name: string;
     description: string | null;
     status: string;
-    exams_count?: number;
-    center?: Center;
+    center?: {
+        id: number;
+        name: string;
+        code: string;
+    };
 }
 
 interface Props {
@@ -60,34 +63,30 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
     };
 
     return (
-        <AppLayout title="Chỉnh Sửa Loại Đề Thi">
-            <Head title={`Chỉnh Sửa Loại Đề: ${examType.name}`} />
+        <AppLayout title="Chỉnh Sửa Loại Đề Thi - Hệ Thống Giáo Dục Sam">
+            <Head title="Chỉnh Sửa Loại Đề Thi" />
 
-            <div className="mx-auto max-w-3xl space-y-6">
-                {/* Top Bar */}
+            <div className="mx-auto max-w-4xl space-y-6">
+                {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/exam-types">
-                            <Button variant="secondary" size="md">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <Layers className="w-6 h-6 text-amber-600" />
-                                Chỉnh Sửa Loại Đề Thi
-                            </h1>
-                            <p className="text-sm text-gray-600">
+                            <h1 className="text-2xl font-bold text-gray-900">Chỉnh Sửa Loại Đề Thi</h1>
+                            <p className="text-sm text-gray-500">
                                 Cập nhật thông tin loại đề thi <strong className="text-gray-900">{examType.name}</strong>
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Form Card */}
-                <Card className="p-6 sm:p-8 bg-white border border-gray-200 shadow-sm">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Form Body */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Card className="p-6 sm:p-8 bg-white border border-gray-200 shadow-sm space-y-6">
                         {/* Center Selection (Super Admin only) */}
                         {isSuperAdmin ? (
                             <div>
@@ -129,7 +128,7 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="Ví dụ: IELTS Mock Test, Kiểm Tra Giữa Kỳ..."
+                                    placeholder="Ví dụ: IELTS Mock Test, Kiểm Tra Giữa Kỳ, HSK Cấp 4..."
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     className="text-gray-900"
@@ -181,21 +180,26 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
                             />
                             {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
                         </div>
+                    </Card>
 
-                        {/* Action buttons */}
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                            <Link href="/exam-types">
-                                <Button type="button" variant="secondary" disabled={isSubmitting}>
-                                    Hủy bỏ
-                                </Button>
-                            </Link>
-                            <Button type="submit" variant="edit" disabled={isSubmitting}>
-                                <Save className="w-4 h-4 mr-2" />
-                                {isSubmitting ? 'Đang cập nhật...' : 'Cập Nhật Loại Đề Thi'}
+                    {/* Submit Buttons */}
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                        <Link href="/exam-types">
+                            <Button variant="secondary" size="lg" disabled={isSubmitting}>
+                                Hủy Bỏ
                             </Button>
-                        </div>
-                    </form>
-                </Card>
+                        </Link>
+                        <Button
+                            type="submit"
+                            variant="edit"
+                            size="lg"
+                            isLoading={isSubmitting}
+                            icon={<Save className="h-5 w-5" />}
+                        >
+                            Cập Nhật Loại Đề Thi
+                        </Button>
+                    </div>
+                </form>
             </div>
         </AppLayout>
     );

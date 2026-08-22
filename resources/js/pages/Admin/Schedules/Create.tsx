@@ -793,22 +793,21 @@ export default function ScheduleCreate({
 
             <div className="mx-auto max-w-6xl space-y-6">
                 {/* Header Top Bar */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href="/schedules"
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-xs transition-colors"
-                            >
-                                <ArrowLeft className="h-5 w-5" />
-                            </Link>
-                            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href="/schedules">
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
+                                Quay Lại
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
                                 Thiết Lập Lịch Học Mới
                             </h1>
+                            <p className="text-sm text-gray-500">
+                                Tạo chu kỳ học tập theo tuần, hệ thống sẽ tự động tính toán ngày kết thúc và sinh toàn bộ ca học tương ứng.
+                            </p>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Tạo chu kỳ học tập theo tuần, hệ thống sẽ tự động tính toán ngày kết thúc và sinh toàn bộ ca học tương ứng.
-                        </p>
                     </div>
                 </div>
 

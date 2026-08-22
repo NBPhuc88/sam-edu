@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Layers, Globe } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -49,34 +49,30 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
     };
 
     return (
-        <AppLayout title="Thêm Loại Đề Thi Mới">
+        <AppLayout title="Thêm Loại Đề Thi Mới - Hệ Thống Giáo Dục Sam">
             <Head title="Thêm Loại Đề Thi Mới" />
 
-            <div className="mx-auto max-w-3xl space-y-6">
-                {/* Top Bar */}
+            <div className="mx-auto max-w-4xl space-y-6">
+                {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/exam-types">
-                            <Button variant="secondary" size="md">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
+                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
                                 Quay Lại
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <Layers className="w-6 h-6 text-indigo-600" />
-                                Thêm Loại Đề Thi Mới
-                            </h1>
-                            <p className="text-sm text-gray-600">
-                                Định nghĩa loại đề thi chuẩn hóa cho ngân hàng đề và các bài kiểm tra
+                            <h1 className="text-2xl font-bold text-gray-900">Thêm Loại Đề Thi Mới</h1>
+                            <p className="text-sm text-gray-500">
+                                Định nghĩa loại đề thi chuẩn hóa cho ngân hàng đề và các bài kiểm tra.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Form Card */}
-                <Card className="p-6 sm:p-8 bg-white border border-gray-200 shadow-sm">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Form Body */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Card className="p-6 sm:p-8 bg-white border border-gray-200 shadow-sm space-y-6">
                         {/* Center Selection (Super Admin only) */}
                         {isSuperAdmin && (
                             <div>
@@ -86,7 +82,7 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
                                 <select
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                     required
                                 >
                                     <option value="">-- Chọn Trung Tâm --</option>
@@ -138,7 +134,7 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 >
                                     <option value="active">Đang hoạt động</option>
                                     <option value="inactive">Tạm ngưng / Ẩn</option>
@@ -156,25 +152,30 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
                                 placeholder="Ghi chú về định dạng đề thi, tiêu chuẩn kỹ năng hoặc mục đích bài kiểm tra..."
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-y"
                             />
                             {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
                         </div>
+                    </Card>
 
-                        {/* Action buttons */}
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                            <Link href="/exam-types">
-                                <Button type="button" variant="secondary" disabled={isSubmitting}>
-                                    Hủy bỏ
-                                </Button>
-                            </Link>
-                            <Button type="submit" variant="success" disabled={isSubmitting}>
-                                <Save className="w-4 h-4 mr-2" />
-                                {isSubmitting ? 'Đang lưu...' : 'Lưu Loại Đề Thi'}
+                    {/* Submit Buttons */}
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                        <Link href="/exam-types">
+                            <Button variant="secondary" size="lg" disabled={isSubmitting}>
+                                Hủy Bỏ
                             </Button>
-                        </div>
-                    </form>
-                </Card>
+                        </Link>
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="lg"
+                            isLoading={isSubmitting}
+                            icon={<Save className="h-5 w-5" />}
+                        >
+                            Lưu Loại Đề Thi
+                        </Button>
+                    </div>
+                </form>
             </div>
         </AppLayout>
     );

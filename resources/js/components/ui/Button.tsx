@@ -38,15 +38,20 @@ export const Button: React.FC<ButtonProps> = ({
         <button
             type={type}
             disabled={disabled || isLoading}
-            className={clsx('btn-base', variantClasses[variant], sizeClasses[size], className)}
+            className={clsx(
+                'btn-base inline-flex items-center justify-center gap-2 whitespace-nowrap',
+                variantClasses[variant],
+                sizeClasses[size],
+                className,
+            )}
             {...props}
         >
             {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
             ) : icon ? (
-                <span className="shrink-0">{icon}</span>
+                <span className="shrink-0 inline-flex items-center">{icon}</span>
             ) : null}
-            <span>{children}</span>
+            {children ? <span className="inline-flex items-center">{children}</span> : null}
         </button>
     );
 };
