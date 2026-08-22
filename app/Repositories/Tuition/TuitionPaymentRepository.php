@@ -16,7 +16,7 @@ class TuitionPaymentRepository implements TuitionPaymentRepositoryInterface
             ->select(
                 'id',
                 'student_tuition_id',
-                'received_by_admin_id',
+                'received_by',
                 'amount',
                 'payment_date',
                 'payment_method',
