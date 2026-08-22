@@ -1,9 +1,9 @@
 /**
- * Navigation Configuration
+ * Dynamic Navigation Configuration
  *
- * Cấu hình menu sidebar theo account_type và admin role.
- * Lọc động theo danh sách quyền permissions từ Database.
- * Xem: .agents/AGENTS.md - Mục 6.1 Navigation Configuration
+ * Menu sidebar động hoàn toàn (100% Dynamic).
+ * Tự động lọc từ Master Navigation Tree dựa trên danh sách quyền permissions từ Database.
+ * Không fix cứng menu theo vai trò.
  * 100% Tiếng Việt
  */
 
@@ -13,15 +13,11 @@ import {
     BookOpen,
     DollarSign,
     FileCheck,
-    FileText,
     LayoutDashboard,
     Lock,
-    MessageSquare,
     Settings,
-    Shield,
     Sliders,
     User,
-    Users,
     Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -34,9 +30,14 @@ export interface NavItem {
     children?: NavItem[];
 }
 
-// ─── Super Admin Navigation ──────────────────────────────────────────────────
-const superAdminNav: NavItem[] = [
-    { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.index' },
+// ─── Master Navigation Tree (Cây Menu Toàn Cục Duy Nhất) ───────────────────
+export const masterNavigation: NavItem[] = [
+    {
+        label: 'Bảng Điều Khiển',
+        path: '/dashboard',
+        icon: LayoutDashboard,
+        permission: 'dashboard.index',
+    },
     {
         label: 'Quản Trị Hệ Thống',
         icon: Lock,
@@ -92,134 +93,37 @@ const superAdminNav: NavItem[] = [
             { label: 'Học Phí Học Sinh', path: '/tuitions', permission: 'tuitions.index' },
         ],
     },
-    { label: 'Thống Kê Báo Cáo', path: '/statistics', icon: BarChart3, permission: 'statistics.index' },
-    { label: 'Thông Báo', path: '/notifications', icon: Bell },
+    {
+        label: 'Thống Kê Báo Cáo',
+        path: '/statistics',
+        icon: BarChart3,
+        permission: 'statistics.index',
+    },
+    {
+        label: 'Thông Báo',
+        path: '/notifications',
+        icon: Bell,
+    },
     {
         label: 'Cài Đặt',
         icon: Settings,
-        children: [{ label: 'Cài Đặt Hệ Thống', path: '/settings' }],
+        children: [
+            { label: 'Cài Đặt Hệ Thống', path: '/settings', permission: 'settings.index' },
+        ],
     },
 ];
-
-// ─── Admin Navigation (Quản lý Trung tâm được gán) ─────────────────────────
-const adminNav: NavItem[] = [
-    { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.index' },
-    {
-        label: 'Quản Lý Trung Tâm',
-        icon: Users,
-        children: [
-            { label: 'Giáo Viên', path: '/teachers', permission: 'teachers.index' },
-            { label: 'Học Sinh', path: '/students', permission: 'students.index' },
-        ],
-    },
-    {
-        label: 'Học Thuật',
-        icon: BookOpen,
-        children: [
-            { label: 'Môn Học', path: '/subjects', permission: 'subjects.index' },
-            { label: 'Phòng Học', path: '/rooms', permission: 'rooms.index' },
-            { label: 'Lớp Học', path: '/classes', permission: 'classes.index' },
-        ],
-    },
-    {
-        label: 'Vận Hành',
-        icon: Zap,
-        children: [
-            { label: 'Lịch Học', path: '/schedules', permission: 'schedules.index' },
-            { label: 'Buổi Học', path: '/sessions', permission: 'sessions.index' },
-            { label: 'Ngày Lễ', path: '/holidays', permission: 'holidays.index' },
-        ],
-    },
-    {
-        label: 'Cấu Hình Đề Thi',
-        icon: Sliders,
-        children: [
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
-            { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index' },
-        ],
-    },
-    {
-        label: 'Thi & Chấm Thi',
-        icon: FileCheck,
-        children: [
-            { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
-            { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-        ],
-    },
-    {
-        label: 'Tài Chính',
-        icon: DollarSign,
-        children: [
-            { label: 'Học Phí Học Sinh', path: '/tuitions', permission: 'tuitions.index' },
-        ],
-    },
-    { label: 'Thống Kê Báo Cáo', path: '/statistics', icon: BarChart3, permission: 'statistics.index' },
-    { label: 'Thông Báo', path: '/notifications', icon: Bell },
-];
-
-// ─── Teacher Navigation ───────────────────────────────────────────────────────
-const teacherNav: NavItem[] = [
-    { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.index' },
-    {
-        label: 'Giảng Dạy',
-        icon: BookOpen,
-        children: [
-            { label: 'Lớp Học Của Tôi', path: '/classes', permission: 'classes.index' },
-            { label: 'Học Sinh Của Tôi', path: '/students', permission: 'students.index' },
-            { label: 'Lịch Dạy', path: '/schedules', permission: 'schedules.index' },
-        ],
-    },
-    {
-        label: 'Kho Đề Thi',
-        icon: Sliders,
-        children: [
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
-        ],
-    },
-    {
-        label: 'Thi & Chấm Thi',
-        icon: FileCheck,
-        children: [
-            { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
-            { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-        ],
-    },
-    { label: 'Thông Báo', path: '/notifications', icon: Bell },
-];
-
-// ─── Student Navigation ───────────────────────────────────────────────────────
-const studentNav: NavItem[] = [
-    { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.index' },
-    {
-        label: 'Thi Trực Tuyến',
-        icon: FileCheck,
-        children: [
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-        ],
-    },
-    { label: 'Trò Chuyện Lớp Học', path: '/classes', icon: MessageSquare, permission: 'classes.index' },
-    { label: 'Thông Báo', path: '/notifications', icon: Bell },
-];
-
-// ─── Full Config Map ──────────────────────────────────────────────────────────
-export const navigationConfig = {
-    admin: {
-        super_admin: superAdminNav,
-        admin: adminNav,
-    },
-    teacher: teacherNav,
-    student: studentNav,
-};
 
 /**
  * Lọc danh sách menu theo quyền động.
+ * - Super Admin luôn thấy toàn bộ menu.
+ * - Các vai trò khác chỉ thấy menu và menu con mà họ được cấp quyền trong Database.
+ * - Nhóm cha có children tự động ẩn nếu không có menu con nào được cấp quyền.
  */
-function filterNavItemsByPermissions(items: NavItem[], permissions: string[], isSuperAdmin: boolean): NavItem[] {
+function filterNavItemsByPermissions(
+    items: NavItem[],
+    permissions: string[],
+    isSuperAdmin: boolean,
+): NavItem[] {
     if (isSuperAdmin) {
         return items;
     }
@@ -227,34 +131,37 @@ function filterNavItemsByPermissions(items: NavItem[], permissions: string[], is
     const filtered: NavItem[] = [];
 
     for (const item of items) {
-        // Kiểm tra quyền của item cha nếu có path và permission
-        if (item.permission && !permissions.includes(item.permission)) {
+        // Item đơn không có children
+        if (!item.children || item.children.length === 0) {
+            if (!item.permission || permissions.includes(item.permission)) {
+                filtered.push(item);
+            }
             continue;
         }
 
-        if (item.children && item.children.length > 0) {
-            const validChildren = item.children.filter((child) => {
-                if (!child.permission) {
-                    return true;
-                }
-                return permissions.includes(child.permission);
-            });
-
-            // Chỉ hiển thị menu cha nếu có ít nhất 1 menu con hợp lệ
-            if (validChildren.length > 0) {
-                filtered.push({
-                    ...item,
-                    children: validChildren,
-                });
+        // Item có children: lọc các con hợp lệ
+        const validChildren = item.children.filter((child) => {
+            if (!child.permission) {
+                return true;
             }
-        } else {
-            filtered.push(item);
+            return permissions.includes(child.permission);
+        });
+
+        // Chỉ hiển thị nhóm cha nếu có ít nhất 1 menu con được cấp quyền
+        if (validChildren.length > 0) {
+            filtered.push({
+                ...item,
+                children: validChildren,
+            });
         }
     }
 
     return filtered;
 }
 
+/**
+ * Lấy danh sách menu động cho người dùng hiện tại dựa trên permissions từ Database.
+ */
 export function getNavigationItems(
     role: string | null,
     adminRole?: string | null,
@@ -266,25 +173,7 @@ export function getNavigationItems(
 
     const isSuperAdmin = role === 'admin' && adminRole === 'super_admin';
 
-    let rawItems: NavItem[] = [];
-    switch (role) {
-        case 'admin':
-        case 'super_admin':
-            rawItems = adminRole === 'super_admin'
-                ? navigationConfig.admin.super_admin
-                : navigationConfig.admin.admin;
-            break;
-        case 'teacher':
-            rawItems = navigationConfig.teacher;
-            break;
-        case 'student':
-            rawItems = navigationConfig.student;
-            break;
-        default:
-            return [];
-    }
-
-    return filterNavItemsByPermissions(rawItems, permissions, isSuperAdmin);
+    return filterNavItemsByPermissions(masterNavigation, permissions, isSuperAdmin);
 }
 
 export function getAccountLabel(role: string | null, adminRole?: string | null): string {
