@@ -54,12 +54,13 @@ class ExamController extends Controller
         $stats    = $this->examService->getStats($admin);
 
         return Inertia::render('Admin/Exams/Index', [
-            'exams'    => $exams,
-            'centers'  => $formData['centers'],
-            'classes'  => $formData['classes'],
-            'subjects' => $formData['subjects'],
-            'stats'    => $stats,
-            'filters'  => [
+            'exams'      => $exams,
+            'centers'    => $formData['centers'],
+            'classes'    => $formData['classes'],
+            'subjects'   => $formData['subjects'],
+            'exam_types' => $formData['exam_types'],
+            'stats'      => $stats,
+            'filters'    => [
                 'search'     => $search ?? '',
                 'center_id'  => $centerId,
                 'class_id'   => $classId,
@@ -77,9 +78,10 @@ class ExamController extends Controller
         $formData = $this->examService->getFormData($admin);
 
         return Inertia::render('Admin/Exams/Create', [
-            'centers'  => $formData['centers'],
-            'classes'  => $formData['classes'],
-            'subjects' => $formData['subjects'],
+            'centers'    => $formData['centers'],
+            'classes'    => $formData['classes'],
+            'subjects'   => $formData['subjects'],
+            'exam_types' => $formData['exam_types'],
         ]);
     }
 
@@ -99,10 +101,11 @@ class ExamController extends Controller
         $formData = $this->examService->getFormData($admin);
 
         return Inertia::render('Admin/Exams/Edit', [
-            'exam'     => $exam,
-            'centers'  => $formData['centers'],
-            'classes'  => $formData['classes'],
-            'subjects' => $formData['subjects'],
+            'exam'       => $exam,
+            'centers'    => $formData['centers'],
+            'classes'    => $formData['classes'],
+            'subjects'   => $formData['subjects'],
+            'exam_types' => $formData['exam_types'],
         ]);
     }
 

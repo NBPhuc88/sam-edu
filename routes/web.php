@@ -218,6 +218,16 @@ Route::middleware('auth.any')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');
     });
 
+    // Exam Types Management Routes (CRUD)
+    Route::prefix('exam-types')->name('exam-types.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ExamTypeController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\ExamTypeController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\ExamTypeController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\ExamTypeController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [\App\Http\Controllers\ExamTypeController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\ExamTypeController::class, 'destroy'])->name('destroy');
+    });
+
     // Class Exam Management Routes (Assign Exam to Class)
     Route::prefix('class-exams')->name('class-exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ClassExamController::class, 'index'])->name('index');

@@ -19,15 +19,23 @@ import AppLayout from '@/layouts/AppLayout';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, ExamSectionData, Subject } from './types';
 
+interface ExamTypeItem {
+    id: number;
+    code: string;
+    name: string;
+}
+
 interface Props {
     centers: Center[];
     subjects: Subject[];
+    exam_types?: ExamTypeItem[];
     errors?: Record<string, string>;
 }
 
 export default function ExamCreate({
     centers = [],
     subjects = [],
+    exam_types = [],
     errors = {},
 }: Props) {
     const { auth } = usePage<any>().props;
@@ -38,7 +46,7 @@ export default function ExamCreate({
     const [subjectId, setSubjectId] = useState<string>('');
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
-    const [examType, setExamType] = useState<string>('general');
+    const [examType, setExamType] = useState<string>(exam_types[0]?.code || 'general');
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
     const [passScore, setPassScore] = useState<number | string>('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -302,15 +310,25 @@ export default function ExamCreate({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="general">Chung (General Test)</option>
-                                    <option value="ielts">IELTS Mock Test (Listening / Reading / Writing / Speaking)</option>
-                                    <option value="hsk">HSK Đề Thi Chuẩn Hóa (Tiếng Trung)</option>
-                                    <option value="toeic">TOEIC Practice Test</option>
-                                    <option value="midterm">Giữa Kỳ (Midterm Exam)</option>
-                                    <option value="final">Cuối Kỳ (Final Exam)</option>
-                                    <option value="quiz">Kiểm Tra 15 Phút / Quiz</option>
-                                    <option value="custom">Tuỳ Chỉnh Khác</option>
-                                    {!['general', 'ielts', 'hsk', 'toeic', 'midterm', 'final', 'quiz', 'custom'].includes(examType) && (
+                                    {exam_types.length > 0 ? (
+                                        exam_types.map((t) => (
+                                            <option key={t.id} value={t.code}>
+                                                {t.name}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <option value="general">Chung (General Test)</option>
+                                            <option value="ielts">IELTS Mock Test</option>
+                                            <option value="hsk">HSK Đề Thi Chuẩn Hóa</option>
+                                            <option value="toeic">TOEIC Practice Test</option>
+                                            <option value="midterm">Giữa Kỳ (Midterm Exam)</option>
+                                            <option value="final">Cuối Kỳ (Final Exam)</option>
+                                            <option value="quiz_15m">Kiểm Tra 15 Phút / Quiz</option>
+                                            <option value="custom">Tuỳ Chỉnh Khác</option>
+                                        </>
+                                    )}
+                                    {examType && !exam_types.some((t) => t.code === examType) && (
                                         <option value={examType}>{examType}</option>
                                     )}
                                 </select>

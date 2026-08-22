@@ -19,7 +19,8 @@ class ExamService implements ExamServiceInterface
         protected ExamRepositoryInterface $examRepository,
         protected CenterRepositoryInterface $centerRepository,
         protected SchoolClassRepositoryInterface $schoolClassRepository,
-        protected SubjectRepositoryInterface $subjectRepository
+        protected SubjectRepositoryInterface $subjectRepository,
+        protected \App\Repositories\ExamType\ExamTypeRepositoryInterface $examTypeRepository
     ) {
     }
 
@@ -69,7 +70,7 @@ class ExamService implements ExamServiceInterface
             if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
                 $centerIds = []; // No access
             } elseif ($centerId !== null) {
-                $centerIds = [$centerId];
+                $centerIds = $centerId;
             } else {
                 $centerIds = $allowedCenterIds;
             }
@@ -98,9 +99,10 @@ class ExamService implements ExamServiceInterface
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         return [
-            'centers'  => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
-            'classes'  => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
-            'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
+            'centers'    => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
+            'classes'    => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
+            'subjects'   => $this->subjectRepository->getByCenterIds($allowedCenterIds),
+            'exam_types' => $this->examTypeRepository->getAllActive($allowedCenterIds),
         ];
     }
 
