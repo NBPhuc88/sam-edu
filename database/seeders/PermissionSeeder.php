@@ -11,8 +11,9 @@ class PermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * @param ?string $targetRole
      */
-    public function run(): void
+    public function run(?string $targetRole = null): void
     {
         // 1. Đồng bộ permissions từ config
         Artisan::call('permission:sync');
@@ -32,7 +33,7 @@ class PermissionSeeder extends Seeder
                 'classes.index', 'classes.create', 'classes.edit', 'classes.delete', 'classes.students', 'classes.chat',
                 'schedules.index', 'schedules.create', 'schedules.edit', 'schedules.delete',
                 'sessions.index', 'sessions.edit', 'attendance.index', 'attendance.save',
-                'holidays.index',
+                'holidays.index', 'holidays.create', 'holidays.edit', 'holidays.delete',
                 'exams.index', 'exams.create', 'exams.edit', 'exams.delete',
                 'exam-types.index', 'exam-types.create', 'exam-types.edit', 'exam-types.delete',
                 'class-exams.index', 'class-exams.create', 'class-exams.edit', 'class-exams.delete',
@@ -60,7 +61,11 @@ class PermissionSeeder extends Seeder
             ],
         ];
 
-        foreach ($roleDefaults as $role => $codes) {
+        $rolesToSeed = ($targetRole && isset($roleDefaults[$targetRole]))
+            ? [$targetRole => $roleDefaults[$targetRole]]
+            : $roleDefaults;
+
+        foreach ($rolesToSeed as $role => $codes) {
             $permissionIds = $allPermissions->whereIn('code', $codes)->pluck('id');
 
             // Xóa quyền cũ của role và gán lại quyền chuẩn

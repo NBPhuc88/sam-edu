@@ -83,10 +83,11 @@ class HandleInertiaRequests extends Middleware
         }
 
         $permissions = [];
+
         if ($user && $role) {
             $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
-            $adminRole = $role === 'admin' ? ($user->role ?? 'admin') : null;
-            $permissions = $permissionService->getPermissionsForUser($role, $adminRole);
+            $adminRole         = $role === 'admin' ? ($user->role ?? 'admin') : null;
+            $permissions       = $permissionService->getPermissionsForUser($role, $adminRole);
         }
 
         $routeName = $request->route()?->getName();
@@ -118,6 +119,12 @@ class HandleInertiaRequests extends Middleware
                 'address'      => SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội'),
                 'phone'        => SystemSetting::getByKey('contact_phone', '0988.123.456'),
                 'email'        => SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com'),
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error'   => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+                'info'    => fn () => $request->session()->get('info'),
             ],
             'seo' => $seoMetadata ? [
                 'title'         => $seoMetadata->title,

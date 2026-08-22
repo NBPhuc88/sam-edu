@@ -14,15 +14,15 @@ import {
     ShieldAlert,
     ShieldCheck,
     Square,
+    Undo2,
     User,
     UserCheck,
     Users,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
@@ -82,12 +82,30 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
         return initial;
     });
 
-    // Quản lý state quyền của các role
+    // Quản lý state quyền của các role (đồng bộ hai chiều với props server)
     const [currentGrants, setCurrentGrants] = useState<Record<string, string[]>>(roleGrants);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isSyncing, setIsSyncing] = useState<boolean>(false);
     const [resetModalOpen, setResetModalOpen] = useState<boolean>(false);
     const [isResetting, setIsResetting] = useState<boolean>(false);
+
+    // Tự động đồng bộ lại currentGrants khi props roleGrants từ server cập nhật (sau save, reset, sync)
+    useEffect(() => {
+        setCurrentGrants(roleGrants);
+    }, [roleGrants]);
+
+    // Tự động mở rộng các module mới khi danh sách modules được cập nhật sau khi đồng bộ
+    useEffect(() => {
+        setExpandedModules((prev) => {
+            const next = { ...prev };
+            modules.forEach((m) => {
+                if (next[m.key] === undefined) {
+                    next[m.key] = true;
+                }
+            });
+            return next;
+        });
+    }, [modules]);
 
     const isSuperAdminRole = selectedRole === 'super_admin';
 
@@ -209,6 +227,13 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
         }));
     };
 
+    const handleDiscardChanges = () => {
+        setCurrentGrants((prev) => ({
+            ...prev,
+            [selectedRole]: [...(roleGrants[selectedRole] || [])],
+        }));
+    };
+
     const handleSave = () => {
         if (isSuperAdminRole) {
             return;
@@ -298,6 +323,18 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                             <span>Khôi Phục Mặc Định</span>
                         </Button>
 
+                        {isDirty && !isSuperAdminRole && (
+                            <Button
+                                variant="secondary"
+                                onClick={handleDiscardChanges}
+                                disabled={isSaving}
+                                className="flex items-center gap-2"
+                            >
+                                <Undo2 className="h-4 w-4 text-gray-500" />
+                                <span>Hoàn Tác</span>
+                            </Button>
+                        )}
+
                         <Button
                             variant="success"
                             onClick={handleSave}
@@ -309,13 +346,6 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                         </Button>
                     </div>
                 </div>
-
-                {/* Flash Messages */}
-                {flash?.success && (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 shadow-xs">
-                        {flash.success}
-                    </div>
-                )}
 
                 {/* Role Tabs */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -603,6 +633,18 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                                 <RotateCcw className="h-4 w-4" />
                                 <span>Khôi Phục Mặc Định</span>
                             </Button>
+
+                            {isDirty && !isSuperAdminRole && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleDiscardChanges}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Undo2 className="h-4 w-4 text-gray-500" />
+                                    <span>Hoàn Tác</span>
+                                </Button>
+                            )}
 
                             <Button
                                 variant="success"

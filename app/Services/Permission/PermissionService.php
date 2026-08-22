@@ -5,6 +5,7 @@ namespace App\Services\Permission;
 use App\Models\Permission;
 use App\Repositories\Permission\PermissionRepositoryInterface;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 
 class PermissionService implements PermissionServiceInterface
@@ -84,9 +85,24 @@ class PermissionService implements PermissionServiceInterface
     public function resetToDefault(?string $role = null): void
     {
         $seeder = new PermissionSeeder();
-        $seeder->run();
+        $seeder->run($role);
 
-        // Xóa toàn bộ cache
+        // Xóa cache
+        if ($role) {
+            $this->clearRoleCache($role);
+        } else {
+            $this->clearAllCache();
+        }
+    }
+
+    public function syncPermissions(): void
+    {
+        Artisan::call('permission:sync');
+        $this->clearAllCache();
+    }
+
+    public function clearAllCache(): void
+    {
         $roles = ['super_admin', 'admin', 'teacher', 'student'];
 
         foreach ($roles as $r) {

@@ -10,7 +10,7 @@
  */
 
 import { Head, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import Toast from '../components/ui/Toast';
 import apiClient from '../lib/axios';
@@ -24,7 +24,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     children,
     title = 'Hệ thống Quản lý Giáo dục Sam',
 }) => {
-    const { auth, center, subscription_plans } = usePage().props as any;
+    const { auth, center, subscription_plans, flash } = usePage().props as any;
 
     const user = auth?.user ?? null;
     const role = auth?.role ?? null;
@@ -34,6 +34,34 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         message: '',
         type: 'info',
     });
+
+    useEffect(() => {
+        if (flash?.success) {
+            setToast({
+                isOpen: true,
+                message: flash.success,
+                type: 'success',
+            });
+        } else if (flash?.error) {
+            setToast({
+                isOpen: true,
+                message: flash.error,
+                type: 'error',
+            });
+        } else if (flash?.warning) {
+            setToast({
+                isOpen: true,
+                message: flash.warning,
+                type: 'warning',
+            });
+        } else if (flash?.info) {
+            setToast({
+                isOpen: true,
+                message: flash.info,
+                type: 'info',
+            });
+        }
+    }, [flash]);
 
     /** Handle ZaloPay renewal */
     const handleZaloPayRenew = async (planCode: string): Promise<void> => {

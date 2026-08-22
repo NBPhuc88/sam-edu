@@ -121,3 +121,48 @@ test('teacher can access allowed route but receives 404 on disallowed create rou
     $disallowedResponse = $this->actingAs($teacher, 'teacher')->get(route('students.create'));
     $disallowedResponse->assertStatus(404);
 });
+
+test('super admin can reset role permissions to default', function () {
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_reset_perm',
+        'full_name'  => 'Super Admin Reset',
+        'email'      => 'superadmin_reset@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000084',
+    ]);
+
+    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+
+    // 1. Thay đổi quyền của giáo viên thành rỗng
+    $permissionService->updateRolePermissions('teacher', []);
+    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeFalse();
+
+    // 2. Gọi API khôi phục mặc định cho vai trò teacher
+    $response = $this->actingAs($superAdmin, 'admin')->post(route('permissions.reset'), [
+        'role' => 'teacher',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+
+    // 3. Kiểm tra lại quyền mặc định đã được khôi phục
+    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeTrue();
+    expect($permissionService->roleHasPermission('teacher', 'classes.index'))->toBeTrue();
+});
+
+test('super admin can sync permissions from config', function () {
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_sync_perm',
+        'full_name'  => 'Super Admin Sync',
+        'email'      => 'superadmin_sync@test.com',
+        'password'   => 'password123',
+        'role'       => 'super_admin',
+        'admin_code' => 'ADM000000083',
+    ]);
+
+    $response = $this->actingAs($superAdmin, 'admin')->post(route('permissions.sync'));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+});

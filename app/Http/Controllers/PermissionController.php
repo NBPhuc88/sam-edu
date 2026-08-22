@@ -6,7 +6,6 @@ use App\Http\Requests\Permission\UpdateRolePermissionsRequest;
 use App\Services\Permission\PermissionServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -65,7 +64,7 @@ class PermissionController extends Controller
      */
     public function sync(): RedirectResponse
     {
-        Artisan::call('permission:sync');
+        $this->permissionService->syncPermissions();
 
         return back()->with('success', 'Đồng bộ danh mục quyền từ file cấu hình thành công.');
     }

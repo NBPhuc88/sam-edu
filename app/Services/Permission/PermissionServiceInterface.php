@@ -26,6 +26,16 @@ interface PermissionServiceInterface
     public function resetToDefault(?string $role = null): void;
 
     /**
+     * Đồng bộ danh mục permissions từ file cấu hình và làm mới cache.
+     */
+    public function syncPermissions(): void;
+
+    /**
+     * Xóa toàn bộ cache phân quyền hệ thống.
+     */
+    public function clearAllCache(): void;
+
+    /**
      * Lấy danh sách mã quyền được cấp cho một người dùng dựa trên role và admin_role.
      *
      * @return array<int, string>
