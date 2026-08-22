@@ -159,6 +159,12 @@ class UpdateExamRequest extends FormRequest
                             $qType      = $q['question_type'] ?? '';
                             $correctAns = $q['correct_answer'] ?? null;
 
+                            // Các câu hỏi Tự luận (Viết) và Ghi âm (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
+                            if (in_array($qType, ['essay', 'writing', 'audio_record', 'oral', 'speaking'], true)) {
+                                continue;
+                            }
+
+                            // 1. Trắc nghiệm 1 đáp án, Đúng/Sai, Tìm lỗi sai
                             if (in_array($qType, ['true_false', 'true_false_not_given', 'single_choice', 'find_mistake'], true)) {
                                 if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
                                     $validator->errors()->add(
@@ -166,11 +172,67 @@ class UpdateExamRequest extends FormRequest
                                         "Vui lòng chọn đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
-                            } elseif ($qType === 'multiple_choice') {
-                                if (empty($correctAns) || (is_array($correctAns) && count(array_filter($correctAns)) === 0)) {
+                            }
+                            // 2. Trắc nghiệm nhiều đáp án
+                            elseif ($qType === 'multiple_choice') {
+                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                         "Vui lòng chọn ít nhất 1 đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 3. Điền vào chỗ trống
+                            elseif (in_array($qType, ['fill_in_blank', 'short_answer'], true)) {
+                                $hasAnswers = false;
+
+                                if (is_array($correctAns)) {
+                                    foreach ($correctAns as $blankConfig) {
+                                        if (is_array($blankConfig) && ! empty($blankConfig['accepted_answers'])) {
+                                            $nonEmpty = array_filter($blankConfig['accepted_answers'], fn ($a) => is_string($a) && trim($a) !== '');
+
+                                            if (! empty($nonEmpty)) {
+                                                $hasAnswers = true;
+
+                                                break;
+                                            }
+                                        }
+                                    }
+                                } elseif (is_string($correctAns) && trim($correctAns) !== '') {
+                                    $hasAnswers = true;
+                                }
+
+                                if (! $hasAnswers) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng nhập đáp án cho chỗ trống của câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 4. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
+                            elseif (in_array($qType, ['matching', 'matching_sentences', 'matching_image', 'diagram_labelling'], true)) {
+                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng ghép nối đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 5. Sắp xếp thứ tự (Ordering)
+                            elseif ($qType === 'ordering') {
+                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng sắp xếp thứ tự đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 6. Các dạng câu hỏi trắc nghiệm / tự động chấm khác
+                            else {
+                                if ($correctAns === null || $correctAns === '' || (is_array($correctAns) && count($correctAns) === 0)) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn hoặc nhập đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
                             }
