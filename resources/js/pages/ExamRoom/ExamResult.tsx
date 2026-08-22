@@ -269,10 +269,17 @@ export default function ExamResult({
                                                 </span>
                                             </div>
 
-                                            {/* Content */}
-                                            <p className="text-xs font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
-                                                {q.content}
-                                            </p>
+                                            {/* Question Title & Content */}
+                                            <div className="space-y-1.5">
+                                                {q.title && (
+                                                    <h4 className="text-sm font-bold text-gray-900 leading-snug">
+                                                        {q.title}
+                                                    </h4>
+                                                )}
+                                                <p className="text-xs font-semibold text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                                    {q.content}
+                                                </p>
+                                            </div>
 
                                             {/* Audio / Image */}
                                             {q.audio_url && (

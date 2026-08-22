@@ -229,6 +229,7 @@ export default function QuestionBuilder({
 
         const newQuestion: ExamQuestionData = {
             code: `Q${String(globalNum).padStart(9, '0')}`,
+            title: '',
             skill: section.skill,
             question_type: type,
             content: '',
@@ -937,6 +938,20 @@ export default function QuestionBuilder({
                                                                             )}
                                                                         </div>
                                                                     )}
+
+                                                                    {/* Question Title */}
+                                                                    <div>
+                                                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-800 block mb-1.5">
+                                                                            Tiêu Đề Câu Hỏi (Tùy chọn)
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={q.title || ''}
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { title: e.target.value || null })}
+                                                                            placeholder="VD: Questions 1-5, Section 1, Part 2..."
+                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                        />
+                                                                    </div>
 
                                                                     {/* Question Content */}
                                                                     <div>

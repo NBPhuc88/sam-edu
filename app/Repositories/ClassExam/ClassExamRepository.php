@@ -111,7 +111,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'exam:id,subject_id,name,code',
                 'exam.subject:id,name,code',
                 'exam.sections:id,exam_id,title,description,skill,order_index',
-                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,title,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
                 'createdByTeacher:id,full_name,teacher_code',
                 'createdByAdmin:id,full_name,admin_code',
             ]);
@@ -182,7 +182,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
                 'exam.subject:id,name,code',
                 'exam.sections:id,exam_id,title,description,skill,order_index',
-                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,title,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
             ])
             ->where(function ($q) use ($cleanedCode) {
                 $q->where('code', $cleanedCode)
@@ -201,7 +201,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'exam:id,subject_id,name,code,duration_minutes,max_score,pass_score',
                 'exam.subject:id,name,code',
                 'exam.sections:id,exam_id,title,description,skill,order_index',
-                'exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'exam.sections.questions:id,exam_id,section_id,code,title,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
             ])
             ->find($classExamId);
     }
@@ -252,7 +252,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'classExam.exam:id,subject_id,name,code',
                 'classExam.exam.subject:id,name,code',
                 'classExam.exam.sections:id,exam_id,title,description,skill,order_index',
-                'classExam.exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'classExam.exam.sections.questions:id,exam_id,section_id,code,title,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
             ])
             ->find($submissionId);
     }
@@ -265,13 +265,13 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'classExam:id,class_id,exam_id,title,exam_date,start_time,end_time,duration_minutes,max_score,pass_score,status',
                 'classExam.exam:id,subject_id,name,code',
                 'classExam.exam.sections:id,exam_id,title,description,skill,order_index',
-                'classExam.exam.sections.questions:id,exam_id,section_id,code,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
+                'classExam.exam.sections.questions:id,exam_id,section_id,code,title,question_type,skill,content,image_url,audio_url,score,options,correct_answer,explanation,metadata,order_index',
             ])
             ->find($submissionId);
     }
 
     public function findQuestionById(int $questionId): ?\App\Models\ExamQuestion
     {
-        return \App\Models\ExamQuestion::select('id', 'exam_id', 'section_id', 'code', 'question_type', 'skill', 'content', 'image_url', 'audio_url', 'score')->find($questionId);
+        return \App\Models\ExamQuestion::select('id', 'exam_id', 'section_id', 'code', 'title', 'question_type', 'skill', 'content', 'image_url', 'audio_url', 'score')->find($questionId);
     }
 }
