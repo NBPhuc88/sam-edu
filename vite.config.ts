@@ -35,6 +35,7 @@ export default defineConfig({
         wayfinder({
             formVariants: true,
             // command: 'docker compose -f /home/phuc/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan wayfinder:generate',
+            // command: 'docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan wayfinder:generate',
         }),
     ],
     build: {

@@ -72,14 +72,57 @@ class RoomRepository implements RoomRepositoryInterface
             )
             ->with([
                 'center:id,name,code',
-                'equipments:id,room_id,name,quantity,unit,status,note'
+                'equipments:id,room_id,name,quantity,unit,status,note',
             ]);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
         }
 
-        return $query->find($id);
+        $room = $query->find($id);
+
+        if ($room) {
+            $schedules = $room->classSchedules()
+                ->with([
+                    'classSubject.schoolClass:id,name,code,status',
+                    'classSubject.subject:id,name,code',
+                ])
+                ->get();
+
+            $upcomingSessionsCount = $room->classSessions()
+                ->where('session_date', '>=', now()->toDateString())
+                ->where('status', '!=', 'cancelled')
+                ->count();
+
+            $inUseClasses = [];
+
+            foreach ($schedules as $sched) {
+                $schoolClass = $sched->classSubject?->schoolClass;
+                $subject     = $sched->classSubject?->subject;
+
+                if ($schoolClass) {
+                    $key = $schoolClass->id . '_' . ($subject?->id ?? 0);
+
+                    if (! isset($inUseClasses[$key])) {
+                        $inUseClasses[$key] = [
+                            'class_name'   => $schoolClass->name,
+                            'class_code'   => $schoolClass->code,
+                            'subject_name' => $subject?->name ?? 'N/A',
+                        ];
+                    }
+                }
+            }
+
+            $inUseClassesArray = array_values($inUseClasses);
+            $isInUse           = count($inUseClassesArray) > 0 || $upcomingSessionsCount > 0 || $schedules->count() > 0;
+
+            $room->setAttribute('is_in_use', $isInUse);
+            $room->setAttribute('schedules_count', $schedules->count());
+            $room->setAttribute('upcoming_sessions_count', $upcomingSessionsCount);
+            $room->setAttribute('in_use_classes', $inUseClassesArray);
+        }
+
+        return $room;
     }
 
     public function create(array $data): Room

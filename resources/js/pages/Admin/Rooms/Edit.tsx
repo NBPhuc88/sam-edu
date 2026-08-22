@@ -9,11 +9,14 @@ import {
     Monitor,
     Tv,
     Wind,
+    AlertCircle,
+    Building2,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -32,6 +35,12 @@ interface RoomEquipment {
     note?: string | null;
 }
 
+interface InUseClass {
+    class_name: string;
+    class_code: string;
+    subject_name: string;
+}
+
 interface Room {
     id: number;
     center_id: number;
@@ -41,6 +50,10 @@ interface Room {
     location: string | null;
     status: 'active' | 'inactive';
     equipments?: RoomEquipment[];
+    is_in_use?: boolean;
+    schedules_count?: number;
+    upcoming_sessions_count?: number;
+    in_use_classes?: InUseClass[];
 }
 
 interface Props {
@@ -62,10 +75,11 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
 
     const [centerId, setCenterId] = useState<string>(String(room.center_id));
     const [name, setName] = useState(room.name || '');
-    const [code, setCode] = useState(room.code || '');
     const [capacity, setCapacity] = useState(room.capacity ? String(room.capacity) : '');
     const [location, setLocation] = useState(room.location || '');
     const [status, setStatus] = useState<'active' | 'inactive'>(room.status || 'active');
+    const [pendingStatus, setPendingStatus] = useState<'active' | 'inactive' | null>(null);
+    const [showInUseWarningModal, setShowInUseWarningModal] = useState(false);
 
     // Equipment state
     const [equipments, setEquipments] = useState<RoomEquipment[]>(
@@ -80,6 +94,28 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
     );
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleStatusChange = (newStatus: 'active' | 'inactive') => {
+        if (newStatus !== room.status && room.is_in_use) {
+            setPendingStatus(newStatus);
+            setShowInUseWarningModal(true);
+        } else {
+            setStatus(newStatus);
+        }
+    };
+
+    const confirmStatusChange = () => {
+        if (pendingStatus) {
+            setStatus(pendingStatus);
+            setPendingStatus(null);
+        }
+        setShowInUseWarningModal(false);
+    };
+
+    const cancelStatusChange = () => {
+        setPendingStatus(null);
+        setShowInUseWarningModal(false);
+    };
 
     const handleAddEquipment = (preset?: { name: string; quantity: number; unit: string }) => {
         setEquipments([
@@ -117,7 +153,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
             {
                 center_id: centerId ? Number(centerId) : null,
                 name: name.trim(),
-                code: code.trim(),
+                code: room.code,
                 capacity: capacity ? Number(capacity) : null,
                 location: location.trim() || null,
                 status,
@@ -225,22 +261,6 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 )}
                             </div>
 
-                            {/* Room Code */}
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mã Phòng Học
-                                </label>
-                                <Input
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    placeholder="Ví dụ: R000000001, P101, LAB-02"
-                                    className="!py-3 !text-sm uppercase font-mono"
-                                />
-                                {errors.code && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.code}</p>
-                                )}
-                            </div>
-
                             {/* Capacity */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -276,13 +296,13 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                             </div>
 
                             {/* Status */}
-                            <div className="md:col-span-2">
+                            <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Trạng Thái Hoạt Động <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    value={status}
-                                    onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
+                                    value={pendingStatus || status}
+                                    onChange={(e) => handleStatusChange(e.target.value as 'active' | 'inactive')}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
@@ -487,6 +507,85 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                         </Button>
                     </div>
                 </form>
+
+                {/* Room In-Use Status Change Warning Modal */}
+                <Modal
+                    isOpen={showInUseWarningModal}
+                    onClose={cancelStatusChange}
+                    title="Cảnh Báo: Phòng Học Đang Được Sử Dụng"
+                    maxWidth="lg"
+                    footer={
+                        <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                onClick={cancelStatusChange}
+                            >
+                                Hủy / Giữ Nguyên Trạng Thái
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="danger"
+                                size="md"
+                                onClick={confirmStatusChange}
+                            >
+                                Xác Nhận Thay Đổi
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 border border-amber-200">
+                            <AlertCircle className="h-6 w-6 shrink-0 text-amber-600 mt-0.5" />
+                            <div className="text-sm text-amber-900">
+                                <p className="font-bold">
+                                    Phòng học &quot;{room.name}&quot; ({room.code}) hiện đang có lịch học/ca học hoạt động!
+                                </p>
+                                <p className="mt-1 text-xs text-amber-800">
+                                    Việc chuyển trạng thái sang{' '}
+                                    <span className="font-bold underline">
+                                        {pendingStatus === 'inactive' ? 'Tạm dừng bảo trì (Inactive)' : 'Đang sử dụng (Active)'}
+                                    </span>{' '}
+                                    có thể ảnh hưởng đến các lớp học và ca học đã được phân công cho phòng học này.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Detailed usage info */}
+                        {((room.in_use_classes && room.in_use_classes.length > 0) || (room.upcoming_sessions_count && room.upcoming_sessions_count > 0)) && (
+                            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs space-y-2">
+                                <h4 className="font-bold text-gray-800 flex items-center gap-1.5">
+                                    <Building2 className="h-4 w-4 text-purple-600" />
+                                    Chi Tiết Sử Dụng Phòng Học:
+                                </h4>
+
+                                {room.in_use_classes && room.in_use_classes.length > 0 && (
+                                    <div>
+                                        <span className="font-semibold text-gray-700">Các Lớp Đang Sử Dụng ({room.in_use_classes.length}):</span>
+                                        <ul className="mt-1 space-y-1 pl-4 list-disc text-gray-600">
+                                            {room.in_use_classes.map((cls, i) => (
+                                                <li key={i}>
+                                                    Lớp <span className="font-semibold text-gray-900">{cls.class_name}</span> ({cls.class_code}) - Môn: <span className="font-medium text-purple-700">{cls.subject_name}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {room.upcoming_sessions_count && room.upcoming_sessions_count > 0 ? (
+                                    <p className="text-gray-700 pt-1 border-t border-gray-200/60 mt-2">
+                                        Tổng số ca học sắp tới: <span className="font-bold text-emerald-700">{room.upcoming_sessions_count} ca</span>
+                                    </p>
+                                ) : null}
+                            </div>
+                        )}
+
+                        <p className="text-xs text-gray-500 italic">
+                            Bạn có chắc chắn muốn tiếp tục thay đổi trạng thái cho phòng học này không?
+                        </p>
+                    </div>
+                </Modal>
             </div>
         </AppLayout>
     );
