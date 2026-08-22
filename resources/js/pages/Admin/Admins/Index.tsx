@@ -15,6 +15,7 @@ import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
+import { usePermission } from '@/hooks/usePermission';
 
 interface Center {
     id: number;
@@ -50,6 +51,7 @@ interface IndexProps {
 }
 
 export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, filters }: IndexProps) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || '');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -155,14 +157,16 @@ return;
                         </p>
                     </div>
 
-                    <Button
-                        variant="success"
-                        size="md"
-                        icon={<Plus className="h-4.5 w-4.5" />}
-                        onClick={handleOpenCreateModal}
-                    >
-                        Tạo Admin Mới
-                    </Button>
+                    {can('admins.create') && (
+                        <Button
+                            variant="success"
+                            size="md"
+                            icon={<Plus className="h-4.5 w-4.5" />}
+                            onClick={handleOpenCreateModal}
+                        >
+                            Tạo Admin Mới
+                        </Button>
+                    )}
                 </div>
 
                 {/* Filter & Search Bar */}
@@ -209,9 +213,11 @@ return;
                                     <th className="px-6 py-4">
                                         Trung tâm Phân công
                                     </th>
-                                    <th className="px-6 py-4 text-right">
-                                        Thao tác
-                                    </th>
+                                    {(can('admins.edit') || can('admins.delete')) && (
+                                        <th className="px-6 py-4 text-right">
+                                            Thao tác
+                                        </th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -295,45 +301,51 @@ return;
                                                 )}
                                             </td>
 
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="edit"
-                                                        size="sm"
-                                                        icon={
-                                                            <Edit className="h-4 w-4" />
-                                                        }
-                                                        onClick={() =>
-                                                            handleOpenEditModal(
-                                                                admin,
+                                            {(can('admins.edit') || can('admins.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can('admins.edit') && (
+                                                            <Button
+                                                                variant="edit"
+                                                                size="sm"
+                                                                icon={
+                                                                    <Edit className="h-4 w-4" />
+                                                                }
+                                                                onClick={() =>
+                                                                    handleOpenEditModal(
+                                                                        admin,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Sửa
+                                                            </Button>
+                                                        )}
+                                                        {can('admins.delete') && (
+                                                            admin.role === 'super_admin' ? (
+                                                                <span
+                                                                    className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-400 cursor-not-allowed select-none"
+                                                                    title="Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa"
+                                                                >
+                                                                    Không thể xóa
+                                                                </span>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="danger"
+                                                                    size="sm"
+                                                                    icon={
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        openDeleteModal(admin)
+                                                                    }
+                                                                >
+                                                                    Xóa
+                                                                </Button>
                                                             )
-                                                        }
-                                                    >
-                                                        Sửa
-                                                    </Button>
-                                                    {admin.role === 'super_admin' ? (
-                                                        <span
-                                                            className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-400 cursor-not-allowed select-none"
-                                                            title="Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa"
-                                                        >
-                                                            Không thể xóa
-                                                        </span>
-                                                    ) : (
-                                                        <Button
-                                                            variant="danger"
-                                                            size="sm"
-                                                            icon={
-                                                                <Trash2 className="h-4 w-4" />
-                                                            }
-                                                            onClick={() =>
-                                                                openDeleteModal(admin)
-                                                            }
-                                                        >
-                                                            Xóa
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </td>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}

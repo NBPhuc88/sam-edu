@@ -21,6 +21,7 @@ import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate, formatTime } from '@/lib/date';
 
+import { usePermission } from '@/hooks/usePermission';
 interface Center {
     id: number;
     name: string;

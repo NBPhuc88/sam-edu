@@ -26,6 +26,7 @@ import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from './AssignExamModal';
 import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
 
+import { usePermission } from '@/hooks/usePermission';
 interface Props {
     classExams: PaginatedData<ClassExam>;
     centers: Center[];

@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import AppLayout from '@/layouts/AppLayout';
 
+import { usePermission } from '@/hooks/usePermission';
 interface StudentAttendanceItem {
     id: number;
     full_name: string;

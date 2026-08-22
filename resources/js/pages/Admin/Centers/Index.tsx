@@ -9,6 +9,7 @@ import Modal from '../../../components/ui/Modal';
 import Pagination from '../../../components/ui/Pagination';
 import AppLayout from '../../../layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { usePermission } from '@/hooks/usePermission';
 
 interface Center {
     id: number;
@@ -40,6 +41,7 @@ interface IndexProps {
 }
 
 export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
+    const { can } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [perPage, setPerPage] = useState<number>(filters?.per_page || 20);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -88,15 +90,17 @@ return;
                             đào tạo trên hệ thống
                         </p>
                     </div>
-                    <Link href="/centers/create">
-                        <Button
-                            variant="success"
-                            size="md"
-                            icon={<Plus className="h-4.5 w-4.5" />}
-                        >
-                            Thêm Trung Tâm Mới
-                        </Button>
-                    </Link>
+                    {can('centers.create') && (
+                        <Link href="/centers/create">
+                            <Button
+                                variant="success"
+                                size="md"
+                                icon={<Plus className="h-4.5 w-4.5" />}
+                            >
+                                Thêm Trung Tâm Mới
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Filter & Search Bar */}
@@ -133,9 +137,11 @@ return;
                                     <th className="px-6 py-4">Quy Mô</th>
                                     <th className="px-6 py-4">Hạn Sử Dụng</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    <th className="px-6 py-4 text-right">
-                                        Thao Tác
-                                    </th>
+                                    {(can('centers.edit') || can('centers.delete')) && (
+                                        <th className="px-6 py-4 text-right">
+                                            Thao Tác
+                                        </th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -213,35 +219,41 @@ return;
                                                     {center.status.toUpperCase()}
                                                 </Badge>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link
-                                                        href={`/centers/${center.id}/edit`}
-                                                    >
-                                                        <Button
-                                                            variant="edit"
-                                                            size="sm"
-                                                            icon={
-                                                                <Edit2 className="h-4 w-4" />
-                                                            }
-                                                        >
-                                                            Sửa
-                                                        </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        icon={
-                                                            <Trash2 className="h-4 w-4" />
-                                                        }
-                                                        onClick={() =>
-                                                            openDeleteModal(center)
-                                                        }
-                                                    >
-                                                        Xóa
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                            {(can('centers.edit') || can('centers.delete')) && (
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can('centers.edit') && (
+                                                            <Link
+                                                                href={`/centers/${center.id}/edit`}
+                                                            >
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={
+                                                                        <Edit2 className="h-4 w-4" />
+                                                                    }
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('centers.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                }
+                                                                onClick={() =>
+                                                                    openDeleteModal(center)
+                                                                }
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (

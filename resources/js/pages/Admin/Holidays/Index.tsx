@@ -22,6 +22,7 @@ import Pagination, { PaginationLink } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { parseDate, WEEKDAY_NAMES } from '@/lib/date';
 
+import { usePermission } from '@/hooks/usePermission';
 interface Holiday {
     id: number;
     name: string;

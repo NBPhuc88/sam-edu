@@ -17,6 +17,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
+import { usePermission } from '@/hooks/usePermission';
 interface Center {
     id: number;
     name: string;

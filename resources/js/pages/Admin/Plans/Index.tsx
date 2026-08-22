@@ -24,6 +24,7 @@ import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 
+import { usePermission } from '@/hooks/usePermission';
 interface SubscriptionPlan {
     id: number;
     code: string;
