@@ -42,6 +42,35 @@ export default function ExamResult({
     const isPassed = passScore !== null ? studentScore >= passScore : studentScore >= maxScore / 2;
 
     const [activeFilter, setActiveFilter] = useState<'all' | 'correct' | 'incorrect'>('all');
+    const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+
+    const sectionStats = React.useMemo(() => {
+        return sections.map((sec, sIdx) => {
+            const secQuestions = sec.questions || [];
+            let secCorrect = 0;
+            let secEarnedScore = 0;
+            let secMaxScore = 0;
+
+            secQuestions.forEach((q) => {
+                const grade = gradingDetails[q.id!] || {};
+                if (grade.is_correct) secCorrect++;
+                secEarnedScore += Number(grade.score_earned || 0);
+                secMaxScore += Number(q.score || 1);
+            });
+
+            return {
+                ...sec,
+                index: sIdx,
+                questions: secQuestions,
+                totalQuestions: secQuestions.length,
+                correctCount: secCorrect,
+                earnedScore: Number(secEarnedScore.toFixed(2)),
+                maxScore: Number(secMaxScore.toFixed(2)),
+            };
+        });
+    }, [sections, gradingDetails]);
+
+    const activeSection = sectionStats[activeSectionIndex] || sectionStats[0];
 
     const formatDuration = (secs: number) => {
         const m = Math.floor(secs / 60);
@@ -204,140 +233,210 @@ export default function ExamResult({
                     </Link>
                 </div>
 
-                {/* Question Review List */}
-                <div className="space-y-6">
-                    {sections.map((section, sIdx) => {
-                        return (
-                            <div key={section.id || sIdx} className="space-y-4">
-                                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xs">
-                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
-                                            {sIdx + 1}
-                                        </span>
-                                        {section.title}
-                                    </h3>
-                                </div>
-
-                                {(section.questions || []).map((q, qIdx) => {
-                                    const grade = gradingDetails[q.id!] || {};
-                                    const isCorrect = grade.is_correct === true;
-                                    const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
-                                    const userAns = grade.user_answer;
-                                    const correctAns = grade.correct_answer;
-
-                                    if (activeFilter === 'correct' && !isCorrect) return null;
-                                    if (activeFilter === 'incorrect' && isCorrect) return null;
-
-                                    return (
-                                        <Card
-                                            key={q.id || qIdx}
-                                            className={`border p-5 shadow-xs space-y-4 transition-all ${
-                                                isManual && !submission.is_graded
-                                                    ? 'border-amber-200 bg-amber-50/20'
-                                                    : isCorrect
-                                                    ? 'border-emerald-200 bg-emerald-50/20'
-                                                    : 'border-rose-200 bg-rose-50/20'
+                {/* Section Navigation Tabs */}
+                {sectionStats.length > 1 && (
+                    <div className="rounded-2xl bg-white p-3 border border-gray-200 shadow-2xs space-y-2">
+                        <span className="text-2xs font-bold uppercase tracking-wider text-gray-500 block px-1">
+                            Chọn phần thi cần xem chi tiết:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                            {sectionStats.map((sec, sIdx) => {
+                                const isActive = sIdx === activeSectionIndex;
+                                return (
+                                    <button
+                                        key={sec.id || sIdx}
+                                        type="button"
+                                        onClick={() => setActiveSectionIndex(sIdx)}
+                                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+                                            isActive
+                                                ? 'bg-slate-900 text-white shadow-xs scale-[1.02]'
+                                                : 'bg-slate-50 text-gray-700 border border-gray-200 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`flex h-5 w-5 items-center justify-center rounded-lg font-mono text-2xs font-bold ${
+                                                isActive
+                                                    ? 'bg-white/20 text-white'
+                                                    : 'bg-gray-200 text-gray-800'
                                             }`}
                                         >
-                                            {/* Question Header */}
-                                            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-white font-mono text-xs font-bold ${
-                                                        isManual && !submission.is_graded
-                                                            ? 'bg-amber-600'
-                                                            : isCorrect
-                                                            ? 'bg-emerald-600'
-                                                            : 'bg-rose-600'
-                                                    }`}>
-                                                        {isManual && !submission.is_graded ? '✍️' : isCorrect ? '✓' : '✗'}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-gray-800">
-                                                        Câu hỏi (Điểm: {grade.score_earned || 0} / {q.score}đ)
-                                                    </span>
-                                                </div>
-                                                <span className={`text-2xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                                    isManual && !submission.is_graded
-                                                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                                        : isCorrect
-                                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                        : 'bg-rose-100 text-rose-800 border border-rose-200'
-                                                }`}>
-                                                    {isManual && !submission.is_graded
-                                                        ? 'Chờ giáo viên chấm'
-                                                        : isCorrect
-                                                        ? 'Chính xác'
-                                                        : 'Chưa chính xác'}
-                                                </span>
-                                            </div>
+                                            {sIdx + 1}
+                                        </span>
+                                        <span>{sec.title}</span>
+                                        <span
+                                            className={`px-2 py-0.5 rounded-full text-2xs font-bold ${
+                                                isActive
+                                                    ? 'bg-emerald-500/30 text-emerald-300'
+                                                    : 'bg-emerald-100 text-emerald-800'
+                                            }`}
+                                        >
+                                            ✓ {sec.correctCount}/{sec.totalQuestions}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
-                                            {/* Question Title & Content */}
-                                            <div className="space-y-1.5">
-                                                {q.title && (
-                                                    <h4 className="text-sm font-bold text-gray-900 leading-snug">
-                                                        {q.title}
-                                                    </h4>
-                                                )}
-                                                {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
-                                                    <p className="text-xs font-semibold text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                                        {q.content}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Audio / Image */}
-                                            {q.audio_url && (
-                                                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-2.5 flex items-center gap-3">
-                                                    <Volume2 className="h-4 w-4 text-blue-600 shrink-0" />
-                                                    <audio src={q.audio_url} controls className="w-full h-7" />
-                                                </div>
-                                            )}
-
-                                            {q.image_url && (
-                                                <div className="rounded-xl border border-gray-200 p-2 bg-slate-50 flex justify-center max-h-48 overflow-hidden">
-                                                    <img src={q.image_url} alt="Minh họa" className="max-h-44 object-contain rounded" />
-                                                </div>
-                                            )}
-
-                                            {/* Visual Interactive Review UI with Color Highlights */}
-                                            <QuestionReviewDetail
-                                                question={{
-                                                    ...q,
-                                                    correct_answer: correctAns,
-                                                    user_answer: userAns,
-                                                    is_correct: isCorrect,
-                                                    teacher_comment: grade.teacher_comment,
-                                                }}
-                                            />
-
-                                            {/* Teacher Comment on Question */}
-                                            {grade.teacher_comment && (
-                                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-950 space-y-1">
-                                                    <span className="text-2xs font-bold uppercase tracking-wider text-emerald-800 block">
-                                                        💬 Nhận xét của giáo viên:
-                                                    </span>
-                                                    <p className="text-xs font-semibold">{grade.teacher_comment}</p>
-                                                </div>
-                                            )}
-
-                                            {/* Explanation */}
-                                            {q.explanation && (
-                                                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 text-xs text-blue-900 space-y-1">
-                                                    <div className="flex items-center gap-1.5 font-bold text-blue-800">
-                                                        <Info className="h-3.5 w-3.5" />
-                                                        <span>Giải thích chi tiết:</span>
-                                                    </div>
-                                                    <p className="text-xs text-blue-950 whitespace-pre-wrap leading-relaxed">
-                                                        {q.explanation}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </Card>
-                                    );
-                                })}
+                {/* Active Section Header Card */}
+                {activeSection && (
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 font-mono text-xs font-bold text-white shadow-2xs">
+                                    {activeSection.index + 1}
+                                </span>
+                                <div>
+                                    <h2 className="text-base font-extrabold text-gray-900">
+                                        {activeSection.title}
+                                    </h2>
+                                    <span className="text-xs font-semibold text-gray-500">
+                                        {activeSection.correctCount}/{activeSection.totalQuestions} câu đúng ({activeSection.earnedScore}/{activeSection.maxScore} điểm)
+                                    </span>
+                                </div>
                             </div>
+                        </div>
+
+                        {activeSection.description && (
+                            <div className="p-3.5 bg-slate-50 rounded-xl text-xs font-medium text-gray-700 whitespace-pre-wrap leading-relaxed border border-slate-200">
+                                {activeSection.description}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Question Review List for Active Section */}
+                <div className="space-y-4">
+                    {(activeSection?.questions || []).map((q, qIdx) => {
+                        const grade = gradingDetails[q.id!] || {};
+                        const isCorrect = grade.is_correct === true;
+                        const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
+                        const userAns = grade.user_answer;
+                        const correctAns = grade.correct_answer;
+
+                        if (activeFilter === 'correct' && !isCorrect) return null;
+                        if (activeFilter === 'incorrect' && isCorrect) return null;
+
+                        return (
+                            <Card
+                                key={q.id || qIdx}
+                                className={`border p-5 shadow-2xs space-y-4 transition-all ${
+                                    isManual && !submission.is_graded
+                                        ? 'border-amber-200 bg-white'
+                                        : isCorrect
+                                        ? 'border-emerald-200 bg-white'
+                                        : 'border-rose-200 bg-white'
+                                }`}
+                            >
+                                {/* Question Header */}
+                                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className={`flex h-6 w-6 items-center justify-center rounded-lg text-white font-mono text-xs font-bold ${
+                                                isManual && !submission.is_graded
+                                                    ? 'bg-amber-600'
+                                                    : isCorrect
+                                                    ? 'bg-emerald-600'
+                                                    : 'bg-rose-600'
+                                            }`}
+                                        >
+                                            {isManual && !submission.is_graded ? '✍️' : isCorrect ? '✓' : '✗'}
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-800">
+                                            Câu hỏi {qIdx + 1} (Điểm: {grade.score_earned || 0} / {q.score}đ)
+                                        </span>
+                                    </div>
+                                    <span
+                                        className={`text-2xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                            isManual && !submission.is_graded
+                                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                                : isCorrect
+                                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                : 'bg-rose-100 text-rose-800 border border-rose-200'
+                                        }`}
+                                    >
+                                        {isManual && !submission.is_graded
+                                            ? 'Chờ giáo viên chấm'
+                                            : isCorrect
+                                            ? 'Chính xác'
+                                            : 'Chưa chính xác'}
+                                    </span>
+                                </div>
+
+                                {/* Question Title & Content */}
+                                <div className="space-y-1.5">
+                                    {q.title && (
+                                        <h4 className="text-sm font-bold text-gray-900 leading-snug">
+                                            {q.title}
+                                        </h4>
+                                    )}
+                                    {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
+                                        <p className="text-xs font-semibold text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                            {q.content}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Audio / Image */}
+                                {q.audio_url && (
+                                    <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-2.5 flex items-center gap-3">
+                                        <Volume2 className="h-4 w-4 text-blue-600 shrink-0" />
+                                        <audio src={q.audio_url} controls className="w-full h-7" />
+                                    </div>
+                                )}
+
+                                {/* Visual Interactive Review UI with Color Highlights */}
+                                <QuestionReviewDetail
+                                    question={{
+                                        ...q,
+                                        correct_answer: correctAns,
+                                        user_answer: userAns,
+                                        is_correct: isCorrect,
+                                        teacher_comment: grade.teacher_comment,
+                                    }}
+                                />
+                            </Card>
                         );
                     })}
                 </div>
+
+                {/* Section Pagination Footer */}
+                {sectionStats.length > 1 && (
+                    <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={activeSectionIndex === 0}
+                            onClick={() => {
+                                setActiveSectionIndex((prev) => Math.max(0, prev - 1));
+                                window.scrollTo({ top: 400, behavior: 'smooth' });
+                            }}
+                        >
+                            ← Phần Trước
+                        </Button>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-700">
+                                Phần {activeSectionIndex + 1} / {sectionStats.length}
+                            </span>
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={activeSectionIndex >= sectionStats.length - 1}
+                            onClick={() => {
+                                setActiveSectionIndex((prev) => Math.min(sectionStats.length - 1, prev + 1));
+                                window.scrollTo({ top: 400, behavior: 'smooth' });
+                            }}
+                        >
+                            Phần Tiếp Theo →
+                        </Button>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

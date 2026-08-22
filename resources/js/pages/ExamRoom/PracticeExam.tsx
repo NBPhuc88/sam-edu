@@ -135,6 +135,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
     // Filter review questions
     const [reviewFilter, setReviewFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all');
+    const [reviewSectionIndex, setReviewSectionIndex] = useState(0);
 
     // Countdown Timer
     useEffect(() => {
@@ -605,7 +606,31 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     // RENDER RESULT SCREEN
     // ==========================================
     if (result) {
-        const filteredGradedQuestions = result.graded_questions.filter((gq) => {
+        const reviewSections = (exam.sections || []).map((sec, sIdx) => {
+            const secQIds = new Set((sec.questions || []).map((q) => q.id));
+            const gradedInSec = result.graded_questions.filter((gq) =>
+                gq.section_id ? gq.section_id === sec.id : secQIds.has(gq.id)
+            );
+            const totalSecQ = gradedInSec.length;
+            const correctSecQ = gradedInSec.filter((gq) => gq.is_correct).length;
+            const earnedSecScore = gradedInSec.reduce((sum, gq) => sum + (Number(gq.earned_score) || 0), 0);
+            const maxSecScore = gradedInSec.reduce((sum, gq) => sum + (Number(gq.max_score) || 0), 0);
+
+            return {
+                ...sec,
+                index: sIdx,
+                gradedQuestions: gradedInSec,
+                totalQuestions: totalSecQ,
+                correctCount: correctSecQ,
+                earnedScore: Number(earnedSecScore.toFixed(2)),
+                maxScore: Number(maxSecScore.toFixed(2)),
+            };
+        });
+
+        const activeSec = reviewSections[reviewSectionIndex] || reviewSections[0];
+        const activeSecGraded = activeSec ? activeSec.gradedQuestions : result.graded_questions;
+
+        const filteredGradedQuestions = activeSecGraded.filter((gq) => {
             if (reviewFilter === 'correct') return gq.is_correct;
             if (reviewFilter === 'incorrect') return !gq.is_correct && !gq.is_skipped;
             if (reviewFilter === 'skipped') return gq.is_skipped;
@@ -697,49 +722,111 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                         </div>
                     </div>
 
-                    {/* Filter Tabs for Graded Questions */}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h2 className="text-lg font-bold text-gray-900">
-                            Chi Tiết Từng Câu Hỏi & Hướng Dẫn Giải
-                        </h2>
-
-                        <div className="flex items-center gap-1 rounded-xl bg-white p-1 border border-gray-200 shadow-2xs">
-                            <button
-                                type="button"
-                                onClick={() => setReviewFilter('all')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-100'
-                                    }`}
-                            >
-                                Tất cả ({result.summary.total_questions})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReviewFilter('correct')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'correct' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'
-                                    }`}
-                            >
-                                Đúng ({result.summary.correct_count})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReviewFilter('incorrect')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'incorrect' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'
-                                    }`}
-                            >
-                                Sai ({result.summary.incorrect_count})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReviewFilter('skipped')}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${reviewFilter === 'skipped' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'
-                                    }`}
-                            >
-                                Chưa làm ({result.summary.skipped_count})
-                            </button>
+                    {/* Section Navigation Tabs */}
+                    {reviewSections.length > 1 && (
+                        <div className="rounded-2xl bg-white p-3 border border-gray-200 shadow-2xs space-y-2">
+                            <span className="text-2xs font-bold uppercase tracking-wider text-gray-500 block px-1">
+                                Chọn phần thi cần xem chi tiết:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {reviewSections.map((sec, sIdx) => {
+                                    const isActive = sIdx === reviewSectionIndex;
+                                    return (
+                                        <button
+                                            key={sec.id || sIdx}
+                                            type="button"
+                                            onClick={() => setReviewSectionIndex(sIdx)}
+                                            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+                                                isActive
+                                                    ? 'bg-slate-900 text-white shadow-xs scale-[1.02]'
+                                                    : 'bg-slate-50 text-gray-700 border border-gray-200 hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`flex h-5 w-5 items-center justify-center rounded-lg font-mono text-2xs font-bold ${
+                                                    isActive
+                                                        ? 'bg-white/20 text-white'
+                                                        : 'bg-gray-200 text-gray-800'
+                                                }`}
+                                            >
+                                                {sIdx + 1}
+                                            </span>
+                                            <span>{sec.title}</span>
+                                            <span
+                                                className={`px-2 py-0.5 rounded-full text-2xs font-bold ${
+                                                    isActive
+                                                        ? 'bg-emerald-500/30 text-emerald-300'
+                                                        : 'bg-emerald-100 text-emerald-800'
+                                                }`}
+                                            >
+                                                ✓ {sec.correctCount}/{sec.totalQuestions}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Graded Question Cards */}
+                    {/* Active Section Header Card */}
+                    {activeSec && (
+                        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xs space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-indigo-600 font-mono text-xs font-bold text-white shadow-2xs">
+                                        {activeSec.index + 1}
+                                    </span>
+                                    <div>
+                                        <h2 className="text-base font-extrabold text-gray-900">
+                                            {activeSec.title}
+                                        </h2>
+                                        <span className="text-xs font-semibold text-gray-500">
+                                            Kỹ năng: {activeSec.skill === 'listening' ? 'Nghe hiểu' : activeSec.skill === 'reading' ? 'Đọc hiểu' : activeSec.skill === 'writing' ? 'Viết' : activeSec.skill === 'speaking' ? 'Nói' : 'Tổng hợp'} • {activeSec.correctCount}/{activeSec.totalQuestions} câu đúng ({activeSec.earnedScore}/{activeSec.maxScore} điểm)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Filter Tabs for Active Section */}
+                                <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 border border-gray-200 shadow-2xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setReviewFilter('all')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                            reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        Tất cả ({activeSec.totalQuestions})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReviewFilter('correct')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                            reviewFilter === 'correct' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'
+                                        }`}
+                                    >
+                                        Đúng ({activeSec.correctCount})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReviewFilter('incorrect')}
+                                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                            reviewFilter === 'incorrect' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'
+                                        }`}
+                                    >
+                                        Sai ({activeSec.totalQuestions - activeSec.correctCount})
+                                    </button>
+                                </div>
+                            </div>
+
+                            {activeSec.description && (
+                                <div className="p-3.5 bg-slate-50 rounded-xl text-xs font-medium text-gray-700 whitespace-pre-wrap leading-relaxed border border-slate-200">
+                                    {activeSec.description}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Graded Question Cards for Active Section */}
                     <div className="space-y-4">
                         {filteredGradedQuestions.map((gq, idx) => {
                             const isCorrect = gq.is_correct;
@@ -748,20 +835,22 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                             return (
                                 <Card
                                     key={gq.id}
-                                    className={`p-5 sm:p-6 border transition-all ${isCorrect
-                                        ? 'border-emerald-200 bg-white'
-                                        : isSkipped
-                                            ? 'border-amber-200 bg-white'
-                                            : 'border-rose-200 bg-white'
-                                        }`}
+                                    className={`p-5 sm:p-6 border transition-all ${
+                                        isCorrect
+                                            ? 'border-emerald-200 bg-white shadow-2xs'
+                                            : isSkipped
+                                            ? 'border-amber-200 bg-white shadow-2xs'
+                                            : 'border-rose-200 bg-white shadow-2xs'
+                                    }`}
                                 >
                                     <div className="space-y-4">
                                         {/* Header */}
                                         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                                             <div className="flex items-center gap-2.5">
                                                 <span
-                                                    className={`flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-extrabold text-white ${isCorrect ? 'bg-emerald-600' : isSkipped ? 'bg-amber-500' : 'bg-rose-600'
-                                                        }`}
+                                                    className={`flex h-7 w-7 items-center justify-center rounded-xl font-mono text-xs font-extrabold text-white shadow-2xs ${
+                                                        isCorrect ? 'bg-emerald-600' : isSkipped ? 'bg-amber-500' : 'bg-rose-600'
+                                                    }`}
                                                 >
                                                     {idx + 1}
                                                 </span>
@@ -772,12 +861,13 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
                                             <div className="flex items-center gap-2">
                                                 <span
-                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${isCorrect
-                                                        ? 'bg-emerald-100 text-emerald-800'
-                                                        : isSkipped
+                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                                        isCorrect
+                                                            ? 'bg-emerald-100 text-emerald-800'
+                                                            : isSkipped
                                                             ? 'bg-amber-100 text-amber-800'
                                                             : 'bg-rose-100 text-rose-800'
-                                                        }`}
+                                                    }`}
                                                 >
                                                     {isCorrect ? 'Chính xác' : isSkipped ? 'Chưa trả lời' : 'Chưa đúng'}
                                                 </span>
@@ -804,29 +894,61 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
                                         {/* Audio Track */}
                                         {gq.audio_url && (
-                                            <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                            <div className="p-2 bg-blue-50 rounded-xl border border-blue-200">
                                                 <audio controls src={gq.audio_url} className="w-full h-8" />
                                             </div>
                                         )}
 
                                         {/* Visual Interactive Review UI with Color Highlights */}
                                         <QuestionReviewDetail question={gq} />
-
-                                        {/* Explanation */}
-                                        {gq.explanation && (
-                                            <div className="rounded-xl bg-emerald-50/70 p-3.5 border border-emerald-200/80 text-xs text-emerald-950 space-y-1">
-                                                <div className="font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
-                                                    <HelpCircle className="h-3.5 w-3.5 text-emerald-600" />
-                                                    Lời Giải Thích Chi Tiết:
-                                                </div>
-                                                <p className="leading-relaxed">{gq.explanation}</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </Card>
                             );
                         })}
+
+                        {filteredGradedQuestions.length === 0 && (
+                            <div className="p-8 text-center bg-white rounded-2xl border border-gray-200 text-xs text-gray-500">
+                                Không có câu hỏi nào thỏa mãn bộ lọc đã chọn trong phần thi này.
+                            </div>
+                        )}
                     </div>
+
+                    {/* Section Pagination Footer */}
+                    {reviewSections.length > 1 && (
+                        <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 shadow-2xs">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                disabled={reviewSectionIndex === 0}
+                                onClick={() => {
+                                    setReviewSectionIndex((prev) => Math.max(0, prev - 1));
+                                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                                }}
+                            >
+                                ← Phần Trước
+                            </Button>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-700">
+                                    Phần {reviewSectionIndex + 1} / {reviewSections.length}
+                                </span>
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                disabled={reviewSectionIndex >= reviewSections.length - 1}
+                                onClick={() => {
+                                    setReviewSectionIndex((prev) => Math.min(reviewSections.length - 1, prev + 1));
+                                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                                }}
+                            >
+                                Phần Tiếp Theo →
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
