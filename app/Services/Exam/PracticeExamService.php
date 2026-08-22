@@ -29,32 +29,31 @@ class PracticeExamService implements PracticeExamServiceInterface
         int $perPage = 12
     ): LengthAwarePaginator {
         $query = Exam::query()
-            ->with(['center:id,name,code', 'subject:id,name,code'])
-            ->withCount(['sections', 'questions'])
             ->where('is_practice', true)
-            ->where('status', 'published');
+            ->where('status', 'published')
+            ->with([
+                'center:id,name,code',
+                'subject:id,name,code',
+                'examType:id,name,code',
+            ])
+            ->withCount(['sections', 'questions']);
 
         // Phân quyền theo Trung tâm
-        if ($admin && $admin->role === 'admin') {
+        if ($admin && ! $admin->isSuperAdmin()) {
             $centerIds = $admin->centers()->pluck('centers.id')->toArray();
-
-            if (! empty($admin->center_id)) {
-                $centerIds[] = $admin->center_id;
-            }
             $query->whereIn('center_id', array_unique($centerIds));
-        } elseif ($teacher) {
+        } elseif ($teacher && ! empty($teacher->center_id)) {
             $query->where('center_id', $teacher->center_id);
-        } elseif ($student) {
+        } elseif ($student && ! empty($student->center_id)) {
             $query->where('center_id', $student->center_id);
         }
 
-        // Lọc theo search
+        // Tìm kiếm theo từ khóa (tên đề thi, mã đề thi)
         if (! empty($filters['search'])) {
             $search = trim($filters['search']);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%");
             });
         }
 
@@ -68,9 +67,17 @@ class PracticeExamService implements PracticeExamServiceInterface
             $query->where('subject_id', (int) $filters['subject_id']);
         }
 
-        // Lọc theo Loại đề thi (exam_type: ielts, toeic, hsk, general)
-        if (! empty($filters['exam_type']) && $filters['exam_type'] !== 'all') {
-            $query->where('exam_type', $filters['exam_type']);
+        // Lọc theo Loại đề thi (exam_type_id hoặc exam_type code)
+        $examTypeFilter = $filters['exam_type_id'] ?? ($filters['exam_type'] ?? null);
+
+        if (! empty($examTypeFilter) && $examTypeFilter !== 'all') {
+            if (is_numeric($examTypeFilter)) {
+                $query->where('exam_type_id', (int) $examTypeFilter);
+            } else {
+                $query->whereHas('examType', function ($q) use ($examTypeFilter) {
+                    $q->where('code', $examTypeFilter);
+                });
+            }
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
@@ -95,6 +102,7 @@ class PracticeExamService implements PracticeExamServiceInterface
         $exam = Exam::with([
             'center:id,name,code',
             'subject:id,name,code',
+            'examType:id,name,code',
             'sections' => function ($q) {
                 $q->orderBy('order_index');
             },
@@ -156,7 +164,8 @@ class PracticeExamService implements PracticeExamServiceInterface
                 'id'               => $exam->id,
                 'code'             => $exam->code,
                 'name'             => $exam->name,
-                'exam_type'        => $exam->exam_type,
+                'exam_type_id'     => $exam->exam_type_id,
+                'exam_type'        => $exam->examType?->name ?? $exam->examType?->code ?? 'general',
                 'duration_minutes' => $exam->duration_minutes ?? 45,
                 'max_score'        => (float) $exam->max_score,
                 'pass_score'       => (float) ($exam->pass_score ?? 0),
@@ -356,7 +365,8 @@ class PracticeExamService implements PracticeExamServiceInterface
                 'id'               => $exam->id,
                 'code'             => $exam->code,
                 'name'             => $exam->name,
-                'exam_type'        => $exam->exam_type,
+                'exam_type_id'     => $exam->exam_type_id,
+                'exam_type'        => $exam->examType?->name ?? $exam->examType?->code ?? 'general',
                 'duration_minutes' => $exam->duration_minutes,
                 'max_score'        => $totalMaxScore,
                 'pass_score'       => (float) ($exam->pass_score ?? ($totalMaxScore * 0.5)),

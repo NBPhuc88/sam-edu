@@ -46,7 +46,7 @@ class ExamService implements ExamServiceInterface
      * @param  ?int                 $centerId
      * @param  ?int                 $classId
      * @param  ?int                 $subjectId
-     * @param  ?string              $examType
+     * @param  int|string|null      $examType
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -58,7 +58,7 @@ class ExamService implements ExamServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?int $subjectId = null,
-        ?string $examType = null,
+        int|string|null $examType = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
@@ -154,7 +154,7 @@ class ExamService implements ExamServiceInterface
             'class_id'            => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
             'name'                => trim($data['name']),
             'code'                => $code,
-            'exam_type'           => $data['exam_type'] ?? 'general',
+            'exam_type_id'        => ! empty($data['exam_type_id']) ? (int) $data['exam_type_id'] : null,
             'description'         => $data['description'] ?? null,
             'duration_minutes'    => (int) ($data['duration_minutes'] ?? 45),
             'max_score'           => (float) ($data['max_score'] ?? 10.0),
@@ -177,7 +177,7 @@ class ExamService implements ExamServiceInterface
                 $this->examRepository->syncQuestions($exam, $data['questions']);
             }
 
-            return $exam->fresh(['subject', 'sections.questions']);
+            return $exam->fresh(['subject', 'examType', 'sections.questions']);
         });
     }
 
@@ -212,7 +212,7 @@ class ExamService implements ExamServiceInterface
             'class_id'          => array_key_exists('class_id', $data) ? ($data['class_id'] ? (int) $data['class_id'] : null) : $exam->class_id,
             'name'              => isset($data['name']) ? trim($data['name']) : $exam->name,
             'code'              => $code,
-            'exam_type'         => $data['exam_type'] ?? $exam->exam_type,
+            'exam_type_id'      => isset($data['exam_type_id']) ? (int) $data['exam_type_id'] : $exam->exam_type_id,
             'description'       => array_key_exists('description', $data) ? $data['description'] : $exam->description,
             'duration_minutes'  => isset($data['duration_minutes']) ? (int) $data['duration_minutes'] : $exam->duration_minutes,
             'max_score'         => isset($data['max_score']) ? (float) $data['max_score'] : $exam->max_score,
@@ -234,7 +234,7 @@ class ExamService implements ExamServiceInterface
                 $this->examRepository->syncQuestions($updated, $data['questions']);
             }
 
-            return $updated->fresh(['subject', 'sections.questions']);
+            return $updated->fresh(['subject', 'examType', 'sections.questions']);
         });
     }
 

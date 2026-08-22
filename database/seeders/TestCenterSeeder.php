@@ -412,43 +412,56 @@ class TestCenterSeeder extends Seeder
     {
         $this->command->info('  → Tạo 5 bài thi (4 đơn kỹ năng + 1 tổng hợp)...');
 
+        // Đảm bảo Exam Types tồn tại
+        foreach (ExamTypeSeeder::getDefaultExamTypes() as $tmpl) {
+            DB::table('exam_types')->updateOrInsert(
+                ['center_id' => $center->id, 'code' => $tmpl['code']],
+                [
+                    'name'        => $tmpl['name'],
+                    'description' => $tmpl['description'],
+                    'status'      => $tmpl['status'],
+                    'created_at'  => $this->now,
+                    'updated_at'  => $this->now,
+                ]
+            );
+        }
+
+        $generalExamTypeId = (int) (DB::table('exam_types')->where('center_id', $center->id)->where('code', 'general')->value('id') ?? DB::table('exam_types')->where('center_id', $center->id)->value('id'));
+        $ieltsExamTypeId   = (int) (DB::table('exam_types')->where('center_id', $center->id)->where('code', 'ielts')->value('id') ?? $generalExamTypeId);
+
         $singleSkillExams = [
             [
-                'skill'     => 'listening',
-                'name'      => 'Kiểm Tra Nghe Hiểu',
-                'exam_type' => 'listening',
-                'duration'  => 45,
-                'sections'  => [
+                'skill'    => 'listening',
+                'name'     => 'Kiểm Tra Nghe Hiểu',
+                'duration' => 45,
+                'sections' => [
                     ['title' => 'Part 1 – Short Conversations', 'skill' => 'listening', 'questions' => 10],
                     ['title' => 'Part 2 – Longer Talks', 'skill' => 'listening', 'questions' => 10],
                 ],
             ],
             [
-                'skill'     => 'reading',
-                'name'      => 'Kiểm Tra Đọc Hiểu',
-                'exam_type' => 'reading',
-                'duration'  => 60,
-                'sections'  => [
+                'skill'    => 'reading',
+                'name'     => 'Kiểm Tra Đọc Hiểu',
+                'duration' => 60,
+                'sections' => [
                     ['title' => 'Part 1 – Short Passages', 'skill' => 'reading', 'questions' => 10],
                     ['title' => 'Part 2 – Long Passages', 'skill' => 'reading', 'questions' => 10],
                 ],
             ],
             [
-                'skill'     => 'writing',
-                'name'      => 'Kiểm Tra Viết',
-                'exam_type' => 'writing',
-                'duration'  => 60,
-                'sections'  => [
+                'skill'    => 'writing',
+                'name'     => 'Kiểm Tra Viết',
+                'duration' => 60,
+                'sections' => [
                     ['title' => 'Task 1 – Sentence Building', 'skill' => 'writing', 'questions' => 5],
                     ['title' => 'Task 2 – Essay Outline', 'skill' => 'writing', 'questions' => 5],
                 ],
             ],
             [
-                'skill'     => 'speaking',
-                'name'      => 'Kiểm Tra Nói',
-                'exam_type' => 'speaking',
-                'duration'  => 30,
-                'sections'  => [
+                'skill'    => 'speaking',
+                'name'     => 'Kiểm Tra Nói',
+                'duration' => 30,
+                'sections' => [
                     ['title' => 'Part 1 – Personal Questions', 'skill' => 'speaking', 'questions' => 5],
                     ['title' => 'Part 2 – Topic Presentation', 'skill' => 'speaking', 'questions' => 5],
                 ],
@@ -456,10 +469,9 @@ class TestCenterSeeder extends Seeder
         ];
 
         $fullExam = [
-            'name'      => 'Kiểm Tra Tổng Hợp 4 Kỹ Năng',
-            'exam_type' => 'full',
-            'duration'  => 150,
-            'sections'  => [
+            'name'     => 'Kiểm Tra Tổng Hợp 4 Kỹ Năng',
+            'duration' => 150,
+            'sections' => [
                 ['title' => 'Listening – Conversations', 'skill' => 'listening', 'questions' => 10],
                 ['title' => 'Reading – Text Passages', 'skill' => 'reading', 'questions' => 10],
                 ['title' => 'Writing – Guided Tasks', 'skill' => 'writing', 'questions' => 5],
@@ -479,7 +491,7 @@ class TestCenterSeeder extends Seeder
                 subjectId: $classForExam->subject_id,
                 classSubjectId: $classForExam->class_subject_id,
                 name: $def['name'],
-                examType: $def['exam_type'],
+                examTypeId: $generalExamTypeId,
                 duration: $def['duration'],
                 examDate: $examDate->copy()->addWeeks($i)->format('Y-m-d'),
                 teacherId: $teacherId,
@@ -495,7 +507,7 @@ class TestCenterSeeder extends Seeder
             subjectId: $listeningClass->subject_id,
             classSubjectId: $listeningClass->class_subject_id,
             name: $fullExam['name'],
-            examType: $fullExam['exam_type'],
+            examTypeId: $ieltsExamTypeId,
             duration: $fullExam['duration'],
             examDate: $examDate->copy()->addMonths(1)->format('Y-m-d'),
             teacherId: $teacherId,
@@ -504,15 +516,15 @@ class TestCenterSeeder extends Seeder
     }
 
     /**
-     * @param int    $centerId
-     * @param int    $classId
-     * @param int    $subjectId
-     * @param int    $classSubjectId
-     * @param string $name
-     * @param string $examType
-     * @param int    $duration
-     * @param string $examDate
-     * @param int    $teacherId
+     * @param int      $centerId
+     * @param int      $classId
+     * @param int      $subjectId
+     * @param int      $classSubjectId
+     * @param string   $name
+     * @param int|null $examTypeId
+     * @param int      $duration
+     * @param string   $examDate
+     * @param int      $teacherId
      */
     private function insertExam(
         int $centerId,
@@ -520,7 +532,7 @@ class TestCenterSeeder extends Seeder
         int $subjectId,
         int $classSubjectId,
         string $name,
-        string $examType,
+        ?int $examTypeId,
         int $duration,
         string $examDate,
         int $teacherId,
@@ -531,7 +543,7 @@ class TestCenterSeeder extends Seeder
             'subject_id'            => $subjectId,
             'class_subject_id'      => $classSubjectId,
             'name'                  => $name,
-            'exam_type'             => $examType,
+            'exam_type_id'          => $examTypeId,
             'description'           => "Bài thi: {$name}",
             'exam_date'             => $examDate,
             'duration_minutes'      => $duration,

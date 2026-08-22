@@ -263,6 +263,13 @@ export interface Subject {
     center_id: number;
 }
 
+export interface ExamTypeRelation {
+    id: number;
+    name: string;
+    code: string;
+    description?: string | null;
+}
+
 export interface Exam {
     id: number;
     center_id: number;
@@ -270,7 +277,9 @@ export interface Exam {
     subject_id: number | null;
     code: string;
     name: string;
-    exam_type: 'general' | 'ielts' | 'hsk' | 'toeic' | 'custom';
+    exam_type_id?: number | null;
+    exam_type?: string | ExamTypeRelation;
+    examType?: ExamTypeRelation;
     duration_minutes: number | null;
     max_score: number | string;
     pass_score: number | string | null;

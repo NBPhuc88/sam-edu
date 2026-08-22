@@ -42,10 +42,11 @@ class PracticeExamController extends Controller
         [$student, $teacher, $admin] = $this->getAuthUser();
 
         $filters = [
-            'search'     => $request->query('search'),
-            'center_id'  => $request->query('center_id'),
-            'subject_id' => $request->query('subject_id'),
-            'exam_type'  => $request->query('exam_type'),
+            'search'       => $request->query('search'),
+            'center_id'    => $request->query('center_id'),
+            'subject_id'   => $request->query('subject_id'),
+            'exam_type_id' => $request->query('exam_type_id') ?? $request->query('exam_type'),
+            'exam_type'    => $request->query('exam_type_id') ?? $request->query('exam_type'),
         ];
 
         $exams = $this->practiceExamService->getPracticeExams($filters, $student, $teacher, $admin, 12);
@@ -60,8 +61,9 @@ class PracticeExamController extends Controller
         // Danh sách Môn học cho bộ lọc
         $subjectsQuery = Subject::select(['id', 'name', 'code', 'center_id']);
 
-        if ($admin && $admin->role === 'admin' && ! empty($admin->center_id)) {
-            $subjectsQuery->where('center_id', $admin->center_id);
+        if ($admin && ! $admin->isSuperAdmin()) {
+            $adminCenterIds = $admin->centers()->pluck('centers.id')->toArray();
+            $subjectsQuery->whereIn('center_id', $adminCenterIds);
         } elseif ($teacher && ! empty($teacher->center_id)) {
             $subjectsQuery->where('center_id', $teacher->center_id);
         } elseif ($student && ! empty($student->center_id)) {
@@ -69,11 +71,25 @@ class PracticeExamController extends Controller
         }
         $subjects = $subjectsQuery->orderBy('name')->get();
 
+        // Danh sách Loại bài kiểm tra cho bộ lọc
+        $examTypesQuery = \App\Models\ExamType::select(['id', 'name', 'code', 'center_id'])->where('status', 'active');
+
+        if ($admin && ! $admin->isSuperAdmin()) {
+            $adminCenterIds = $admin->centers()->pluck('centers.id')->toArray();
+            $examTypesQuery->whereIn('center_id', $adminCenterIds);
+        } elseif ($teacher && ! empty($teacher->center_id)) {
+            $examTypesQuery->where('center_id', $teacher->center_id);
+        } elseif ($student && ! empty($student->center_id)) {
+            $examTypesQuery->where('center_id', $student->center_id);
+        }
+        $examTypes = $examTypesQuery->orderBy('name')->get();
+
         return Inertia::render('ExamRoom/PracticeList', [
-            'exams'    => $exams,
-            'centers'  => $centers,
-            'subjects' => $subjects,
-            'filters'  => $filters,
+            'exams'      => $exams,
+            'centers'    => $centers,
+            'subjects'   => $subjects,
+            'exam_types' => $examTypes,
+            'filters'    => $filters,
         ]);
     }
 

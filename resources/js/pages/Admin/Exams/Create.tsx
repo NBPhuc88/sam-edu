@@ -47,7 +47,7 @@ export default function ExamCreate({
     const [subjectId, setSubjectId] = useState<string>('');
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
-    const [examType, setExamType] = useState<string>(exam_types[0]?.code || 'general');
+    const [examTypeId, setExamTypeId] = useState<string>(exam_types[0]?.id ? String(exam_types[0].id) : '');
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
     const [passScore, setPassScore] = useState<number | string>('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -97,7 +97,7 @@ export default function ExamCreate({
             subject_id: subjectId ? Number(subjectId) : null,
             name: name.trim(),
             code: code.trim() || null,
-            exam_type: examType,
+            exam_type_id: examTypeId ? Number(examTypeId) : null,
             duration_minutes: durationMinutes ? Number(durationMinutes) : null,
             max_score: calculatedMaxScore,
             pass_score: passScore ? Number(passScore) : null,
@@ -297,35 +297,22 @@ export default function ExamCreate({
                                     Loại Đề Thi <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    value={examType}
-                                    onChange={(e) => setExamType(e.target.value)}
+                                    value={examTypeId}
+                                    onChange={(e) => setExamTypeId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    {filteredExamTypes.length > 0 ? (
-                                        filteredExamTypes.map((t) => (
-                                            <option key={t.id} value={t.code}>
-                                                {t.name}
-                                            </option>
-                                        ))
-                                    ) : (
-                                        <>
-                                            <option value="general">Chung (General Test)</option>
-                                            <option value="ielts">IELTS Mock Test</option>
-                                            <option value="hsk">HSK Đề Thi Chuẩn Hóa</option>
-                                            <option value="toeic">TOEIC Practice Test</option>
-                                            <option value="midterm">Giữa Kỳ (Midterm Exam)</option>
-                                            <option value="final">Cuối Kỳ (Final Exam)</option>
-                                            <option value="quiz_15m">Kiểm Tra 15 Phút / Quiz</option>
-                                            <option value="custom">Tuỳ Chỉnh Khác</option>
-                                        </>
-                                    )}
-                                    {examType && !filteredExamTypes.some((t) => t.code === examType) && (
-                                        <option value={examType}>{examType}</option>
-                                    )}
+                                    <option value="">-- Chọn Loại Đề Thi --</option>
+                                    {filteredExamTypes.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name} ({t.code})
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.exam_type && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.exam_type}</p>
+                                {(errors.exam_type_id || errors.exam_type) && (
+                                    <p className="mt-1.5 text-sm text-red-600">
+                                        {errors.exam_type_id || errors.exam_type}
+                                    </p>
                                 )}
                             </div>
 

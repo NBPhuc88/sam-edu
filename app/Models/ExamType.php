@@ -42,6 +42,6 @@ class ExamType extends Model
      */
     public function exams(): HasMany
     {
-        return $this->hasMany(Exam::class, 'exam_type', 'code');
+        return $this->hasMany(Exam::class, 'exam_type_id');
     }
 }

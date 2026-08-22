@@ -21,14 +21,23 @@ import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { Center, Exam, PaginatedData, Subject } from '../Admin/Exams/types';
 
+interface ExamTypeOption {
+    id: number;
+    name: string;
+    code: string;
+    center_id?: number | null;
+}
+
 interface Props {
     exams: PaginatedData<Exam>;
     centers: Center[];
     subjects: Subject[];
+    exam_types?: ExamTypeOption[];
     filters: {
         search?: string;
         center_id?: number | null;
         subject_id?: number | null;
+        exam_type_id?: number | string | null;
         exam_type?: string;
     };
 }
@@ -37,6 +46,7 @@ export default function PracticeList({
     exams,
     centers = [],
     subjects = [],
+    exam_types = [],
     filters,
 }: Props) {
     const { auth } = usePage<any>().props;
@@ -50,12 +60,20 @@ export default function PracticeList({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedExamType, setSelectedExamType] = useState<string>(
-        filters.exam_type || 'all',
+        filters.exam_type_id ? String(filters.exam_type_id) : (filters.exam_type || 'all'),
     );
 
     // Confirm Start Modal
     const [startModalOpen, setStartModalOpen] = useState(false);
     const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+
+    const filteredSubjects = selectedCenterId
+        ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
+        : subjects;
+
+    const filteredExamTypes = selectedCenterId
+        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(selectedCenterId))
+        : exam_types;
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,7 +83,7 @@ export default function PracticeList({
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
                 subject_id: selectedSubjectId || undefined,
-                exam_type: selectedExamType !== 'all' ? selectedExamType : undefined,
+                exam_type_id: selectedExamType !== 'all' ? selectedExamType : undefined,
             },
             { preserveState: true },
         );
@@ -84,18 +102,21 @@ export default function PracticeList({
         setStartModalOpen(true);
     };
 
-    const getExamTypeBadge = (type: string) => {
-        switch (type) {
+    const getExamTypeBadge = (exam: Exam) => {
+        const typeName = exam.examType?.name || (typeof exam.exam_type === 'object' ? (exam.exam_type as any)?.name : exam.exam_type) || 'Đề thi';
+        const typeCode = (exam.examType?.code || (typeof exam.exam_type === 'object' ? (exam.exam_type as any)?.code : exam.exam_type) || '').toLowerCase();
+
+        switch (typeCode) {
             case 'ielts':
-                return <Badge variant="danger">IELTS Simulation</Badge>;
-            case 'toeic':
-                return <Badge variant="pending">TOEIC Exam</Badge>;
+                return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">{typeName}</span>;
             case 'hsk':
-                return <Badge variant="expired">HSK Test</Badge>;
-            case 'general':
-                return <Badge variant="active">Định Kỳ / Chung</Badge>;
+                return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-2xs font-bold text-red-700 border border-red-200">{typeName}</span>;
+            case 'toeic':
+                return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-2xs font-bold text-purple-700 border border-purple-200">{typeName}</span>;
+            case 'custom':
+                return <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-2xs font-bold text-teal-700 border border-teal-200">{typeName}</span>;
             default:
-                return <Badge variant="info">Tự Do</Badge>;
+                return <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-2xs font-bold text-emerald-700 border border-emerald-200">{typeName}</span>;
         }
     };
 
@@ -175,7 +196,7 @@ export default function PracticeList({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="">Tất cả Môn học</option>
-                                    {subjects.map((s) => (
+                                    {filteredSubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name}
                                         </option>
@@ -194,11 +215,11 @@ export default function PracticeList({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả định dạng</option>
-                                    <option value="ielts">IELTS Simulation</option>
-                                    <option value="toeic">TOEIC Practice</option>
-                                    <option value="hsk">HSK Tiếng Trung</option>
-                                    <option value="general">Bài Kiểm Tra Chung</option>
-                                    <option value="custom">Tự Chọn</option>
+                                    {filteredExamTypes.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name} ({t.code})
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -256,7 +277,7 @@ export default function PracticeList({
                                             <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
                                                 {exam.code}
                                             </span>
-                                            {getExamTypeBadge(exam.exam_type)}
+                                            {getExamTypeBadge(exam)}
                                         </div>
 
                                         <div>

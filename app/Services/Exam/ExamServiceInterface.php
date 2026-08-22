@@ -13,7 +13,7 @@ interface ExamServiceInterface
      * @param  ?int                 $centerId
      * @param  ?int                 $classId
      * @param  ?int                 $subjectId
-     * @param  ?string              $examType
+     * @param  int|string|null      $examType
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
@@ -25,7 +25,7 @@ interface ExamServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?int $subjectId = null,
-        ?string $examType = null,
+        int|string|null $examType = null,
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,

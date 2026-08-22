@@ -71,8 +71,8 @@ export const masterNavigation: NavItem[] = [
         label: 'Cấu Hình Đề Thi',
         icon: Sliders,
         children: [
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
             { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index' },
+            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
         ],
     },
     {

@@ -27,11 +27,19 @@ import AssignExamModal from '../ClassExams/AssignExamModal';
 import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
+interface ExamTypeOption {
+    id: number;
+    name: string;
+    code: string;
+    center_id?: number | null;
+}
+
 interface Props {
     exams: PaginatedData<Exam>;
     centers: Center[];
     classes: SchoolClass[];
     subjects: Subject[];
+    exam_types?: ExamTypeOption[];
     stats?: {
         total: number;
         published: number;
@@ -43,6 +51,7 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         subject_id?: number | null;
+        exam_type_id?: number | string | null;
         exam_type?: string;
         status?: string;
     };
@@ -53,6 +62,7 @@ export default function ExamIndex({
     centers = [],
     classes = [],
     subjects = [],
+    exam_types = [],
     stats,
     filters,
 }: Props) {
@@ -71,7 +81,7 @@ export default function ExamIndex({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedExamType, setSelectedExamType] = useState<string>(
-        filters.exam_type || 'all',
+        filters.exam_type_id ? String(filters.exam_type_id) : (filters.exam_type || 'all'),
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
@@ -99,6 +109,10 @@ export default function ExamIndex({
         ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
         : subjects;
 
+    const filteredExamTypes = selectedCenterId
+        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(selectedCenterId))
+        : exam_types;
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
@@ -108,7 +122,7 @@ export default function ExamIndex({
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
                 subject_id: selectedSubjectId || undefined,
-                exam_type: selectedExamType !== 'all' ? selectedExamType : undefined,
+                exam_type_id: selectedExamType !== 'all' ? selectedExamType : undefined,
                 status: selectedStatus !== 'all' ? selectedStatus : undefined,
             },
             { preserveState: true },
@@ -122,17 +136,12 @@ export default function ExamIndex({
         setSelectedSubjectId('');
         setSelectedExamType('all');
         setSelectedStatus('all');
-        router.get('/exams', {}, { preserveState: true });
+        router.get('/exams');
     };
 
     const openDeleteModal = (exam: Exam) => {
         setDeletingExam(exam);
         setDeleteModalOpen(true);
-    };
-
-    const openQuestionsModal = (exam: Exam) => {
-        setSelectedExamQuestions(exam);
-        setViewQuestionsModalOpen(true);
     };
 
     const confirmDelete = () => {
@@ -148,14 +157,24 @@ export default function ExamIndex({
         });
     };
 
+    const openQuestionsModal = (exam: Exam) => {
+        setSelectedExamQuestions(exam);
+        setViewQuestionsModalOpen(true);
+    };
+
+    const openAssignModal = (examId: number) => {
+        setAssigningExamId(examId);
+        setAssignModalOpen(true);
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'published':
-                return <Badge variant="active">Đã công bố</Badge>;
+                return <Badge variant="active">Đã xuất bản</Badge>;
             case 'draft':
                 return <Badge variant="pending">Bản nháp</Badge>;
             case 'completed':
-                return <Badge variant="info">Đã kết thúc</Badge>;
+                return <Badge variant="info">Hoàn thành</Badge>;
             case 'cancelled':
                 return <Badge variant="expired">Đã hủy</Badge>;
             default:
@@ -163,18 +182,21 @@ export default function ExamIndex({
         }
     };
 
-    const getExamTypeBadge = (type: string) => {
-        switch (type) {
+    const getExamTypeBadge = (exam: Exam) => {
+        const typeName = exam.examType?.name || (typeof exam.exam_type === 'object' ? exam.exam_type?.name : exam.exam_type) || 'Chung';
+        const typeCode = (exam.examType?.code || (typeof exam.exam_type === 'object' ? exam.exam_type?.code : exam.exam_type) || '').toLowerCase();
+
+        switch (typeCode) {
             case 'ielts':
-                return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">IELTS Mock</span>;
+                return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">{typeName}</span>;
             case 'hsk':
-                return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-2xs font-bold text-red-700 border border-red-200">HSK Đề Thi</span>;
+                return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-2xs font-bold text-red-700 border border-red-200">{typeName}</span>;
             case 'toeic':
-                return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-2xs font-bold text-purple-700 border border-purple-200">TOEIC Test</span>;
+                return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-2xs font-bold text-purple-700 border border-purple-200">{typeName}</span>;
             case 'custom':
-                return <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-2xs font-bold text-teal-700 border border-teal-200">Tuỳ Chỉnh</span>;
+                return <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-2xs font-bold text-teal-700 border border-teal-200">{typeName}</span>;
             default:
-                return <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-2xs font-semibold text-gray-700">Chung (General)</span>;
+                return <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-2xs font-semibold text-gray-700 border border-gray-200">{typeName}</span>;
         }
     };
 
@@ -360,11 +382,11 @@ export default function ExamIndex({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả loại đề</option>
-                                    <option value="general">Chung (General)</option>
-                                    <option value="ielts">IELTS Mock Test</option>
-                                    <option value="hsk">HSK Đề Thi Mẫu</option>
-                                    <option value="toeic">TOEIC Practice Test</option>
-                                    <option value="custom">Tuỳ Chỉnh</option>
+                                    {filteredExamTypes.map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name} ({t.code})
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -382,9 +404,9 @@ export default function ExamIndex({
                                 type="submit"
                                 variant="success"
                                 size="sm"
-                                icon={<Filter className="h-4 w-4" />}
+                                icon={<Search className="h-4 w-4" />}
                             >
-                                Áp Dụng Lọc
+                                Tìm Kiếm
                             </Button>
                         </div>
                     </form>
@@ -482,7 +504,7 @@ export default function ExamIndex({
                                                 </div>
                                             </td>
                                             <td>
-                                                {getExamTypeBadge(exam.exam_type)}
+                                                {getExamTypeBadge(exam)}
                                             </td>
                                             <td>
                                                 <div className="space-y-1 text-xs">

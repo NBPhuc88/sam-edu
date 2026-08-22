@@ -29,22 +29,22 @@ class ExamController extends Controller
 
     public function index(FilterExamRequest $request): InertiaResponse
     {
-        $admin     = $this->getAuthAdmin();
-        $search    = $request->input('search');
-        $centerId  = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $classId   = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $subjectId = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
-        $examType  = $request->input('exam_type');
-        $status    = $request->input('status');
-        $page      = $request->integer('page', 1);
-        $perPage   = $request->integer('per_page', config('app.pagination_per_page', 15));
+        $admin      = $this->getAuthAdmin();
+        $search     = $request->input('search');
+        $centerId   = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId    = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $subjectId  = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
+        $examTypeId = $request->input('exam_type_id') ?? $request->input('exam_type');
+        $status     = $request->input('status');
+        $page       = $request->integer('page', 1);
+        $perPage    = $request->integer('per_page', config('app.pagination_per_page', 15));
 
         $exams = $this->examService->getPaginatedExams(
             is_string($search) ? $search : null,
             $centerId,
             $classId,
             $subjectId,
-            is_string($examType) ? $examType : null,
+            $examTypeId,
             is_string($status) ? $status : null,
             $perPage,
             $page,
@@ -61,13 +61,14 @@ class ExamController extends Controller
             'exam_types' => $formData['exam_types'],
             'stats'      => $stats,
             'filters'    => [
-                'search'     => $search ?? '',
-                'center_id'  => $centerId,
-                'class_id'   => $classId,
-                'subject_id' => $subjectId,
-                'exam_type'  => $examType ?? 'all',
-                'status'     => $status ?? 'all',
-                'per_page'   => $perPage,
+                'search'       => $search ?? '',
+                'center_id'    => $centerId,
+                'class_id'     => $classId,
+                'subject_id'   => $subjectId,
+                'exam_type_id' => $examTypeId ?? 'all',
+                'exam_type'    => $examTypeId ?? 'all',
+                'status'       => $status ?? 'all',
+                'per_page'     => $perPage,
             ],
         ]);
     }
