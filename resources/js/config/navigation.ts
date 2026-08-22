@@ -13,11 +13,13 @@ import {
     BookOpen,
     DollarSign,
     FileCheck,
+    FileText,
     LayoutDashboard,
     Lock,
     MessageSquare,
     Settings,
     Shield,
+    Sliders,
     User,
     Users,
     Zap,
@@ -65,15 +67,21 @@ const superAdminNav: NavItem[] = [
         ],
     },
     {
-        label: 'Thi & Kiểm Tra',
-        icon: FileCheck,
+        label: 'Cấu Hình Đề Thi',
+        icon: Sliders,
         children: [
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
             { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
             { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index' },
+        ],
+    },
+    {
+        label: 'Thi & Chấm Thi',
+        icon: FileCheck,
+        children: [
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
             { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
+            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
         ],
     },
     {
@@ -123,15 +131,21 @@ const adminNav: NavItem[] = [
         ],
     },
     {
-        label: 'Thi & Kiểm Tra',
-        icon: FileCheck,
+        label: 'Cấu Hình Đề Thi',
+        icon: Sliders,
         children: [
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
             { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
             { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index' },
+        ],
+    },
+    {
+        label: 'Thi & Chấm Thi',
+        icon: FileCheck,
+        children: [
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
             { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
+            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
         ],
     },
     {
@@ -158,14 +172,20 @@ const teacherNav: NavItem[] = [
         ],
     },
     {
-        label: 'Thi & Điểm Số',
+        label: 'Kho Đề Thi',
+        icon: Sliders,
+        children: [
+            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
+        ],
+    },
+    {
+        label: 'Thi & Chấm Thi',
         icon: FileCheck,
         children: [
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
             { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
+            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
         ],
     },
     { label: 'Thông Báo', path: '/notifications', icon: Bell },
@@ -174,8 +194,14 @@ const teacherNav: NavItem[] = [
 // ─── Student Navigation ───────────────────────────────────────────────────────
 const studentNav: NavItem[] = [
     { label: 'Bảng Điều Khiển', path: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.index' },
-    { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', icon: FileCheck, permission: 'practice-exams.index' },
-    { label: 'Vào Phòng Thi', path: '/exam-room', icon: Zap, permission: 'online-exam.enter' },
+    {
+        label: 'Thi Trực Tuyến',
+        icon: FileCheck,
+        children: [
+            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
+        ],
+    },
     { label: 'Trò Chuyện Lớp Học', path: '/classes', icon: MessageSquare, permission: 'classes.index' },
     { label: 'Thông Báo', path: '/notifications', icon: Bell },
 ];
