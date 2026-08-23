@@ -7,9 +7,10 @@
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
         <!-- Favicons -->
-        <link rel="icon" href="/favicon.png" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="shortcut icon" href="/favicon.ico?v=2">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 
         @fonts
 
