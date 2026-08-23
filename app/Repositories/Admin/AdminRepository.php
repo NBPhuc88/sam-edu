@@ -9,10 +9,17 @@ class AdminRepository implements AdminRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Admin
     {
+        $isMysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+
         /** @var Admin|null $admin */
-        $admin = Admin::whereRaw('BINARY username = ?', [$username])
-            ->orWhere('email', $username)
-            ->first();
+        $admin = Admin::where(function ($query) use ($username, $isMysql) {
+            if ($isMysql) {
+                $query->whereRaw('BINARY username = ?', [$username]);
+            } else {
+                $query->where('username', $username);
+            }
+            $query->orWhere('email', $username);
+        })->first();
 
         return $admin;
     }

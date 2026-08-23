@@ -71,6 +71,13 @@ class AuthService implements AuthServiceInterface
         Auth::guard($role)->login($account);
         request()->session()->regenerate();
 
+        // Single device login enforcement: generate new device session token
+        $deviceToken = \Illuminate\Support\Str::random(40);
+        $account->update([
+            'current_session_id' => $deviceToken,
+        ]);
+        request()->session()->put('auth_device_token_' . $role, $deviceToken);
+
         return [
             'success' => true,
             'account' => $account,
@@ -83,6 +90,14 @@ class AuthService implements AuthServiceInterface
      */
     public function logout(): void
     {
+        $user = Auth::guard('admin')->user()
+            ?? Auth::guard('teacher')->user()
+            ?? Auth::guard('student')->user();
+
+        if ($user) {
+            $user->update(['current_session_id' => null]);
+        }
+
         Auth::guard('admin')->logout();
         Auth::guard('teacher')->logout();
         Auth::guard('student')->logout();

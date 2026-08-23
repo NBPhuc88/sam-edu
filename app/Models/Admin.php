@@ -20,6 +20,7 @@ class Admin extends Authenticatable
         'role',
         'status',
         'last_login_at',
+        'current_session_id',
         'admin_code',
         'full_name',
         'phone',

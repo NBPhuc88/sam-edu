@@ -21,6 +21,7 @@ class Teacher extends Authenticatable
         'password',
         'status',
         'last_login_at',
+        'current_session_id',
         'teacher_code',
         'center_id',
         'first_name',

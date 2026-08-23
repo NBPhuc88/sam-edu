@@ -8,19 +8,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * RequireAuth Middleware
- *
- * Kiểm tra đăng nhập cho bất kỳ guard nào trong hệ thống:
- * admin, teacher, student.
- * Đồng thời bảo vệ tính duy nhất của phiên đăng nhập (single device login).
- *
- * Nếu không có guard nào authenticated → redirect về /login.
- *
- * Xem: .agents/AGENTS.md - Mục 4: Authentication
- */
-class RequireAuth
+class EnforceSingleSession
 {
+    /**
+     * Handle an incoming request.
+     *
+     * Giới hạn đăng nhập trên duy nhất 1 thiết bị:
+     * Nếu tài khoản đã có device session token trong DB và khác với token được lưu trong session hiện tại,
+     * tự động hủy phiên hiện tại và đăng xuất.
+     *
+     * @param \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response) $next
+     * @param Request                                                                          $request
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $guards = ['admin', 'teacher', 'student'];
@@ -47,6 +46,7 @@ class RequireAuth
                     ]);
                 }
 
+                // Tự động đồng bộ device token nếu chưa có trong session hoặc DB
                 if ($user) {
                     if (! $dbToken) {
                         $newToken = Str::random(40);
@@ -56,12 +56,9 @@ class RequireAuth
                         $request->session()->put('auth_device_token_' . $guard, $dbToken);
                     }
                 }
-
-                return $next($request);
             }
         }
 
-        // Not authenticated via any guard → redirect to login
-        return redirect()->route('login');
+        return $next($request);
     }
 }

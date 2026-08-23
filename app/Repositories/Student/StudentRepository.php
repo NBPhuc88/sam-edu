@@ -9,10 +9,17 @@ class StudentRepository implements StudentRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Student
     {
+        $isMysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+
         /** @var Student|null $student */
-        $student = Student::whereRaw('BINARY username = ?', [$username])
-            ->orWhere('email', $username)
-            ->first();
+        $student = Student::where(function ($query) use ($username, $isMysql) {
+            if ($isMysql) {
+                $query->whereRaw('BINARY username = ?', [$username]);
+            } else {
+                $query->where('username', $username);
+            }
+            $query->orWhere('email', $username);
+        })->first();
 
         return $student;
     }

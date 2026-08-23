@@ -11,10 +11,17 @@ class TeacherRepository implements TeacherRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Teacher
     {
+        $isMysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+
         /** @var Teacher|null $teacher */
-        $teacher = Teacher::whereRaw('BINARY username = ?', [$username])
-            ->orWhere('email', $username)
-            ->first();
+        $teacher = Teacher::where(function ($query) use ($username, $isMysql) {
+            if ($isMysql) {
+                $query->whereRaw('BINARY username = ?', [$username]);
+            } else {
+                $query->where('username', $username);
+            }
+            $query->orWhere('email', $username);
+        })->first();
 
         return $teacher;
     }

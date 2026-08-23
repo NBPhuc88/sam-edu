@@ -81,6 +81,13 @@ class PasswordResetService implements PasswordResetServiceInterface
         request()->session()->regenerate();
         session(['must_change_password' => true]);
 
+        // Single device login enforcement: generate new device session token
+        $deviceToken = \Illuminate\Support\Str::random(40);
+        $account->update([
+            'current_session_id' => $deviceToken,
+        ]);
+        request()->session()->put('auth_device_token_' . $accountType, $deviceToken);
+
         return [
             'success' => true,
             'error'   => null,

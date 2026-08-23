@@ -21,6 +21,7 @@ class Student extends Authenticatable
         'password',
         'status',
         'last_login_at',
+        'current_session_id',
         'student_code',
         'center_id',
         'first_name',
