@@ -166,3 +166,39 @@ test('super admin can sync permissions from config', function () {
     $response->assertRedirect();
     $response->assertSessionHas('success');
 });
+
+test('role without classes.exam-results permission cannot access class exam results page', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000082',
+        'name'   => 'Trung Tâm Class Exam Test',
+        'email'  => 'center82@test.com',
+        'phone'  => '0901234582',
+        'status' => 'active',
+    ]);
+
+    $student = Student::create([
+        'student_code' => 'HS000000082',
+        'first_name'   => 'Học Sinh',
+        'last_name'    => 'Exam Test',
+        'full_name'    => 'Học Sinh Test Exam Perm',
+        'username'     => 'student_exam_perm',
+        'password'     => 'password123',
+        'center_id'    => $center->id,
+        'status'       => 1,
+    ]);
+
+    $class = \App\Models\SchoolClass::create([
+        'center_id' => $center->id,
+        'name'      => 'Lớp Toán 12',
+        'code'      => 'CLS000000082',
+        'status'    => 1,
+    ]);
+
+    // Thu hồi quyền classes.exam-results của role student
+    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+    $permissionService->updateRolePermissions('student', ['dashboard.index', 'classes.index']);
+
+    $response = $this->actingAs($student, 'student')->get(route('classes.exam-results.index', ['classId' => $class->id]));
+
+    $response->assertStatus(404);
+});

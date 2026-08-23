@@ -43,17 +43,10 @@ class AutoCheckPermission
             return $next($request);
         }
 
-        // Tách route name thành module và action
-        $parts  = explode('.', $routeName);
-        $module = $parts[0];
-        $action = end($parts);
+        $permissionCode = $this->resolvePermissionCode($routeName);
 
-        // Ánh xạ action chuẩn
-        $permissionAction = self::ACTION_MAP[$action] ?? $action;
-        $permissionCode   = "{$module}.{$permissionAction}";
-
-        // Nếu permission code không tồn tại trong danh mục hệ thống → cho qua
-        if (! $this->permissionService->permissionExists($permissionCode)) {
+        // Nếu không map được permission code nào trong danh mục hệ thống → cho qua
+        if (! $permissionCode || ! $this->permissionService->permissionExists($permissionCode)) {
             return $next($request);
         }
 
@@ -78,6 +71,57 @@ class AutoCheckPermission
             'status'  => 404,
             'message' => 'Trang bạn đang tìm kiếm không tồn tại hoặc đường dẫn không đúng.',
         ])->toResponse($request)->setStatusCode(404);
+    }
+
+    /**
+     * Resolve permission code from route name.
+     * @param string $routeName
+     */
+    private function resolvePermissionCode(string $routeName): ?string
+    {
+        // 1. Direct match with route name
+        if ($this->permissionService->permissionExists($routeName)) {
+            return $routeName;
+        }
+
+        $parts = explode('.', $routeName);
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        // 2. Multi-part without last action (e.g. 'classes.exam-results.index' -> 'classes.exam-results')
+        $withoutLastAction = implode('.', array_slice($parts, 0, -1));
+
+        if ($this->permissionService->permissionExists($withoutLastAction)) {
+            return $withoutLastAction;
+        }
+
+        // 3. Multi-part with first module and last action (e.g. 'attendance.session.save' -> 'attendance.save')
+        $module      = $parts[0];
+        $action      = end($parts);
+        $directCross = "{$module}.{$action}";
+
+        if ($this->permissionService->permissionExists($directCross)) {
+            return $directCross;
+        }
+
+        // 4. Standard action mapping (e.g. 'store' -> 'create', 'update' -> 'edit', 'destroy' -> 'delete')
+        $mappedAction = self::ACTION_MAP[$action] ?? $action;
+        $standardCode = "{$module}.{$mappedAction}";
+
+        if ($this->permissionService->permissionExists($standardCode)) {
+            return $standardCode;
+        }
+
+        // 5. Check if without last action + mapped action exists
+        $mappedMultiCode = "{$withoutLastAction}.{$mappedAction}";
+
+        if ($this->permissionService->permissionExists($mappedMultiCode)) {
+            return $mappedMultiCode;
+        }
+
+        return null;
     }
 
     /**
