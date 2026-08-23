@@ -22,7 +22,7 @@ class UpdateForcedPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:5', 'max:20', 'confirmed'],
         ];
     }
 
@@ -35,7 +35,8 @@ class UpdateForcedPasswordRequest extends FormRequest
     {
         return [
             'password.required'  => 'Vui lòng nhập mật khẩu mới.',
-            'password.min'       => 'Mật khẩu tối thiểu phải từ 6 ký tự trở lên.',
+            'password.min'       => 'Mật khẩu tối thiểu phải từ 5 ký tự trở lên.',
+            'password.max'       => 'Mật khẩu không được vượt quá 20 ký tự.',
             'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
         ];
     }

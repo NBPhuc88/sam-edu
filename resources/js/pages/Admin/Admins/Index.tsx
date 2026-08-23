@@ -380,6 +380,7 @@ return;
                                 onChange={(e) =>
                                     form.setData('full_name', e.target.value)
                                 }
+                                maxLength={50}
                                 error={form.errors.full_name}
                                 className="!py-3 !text-sm"
                             />
@@ -390,11 +391,12 @@ return;
                                 Tên đăng nhập (Username) (*)
                             </label>
                             <Input
-                                placeholder="Nhập username"
+                                placeholder="Nhập username (6-19 ký tự)"
                                 value={form.data.username}
                                 onChange={(e) =>
-                                    form.setData('username', e.target.value)
+                                    form.setData('username', e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))
                                 }
+                                maxLength={19}
                                 error={form.errors.username}
                                 className="!py-3 !text-sm"
                             />
@@ -412,6 +414,7 @@ return;
                                     onChange={(e) =>
                                         form.setData('email', e.target.value)
                                     }
+                                    maxLength={100}
                                     error={form.errors.email}
                                     className="!py-3 !text-sm"
                                 />
@@ -421,11 +424,12 @@ return;
                                     Số điện thoại
                                 </label>
                                 <Input
-                                    placeholder="0912..."
+                                    placeholder="Ví dụ: 0912345678"
                                     value={form.data.phone}
                                     onChange={(e) =>
                                         form.setData('phone', e.target.value)
                                     }
+                                    maxLength={15}
                                     error={form.errors.phone}
                                     className="!py-3 !text-sm"
                                 />
@@ -440,11 +444,12 @@ return;
                             </label>
                             <Input
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder="•••••••• (5-20 ký tự)"
                                 value={form.data.password}
                                 onChange={(e) =>
                                     form.setData('password', e.target.value)
                                 }
+                                maxLength={20}
                                 error={form.errors.password}
                                 className="!py-3 !text-sm"
                             />

@@ -199,6 +199,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Ví dụ: Trần Thị Mai"
+                                    maxLength={50}
                                     className="!py-3 !text-sm font-medium"
                                     required
                                 />
@@ -226,8 +227,9 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 </label>
                                 <Input
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
+                                    maxLength={19}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.username && (
@@ -245,6 +247,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    maxLength={20}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.password && (
@@ -261,6 +264,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.email && (
@@ -276,6 +280,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="Ví dụ: 0912345678"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.phone && (
@@ -319,6 +325,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
+                                    maxLength={255}
                                     className="!py-3 !text-sm"
                                 />
                             </div>
@@ -341,6 +348,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={parentName}
                                     onChange={(e) => setParentName(e.target.value)}
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                 />
                             </div>
@@ -353,6 +361,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={parentPhone}
                                     onChange={(e) => setParentPhone(e.target.value)}
+                                    placeholder="Ví dụ: 0901234567"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
                             </div>
@@ -365,6 +375,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={parentRelationship}
                                     onChange={(e) => setParentRelationship(e.target.value)}
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                 />
                             </div>

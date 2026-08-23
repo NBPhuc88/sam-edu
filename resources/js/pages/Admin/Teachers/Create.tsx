@@ -51,7 +51,8 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                 .replace(/đ/g, 'd')
                 .replace(/Đ/g, 'd')
                 .toLowerCase()
-                .replace(/[^a-z0-9]/g, '');
+                .replace(/[^a-z0-9]/g, '')
+                .slice(0, 19);
 
             if (clean) {
                 setUsername(clean);
@@ -64,20 +65,20 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
         setIsSubmitting(true);
 
         router.post(
-            '/teachers',
+            '/admin/teachers',
             {
-                center_id: centerId ? Number(centerId) : undefined,
+                center_id: centerId,
                 full_name: fullName,
                 username,
-                email: email || undefined,
-                password: password || undefined,
-                phone: phone || undefined,
-                date_of_birth: dateOfBirth || undefined,
-                gender: gender || undefined,
-                hire_date: hireDate || undefined,
-                specialization: specialization || undefined,
+                email,
+                password,
+                phone,
+                date_of_birth: dateOfBirth,
+                gender,
+                hire_date: hireDate,
+                specialization,
                 status,
-                note: note || undefined,
+                note,
             },
             {
                 onFinish: () => setIsSubmitting(false),
@@ -86,17 +87,19 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
     };
 
     return (
-        <AppLayout title="Thêm Giáo Viên Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout>
             <Head title="Thêm Giáo Viên Mới" />
 
-            <div className="mx-auto max-w-4xl space-y-6">
-                {/* Header Top Bar */}
+            <div className="mx-auto max-w-5xl space-y-6 pb-12">
+                {/* Header & Breadcrumb */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Link href="/teachers">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/admin/teachers"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-xs transition-colors hover:bg-gray-50 hover:text-emerald-700"
+                            title="Quay lại danh sách"
+                        >
+                            <ArrowLeft className="h-5 w-5" />
                         </Link>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Thêm Giáo Viên Mới</h1>
@@ -150,6 +153,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     value={fullName}
                                     onChange={(e) => handleFullNameChange(e.target.value)}
                                     placeholder="Ví dụ: Nguyễn Văn An"
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                     required
                                 />
@@ -177,8 +181,9 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 </label>
                                 <Input
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     placeholder="Ví dụ: gv_nguyenan"
+                                    maxLength={19}
                                     className="!py-3 !text-sm"
                                     required
                                 />
@@ -197,6 +202,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    maxLength={20}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.password && (
@@ -214,6 +220,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="nguyenvanan@gmail.com"
+                                    maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.email && (
@@ -229,7 +236,8 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 <Input
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="0912345678"
+                                    placeholder="Ví dụ: 0912345678"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.phone && (

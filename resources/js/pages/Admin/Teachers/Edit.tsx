@@ -162,6 +162,7 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 <Input
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                     required
                                 />
@@ -189,7 +190,8 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 </label>
                                 <Input
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
+                                    maxLength={19}
                                     className="!py-3 !text-sm"
                                     required
                                 />
@@ -208,6 +210,7 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    maxLength={20}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.password && (
@@ -224,6 +227,7 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.email && (
@@ -239,6 +243,8 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 <Input
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="Ví dụ: 0912345678"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.phone && (

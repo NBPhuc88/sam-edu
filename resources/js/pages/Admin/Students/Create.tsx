@@ -178,6 +178,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={fullName}
                                     onChange={(e) => handleFullNameChange(e.target.value)}
                                     placeholder="Ví dụ: Trần Thị Mai"
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                     required
                                 />
@@ -205,8 +206,9 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 </label>
                                 <Input
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
+                                    maxLength={19}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.username && (
@@ -224,6 +226,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="•••••••• (để trống nếu chưa cấp)"
+                                    maxLength={20}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.password && (
@@ -241,6 +244,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="tranthimai@gmail.com"
+                                    maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.email && (
@@ -257,6 +261,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="0987654321"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
                                 {errors.phone && (
@@ -301,6 +306,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
                                     placeholder="Ví dụ: Số 123 Đường Nguyễn Trãi, Quận 1, TP.HCM"
+                                    maxLength={255}
                                     className="!py-3 !text-sm"
                                 />
                             </div>
@@ -324,8 +330,12 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={parentName}
                                     onChange={(e) => setParentName(e.target.value)}
                                     placeholder="Ví dụ: Trần Văn Hùng"
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                 />
+                                {errors.parent_name && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.parent_name}</p>
+                                )}
                             </div>
 
                             {/* Parent Phone */}
@@ -337,8 +347,12 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={parentPhone}
                                     onChange={(e) => setParentPhone(e.target.value)}
                                     placeholder="0901234567"
+                                    maxLength={15}
                                     className="!py-3 !text-sm"
                                 />
+                                {errors.parent_phone && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.parent_phone}</p>
+                                )}
                             </div>
 
                             {/* Parent Relationship */}
@@ -350,6 +364,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     value={parentRelationship}
                                     onChange={(e) => setParentRelationship(e.target.value)}
                                     placeholder="Ví dụ: Bố, Mẹ, Người giám hộ..."
+                                    maxLength={50}
                                     className="!py-3 !text-sm"
                                 />
                             </div>

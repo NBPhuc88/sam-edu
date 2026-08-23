@@ -73,12 +73,13 @@ class ProfileController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'string'],
-            'password'         => ['required', 'string', 'min:6', 'confirmed'],
+            'password'         => ['required', 'string', 'min:5', 'max:20', 'confirmed'],
             'otp'              => ['required', 'string', 'regex:/^[0-9]{6}$/'],
         ], [
             'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại.',
             'password.required'         => 'Vui lòng nhập mật khẩu mới.',
-            'password.min'              => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+            'password.min'              => 'Mật khẩu mới phải có ít nhất 5 ký tự.',
+            'password.max'              => 'Mật khẩu mới không được vượt quá 20 ký tự.',
             'password.confirmed'        => 'Mật khẩu xác nhận không khớp.',
             'otp.required'              => 'Vui lòng nhập mã xác thực OTP 6 số.',
             'otp.regex'                 => 'Mã xác thực OTP phải gồm đúng 6 chữ số.',

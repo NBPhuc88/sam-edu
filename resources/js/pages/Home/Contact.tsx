@@ -17,16 +17,25 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import PublicLayout from '../../layouts/PublicLayout';
 
+import { VIETNAMESE_PHONE_REGEX } from '../../utils/validation';
+
 const contactSchema = z.object({
-    full_name: z.string().min(2, 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự)'),
-    phone: z.string().min(8, 'Vui lòng nhập số điện thoại hợp lệ'),
+    full_name: z
+        .string()
+        .min(2, 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự)')
+        .max(50, 'Họ và tên không được vượt quá 50 ký tự'),
+    phone: z
+        .string()
+        .min(1, 'Vui lòng nhập số điện thoại')
+        .regex(VIETNAMESE_PHONE_REGEX, 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678)'),
     email: z
         .string()
         .email('Email không đúng định dạng')
+        .max(100, 'Email không được vượt quá 100 ký tự')
         .optional()
         .or(z.literal('')),
-    center_name: z.string().optional(),
-    message: z.string().optional(),
+    center_name: z.string().max(100, 'Tên trung tâm không được vượt quá 100 ký tự').optional(),
+    message: z.string().max(2000, 'Nội dung tin nhắn không được vượt quá 2000 ký tự').optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;

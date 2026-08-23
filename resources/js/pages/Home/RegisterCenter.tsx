@@ -14,6 +14,7 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import PublicLayout from '../../layouts/PublicLayout';
 import apiClient from '../../lib/axios';
+import { isValidVietnamesePhone } from '../../utils/validation';
 
 interface RegisterCenterProps {
     contactInfo?: {
@@ -85,6 +86,11 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                 'Vui lòng điền đầy đủ Tên trung tâm, Số điện thoại và Email.',
             );
 
+            return;
+        }
+
+        if (!isValidVietnamesePhone(phone)) {
+            setErrorMessage('Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678 hoặc +84912345678).');
             return;
         }
 
@@ -325,6 +331,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         e.target.value,
                                                     )
                                                 }
+                                                maxLength={100}
                                                 required
                                             />
 
@@ -336,6 +343,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                     onChange={(e) =>
                                                         setPhone(e.target.value)
                                                     }
+                                                    maxLength={15}
                                                     required
                                                 />
                                                 <Input
@@ -346,6 +354,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                     onChange={(e) =>
                                                         setEmail(e.target.value)
                                                     }
+                                                    maxLength={100}
                                                     required
                                                 />
                                             </div>
@@ -357,6 +366,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 onChange={(e) =>
                                                     setAddress(e.target.value)
                                                 }
+                                                maxLength={255}
                                             />
                                         </div>
 

@@ -18,7 +18,10 @@ import Input from '../../components/ui/Input';
 const loginSchema = z.object({
     role: z.enum(['admin', 'teacher', 'student']),
     username: z.string().min(1, 'Vui lòng nhập tên đăng nhập hoặc email'),
-    password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+    password: z
+        .string()
+        .min(1, 'Vui lòng nhập mật khẩu')
+        .max(20, 'Mật khẩu không được vượt quá 20 ký tự'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;

@@ -20,12 +20,12 @@ class StoreStudentTuitionRequest extends FormRequest
             'center_id'    => ['required', 'integer', 'exists:centers,id'],
             'student_id'   => ['required', 'integer', 'exists:students,id'],
             'class_id'     => ['required', 'integer', 'exists:classes,id'],
-            'title'        => ['nullable', 'string', 'max:255'],
-            'total_amount' => ['required', 'numeric', 'min:0'],
+            'title'        => ['nullable', 'string', 'max:100'],
+            'total_amount' => ['required', 'numeric', 'min:0', 'max:1000000000'],
             'due_date'     => ['nullable', 'date'],
-            'note'         => ['nullable', 'string'],
+            'note'         => ['nullable', 'string', 'max:1000'],
             // First installment (optional)
-            'initial_payment_amount'   => ['nullable', 'numeric', 'min:0', 'lte:total_amount'],
+            'initial_payment_amount'   => ['nullable', 'numeric', 'min:0', 'max:1000000000', 'lte:total_amount'],
             'initial_payment_date'     => ['nullable', 'date'],
             'initial_payment_method'   => ['nullable', 'string', 'in:cash,bank_transfer,momo,zalopay,credit_card,other'],
             'initial_transaction_code' => ['nullable', 'string', 'max:100'],
@@ -47,7 +47,9 @@ class StoreStudentTuitionRequest extends FormRequest
             'class_id.exists'            => 'Lớp học đã chọn không tồn tại.',
             'total_amount.required'      => 'Vui lòng nhập tổng số tiền học phí cần đóng.',
             'total_amount.min'           => 'Số tiền học phí không thể âm.',
+            'total_amount.max'           => 'Số tiền học phí không được vượt quá 1.000.000.000 VNĐ.',
             'initial_payment_amount.lte' => 'Số tiền đóng đợt 1 không được vượt quá tổng số tiền học phí cần đóng.',
+            'title.max'                  => 'Tiêu đề khoản thu không được vượt quá 100 ký tự.',
         ];
     }
 }
