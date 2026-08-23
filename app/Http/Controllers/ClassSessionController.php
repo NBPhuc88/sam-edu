@@ -47,7 +47,7 @@ class ClassSessionController extends Controller
         $search      = $request->input('search');
         $centerId    = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId     = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $subjectId   = $request->input('subject_id') ? (string) $request->input('subject_id') : null;
+        $subjectId   = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
         $teacherId   = $request->input('teacher_id') ? (int) $request->input('teacher_id') : null;
         $roomId      = $request->input('room_id') ? (int) $request->input('room_id') : null;
         $sessionDate = $request->input('session_date');

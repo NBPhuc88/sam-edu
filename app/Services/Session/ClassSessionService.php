@@ -71,7 +71,7 @@ class ClassSessionService implements ClassSessionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $subjectId = null,
+        ?int $subjectId = null,
         ?int $teacherId = null,
         ?int $roomId = null,
         ?string $sessionDate = null,
