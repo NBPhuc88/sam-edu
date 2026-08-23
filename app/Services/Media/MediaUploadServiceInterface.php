@@ -23,4 +23,13 @@ interface MediaUploadServiceInterface
         ?string $subId = null,
         string $folder = 'exams/media'
     ): array;
+
+    /**
+     * Xóa toàn bộ file media/ảnh của một bài thi trên storage (disk 'sam' và 'public').
+     *
+     * @param  int           $examId
+     * @param  array<string> $extraFilePaths
+     * @return void
+     */
+    public function deleteExamMedia(int $examId, array $extraFilePaths = []): void;
 }

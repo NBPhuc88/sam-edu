@@ -4,12 +4,14 @@ namespace App\Services\Exam;
 
 use App\Models\Admin;
 use App\Models\Exam;
+use App\Models\ExamQuestion;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
 use App\Repositories\ExamType\ExamTypeRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
+use App\Services\Media\MediaUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -22,7 +24,8 @@ class ExamService implements ExamServiceInterface
         protected CenterRepositoryInterface $centerRepository,
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected SubjectRepositoryInterface $subjectRepository,
-        protected ExamTypeRepositoryInterface $examTypeRepository
+        protected ExamTypeRepositoryInterface $examTypeRepository,
+        protected MediaUploadServiceInterface $mediaUploadService
     ) {
     }
 
@@ -276,7 +279,77 @@ class ExamService implements ExamServiceInterface
     {
         $exam = $this->findExam($id, $user);
 
+        // Thu thập toàn bộ đường dẫn ảnh/media liên quan đến bài thi
+        $mediaPaths = [];
+
+        if ($exam->relationLoaded('sections')) {
+            foreach ($exam->sections as $sec) {
+                foreach ($sec->questions ?? [] as $q) {
+                    $this->extractQuestionMediaPaths($q, $mediaPaths);
+                }
+            }
+        } elseif ($exam->relationLoaded('questions')) {
+            foreach ($exam->questions as $q) {
+                $this->extractQuestionMediaPaths($q, $mediaPaths);
+            }
+        } else {
+            $questions = $exam->questions()->get();
+
+            foreach ($questions as $q) {
+                $this->extractQuestionMediaPaths($q, $mediaPaths);
+            }
+        }
+
+        // Xóa toàn bộ file và thư mục ảnh của bài thi
+        $this->mediaUploadService->deleteExamMedia((int) $exam->id, $mediaPaths);
+
         return $this->examRepository->delete($exam->id);
+    }
+
+    /**
+     * @param ExamQuestion  $question
+     * @param array<string> $paths
+     */
+    protected function extractQuestionMediaPaths(ExamQuestion $question, array &$paths): void
+    {
+        if (! empty($question->image_url)) {
+            $paths[] = (string) $question->image_url;
+        }
+
+        if (! empty($question->audio_url)) {
+            $paths[] = (string) $question->audio_url;
+        }
+
+        if (! empty($question->options) && is_array($question->options)) {
+            $this->extractPathsFromNestedArray($question->options, $paths);
+        }
+
+        if (! empty($question->metadata) && is_array($question->metadata)) {
+            $this->extractPathsFromNestedArray($question->metadata, $paths);
+        }
+    }
+
+    /**
+     * @param array<mixed>  $array
+     * @param array<string> $paths
+     */
+    protected function extractPathsFromNestedArray(array $array, array &$paths): void
+    {
+        foreach ($array as $val) {
+            if (is_array($val)) {
+                $this->extractPathsFromNestedArray($val, $paths);
+            } elseif (is_string($val)) {
+                if (
+                    str_contains($val, 'exams/') ||
+                    str_contains($val, 'media/') ||
+                    str_contains($val, '/sam-storage/') ||
+                    str_contains($val, '/storage/') ||
+                    preg_match('/\.(jpg|jpeg|png|gif|webp|svg|mp3|mp4|wav)$/i', $val)
+                ) {
+                    $paths[] = $val;
+                }
+            }
+        }
     }
 
     /**

@@ -229,6 +229,7 @@ class DeleteImpactService implements DeleteImpactServiceInterface
 
                 if ($questionCount > 0) {
                     $impacts[] = "Xóa {$questionCount} câu hỏi trong đề";
+                    $impacts[] = 'Xóa toàn bộ hình ảnh và tệp tin media đính kèm trong đề thi';
                 }
 
                 if ($classExamCount > 0) {

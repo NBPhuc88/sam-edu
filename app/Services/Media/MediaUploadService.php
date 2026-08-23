@@ -73,4 +73,63 @@ class MediaUploadService implements MediaUploadServiceInterface
             'file_path' => $destinationRelativePath,
         ];
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function deleteExamMedia(int $examId, array $extraFilePaths = []): void
+    {
+        $samDisk    = Storage::disk('sam');
+        $publicDisk = Storage::disk('public');
+
+        // 1. Xóa toàn bộ thư mục exams/{examId}
+        $examFolder = "exams/{$examId}";
+
+        if ($samDisk->exists($examFolder)) {
+            $samDisk->deleteDirectory($examFolder);
+        }
+
+        if ($publicDisk->exists($examFolder)) {
+            $publicDisk->deleteDirectory($examFolder);
+        }
+
+        // 2. Xóa các file media riêng lẻ được truyền vào (nếu có lưu ở ngoài folder exams/{examId})
+        foreach ($extraFilePaths as $path) {
+            if (empty($path) || ! is_string($path)) {
+                continue;
+            }
+
+            $cleanPath = $this->normalizeStoragePath($path);
+
+            if (! empty($cleanPath)) {
+                if ($samDisk->exists($cleanPath)) {
+                    $samDisk->delete($cleanPath);
+                }
+
+                if ($publicDisk->exists($cleanPath)) {
+                    $publicDisk->delete($cleanPath);
+                }
+            }
+        }
+    }
+
+    /**
+     * Chuẩn hóa URL/đường dẫn về đường dẫn tương đối trong storage.
+     * @param string $path
+     */
+    protected function normalizeStoragePath(string $path): string
+    {
+        // Loại bỏ domain nếu là full URL (ví dụ: http://localhost/sam-storage/exams/1/abc.png)
+        $parsed = parse_url($path, PHP_URL_PATH);
+        $path   = $parsed ? ltrim($parsed, '/') : ltrim($path, '/');
+
+        // Loại bỏ tiền tố sam-storage/ hoặc storage/
+        if (str_starts_with($path, 'sam-storage/')) {
+            $path = substr($path, strlen('sam-storage/'));
+        } elseif (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        return trim($path, '/');
+    }
 }
