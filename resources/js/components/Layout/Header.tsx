@@ -1,5 +1,5 @@
-import { router } from '@inertiajs/react';
-import { Building2, CreditCard, LogOut, Menu, X } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Building2, CreditCard, LogOut, Menu, User as UserIcon, X } from 'lucide-react';
 import React from 'react';
 import Button from '../ui/Button';
 
@@ -115,17 +115,26 @@ export const Header: React.FC<HeaderProps> = ({
                     </Button>
                 )}
 
-                {/* User info */}
+                {/* User info link to Profile */}
                 {user && (
-                    <div className="hidden items-center gap-2.5 sm:flex">
+                    <Link
+                        href="/profile"
+                        title="Xem và quản lý Thông Tin Tài Khoản"
+                        className="flex items-center gap-2.5 py-1 px-2 rounded-xl transition-all hover:bg-slate-100 group"
+                    >
                         {/* Avatar */}
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 ring-2 ring-emerald-500/20 shadow-xs">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 ring-2 ring-emerald-500/20 shadow-xs group-hover:scale-105 transition-transform">
                             {user.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
                         </div>
-                        <span className="text-xs font-bold text-gray-900">
-                            {user.full_name ?? user.username}
-                        </span>
-                    </div>
+                        <div className="hidden sm:flex flex-col text-left">
+                            <span className="text-xs font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                                {user.full_name ?? user.username}
+                            </span>
+                            <span className="text-2xs text-gray-400 capitalize">
+                                {role === 'admin' ? (user.admin_role === 'super_admin' ? 'Super Admin' : 'Admin') : role === 'teacher' ? 'Giáo viên' : 'Học sinh'}
+                            </span>
+                        </div>
+                    </Link>
                 )}
 
                 {/* Logout */}

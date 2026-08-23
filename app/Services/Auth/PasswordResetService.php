@@ -61,7 +61,7 @@ class PasswordResetService implements PasswordResetServiceInterface
         if (now()->isAfter($record->expires_at)) {
             return [
                 'success' => false,
-                'error'   => 'Mã OTP đã hết hạn (chỉ có hiệu lực trong 15 phút). Vui lòng yêu cầu mã mới!',
+                'error'   => 'Mã OTP đã hết hạn (chỉ có hiệu lực trong 5 phút). Vui lòng yêu cầu mã mới!',
             ];
         }
 

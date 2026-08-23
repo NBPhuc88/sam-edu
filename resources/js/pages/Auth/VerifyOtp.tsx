@@ -124,17 +124,21 @@ export const VerifyOtp: React.FC<VerifyOtpProps> = ({
                                 className="w-full text-center text-3xl font-black tracking-[12px] py-3 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
                                 required
                             />
+                            <p className="mt-2 text-center text-2xs text-gray-500">
+                                ⏱️ Mã OTP chỉ có hiệu lực trong <strong>5 phút</strong>. Quá 5 phút vui lòng nhấn "Gửi lại mã OTP".
+                            </p>
                         </div>
 
                         <div className="pt-2">
                             <Button
                                 type="submit"
                                 variant="success"
+                                size="lg"
                                 isLoading={isSubmitting}
                                 disabled={otp.length !== 6}
                                 className="w-full justify-center py-3 text-sm font-bold shadow-sm"
                             >
-                                Xác Thực OTP & Đăng Nhập
+                                Xác Thực OTP & Đặt Mật Khẩu Mới
                             </Button>
                         </div>
                     </form>

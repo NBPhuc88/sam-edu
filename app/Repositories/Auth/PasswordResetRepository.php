@@ -20,7 +20,7 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
             'email'        => $email,
             'account_type' => $accountType,
             'otp_hash'     => $otpHash,
-            'expires_at'   => now()->addMinutes(15),
+            'expires_at'   => now()->addMinutes(5),
             'created_at'   => now(),
         ]);
     }

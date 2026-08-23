@@ -63,10 +63,10 @@ export const ForgotPassword: React.FC = () => {
                         </div>
                         <div>
                             <h2 className="text-base font-bold text-gray-900">
-                                Yêu cầu Mã OTP Đăng nhập
+                                Yêu Cầu Mã Xác Thực OTP
                             </h2>
                             <p className="text-xs text-gray-500">
-                                Chọn loại tài khoản và nhập email để nhận OTP 6 số
+                                Chọn loại tài khoản và nhập email để nhận mã OTP 6 số (hiệu lực 5 phút)
                             </p>
                         </div>
                     </div>

@@ -58,6 +58,17 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
 
+    // User Profile / Account Information
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ProfileController::class, 'index'])->name('index');
+        Route::post('/password/send-otp', [\App\Http\Controllers\ProfileController::class, 'sendPasswordChangeOtp'])->name('password.send_otp');
+        Route::post('/password/update', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
+        Route::post('/email/send-old-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailOldOtp'])->name('email.send_old_otp');
+        Route::post('/email/verify-old-otp', [\App\Http\Controllers\ProfileController::class, 'verifyChangeEmailOldOtp'])->name('email.verify_old_otp');
+        Route::post('/email/send-new-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailNewOtp'])->name('email.send_new_otp');
+        Route::post('/email/update', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('email.update');
+    });
+
     // Student Transcript & PDF Export (Phục vụ học sinh xem & in bảng điểm)
     Route::get('/student/transcript/print', [\App\Http\Controllers\StudentTranscriptController::class, 'print'])->name('student.transcript.print');
 
