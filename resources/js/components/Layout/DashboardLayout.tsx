@@ -14,6 +14,7 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import { formatDate } from '@/lib/date';
 
 interface AuthUser {
@@ -177,7 +178,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 />
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                <main className="flex-1 p-6">{children}</main>
+
+                {/* Footer */}
+                <Footer />
             </div>
 
             {/* ── ZaloPay Renewal Modal ─────────────────────────────────── */}
