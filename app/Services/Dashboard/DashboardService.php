@@ -560,13 +560,13 @@ class DashboardService implements DashboardServiceInterface
         foreach ($results as $res) {
             $mapped[] = [
                 'id'           => $res->id,
-                'exam_name'    => $res->exam->name ?? 'Bài thi',
-                'subject_name' => $res->exam->subject->name ?? 'Môn học',
-                'class_name'   => $res->exam->schoolClass->name ?? 'Lớp học',
+                'exam_name'    => $res->exam?->name ?? 'Bài thi',
+                'subject_name' => $res->exam?->subject?->name ?? 'Môn học',
+                'class_name'   => $res->exam?->schoolClass?->name ?? 'Lớp học',
                 'score'        => (float) $res->score,
                 'grade'        => $res->grade ?? 'Đạt',
                 'comment'      => $res->comment ?? '',
-                'exam_date'    => $res->exam->exam_date ? $res->exam->exam_date->format('d-m-Y') : date('d-m-Y'),
+                'exam_date'    => $res->exam?->exam_date ? $res->exam->exam_date->format('d-m-Y') : ($res->created_at ? $res->created_at->format('d-m-Y') : date('d-m-Y')),
             ];
         }
 

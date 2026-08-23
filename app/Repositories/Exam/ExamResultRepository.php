@@ -19,13 +19,12 @@ class ExamResultRepository implements ExamResultRepositoryInterface
                 'exam_id',
                 'student_id',
                 'score',
-                'max_score',
                 'grade',
-                'note',
+                'comment',
                 'created_at'
             )
             ->with([
-                'exam:id,name,code,subject_id,class_id',
+                'exam:id,name,code,subject_id,class_id,max_score,exam_date',
                 'exam.subject:id,name,code',
                 'exam.schoolClass:id,name,code',
             ])
