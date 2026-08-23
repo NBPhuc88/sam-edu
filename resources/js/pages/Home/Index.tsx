@@ -88,7 +88,7 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                                         size="lg"
                                         icon={<Sparkles className="h-5 w-5" />}
                                     >
-                                        Dùng thử miễn phí 14 ngày
+                                        Dùng thử miễn phí 30 ngày
                                     </Button>
                                 </Link>
                                 <Link href="/login">
@@ -229,11 +229,10 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                             plans.map((plan: Plan) => (
                                 <Card
                                     key={plan.id}
-                                    className={`relative flex flex-col justify-between p-6 transition-all hover:shadow-lg ${
-                                        plan.is_featured
+                                    className={`relative flex flex-col justify-between p-6 transition-all hover:shadow-lg ${plan.is_featured
                                             ? 'border-2 border-emerald-600 bg-white shadow-md ring-2 ring-emerald-500/20'
                                             : 'border-gray-200 bg-white'
-                                    }`}
+                                        }`}
                                 >
                                     {plan.badge_text && (
                                         <div className="absolute -top-3.5 right-4">

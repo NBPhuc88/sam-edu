@@ -236,7 +236,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         className="w-full justify-center"
                                         icon={<Sparkles className="h-4 w-4" />}
                                     >
-                                        Dùng thử miễn phí 14 ngày
+                                        Dùng thử miễn phí 30 ngày
                                     </Button>
                                 </Link>
                             </div>
