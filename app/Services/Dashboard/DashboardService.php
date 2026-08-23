@@ -142,6 +142,8 @@ class DashboardService implements DashboardServiceInterface
 
         $renewedCenters = $this->centerRepository->getByIdsCollection($renewedCenterIds);
 
+        $allCenters = $newCenters->concat($renewedCenters)->unique('id');
+
         $trialCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'trial' || $c->subscription_plan === 'trial')->count();
         $basicCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'basic' || str_starts_with($c->subscription_plan ?? '', 'basic'))->count();
         $advancedCount = $allCenters->filter(fn ($c) => $c->plan_type === 'advanced' || str_starts_with($c->subscription_plan ?? '', 'advanced'))->count();

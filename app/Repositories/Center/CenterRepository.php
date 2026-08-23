@@ -221,6 +221,8 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
+            'subscription_plan',
+            'plan_type',
             'created_at'
         )
         ->whereBetween('created_at', [$start, $end])
@@ -241,6 +243,8 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
+            'subscription_plan',
+            'plan_type',
             'expires_at'
         )
         ->whereBetween('expires_at', [$start, $end])
@@ -259,7 +263,9 @@ class CenterRepository implements CenterRepositoryInterface
             'name',
             'email',
             'phone',
-            'status'
+            'status',
+            'subscription_plan',
+            'plan_type'
         )
         ->whereIn('id', $ids)
         ->get();
