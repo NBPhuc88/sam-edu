@@ -316,9 +316,9 @@ export default function ExamIndex({
                 {/* Filter Card */}
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">
                     <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             {/* Search */}
-                            <div className="lg:col-span-2">
+                            <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Tìm kiếm đề thi
                                 </label>
@@ -327,6 +327,7 @@ export default function ExamIndex({
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Tìm theo tên đề thi, mã đề..."
                                     icon={<Search className="h-4 w-4 text-gray-400" />}
+                                    className="!py-2 !text-sm !h-[38px]"
                                 />
                             </div>
 

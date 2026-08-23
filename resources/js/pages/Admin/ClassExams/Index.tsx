@@ -289,6 +289,7 @@ export default function ClassExamIndex({
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Tên bài thi, lớp học, mã đề..."
                                     icon={<Search className="h-4 w-4 text-gray-400" />}
+                                    className="!py-2 !text-sm !h-[38px]"
                                 />
                             </div>
 
