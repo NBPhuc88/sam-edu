@@ -117,7 +117,7 @@ class TeacherRepository implements TeacherRepositoryInterface
             });
         }
 
-        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     /**

@@ -88,7 +88,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             });
         }
 
-        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     /**

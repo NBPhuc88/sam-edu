@@ -87,7 +87,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
 
         return $query->orderBy('exam_date', 'desc')
             ->orderBy('start_time', 'asc')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     public function findById(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?ClassExam

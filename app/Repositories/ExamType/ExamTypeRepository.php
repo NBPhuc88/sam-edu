@@ -63,7 +63,7 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
 
         return $query->orderBy('center_id', 'asc')
             ->orderBy('id', 'asc')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     /**

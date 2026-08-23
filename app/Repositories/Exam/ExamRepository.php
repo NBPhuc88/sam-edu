@@ -95,7 +95,7 @@ class ExamRepository implements ExamRepositoryInterface
         }
 
         return $query->orderByDesc('id')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     /**

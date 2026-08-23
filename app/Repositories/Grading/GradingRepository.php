@@ -76,7 +76,7 @@ class GradingRepository implements GradingRepositoryInterface
             'gradedByAdmin:id,full_name,username',
         ])
         ->orderByDesc('id')
-        ->paginate($perPage, ['*'], 'page', $page);
+        ->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     public function getGradingStats(

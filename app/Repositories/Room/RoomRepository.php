@@ -54,7 +54,7 @@ class RoomRepository implements RoomRepositoryInterface
             $query->where('status', $status);
         }
 
-        return $query->paginate($perPage, ['*'], 'page', $page);
+        return $query->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     public function find(int $id, ?array $allowedCenterIds = null): ?Room

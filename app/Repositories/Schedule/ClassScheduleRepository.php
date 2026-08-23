@@ -106,7 +106,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             });
         }
 
-        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
     }
 
     /**

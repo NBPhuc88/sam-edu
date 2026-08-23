@@ -80,7 +80,7 @@ class PracticeExamService implements PracticeExamServiceInterface
             }
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
+        return $query->orderBy('created_at', 'desc')->deferredPaginate($perPage)->withQueryString();
     }
 
     /**

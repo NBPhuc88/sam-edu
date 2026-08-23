@@ -251,6 +251,39 @@ Mọi chỉnh sửa mã nguồn trước khi hoàn tất CẦN đảm bảo các
 > - Định danh câu hỏi (`q.title || q.code`, ví dụ `Q04_BLANK`) và Tên phần thi (`section.title`) được hiển thị gọn gàng, tinh tế ngay trên **Thanh Header của thẻ câu hỏi** cùng với số thứ tự và điểm số.
 > - Thân thẻ câu hỏi trực tiếp hiển thị **Nội dung câu hỏi / Đề bài** (`content`) và **Vùng tương tác đáp án**, tránh tạo thêm các thẻ tiêu đề `<h3>` trùng lặp bên trong.
 
+---
+
+## 11. Quy Chuẩn Tối Ưu Phân Trang Deferred Join (Late Lookup Pagination Rule)
+
+> [!IMPORTANT]
+> **1. NGUYÊN LÝ KỸ THUẬT DEFERRED JOIN (LATE LOOKUP / JOIN TRÌ HOÃN)**:
+> - **Vấn đề của `OFFSET` lớn thông thường**: Khi phân trang trang sâu (ví dụ `LIMIT 50 OFFSET 100000`), MySQL phải đọc toàn bộ các cột dữ liệu của 100.050 bản ghi từ đĩa / Buffer Pool rồi loại bỏ 100.000 dòng đầu, gây tốn I/O và nghẽn CPU.
+> - **Cấu trúc SQL tối ưu (Deferred Join)**:
+>   ```sql
+>   SELECT pre.*
+>   FROM (
+>       SELECT id
+>       FROM table_name
+>       WHERE [conditions]
+>       ORDER BY [order_columns]
+>       LIMIT perPage OFFSET offset
+>   ) AS temp
+>   INNER JOIN table_name AS pre ON temp.id = pre.id
+>   ORDER BY [order_columns];
+>   ```
+>   - Subquery `temp` chỉ quét qua Index / Primary Key cực nhẹ (`SELECT id`) mà không nạp các cột dữ liệu khác.
+>   - Sau khi có danh sách ID của trang hiện tại (ví dụ đúng 15 - 50 IDs), câu lệnh `INNER JOIN` (hoặc `WHERE IN`) mới nạp toàn bộ các cột và các quan hệ Eager Loading (`with(...)`).
+
+> [!IMPORTANT]
+> **2. QUY TẮC SỬ DỤNG TRONG TOÀN BỘ CODEBASE SAM-EDU**:
+> - Hệ thống đã cấu hình sẵn Macro `deferredPaginate()` cho Eloquent Builder trong [`app/Providers/AppServiceProvider.php`](file:///home/phuc/Desktop/web/projects/sam-edu/app/Providers/AppServiceProvider.php).
+> - **BẮT BUỘC 100%**: Tất cả các tầng Repository (hoặc Service) khi phân trang dữ liệu đều phải sử dụng `->deferredPaginate($perPage, $columns, $pageName, $page)` thay vì `->paginate(...)` mặc định.
+> - **Cú pháp chuẩn**:
+>   ```php
+>   return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
+>   ```
+
+
 
 
 

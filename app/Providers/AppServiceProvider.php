@@ -53,6 +53,9 @@ use App\Services\Teacher\TeacherServiceInterface;
 use App\Services\Zalo\ZaloService;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -136,6 +139,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configurePagination();
     }
 
     /**
@@ -159,5 +163,74 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Cấu hình tối ưu phân trang Deferred Join (Late Lookup / Join trì hoãn).
+     */
+    protected function configurePagination(): void
+    {
+        Builder::macro('deferredPaginate', function (
+            int $perPage = 15,
+            array $columns = ['*'],
+            string $pageName = 'page',
+            ?int $page = null
+        ): LengthAwarePaginator {
+            /** @var Builder $this */
+            $model   = $this->getModel();
+            $keyName = $model->getQualifiedKeyName();
+
+            $page = $page ?: Paginator::resolveCurrentPage($pageName);
+
+            // 1. Tính tổng số dòng (Count query)
+            $total = $this->toBase()->getCountForPagination();
+
+            if ($total === 0) {
+                return new LengthAwarePaginator(
+                    $model->newCollection(),
+                    0,
+                    $perPage,
+                    $page,
+                    [
+                        'path'     => Paginator::resolveCurrentPath(),
+                        'pageName' => $pageName,
+                    ]
+                );
+            }
+
+            // 2. Subquery / Index-only scan: Lấy danh sách ID của trang hiện tại (Lightweight offset)
+            $idQuery = (clone $this)
+                ->setEagerLoads([])
+                ->select([$keyName]);
+
+            $ids = $idQuery
+                ->forPage($page, $perPage)
+                ->pluck($model->getKeyName());
+
+            if ($ids->isEmpty()) {
+                $items = $model->newCollection();
+            } else {
+                // 3. Deferred Join: Lấy dữ liệu và eager load quan hệ cho đúng các ID đã lấy
+                $items = $this->clone()
+                    ->setQuery($model->newQueryWithoutScopes()->getQuery())
+                    ->whereIn($keyName, $ids)
+                    ->get($columns);
+
+                // Bảo toàn thứ tự ban đầu của $ids
+                $orderMap = array_flip($ids->toArray());
+                $items    = $items->sortBy(fn ($item) => $orderMap[$item->getKey()] ?? PHP_INT_MAX)->values();
+            }
+
+            return new LengthAwarePaginator(
+                $items,
+                $total,
+                $perPage,
+                $page,
+                [
+                    'path'     => Paginator::resolveCurrentPath(),
+                    'pageName' => $pageName,
+                ]
+            );
+        });
     }
 }

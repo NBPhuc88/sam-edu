@@ -47,7 +47,7 @@ class AdminRepository implements AdminRepositoryInterface
                 $query->where('role', $role);
             })
             ->latest()
-            ->paginate($perPage);
+            ->deferredPaginate($perPage);
     }
 
     /**
