@@ -20,7 +20,8 @@ class DashboardController extends Controller
      */
     public function index(Request $request): Response
     {
-        $data = $this->dashboardService->getDashboardData();
+        $month = $request->input('month');
+        $data  = $this->dashboardService->getDashboardData(is_string($month) ? $month : null);
 
         return Inertia::render('Dashboard', $data);
     }

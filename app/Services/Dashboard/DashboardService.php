@@ -31,9 +31,10 @@ class DashboardService implements DashboardServiceInterface
     }
 
     /**
+     * @param  ?string              $month
      * @return array<string, mixed>
      */
-    public function getDashboardData(): array
+    public function getDashboardData(?string $month = null): array
     {
         $role = 'student';
         $user = null;
@@ -101,9 +102,10 @@ class DashboardService implements DashboardServiceInterface
 
         // 3. TEACHER DASHBOARD
         if ($role === 'teacher' && $user instanceof Teacher) {
-            $data['center']          = isset($user->center_id) ? $this->formatCenterData($this->centerRepository->find($user->center_id)) : null;
-            $data['weekly_schedule'] = $this->getTeacherWeeklySchedule($user->id);
-            $data['stats']           = [
+            $data['center']           = isset($user->center_id) ? $this->formatCenterData($this->centerRepository->find($user->center_id)) : null;
+            $data['monthly_schedule'] = $this->getTeacherMonthlySchedule($user->id, $month);
+            $data['weekly_schedule']  = $this->getTeacherWeeklySchedule($user->id);
+            $data['stats']            = [
                 'my_classes'  => $user->classSubjects()->pluck('class_id')->unique()->count(),
                 'my_students' => $this->studentRepository->countByCenterIds([$user->center_id]),
             ];
@@ -274,6 +276,154 @@ class DashboardService implements DashboardServiceInterface
     }
 
     /**
+     * Giáo viên - Lịch dạy cả tháng
+     * @param  int                                                                                                        $teacherId
+     * @param  ?string                                                                                                    $monthStr  (YYYY-MM)
+     * @return array{month: string, month_label: string, prev_month: string, next_month: string, days: array<int, mixed>}
+     */
+    protected function getTeacherMonthlySchedule(int $teacherId, ?string $monthStr = null): array
+    {
+        $baseDate = null;
+
+        if ($monthStr && preg_match('/^\d{4}-\d{2}$/', $monthStr)) {
+            try {
+                $baseDate = \Carbon\Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth();
+            } catch (\Exception $e) {
+                $baseDate = now()->startOfMonth();
+            }
+        } else {
+            $baseDate = now()->startOfMonth();
+        }
+
+        $startOfMonth = $baseDate->copy()->startOfMonth();
+        $endOfMonth   = $baseDate->copy()->endOfMonth();
+        $todayStr     = now()->toDateString();
+
+        // Start grid on Monday of the first week
+        $gridStart = $startOfMonth->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        // End grid on Sunday of the last week
+        $gridEnd = $endOfMonth->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+
+        // Lấy các ca học thực tế trong toàn bộ khung lưới tháng của giáo viên
+        $sessions = \App\Models\ClassSession::query()
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'room:id,name',
+            ])
+            ->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)
+                    ->orWhereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+            })
+            ->whereBetween('session_date', [$gridStart->toDateString(), $gridEnd->toDateString()])
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get();
+
+        // Lấy lịch định kỳ để dự phòng nếu ngày đó chưa sinh ca
+        $recurringSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
+
+        $days       = [];
+        $currentDay = $gridStart->copy();
+
+        $dayNames = [
+            1 => 'Thứ 2',
+            2 => 'Thứ 3',
+            3 => 'Thứ 4',
+            4 => 'Thứ 5',
+            5 => 'Thứ 6',
+            6 => 'Thứ 7',
+            7 => 'Chủ Nhật',
+        ];
+
+        while ($currentDay->lte($gridEnd)) {
+            $dayDateStr     = $currentDay->toDateString();
+            $isoWeekday     = $currentDay->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
+            $isToday        = ($dayDateStr === $todayStr);
+            $isCurrentMonth = ($currentDay->month === $startOfMonth->month);
+
+            $daySess = $sessions->filter(function ($sess) use ($dayDateStr) {
+                if (! $sess->session_date) {
+                    return false;
+                }
+                $sessDate = $sess->session_date instanceof \DateTimeInterface
+                    ? $sess->session_date->format('Y-m-d')
+                    : Carbon::parse($sess->session_date)->format('Y-m-d');
+
+                return $sessDate === $dayDateStr;
+            })->values();
+            $mapped = [];
+
+            if ($daySess->isNotEmpty()) {
+                foreach ($daySess as $sess) {
+                    $startTimeStr = $sess->start_time ? (is_string($sess->start_time) ? substr($sess->start_time, 0, 5) : $sess->start_time->format('H:i')) : '08:00';
+                    $endTimeStr   = $sess->end_time ? (is_string($sess->end_time) ? substr($sess->end_time, 0, 5) : $sess->end_time->format('H:i')) : '09:30';
+
+                    $mapped[] = [
+                        'id'           => $sess->id,
+                        'session_id'   => $sess->id,
+                        'session_date' => $dayDateStr,
+                        'start_time'   => $startTimeStr,
+                        'end_time'     => $endTimeStr,
+                        'time'         => "{$startTimeStr} - {$endTimeStr}",
+                        'class_id'     => $sess->classSubject?->schoolClass?->id,
+                        'class_name'   => $sess->classSubject?->schoolClass?->name ?? 'Lớp học',
+                        'class_code'   => $sess->classSubject?->schoolClass?->code,
+                        'subject_name' => $sess->classSubject?->subject?->name ?? 'Môn học',
+                        'room_name'    => $sess->room?->name ?? 'Phòng học',
+                        'status'       => $sess->status ?? 'scheduled',
+                        'is_today'     => $isToday,
+                    ];
+                }
+            } elseif ($isCurrentMonth) {
+                // Lấy recurring schedule nếu là ngày trong tháng
+                $dayRecurring = $recurringSchedules->where('weekday', $isoWeekday)->values();
+
+                foreach ($dayRecurring as $sched) {
+                    $startTimeStr = $sched->start_time ? substr($sched->start_time, 0, 5) : '08:00';
+                    $endTimeStr   = $sched->end_time ? substr($sched->end_time, 0, 5) : '09:30';
+
+                    $mapped[] = [
+                        'id'           => $sched->id,
+                        'session_id'   => null,
+                        'session_date' => $dayDateStr,
+                        'start_time'   => $startTimeStr,
+                        'end_time'     => $endTimeStr,
+                        'time'         => "{$startTimeStr} - {$endTimeStr}",
+                        'class_id'     => $sched->classSubject?->schoolClass?->id,
+                        'class_name'   => $sched->classSubject?->schoolClass?->name ?? 'Lớp học',
+                        'class_code'   => $sched->classSubject?->schoolClass?->code,
+                        'subject_name' => $sched->classSubject?->subject?->name ?? 'Môn học',
+                        'room_name'    => $sched->room?->name ?? 'Phòng học',
+                        'status'       => 'scheduled',
+                        'is_today'     => $isToday,
+                    ];
+                }
+            }
+
+            $days[] = [
+                'date'             => $dayDateStr,
+                'day_number'       => (int) $currentDay->format('j'),
+                'weekday'          => $isoWeekday,
+                'day_name'         => $dayNames[$isoWeekday] ?? "Thứ {$isoWeekday}",
+                'is_current_month' => $isCurrentMonth,
+                'is_today'         => $isToday,
+                'schedules'        => $mapped,
+            ];
+
+            $currentDay = $currentDay->addDay();
+        }
+
+        return [
+            'month'       => $startOfMonth->format('Y-m'),
+            'month_label' => 'Tháng ' . $startOfMonth->format('m/Y'),
+            'prev_month'  => $startOfMonth->copy()->subMonth()->format('Y-m'),
+            'next_month'  => $startOfMonth->copy()->addMonth()->format('Y-m'),
+            'days'        => $days,
+        ];
+    }
+
+    /**
      * Giáo viên - Lịch dạy trong tuần
      * @param  int                                                                                                           $teacherId
      * @return array<int, array{day_name: string, weekday: int, date: string, is_today: bool, schedules: array<int, mixed>}>
@@ -318,7 +468,17 @@ class DashboardService implements DashboardServiceInterface
         foreach ($weekdays as $dayCode => $dayName) {
             $dayDate = $startOfWeek->copy()->addDays($dayCode - 1)->toDateString();
             $isToday = ($dayDate === $todayStr);
-            $daySess = $sessions->where('session_date', $dayDate)->values();
+
+            $daySess = $sessions->filter(function ($sess) use ($dayDate) {
+                if (! $sess->session_date) {
+                    return false;
+                }
+                $sessDate = $sess->session_date instanceof \DateTimeInterface
+                    ? $sess->session_date->format('Y-m-d')
+                    : Carbon::parse($sess->session_date)->format('Y-m-d');
+
+                return $sessDate === $dayDate;
+            })->values();
 
             $mapped = [];
 

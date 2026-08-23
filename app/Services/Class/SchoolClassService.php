@@ -340,6 +340,17 @@ class SchoolClassService implements SchoolClassServiceInterface
             $endDateStr
         );
 
+        if ($teacher !== null) {
+            $schoolClass->setRelation(
+                'classSubjects',
+                $schoolClass->classSubjects->where('teacher_id', $teacher->id)->values()
+            );
+
+            $rawSessions = $rawSessions->filter(function ($s) use ($teacher) {
+                return $s->teacher_id === $teacher->id || $s->classSubject?->teacher_id === $teacher->id;
+            });
+        }
+
         $processedSessions = [];
 
         foreach ($rawSessions as $session) {
@@ -415,6 +426,12 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         // Lấy lịch học cố định hàng tuần
         $recurringSchedules = $this->schoolClassRepository->getClassWeeklySchedules($classId);
+
+        if ($teacher !== null) {
+            $recurringSchedules = $recurringSchedules->filter(function ($sc) use ($teacher) {
+                return $sc->classSubject?->teacher_id === $teacher->id;
+            });
+        }
 
         // Trích xuất các khung giờ học (Time slots) duy nhất
         $timeSlotSet = [];

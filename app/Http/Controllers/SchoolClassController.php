@@ -154,6 +154,8 @@ class SchoolClassController extends Controller
             $teacher
         );
 
-        return Inertia::render('Admin/Classes/Schedule', $timetableData);
+        return Inertia::render('Admin/Classes/Schedule', array_merge($timetableData, [
+            'isTeacher' => (bool) $teacher,
+        ]));
     }
 }

@@ -9,9 +9,11 @@ import {
     Wallet,
     Clock,
     ArrowRight,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     ResponsiveContainer,
     BarChart,
@@ -291,7 +293,13 @@ export const Dashboard: React.FC<any> = (props) => {
 
     // Render Teacher Dashboard
     if (role === 'teacher') {
-        const weeklySchedule = props.weekly_schedule || [];
+        const monthlySchedule = props.monthly_schedule || {
+            month: '',
+            month_label: '',
+            prev_month: '',
+            next_month: '',
+            days: [],
+        };
         const myClassesCount = stats.my_classes || 0;
         const myStudentsCount = stats.my_students || 0;
 
@@ -300,20 +308,33 @@ export const Dashboard: React.FC<any> = (props) => {
         const currentHours = String(now.getHours()).padStart(2, '0');
         const currentMinutes = String(now.getMinutes()).padStart(2, '0');
         const currentTimeStr = `${currentHours}:${currentMinutes}`;
+        const todayMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        // Calculate total sessions in current month
+        const totalMonthSessions = (monthlySchedule.days || []).reduce(
+            (acc: number, day: any) => (day.is_current_month ? acc + (day.schedules?.length || 0) : acc),
+            0,
+        );
+
+        const handleMonthChange = (targetMonth: string) => {
+            router.get('/dashboard', { month: targetMonth }, { preserveState: true, preserveScroll: true });
+        };
+
+        const weekdayHeaders = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
 
         return (
             <AppLayout title="Bảng Điều Khiển - Giáo Viên">
                 <div className="space-y-8">
                     {/* Header Banner & Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <Card className="border-gray-200 bg-white p-6 md:col-span-1 shadow-xs">
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-emerald-600" />
-                                <span>Lịch Giảng Dạy Tuần Này</span>
-                            </h2>
-                            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-                                Nhấp vào các ca học hôm nay để chuyển nhanh đến màn hình điểm danh học sinh.
-                            </p>
+                        <Card className="border-gray-200 bg-white p-6 shadow-xs flex items-center gap-4">
+                            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                                <Calendar className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="text-2xs font-semibold text-gray-500 uppercase tracking-wider">Tổng Ca Dạy Tháng Này</div>
+                                <div className="text-2xl font-black text-gray-900 mt-0.5">{totalMonthSessions} ca học</div>
+                            </div>
                         </Card>
 
                         <Card className="border-gray-200 bg-white p-6 shadow-xs flex items-center gap-4">
@@ -337,79 +358,148 @@ export const Dashboard: React.FC<any> = (props) => {
                         </Card>
                     </div>
 
-                    {/* Timetable Grid */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-emerald-600" />
-                                <span>Thời Khóa Biểu Giảng Dạy</span>
-                            </h3>
-                            <span className="text-xs font-medium text-gray-500">
-                                Giờ hiện tại: <strong className="text-emerald-700 font-mono">{currentTimeStr}</strong>
-                            </span>
+                    {/* Monthly Timetable Calendar */}
+                    <Card className="border-gray-200 bg-white p-5 shadow-xs space-y-5">
+                        {/* Calendar Header & Controls */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
+                                    <Clock className="w-5 h-5 text-emerald-600" />
+                                    <span>Thời Khóa Biểu Giảng Dạy</span>
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Giờ hiện tại: <strong className="text-emerald-700 font-mono">{currentTimeStr}</strong>. Nhấp vào ca học hôm nay để điểm danh.
+                                </p>
+                            </div>
+
+                            {/* Month Navigator */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMonthChange(monthlySchedule.prev_month)}
+                                    className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors"
+                                    title="Tháng trước"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+
+                                <div className="px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold text-sm rounded-lg min-w-[130px] text-center">
+                                    {monthlySchedule.month_label || 'Lịch Giảng Dạy'}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleMonthChange(monthlySchedule.next_month)}
+                                    className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-2xs transition-colors"
+                                    title="Tháng sau"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+
+                                {monthlySchedule.month !== todayMonthStr && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleMonthChange(todayMonthStr)}
+                                        className="ml-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors"
+                                    >
+                                        Hôm nay
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-                            {weeklySchedule.map((dayItem: any) => {
+                        {/* Weekday Headers (Desktop) */}
+                        <div className="hidden lg:grid grid-cols-7 gap-2.5 text-center font-bold text-xs text-gray-600 uppercase tracking-wider pb-1">
+                            {weekdayHeaders.map((header, idx) => (
+                                <div
+                                    key={header}
+                                    className={`py-2 rounded-lg ${idx >= 5 ? 'bg-amber-50/70 text-amber-900 font-bold' : 'bg-slate-100/70 text-slate-700'}`}
+                                >
+                                    {header}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Month Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                            {(monthlySchedule.days || []).map((dayItem: any, index: number) => {
                                 const isToday = Boolean(dayItem.is_today);
+                                const isCurrentMonth = Boolean(dayItem.is_current_month);
+                                const schedules = dayItem.schedules || [];
 
                                 return (
                                     <div
-                                        key={dayItem.weekday}
-                                        className={`flex flex-col rounded-xl border transition-all duration-200 bg-white shadow-xs ${
+                                        key={`${dayItem.date}-${index}`}
+                                        className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[140px] ${
                                             isToday
-                                                ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-                                                : 'border-gray-200'
+                                                ? 'border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-500/20 shadow-xs'
+                                                : isCurrentMonth
+                                                  ? 'border-gray-200 bg-white hover:border-gray-300'
+                                                  : 'border-gray-100 bg-slate-50/50 opacity-60'
                                         }`}
                                     >
-                                        {/* Day Header */}
+                                        {/* Day Cell Header */}
                                         <div
-                                            className={`p-3 border-b text-center rounded-t-xl ${
+                                            className={`px-2.5 py-1.5 border-b flex items-center justify-between rounded-t-xl text-xs ${
                                                 isToday
                                                     ? 'bg-emerald-600 text-white font-bold'
-                                                    : 'bg-slate-50 border-gray-100 text-gray-800 font-semibold'
+                                                    : isCurrentMonth
+                                                      ? 'bg-slate-50/90 border-gray-100 text-gray-800 font-semibold'
+                                                      : 'bg-slate-100/50 border-gray-100 text-gray-400 font-normal'
                                             }`}
                                         >
-                                            <div className="text-sm">{dayItem.day_name}</div>
-                                            <div className={`text-2xs mt-0.5 font-mono ${isToday ? 'text-emerald-100 font-semibold' : 'text-gray-500'}`}>
-                                                {dayItem.date ? dayItem.date.split('-').reverse().slice(0, 2).join('/') : ''}
-                                                {isToday && <span className="ml-1.5 px-1.5 py-0.2 bg-white text-emerald-800 rounded-full font-bold">Hôm nay</span>}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="lg:hidden text-2xs font-medium opacity-80">{dayItem.day_name},</span>
+                                                <span className={`font-mono ${isToday ? 'text-sm font-black' : 'font-bold'}`}>
+                                                    {dayItem.day_number}
+                                                </span>
                                             </div>
+
+                                            {isToday && (
+                                                <span className="text-3xs px-1.5 py-0.2 bg-white text-emerald-800 rounded-full font-bold">
+                                                    Hôm nay
+                                                </span>
+                                            )}
+
+                                            {!isToday && schedules.length > 0 && (
+                                                <span className="text-3xs px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded-full font-semibold">
+                                                    {schedules.length} ca
+                                                </span>
+                                            )}
                                         </div>
 
-                                        {/* Schedule Boxes */}
-                                        <div className="p-2.5 flex-1 space-y-2.5 min-h-[160px]">
-                                            {dayItem.schedules && dayItem.schedules.length > 0 ? (
-                                                dayItem.schedules.map((s: any) => {
+                                        {/* Day Cell Sessions */}
+                                        <div className="p-2 flex-1 space-y-1.5 overflow-y-auto max-h-[220px]">
+                                            {schedules.length > 0 ? (
+                                                schedules.map((s: any) => {
                                                     const hasSessionId = Boolean(s.session_id);
-                                                    const isUpcomingOrOngoing = isToday && s.end_time >= currentTimeStr;
 
-                                                    // For today's sessions, provide direct navigation link
+                                                    // For today's sessions, provide direct navigation link to attendance
                                                     if (isToday && hasSessionId) {
                                                         return (
                                                             <Link
                                                                 key={s.id}
                                                                 href={`/attendance/session/${s.session_id}`}
-                                                                className="block p-3 rounded-lg border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-100/80 hover:border-emerald-500 hover:shadow-sm transition-all text-left group"
+                                                                className="block p-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-500 hover:shadow-xs transition-all text-left group"
                                                             >
-                                                                <div className="flex items-center justify-between gap-1 text-2xs font-bold text-emerald-900 font-mono pb-1 border-b border-emerald-200/60">
+                                                                <div className="flex items-center justify-between gap-1 text-3xs font-bold text-emerald-900 font-mono pb-0.5 border-b border-emerald-200/60">
                                                                     <span className="flex items-center gap-1">
-                                                                        <Clock className="w-3 h-3 text-emerald-600" />
+                                                                        <Clock className="w-2.5 h-2.5 text-emerald-600" />
                                                                         {s.time}
                                                                     </span>
-                                                                    <span className="text-3xs bg-emerald-600 text-white px-1.5 py-0.5 rounded font-medium">
+                                                                    <span className="text-3xs bg-emerald-600 text-white px-1 py-0.2 rounded font-medium">
                                                                         Điểm danh
                                                                     </span>
                                                                 </div>
-                                                                <div className="font-bold text-gray-900 text-xs mt-1.5 group-hover:text-emerald-800 transition-colors">
+                                                                <div className="font-bold text-gray-900 text-2xs mt-1 truncate group-hover:text-emerald-800 transition-colors">
                                                                     {s.class_name}
                                                                 </div>
-                                                                <div className="text-2xs font-semibold text-emerald-700 mt-0.5">
+                                                                <div className="text-3xs font-semibold text-emerald-700 truncate">
                                                                     {s.subject_name}
                                                                 </div>
-                                                                <div className="text-3xs text-gray-500 mt-1 flex items-center justify-between">
-                                                                    <span>{s.room_name}</span>
-                                                                    <ArrowRight className="w-3 h-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                <div className="text-3xs text-gray-500 mt-0.5 flex items-center justify-between">
+                                                                    <span className="truncate">{s.room_name}</span>
+                                                                    <ArrowRight className="w-2.5 h-2.5 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                                                                 </div>
                                                             </Link>
                                                         );
@@ -418,27 +508,27 @@ export const Dashboard: React.FC<any> = (props) => {
                                                     return (
                                                         <div
                                                             key={s.id}
-                                                            className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1 text-left"
+                                                            className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg space-y-0.5 text-left hover:bg-slate-100/70 transition-colors"
                                                         >
-                                                            <div className="text-2xs font-semibold text-gray-600 font-mono flex items-center gap-1">
+                                                            <div className="text-3xs font-semibold text-gray-600 font-mono flex items-center gap-1">
                                                                 <Clock className="w-2.5 h-2.5 text-gray-400" />
                                                                 {s.time}
                                                             </div>
-                                                            <div className="font-bold text-gray-900 text-xs">
+                                                            <div className="font-bold text-gray-900 text-2xs truncate">
                                                                 {s.class_name}
                                                             </div>
-                                                            <div className="text-2xs font-medium text-emerald-700">
+                                                            <div className="text-3xs font-medium text-emerald-700 truncate">
                                                                 {s.subject_name}
                                                             </div>
-                                                            <div className="text-3xs text-gray-500 pt-0.5">
+                                                            <div className="text-3xs text-gray-500 truncate">
                                                                 {s.room_name}
                                                             </div>
                                                         </div>
                                                     );
                                                 })
                                             ) : (
-                                                <div className="h-full flex items-center justify-center text-center py-6">
-                                                    <p className="text-xs text-gray-400 italic">Không có ca</p>
+                                                <div className="h-full flex items-center justify-center text-center py-3">
+                                                    <span className="text-3xs text-gray-300 italic">-</span>
                                                 </div>
                                             )}
                                         </div>
@@ -446,7 +536,7 @@ export const Dashboard: React.FC<any> = (props) => {
                                 );
                             })}
                         </div>
-                    </div>
+                    </Card>
                 </div>
             </AppLayout>
         );

@@ -142,6 +142,7 @@ interface Props {
     timeSlots: TimeSlot[];
     sessions: ClassSession[];
     recurringSchedules: RecurringSchedule[];
+    isTeacher?: boolean;
 }
 
 export default function ClassSchedulePage({
@@ -156,6 +157,7 @@ export default function ClassSchedulePage({
     timeSlots = [],
     sessions = [],
     recurringSchedules = [],
+    isTeacher = false,
 }: Props) {
     const [viewMode, setViewMode] = useState<'sessions' | 'recurring'>('sessions');
 
@@ -367,16 +369,18 @@ export default function ClassSchedulePage({
                                 Chat
                             </Button>
                         </Link>
-                        <Link href={`/schedules/create`}>
-                            <Button
-                                variant="success"
-                                size="sm"
-                                icon={<Plus className="h-4 w-4" />}
-                                title="Thêm lịch học hoặc ca học mới"
-                            >
-                                Thêm Lịch Học
-                            </Button>
-                        </Link>
+                        {!isTeacher && (
+                            <Link href={`/schedules/create`}>
+                                <Button
+                                    variant="success"
+                                    size="sm"
+                                    icon={<Plus className="h-4 w-4" />}
+                                    title="Thêm lịch học hoặc ca học mới"
+                                >
+                                    Thêm Lịch Học
+                                </Button>
+                            </Link>
+                        )}
                         {/* <Button
                             variant="secondary"
                             size="sm"
