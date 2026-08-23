@@ -8,9 +8,10 @@ import {
     DollarSign,
     Wallet,
     Clock,
-    ArrowRight,
     ChevronLeft,
     ChevronRight,
+    DoorOpen,
+    UserCheck,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
@@ -24,10 +25,12 @@ import {
     CartesianGrid,
 } from 'recharts';
 import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import CustomPieChart from '../components/ui/CustomPieChart';
 import type { Column } from '../components/ui/DataTable';
 import DataTable from '../components/ui/DataTable';
+import Modal from '../components/ui/Modal';
 import AppLayout from '../layouts/AppLayout';
 
 export const Dashboard: React.FC<any> = (props) => {
@@ -35,6 +38,7 @@ export const Dashboard: React.FC<any> = (props) => {
     const stats = props.stats || {};
 
     const [examSearch, setExamSearch] = useState('');
+    const [selectedSession, setSelectedSession] = useState<any | null>(null);
 
     const formatCurrency = (amount: number | string) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -469,63 +473,31 @@ export const Dashboard: React.FC<any> = (props) => {
                                         </div>
 
                                         {/* Day Cell Sessions */}
-                                        <div className="p-2 flex-1 space-y-1.5 overflow-y-auto max-h-[220px]">
+                                        <div className="p-1.5 flex-1 space-y-1 overflow-y-auto max-h-[220px]">
                                             {schedules.length > 0 ? (
-                                                schedules.map((s: any) => {
-                                                    const hasSessionId = Boolean(s.session_id);
-
-                                                    // For today's sessions, provide direct navigation link to attendance
-                                                    if (isToday && hasSessionId) {
-                                                        return (
-                                                            <Link
-                                                                key={s.id}
-                                                                href={`/attendance/session/${s.session_id}`}
-                                                                className="block p-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-500 hover:shadow-xs transition-all text-left group"
-                                                            >
-                                                                <div className="flex items-center justify-between gap-1 text-3xs font-bold text-emerald-900 font-mono pb-0.5 border-b border-emerald-200/60">
-                                                                    <span className="flex items-center gap-1">
-                                                                        <Clock className="w-2.5 h-2.5 text-emerald-600" />
-                                                                        {s.time}
-                                                                    </span>
-                                                                    <span className="text-3xs bg-emerald-600 text-white px-1 py-0.2 rounded font-medium">
-                                                                        Điểm danh
-                                                                    </span>
-                                                                </div>
-                                                                <div className="font-bold text-gray-900 text-2xs mt-1 truncate group-hover:text-emerald-800 transition-colors">
-                                                                    {s.class_name}
-                                                                </div>
-                                                                <div className="text-3xs font-semibold text-emerald-700 truncate">
-                                                                    {s.subject_name}
-                                                                </div>
-                                                                <div className="text-3xs text-gray-500 mt-0.5 flex items-center justify-between">
-                                                                    <span className="truncate">{s.room_name}</span>
-                                                                    <ArrowRight className="w-2.5 h-2.5 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                                                </div>
-                                                            </Link>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <div
-                                                            key={s.id}
-                                                            className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg space-y-0.5 text-left hover:bg-slate-100/70 transition-colors"
-                                                        >
-                                                            <div className="text-3xs font-semibold text-gray-600 font-mono flex items-center gap-1">
-                                                                <Clock className="w-2.5 h-2.5 text-gray-400" />
-                                                                {s.time}
-                                                            </div>
-                                                            <div className="font-bold text-gray-900 text-2xs truncate">
-                                                                {s.class_name}
-                                                            </div>
-                                                            <div className="text-3xs font-medium text-emerald-700 truncate">
-                                                                {s.subject_name}
-                                                            </div>
-                                                            <div className="text-3xs text-gray-500 truncate">
-                                                                {s.room_name}
-                                                            </div>
+                                                schedules.map((s: any) => (
+                                                    <button
+                                                        key={s.id}
+                                                        type="button"
+                                                        onClick={() => setSelectedSession(s)}
+                                                        className={`w-full text-left px-2 py-1.5 rounded-lg border text-2xs font-bold flex items-center justify-between gap-1 transition-all shadow-2xs cursor-pointer ${
+                                                            isToday
+                                                                ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700 hover:shadow-xs'
+                                                                : 'bg-emerald-50 text-emerald-950 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
+                                                        }`}
+                                                        title={`Nhấp xem chi tiết ca: ${s.time} - ${s.class_name}`}
+                                                    >
+                                                        <div className="flex items-center gap-1.5 truncate">
+                                                            <Clock className={`w-3.5 h-3.5 shrink-0 ${isToday ? 'text-emerald-100' : 'text-emerald-600'}`} />
+                                                            <span className="font-mono truncate">Ca: {s.time}</span>
                                                         </div>
-                                                    );
-                                                })
+                                                        {isToday && (
+                                                            <span className="shrink-0 text-3xs px-1 py-0.2 bg-white text-emerald-800 rounded font-black">
+                                                                Hôm nay
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                ))
                                             ) : (
                                                 <div className="h-full flex items-center justify-center text-center py-3">
                                                     <span className="text-3xs text-gray-300 italic">-</span>
@@ -537,6 +509,109 @@ export const Dashboard: React.FC<any> = (props) => {
                             })}
                         </div>
                     </Card>
+
+                    {/* Session Detail Modal */}
+                    <Modal
+                        isOpen={Boolean(selectedSession)}
+                        onClose={() => setSelectedSession(null)}
+                        title="Chi Tiết Ca Học"
+                        maxWidth="lg"
+                        footer={
+                            <div className="flex items-center justify-end gap-2 w-full">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setSelectedSession(null)}
+                                >
+                                    Đóng
+                                </Button>
+                                {selectedSession?.class_id && (
+                                    <Link
+                                        href={`/classes/${selectedSession.class_id}/schedule?date=${selectedSession.session_date}`}
+                                    >
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            icon={<Calendar className="w-4 h-4 text-emerald-600" />}
+                                        >
+                                            Thời Khóa Biểu Lớp
+                                        </Button>
+                                    </Link>
+                                )}
+                                {selectedSession?.session_id && (
+                                    <Link href={`/attendance/session/${selectedSession.session_id}`}>
+                                        <Button
+                                            variant="success"
+                                            size="sm"
+                                            icon={<UserCheck className="w-4 h-4" />}
+                                        >
+                                            Điểm Danh
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        }
+                    >
+                        {selectedSession && (
+                            <div className="space-y-4 text-sm text-gray-800">
+                                {/* Header info */}
+                                <div className="p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 bg-emerald-600 text-white rounded-lg">
+                                            <Clock className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="text-2xs font-bold uppercase text-emerald-800">Khung Giờ Học</div>
+                                            <div className="text-base font-black text-emerald-950 font-mono">
+                                                Ca: {selectedSession.time}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Badge variant={selectedSession.is_today ? 'active' : 'pending'}>
+                                        {selectedSession.is_today ? 'Hôm Nay' : selectedSession.session_date}
+                                    </Badge>
+                                </div>
+
+                                {/* Details Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-0.5">
+                                        <div className="text-2xs font-semibold uppercase text-gray-500 flex items-center gap-1">
+                                            <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                                            <span>Lớp Học</span>
+                                        </div>
+                                        <div className="font-bold text-gray-900 text-sm">{selectedSession.class_name}</div>
+                                        {selectedSession.class_code && (
+                                            <div className="font-mono text-xs text-gray-500">Mã: {selectedSession.class_code}</div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-0.5">
+                                        <div className="text-2xs font-semibold uppercase text-gray-500 flex items-center gap-1">
+                                            <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                                            <span>Môn Học</span>
+                                        </div>
+                                        <div className="font-bold text-gray-900 text-sm">{selectedSession.subject_name}</div>
+                                    </div>
+
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-0.5">
+                                        <div className="text-2xs font-semibold uppercase text-gray-500 flex items-center gap-1">
+                                            <DoorOpen className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Phòng Học</span>
+                                        </div>
+                                        <div className="font-bold text-gray-900 text-sm">{selectedSession.room_name || 'Chưa xếp phòng'}</div>
+                                    </div>
+
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-0.5">
+                                        <div className="text-2xs font-semibold uppercase text-gray-500 flex items-center gap-1">
+                                            <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                                            <span>Ngày Học</span>
+                                        </div>
+                                        <div className="font-bold text-gray-900 text-sm font-mono">{selectedSession.session_date}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
                 </div>
             </AppLayout>
         );
