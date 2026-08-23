@@ -343,11 +343,13 @@ class SchoolClassService implements SchoolClassServiceInterface
         if ($teacher !== null) {
             $schoolClass->setRelation(
                 'classSubjects',
-                $schoolClass->classSubjects->where('teacher_id', $teacher->id)->values()
+                $schoolClass->classSubjects->filter(fn ($cs) => (int) $cs->teacher_id === (int) $teacher->id)->values()
             );
 
             $rawSessions = $rawSessions->filter(function ($s) use ($teacher) {
-                return $s->teacher_id === $teacher->id || $s->classSubject?->teacher_id === $teacher->id;
+                $sessionTeacherId = $s->teacher_id ?: $s->classSubject?->teacher_id;
+
+                return (int) $sessionTeacherId === (int) $teacher->id;
             });
         }
 
@@ -429,7 +431,9 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         if ($teacher !== null) {
             $recurringSchedules = $recurringSchedules->filter(function ($sc) use ($teacher) {
-                return $sc->classSubject?->teacher_id === $teacher->id;
+                $scTeacherId = $sc->class_subject?->teacher_id ?? $sc->classSubject?->teacher_id;
+
+                return (int) $scTeacherId === (int) $teacher->id;
             });
         }
 
