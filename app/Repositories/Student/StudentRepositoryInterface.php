@@ -122,8 +122,8 @@ interface StudentRepositoryInterface
     public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int                                                                      $studentId
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     * @param  int                            $studentId
+     * @return \Illuminate\Support\Collection
      */
-    public function getStudentWeeklySchedules(int $studentId): \Illuminate\Database\Eloquent\Collection;
+    public function getStudentWeeklySchedules(int $studentId): \Illuminate\Support\Collection;
 }
