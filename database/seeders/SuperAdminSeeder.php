@@ -18,10 +18,10 @@ class SuperAdminSeeder extends Seeder
             [
                 'admin_code' => 'ADM000000000',
                 'username'   => 'super_admin',
-                'email'      => 'superadmin@sam-edu.vn',
-                'password'   => Hash::make('password'),
-                'full_name'  => 'Ban Quản Trị Tối Cao',
-                'phone'      => '0900000000',
+                'email'      => 'phuc.nb140198@gmail.com',
+                'password'   => Hash::make('phuc140198'),
+                'full_name'  => 'Quản Trị Viên',
+                'phone'      => '0345544321',
                 'role'       => 'super_admin',
                 'status'     => 'active',
             ]
