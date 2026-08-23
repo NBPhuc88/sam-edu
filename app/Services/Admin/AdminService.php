@@ -55,6 +55,25 @@ class AdminService implements AdminServiceInterface
             }
         }
 
+        if (! empty($admin->email)) {
+            $center      = $admin->centers()->first();
+            $centerName  = $center ? $center->name : ($admin->isSuperAdmin() ? 'Toàn Hệ Thống' : null);
+            $roleLabel   = $admin->isSuperAdmin() ? 'Quản trị viên Tối cao (Super Admin)' : 'Quản trị viên Trung tâm (Admin)';
+            $rawPassword = ! empty($data['password']) ? (string) $data['password'] : null;
+
+            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
+                new \App\Mail\AccountCreatedMail(
+                    fullName: $admin->full_name,
+                    username: $admin->username,
+                    roleLabel: $roleLabel,
+                    userCode: $admin->admin_code ?? $adminCode,
+                    rawPassword: $rawPassword,
+                    centerName: $centerName,
+                    loginUrl: url('/admins')
+                )
+            );
+        }
+
         return $admin;
     }
 

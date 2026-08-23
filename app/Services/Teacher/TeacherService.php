@@ -154,9 +154,10 @@ class TeacherService implements TeacherServiceInterface
             }
         }
 
-        $password = ! empty($data['password']) ? Hash::make($data['password']) : Hash::make('12345678');
+        $rawPassword = ! empty($data['password']) ? (string) $data['password'] : '12345678';
+        $password    = Hash::make($rawPassword);
 
-        return $this->teacherRepository->create([
+        $teacher = $this->teacherRepository->create([
             'username'       => trim($data['username']),
             'email'          => ! empty($data['email']) ? trim($data['email']) : null,
             'password'       => $password,
@@ -174,6 +175,23 @@ class TeacherService implements TeacherServiceInterface
             'specialization' => $data['specialization'] ?? null,
             'note'           => $data['note'] ?? null,
         ]);
+
+        if (! empty($teacher->email)) {
+            $center = $this->centerRepository->find($centerId);
+            \Illuminate\Support\Facades\Mail::to($teacher->email)->queue(
+                new \App\Mail\AccountCreatedMail(
+                    fullName: $teacher->full_name,
+                    username: $teacher->username,
+                    roleLabel: 'Giáo viên',
+                    userCode: $teacher->teacher_code ?? $teacherCode,
+                    rawPassword: $rawPassword,
+                    centerName: $center?->name,
+                    loginUrl: url('/login')
+                )
+            );
+        }
+
+        return $teacher;
     }
 
     /**

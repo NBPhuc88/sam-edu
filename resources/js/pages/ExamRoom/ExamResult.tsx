@@ -132,23 +132,23 @@ export default function ExamResult({
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-6 text-xs font-medium">
+                            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-medium">
                                 <div>
                                     <p className="opacity-80">Đúng / Tổng câu</p>
-                                    <p className="mt-0.5 text-lg font-extrabold">
+                                    <p className="mt-0.5 text-base sm:text-lg font-extrabold">
                                         {submission.total_correct} / {submission.total_questions} câu ({accuracyPercent}%)
                                     </p>
                                 </div>
                                 <div>
                                     <p className="opacity-80">Thời gian làm bài</p>
-                                    <p className="mt-0.5 text-lg font-extrabold">
+                                    <p className="mt-0.5 text-base sm:text-lg font-extrabold">
                                         {formatDuration(submission.duration_seconds_used)}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-2xs opacity-80">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-2xs opacity-80">
                             <span>
                                 Thí sinh: <strong>{submission.student?.full_name}</strong> ({submission.student?.student_code || submission.student?.username})
                             </span>
@@ -188,8 +188,8 @@ export default function ExamResult({
                 )}
 
                 {/* Filter & Navigation Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
                             onClick={() => setActiveFilter('all')}
@@ -240,7 +240,7 @@ export default function ExamResult({
                         <span className="text-2xs font-bold uppercase tracking-wider text-gray-500 block px-1">
                             Chọn phần thi cần xem chi tiết:
                         </span>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex overflow-x-auto pb-1 gap-2">
                             {sectionStats.map((sec, sIdx) => {
                                 const isActive = sIdx === activeSectionIndex;
                                 return (

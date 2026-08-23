@@ -240,9 +240,10 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $password = ! empty($data['password']) ? Hash::make($data['password']) : null;
+        $rawPassword = ! empty($data['password']) ? (string) $data['password'] : null;
+        $password    = $rawPassword ? Hash::make($rawPassword) : null;
 
-        return $this->studentRepository->create([
+        $student = $this->studentRepository->create([
             'username'            => ! empty($data['username']) ? trim($data['username']) : null,
             'email'               => ! empty($data['email']) ? trim($data['email']) : null,
             'password'            => $password,
@@ -263,6 +264,23 @@ class StudentService implements StudentServiceInterface
             'admission_date'      => $data['admission_date'] ?? null,
             'note'                => $data['note'] ?? null,
         ]);
+
+        if (! empty($student->email) && ! empty($student->username)) {
+            $center = $this->centerRepository->find($centerId);
+            \Illuminate\Support\Facades\Mail::to($student->email)->queue(
+                new \App\Mail\AccountCreatedMail(
+                    fullName: $student->full_name,
+                    username: $student->username,
+                    roleLabel: 'Học sinh',
+                    userCode: $student->student_code ?? $studentCode,
+                    rawPassword: $rawPassword,
+                    centerName: $center?->name,
+                    loginUrl: url('/login')
+                )
+            );
+        }
+
+        return $student;
     }
 
     /**

@@ -8,6 +8,8 @@ import {
     FileText,
     Send,
     Volume2,
+    LayoutGrid,
+    X,
 } from 'lucide-react';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Button from '@/components/ui/Button';
@@ -72,6 +74,7 @@ export default function TakeExam({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+    const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
 
     // ─── Countdown Timer Setup With Server Clock Drift Sync ───
     const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
@@ -597,8 +600,8 @@ export default function TakeExam({
                     })}
                 </main>
 
-                {/* Sidebar Question Navigation Grid */}
-                <aside className="lg:col-span-4 sticky top-20 space-y-4">
+                {/* Sidebar Question Navigation Grid (Desktop) */}
+                <aside className="hidden lg:block lg:col-span-4 sticky top-20 space-y-4">
                     <Card className="border-gray-200 bg-white p-5 shadow-xs space-y-4">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                             <span className="text-xs font-bold uppercase tracking-wider text-gray-800">
@@ -649,6 +652,98 @@ export default function TakeExam({
                     </Card>
                 </aside>
             </div>
+
+            {/* Mobile Bottom Floating Action Bar (< lg) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-3 shadow-lg flex items-center justify-between gap-3">
+                <button
+                    type="button"
+                    onClick={() => setMobilePaletteOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-100 border border-slate-200 text-gray-800 text-xs font-bold active:scale-98 transition-transform"
+                >
+                    <LayoutGrid className="h-4 w-4 text-emerald-600" />
+                    <span>Câu Hỏi ({answeredCount}/{allQuestions.length})</span>
+                </button>
+
+                <Button
+                    type="button"
+                    variant="success"
+                    size="md"
+                    className="flex-1 font-bold text-xs py-2.5 shadow-xs"
+                    icon={<Send className="h-4 w-4" />}
+                    onClick={() => setSubmitConfirmOpen(true)}
+                    isLoading={isSubmitting}
+                >
+                    Nộp Bài
+                </Button>
+            </div>
+
+            {/* Mobile Question Palette Modal Drawer (< lg) */}
+            {mobilePaletteOpen && (
+                <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs animate-fadeIn">
+                    <div className="bg-white rounded-t-3xl max-h-[80vh] flex flex-col shadow-2xl p-5 space-y-4">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900">
+                                    Bảng Danh Sách Câu Hỏi
+                                </h3>
+                                <p className="text-2xs text-gray-500 mt-0.5">
+                                    Đã hoàn thành <strong className="text-emerald-600">{answeredCount}</strong> trên tổng số {allQuestions.length} câu
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setMobilePaletteOpen(false)}
+                                className="h-8 w-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        {/* Question Numbers Grid Mobile */}
+                        <div className="grid grid-cols-5 gap-2.5 overflow-y-auto max-h-[50vh] p-1">
+                            {allQuestions.map((item) => {
+                                const ans = answers[item.question.id!];
+                                const isDone = ans !== undefined && ans !== null && ans !== '' && (!Array.isArray(ans) || ans.length > 0) && (typeof ans !== 'object' || Object.keys(ans).length > 0);
+
+                                return (
+                                    <button
+                                        key={item.num}
+                                        type="button"
+                                        onClick={() => {
+                                            scrollToQuestion(item.num);
+                                            setMobilePaletteOpen(false);
+                                        }}
+                                        className={`h-11 rounded-xl font-mono text-xs font-black transition-all border ${
+                                            isDone
+                                                ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                                                : 'bg-slate-50 text-gray-700 border-gray-200'
+                                        }`}
+                                    >
+                                        {item.num}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="pt-2">
+                            <Button
+                                type="button"
+                                variant="success"
+                                size="lg"
+                                className="w-full font-bold text-sm py-3"
+                                icon={<Send className="h-4 w-4" />}
+                                onClick={() => {
+                                    setMobilePaletteOpen(false);
+                                    setSubmitConfirmOpen(true);
+                                }}
+                                isLoading={isSubmitting}
+                            >
+                                Nộp Bài Thi Ngay
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Manual Submit Confirmation Dialog */}
             <ConfirmDialog

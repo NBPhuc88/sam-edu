@@ -113,7 +113,47 @@ class ClassExamService implements ClassExamServiceInterface
                 'created_by_teacher_id' => $teacher?->id,
             ];
 
-            return $this->classExamRepository->create($payload);
+            $classExam = $this->classExamRepository->create($payload);
+
+            // Gửi email thông báo kỳ thi qua Queue cho học sinh và giáo viên phụ trách lớp
+            $schoolClass = \App\Models\SchoolClass::with(['students' => function ($q) {
+                $q->wherePivot('status', 1)->where('students.status', 1);
+            }, 'classSubjects.teacher'])->find($data['class_id']);
+
+            if ($schoolClass) {
+                // 1. Gửi cho tất cả học sinh đang học trong lớp
+                foreach ($schoolClass->students as $student) {
+                    if (! empty($student->email)) {
+                        \Illuminate\Support\Facades\Mail::to($student->email)->queue(
+                            new \App\Mail\ClassExamCreatedMail(
+                                classExam: $classExam,
+                                recipientName: $student->full_name,
+                                recipientRole: 'student'
+                            )
+                        );
+                    }
+                }
+
+                // 2. Gửi cho tất cả giáo viên phụ trách môn/lớp
+                $teachers = $schoolClass->classSubjects
+                    ->pluck('teacher')
+                    ->filter()
+                    ->unique('id');
+
+                foreach ($teachers as $t) {
+                    if (! empty($t->email)) {
+                        \Illuminate\Support\Facades\Mail::to($t->email)->queue(
+                            new \App\Mail\ClassExamCreatedMail(
+                                classExam: $classExam,
+                                recipientName: $t->full_name,
+                                recipientRole: 'teacher'
+                            )
+                        );
+                    }
+                }
+            }
+
+            return $classExam;
         });
     }
 
