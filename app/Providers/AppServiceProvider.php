@@ -56,8 +56,16 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -140,6 +148,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configurePagination();
+        $this->configureQueueAndMailLogging();
     }
 
     /**
@@ -231,6 +240,53 @@ class AppServiceProvider extends ServiceProvider
                     'pageName' => $pageName,
                 ]
             );
+        });
+    }
+
+    /**
+     * Cấu hình ghi log chi tiết cho Queue Worker và Mail Job theo storage/logs/queue/YYYY-MM/D.log
+     */
+    protected function configureQueueAndMailLogging(): void
+    {
+        Queue::before(function (JobProcessing $event) {
+            $jobName = $event->job->resolveName();
+            $jobId   = $event->job->getJobId();
+            $queue   = $event->job->getQueue();
+
+            Log::channel('queue')->info("[Queue Job Started] {$jobName} (ID: {$jobId}) on queue '{$queue}'");
+        });
+
+        Queue::after(function (JobProcessed $event) {
+            $jobName = $event->job->resolveName();
+            $jobId   = $event->job->getJobId();
+
+            Log::channel('queue')->info("[Queue Job Completed] {$jobName} (ID: {$jobId}) finished successfully");
+        });
+
+        Queue::failing(function (JobFailed $event) {
+            $jobName  = $event->job->resolveName();
+            $jobId    = $event->job->getJobId();
+            $errorMsg = $event->exception->getMessage();
+
+            Log::channel('queue')->error("[Queue Job Failed] {$jobName} (ID: {$jobId}): {$errorMsg}", [
+                'exception' => $event->exception->getTraceAsString(),
+            ]);
+        });
+
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            $subject = $event->message->getSubject() ?? '(No Subject)';
+            $to      = $event->message->getTo();
+            $toList  = ! empty($to) ? implode(', ', array_map(fn ($addr) => $addr->toString(), $to)) : 'unknown';
+
+            Log::channel('queue')->info("[Mail Sending] Subject: '{$subject}' | To: [{$toList}]");
+        });
+
+        Event::listen(MessageSent::class, function (MessageSent $event) {
+            $subject = $event->message->getSubject() ?? '(No Subject)';
+            $to      = $event->message->getTo();
+            $toList  = ! empty($to) ? implode(', ', array_map(fn ($addr) => $addr->toString(), $to)) : 'unknown';
+
+            Log::channel('queue')->info("[Mail Sent Successfully] Subject: '{$subject}' | To: [{$toList}]");
         });
     }
 }

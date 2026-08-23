@@ -131,6 +131,13 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        'queue' => [
+            'driver'               => 'custom',
+            'via'                  => \App\Logging\QueueLogger::class,
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],

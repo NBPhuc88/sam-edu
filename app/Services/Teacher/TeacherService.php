@@ -213,10 +213,15 @@ class TeacherService implements TeacherServiceInterface
             }
         }
 
+        $oldEmail       = $teacher->email;
+        $isPassChanged  = ! empty($data['password']);
+        $newEmail       = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $teacher->email;
+        $isEmailChanged = $newEmail && $oldEmail !== $newEmail;
+
         $updateData = [
             'center_id'      => $data['center_id'] ?? $teacher->center_id,
             'username'       => isset($data['username']) ? trim($data['username']) : $teacher->username,
-            'email'          => array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $teacher->email,
+            'email'          => $newEmail,
             'status'         => $data['status'] ?? $teacher->status,
             'teacher_code'   => isset($data['teacher_code']) ? trim($data['teacher_code']) : $teacher->teacher_code,
             'phone'          => array_key_exists('phone', $data) ? $data['phone'] : $teacher->phone,
@@ -243,11 +248,42 @@ class TeacherService implements TeacherServiceInterface
             $updateData['last_name']  = $data['last_name'] ?? $lastName;
         }
 
-        if (! empty($data['password'])) {
+        if ($isPassChanged) {
             $updateData['password'] = Hash::make($data['password']);
         }
 
-        return $this->teacherRepository->update($id, $updateData);
+        $updatedTeacher = $this->teacherRepository->update($id, $updateData);
+        $center         = $this->centerRepository->find((int) $updatedTeacher->center_id);
+
+        if ($isPassChanged && ! empty($updatedTeacher->email)) {
+            \Illuminate\Support\Facades\Mail::to($updatedTeacher->email)->queue(
+                new \App\Mail\PasswordChangedMail(
+                    fullName: $updatedTeacher->full_name,
+                    username: $updatedTeacher->username,
+                    roleLabel: 'Giáo viên',
+                    centerName: $center?->name,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/teachers')
+                )
+            );
+        }
+
+        if ($isEmailChanged) {
+            \Illuminate\Support\Facades\Mail::to($newEmail)->queue(
+                new \App\Mail\EmailChangedMail(
+                    fullName: $updatedTeacher->full_name,
+                    username: $updatedTeacher->username,
+                    oldEmail: (string) $oldEmail,
+                    newEmail: (string) $newEmail,
+                    roleLabel: 'Giáo viên',
+                    centerName: $center?->name,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/teachers')
+                )
+            );
+        }
+
+        return $updatedTeacher;
     }
 
     /**

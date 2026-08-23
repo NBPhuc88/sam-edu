@@ -106,6 +106,37 @@ class PasswordResetService implements PasswordResetServiceInterface
 
         session()->forget('must_change_password');
 
+        if (! empty($user->email)) {
+            $roleLabel = 'Tài khoản';
+            $loginUrl  = url('/login');
+
+            if ($user instanceof \App\Models\Admin) {
+                $roleLabel = $user->role === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên';
+                $loginUrl  = url('/admins');
+            } elseif ($user instanceof \App\Models\Teacher) {
+                $roleLabel = 'Giáo viên';
+                $loginUrl  = url('/teachers');
+            } elseif ($user instanceof \App\Models\Student) {
+                $roleLabel = 'Học sinh';
+                $loginUrl  = url('/login');
+            }
+
+            try {
+                Mail::to($user->email)->queue(
+                    new \App\Mail\PasswordChangedMail(
+                        fullName: $user->full_name ?? $user->name ?? 'Người dùng',
+                        username: (string) ($user->username ?? $user->email),
+                        roleLabel: $roleLabel,
+                        centerName: $user->center?->name ?? null,
+                        changedAt: date('d/m/Y H:i:s'),
+                        loginUrl: $loginUrl
+                    )
+                );
+            } catch (\Throwable $e) {
+                Log::channel('queue')->error('[Password Reset] Lỗi gửi mail thông báo đổi mật khẩu: ' . $e->getMessage());
+            }
+        }
+
         return [
             'success' => true,
             'error'   => null,

@@ -97,14 +97,19 @@ class AdminService implements AdminServiceInterface
             }
         }
 
+        $oldEmail       = $targetAdmin->email;
+        $isPassChanged  = ! empty($data['password']);
+        $newEmail       = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $targetAdmin->email;
+        $isEmailChanged = $newEmail && $oldEmail !== $newEmail;
+
         $updateData = [
             'full_name' => $data['full_name'],
-            'email'     => $data['email'] ?? null,
+            'email'     => $newEmail,
             'phone'     => $data['phone'] ?? null,
             'role'      => $data['role'],
         ];
 
-        if (! empty($data['password'])) {
+        if ($isPassChanged) {
             $updateData['password'] = Hash::make((string) $data['password']);
         }
 
@@ -115,6 +120,37 @@ class AdminService implements AdminServiceInterface
             $this->adminRepository->syncCenters($admin, $centerId ? [(int) $centerId] : []);
         } else {
             $this->adminRepository->syncCenters($admin, []);
+        }
+
+        $roleLabel  = $admin->role === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên';
+        $centerName = $admin->centers->first()?->name;
+
+        if ($isPassChanged && ! empty($admin->email)) {
+            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
+                new \App\Mail\PasswordChangedMail(
+                    fullName: $admin->full_name,
+                    username: $admin->username,
+                    roleLabel: $roleLabel,
+                    centerName: $centerName,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/admins')
+                )
+            );
+        }
+
+        if ($isEmailChanged) {
+            \Illuminate\Support\Facades\Mail::to($newEmail)->queue(
+                new \App\Mail\EmailChangedMail(
+                    fullName: $admin->full_name,
+                    username: $admin->username,
+                    oldEmail: (string) $oldEmail,
+                    newEmail: (string) $newEmail,
+                    roleLabel: $roleLabel,
+                    centerName: $centerName,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/admins')
+                )
+            );
         }
 
         return $admin;
