@@ -41,6 +41,14 @@ class PracticeExamController extends Controller
     {
         [$student, $teacher, $admin] = $this->getAuthUser();
 
+        if ($student) {
+            $studentStatus = is_object($student->status) ? $student->status->value : (int) $student->status;
+
+            if ($studentStatus !== 1) {
+                abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
+            }
+        }
+
         $filters = [
             'search'       => $request->query('search'),
             'center_id'    => $request->query('center_id'),

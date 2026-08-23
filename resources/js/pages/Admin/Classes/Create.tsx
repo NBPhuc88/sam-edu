@@ -249,9 +249,10 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     onChange={(e) => setStatus(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="1">Đang mở lớp</option>
+                                    <option value="1">Đang hoạt động</option>
+                                    <option value="0">Tạm dừng</option>
                                     <option value="2">Đã hoàn thành</option>
-                                    <option value="0">Tạm dừng / Đóng</option>
+                                    <option value="3">Đã đóng</option>
                                 </select>
                             </div>
 

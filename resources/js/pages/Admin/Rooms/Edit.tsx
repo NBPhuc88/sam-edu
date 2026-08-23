@@ -48,7 +48,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'inactive';
+    status: 'active' | 'paused' | 'closed' | 'inactive';
     equipments?: RoomEquipment[];
     is_in_use?: boolean;
     schedules_count?: number;
@@ -77,8 +77,10 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
     const [name, setName] = useState(room.name || '');
     const [capacity, setCapacity] = useState(room.capacity ? String(room.capacity) : '');
     const [location, setLocation] = useState(room.location || '');
-    const [status, setStatus] = useState<'active' | 'inactive'>(room.status || 'active');
-    const [pendingStatus, setPendingStatus] = useState<'active' | 'inactive' | null>(null);
+    const [status, setStatus] = useState<'active' | 'paused' | 'closed'>(
+        room.status === 'closed' ? 'closed' : (room.status === 'paused' || room.status === 'inactive' ? 'paused' : 'active')
+    );
+    const [pendingStatus, setPendingStatus] = useState<'active' | 'paused' | 'closed' | null>(null);
     const [showInUseWarningModal, setShowInUseWarningModal] = useState(false);
 
     // Equipment state
@@ -95,7 +97,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleStatusChange = (newStatus: 'active' | 'inactive') => {
+    const handleStatusChange = (newStatus: 'active' | 'paused' | 'closed') => {
         if (newStatus !== room.status && room.is_in_use) {
             setPendingStatus(newStatus);
             setShowInUseWarningModal(true);
@@ -301,14 +303,23 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                     Trạng Thái Hoạt Động <span className="text-red-500">*</span>
                                 </label>
                                 <select
-                                    value={pendingStatus || status}
-                                    onChange={(e) => handleStatusChange(e.target.value as 'active' | 'inactive')}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value as 'active' | 'paused' | 'closed')}
+                                    disabled={room.status === 'closed' && !isSuperAdmin}
+                                    className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
+                                        room.status === 'closed' && !isSuperAdmin ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
+                                    }`}
                                     required
                                 >
-                                    <option value="active">Đang sử dụng (Active)</option>
-                                    <option value="inactive">Tạm dừng bảo trì (Inactive)</option>
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="paused">Tạm dừng</option>
+                                    <option value="closed">Đã đóng</option>
                                 </select>
+                                {room.status === 'closed' && !isSuperAdmin && (
+                                    <p className="mt-1.5 text-xs text-amber-700 font-medium">
+                                        * Phòng học đã đóng. Chỉ Super Admin mới có quyền mở lại.
+                                    </p>
+                                )}
                                 {errors.status && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>
                                 )}
@@ -545,7 +556,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 <p className="mt-1 text-xs text-amber-800">
                                     Việc chuyển trạng thái sang{' '}
                                     <span className="font-bold underline">
-                                        {pendingStatus === 'inactive' ? 'Tạm dừng bảo trì (Inactive)' : 'Đang sử dụng (Active)'}
+                                        {pendingStatus === 'closed' ? 'Đã đóng' : (pendingStatus === 'paused' ? 'Tạm dừng' : 'Đang hoạt động')}
                                     </span>{' '}
                                     có thể ảnh hưởng đến các lớp học và ca học đã được phân công cho phòng học này.
                                 </p>

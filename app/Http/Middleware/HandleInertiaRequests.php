@@ -112,19 +112,22 @@ class HandleInertiaRequests extends Middleware
                 $currentPlan = $centerModel->currentPlan();
 
                 $centerData = [
-                    'id'                => $centerModel->id,
-                    'code'              => $centerModel->code,
-                    'name'              => $centerModel->name,
-                    'subscription_plan' => $centerModel->subscription_plan,
-                    'plan_type'         => $centerModel->plan_type,
-                    'allowed_features'  => $currentPlan?->allowed_features ?? [],
-                    'max_classes'       => $centerModel->max_classes,
-                    'max_students'      => $centerModel->max_students,
-                    'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
-                    'is_expired'        => $isExpired,
-                    'expiring_soon'     => $expiringSoon,
-                    'expiring_1day'     => $expiring1DayAlert,
-                    'days_remaining'    => $daysRemaining,
+                    'id'                    => $centerModel->id,
+                    'code'                  => $centerModel->code,
+                    'name'                  => $centerModel->name,
+                    'subscription_plan'     => $centerModel->subscription_plan,
+                    'plan_type'             => $centerModel->plan_type,
+                    'allowed_features'      => $currentPlan?->allowed_features ?? [],
+                    'max_classes'           => $centerModel->max_classes,
+                    'max_students'          => $centerModel->max_students,
+                    'active_classes_count'  => $centerModel->classes()->whereIn('status', [0, 1])->count(),
+                    'active_students_count' => $centerModel->students()->where('status', 1)->count(),
+                    'active_rooms_count'    => $centerModel->rooms()->whereIn('status', ['active', 'paused'])->count(),
+                    'expires_at'            => $expiresAt ? $expiresAt->toIso8601String() : null,
+                    'is_expired'            => $isExpired,
+                    'expiring_soon'         => $expiringSoon,
+                    'expiring_1day'         => $expiring1DayAlert,
+                    'days_remaining'        => $daysRemaining,
                 ];
             }
         }

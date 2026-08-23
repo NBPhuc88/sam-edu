@@ -14,6 +14,7 @@ return new class () extends Migration {
             if (! Schema::hasColumn('subscription_plans', 'plan_type')) {
                 $table->enum('plan_type', ['trial', 'basic', 'advanced'])->default('basic')->after('name');
             }
+
             if (! Schema::hasColumn('subscription_plans', 'allowed_features')) {
                 $table->json('allowed_features')->nullable()->after('features');
             }
@@ -29,6 +30,7 @@ return new class () extends Migration {
             if (Schema::hasColumn('subscription_plans', 'allowed_features')) {
                 $table->dropColumn('allowed_features');
             }
+
             if (Schema::hasColumn('subscription_plans', 'plan_type')) {
                 $table->dropColumn('plan_type');
             }

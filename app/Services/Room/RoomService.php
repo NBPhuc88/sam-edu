@@ -25,7 +25,11 @@ class RoomService implements RoomServiceInterface
     protected function getAllowedCenterIds(?Admin $admin): ?array
     {
         if (! $admin) {
-            return [];
+            $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        }
+
+        if (! $admin) {
+            return null;
         }
 
         if ($admin->isSuperAdmin()) {
@@ -81,13 +85,31 @@ class RoomService implements RoomServiceInterface
     public function createRoom(array $data, ?Admin $admin = null): Room
     {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $centerId         = (int) $data['center_id'];
 
-        if ($allowedCenterIds !== null && ! in_array((int) $data['center_id'], $allowedCenterIds, true)) {
+        if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
             throw new AccessDeniedHttpException('Bạn không có quyền tạo phòng học cho trung tâm này.');
         }
 
+        $status = $data['status'] ?? 'active';
+
+        // Kiểm tra giới hạn số phòng học đang hoạt động và tạm dừng không được vượt quá max_classes
+        if (in_array($status, ['active', 'paused'], true)) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_classes !== null) {
+                $activePausedCount = Room::where('center_id', $centerId)
+                    ->whereIn('status', ['active', 'paused'])
+                    ->count();
+
+                if ($activePausedCount >= $center->max_classes) {
+                    throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");
+                }
+            }
+        }
+
         if (empty($data['code'])) {
-            $data['code'] = $this->generateRoomCode((int) $data['center_id']);
+            $data['code'] = $this->generateRoomCode($centerId);
         }
 
         return $this->roomRepository->create($data);
@@ -116,6 +138,32 @@ class RoomService implements RoomServiceInterface
 
             if ($allowedCenterIds !== null && ! in_array((int) $data['center_id'], $allowedCenterIds, true)) {
                 throw new AccessDeniedHttpException('Bạn không có quyền chuyển phòng học sang trung tâm này.');
+            }
+        }
+
+        // Phòng học đã đóng (closed) không thể đổi trạng thái khác (trừ Super Admin)
+        if ($room->status === 'closed' && isset($data['status']) && $data['status'] !== 'closed') {
+            if (! ($admin && $admin->isSuperAdmin())) {
+                throw new AccessDeniedHttpException('Phòng học đã đóng chỉ có Super Admin mới có quyền mở lại.');
+            }
+        }
+
+        // Nếu chuyển từ closed sang active hoặc paused, kiểm tra giới hạn phòng
+        $newStatus = $data['status'] ?? $room->status;
+        $centerId  = (int) ($data['center_id'] ?? $room->center_id);
+
+        if ($room->status === 'closed' && in_array($newStatus, ['active', 'paused'], true)) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_classes !== null) {
+                $activePausedCount = Room::where('center_id', $centerId)
+                    ->where('id', '!=', $room->id)
+                    ->whereIn('status', ['active', 'paused'])
+                    ->count();
+
+                if ($activePausedCount >= $center->max_classes) {
+                    throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");
+                }
             }
         }
 

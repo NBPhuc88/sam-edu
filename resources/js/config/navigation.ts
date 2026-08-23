@@ -134,11 +134,6 @@ function filterNavItemsByPermissionsAndPlan(
     const filtered: NavItem[] = [];
 
     for (const item of items) {
-        // Kiểm tra quyền feature theo gói dịch vụ
-        if (item.planFeature && !isTrial && !allowedFeatures.includes(item.planFeature)) {
-            continue;
-        }
-
         // Item đơn không có children
         if (!item.children || item.children.length === 0) {
             if (!item.permission || permissions.includes(item.permission)) {
@@ -147,11 +142,8 @@ function filterNavItemsByPermissionsAndPlan(
             continue;
         }
 
-        // Item có children: lọc các con hợp lệ
+        // Item có children: lọc theo quyền permissions của role
         const validChildren = item.children.filter((child) => {
-            if (child.planFeature && !isTrial && !allowedFeatures.includes(child.planFeature)) {
-                return false;
-            }
             if (!child.permission) {
                 return true;
             }

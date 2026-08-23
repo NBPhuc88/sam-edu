@@ -38,6 +38,16 @@ class OnlineExamController extends Controller
      */
     public function enterCode(): InertiaResponse
     {
+        [$student] = $this->getAuthUser();
+
+        if ($student) {
+            $studentStatus = is_object($student->status) ? $student->status->value : (int) $student->status;
+
+            if ($studentStatus !== 1) {
+                abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
+            }
+        }
+
         return Inertia::render('ExamRoom/EnterCode');
     }
 
@@ -54,6 +64,14 @@ class OnlineExamController extends Controller
         ]);
 
         [$student, $teacher, $admin] = $this->getAuthUser();
+
+        if ($student) {
+            $studentStatus = is_object($student->status) ? $student->status->value : (int) $student->status;
+
+            if ($studentStatus !== 1) {
+                abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
+            }
+        }
 
         $classExam = $this->onlineExamService->getExamRoomByCode($request->input('code'), $student, $teacher, $admin);
 

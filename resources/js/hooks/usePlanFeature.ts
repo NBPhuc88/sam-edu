@@ -66,6 +66,20 @@ export function useCanExportCsv(): boolean {
 }
 
 /**
+ * Tiện ích kiểm tra nhanh quyền Nhập file CSV (export_csv).
+ */
+export function useCanImportCsv(): boolean {
+    return usePlanFeature('export_csv');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền sử dụng công cụ CSV.
+ */
+export function useCanUseCsv(): boolean {
+    return usePlanFeature('export_csv');
+}
+
+/**
  * Tiện ích kiểm tra nhanh quyền sử dụng Kho đề thi & Phòng thi (exams).
  */
 export function useCanUseExams(): boolean {

@@ -54,7 +54,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
     const [code, setCode] = useState('');
     const [capacity, setCapacity] = useState('');
     const [location, setLocation] = useState('');
-    const [status, setStatus] = useState<'active' | 'inactive'>('active');
+    const [status, setStatus] = useState<'active' | 'paused' | 'closed'>('active');
 
     // Equipment state
     const [equipments, setEquipments] = useState<EquipmentRow[]>([]);
@@ -262,12 +262,13 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
+                                    onChange={(e) => setStatus(e.target.value as 'active' | 'paused' | 'closed')}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="active">Đang sử dụng (Active)</option>
-                                    <option value="inactive">Tạm dừng bảo trì (Inactive)</option>
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="paused">Tạm dừng</option>
+                                    <option value="closed">Đã đóng</option>
                                 </select>
                                 {errors.status && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>

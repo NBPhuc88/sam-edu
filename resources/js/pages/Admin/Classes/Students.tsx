@@ -227,26 +227,38 @@ export default function ClassStudentsPage({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {canExportCsv && (
-                                <Button
-                                    variant="secondary"
-                                    size="md"
-                                    onClick={handleExport}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Download className="h-4.5 w-4.5 text-gray-600" />
-                                    Export CSV Lớp
-                                </Button>
-                            )}
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                onClick={() => {
+                                    if (!canExportCsv) {
+                                        router.visit('/upgrade-plan?feature=export_csv');
+                                    } else {
+                                        handleExport();
+                                    }
+                                }}
+                                className="flex items-center gap-2"
+                                title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất danh sách học sinh lớp'}
+                            >
+                                <Download className="h-4.5 w-4.5 text-gray-600" />
+                                Export CSV Lớp {!canExportCsv && '🔒'}
+                            </Button>
                             {!isTeacher && (
                                 <Button
                                     variant="success"
                                     size="md"
-                                    onClick={() => setIsImportModalOpen(true)}
+                                    onClick={() => {
+                                        if (!canExportCsv) {
+                                            router.visit('/upgrade-plan?feature=export_csv');
+                                        } else {
+                                            setIsImportModalOpen(true);
+                                        }
+                                    }}
                                     className="flex items-center gap-2"
+                                    title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Nhập danh sách học sinh vào lớp'}
                                 >
                                     <Upload className="h-4.5 w-4.5" />
-                                    Import CSV Lớp
+                                    Import CSV Lớp {!canExportCsv && '🔒'}
                                 </Button>
                             )}
                         </div>

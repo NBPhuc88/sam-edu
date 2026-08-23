@@ -22,6 +22,7 @@ import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
+import { useCanUseChat } from '@/hooks/usePlanFeature';
 interface Center {
     id: number;
     name: string;
@@ -146,18 +147,24 @@ return;
         });
     };
 
+    const canUseChat = useCanUseChat();
+
     const getStatusBadge = (status: number | string) => {
         const num = Number(status);
 
         if (num === 1 || status === 'active') {
-            return <Badge variant="active">Đang mở lớp</Badge>;
+            return <Badge variant="active">Đang hoạt động</Badge>;
         }
 
         if (num === 2 || status === 'completed') {
             return <Badge variant="pending">Đã hoàn thành</Badge>;
         }
 
-        return <Badge variant="expired">Tạm dừng / Đóng</Badge>;
+        if (num === 3 || status === 'closed') {
+            return <Badge variant="danger">Đã đóng</Badge>;
+        }
+
+        return <Badge variant="expired">Tạm dừng</Badge>;
     };
 
     return (
@@ -228,9 +235,10 @@ return;
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả Trạng thái</option>
-                                    <option value="1">Đang mở lớp</option>
+                                    <option value="1">Đang hoạt động</option>
+                                    <option value="0">Tạm dừng</option>
                                     <option value="2">Đã hoàn thành</option>
-                                    <option value="0">Tạm dừng / Đóng</option>
+                                    <option value="3">Đã đóng</option>
                                 </select>
                             </div>
                         </div>
@@ -399,9 +407,9 @@ return;
                                                             <Users className="h-4 w-4" />
                                                         </Link>
                                                     </Tooltip>
-                                                    <Tooltip content="Nhóm chat trao đổi lớp học">
+                                                    <Tooltip content={canUseChat ? 'Nhóm chat trao đổi lớp học' : 'Nhóm chat (Tính năng thuộc Gói Nâng Cao 🔒)'}>
                                                         <Link
-                                                            href={`/classes/${cls.id}/chat`}
+                                                            href={canUseChat ? `/classes/${cls.id}/chat` : '/upgrade-plan?feature=chat'}
                                                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors shadow-2xs"
                                                         >
                                                             <MessageSquare className="h-4 w-4" />

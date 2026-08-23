@@ -31,6 +31,14 @@ class SchoolClassService implements SchoolClassServiceInterface
      */
     protected function getAllowedCenterIds(?Admin $admin, ?Teacher $teacher = null): ?array
     {
+        if (! $admin && ! $teacher) {
+            $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+
+            if (! $admin) {
+                $teacher = \Illuminate\Support\Facades\Auth::guard('teacher')->user();
+            }
+        }
+
         if ($admin) {
             if ($admin->isSuperAdmin()) {
                 return null; // All centers
@@ -43,7 +51,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             return $teacher->center_id ? [(int) $teacher->center_id] : [];
         }
 
-        return [];
+        return null;
     }
 
     /**
@@ -172,12 +180,29 @@ class SchoolClassService implements SchoolClassServiceInterface
         if (isset($data['status'])) {
             if (is_numeric($data['status'])) {
                 $status = (int) $data['status'];
-            } elseif ($data['status'] === 'inactive') {
+            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
                 $status = 0;
             } elseif ($data['status'] === 'completed') {
                 $status = 2;
+            } elseif ($data['status'] === 'closed') {
+                $status = 3;
             } else {
                 $status = 1;
+            }
+        }
+
+        // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng (status 0, 1) không vượt quá max_classes
+        if (in_array($status, [0, 1], true)) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_classes !== null) {
+                $activePausedClassesCount = SchoolClass::where('center_id', $centerId)
+                    ->whereIn('status', [0, 1])
+                    ->count();
+
+                if ($activePausedClassesCount >= $center->max_classes) {
+                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để tạo thêm.");
+                }
             }
         }
 
@@ -219,37 +244,129 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
-        $status = $schoolClass->status;
+        $currentStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
+        $newStatus        = $currentStatusInt;
 
         if (isset($data['status'])) {
             if (is_numeric($data['status'])) {
-                $status = (int) $data['status'];
-            } elseif ($data['status'] === 'inactive') {
-                $status = 0;
+                $newStatus = (int) $data['status'];
+            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
+                $newStatus = 0;
             } elseif ($data['status'] === 'completed') {
-                $status = 2;
+                $newStatus = 2;
+            } elseif ($data['status'] === 'closed') {
+                $newStatus = 3;
             } else {
-                $status = 1;
+                $newStatus = 1;
             }
         }
 
-        $updatedClass = $this->schoolClassRepository->update($id, [
-            'center_id'    => $data['center_id'] ?? $schoolClass->center_id,
-            'code'         => isset($data['code']) ? trim($data['code']) : $schoolClass->code,
-            'name'         => isset($data['name']) ? trim($data['name']) : $schoolClass->name,
-            'description'  => array_key_exists('description', $data) ? $data['description'] : $schoolClass->description,
-            'max_students' => array_key_exists('max_students', $data) ? (! empty($data['max_students']) ? (int) $data['max_students'] : null) : $schoolClass->max_students,
-            'start_date'   => array_key_exists('start_date', $data) ? (! empty($data['start_date']) ? $data['start_date'] : null) : $schoolClass->start_date,
-            'end_date'     => array_key_exists('end_date', $data) ? (! empty($data['end_date']) ? $data['end_date'] : null) : $schoolClass->end_date,
-            'status'       => $status,
-        ]);
-
-        // Cập nhật danh sách môn học và giáo viên phụ trách
-        if (isset($data['subjects']) && is_array($data['subjects'])) {
-            $this->schoolClassRepository->syncClassSubjects($updatedClass, $data['subjects']);
+        // Lớp học đã hoàn thành (2) hoặc đã đóng (3) không thể chuyển sang trạng thái khác (trừ Super Admin)
+        if (in_array($currentStatusInt, [2, 3], true) && $newStatus !== $currentStatusInt) {
+            if (! ($admin && $admin->isSuperAdmin())) {
+                throw new AccessDeniedHttpException('Lớp học đã hoàn thành hoặc đã đóng chỉ có Super Admin mới có quyền mở lại.');
+            }
         }
 
+        // Nếu chuyển từ Hoàn thành/Đóng (2, 3) sang Hoạt động/Tạm dừng (0, 1), kiểm tra giới hạn max_classes
+        $centerId = (int) ($data['center_id'] ?? $schoolClass->center_id);
+
+        if (in_array($currentStatusInt, [2, 3], true) && in_array($newStatus, [0, 1], true)) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_classes !== null) {
+                $activePausedClassesCount = SchoolClass::where('center_id', $centerId)
+                    ->where('id', '!=', $schoolClass->id)
+                    ->whereIn('status', [0, 1])
+                    ->count();
+
+                if ($activePausedClassesCount >= $center->max_classes) {
+                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để mở lại lớp này.");
+                }
+            }
+        }
+
+        $updatedClass = \Illuminate\Support\Facades\DB::transaction(function () use ($id, $data, $schoolClass, $newStatus, $currentStatusInt, $centerId) {
+            $updated = $this->schoolClassRepository->update($id, [
+                'center_id'    => $data['center_id'] ?? $schoolClass->center_id,
+                'code'         => isset($data['code']) ? trim($data['code']) : $schoolClass->code,
+                'name'         => isset($data['name']) ? trim($data['name']) : $schoolClass->name,
+                'description'  => array_key_exists('description', $data) ? $data['description'] : $schoolClass->description,
+                'max_students' => array_key_exists('max_students', $data) ? (! empty($data['max_students']) ? (int) $data['max_students'] : null) : $schoolClass->max_students,
+                'start_date'   => array_key_exists('start_date', $data) ? (! empty($data['start_date']) ? $data['start_date'] : null) : $schoolClass->start_date,
+                'end_date'     => array_key_exists('end_date', $data) ? (! empty($data['end_date']) ? $data['end_date'] : null) : $schoolClass->end_date,
+                'status'       => $newStatus,
+            ]);
+
+            // Cập nhật danh sách môn học và giáo viên phụ trách
+            if (isset($data['subjects']) && is_array($data['subjects'])) {
+                $this->schoolClassRepository->syncClassSubjects($updated, $data['subjects']);
+            }
+
+            // Tự động đồng bộ trạng thái học sinh nếu trạng thái lớp thay đổi
+            if ($newStatus !== $currentStatusInt) {
+                $this->cascadeClassStatusToStudents($id, $centerId, $newStatus);
+            }
+
+            return $updated;
+        });
+
         return $updatedClass;
+    }
+
+    /**
+     * Đồng bộ trạng thái lớp học sang các học sinh cô lập (chỉ học lớp này, không học lớp active nào khác).
+     * @param int $classId
+     * @param int $centerId
+     * @param int $newClassStatus
+     */
+    protected function cascadeClassStatusToStudents(int $classId, int $centerId, int $newClassStatus): void
+    {
+        $studentIdsInClass = \Illuminate\Support\Facades\DB::table('class_students')
+            ->where('class_id', $classId)
+            ->pluck('student_id')
+            ->toArray();
+
+        if (empty($studentIdsInClass)) {
+            return;
+        }
+
+        // Tìm các học sinh CÒN đang học ở lớp khác ĐANG HOẠT ĐỘNG (status = 1)
+        $multiActiveStudentIds = \Illuminate\Support\Facades\DB::table('class_students as cs')
+            ->join('classes as c', 'c.id', '=', 'cs.class_id')
+            ->whereIn('cs.student_id', $studentIdsInClass)
+            ->where('c.id', '!=', $classId)
+            ->where('c.center_id', $centerId)
+            ->where('c.status', 1)
+            ->whereNull('c.deleted_at')
+            ->pluck('cs.student_id')
+            ->unique()
+            ->toArray();
+
+        // Danh sách học sinh chỉ thuộc duy nhất lớp này
+        $isolatedStudentIds = array_values(array_diff($studentIdsInClass, $multiActiveStudentIds));
+
+        if (empty($isolatedStudentIds)) {
+            return;
+        }
+
+        // 1 câu lệnh SQL duy nhất cập nhật trạng thái học sinh tương ứng
+        if ($newClassStatus === 0 || $newClassStatus === 3) {
+            \Illuminate\Support\Facades\DB::table('students')
+                ->whereIn('id', $isolatedStudentIds)
+                ->where('status', 1)
+                ->update(['status' => 0]);
+        } elseif ($newClassStatus === 2) {
+            \Illuminate\Support\Facades\DB::table('students')
+                ->whereIn('id', $isolatedStudentIds)
+                ->where('status', 1)
+                ->update(['status' => 2]);
+        } elseif ($newClassStatus === 1) {
+            \Illuminate\Support\Facades\DB::table('students')
+                ->whereIn('id', $isolatedStudentIds)
+                ->whereIn('status', [0, 2])
+                ->update(['status' => 1]);
+        }
     }
 
     /**

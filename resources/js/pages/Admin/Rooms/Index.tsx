@@ -150,9 +150,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'active':
-                return <Badge variant="active">Đang sử dụng</Badge>;
+                return <Badge variant="active">Đang hoạt động</Badge>;
+            case 'paused':
             case 'inactive':
                 return <Badge variant="expired">Tạm dừng</Badge>;
+            case 'closed':
+                return <Badge variant="danger">Đã đóng</Badge>;
             default:
                 return <Badge variant="info">{status}</Badge>;
         }
@@ -320,8 +323,9 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả trạng thái</option>
-                                    <option value="active">Đang sử dụng</option>
-                                    <option value="inactive">Tạm dừng</option>
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="paused">Tạm dừng</option>
+                                    <option value="closed">Đã đóng</option>
                                 </select>
                             </div>
                         </div>

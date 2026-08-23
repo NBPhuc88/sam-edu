@@ -63,6 +63,12 @@ class ChatService implements ChatServiceInterface
         }
 
         if ($user instanceof Student) {
+            $studentStatusInt = is_object($user->status) ? $user->status->value : (int) $user->status;
+
+            if ($studentStatusInt !== 1) {
+                abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
+            }
+
             $isEnrolled = ($user->center_id === $schoolClass->center_id)
                 && $schoolClass->students()->where('students.id', $user->id)->exists();
 
@@ -183,6 +189,13 @@ class ChatService implements ChatServiceInterface
      */
     public function sendMessage(int $classId, array $senderInfo, string $message): array
     {
+        $schoolClass    = $this->authorizeAccess($classId);
+        $classStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
+
+        if ($classStatusInt !== 1) {
+            abort(403, 'Lớp học đã tạm dừng, hoàn thành hoặc đã đóng. Không thể gửi thêm tin nhắn.');
+        }
+
         $created = $this->chatRepository->createMessage([
             'class_id'      => $classId,
             'sender_type'   => $senderInfo['sender_type'] ?? 'student',

@@ -12,6 +12,7 @@ import {
     ChevronRight,
     DoorOpen,
     UserCheck,
+    Printer,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
@@ -720,15 +721,30 @@ return true;
                 <Card
                     title="Bảng Kết Quả Kỳ Thi"
                     headerAction={
-                        <div className="relative w-72">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Tìm bài thi, môn học..."
-                                value={examSearch}
-                                onChange={(e) => setExamSearch(e.target.value)}
-                                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-gray-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                            />
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="relative w-64">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm bài thi, môn học..."
+                                    value={examSearch}
+                                    onChange={(e) => setExamSearch(e.target.value)}
+                                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-gray-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                                />
+                            </div>
+                            <a
+                                href="/student/transcript/print"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={<Printer className="w-4 h-4 text-emerald-600" />}
+                                >
+                                    In / Xuất PDF Bảng Điểm
+                                </Button>
+                            </a>
                         </div>
                     }
                 >

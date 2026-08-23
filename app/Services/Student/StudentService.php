@@ -214,13 +214,39 @@ class StudentService implements StudentServiceInterface
             }
         }
 
+        $status    = $data['status'] ?? 1;
+        $statusInt = 1;
+
+        if (is_numeric($status)) {
+            $statusInt = (int) $status;
+        } elseif ($status === 'inactive' || $status === 'paused') {
+            $statusInt = 0;
+        } elseif ($status === 'graduated' || $status === 'completed') {
+            $statusInt = 2;
+        }
+
+        // Kiểm tra giới hạn số học sinh đang hoạt động không vượt quá max_students
+        if ($statusInt === 1) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_students !== null) {
+                $activeStudentsCount = Student::where('center_id', $centerId)
+                    ->where('status', 1)
+                    ->count();
+
+                if ($activeStudentsCount >= $center->max_students) {
+                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                }
+            }
+        }
+
         $password = ! empty($data['password']) ? Hash::make($data['password']) : null;
 
         return $this->studentRepository->create([
             'username'            => ! empty($data['username']) ? trim($data['username']) : null,
             'email'               => ! empty($data['email']) ? trim($data['email']) : null,
             'password'            => $password,
-            'status'              => $data['status'] ?? 'active',
+            'status'              => $statusInt,
             'student_code'        => $studentCode,
             'center_id'           => $centerId,
             'first_name'          => $data['first_name'] ?? $firstName,
@@ -258,11 +284,43 @@ class StudentService implements StudentServiceInterface
             }
         }
 
+        $newStatus = $student->status;
+
+        if (isset($data['status'])) {
+            if (is_numeric($data['status'])) {
+                $newStatus = (int) $data['status'];
+            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
+                $newStatus = 0;
+            } elseif ($data['status'] === 'graduated' || $data['status'] === 'completed') {
+                $newStatus = 2;
+            } else {
+                $newStatus = 1;
+            }
+        }
+
+        $currentStatusInt = is_object($student->status) ? $student->status->value : (int) $student->status;
+        $centerId         = (int) ($data['center_id'] ?? $student->center_id);
+
+        if ($currentStatusInt !== 1 && $newStatus === 1) {
+            $center = $this->centerRepository->find($centerId);
+
+            if ($center && $center->max_students !== null) {
+                $activeStudentsCount = Student::where('center_id', $centerId)
+                    ->where('id', '!=', $student->id)
+                    ->where('status', 1)
+                    ->count();
+
+                if ($activeStudentsCount >= $center->max_students) {
+                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                }
+            }
+        }
+
         $updateData = [
             'center_id'           => $data['center_id'] ?? $student->center_id,
             'username'            => array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $student->username,
             'email'               => array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $student->email,
-            'status'              => $data['status'] ?? $student->status,
+            'status'              => $newStatus,
             'student_code'        => isset($data['student_code']) ? trim($data['student_code']) : $student->student_code,
             'phone'               => array_key_exists('phone', $data) ? $data['phone'] : $student->phone,
             'date_of_birth'       => array_key_exists('date_of_birth', $data) ? $data['date_of_birth'] : $student->date_of_birth,

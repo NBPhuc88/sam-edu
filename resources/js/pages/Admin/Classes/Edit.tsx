@@ -1,10 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2, Calendar, AlertTriangle } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -185,9 +186,14 @@ export default function ClassEdit({
         setSubjectRows(updated);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+    const isClosedOrCompleted = Number(schoolClass.status) === 2 || Number(schoolClass.status) === 3;
+    const canEditStatus = isSuperAdmin || !isClosedOrCompleted;
+
+    const executeSubmit = () => {
         setIsSubmitting(true);
+        setShowConfirmModal(false);
 
         const subjectMap = new Map<number, number>();
         subjectRows.forEach((r) => {
@@ -217,6 +223,21 @@ export default function ClassEdit({
                 onFinish: () => setIsSubmitting(false),
             },
         );
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Nếu chuyển sang trạng thái Hoàn thành (2) hoặc Đã đóng (3) khác với ban đầu, yêu cầu xác nhận qua Modal
+        const selectedStatusNum = Number(status);
+        const originalStatusNum = Number(schoolClass.status);
+
+        if ((selectedStatusNum === 2 || selectedStatusNum === 3) && selectedStatusNum !== originalStatusNum) {
+            setShowConfirmModal(true);
+            return;
+        }
+
+        executeSubmit();
     };
 
     return (
@@ -339,12 +360,21 @@ export default function ClassEdit({
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    disabled={!canEditStatus}
+                                    className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
+                                        !canEditStatus ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
+                                    }`}
                                 >
-                                    <option value="1">Đang mở lớp</option>
+                                    <option value="1">Đang hoạt động</option>
+                                    <option value="0">Tạm dừng</option>
                                     <option value="2">Đã hoàn thành</option>
-                                    <option value="0">Tạm dừng / Đóng</option>
+                                    <option value="3">Đã đóng</option>
                                 </select>
+                                {!canEditStatus && (
+                                    <p className="mt-1.5 text-xs text-amber-700 font-medium">
+                                        * Lớp học đã hoàn thành hoặc đã đóng. Chỉ Super Admin mới có quyền mở lại.
+                                    </p>
+                                )}
                             </div>
 
                             {/* Start Date */}
@@ -523,6 +553,54 @@ export default function ClassEdit({
                         </Button>
                     </div>
                 </form>
+
+                {/* Modal Xác Nhận Hoàn Thành / Đóng Lớp */}
+                <Modal
+                    isOpen={showConfirmModal}
+                    onClose={() => setShowConfirmModal(false)}
+                    title="Xác Nhận Thay Đổi Trạng Thái Lớp Học"
+                    maxWidth="md"
+                    footer={
+                        <div className="flex items-center justify-end gap-2.5 w-full">
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                Hủy Bỏ
+                            </Button>
+                            <Button
+                                variant="danger"
+                                size="md"
+                                isLoading={isSubmitting}
+                                onClick={executeSubmit}
+                            >
+                                Xác Nhận Chuyển Trạng Thái
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="space-y-3.5 text-sm text-gray-700">
+                        <div className="flex items-start gap-3 p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
+                            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                                <div className="font-bold">Cảnh báo hành động không thể đảo ngược!</div>
+                                <div className="mt-1 text-xs text-amber-800 leading-relaxed">
+                                    Bạn đang chọn chuyển trạng thái lớp sang{' '}
+                                    <strong className="font-bold text-amber-950">
+                                        {Number(status) === 2 ? 'ĐÃ HOÀN THÀNH' : 'ĐÃ ĐÓNG'}
+                                    </strong>
+                                    . Khi hoàn tất, các tính năng lịch học, thi cử và chat nhóm của lớp sẽ bị khóa vĩnh viễn và chỉ có{' '}
+                                    <strong className="underline">Super Admin</strong> mới có quyền mở lại lớp học này.
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-gray-500">
+                            Hệ thống cũng sẽ tự động chuyển trạng thái của các học sinh chỉ tham gia duy nhất lớp này sang trạng thái tương ứng (Đã tốt nghiệp / Tạm dừng).
+                        </p>
+                    </div>
+                </Modal>
             </div>
         </AppLayout>
     );

@@ -17,7 +17,7 @@ return new class () extends Migration {
             $table->string('name', 255);
             $table->integer('capacity')->nullable();
             $table->string('location', 255)->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status', ['active', 'paused', 'closed'])->default('active');
             $table->timestamps();
             $table->softDeletes();
 

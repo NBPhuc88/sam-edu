@@ -228,31 +228,48 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                             variant="secondary"
                             size="md"
                             icon={<FileSpreadsheet className="h-4.5 w-4.5" />}
-                            onClick={handleDownloadSample}
+                            onClick={() => {
+                                if (!canExportCsv) {
+                                    router.visit('/upgrade-plan?feature=export_csv');
+                                } else {
+                                    handleDownloadSample();
+                                }
+                            }}
                             title="Tải tệp mẫu CSV"
                         >
-                            Tệp Mẫu CSV
+                            Tệp Mẫu CSV {!canExportCsv && '🔒'}
                         </Button>
                         {can('teachers.create') && (
                             <Button
                                 variant="secondary"
                                 size="md"
                                 icon={<Upload className="h-4.5 w-4.5" />}
-                                onClick={() => setIsImportModalOpen(true)}
+                                onClick={() => {
+                                    if (!canExportCsv) {
+                                        router.visit('/upgrade-plan?feature=export_csv');
+                                    } else {
+                                        setIsImportModalOpen(true);
+                                    }
+                                }}
                             >
-                                Import CSV
+                                Import CSV {!canExportCsv && '🔒'}
                             </Button>
                         )}
-                        {canExportCsv && (
-                            <Button
-                                variant="secondary"
-                                size="md"
-                                icon={<Download className="h-4.5 w-4.5" />}
-                                onClick={handleExport}
-                            >
-                                Export CSV
-                            </Button>
-                        )}
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            icon={<Download className="h-4.5 w-4.5" />}
+                            onClick={() => {
+                                if (!canExportCsv) {
+                                    router.visit('/upgrade-plan?feature=export_csv');
+                                } else {
+                                    handleExport();
+                                }
+                            }}
+                            title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất danh sách giáo viên'}
+                        >
+                            Export CSV {!canExportCsv && '🔒'}
+                        </Button>
                         {can('teachers.create') && (
                             <Link href="/teachers/create">
                                 <Button

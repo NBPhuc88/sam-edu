@@ -13,10 +13,10 @@ return [
 
     'features' => [
         'export_csv' => [
-            'name'           => 'Xuất dữ liệu CSV',
-            'description'    => 'Xuất danh sách giáo viên, học sinh và tải file CSV mẫu',
-            'route_actions'  => ['export', 'sample-csv'],
-            'route_suffixes' => ['.export', '.sample-csv'],
+            'name'           => 'Công cụ Xuất/Nhập CSV',
+            'description'    => 'Xuất danh sách giáo viên, học sinh, nhập danh sách từ CSV và tải file mẫu',
+            'route_actions'  => ['export', 'import', 'sample-csv', 'download-sample'],
+            'route_suffixes' => ['.export', '.import', '.sample-csv', '.download-sample'],
         ],
         'exams' => [
             'name'           => 'Kho đề thi',

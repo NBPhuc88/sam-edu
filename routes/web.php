@@ -58,6 +58,36 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticController::class, 'index'])->name('statistics');
 
+    // Student Transcript & PDF Export (Phục vụ học sinh xem & in bảng điểm)
+    Route::get('/student/transcript/print', [\App\Http\Controllers\StudentTranscriptController::class, 'print'])->name('student.transcript.print');
+
+    // SaaS Upgrade Plan Page (Trang thông báo nâng cấp gói)
+    Route::get('/upgrade-plan', function (\Illuminate\Http\Request $request) {
+        $user   = $request->user();
+        $center = null;
+
+        if ($user instanceof \App\Models\Admin) {
+            $center = $user->centers()->first();
+        } elseif ($user && isset($user->center_id)) {
+            $center = \App\Models\Center::find($user->center_id);
+        }
+
+        $featureKey = $request->query('feature', 'general');
+        $featureDef = config("plan_features.features.{$featureKey}");
+
+        return Inertia::render('UpgradePlan', [
+            'status'       => 403,
+            'reason'       => 'feature_locked',
+            'title'        => 'Tính Năng Thuộc Gói Nâng Cao',
+            'feature'      => $featureKey,
+            'featureName'  => $featureDef['name'] ?? 'Tính Năng Nâng Cao',
+            'message'      => $featureDef ? "Tính năng '{$featureDef['name']}' ({$featureDef['description']}) chỉ có trong Gói Nâng Cao. Vui lòng liên hệ Quản trị viên hệ thống để nâng cấp gói cho trung tâm của bạn." : 'Tính năng này yêu cầu nâng cấp lên gói Nâng Cao để sử dụng.',
+            'currentPlan'  => $center?->subscription_plan ?? 'basic_5',
+            'planType'     => $center?->plan_type ?? 'basic',
+            'requiredPlan' => 'advanced',
+        ]);
+    })->name('upgrade-plan');
+
     // System Permissions Management Routes (Super Admin)
     Route::prefix('permissions')->name('permissions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PermissionController::class, 'index'])->name('index');
