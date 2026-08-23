@@ -379,7 +379,14 @@ export default function GradingIndex({
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                                                             {sub.student?.avatar ? (
-                                                                <img src={sub.student.avatar} alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
+                                                                <img
+                                                                    src={sub.student.avatar}
+                                                                    alt="Avatar"
+                                                                    className="h-8 w-8 rounded-full object-cover"
+                                                                    onError={(e) => {
+                                                                        (e.target as HTMLElement).style.display = 'none';
+                                                                    }}
+                                                                />
                                                             ) : (
                                                                 sub.student?.full_name?.charAt(0) || 'U'
                                                             )}

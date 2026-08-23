@@ -1143,6 +1143,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         src={currentQuestion.image_url}
                                         alt="Đính kèm đề bài"
                                         className="max-h-72 w-auto mx-auto rounded-xl object-contain"
+                                        onError={(e) => {
+                                            (e.target as HTMLElement).style.display = 'none';
+                                        }}
                                     />
                                 </div>
                             )}

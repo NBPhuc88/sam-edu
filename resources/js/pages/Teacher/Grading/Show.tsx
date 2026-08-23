@@ -288,7 +288,14 @@ export default function GradingShow({
                         <div className="flex items-start gap-4 border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-4">
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 text-xl font-black shadow-xs">
                                 {submission.student?.avatar ? (
-                                    <img src={submission.student.avatar} alt="Avatar" className="h-14 w-14 rounded-2xl object-cover" />
+                                    <img
+                                        src={submission.student.avatar}
+                                        alt="Avatar"
+                                        className="h-14 w-14 rounded-2xl object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLElement).style.display = 'none';
+                                        }}
+                                    />
                                 ) : (
                                     submission.student?.full_name?.charAt(0) || 'U'
                                 )}

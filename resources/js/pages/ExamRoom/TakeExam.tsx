@@ -400,7 +400,14 @@ export default function TakeExam({
 
                                             {q.image_url && q.question_type !== 'diagram_labelling' && (
                                                 <div className="rounded-xl border border-gray-200 p-2 bg-slate-50 flex justify-center max-h-60 overflow-hidden">
-                                                    <img src={q.image_url} alt="Minh họa" className="max-h-56 object-contain rounded" />
+                                                    <img
+                                                        src={q.image_url}
+                                                        alt="Minh họa"
+                                                        className="max-h-56 object-contain rounded"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLElement).style.display = 'none';
+                                                        }}
+                                                    />
                                                 </div>
                                             )}
 

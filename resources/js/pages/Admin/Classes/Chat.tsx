@@ -553,6 +553,9 @@ export default function ClassChatPage({
                                                             src={msg.sender_avatar}
                                                             alt={msg.sender_name}
                                                             className="h-8.5 w-8.5 rounded-full object-cover shadow-xs border border-white/40"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLElement).style.display = 'none';
+                                                            }}
                                                         />
                                                     ) : (
                                                         <div
@@ -579,6 +582,9 @@ export default function ClassChatPage({
                                                         src={msg.message.trim()}
                                                         alt="sticker"
                                                         className="max-h-56 max-w-56 object-contain rounded-2xl"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLElement).style.display = 'none';
+                                                        }}
                                                     />
                                                     <span className="absolute bottom-1.5 right-2 rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
                                                         {msg.time_formatted}
