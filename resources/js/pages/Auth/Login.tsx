@@ -10,6 +10,7 @@ import {
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import AppLogo from '../../components/common/AppLogo';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -63,9 +64,10 @@ export const Login: React.FC = () => {
                         title="Về trang chủ Sam Edu"
                         className="group inline-flex flex-col items-center gap-2"
                     >
-                        <div className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-xl font-black text-white shadow-md transition-transform group-hover:scale-105">
-                            SAM
-                        </div>
+                        <AppLogo
+                            size="xl"
+                            className="transition-transform group-hover:scale-105"
+                        />
                         <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 transition-colors group-hover:text-emerald-700">
                             Hệ thống Quản lý Giáo dục Sam
                         </h1>

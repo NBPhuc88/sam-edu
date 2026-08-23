@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { Building2, CreditCard, LogOut, Menu, User as UserIcon, X } from 'lucide-react';
 import React from 'react';
+import AppLogo from '@/components/common/AppLogo';
 import Button from '../ui/Button';
 
 interface AuthUser {
@@ -73,12 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* Breadcrumb brand mark (mobile) */}
                 <div className="flex items-center gap-2 md:hidden">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-xs font-bold text-white">
-                        SAM
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">
-                        Giáo dục Sam
-                    </span>
+                    <AppLogo withText={true} size="sm" />
                 </div>
             </div>
 

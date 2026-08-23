@@ -10,6 +10,7 @@ import {
     X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import AppLogo from '../components/common/AppLogo';
 import Button from '../components/ui/Button';
 import ScrollToTop from '../components/ui/ScrollToTop';
 
@@ -100,19 +101,14 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     {/* Brand Logo */}
                     <Link
                         href="/"
-                        className="flex shrink-0 items-center gap-2.5"
+                        className="flex shrink-0 items-center"
                     >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-base font-black text-white shadow-xs">
-                            SAM
-                        </div>
-                        <div>
-                            <span className="block text-sm leading-tight font-extrabold text-gray-900 sm:text-base">
-                                Giáo dục Sam
-                            </span>
-                            <span className="hidden text-[11px] text-gray-500 sm:block">
-                                Hệ thống Quản lý Giáo dục Sam
-                            </span>
-                        </div>
+                        <AppLogo
+                            withText={true}
+                            brandName="Giáo dục Sam"
+                            subtitle="Hệ thống Quản lý Giáo dục Sam"
+                            size="md"
+                        />
                     </Link>
 
                     {/* Nav Links */}
@@ -258,14 +254,12 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
                         {/* Company Info */}
                         <div className="space-y-3 md:col-span-2">
-                            <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
-                                    SAM
-                                </div>
-                                <span className="text-lg font-bold text-white">
-                                    Công ty Cổ phần Giáo dục Sam
-                                </span>
-                            </div>
+                            <AppLogo
+                                withText={true}
+                                brandName="Công ty Cổ phần Giáo dục Sam"
+                                textColor="light"
+                                size="sm"
+                            />
                             <p className="max-w-md text-xs leading-relaxed text-gray-400">
                                 Nền tảng quản lý giáo dục đa trung tâm hàng đầu,
                                 tối ưu hóa quy trình điểm danh, sĩ số học sinh,

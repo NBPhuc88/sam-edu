@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { Lock, ShieldAlert, KeyRound } from 'lucide-react';
 import React, { useState } from 'react';
+import AppLogo from '../../components/common/AppLogo';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -32,8 +33,8 @@ export const ForceChangePassword: React.FC = () => {
             <div className="w-full max-w-lg space-y-6">
                 {/* Brand Header */}
                 <div className="space-y-2 text-center">
-                    <div className="inline-flex items-center justify-center rounded-2xl bg-amber-600 px-4 py-2.5 text-xl font-black text-white shadow-md">
-                        SAM
+                    <div className="flex justify-center">
+                        <AppLogo size="xl" />
                     </div>
                     <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
                         Bắt Buộc Cập Nhật Mật Khẩu Mới

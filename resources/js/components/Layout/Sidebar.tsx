@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import AppLogo from '@/components/common/AppLogo';
 import { getNavigationItems } from '../../config/navigation';
 import type { NavItem } from '../../config/navigation';
 
@@ -218,18 +219,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* Fixed width container to prevent text warping during transition */}
                 <div className="flex h-full w-64 flex-col justify-between">
                     {/* Top Section: Brand header */}
-                    <div className="flex h-16 shrink-0 items-center gap-3 border-b border-gray-100 px-4">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-black text-white shadow-xs">
-                            SAM
-                        </div>
-                        <div>
-                            <div className="text-sm leading-tight font-extrabold text-gray-900">
-                                Giáo dục Sam
-                            </div>
-                            <div className="text-2xs text-gray-400 font-medium">
-                                Quản lý Giáo dục
-                            </div>
-                        </div>
+                    <div className="flex h-16 shrink-0 items-center border-b border-gray-100 px-4">
+                        <AppLogo withText={true} subtitle="Quản lý Giáo dục" size="md" />
                     </div>
 
                     {/* Middle Section: Navigation scrollable list */}
