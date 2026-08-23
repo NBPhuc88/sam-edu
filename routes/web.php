@@ -149,7 +149,11 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::get('/export', [StudentController::class, 'export'])->name('export');
         Route::post('/import', [StudentController::class, 'import'])->name('import');
         Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');
+        Route::get('/{id}/schedule', [StudentController::class, 'schedule'])->name('schedule');
     });
+
+    // Student Dedicated Schedule Route
+    Route::get('/student/schedule', [StudentController::class, 'mySchedule'])->name('student.schedule');
 
     // Teacher Management Routes (CRUD, Export & Import)
     Route::prefix('teachers')->name('teachers.')->group(function () {
@@ -210,6 +214,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::post('/{classId}/students/add', [SchoolClassStudentController::class, 'addStudents'])->name('students.add');
         Route::delete('/{classId}/students/{studentId}', [SchoolClassStudentController::class, 'removeStudent'])->name('students.remove');
 
+        Route::get('/{classId}/exam-results', [\App\Http\Controllers\SchoolClassExamResultController::class, 'index'])->name('exam-results.index');
+        Route::get('/{classId}/exam-results/export', [\App\Http\Controllers\SchoolClassExamResultController::class, 'export'])->name('exam-results.export');
+
         Route::prefix('{classId}/chat')->name('chat.')->group(function () {
             Route::get('/', [ChatController::class, 'index'])->name('index');
             Route::get('/messages', [ChatController::class, 'getMessages'])->name('messages');
@@ -262,6 +269,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::patch('/payments/{paymentId}', [\App\Http\Controllers\StudentTuitionController::class, 'updatePayment'])->name('payments.update');
         Route::delete('/payments/{paymentId}', [\App\Http\Controllers\StudentTuitionController::class, 'destroyPayment'])->name('payments.destroy');
     });
+
+    // Student Dedicated Tuition Route
+    Route::get('/student/tuitions', [\App\Http\Controllers\StudentTuitionController::class, 'myTuitions'])->name('student.tuitions.index');
 
     // Exam Bank Management Routes (CRUD)
     Route::prefix('exams')->name('exams.')->group(function () {

@@ -4,6 +4,7 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -17,6 +18,7 @@ interface SchoolClassServiceInterface
      * @param  int                  $page
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  ?Student             $student
      * @return LengthAwarePaginator
      */
     public function getPaginatedClasses(
@@ -26,15 +28,17 @@ interface SchoolClassServiceInterface
         int $perPage = 15,
         int $page = 1,
         ?Admin $admin = null,
-        ?Teacher $teacher = null
+        ?Teacher $teacher = null,
+        ?Student $student = null
     ): LengthAwarePaginator;
 
     /**
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  ?Student             $student
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array;
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null, ?Student $student = null): array;
 
     /**
      * @param  int              $id

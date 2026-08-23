@@ -15,6 +15,7 @@ interface SchoolClassRepositoryInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?int                 $teacherId
+     * @param  ?int                 $studentId
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -23,7 +24,8 @@ interface SchoolClassRepositoryInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?int $teacherId = null
+        ?int $teacherId = null,
+        ?int $studentId = null
     ): LengthAwarePaginator;
 
     /**

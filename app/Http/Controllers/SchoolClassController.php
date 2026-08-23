@@ -6,6 +6,7 @@ use App\Http\Requests\Class\FilterSchoolClassRequest;
 use App\Http\Requests\Class\StoreSchoolClassRequest;
 use App\Http\Requests\Class\UpdateSchoolClassRequest;
 use App\Models\Admin;
+use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\Class\SchoolClassServiceInterface;
 use Illuminate\Http\RedirectResponse;
@@ -27,18 +28,20 @@ class SchoolClassController extends Controller
         $admin = Auth::guard('admin')->user();
         /** @var Teacher|null $teacher */
         $teacher = Auth::guard('teacher')->user();
+        /** @var Student|null $student */
+        $student = Auth::guard('student')->user();
 
-        return [$admin, $teacher];
+        return [$admin, $teacher, $student];
     }
 
     public function index(FilterSchoolClassRequest $request): InertiaResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
-        $search            = $request->input('search');
-        $centerId          = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $status            = $request->input('status');
-        $page              = $request->integer('page', 1);
-        $perPage           = $request->integer('per_page', config('app.pagination_per_page', 20));
+        [$admin, $teacher, $student] = $this->getAuthUser();
+        $search                      = $request->input('search');
+        $centerId                    = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $status                      = $request->input('status');
+        $page                        = $request->integer('page', 1);
+        $perPage                     = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $classes = $this->schoolClassService->getPaginatedClasses(
             is_string($search) ? $search : null,
@@ -47,10 +50,11 @@ class SchoolClassController extends Controller
             $perPage,
             $page,
             $admin,
-            $teacher
+            $teacher,
+            $student
         );
 
-        $formData = $this->schoolClassService->getFormData($admin, $teacher);
+        $formData = $this->schoolClassService->getFormData($admin, $teacher, $student);
 
         return Inertia::render('Admin/Classes/Index', [
             'classes' => $classes,
@@ -58,18 +62,19 @@ class SchoolClassController extends Controller
             'filters' => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
-                'status'    => $status ?? 'all',
+                'status'    => $status ?? '1',
                 'per_page'  => $perPage,
             ],
             'isTeacher' => (bool) $teacher,
+            'isStudent' => (bool) $student,
         ]);
     }
 
     public function create(): InertiaResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
+        [$admin, $teacher, $student] = $this->getAuthUser();
 
-        if ($teacher) {
+        if ($teacher || $student) {
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
@@ -84,9 +89,9 @@ class SchoolClassController extends Controller
 
     public function store(StoreSchoolClassRequest $request): RedirectResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
+        [$admin, $teacher, $student] = $this->getAuthUser();
 
-        if ($teacher) {
+        if ($teacher || $student) {
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
@@ -98,9 +103,9 @@ class SchoolClassController extends Controller
 
     public function edit(int $id): InertiaResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
+        [$admin, $teacher, $student] = $this->getAuthUser();
 
-        if ($teacher) {
+        if ($teacher || $student) {
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
@@ -117,9 +122,9 @@ class SchoolClassController extends Controller
 
     public function update(UpdateSchoolClassRequest $request, int $id): RedirectResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
+        [$admin, $teacher, $student] = $this->getAuthUser();
 
-        if ($teacher) {
+        if ($teacher || $student) {
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
@@ -131,9 +136,9 @@ class SchoolClassController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        [$admin, $teacher] = $this->getAuthUser();
+        [$admin, $teacher, $student] = $this->getAuthUser();
 
-        if ($teacher) {
+        if ($teacher || $student) {
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 

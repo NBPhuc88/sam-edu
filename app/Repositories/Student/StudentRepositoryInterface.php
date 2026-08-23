@@ -112,4 +112,18 @@ interface StudentRepositoryInterface
      * @param int     $classId
      */
     public function detachClass(Student $student, int $classId): bool;
+
+    /**
+     * @param  int                                                                     $studentId
+     * @param  string                                                                  $startDate
+     * @param  string                                                                  $endDate
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int                                                                      $studentId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getStudentWeeklySchedules(int $studentId): \Illuminate\Database\Eloquent\Collection;
 }

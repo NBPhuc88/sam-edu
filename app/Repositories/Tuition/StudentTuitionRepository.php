@@ -44,7 +44,8 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             ->with([
                 'student:id,full_name,student_code,phone',
                 'schoolClass:id,name,code',
-                'center:id,name,code'
+                'center:id,name,code',
+                'payments:id,student_tuition_id,amount,payment_date,payment_method,transaction_code,received_by,note',
             ])
             ->withCount('payments');
 

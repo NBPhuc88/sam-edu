@@ -28,8 +28,12 @@ class ClassScheduleController extends Controller
         return $admin;
     }
 
-    public function index(FilterClassScheduleRequest $request): InertiaResponse
+    public function index(FilterClassScheduleRequest $request): InertiaResponse|RedirectResponse
     {
+        if (Auth::guard('student')->check()) {
+            return redirect()->route('student.schedule');
+        }
+
         $admin     = $this->getAuthAdmin();
         $search    = $request->input('search');
         $centerId  = $request->input('center_id') ? (int) $request->input('center_id') : null;

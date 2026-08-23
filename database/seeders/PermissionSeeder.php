@@ -56,6 +56,8 @@ class PermissionSeeder extends Seeder
             'student' => [
                 'dashboard.index',
                 'classes.index', 'classes.chat',
+                'schedules.index',
+                'tuitions.index',
                 'online-exam.enter', 'practice-exams.index',
             ],
         ];

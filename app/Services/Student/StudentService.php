@@ -9,6 +9,7 @@ use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -539,5 +540,208 @@ class StudentService implements StudentServiceInterface
         $student = $this->findStudent($studentId, $admin);
 
         return $this->studentRepository->detachClass($student, $classId);
+    }
+
+    /**
+     * @param  int                  $studentId
+     * @param  ?string              $weekDate
+     * @param  ?Student             $student
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getStudentTimetableData(int $studentId, ?string $weekDate = null, ?Student $student = null, ?Admin $admin = null): array
+    {
+        $targetStudent = $student;
+
+        if (! $targetStudent) {
+            $targetStudent = $this->findStudent($studentId, $admin);
+        }
+
+        $targetStudent->load(['center:id,name,code']);
+
+        $baseDate    = $weekDate ? Carbon::parse($weekDate) : Carbon::today();
+        $startOfWeek = $baseDate->copy()->startOfWeek(Carbon::MONDAY);
+        $endOfWeek   = $baseDate->copy()->endOfWeek(Carbon::SUNDAY);
+
+        // 7 ngày trong tuần
+        $weekDays = [];
+        $dayNames = [
+            1 => 'Thứ 2',
+            2 => 'Thứ 3',
+            3 => 'Thứ 4',
+            4 => 'Thứ 5',
+            5 => 'Thứ 6',
+            6 => 'Thứ 7',
+            7 => 'Chủ Nhật',
+        ];
+
+        for ($i = 0; $i < 7; $i++) {
+            $day        = $startOfWeek->copy()->addDays($i);
+            $isoWeekday = $day->dayOfWeekIso;
+
+            $weekDays[] = [
+                'weekday_number' => $isoWeekday,
+                'weekday_label'  => $dayNames[$isoWeekday] ?? "Thứ {$isoWeekday}",
+                'date_formatted' => $day->format('d-m-Y'),
+                'date_raw'       => $day->format('Y-m-d'),
+                'is_today'       => $day->isToday(),
+            ];
+        }
+
+        $startDateStr = $startOfWeek->format('Y-m-d');
+        $endDateStr   = $endOfWeek->format('Y-m-d');
+
+        // Lấy danh sách ca học thực tế của các lớp học sinh tham gia trong tuần
+        $rawSessions = $this->studentRepository->getStudentSessionsBetweenDates(
+            $targetStudent->id,
+            $startDateStr,
+            $endDateStr
+        );
+
+        $enrichedSessions = [];
+
+        foreach ($rawSessions as $session) {
+            $sessionDateStr = $session->session_date ? Carbon::parse($session->session_date)->format('Y-m-d') : '';
+
+            // 1. Slot cũ đã dời đi
+            if ($session->reschedules && $session->reschedules->isNotEmpty()) {
+                foreach ($session->reschedules as $reschedule) {
+                    $oldDateStr = $reschedule->old_date ? Carbon::parse($reschedule->old_date)->format('Y-m-d') : '';
+                    $newDateStr = $reschedule->new_date ? Carbon::parse($reschedule->new_date)->format('Y-m-d') : '';
+
+                    if ($oldDateStr >= $startDateStr && $oldDateStr <= $endDateStr) {
+                        $oldStartTime = substr((string) $reschedule->old_start_time, 0, 5);
+                        $oldEndTime   = substr((string) $reschedule->old_end_time, 0, 5);
+                        $newStartTime = substr((string) $reschedule->new_start_time, 0, 5);
+                        $newEndTime   = substr((string) $reschedule->new_end_time, 0, 5);
+
+                        $enrichedSessions[] = [
+                            'id'                      => "rescheduled-old-{$session->id}-{$reschedule->id}",
+                            'original_session_id'     => $session->id,
+                            'class_subject_id'        => $session->class_subject_id,
+                            'teacher_id'              => $session->teacher_id,
+                            'room_id'                 => $reschedule->old_room_id ?? $session->room_id,
+                            'session_date'            => $oldDateStr,
+                            'start_time'              => $oldStartTime,
+                            'end_time'                => $oldEndTime,
+                            'status'                  => 'rescheduled',
+                            'topic'                   => $session->topic,
+                            'note'                    => $session->note,
+                            'is_rescheduled_old_slot' => true,
+                            'reschedule_info'         => [
+                                'new_date'       => Carbon::parse($newDateStr)->format('d-m-Y'),
+                                'new_start_time' => $newStartTime,
+                                'new_end_time'   => $newEndTime,
+                                'reason'         => $reschedule->reason,
+                            ],
+                            'class_subject' => $session->classSubject,
+                            'teacher'       => $session->teacher,
+                            'room'          => $reschedule->oldRoom ?? $session->room,
+                            'class_name'    => $session->classSubject?->schoolClass?->name ?? 'Lớp học',
+                            'class_code'    => $session->classSubject?->schoolClass?->code ?? '',
+                            'subject_name'  => $session->classSubject?->subject?->name ?? 'Môn học',
+                            'subject_code'  => $session->classSubject?->subject?->code ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // 2. Ca học ở new_date (nếu nằm trong tuần)
+            if ($sessionDateStr >= $startDateStr && $sessionDateStr <= $endDateStr) {
+                $sessionArr = $session->toArray();
+
+                $sessionArr['total_sessions'] = $session->classSubject?->subject?->total_sessions;
+                $sessionArr['student_count']  = $session->classSubject?->schoolClass?->students_count ?? 0;
+                $sessionArr['max_students']   = $session->classSubject?->schoolClass?->max_students;
+                $sessionArr['class_name']     = $session->classSubject?->schoolClass?->name ?? 'Lớp học';
+                $sessionArr['class_code']     = $session->classSubject?->schoolClass?->code ?? '';
+                $sessionArr['subject_name']   = $session->classSubject?->subject?->name ?? 'Môn học';
+                $sessionArr['subject_code']   = $session->classSubject?->subject?->code ?? '';
+
+                if ($session->reschedules && $session->reschedules->isNotEmpty()) {
+                    $latestReschedule = $session->reschedules->first();
+                    $oldDateStr       = $latestReschedule->old_date ? Carbon::parse($latestReschedule->old_date)->format('Y-m-d') : '';
+                    $oldStartTime     = substr((string) $latestReschedule->old_start_time, 0, 5);
+                    $oldEndTime       = substr((string) $latestReschedule->old_end_time, 0, 5);
+
+                    $sessionArr['is_rescheduled_new_slot'] = true;
+
+                    if ($sessionArr['status'] === 'rescheduled') {
+                        $sessionArr['status'] = 'scheduled';
+                    }
+
+                    $sessionArr['reschedule_from_info'] = [
+                        'old_date'       => Carbon::parse($oldDateStr)->format('d-m-Y'),
+                        'old_start_time' => $oldStartTime,
+                        'old_end_time'   => $oldEndTime,
+                        'reason'         => $latestReschedule->reason,
+                    ];
+                }
+
+                // Room info
+                if ($session->room) {
+                    $sessionArr['room_info'] = [
+                        'id'       => $session->room->id,
+                        'name'     => $session->room->name,
+                        'code'     => $session->room->code ?? '',
+                        'capacity' => $session->room->capacity ?? 0,
+                        'location' => $session->room->location ?? '',
+                    ];
+                } else {
+                    $sessionArr['room_info'] = null;
+                }
+
+                $enrichedSessions[] = $sessionArr;
+            }
+        }
+
+        // Lấy lịch học cố định hàng tuần của học sinh
+        $recurringSchedules = $this->studentRepository->getStudentWeeklySchedules($targetStudent->id);
+
+        // Trích xuất các khung giờ học (Time slots) duy nhất
+        $timeSlotSet = [];
+
+        foreach ($enrichedSessions as $sessItem) {
+            $start = substr((string) $sessItem['start_time'], 0, 5);
+            $end   = substr((string) $sessItem['end_time'], 0, 5);
+            $key   = "{$start} - {$end}";
+
+            $timeSlotSet[$key] = [
+                'start_time' => $start,
+                'end_time'   => $end,
+                'label'      => $key,
+            ];
+        }
+
+        foreach ($recurringSchedules as $schedule) {
+            $start = substr((string) $schedule->start_time, 0, 5);
+            $end   = substr((string) $schedule->end_time, 0, 5);
+            $key   = "{$start} - {$end}";
+
+            $timeSlotSet[$key] = [
+                'start_time' => $start,
+                'end_time'   => $end,
+                'label'      => $key,
+            ];
+        }
+
+        // Sắp xếp time slots theo start_time
+        uasort($timeSlotSet, function ($a, $b) {
+            return strcmp($a['start_time'], $b['start_time']);
+        });
+
+        return [
+            'student'            => $targetStudent,
+            'weekDays'           => $weekDays,
+            'startOfWeek'        => $startOfWeek->format('Y-m-d'),
+            'endOfWeek'          => $endOfWeek->format('Y-m-d'),
+            'prevWeek'           => $startOfWeek->copy()->subWeek()->format('Y-m-d'),
+            'nextWeek'           => $startOfWeek->copy()->addWeek()->format('Y-m-d'),
+            'currentWeek'        => Carbon::today()->format('Y-m-d'),
+            'selectedDate'       => $baseDate->format('Y-m-d'),
+            'timeSlots'          => array_values($timeSlotSet),
+            'sessions'           => $enrichedSessions,
+            'recurringSchedules' => $recurringSchedules,
+        ];
     }
 }

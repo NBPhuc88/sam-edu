@@ -689,10 +689,21 @@ return true;
 
                 {/* Lịch học trong tuần */}
                 <div>
-                    <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-emerald-600" />
-                        <span>Lịch Học Trong Tuần</span>
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-emerald-600" />
+                            <span>Lịch Học Trong Tuần</span>
+                        </h3>
+                        <Link href="/student/schedule">
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                icon={<Calendar className="w-4 h-4 text-emerald-600" />}
+                            >
+                                Xem Thời Khóa Biểu Chi Tiết
+                            </Button>
+                        </Link>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {weeklySchedule.map((dayItem: any) => (
                             <Card key={dayItem.weekday} title={dayItem.day_name} className="bg-white border-gray-200">

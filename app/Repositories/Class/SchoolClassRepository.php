@@ -18,6 +18,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?int                 $teacherId
+     * @param  ?int                 $studentId
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -26,7 +27,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?int $teacherId = null
+        ?int $teacherId = null,
+        ?int $studentId = null
     ): LengthAwarePaginator {
         $query = SchoolClass::query()
             ->select(
@@ -48,6 +50,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ])
             ->withCount('students');
 
+        if ($studentId !== null) {
+            $query->whereHas('students', function ($q) use ($studentId) {
+                $q->where('students.id', $studentId);
+            });
+        }
+
         if ($teacherId !== null) {
             $query->whereHas('classSubjects', function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId);
@@ -62,7 +70,10 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             }
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        // Mặc định chỉ hiển thị lớp đang học (status = 1) nếu không truyền filter status
+        if ($status === null || $status === '') {
+            $query->where('status', 1);
+        } elseif ($status !== 'all') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {

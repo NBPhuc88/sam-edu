@@ -10,6 +10,7 @@ import {
     AlertCircle,
     Filter,
     Calendar,
+    Award,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -82,6 +83,7 @@ interface Props {
         per_page?: number;
     };
     isTeacher?: boolean;
+    isStudent?: boolean;
 }
 
 export default function ClassIndex({
@@ -89,6 +91,7 @@ export default function ClassIndex({
     centers = [],
     filters,
     isTeacher = false,
+    isStudent = false,
 }: Props) {
     const { can } = usePermission();
     const { auth } = usePage<any>().props;
@@ -99,7 +102,7 @@ export default function ClassIndex({
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status || '1',
     );
 
     // Delete modal state
@@ -177,14 +180,16 @@ return;
                     <div>
                         <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-gray-900">
                             <GraduationCap className="h-7 w-7 text-emerald-600" />
-                            Quản Lý Lớp Học
+                            {isStudent ? 'Lớp Học Của Tôi' : 'Quản Lý Lớp Học'}
                         </h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Quản lý thông tin lớp học, phân công nhiều môn học & giáo viên phụ trách theo trung tâm.
+                            {isStudent
+                                ? 'Danh sách các lớp học bạn đang theo học hoặc đã hoàn thành.'
+                                : 'Quản lý thông tin lớp học, phân công nhiều môn học & giáo viên phụ trách theo trung tâm.'}
                         </p>
                     </div>
 
-                    {can('classes.create') && (
+                    {!isStudent && can('classes.create') && (
                         <Link href="/classes/create">
                             <Button
                                 variant="success"
@@ -391,6 +396,14 @@ return;
 
                                             <td className="px-6 py-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
+                                                    <Tooltip content="Bảng điểm & Bài thi đã thi">
+                                                        <Link
+                                                            href={`/classes/${cls.id}/exam-results`}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-colors shadow-2xs"
+                                                        >
+                                                            <Award className="h-4 w-4" />
+                                                        </Link>
+                                                    </Tooltip>
                                                     <Tooltip content="Xem thời khóa biểu lớp học">
                                                         <Link
                                                             href={`/classes/${cls.id}/schedule`}
@@ -399,14 +412,16 @@ return;
                                                             <Calendar className="h-4 w-4" />
                                                         </Link>
                                                     </Tooltip>
-                                                    <Tooltip content="Danh sách học sinh trong lớp">
-                                                        <Link
-                                                            href={`/classes/${cls.id}/students`}
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-2xs"
-                                                        >
-                                                            <Users className="h-4 w-4" />
-                                                        </Link>
-                                                    </Tooltip>
+                                                    {!isStudent && (
+                                                        <Tooltip content="Danh sách học sinh trong lớp">
+                                                            <Link
+                                                                href={`/classes/${cls.id}/students`}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-2xs"
+                                                            >
+                                                                <Users className="h-4 w-4" />
+                                                            </Link>
+                                                        </Tooltip>
+                                                    )}
                                                     <Tooltip content={canUseChat ? 'Nhóm chat trao đổi lớp học' : 'Nhóm chat (Tính năng thuộc Gói Nâng Cao 🔒)'}>
                                                         <Link
                                                             href={canUseChat ? `/classes/${cls.id}/chat` : '/upgrade-plan?feature=chat'}
@@ -415,7 +430,7 @@ return;
                                                             <MessageSquare className="h-4 w-4" />
                                                         </Link>
                                                     </Tooltip>
-                                                    {!isTeacher && can('classes.edit') && (
+                                                    {!isTeacher && !isStudent && can('classes.edit') && (
                                                         <Tooltip content="Chỉnh sửa lớp học">
                                                             <Link href={`/classes/${cls.id}/edit`}>
                                                                 <Button
@@ -429,7 +444,7 @@ return;
                                                             </Link>
                                                         </Tooltip>
                                                     )}
-                                                    {!isTeacher && can('classes.delete') && (
+                                                    {!isTeacher && !isStudent && can('classes.delete') && (
                                                         <Tooltip content="Xóa lớp học">
                                                             <Button
                                                                 variant="danger"

@@ -267,4 +267,57 @@ class StudentController extends Controller
             fclose($handle);
         }, 200, $headers);
     }
+
+    /**
+     * Thời khóa biểu cho học sinh đang đăng nhập
+     * @param Request $request
+     */
+    public function mySchedule(Request $request): InertiaResponse
+    {
+        /** @var \App\Models\Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if (! $student) {
+            abort(403, 'Chỉ học sinh mới có quyền truy cập trang lịch học cá nhân.');
+        }
+
+        $weekDate      = $request->query('date');
+        $timetableData = $this->studentService->getStudentTimetableData(
+            $student->id,
+            is_string($weekDate) ? $weekDate : null,
+            $student
+        );
+
+        return Inertia::render('Student/Schedule', $timetableData);
+    }
+
+    /**
+     * Thời khóa biểu học sinh (Admin / Teacher / Student)
+     * @param Request $request
+     * @param int     $id
+     */
+    public function schedule(Request $request, int $id): InertiaResponse
+    {
+        /** @var \App\Models\Student|null $currentStudent */
+        $currentStudent = Auth::guard('student')->user();
+
+        if ($currentStudent) {
+            if ($currentStudent->id !== $id) {
+                abort(403, 'Học sinh chỉ được xem lịch học của chính mình.');
+            }
+
+            return $this->mySchedule($request);
+        }
+
+        [$admin, $teacher] = $this->getAuthUser();
+        $weekDate          = $request->query('date');
+        $timetableData     = $this->studentService->getStudentTimetableData(
+            $id,
+            is_string($weekDate) ? $weekDate : null,
+            null,
+            $admin
+        );
+
+        return Inertia::render('Student/Schedule', $timetableData);
+    }
 }

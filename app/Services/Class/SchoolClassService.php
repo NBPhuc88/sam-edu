@@ -63,6 +63,7 @@ class SchoolClassService implements SchoolClassServiceInterface
      * @param  int                  $page
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  ?Student             $student
      * @return LengthAwarePaginator
      */
     public function getPaginatedClasses(
@@ -72,8 +73,21 @@ class SchoolClassService implements SchoolClassServiceInterface
         int $perPage = 15,
         int $page = 1,
         ?Admin $admin = null,
-        ?Teacher $teacher = null
+        ?Teacher $teacher = null,
+        ?Student $student = null
     ): LengthAwarePaginator {
+        if ($student) {
+            return $this->schoolClassRepository->paginate(
+                $search,
+                $student->center_id ? [(int) $student->center_id] : null,
+                $status,
+                $perPage,
+                $page,
+                null,
+                $student->id
+            );
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
 
         if ($allowedCenterIds !== null) {
@@ -101,10 +115,21 @@ class SchoolClassService implements SchoolClassServiceInterface
     /**
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  ?Student             $student
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null, ?Student $student = null): array
     {
+        if ($student) {
+            $allowedCenterIds = $student->center_id ? [(int) $student->center_id] : [];
+
+            return [
+                'centers'  => $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']),
+                'subjects' => [],
+                'teachers' => [],
+            ];
+        }
+
         if ($teacher) {
             $allowedCenterIds = $teacher->center_id ? [(int) $teacher->center_id] : [];
 

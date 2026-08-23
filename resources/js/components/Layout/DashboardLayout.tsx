@@ -74,7 +74,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             return window.innerWidth >= 768;
         }
 
-        return true;
+        return false;
     });
 
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);

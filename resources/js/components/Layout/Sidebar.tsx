@@ -121,7 +121,8 @@ const NavGroup: React.FC<{
             (child) => child.path && isActivePath(child.path, currentUrl),
         ) ?? false;
 
-    const [expanded, setExpanded] = useState(groupActive);
+    // Default all menu groups to open (expanded) on load unless user collapses
+    const [expanded, setExpanded] = useState(true);
     const Icon = item.icon;
 
     // Keep expanded if URL changes to a child

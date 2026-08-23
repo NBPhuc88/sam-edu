@@ -283,4 +283,100 @@ class StudentRepository implements StudentRepositoryInterface
     {
         return (bool) $student->classes()->detach($classId);
     }
+
+    /**
+     * @param  int                                                                     $studentId
+     * @param  string                                                                  $startDate
+     * @param  string                                                                  $endDate
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     */
+    public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    {
+        $classIds = \App\Models\ClassStudent::where('student_id', $studentId)
+            ->pluck('class_id')
+            ->toArray();
+
+        if (empty($classIds)) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return \App\Models\ClassSession::query()
+            ->select(
+                'id',
+                'class_subject_id',
+                'teacher_id',
+                'room_id',
+                'session_date',
+                'start_time',
+                'end_time',
+                'topic',
+                'status',
+                'note'
+            )
+            ->whereHas('classSubject', function ($csq) use ($classIds) {
+                $csq->whereIn('class_id', $classIds);
+            })
+            ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass' => function ($cq) {
+                    $cq->select(
+                        'id',
+                        'center_id',
+                        'name',
+                        'code'
+                    )->withCount('students');
+                },
+                'classSubject.subject:id,name,code,total_sessions,duration_minutes',
+                'teacher:id,full_name,teacher_code,phone',
+                'room:id,name',
+                'reschedules' => function ($q) {
+                    $q->orderBy('changed_at', 'desc');
+                },
+                'reschedules.oldRoom:id,name',
+                'reschedules.newRoom:id,name',
+            ])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('session_date', [$startDate, $endDate])
+                    ->orWhereHas('reschedules', function ($rq) use ($startDate, $endDate) {
+                        $rq->whereBetween('old_date', [$startDate, $endDate]);
+                    });
+            })
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
+     * @param  int                                                                      $studentId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSchedule>
+     */
+    public function getStudentWeeklySchedules(int $studentId): \Illuminate\Database\Eloquent\Collection
+    {
+        $classIds = \App\Models\ClassStudent::where('student_id', $studentId)
+            ->pluck('class_id')
+            ->toArray();
+
+        if (empty($classIds)) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return \App\Models\ClassSchedule::query()
+            ->select('id', 'class_subject_id', 'room_id', 'weekday', 'start_time', 'end_time', 'status')
+            ->whereHas('classSubject', function ($q) use ($classIds) {
+                $q->whereIn('class_id', $classIds);
+            })
+            ->with([
+                'classSubject:id,class_id,subject_id,teacher_id',
+                'classSubject.schoolClass' => function ($cq) {
+                    $cq->select('id', 'center_id', 'name', 'code')->withCount('students');
+                },
+                'classSubject.subject:id,name,code',
+                'classSubject.teacher:id,full_name,teacher_code',
+                'room:id,name,code,capacity,location',
+            ])
+            ->where('status', 'active')
+            ->orderBy('weekday')
+            ->orderBy('start_time')
+            ->get();
+    }
 }

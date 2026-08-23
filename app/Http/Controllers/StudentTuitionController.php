@@ -34,8 +34,63 @@ class StudentTuitionController extends Controller
         return $admin;
     }
 
+    public function myTuitions(Request $request): InertiaResponse
+    {
+        /** @var \App\Models\Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if (! $student) {
+            abort(403, 'Chỉ học sinh mới có quyền truy cập lịch sử học phí cá nhân.');
+        }
+
+        $search  = $request->input('search');
+        $status  = $request->input('status');
+        $page    = $request->integer('page', 1);
+        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
+
+        $tuitions = $this->studentTuitionService->getPaginatedTuitions(
+            is_string($search) ? $search : null,
+            null,
+            null,
+            $student->id,
+            is_string($status) && $status !== 'all' ? $status : null,
+            $perPage,
+            $page,
+            null
+        );
+
+        $studentTuitionsAll = \App\Models\StudentTuition::where('student_id', $student->id)->get();
+        $stats              = [
+            'total_amount'     => (float) $studentTuitionsAll->sum('total_amount'),
+            'paid_amount'      => (float) $studentTuitionsAll->sum('paid_amount'),
+            'remaining_amount' => (float) $studentTuitionsAll->sum('remaining_amount'),
+            'total_records'    => $studentTuitionsAll->count(),
+            'completed_count'  => $studentTuitionsAll->where('status', 'paid')->count(),
+            'partial_count'    => $studentTuitionsAll->where('status', 'partial')->count(),
+            'unpaid_count'     => $studentTuitionsAll->whereIn('status', ['unpaid', 'overdue'])->count(),
+        ];
+
+        return Inertia::render('Student/Tuitions/Index', [
+            'student'  => $student,
+            'tuitions' => $tuitions,
+            'stats'    => $stats,
+            'filters'  => [
+                'search'   => $search ?? '',
+                'status'   => $status ?? 'all',
+                'per_page' => $perPage,
+            ],
+        ]);
+    }
+
     public function index(FilterStudentTuitionRequest $request): InertiaResponse
     {
+        /** @var \App\Models\Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if ($student) {
+            return $this->myTuitions($request);
+        }
+
         $admin    = $this->getAuthAdmin();
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;

@@ -89,4 +89,13 @@ interface StudentServiceInterface
      * @param ?Admin $admin
      */
     public function removeStudentFromClass(int $studentId, int $classId, ?Admin $admin = null): bool;
+
+    /**
+     * @param  int                  $studentId
+     * @param  ?string              $weekDate
+     * @param  ?Student             $student
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getStudentTimetableData(int $studentId, ?string $weekDate = null, ?Student $student = null, ?Admin $admin = null): array;
 }
