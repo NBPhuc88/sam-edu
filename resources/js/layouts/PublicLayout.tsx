@@ -40,11 +40,11 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const pageDescription =
         seo?.description ||
         description ||
-        'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học và tự động gia hạn gói dịch vụ qua ZaloPay QR Code v2.';
+        'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm toàn diện: tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực.';
     const pageKeywords =
         seo?.keywords ||
         keywords ||
-        'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, Giáo dục Sam, Sam Edu, ZaloPay';
+        'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, Giáo dục Sam, Sam Edu';
     const pageCanonical =
         seo?.canonical_url || canonicalUrl || 'https://sam-edu.test';
 
@@ -256,15 +256,12 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                         <div className="space-y-3 md:col-span-2">
                             <AppLogo
                                 withText={true}
-                                brandName="Công ty Cổ phần Giáo dục Sam"
+                                brandName={contactInfo?.company_name || 'Công ty Cổ phần Giáo dục Sam'}
                                 textColor="light"
                                 size="sm"
                             />
                             <p className="max-w-md text-xs leading-relaxed text-gray-400">
-                                Nền tảng quản lý giáo dục đa trung tâm hàng đầu,
-                                tối ưu hóa quy trình điểm danh, sĩ số học sinh,
-                                xếp lịch và gia hạn tự động qua ZaloPay QR Code
-                                v2.
+                                Hệ sinh thái chuyển đổi số giáo dục đa trung tâm toàn diện: Chuẩn hóa vận hành học vụ, tự động xếp lịch &amp; điểm danh, tích hợp khảo thí trực tuyến 9 dạng câu hỏi, chat nhóm lớp học trực tuyến và quản trị phân quyền an toàn, hiệu quả.
                             </p>
                             <div className="space-y-1.5 pt-2 text-xs text-gray-300">
                                 <div className="flex items-center gap-2">
