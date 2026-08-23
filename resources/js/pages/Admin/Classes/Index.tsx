@@ -78,10 +78,17 @@ interface Props {
         search?: string;
         center_id?: number | null;
         status?: string;
+        per_page?: number;
     };
+    isTeacher?: boolean;
 }
 
-export default function ClassIndex({ classes, centers = [], filters }: Props) {
+export default function ClassIndex({
+    classes,
+    centers = [],
+    filters,
+    isTeacher = false,
+}: Props) {
     const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
@@ -257,7 +264,11 @@ return;
                                 <tr>
                                     <th className="px-6 py-4">Lớp Học</th>
                                     {isSuperAdmin && <th className="px-6 py-4">Trung Tâm</th>}
-                                    <th className="px-6 py-4">Môn Học & Giáo Viên Phụ Trách</th>
+                                    {isTeacher ? (
+                                        <th className="px-6 py-4">Môn Học</th>
+                                    ) : (
+                                        <th className="px-6 py-4">Môn Học & Giáo Viên Phụ Trách</th>
+                                    )}
                                     <th className="px-6 py-4 whitespace-nowrap">Sĩ Số</th>
                                     <th className="px-6 py-4 whitespace-nowrap">Trạng Thái</th>
                                     {(can('classes.edit') || can('classes.delete')) && (
@@ -324,7 +335,14 @@ return;
                                                         {cls.class_subjects.map((cs) => {
                                                             const subjectName = cs.subject?.name || 'Môn học';
                                                             const teacherName = cs.teacher?.full_name ? `GV ${cs.teacher.full_name}` : 'Chưa gán';
-                                                            return (
+                                                            return isTeacher ? (
+                                                                <div
+                                                                    key={cs.id}
+                                                                    className="inline-flex items-center rounded-md border border-gray-200 bg-slate-50/80 px-2.5 py-1 text-xs font-semibold text-gray-800"
+                                                                >
+                                                                    {subjectName}
+                                                                </div>
+                                                            ) : (
                                                                 <Tooltip
                                                                     key={cs.id}
                                                                     content={`${subjectName} • ${teacherName}`}
@@ -343,7 +361,9 @@ return;
                                                         })}
                                                     </div>
                                                 ) : (
-                                                    <span className="italic text-xs text-gray-400">Chưa gán môn & giáo viên</span>
+                                                    <span className="italic text-xs text-gray-400">
+                                                        {isTeacher ? 'Chưa gán môn học' : 'Chưa gán môn & giáo viên'}
+                                                    </span>
                                                 )}
                                             </td>
 

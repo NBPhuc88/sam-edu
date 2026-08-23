@@ -4,6 +4,7 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface SchoolClassServiceInterface
@@ -15,6 +16,7 @@ interface SchoolClassServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return LengthAwarePaginator
      */
     public function getPaginatedClasses(
@@ -23,21 +25,24 @@ interface SchoolClassServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator;
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array;
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array;
 
     /**
      * @param  int              $id
      * @param  ?Admin           $admin
+     * @param  ?Teacher         $teacher
      * @return SchoolClass|null
      */
-    public function findClass(int $id, ?Admin $admin = null): ?SchoolClass;
+    public function findClass(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?SchoolClass;
 
     /**
      * @param  array<string, mixed> $data
@@ -69,7 +74,8 @@ interface SchoolClassServiceInterface
      * @param  int                  $classId
      * @param  ?string              $weekDate
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null): array;
+    public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null, ?Teacher $teacher = null): array;
 }

@@ -112,9 +112,11 @@ interface Props {
         session_date?: string;
         date_from?: string;
         date_to?: string;
+        date_scope?: string;
         status?: string;
         per_page?: number;
     };
+    isTeacher?: boolean;
 }
 
 export default function SessionIndex({
@@ -125,10 +127,12 @@ export default function SessionIndex({
     teachers = [],
     rooms = [],
     filters,
+    isTeacher: isTeacherProp,
 }: Props) {
     const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const isTeacher = Boolean(isTeacherProp || auth?.user?.role === 'teacher');
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
@@ -149,6 +153,7 @@ export default function SessionIndex({
     const [sessionDate, setSessionDate] = useState(filters.session_date || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
+    const [dateScope, setDateScope] = useState<string>(filters.date_scope || 'from_today');
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
     );
@@ -184,11 +189,12 @@ export default function SessionIndex({
             center_id: selectedCenterId,
             class_id: selectedClassId,
             subject_id: selectedSubjectId,
-            teacher_id: selectedTeacherId,
-            room_id: selectedRoomId,
+            teacher_id: !isTeacher ? selectedTeacherId : undefined,
+            room_id: !isTeacher ? selectedRoomId : undefined,
             session_date: sessionDate,
             date_from: dateFrom,
             date_to: dateTo,
+            date_scope: dateScope,
             status: selectedStatus,
             per_page: filters.per_page !== 20 ? filters.per_page : undefined,
         });
@@ -205,8 +211,9 @@ export default function SessionIndex({
         setSessionDate('');
         setDateFrom('');
         setDateTo('');
+        setDateScope('from_today');
         setSelectedStatus('all');
-        router.get('/sessions', {}, { preserveState: true });
+        router.get('/sessions', { date_scope: 'from_today' }, { preserveState: true });
     };
 
     const handleQuickDateToday = () => {
@@ -219,7 +226,7 @@ export default function SessionIndex({
             center_id: selectedCenterId,
             class_id: selectedClassId,
             subject_id: selectedSubjectId,
-            teacher_id: selectedTeacherId,
+            teacher_id: !isTeacher ? selectedTeacherId : undefined,
             status: selectedStatus,
             per_page: filters.per_page !== 20 ? filters.per_page : undefined,
         });
@@ -354,40 +361,59 @@ export default function SessionIndex({
                             </div>
 
                             {/* Teacher filter */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Giáo viên
-                                </label>
-                                <select
-                                    value={selectedTeacherId}
-                                    onChange={(e) => setSelectedTeacherId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="">-- Tất cả giáo viên --</option>
-                                    {filteredTeachers.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.full_name} ({t.teacher_code})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {!isTeacher && (
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                        Giáo viên
+                                    </label>
+                                    <select
+                                        value={selectedTeacherId}
+                                        onChange={(e) => setSelectedTeacherId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="">-- Tất cả giáo viên --</option>
+                                        {filteredTeachers.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                                {t.full_name} ({t.teacher_code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* Room filter */}
+                            {!isTeacher && (
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                        Phòng học
+                                    </label>
+                                    <select
+                                        value={selectedRoomId}
+                                        onChange={(e) => setSelectedRoomId(e.target.value)}
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="">-- Tất cả phòng học --</option>
+                                        {filteredRooms.map((r) => (
+                                            <option key={r.id} value={r.id}>
+                                                {r.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Date scope filter */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Phòng học
+                                    Phạm vi ngày
                                 </label>
                                 <select
-                                    value={selectedRoomId}
-                                    onChange={(e) => setSelectedRoomId(e.target.value)}
+                                    value={dateScope}
+                                    onChange={(e) => setDateScope(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Tất cả phòng học --</option>
-                                    {filteredRooms.map((r) => (
-                                        <option key={r.id} value={r.id}>
-                                            {r.name}
-                                        </option>
-                                    ))}
+                                    <option value="from_today">Từ hôm nay đến tương lai</option>
+                                    <option value="all">Tất cả các buổi</option>
                                 </select>
                             </div>
 

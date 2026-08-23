@@ -4,6 +4,7 @@ namespace App\Services\Student;
 
 use App\Models\Admin;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
@@ -23,19 +24,33 @@ class StudentService implements StudentServiceInterface
 
     /**
      * @param  ?Admin          $admin
+     * @param  ?Teacher        $teacher
      * @return array<int>|null Null nghĩa là Super Admin (truy cập toàn bộ)
      */
-    protected function getAllowedCenterIds(?Admin $admin): ?array
+    protected function getAllowedCenterIds(?Admin $admin, ?Teacher $teacher = null): ?array
     {
-        if (! $admin) {
-            return [];
+        if ($admin) {
+            if ($admin->isSuperAdmin()) {
+                return null; // All centers
+            }
+
+            return $admin->centers()->pluck('centers.id')->toArray();
         }
 
-        if ($admin->isSuperAdmin()) {
-            return null; // All centers
+        if ($teacher) {
+            return $teacher->center_id ? [(int) $teacher->center_id] : [];
         }
 
-        return $admin->centers()->pluck('centers.id')->toArray();
+        return [];
+    }
+
+    /**
+     * @param  Teacher    $teacher
+     * @return array<int>
+     */
+    protected function getTeacherClassIds(Teacher $teacher): array
+    {
+        return $teacher->classSubjects()->pluck('class_id')->unique()->toArray();
     }
 
     /**
@@ -46,6 +61,7 @@ class StudentService implements StudentServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return LengthAwarePaginator
      */
     public function getPaginatedStudents(
@@ -55,9 +71,25 @@ class StudentService implements StudentServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
+        $allowedClassIds  = null;
+
+        if ($teacher) {
+            $allowedClassIds = $this->getTeacherClassIds($teacher);
+
+            if (empty($allowedClassIds)) {
+                $allowedClassIds = [-1]; // No classes assigned
+            }
+
+            if ($classId !== null) {
+                if (!in_array($classId, $allowedClassIds, true)) {
+                    $allowedClassIds = [-1]; // No permission for this class
+                }
+            }
+        }
 
         if ($allowedCenterIds !== null) {
             if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
@@ -77,16 +109,29 @@ class StudentService implements StudentServiceInterface
             $classId,
             $status,
             $perPage,
-            $page
+            $page,
+            $allowedClassIds
         );
     }
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array
     {
+        if ($teacher) {
+            $teacherClassIds = $this->getTeacherClassIds($teacher);
+            $classes         = \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']);
+            $centers         = $teacher->center_id ? $this->centerRepository->getByIds([(int) $teacher->center_id], ['id', 'name', 'code']) : [];
+
+            return [
+                'centers' => $centers,
+                'classes' => $classes,
+            ];
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null) {
@@ -106,15 +151,25 @@ class StudentService implements StudentServiceInterface
     /**
      * @param  int          $id
      * @param  ?Admin       $admin
+     * @param  ?Teacher     $teacher
      * @return Student|null
      */
-    public function findStudent(int $id, ?Admin $admin = null): ?Student
+    public function findStudent(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?Student
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
         $student          = $this->studentRepository->find($id, $allowedCenterIds);
 
         if (! $student) {
             throw new NotFoundHttpException('Không tìm thấy học sinh hoặc bạn không có quyền truy cập.');
+        }
+
+        if ($teacher) {
+            $teacherClassIds = $this->getTeacherClassIds($teacher);
+            $hasAccess       = $student->classes()->whereIn('classes.id', $teacherClassIds)->exists();
+
+            if (! $hasAccess) {
+                throw new NotFoundHttpException('Không tìm thấy học sinh hoặc bạn không có quyền truy cập.');
+            }
         }
 
         return $student;

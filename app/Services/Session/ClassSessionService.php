@@ -13,7 +13,6 @@ use App\Repositories\Subject\SubjectRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClassSessionService implements ClassSessionServiceInterface
@@ -65,13 +64,14 @@ class ClassSessionService implements ClassSessionServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  Admin|Teacher|null   $user
+     * @param  ?string              $dateScope
      * @return LengthAwarePaginator
      */
     public function getPaginatedSessions(
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?int $subjectId = null,
+        ?string $subjectId = null,
         ?int $teacherId = null,
         ?int $roomId = null,
         ?string $sessionDate = null,
@@ -80,7 +80,8 @@ class ClassSessionService implements ClassSessionServiceInterface
         ?string $status = null,
         int $perPage = 20,
         int $page = 1,
-        Admin|Teacher|null $user = null
+        Admin|Teacher|null $user = null,
+        ?string $dateScope = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($user);
 
@@ -104,6 +105,16 @@ class ClassSessionService implements ClassSessionServiceInterface
             $finalTeacherId = $user->id;
         }
 
+        // Xử lý phạm vi ngày: mặc định là từ hôm nay đến tương lai nếu không chọn ngày cụ thể
+        $finalDateFrom = $dateFrom;
+        $finalDateTo   = $dateTo;
+
+        $effectiveScope = $dateScope ?? 'from_today';
+
+        if ($effectiveScope === 'from_today' && empty($sessionDate) && empty($dateFrom) && empty($dateTo)) {
+            $finalDateFrom = Carbon::today()->toDateString();
+        }
+
         return $this->sessionRepository->paginate(
             $search,
             $finalCenterIds,
@@ -112,8 +123,8 @@ class ClassSessionService implements ClassSessionServiceInterface
             $finalTeacherId,
             $roomId,
             $sessionDate,
-            $dateFrom,
-            $dateTo,
+            $finalDateFrom,
+            $finalDateTo,
             $status,
             $perPage,
             $page
@@ -233,14 +244,14 @@ class ClassSessionService implements ClassSessionServiceInterface
                 $centerId = $session->classSubject?->schoolClass?->center_id;
 
                 if ($centerId && ! in_array($centerId, $allowed, true)) {
-                    throw new AccessDeniedHttpException('Bạn không có quyền truy cập buổi học này.');
+                    throw new NotFoundHttpException('Không tìm thấy buổi học hoặc bạn không có quyền truy cập.');
                 }
             }
         } elseif ($user instanceof Teacher) {
-            $centerId = $session->classSubject?->schoolClass?->center_id;
+            $assignedTeacherId = $session->teacher_id ?? $session->classSubject?->teacher_id;
 
-            if ($centerId && $centerId !== (int) $user->center_id) {
-                throw new AccessDeniedHttpException('Bạn không có quyền truy cập buổi học này.');
+            if ($assignedTeacherId !== $user->id && $session->classSubject?->teacher_id !== $user->id) {
+                throw new NotFoundHttpException('Không tìm thấy buổi học hoặc bạn không có quyền truy cập.');
             }
         }
     }
@@ -251,6 +262,20 @@ class ClassSessionService implements ClassSessionServiceInterface
      */
     public function getFilterFormData(Admin|Teacher|null $user = null): array
     {
+        if ($user instanceof Teacher) {
+            $teacherClassIds   = $user->classSubjects()->pluck('class_id')->unique()->toArray();
+            $teacherSubjectIds = $user->classSubjects()->pluck('subject_id')->unique()->toArray();
+            $allowedCenterIds  = $user->center_id ? [(int) $user->center_id] : [];
+
+            return [
+                'centers'  => $this->centerRepository->getActiveCenters($allowedCenterIds),
+                'classes'  => \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']),
+                'subjects' => \App\Models\Subject::whereIn('id', $teacherSubjectIds)->get(['id', 'name', 'code', 'center_id']),
+                'teachers' => [],
+                'rooms'    => [],
+            ];
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($user);
 
         return [

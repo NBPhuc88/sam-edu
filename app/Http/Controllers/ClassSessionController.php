@@ -47,12 +47,13 @@ class ClassSessionController extends Controller
         $search      = $request->input('search');
         $centerId    = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId     = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $subjectId   = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
+        $subjectId   = $request->input('subject_id') ? (string) $request->input('subject_id') : null;
         $teacherId   = $request->input('teacher_id') ? (int) $request->input('teacher_id') : null;
         $roomId      = $request->input('room_id') ? (int) $request->input('room_id') : null;
         $sessionDate = $request->input('session_date');
         $dateFrom    = $request->input('date_from');
         $dateTo      = $request->input('date_to');
+        $dateScope   = $request->input('date_scope', 'from_today');
         $status      = $request->input('status');
         $page        = $request->integer('page', 1);
         $perPage     = $request->integer('per_page', config('app.pagination_per_page', 20));
@@ -61,7 +62,7 @@ class ClassSessionController extends Controller
             is_string($search) ? $search : null,
             $centerId,
             $classId,
-            $subjectId,
+            $subjectId ? (int) $subjectId : null,
             $teacherId,
             $roomId,
             is_string($sessionDate) ? $sessionDate : null,
@@ -70,19 +71,21 @@ class ClassSessionController extends Controller
             is_string($status) ? $status : null,
             $perPage,
             $page,
-            $user
+            $user,
+            $dateScope
         );
 
         $formData = $this->sessionService->getFilterFormData($user);
 
         return Inertia::render('Admin/Sessions/Index', [
-            'sessions' => $sessions,
-            'centers'  => $formData['centers'],
-            'classes'  => $formData['classes'],
-            'subjects' => $formData['subjects'],
-            'teachers' => $formData['teachers'],
-            'rooms'    => $formData['rooms'],
-            'filters'  => array_filter([
+            'sessions'  => $sessions,
+            'centers'   => $formData['centers'],
+            'classes'   => $formData['classes'],
+            'subjects'  => $formData['subjects'],
+            'teachers'  => $formData['teachers'],
+            'rooms'     => $formData['rooms'],
+            'isTeacher' => ($user instanceof Teacher),
+            'filters'   => array_filter([
                 'search'       => $search,
                 'center_id'    => $centerId,
                 'class_id'     => $classId,
@@ -92,6 +95,7 @@ class ClassSessionController extends Controller
                 'session_date' => $sessionDate,
                 'date_from'    => $dateFrom,
                 'date_to'      => $dateTo,
+                'date_scope'   => $dateScope,
                 'status'       => ($status && $status !== 'all') ? $status : null,
                 'per_page'     => $perPage !== 20 ? $perPage : null,
             ], fn ($val) => $val !== null && $val !== ''),

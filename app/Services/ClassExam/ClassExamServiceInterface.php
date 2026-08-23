@@ -4,6 +4,7 @@ namespace App\Services\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface ClassExamServiceInterface
@@ -18,6 +19,7 @@ interface ClassExamServiceInterface
      * @param  int                             $perPage
      * @param  int                             $page
      * @param  ?Admin                          $admin
+     * @param  ?Teacher                        $teacher
      */
     public function getPaginatedClassExams(
         ?string $search = null,
@@ -27,35 +29,40 @@ interface ClassExamServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator;
 
-    public function findClassExam(int $id, ?Admin $admin = null): ClassExam;
+    public function findClassExam(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam;
 
     /**
      * @param array<string, mixed> $data
      * @param ?Admin               $admin
+     * @param ?Teacher             $teacher
      */
-    public function createClassExam(array $data, ?Admin $admin = null): ClassExam;
+    public function createClassExam(array $data, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam;
 
     /**
      * @param array<string, mixed> $data
      * @param int                  $id
      * @param ?Admin               $admin
+     * @param ?Teacher             $teacher
      */
-    public function updateClassExam(int $id, array $data, ?Admin $admin = null): ClassExam;
+    public function updateClassExam(int $id, array $data, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam;
 
-    public function deleteClassExam(int $id, ?Admin $admin = null): bool;
+    public function deleteClassExam(int $id, ?Admin $admin = null, ?Teacher $teacher = null): bool;
 
     /**
      * @return array{centers: \Illuminate\Database\Eloquent\Collection<int, \App\Models\Center>, classes: \Illuminate\Database\Eloquent\Collection<int, \App\Models\SchoolClass>, exams: \Illuminate\Database\Eloquent\Collection<int, \App\Models\Exam>}
      * @param  ?Admin                                                                                                                                                                                                                                     $admin
+     * @param  ?Teacher                                                                                                                                                                                                                                   $teacher
      */
-    public function getFormData(?Admin $admin = null): array;
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array;
 
     /**
      * @return array{total: int, scheduled: int, ongoing: int, completed: int}
      * @param  ?Admin                                                          $admin
+     * @param  ?Teacher                                                        $teacher
      */
-    public function getStats(?Admin $admin = null): array;
+    public function getStats(?Admin $admin = null, ?Teacher $teacher = null): array;
 }

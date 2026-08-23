@@ -7,8 +7,11 @@ import {
     Calendar,
     DollarSign,
     Wallet,
+    Clock,
+    ArrowRight,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import {
     ResponsiveContainer,
     BarChart,
@@ -289,36 +292,160 @@ export const Dashboard: React.FC<any> = (props) => {
     // Render Teacher Dashboard
     if (role === 'teacher') {
         const weeklySchedule = props.weekly_schedule || [];
+        const myClassesCount = stats.my_classes || 0;
+        const myStudentsCount = stats.my_students || 0;
+
+        // Current time in HH:mm
+        const now = new Date();
+        const currentHours = String(now.getHours()).padStart(2, '0');
+        const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTimeStr = `${currentHours}:${currentMinutes}`;
 
         return (
             <AppLayout title="Bảng Điều Khiển - Giáo Viên">
                 <div className="space-y-8">
-                    <Card className="border-gray-200 bg-white p-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Lịch Giảng Dạy Trong Tuần</h2>
-                        <p className="mt-1 text-sm text-gray-500">Danh sách các ca dạy theo lớp và môn học được phân công.</p>
-                    </Card>
+                    {/* Header Banner & Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <Card className="border-gray-200 bg-white p-6 md:col-span-1 shadow-xs">
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-emerald-600" />
+                                <span>Lịch Giảng Dạy Tuần Này</span>
+                            </h2>
+                            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                                Nhấp vào các ca học hôm nay để chuyển nhanh đến màn hình điểm danh học sinh.
+                            </p>
+                        </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {weeklySchedule.map((dayItem: any) => (
-                            <Card key={dayItem.weekday} title={dayItem.day_name} className="bg-white border-gray-200">
-                                {dayItem.schedules && dayItem.schedules.length > 0 ? (
-                                    <div className="space-y-3 pt-2">
-                                        {dayItem.schedules.map((s: any) => (
-                                            <div key={s.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
-                                                <div className="font-bold text-gray-900 text-sm">{s.class_name}</div>
-                                                <div className="text-xs font-semibold text-emerald-700">{s.subject_name}</div>
-                                                <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
-                                                    <span>{s.room_name}</span>
-                                                    <span className="font-medium text-gray-700">{s.time}</span>
-                                                </div>
+                        <Card className="border-gray-200 bg-white p-6 shadow-xs flex items-center gap-4">
+                            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                                <BookOpen className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="text-2xs font-semibold text-gray-500 uppercase tracking-wider">Lớp Đang Phụ Trách</div>
+                                <div className="text-2xl font-black text-gray-900 mt-0.5">{myClassesCount} lớp</div>
+                            </div>
+                        </Card>
+
+                        <Card className="border-gray-200 bg-white p-6 shadow-xs flex items-center gap-4">
+                            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="text-2xs font-semibold text-gray-500 uppercase tracking-wider">Học Sinh Trung Tâm</div>
+                                <div className="text-2xl font-black text-gray-900 mt-0.5">{myStudentsCount} học sinh</div>
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Timetable Grid */}
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-emerald-600" />
+                                <span>Thời Khóa Biểu Giảng Dạy</span>
+                            </h3>
+                            <span className="text-xs font-medium text-gray-500">
+                                Giờ hiện tại: <strong className="text-emerald-700 font-mono">{currentTimeStr}</strong>
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+                            {weeklySchedule.map((dayItem: any) => {
+                                const isToday = Boolean(dayItem.is_today);
+
+                                return (
+                                    <div
+                                        key={dayItem.weekday}
+                                        className={`flex flex-col rounded-xl border transition-all duration-200 bg-white shadow-xs ${
+                                            isToday
+                                                ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                                                : 'border-gray-200'
+                                        }`}
+                                    >
+                                        {/* Day Header */}
+                                        <div
+                                            className={`p-3 border-b text-center rounded-t-xl ${
+                                                isToday
+                                                    ? 'bg-emerald-600 text-white font-bold'
+                                                    : 'bg-slate-50 border-gray-100 text-gray-800 font-semibold'
+                                            }`}
+                                        >
+                                            <div className="text-sm">{dayItem.day_name}</div>
+                                            <div className={`text-2xs mt-0.5 font-mono ${isToday ? 'text-emerald-100 font-semibold' : 'text-gray-500'}`}>
+                                                {dayItem.date ? dayItem.date.split('-').reverse().slice(0, 2).join('/') : ''}
+                                                {isToday && <span className="ml-1.5 px-1.5 py-0.2 bg-white text-emerald-800 rounded-full font-bold">Hôm nay</span>}
                                             </div>
-                                        ))}
+                                        </div>
+
+                                        {/* Schedule Boxes */}
+                                        <div className="p-2.5 flex-1 space-y-2.5 min-h-[160px]">
+                                            {dayItem.schedules && dayItem.schedules.length > 0 ? (
+                                                dayItem.schedules.map((s: any) => {
+                                                    const hasSessionId = Boolean(s.session_id);
+                                                    const isUpcomingOrOngoing = isToday && s.end_time >= currentTimeStr;
+
+                                                    // For today's sessions, provide direct navigation link
+                                                    if (isToday && hasSessionId) {
+                                                        return (
+                                                            <Link
+                                                                key={s.id}
+                                                                href={`/attendance/session/${s.session_id}`}
+                                                                className="block p-3 rounded-lg border border-emerald-300 bg-emerald-50/70 hover:bg-emerald-100/80 hover:border-emerald-500 hover:shadow-sm transition-all text-left group"
+                                                            >
+                                                                <div className="flex items-center justify-between gap-1 text-2xs font-bold text-emerald-900 font-mono pb-1 border-b border-emerald-200/60">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3 text-emerald-600" />
+                                                                        {s.time}
+                                                                    </span>
+                                                                    <span className="text-3xs bg-emerald-600 text-white px-1.5 py-0.5 rounded font-medium">
+                                                                        Điểm danh
+                                                                    </span>
+                                                                </div>
+                                                                <div className="font-bold text-gray-900 text-xs mt-1.5 group-hover:text-emerald-800 transition-colors">
+                                                                    {s.class_name}
+                                                                </div>
+                                                                <div className="text-2xs font-semibold text-emerald-700 mt-0.5">
+                                                                    {s.subject_name}
+                                                                </div>
+                                                                <div className="text-3xs text-gray-500 mt-1 flex items-center justify-between">
+                                                                    <span>{s.room_name}</span>
+                                                                    <ArrowRight className="w-3 h-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                </div>
+                                                            </Link>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <div
+                                                            key={s.id}
+                                                            className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1 text-left"
+                                                        >
+                                                            <div className="text-2xs font-semibold text-gray-600 font-mono flex items-center gap-1">
+                                                                <Clock className="w-2.5 h-2.5 text-gray-400" />
+                                                                {s.time}
+                                                            </div>
+                                                            <div className="font-bold text-gray-900 text-xs">
+                                                                {s.class_name}
+                                                            </div>
+                                                            <div className="text-2xs font-medium text-emerald-700">
+                                                                {s.subject_name}
+                                                            </div>
+                                                            <div className="text-3xs text-gray-500 pt-0.5">
+                                                                {s.room_name}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="h-full flex items-center justify-center text-center py-6">
+                                                    <p className="text-xs text-gray-400 italic">Không có ca</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                ) : (
-                                    <p className="text-sm text-gray-400 italic pt-2">Không có lịch dạy.</p>
-                                )}
-                            </Card>
-                        ))}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </AppLayout>

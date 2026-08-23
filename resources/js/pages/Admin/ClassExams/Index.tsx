@@ -45,7 +45,9 @@ interface Props {
         class_id?: number | null;
         exam_id?: number | null;
         status?: string;
+        per_page?: number;
     };
+    isTeacher?: boolean;
 }
 
 export default function ClassExamIndex({
@@ -55,6 +57,7 @@ export default function ClassExamIndex({
     exams = [],
     stats,
     filters,
+    isTeacher = false,
 }: Props) {
     const { can } = usePermission();
     const { auth } = usePage<any>().props;

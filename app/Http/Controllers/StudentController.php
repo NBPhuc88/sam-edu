@@ -7,6 +7,7 @@ use App\Http\Requests\Student\ImportCsvRequest;
 use App\Http\Requests\Student\StoreStudentRequest;
 use App\Http\Requests\Student\UpdateStudentRequest;
 use App\Models\Admin;
+use App\Models\Teacher;
 use App\Services\Student\StudentExportImportServiceInterface;
 use App\Services\Student\StudentServiceInterface;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StudentController extends Controller
 {
@@ -24,23 +26,25 @@ class StudentController extends Controller
     ) {
     }
 
-    protected function getAuthAdmin(): ?Admin
+    protected function getAuthUser(): array
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
+        /** @var Teacher|null $teacher */
+        $teacher = Auth::guard('teacher')->user();
 
-        return $admin;
+        return [$admin, $teacher];
     }
 
     public function index(FilterStudentRequest $request): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
-        $search   = $request->input('search');
-        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $status   = $request->input('status');
-        $page     = $request->integer('page', 1);
-        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
+        [$admin, $teacher] = $this->getAuthUser();
+        $search            = $request->input('search');
+        $centerId          = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId           = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $status            = $request->input('status');
+        $page              = $request->integer('page', 1);
+        $perPage           = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $students = $this->studentService->getPaginatedStudents(
             is_string($search) ? $search : null,
@@ -49,10 +53,11 @@ class StudentController extends Controller
             is_string($status) ? $status : null,
             $perPage,
             $page,
-            $admin
+            $admin,
+            $teacher
         );
 
-        $formData = $this->studentService->getFormData($admin);
+        $formData = $this->studentService->getFormData($admin, $teacher);
 
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
@@ -65,12 +70,18 @@ class StudentController extends Controller
                 'status'    => $status ?? 'all',
                 'per_page'  => $perPage,
             ],
+            'isTeacher' => (bool) $teacher,
         ]);
     }
 
     public function create(): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
         $formData = $this->studentService->getFormData($admin);
 
         return Inertia::render('Admin/Students/Create', [
@@ -80,7 +91,12 @@ class StudentController extends Controller
 
     public function store(StoreStudentRequest $request): RedirectResponse
     {
-        $admin   = $this->getAuthAdmin();
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
         $student = $this->studentService->createStudent($request->validated(), $admin);
 
         return redirect()->route('students.index')
@@ -89,7 +105,12 @@ class StudentController extends Controller
 
     public function edit(int $id): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
         $student  = $this->studentService->findStudent($id, $admin);
         $formData = $this->studentService->getFormData($admin);
 
@@ -101,7 +122,12 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, int $id): RedirectResponse
     {
-        $admin   = $this->getAuthAdmin();
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
         $student = $this->studentService->updateStudent($id, $request->validated(), $admin);
 
         return redirect()->route('students.index')
@@ -110,7 +136,12 @@ class StudentController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
         $this->studentService->deleteStudent($id, $admin);
 
         return redirect()->route('students.index')

@@ -4,6 +4,7 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
+use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
@@ -25,19 +26,24 @@ class SchoolClassService implements SchoolClassServiceInterface
 
     /**
      * @param  ?Admin          $admin
+     * @param  ?Teacher        $teacher
      * @return array<int>|null Null nghĩa là Super Admin (truy cập toàn bộ)
      */
-    protected function getAllowedCenterIds(?Admin $admin): ?array
+    protected function getAllowedCenterIds(?Admin $admin, ?Teacher $teacher = null): ?array
     {
-        if (! $admin) {
-            return [];
+        if ($admin) {
+            if ($admin->isSuperAdmin()) {
+                return null; // All centers
+            }
+
+            return $admin->centers()->pluck('centers.id')->toArray();
         }
 
-        if ($admin->isSuperAdmin()) {
-            return null; // All centers
+        if ($teacher) {
+            return $teacher->center_id ? [(int) $teacher->center_id] : [];
         }
 
-        return $admin->centers()->pluck('centers.id')->toArray();
+        return [];
     }
 
     /**
@@ -47,6 +53,7 @@ class SchoolClassService implements SchoolClassServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return LengthAwarePaginator
      */
     public function getPaginatedClasses(
@@ -55,9 +62,10 @@ class SchoolClassService implements SchoolClassServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
 
         if ($allowedCenterIds !== null) {
             if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
@@ -76,16 +84,28 @@ class SchoolClassService implements SchoolClassServiceInterface
             $centerIds,
             $status,
             $perPage,
-            $page
+            $page,
+            $teacher?->id
         );
     }
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array
     {
+        if ($teacher) {
+            $allowedCenterIds = $teacher->center_id ? [(int) $teacher->center_id] : [];
+
+            return [
+                'centers'  => $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']),
+                'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
+                'teachers' => $this->teacherRepository->getActiveTeachers($allowedCenterIds, ['id', 'full_name', 'teacher_code', 'center_id', 'phone']),
+            ];
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         return [
@@ -98,15 +118,24 @@ class SchoolClassService implements SchoolClassServiceInterface
     /**
      * @param  int              $id
      * @param  ?Admin           $admin
+     * @param  ?Teacher         $teacher
      * @return SchoolClass|null
      */
-    public function findClass(int $id, ?Admin $admin = null): ?SchoolClass
+    public function findClass(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?SchoolClass
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
         $schoolClass      = $this->schoolClassRepository->find($id, $allowedCenterIds);
 
         if (! $schoolClass) {
             throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
+        }
+
+        if ($teacher) {
+            $isAssigned = $schoolClass->classSubjects()->where('teacher_id', $teacher->id)->exists();
+
+            if (! $isAssigned) {
+                throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
+            }
         }
 
         return $schoolClass;
@@ -257,11 +286,12 @@ class SchoolClassService implements SchoolClassServiceInterface
      * @param  int                  $classId
      * @param  ?string              $weekDate
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null): array
+    public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null, ?Teacher $teacher = null): array
     {
-        $schoolClass = $this->findClass($classId, $admin);
+        $schoolClass = $this->findClass($classId, $admin, $teacher);
 
         // Nạp đầy đủ thông tin môn học và giáo viên
         $schoolClass->load([

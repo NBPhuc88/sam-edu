@@ -4,6 +4,7 @@ namespace App\Services\Student;
 
 use App\Models\Admin;
 use App\Models\Student;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface StudentServiceInterface
@@ -16,6 +17,7 @@ interface StudentServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return LengthAwarePaginator
      */
     public function getPaginatedStudents(
@@ -25,21 +27,24 @@ interface StudentServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator;
 
     /**
      * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array;
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array;
 
     /**
      * @param  int          $id
      * @param  ?Admin       $admin
+     * @param  ?Teacher     $teacher
      * @return Student|null
      */
-    public function findStudent(int $id, ?Admin $admin = null): ?Student;
+    public function findStudent(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?Student;
 
     /**
      * @param  array<string, mixed> $data

@@ -70,6 +70,7 @@ class StudentRepository implements StudentRepositoryInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
+     * @param  array<int>|null      $allowedClassIds
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -78,7 +79,8 @@ class StudentRepository implements StudentRepositoryInterface
         ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
-        int $page = 1
+        int $page = 1,
+        ?array $allowedClassIds = null
     ): LengthAwarePaginator {
         $query = Student::query()
             ->select(
@@ -107,6 +109,12 @@ class StudentRepository implements StudentRepositoryInterface
             } else {
                 $query->where('center_id', $centerIds);
             }
+        }
+
+        if ($allowedClassIds !== null) {
+            $query->whereHas('classStudents', function ($q) use ($allowedClassIds) {
+                $q->whereIn('class_id', $allowedClassIds);
+            });
         }
 
         if ($classId !== null && $classId > 0) {

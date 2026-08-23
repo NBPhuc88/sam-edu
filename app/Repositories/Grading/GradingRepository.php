@@ -18,13 +18,8 @@ class GradingRepository implements GradingRepositoryInterface
         $query = SchoolClass::query()->whereIn('status', [1, 2]);
 
         if ($teacher) {
-            $query->where(function (Builder $q) use ($teacher) {
-                $q->whereHas('classSubjects', function (Builder $sq) use ($teacher) {
-                    $sq->where('teacher_id', $teacher->id);
-                })
-                ->orWhereHas('classExams', function (Builder $eq) use ($teacher) {
-                    $eq->where('created_by_teacher_id', $teacher->id);
-                });
+            $query->whereHas('classSubjects', function (Builder $sq) use ($teacher) {
+                $sq->where('teacher_id', $teacher->id);
             });
         } elseif ($admin && ! $admin->isSuperAdmin()) {
             $centerIds = $admin->centers()->pluck('centers.id')->toArray();

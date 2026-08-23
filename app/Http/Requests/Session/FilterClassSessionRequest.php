@@ -31,6 +31,7 @@ class FilterClassSessionRequest extends FormRequest
             'session_date' => ['nullable', 'date_format:Y-m-d'],
             'date_from'    => ['nullable', 'date_format:Y-m-d'],
             'date_to'      => ['nullable', 'date_format:Y-m-d'],
+            'date_scope'   => ['nullable', 'string', 'in:all,from_today'],
             'status'       => ['nullable', 'string', 'in:all,scheduled,in_progress,completed,cancelled'],
             'page'         => ['nullable', 'integer', 'min:1'],
             'per_page'     => ['nullable', 'integer', 'min:1', 'max:100'],

@@ -4,13 +4,15 @@ namespace App\Services\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\ClassExam\ClassExamRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClassExamService implements ClassExamServiceInterface
 {
@@ -30,7 +32,8 @@ class ClassExamService implements ClassExamServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator {
         return $this->classExamRepository->getPaginatedClassExams(
             $search,
@@ -40,29 +43,41 @@ class ClassExamService implements ClassExamServiceInterface
             $status,
             $perPage,
             $page,
-            $admin
+            $admin,
+            $teacher
         );
     }
 
-    public function findClassExam(int $id, ?Admin $admin = null): ClassExam
+    public function findClassExam(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam
     {
-        $classExam = $this->classExamRepository->findById($id, $admin);
+        $classExam = $this->classExamRepository->findById($id, $admin, $teacher);
 
         if (! $classExam) {
-            throw new ModelNotFoundException("Không tìm thấy kỳ thi của lớp có ID #{$id}.");
+            throw new NotFoundHttpException("Không tìm thấy kỳ thi của lớp có ID #{$id} hoặc bạn không có quyền truy cập.");
         }
 
         return $classExam;
     }
 
-    public function createClassExam(array $data, ?Admin $admin = null): ClassExam
+    public function createClassExam(array $data, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam
     {
-        return DB::transaction(function () use ($data, $admin) {
+        return DB::transaction(function () use ($data, $admin, $teacher) {
+            // Nếu là giáo viên, kiểm tra xem có dạy lớp này không
+            if ($teacher) {
+                $isAssigned = \App\Models\SchoolClass::where('id', $data['class_id'])
+                    ->whereHas('classSubjects', fn ($q) => $q->where('teacher_id', $teacher->id))
+                    ->exists();
+
+                if (! $isAssigned) {
+                    throw new AccessDeniedHttpException('Bạn không có quyền tạo kỳ thi cho lớp học này.');
+                }
+            }
+
             // Lấy thông tin từ đề thi gốc qua Repository
             $exam = $this->examRepository->find($data['exam_id']);
 
             if (! $exam) {
-                throw new ModelNotFoundException("Không tìm thấy đề thi gốc với ID #{$data['exam_id']}");
+                throw new NotFoundHttpException("Không tìm thấy đề thi gốc với ID #{$data['exam_id']}");
             }
 
             // Sinh mã kỳ thi nếu chưa có (CE000000001)
@@ -80,32 +95,43 @@ class ClassExamService implements ClassExamServiceInterface
             $validTo   = "{$examDate} {$endTime}";
 
             $payload = [
-                'code'                => $code,
-                'access_code'         => $accessCode,
-                'class_id'            => $data['class_id'],
-                'exam_id'             => $exam->id,
-                'title'               => $data['title'],
-                'exam_date'           => $examDate,
-                'start_time'          => $data['start_time'] ?? null,
-                'end_time'            => $data['end_time'] ?? null,
-                'valid_from'          => $validFrom,
-                'valid_to'            => $validTo,
-                'duration_minutes'    => $data['duration_minutes'] ?? $exam->duration_minutes,
-                'max_score'           => $data['max_score'] ?? $exam->max_score,
-                'pass_score'          => $data['pass_score'] ?? $exam->pass_score,
-                'status'              => $data['status'] ?? 'scheduled',
-                'created_by_admin_id' => $admin?->id,
+                'code'                  => $code,
+                'access_code'           => $accessCode,
+                'class_id'              => $data['class_id'],
+                'exam_id'               => $exam->id,
+                'title'                 => $data['title'],
+                'exam_date'             => $examDate,
+                'start_time'            => $data['start_time'] ?? null,
+                'end_time'              => $data['end_time'] ?? null,
+                'valid_from'            => $validFrom,
+                'valid_to'              => $validTo,
+                'duration_minutes'      => $data['duration_minutes'] ?? $exam->duration_minutes,
+                'max_score'             => $data['max_score'] ?? $exam->max_score,
+                'pass_score'            => $data['pass_score'] ?? $exam->pass_score,
+                'status'                => $data['status'] ?? 'scheduled',
+                'created_by_admin_id'   => $admin?->id,
+                'created_by_teacher_id' => $teacher?->id,
             ];
 
             return $this->classExamRepository->create($payload);
         });
     }
 
-    public function updateClassExam(int $id, array $data, ?Admin $admin = null): ClassExam
+    public function updateClassExam(int $id, array $data, ?Admin $admin = null, ?Teacher $teacher = null): ClassExam
     {
-        $classExam = $this->findClassExam($id, $admin);
+        $classExam = $this->findClassExam($id, $admin, $teacher);
 
-        return DB::transaction(function () use ($classExam, $data) {
+        return DB::transaction(function () use ($classExam, $data, $teacher) {
+            if ($teacher && isset($data['class_id']) && (int) $data['class_id'] !== (int) $classExam->class_id) {
+                $isAssigned = \App\Models\SchoolClass::where('id', $data['class_id'])
+                    ->whereHas('classSubjects', fn ($q) => $q->where('teacher_id', $teacher->id))
+                    ->exists();
+
+                if (! $isAssigned) {
+                    throw new AccessDeniedHttpException('Bạn không có quyền chuyển kỳ thi sang lớp học này.');
+                }
+            }
+
             if (isset($data['exam_date'])) {
                 $examDate  = $data['exam_date'];
                 $startTime = ! empty($data['start_time']) ? $data['start_time'] : ($classExam->start_time ? $classExam->start_time->format('H:i:s') : '00:00:00');
@@ -119,17 +145,29 @@ class ClassExamService implements ClassExamServiceInterface
         });
     }
 
-    public function deleteClassExam(int $id, ?Admin $admin = null): bool
+    public function deleteClassExam(int $id, ?Admin $admin = null, ?Teacher $teacher = null): bool
     {
-        $classExam = $this->findClassExam($id, $admin);
+        $classExam = $this->findClassExam($id, $admin, $teacher);
 
         return DB::transaction(function () use ($classExam) {
             return $this->classExamRepository->delete($classExam);
         });
     }
 
-    public function getFormData(?Admin $admin = null): array
+    public function getFormData(?Admin $admin = null, ?Teacher $teacher = null): array
     {
+        if ($teacher) {
+            $teacherClassIds  = $teacher->classSubjects()->pluck('class_id')->unique()->toArray();
+            $classes          = \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']);
+            $managedCenterIds = $teacher->center_id ? [(int) $teacher->center_id] : null;
+
+            return [
+                'centers' => $this->centerRepository->getActiveCenters($managedCenterIds),
+                'classes' => $classes,
+                'exams'   => $this->examRepository->getPublishedExamsForDropdown($managedCenterIds),
+            ];
+        }
+
         $managedCenterIds = null;
 
         if ($admin && ! $admin->isSuperAdmin()) {
@@ -143,8 +181,8 @@ class ClassExamService implements ClassExamServiceInterface
         ];
     }
 
-    public function getStats(?Admin $admin = null): array
+    public function getStats(?Admin $admin = null, ?Teacher $teacher = null): array
     {
-        return $this->classExamRepository->getStats($admin);
+        return $this->classExamRepository->getStats($admin, $teacher);
     }
 }

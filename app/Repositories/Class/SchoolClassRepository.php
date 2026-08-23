@@ -17,6 +17,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
+     * @param  ?int                 $teacherId
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -24,7 +25,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         array|int|null $centerIds = null,
         ?string $status = null,
         int $perPage = 15,
-        int $page = 1
+        int $page = 1,
+        ?int $teacherId = null
     ): LengthAwarePaginator {
         $query = SchoolClass::query()
             ->select(
@@ -45,6 +47,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
             ->withCount('students');
+
+        if ($teacherId !== null) {
+            $query->whereHas('classSubjects', function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId);
+            });
+        }
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {

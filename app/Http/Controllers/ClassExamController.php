@@ -6,6 +6,7 @@ use App\Http\Requests\ClassExam\FilterClassExamRequest;
 use App\Http\Requests\ClassExam\StoreClassExamRequest;
 use App\Http\Requests\ClassExam\UpdateClassExamRequest;
 use App\Models\Admin;
+use App\Models\Teacher;
 use App\Services\ClassExam\ClassExamServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -19,24 +20,26 @@ class ClassExamController extends Controller
     ) {
     }
 
-    protected function getAuthAdmin(): ?Admin
+    protected function getAuthUser(): array
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
+        /** @var Teacher|null $teacher */
+        $teacher = Auth::guard('teacher')->user();
 
-        return $admin;
+        return [$admin, $teacher];
     }
 
     public function index(FilterClassExamRequest $request): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
-        $search   = $request->input('search');
-        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $examId   = $request->input('exam_id') ? (int) $request->input('exam_id') : null;
-        $status   = $request->input('status');
-        $page     = $request->integer('page', 1);
-        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 15));
+        [$admin, $teacher] = $this->getAuthUser();
+        $search            = $request->input('search');
+        $centerId          = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId           = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $examId            = $request->input('exam_id') ? (int) $request->input('exam_id') : null;
+        $status            = $request->input('status');
+        $page              = $request->integer('page', 1);
+        $perPage           = $request->integer('per_page', config('app.pagination_per_page', 15));
 
         $classExams = $this->classExamService->getPaginatedClassExams(
             is_string($search) ? $search : null,
@@ -46,10 +49,11 @@ class ClassExamController extends Controller
             is_string($status) ? $status : null,
             $perPage,
             $page,
-            $admin
+            $admin,
+            $teacher
         );
-        $formData = $this->classExamService->getFormData($admin);
-        $stats    = $this->classExamService->getStats($admin);
+        $formData = $this->classExamService->getFormData($admin, $teacher);
+        $stats    = $this->classExamService->getStats($admin, $teacher);
 
         return Inertia::render('Admin/ClassExams/Index', [
             'classExams' => $classExams,
@@ -65,13 +69,14 @@ class ClassExamController extends Controller
                 'status'    => $status ?? 'all',
                 'per_page'  => $perPage,
             ],
+            'isTeacher' => (bool) $teacher,
         ]);
     }
 
     public function store(StoreClassExamRequest $request): RedirectResponse
     {
-        $admin     = $this->getAuthAdmin();
-        $classExam = $this->classExamService->createClassExam($request->validated(), $admin);
+        [$admin, $teacher] = $this->getAuthUser();
+        $classExam         = $this->classExamService->createClassExam($request->validated(), $admin, $teacher);
 
         return redirect()->back()
             ->with('success', "Gán bài thi '{$classExam->title}' cho lớp {$classExam->schoolClass?->name} thành công!");
@@ -79,8 +84,8 @@ class ClassExamController extends Controller
 
     public function update(UpdateClassExamRequest $request, int $id): RedirectResponse
     {
-        $admin     = $this->getAuthAdmin();
-        $classExam = $this->classExamService->updateClassExam($id, $request->validated(), $admin);
+        [$admin, $teacher] = $this->getAuthUser();
+        $classExam         = $this->classExamService->updateClassExam($id, $request->validated(), $admin, $teacher);
 
         return redirect()->back()
             ->with('success', "Cập nhật kỳ thi '{$classExam->title}' thành công!");
@@ -88,8 +93,8 @@ class ClassExamController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
-        $this->classExamService->deleteClassExam($id, $admin);
+        [$admin, $teacher] = $this->getAuthUser();
+        $this->classExamService->deleteClassExam($id, $admin, $teacher);
 
         return redirect()->back()
             ->with('success', 'Đã hủy / xóa kỳ thi của lớp thành công!');

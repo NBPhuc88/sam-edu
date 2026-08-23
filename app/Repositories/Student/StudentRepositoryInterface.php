@@ -31,6 +31,7 @@ interface StudentRepositoryInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
+     * @param  array<int>|null      $allowedClassIds
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -39,7 +40,8 @@ interface StudentRepositoryInterface
         ?int $classId = null,
         ?string $status = null,
         int $perPage = 15,
-        int $page = 1
+        int $page = 1,
+        ?array $allowedClassIds = null
     ): LengthAwarePaginator;
 
     /**

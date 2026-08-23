@@ -10,7 +10,6 @@ use App\Repositories\Grading\GradingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class GradingService implements GradingServiceInterface
 {
@@ -202,7 +201,7 @@ class GradingService implements GradingServiceInterface
                 return;
             }
 
-            throw ValidationException::withMessages(['unauthorized' => 'Bạn không quản lý trung tâm của bài thi này.']);
+            throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Không tìm thấy bài thi hoặc bạn không có quyền truy cập.');
         }
 
         if ($teacher) {
@@ -216,9 +215,9 @@ class GradingService implements GradingServiceInterface
                 return;
             }
 
-            throw ValidationException::withMessages(['unauthorized' => 'Bạn không có quyền chấm bài cho lớp học này.']);
+            throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Không tìm thấy bài thi hoặc bạn không có quyền truy cập.');
         }
 
-        throw ValidationException::withMessages(['unauthorized' => 'Vui lòng đăng nhập với tư cách giáo viên hoặc quản trị viên.']);
+        throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Vui lòng đăng nhập với tư cách giáo viên hoặc quản trị viên.');
     }
 }

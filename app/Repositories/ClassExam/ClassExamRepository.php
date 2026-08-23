@@ -4,6 +4,7 @@ namespace App\Repositories\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ClassExamRepository implements ClassExamRepositoryInterface
@@ -16,7 +17,8 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator {
         $query = ClassExam::query()
             ->select(
@@ -43,8 +45,10 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'createdByAdmin:id,full_name,admin_code',
             ]);
 
-        // Scope by admin center
-        if ($admin && ! $admin->isSuperAdmin()) {
+        // Scope by teacher or admin center
+        if ($teacher) {
+            $query->where('created_by_teacher_id', $teacher->id);
+        } elseif ($admin && ! $admin->isSuperAdmin()) {
             $managedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
             $query->whereHas('schoolClass', function ($q) use ($managedCenterIds) {
                 $q->whereIn('center_id', $managedCenterIds);
@@ -86,7 +90,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             ->paginate($perPage, ['*'], 'page', $page);
     }
 
-    public function findById(int $id, ?Admin $admin = null): ?ClassExam
+    public function findById(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?ClassExam
     {
         $query = ClassExam::query()
             ->select(
@@ -116,7 +120,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'createdByAdmin:id,full_name,admin_code',
             ]);
 
-        if ($admin && ! $admin->isSuperAdmin()) {
+        if ($teacher) {
+            $query->where('created_by_teacher_id', $teacher->id);
+        } elseif ($admin && ! $admin->isSuperAdmin()) {
             $managedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
             $query->whereHas('schoolClass', function ($q) use ($managedCenterIds) {
                 $q->whereIn('center_id', $managedCenterIds);
@@ -143,11 +149,13 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         return (bool) $classExam->delete();
     }
 
-    public function getStats(?Admin $admin = null): array
+    public function getStats(?Admin $admin = null, ?Teacher $teacher = null): array
     {
         $query = ClassExam::query();
 
-        if ($admin && ! $admin->isSuperAdmin()) {
+        if ($teacher) {
+            $query->where('created_by_teacher_id', $teacher->id);
+        } elseif ($admin && ! $admin->isSuperAdmin()) {
             $managedCenterIds = $admin->centers()
             ->pluck('centers.id')
             ->toArray();

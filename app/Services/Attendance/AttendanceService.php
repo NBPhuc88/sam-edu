@@ -6,7 +6,6 @@ use App\Models\Admin;
 use App\Models\Teacher;
 use App\Repositories\Attendance\AttendanceRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AttendanceService implements AttendanceServiceInterface
@@ -36,16 +35,13 @@ class AttendanceService implements AttendanceServiceInterface
             $centerId         = $session->classSubject?->schoolClass?->center_id;
 
             if ($centerId && ! in_array($centerId, $allowedCenterIds, true)) {
-                throw new AccessDeniedHttpException('Bạn không có quyền truy cập ca học này.');
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
             }
         } elseif ($user instanceof Teacher) {
             $assignedTeacherId = $session->teacher_id ?? $session->classSubject?->teacher_id;
 
-            if ($assignedTeacherId !== $user->id) {
-                // If it's another teacher, allow viewing if same center or restrict
-                if ($session->classSubject?->schoolClass?->center_id !== $user->center_id) {
-                    throw new AccessDeniedHttpException('Bạn không có quyền truy cập ca học này.');
-                }
+            if ($assignedTeacherId !== $user->id && $session->classSubject?->teacher_id !== $user->id) {
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
             }
         }
 
@@ -111,6 +107,22 @@ class AttendanceService implements AttendanceServiceInterface
 
         if (! $session) {
             throw new NotFoundHttpException("Không tìm thấy ca học với ID #{$sessionId}");
+        }
+
+        // Check permissions
+        if ($user instanceof Admin && ! $user->isSuperAdmin()) {
+            $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
+            $centerId         = $session->classSubject?->schoolClass?->center_id;
+
+            if ($centerId && ! in_array($centerId, $allowedCenterIds, true)) {
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
+            }
+        } elseif ($user instanceof Teacher) {
+            $assignedTeacherId = $session->teacher_id ?? $session->classSubject?->teacher_id;
+
+            if ($assignedTeacherId !== $user->id && $session->classSubject?->teacher_id !== $user->id) {
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
+            }
         }
 
         $markedByTeacherId = ($user instanceof Teacher) ? $user->id : null;

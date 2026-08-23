@@ -78,9 +78,16 @@ interface Props {
         status?: string;
         per_page?: number;
     };
+    isTeacher?: boolean;
 }
 
-export default function StudentIndex({ students, centers = [], classes = [], filters }: Props) {
+export default function StudentIndex({
+    students,
+    centers = [],
+    classes = [],
+    filters,
+    isTeacher = false,
+}: Props) {
     const { can } = usePermission();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
@@ -402,7 +409,11 @@ return;
                                     <th className="px-6 py-4">Học Sinh</th>
                                     <th className="px-6 py-4">Tài Khoản & Liên Hệ</th>
                                     <th className="px-6 py-4">Phụ Huynh</th>
-                                    <th className="px-6 py-4">Trung Tâm</th>
+                                    {isSuperAdmin ? (
+                                        <th className="px-6 py-4">Trung Tâm</th>
+                                    ) : (
+                                        <th className="px-6 py-4">Lớp Học</th>
+                                    )}
                                     <th className="px-6 py-4">Ngày Nhập Học</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
                                     {(can('students.edit') || can('students.delete')) && (
@@ -431,7 +442,7 @@ return;
                                                         <div className="font-mono text-xs text-gray-400">
                                                             Mã: {student.student_code} • {getGenderLabel(student.gender)}
                                                         </div>
-                                                        {student.classes && student.classes.length > 0 && (
+                                                        {isSuperAdmin && student.classes && student.classes.length > 0 && (
                                                             <div className="mt-1 flex flex-wrap gap-1">
                                                                 {student.classes.map((cls) => (
                                                                     <Tooltip
@@ -486,20 +497,41 @@ return;
                                                 )}
                                             </td>
 
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-[180px]">
-                                                    <TruncatedText
-                                                        text={student.center?.name || 'N/A'}
-                                                        maxLines={1}
-                                                        className="font-semibold text-gray-800"
-                                                    />
-                                                    {student.center?.code && (
-                                                        <div className="font-mono text-xs text-gray-400">
-                                                            {student.center.code}
+                                            {isSuperAdmin ? (
+                                                <td className="px-6 py-4">
+                                                    <div className="max-w-[180px]">
+                                                        <TruncatedText
+                                                            text={student.center?.name || 'N/A'}
+                                                            maxLines={1}
+                                                            className="font-semibold text-gray-800"
+                                                        />
+                                                        {student.center?.code && (
+                                                            <div className="font-mono text-xs text-gray-400">
+                                                                {student.center.code}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            ) : (
+                                                <td className="px-6 py-4">
+                                                    {student.classes && student.classes.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                                                            {student.classes.map((cls) => (
+                                                                <Tooltip
+                                                                    key={cls.id}
+                                                                    content={`Lớp: ${cls.name} (${cls.code})`}
+                                                                >
+                                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 max-w-[160px] truncate">
+                                                                        {cls.name}
+                                                                    </span>
+                                                                </Tooltip>
+                                                            ))}
                                                         </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Chưa xếp lớp</span>
                                                     )}
-                                                </div>
-                                            </td>
+                                                </td>
+                                            )}
 
                                             <td className="px-6 py-4 font-mono text-gray-600">
                                                 {student.admission_date || '-'}

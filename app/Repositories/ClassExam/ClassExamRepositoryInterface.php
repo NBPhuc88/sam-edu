@@ -4,6 +4,7 @@ namespace App\Repositories\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface ClassExamRepositoryInterface
@@ -18,6 +19,7 @@ interface ClassExamRepositoryInterface
      * @param  int                             $perPage
      * @param  int                             $page
      * @param  ?Admin                          $admin
+     * @param  ?Teacher                        $teacher
      */
     public function getPaginatedClassExams(
         ?string $search = null,
@@ -27,10 +29,11 @@ interface ClassExamRepositoryInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
     ): LengthAwarePaginator;
 
-    public function findById(int $id, ?Admin $admin = null): ?ClassExam;
+    public function findById(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?ClassExam;
 
     /**
      * @param array<string, mixed> $data
@@ -48,8 +51,9 @@ interface ClassExamRepositoryInterface
     /**
      * @return array{total: int, scheduled: int, ongoing: int, completed: int}
      * @param  ?Admin                                                          $admin
+     * @param  ?Teacher                                                        $teacher
      */
-    public function getStats(?Admin $admin = null): array;
+    public function getStats(?Admin $admin = null, ?Teacher $teacher = null): array;
 
     public function findByCodeOrAccessCode(string $code): ?ClassExam;
 

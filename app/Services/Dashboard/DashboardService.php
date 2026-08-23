@@ -275,11 +275,15 @@ class DashboardService implements DashboardServiceInterface
 
     /**
      * Giáo viên - Lịch dạy trong tuần
-     * @param  int                                                                             $teacherId
-     * @return array<int, array{day_name: string, weekday: int, schedules: array<int, mixed>}>
+     * @param  int                                                                                                           $teacherId
+     * @return array<int, array{day_name: string, weekday: int, date: string, is_today: bool, schedules: array<int, mixed>}>
      */
     protected function getTeacherWeeklySchedule(int $teacherId): array
     {
+        $startOfWeek = now()->startOfWeek(); // Monday
+        $endOfWeek   = now()->endOfWeek();   // Sunday
+        $todayStr    = now()->toDateString();
+
         $weekdays = [
             1 => 'Thứ 2',
             2 => 'Thứ 3',
@@ -290,28 +294,86 @@ class DashboardService implements DashboardServiceInterface
             7 => 'Chủ Nhật',
         ];
 
-        $teacherSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
+        // Lấy các ca học thực tế trong tuần của giáo viên
+        $sessions = \App\Models\ClassSession::query()
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'room:id,name',
+            ])
+            ->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)
+                    ->orWhereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+            })
+            ->whereBetween('session_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get();
+
+        // Lấy thêm lịch học định kỳ nếu chưa có sessions
+        $recurringSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
 
         $result = [];
 
         foreach ($weekdays as $dayCode => $dayName) {
-            $daySchedules = $teacherSchedules->where('weekday', $dayCode)->values();
+            $dayDate = $startOfWeek->copy()->addDays($dayCode - 1)->toDateString();
+            $isToday = ($dayDate === $todayStr);
+            $daySess = $sessions->where('session_date', $dayDate)->values();
 
             $mapped = [];
 
-            foreach ($daySchedules as $sched) {
-                $mapped[] = [
-                    'id'           => $sched->id,
-                    'class_name'   => $sched->classSubject->schoolClass->name ?? 'Lớp học',
-                    'subject_name' => $sched->classSubject->subject->name ?? 'Môn học',
-                    'room_name'    => $sched->room->name ?? 'Phòng học',
-                    'time'         => "{$sched->start_time} - {$sched->end_time}",
-                ];
+            if ($daySess->isNotEmpty()) {
+                foreach ($daySess as $sess) {
+                    $startTimeStr = $sess->start_time ? (is_string($sess->start_time) ? substr($sess->start_time, 0, 5) : $sess->start_time->format('H:i')) : '08:00';
+                    $endTimeStr   = $sess->end_time ? (is_string($sess->end_time) ? substr($sess->end_time, 0, 5) : $sess->end_time->format('H:i')) : '09:30';
+
+                    $mapped[] = [
+                        'id'           => $sess->id,
+                        'session_id'   => $sess->id,
+                        'session_date' => $dayDate,
+                        'start_time'   => $startTimeStr,
+                        'end_time'     => $endTimeStr,
+                        'time'         => "{$startTimeStr} - {$endTimeStr}",
+                        'class_id'     => $sess->classSubject?->schoolClass?->id,
+                        'class_name'   => $sess->classSubject?->schoolClass?->name ?? 'Lớp học',
+                        'class_code'   => $sess->classSubject?->schoolClass?->code,
+                        'subject_name' => $sess->classSubject?->subject?->name ?? 'Môn học',
+                        'room_name'    => $sess->room?->name ?? 'Phòng học',
+                        'status'       => $sess->status ?? 'scheduled',
+                        'is_today'     => $isToday,
+                    ];
+                }
+            } else {
+                // Fallback to recurring schedule for this weekday
+                $dayRecurring = $recurringSchedules->where('weekday', $dayCode)->values();
+
+                foreach ($dayRecurring as $sched) {
+                    $startTimeStr = $sched->start_time ? substr($sched->start_time, 0, 5) : '08:00';
+                    $endTimeStr   = $sched->end_time ? substr($sched->end_time, 0, 5) : '09:30';
+
+                    $mapped[] = [
+                        'id'           => $sched->id,
+                        'session_id'   => null,
+                        'session_date' => $dayDate,
+                        'start_time'   => $startTimeStr,
+                        'end_time'     => $endTimeStr,
+                        'time'         => "{$startTimeStr} - {$endTimeStr}",
+                        'class_id'     => $sched->classSubject?->schoolClass?->id,
+                        'class_name'   => $sched->classSubject?->schoolClass?->name ?? 'Lớp học',
+                        'class_code'   => $sched->classSubject?->schoolClass?->code,
+                        'subject_name' => $sched->classSubject?->subject?->name ?? 'Môn học',
+                        'room_name'    => $sched->room?->name ?? 'Phòng học',
+                        'status'       => 'scheduled',
+                        'is_today'     => $isToday,
+                    ];
+                }
             }
 
             $result[] = [
                 'day_name'  => $dayName,
                 'weekday'   => $dayCode,
+                'date'      => $dayDate,
+                'is_today'  => $isToday,
                 'schedules' => $mapped,
             ];
         }

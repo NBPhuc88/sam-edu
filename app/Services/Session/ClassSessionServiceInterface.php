@@ -23,6 +23,7 @@ interface ClassSessionServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  Admin|Teacher|null   $user
+     * @param  ?string              $dateScope
      * @return LengthAwarePaginator
      */
     public function getPaginatedSessions(
@@ -38,7 +39,8 @@ interface ClassSessionServiceInterface
         ?string $status = null,
         int $perPage = 20,
         int $page = 1,
-        Admin|Teacher|null $user = null
+        Admin|Teacher|null $user = null,
+        ?string $dateScope = null
     ): LengthAwarePaginator;
 
     /**
