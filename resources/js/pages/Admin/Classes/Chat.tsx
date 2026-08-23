@@ -5,14 +5,13 @@ import {
     PinOff,
     Send,
     ArrowLeft,
-    MessageSquare,
-    ShieldCheck,
-    GraduationCap,
-    User,
-    Wifi,
+    Smile,
+    Paperclip,
+    Palette,
+    Check,
+    X,
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-import Button from '@/components/ui/Button';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
 
@@ -44,6 +43,7 @@ interface ChatMessageData {
     pinned_by_name: string | null;
     created_at: string;
     time_formatted: string;
+    reaction?: string | null;
 }
 
 interface Props {
@@ -51,6 +51,152 @@ interface Props {
     currentUser: CurrentUser;
     initialMessages: ChatMessageData[];
     initialPinnedMessage: ChatMessageData | null;
+}
+
+// Telegram Sender Name Distinct Colors
+const SENDER_COLORS = [
+    'text-[#e11d48]', // Rose / Red (e.g. Phạm Quốc Việt)
+    'text-[#d97706]', // Amber / Orange (e.g. Lê Khánh Linh)
+    'text-[#16a34a]', // Emerald / Green (e.g. Gryffindor Cuong)
+    'text-[#ea580c]', // Coral / Orange-Red (e.g. Nam heli)
+    'text-[#2563eb]', // Blue
+    'text-[#9333ea]', // Purple
+    'text-[#0891b2]', // Cyan
+    'text-[#db2777]', // Pink
+    'text-[#4f46e5]', // Indigo
+];
+
+const AVATAR_BG_COLORS = [
+    'bg-[#f59e0b]', // Amber
+    'bg-[#3b82f6]', // Blue
+    'bg-[#10b981]', // Emerald
+    'bg-[#ef4444]', // Red
+    'bg-[#8b5cf6]', // Purple
+    'bg-[#ec4899]', // Pink
+    'bg-[#06b6d4]', // Cyan
+    'bg-[#14b8a6]', // Teal
+];
+
+export interface ChatTheme {
+    id: string;
+    name: string;
+    bgColor: string;
+    previewColor: string;
+    patternOpacity: number;
+    selfBubbleClass: string;
+    selfTextClass: string;
+    badge: string;
+}
+
+export const CHAT_THEMES: ChatTheme[] = [
+    {
+        id: 'classic_green',
+        name: 'Xanh Cổ Điển (Mặc định)',
+        bgColor: '#7ba97e',
+        previewColor: '#7ba97e',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#effdde]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Telegram',
+    },
+    {
+        id: 'ocean_teal',
+        name: 'Đại Dương Xanh',
+        bgColor: '#4a8b94',
+        previewColor: '#4a8b94',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#daf0f2]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Tươi Mát',
+    },
+    {
+        id: 'sky_blue',
+        name: 'Bầu Trời Xanh',
+        bgColor: '#5c92b8',
+        previewColor: '#5c92b8',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#e2f0fc]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Thanh Nhã',
+    },
+    {
+        id: 'midnight_dark',
+        name: 'Đêm Huyền Bí',
+        bgColor: '#1a242f',
+        previewColor: '#1a242f',
+        patternOpacity: 0.12,
+        selfBubbleClass: 'bg-[#2b5278]',
+        selfTextClass: 'text-white',
+        badge: 'Dark Mode',
+    },
+    {
+        id: 'lavender_purple',
+        name: 'Tím Oải Hương',
+        bgColor: '#786b8b',
+        previewColor: '#786b8b',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#f0e6ff]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Mộng Mơ',
+    },
+    {
+        id: 'sunset_warm',
+        name: 'Hoàng Hôn Ấm Áp',
+        bgColor: '#ba755e',
+        previewColor: '#ba755e',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#fceed8]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Ấm Áp',
+    },
+    {
+        id: 'sakura_pink',
+        name: 'Hồng Hoa Anh Đào',
+        bgColor: '#ba7684',
+        previewColor: '#ba7684',
+        patternOpacity: 0.16,
+        selfBubbleClass: 'bg-[#ffe8ee]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Dễ Thương',
+    },
+    {
+        id: 'minimal_slate',
+        name: 'Xám Tối Giản',
+        bgColor: '#526173',
+        previewColor: '#526173',
+        patternOpacity: 0.14,
+        selfBubbleClass: 'bg-[#e7eff9]',
+        selfTextClass: 'text-gray-900',
+        badge: 'Hiện Đại',
+    },
+];
+
+function getSenderColor(name: string, id: number): string {
+    const hash = (id * 37 + name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % SENDER_COLORS.length;
+    return SENDER_COLORS[Math.abs(hash)];
+}
+
+function getAvatarBgColor(name: string, id: number): string {
+    const hash = (id * 19 + name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % AVATAR_BG_COLORS.length;
+    return AVATAR_BG_COLORS[Math.abs(hash)];
+}
+
+function getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+function isImageOrSticker(text: string): boolean {
+    if (!text) return false;
+    const trimmed = text.trim();
+    return (
+        /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(trimmed) ||
+        trimmed.startsWith('data:image/')
+    );
 }
 
 export default function ClassChatPage({
@@ -68,8 +214,27 @@ export default function ClassChatPage({
     const [inputMessage, setInputMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [wsConnected, setWsConnected] = useState(true);
+    const [selectedThemeId, setSelectedThemeId] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('sam_chat_wallpaper_theme') || 'classic_green';
+        }
+        return 'classic_green';
+    });
+    const [showThemeModal, setShowThemeModal] = useState(false);
+
+    const activeTheme =
+        CHAT_THEMES.find((t) => t.id === selectedThemeId) || CHAT_THEMES[0];
+
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+    const handleSelectTheme = (themeId: string) => {
+        setSelectedThemeId(themeId);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('sam_chat_wallpaper_theme', themeId);
+        }
+        setShowThemeModal(false);
+    };
 
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         messagesEndRef.current?.scrollIntoView({ behavior });
@@ -186,111 +351,127 @@ export default function ClassChatPage({
         const elem = messageRefs.current[messageId];
         if (elem) {
             elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            elem.classList.add('bg-amber-100/80');
+            elem.classList.add('ring-4', 'ring-amber-300');
             setTimeout(() => {
-                elem.classList.remove('bg-amber-100/80');
+                elem.classList.remove('ring-4', 'ring-amber-300');
             }, 2000);
         }
     };
 
-    const getSenderBadge = (type: string) => {
+    const renderRoleBadge = (type: string) => {
         switch (type) {
             case 'admin':
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-2xs font-bold text-emerald-800">
-                        <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                        Admin
+                    <span className="inline-flex items-center rounded-full bg-[#f3e8ff] px-2 py-0.5 text-[11px] font-medium text-[#7e22ce] shadow-2xs">
+                        người sở hữu
                     </span>
                 );
             case 'teacher':
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-2xs font-bold text-blue-800">
-                        <GraduationCap className="h-3 w-3 text-blue-600" />
-                        Giáo viên
+                    <span className="inline-flex items-center rounded-full bg-[#dbeafe] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8] shadow-2xs">
+                        giáo viên
                     </span>
                 );
             default:
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-2xs font-medium text-slate-700">
-                        <User className="h-3 w-3 text-slate-500" />
-                        Học sinh
-                    </span>
-                );
+                return null;
         }
+    };
+
+    // SVG Doodle Pattern dynamic background generator
+    const getTelegramWallpaperStyle = (theme: ChatTheme): React.CSSProperties => {
+        return {
+            backgroundColor: theme.bgColor,
+            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06) 0%, transparent 80%), url("data:image/svg+xml,%3Csvg width='320' height='320' viewBox='0 0 320 320' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='${theme.patternOpacity}' fill-rule='evenodd'%3E%3Cpath d='M38 48c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10zm4 0c0 3.3 2.7 6 6 6s6-2.7 6-6-2.7-6-6-6-6 2.7-6 6zm100-24l6 12 13 2-9 9 2 13-12-6-12 6 2-13-9-9 13-2 6-12zm-3 8.5l-3.5 7-7.7 1.1 5.6 5.4-1.3 7.7 6.9-3.6 6.9 3.6-1.3-7.7 5.6-5.4-7.7-1.1-3.5-7zM246 36c6.6 0 12 5.4 12 12s-5.4 12-12 12-12-5.4-12-12 5.4-12 12-12zm0 4c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm-180 94c8.8 0 16 7.2 16 16 0 4.8-2.1 9.1-5.5 12l5.5 12-12-5.5c-1.3.3-2.6.5-4 .5-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 4c-6.6 0-12 5.4-12 12s5.4 12 12 12c1.2 0 2.4-.2 3.5-.6l6.5 3-3-6.5c1.9-2.2 3-5 3-7.9 0-6.6-5.4-12-12-12zm184 8c12 0 22 10 22 22s-10 22-22 22-22-10-22-22 10-22 22-22zm0 4c-9.9 0-18 8.1-18 18s8.1 18 18 18 18-8.1 18-18-8.1-18-18-18zm-100 24c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm0 4c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zm-104 90l16-8 16 8-4-18 13-13-18-3-7-16-7 16-18 3 13 13-4 18zm140 10c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20zm4 0c0 8.8 7.2 16 16 16s16-7.2 16-16-7.2-16-16-16-16 7.2-16 16zm-50 40c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10zm110-30l10 5-2-11 8-8-11-2-5-10-5 10-11 2 8 8-2 11 10-5z'/%3E%3C/g%3E%3C/svg%3E")`,
+        };
     };
 
     return (
         <AppLayout title={`Nhóm Chat Lớp ${schoolClass.name}`}>
             <Head title={`Nhóm Chat Lớp ${schoolClass.name}`} />
 
-            <div className="mx-auto max-w-5xl space-y-3">
-                {/* Back Navigation */}
-                <div className="flex items-center justify-between">
+            <div className="mx-auto max-w-4xl space-y-3">
+                {/* Back Navigation, Theme Picker & Status */}
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <Link
                         href="/classes"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 transition-colors hover:text-emerald-700"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 transition-colors hover:text-emerald-700"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         <span>Danh Sách Lớp Học</span>
                     </Link>
 
-                    {/* Realtime Status Indicator */}
-                    <div className="flex items-center gap-1.5 text-2xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <Wifi className="h-3 w-3" />
-                        <span>Realtime WebSocket</span>
+                    <div className="flex items-center gap-2">
+                        {/* Theme Wallpaper Picker Button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowThemeModal(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-emerald-700 transition-colors cursor-pointer"
+                            title="Đổi hình nền trò chuyện"
+                        >
+                            <span
+                                className="h-3.5 w-3.5 rounded-full border border-black/20 shadow-2xs shrink-0"
+                                style={{ backgroundColor: activeTheme.previewColor }}
+                            />
+                            <Palette className="h-3.5 w-3.5 text-gray-600" />
+                            <span className="hidden sm:inline">Hình nền: {activeTheme.name.split(' (')[0]}</span>
+                            <span className="sm:hidden">Nền</span>
+                        </button>
+
+                        {/* Realtime Status Indicator */}
+                        <div className="flex items-center gap-1.5 text-2xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Main Chat Container - Strictly Flex column spanning full available height */}
-                <div className="flex h-[calc(100vh-175px)] min-h-[520px] flex-col rounded-2xl border border-gray-200 bg-white shadow-xs overflow-hidden">
-                    {/* Header: shrink-0 at the top */}
-                    <div className="shrink-0 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3.5 sm:px-6 sm:py-4 text-white">
+                {/* Main Chat Container - Telegram Canvas */}
+                <div className="flex h-[calc(100vh-175px)] min-h-[540px] flex-col rounded-2xl border border-gray-300/80 shadow-md overflow-hidden bg-slate-900">
+                    {/* Telegram Style Top Header */}
+                    <div className="shrink-0 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-5">
                         <div className="flex items-center gap-3 min-w-0">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-bold text-white shadow-xs">
-                                <MessageSquare className="h-5 w-5" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-tr from-emerald-600 to-teal-500 font-bold text-white shadow-xs">
+                                {schoolClass.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                                <h2 className="text-sm sm:text-base font-bold truncate">
-                                    Nhóm Chat: {schoolClass.name}
+                                <h2 className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                                    {schoolClass.name}
                                 </h2>
-                                <p className="text-2xs sm:text-xs text-slate-400 truncate">
-                                    Mã lớp: {schoolClass.code} •{' '}
-                                    {schoolClass.center?.name || 'Trung tâm Sam Edu'}
+                                <p className="text-2xs sm:text-xs text-gray-500 truncate">
+                                    Mã lớp: {schoolClass.code} • {schoolClass.center?.name || 'Trung tâm Sam Edu'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="text-right shrink-0 pl-2">
-                            <span className="block text-2xs text-slate-400">
-                                Bạn đang đăng nhập:
+                            <span className="block text-2xs text-gray-400">
+                                Đang là:
                             </span>
-                            <span className="text-xs sm:text-sm font-bold text-emerald-400">
+                            <span className="text-xs font-bold text-emerald-600">
                                 {currentUser.sender_name}
                             </span>
                         </div>
                     </div>
 
-                    {/* Pinned Message Banner: shrink-0 under header */}
+                    {/* Pinned Message Banner */}
                     {pinnedMessage && (
-                        <div className="shrink-0 flex items-center justify-between gap-3 border-b border-amber-200 bg-linear-to-r from-amber-50 to-orange-50 px-4 py-2.5 sm:px-5 sm:py-3 text-amber-950 shadow-2xs">
+                        <div className="shrink-0 flex items-center justify-between gap-3 border-b border-amber-200/80 bg-white/95 backdrop-blur-xs px-4 py-2 sm:px-5 text-gray-900 shadow-2xs border-l-4 border-l-amber-500">
                             <div
                                 onClick={() => scrollToMessage(pinnedMessage.id)}
-                                className="flex min-w-0 flex-1 items-start gap-2.5 cursor-pointer group"
+                                className="flex min-w-0 flex-1 items-center gap-2.5 cursor-pointer group"
                                 title="Nhấp để cuộn tới tin nhắn này"
                             >
-                                <Pin className="mt-0.5 h-4 w-4 shrink-0 fill-amber-500 text-amber-600 group-hover:scale-110 transition-transform" />
-                                <div className="min-w-0 text-xs sm:text-sm">
+                                <Pin className="h-4 w-4 shrink-0 fill-amber-500 text-amber-600 group-hover:scale-110 transition-transform" />
+                                <div className="min-w-0 text-xs">
                                     <div className="flex items-center gap-1.5 font-bold text-amber-900">
                                         <span>Tin nhắn đã ghim</span>
-                                        <span className="text-2xs font-normal text-amber-700">
-                                            (bởi {pinnedMessage.pinned_by_name || 'Giáo viên/Admin'})
+                                        <span className="text-2xs font-normal text-gray-500">
+                                            (từ {pinnedMessage.pinned_by_name || 'Admin/Giáo viên'})
                                         </span>
                                     </div>
-                                    <div className="mt-0.5 truncate font-medium text-gray-800">
+                                    <div className="truncate text-gray-700">
                                         "{pinnedMessage.message}"
                                     </div>
                                 </div>
@@ -301,7 +482,7 @@ export default function ClassChatPage({
                                     type="button"
                                     onClick={() => handleTogglePin(pinnedMessage.id)}
                                     title="Bỏ ghim tin nhắn này"
-                                    className="shrink-0 rounded-lg p-1.5 text-amber-700 hover:bg-amber-100 hover:text-amber-900 transition-colors"
+                                    className="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                                 >
                                     <PinOff className="h-4 w-4" />
                                 </button>
@@ -309,25 +490,50 @@ export default function ClassChatPage({
                         </div>
                     )}
 
-                    {/* Messages Body: flex-1 takes all available space, scrolls independently */}
-                    <div className="flex-1 min-h-0 space-y-4 overflow-y-auto bg-slate-50/70 p-4 sm:p-6">
+                    {/* Telegram Messages Canvas with Dynamic Wallpaper Theme */}
+                    <div
+                        style={getTelegramWallpaperStyle(activeTheme)}
+                        className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5 space-y-1.5"
+                    >
                         {messages.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center text-center text-gray-400 py-12">
-                                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                                    <MessageSquare className="h-8 w-8 text-gray-300 stroke-1" />
+                            <div className="flex h-full flex-col items-center justify-center text-center text-white/90 py-12">
+                                <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center mb-3 shadow-inner">
+                                    <Smile className="h-8 w-8 text-white stroke-2" />
                                 </div>
-                                <p className="text-sm sm:text-base font-bold text-gray-700">
-                                    Chưa có tin nhắn nào trong nhóm chat này.
+                                <p className="text-sm sm:text-base font-bold text-white drop-shadow-xs">
+                                    Chưa có tin nhắn nào trong nhóm chat này
                                 </p>
-                                <p className="mt-1 text-xs text-gray-400 max-w-xs">
+                                <p className="mt-1 text-xs text-white/80 max-w-xs drop-shadow-xs">
                                     Hãy là người đầu tiên gửi tin nhắn để cùng trao đổi học tập với lớp!
                                 </p>
                             </div>
                         ) : (
-                            messages.map((msg) => {
+                            messages.map((msg, index) => {
                                 const isSelf =
                                     msg.sender_type === currentUser.sender_type &&
                                     msg.sender_id === currentUser.sender_id;
+
+                                // Grouping logic (Cluster consecutive messages from the same sender)
+                                const prevMsg = index > 0 ? messages[index - 1] : null;
+                                const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
+
+                                const isSameSenderAsPrev =
+                                    prevMsg !== null &&
+                                    prevMsg.sender_type === msg.sender_type &&
+                                    prevMsg.sender_id === msg.sender_id;
+
+                                const isSameSenderAsNext =
+                                    nextMsg !== null &&
+                                    nextMsg.sender_type === msg.sender_type &&
+                                    nextMsg.sender_id === msg.sender_id;
+
+                                const isFirstInGroup = !isSameSenderAsPrev;
+                                const isLastInGroup = !isSameSenderAsNext;
+
+                                const senderColorClass = getSenderColor(msg.sender_name, msg.sender_id);
+                                const avatarBgColor = getAvatarBgColor(msg.sender_name, msg.sender_id);
+                                const initials = getInitials(msg.sender_name);
+                                const isSticker = isImageOrSticker(msg.message);
 
                                 return (
                                     <div
@@ -335,100 +541,117 @@ export default function ClassChatPage({
                                         ref={(el) => {
                                             messageRefs.current[msg.id] = el;
                                         }}
-                                        className={`flex items-start gap-2.5 sm:gap-3 transition-colors duration-500 rounded-xl p-1 ${
-                                            isSelf ? 'flex-row-reverse' : 'flex-row'
-                                        }`}
+                                        className={`flex items-end gap-2 transition-all duration-300 ${isFirstInGroup ? 'mt-3' : 'mt-0.5'
+                                            } ${isSelf ? 'justify-end' : 'justify-start'}`}
                                     >
-                                        {/* Avatar */}
-                                        <div
-                                            className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-black text-white shadow-2xs ${
-                                                msg.sender_type === 'admin'
-                                                    ? 'bg-emerald-600'
-                                                    : msg.sender_type === 'teacher'
-                                                    ? 'bg-blue-600'
-                                                    : 'bg-slate-700'
-                                            }`}
-                                        >
-                                            {msg.sender_name.charAt(0).toUpperCase()}
-                                        </div>
+                                        {/* Avatar on Left (for other senders, shown at the BOTTOM of the message cluster) */}
+                                        {!isSelf && (
+                                            <div className="w-8.5 shrink-0 flex items-end">
+                                                {isLastInGroup ? (
+                                                    msg.sender_avatar ? (
+                                                        <img
+                                                            src={msg.sender_avatar}
+                                                            alt={msg.sender_name}
+                                                            className="h-8.5 w-8.5 rounded-full object-cover shadow-xs border border-white/40"
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            className={`h-8.5 w-8.5 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-xs border border-white/40 ${avatarBgColor}`}
+                                                        >
+                                                            {initials}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <div className="w-8.5 h-8.5" />
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Message Bubble Container */}
                                         <div
-                                            className={`max-w-[85%] sm:max-w-[75%] space-y-1 ${
-                                                isSelf ? 'items-end text-right' : 'items-start text-left'
-                                            }`}
-                                        >
-                                            {/* Sender Name & Role & Timestamp */}
-                                            <div
-                                                className={`flex items-center gap-1.5 text-2xs ${
-                                                    isSelf ? 'justify-end' : 'justify-start'
+                                            className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${isSelf ? 'items-end' : 'items-start'
                                                 }`}
-                                            >
-                                                <span className="font-bold text-gray-800">
-                                                    {msg.sender_name}
-                                                </span>
-                                                {getSenderBadge(msg.sender_type)}
-                                                <span className="text-gray-400">
-                                                    {msg.time_formatted}
-                                                </span>
-                                            </div>
-
-                                            {/* Message Content Bubble with optional Pin action */}
-                                            <div className="group relative flex items-center gap-1.5">
-                                                {/* Left Pin button for self messages if Admin/Teacher */}
-                                                {isSelf && currentUser.can_pin && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleTogglePin(msg.id)}
-                                                        title={msg.is_pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
-                                                        className={`rounded-full p-1.5 transition-all hover:bg-gray-200 ${
-                                                            msg.is_pinned
-                                                                ? 'text-amber-600 opacity-100'
-                                                                : 'text-gray-400 opacity-0 group-hover:opacity-100'
-                                                        }`}
-                                                    >
-                                                        <Pin
-                                                            className={`h-3.5 w-3.5 ${
-                                                                msg.is_pinned ? 'fill-amber-500' : ''
-                                                            }`}
-                                                        />
-                                                    </button>
-                                                )}
-
-                                                <div
-                                                    className={`rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs break-words ${
-                                                        isSelf
-                                                            ? 'rounded-tr-xs bg-emerald-600 text-white'
-                                                            : 'rounded-tl-xs border border-gray-200 bg-white text-gray-900'
-                                                    } ${
-                                                        msg.is_pinned
-                                                            ? 'ring-2 ring-amber-400 bg-amber-50/50'
-                                                            : ''
-                                                    }`}
-                                                >
-                                                    {msg.message}
+                                        >
+                                            {/* Sticker / Image Message */}
+                                            {isSticker ? (
+                                                <div className="relative overflow-hidden rounded-2xl shadow-sm bg-white/10 backdrop-blur-2xs">
+                                                    <img
+                                                        src={msg.message.trim()}
+                                                        alt="sticker"
+                                                        className="max-h-56 max-w-56 object-contain rounded-2xl"
+                                                    />
+                                                    <span className="absolute bottom-1.5 right-2 rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
+                                                        {msg.time_formatted}
+                                                    </span>
                                                 </div>
-
-                                                {/* Right Pin button for other messages if Admin/Teacher */}
-                                                {!isSelf && currentUser.can_pin && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleTogglePin(msg.id)}
-                                                        title={msg.is_pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
-                                                        className={`rounded-full p-1.5 transition-all hover:bg-gray-200 ${
-                                                            msg.is_pinned
-                                                                ? 'text-amber-600 opacity-100'
-                                                                : 'text-gray-400 opacity-0 group-hover:opacity-100'
+                                            ) : (
+                                                /* Standard Telegram Text Bubble */
+                                                <div
+                                                    className={`relative px-3.5 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.12)] break-words text-[13.5px] leading-[1.35] transition-shadow ${isSelf
+                                                        ? `${activeTheme.selfBubbleClass} ${activeTheme.selfTextClass} rounded-2xl ${isLastInGroup ? 'rounded-br-xs' : ''
+                                                        }`
+                                                        : `bg-white text-gray-900 rounded-2xl ${isLastInGroup ? 'rounded-bl-xs' : ''
+                                                        }`
+                                                        } ${msg.is_pinned
+                                                            ? 'ring-2 ring-amber-400 bg-amber-50/90'
+                                                            : ''
                                                         }`}
-                                                    >
-                                                        <Pin
-                                                            className={`h-3.5 w-3.5 ${
-                                                                msg.is_pinned ? 'fill-amber-500' : ''
-                                                            }`}
-                                                        />
-                                                    </button>
-                                                )}
-                                            </div>
+                                                >
+                                                    {/* Sender Name & Role Badge (Only on first message of cluster for non-self) */}
+                                                    {!isSelf && isFirstInGroup && (
+                                                        <div className="flex items-center justify-between gap-2.5 mb-1 select-none">
+                                                            <span
+                                                                className={`font-bold text-[13px] tracking-tight ${senderColorClass}`}
+                                                            >
+                                                                {msg.sender_name}
+                                                            </span>
+                                                            {renderRoleBadge(msg.sender_type)}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Text Message Content + Telegram Inline Timestamp */}
+                                                    <div>
+                                                        <span>{msg.message}</span>
+                                                        <span
+                                                            className={`float-right ml-3 mt-1 inline-block text-[11px] font-normal select-none leading-none ${isSelf && activeTheme.id === 'midnight_dark'
+                                                                ? 'text-slate-300'
+                                                                : 'text-gray-400'
+                                                                }`}
+                                                        >
+                                                            {msg.time_formatted}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Optional Pin Action button on hover */}
+                                                    {currentUser.can_pin && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleTogglePin(msg.id)}
+                                                            title={msg.is_pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                                                            className={`absolute -top-2 ${isSelf ? '-left-6' : '-right-6'
+                                                                } rounded-full bg-white/90 p-1 shadow-xs transition-opacity hover:bg-white ${msg.is_pinned
+                                                                    ? 'text-amber-600 opacity-100'
+                                                                    : 'text-gray-400 opacity-0 group-hover:opacity-100'
+                                                                }`}
+                                                        >
+                                                            <Pin
+                                                                className={`h-3.5 w-3.5 ${msg.is_pinned ? 'fill-amber-500' : ''
+                                                                    }`}
+                                                            />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Reaction Badge if any (e.g. Heart / Emoji reaction matching screenshot) */}
+                                            {msg.reaction && (
+                                                <div className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-xs shadow-xs border border-gray-100 -mt-1.5 ml-2 z-10 select-none">
+                                                    <span>{msg.reaction}</span>
+                                                    <span className="rounded-full bg-amber-100 px-1 text-[10px] font-bold text-amber-700">
+                                                        KL
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -437,32 +660,126 @@ export default function ClassChatPage({
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Chat Input Footer: shrink-0 pinned firmly at the bottom */}
-                    <div className="shrink-0 border-t border-gray-200 bg-white p-3 sm:p-4">
+                    {/* Telegram Style Chat Input Footer */}
+                    <div className="shrink-0 border-t border-gray-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3">
                         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                title="Biểu tượng cảm xúc"
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                            >
+                                <Smile className="h-5 w-5" />
+                            </button>
+
                             <input
                                 type="text"
-                                placeholder="Nhập tin nhắn để trao đổi cùng lớp học..."
+                                placeholder="Viết tin nhắn..."
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
                                 disabled={isSending}
-                                className="flex-1 rounded-xl border border-gray-300 bg-slate-50/60 px-4 py-2.5 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
                             />
-                            <Button
-                                type="submit"
-                                variant="success"
-                                size="md"
-                                disabled={isSending || !inputMessage.trim()}
-                                isLoading={isSending}
-                                className="shrink-0 flex items-center gap-1.5 px-4 sm:px-5 !py-2.5 font-bold text-xs sm:text-sm"
+
+                            <button
+                                type="button"
+                                title="Đính kèm tệp / hình ảnh"
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors shrink-0"
                             >
-                                <Send className="h-4 w-4" />
-                                <span className="hidden sm:inline">Gửi</span>
-                            </Button>
+                                <Paperclip className="h-5 w-5" />
+                            </button>
+
+                            <button
+                                type="submit"
+                                disabled={isSending || !inputMessage.trim()}
+                                className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0"
+                                title="Gửi tin nhắn"
+                            >
+                                <Send className="h-4 w-4 ml-0.5" />
+                            </button>
                         </form>
                     </div>
                 </div>
             </div>
+
+            {/* Modal: Wallpaper Theme Picker */}
+            {showThemeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3.5 mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-2xs">
+                                    <Palette className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-900">
+                                        Chọn Hình Nền Trò Chuyện
+                                    </h3>
+                                    <p className="text-xs text-gray-500">
+                                        Tùy chỉnh màu sắc & hoa văn doodle Telegram theo phong cách yêu thích
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowThemeModal(false)}
+                                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* Themes Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                            {CHAT_THEMES.map((theme) => {
+                                const isSelected = theme.id === activeTheme.id;
+                                return (
+                                    <button
+                                        key={theme.id}
+                                        type="button"
+                                        onClick={() => handleSelectTheme(theme.id)}
+                                        className={`group relative flex flex-col items-center rounded-xl p-2.5 text-left border-2 transition-all cursor-pointer ${isSelected
+                                            ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-2xs'
+                                            }`}
+                                    >
+                                        {/* Preview Wallpaper Tile with Doodle Pattern */}
+                                        <div
+                                            style={getTelegramWallpaperStyle(theme)}
+                                            className="relative h-24 w-full rounded-lg shadow-inner overflow-hidden border border-black/10 flex items-center justify-center transition-transform group-hover:scale-102"
+                                        >
+                                            <div className="rounded-md bg-white/90 px-2 py-0.5 text-2xs font-bold text-gray-800 shadow-2xs backdrop-blur-xs">
+                                                {theme.badge}
+                                            </div>
+                                            {isSelected && (
+                                                <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs">
+                                                    <Check className="h-3 w-3 stroke-[3]" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <span className="mt-2 text-xs font-bold text-gray-800 text-center line-clamp-1">
+                                            {theme.name.split(' (')[0]}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-3">
+                            <span className="text-2xs text-gray-400">
+                                Lựa chọn hình nền sẽ được lưu tự động trên trình duyệt này.
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowThemeModal(false)}
+                                className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
