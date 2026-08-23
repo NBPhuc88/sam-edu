@@ -96,23 +96,24 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
             </Head>
 
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-2xs">
-                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-xs shadow-2xs">
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8">
                     {/* Brand Logo */}
                     <Link
                         href="/"
-                        className="flex shrink-0 items-center"
+                        className="flex shrink-0 items-center min-w-0 mr-2"
                     >
                         <AppLogo
                             withText={true}
                             brandName="Giáo dục Sam"
                             subtitle="Hệ thống Quản lý Giáo dục Sam"
                             size="md"
+                            hideSubtitleOnMobile={true}
                         />
                     </Link>
 
                     {/* Nav Links */}
-                    <nav className="hidden items-center gap-8 text-sm font-medium text-gray-700 md:flex">
+                    <nav className="hidden items-center gap-6 lg:gap-8 text-sm font-medium text-gray-700 md:flex">
                         <Link
                             href="/"
                             className="transition-colors hover:text-emerald-700"
@@ -140,7 +141,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </nav>
 
                     {/* Right Action Buttons */}
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
                         {user ? (
                             <Link href="/dashboard">
                                 <Button
@@ -150,13 +151,14 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         <LayoutDashboard className="h-4 w-4" />
                                     }
                                 >
-                                    Trang của tôi
+                                    <span className="hidden xs:inline">Trang của tôi</span>
+                                    <span className="xs:hidden">Portal</span>
                                 </Button>
                             </Link>
                         ) : (
                             <>
                                 <Link href="/login">
-                                    <Button variant="secondary" size="sm">
+                                    <Button variant="secondary" size="sm" className="px-2.5 sm:px-3 text-xs sm:text-sm">
                                         Đăng nhập
                                     </Button>
                                 </Link>
@@ -179,13 +181,13 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                         <button
                             type="button"
                             onClick={() => setMobileMenuOpen((prev) => !prev)}
-                            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+                            className="rounded-lg p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 md:hidden transition-colors"
                             aria-label="Toggle Navigation Menu"
                         >
                             {mobileMenuOpen ? (
-                                <X className="h-6 w-6" />
+                                <X className="h-6 w-6 text-gray-800" />
                             ) : (
-                                <Menu className="h-6 w-6" />
+                                <Menu className="h-6 w-6 text-gray-800" />
                             )}
                         </button>
                     </div>
@@ -193,47 +195,48 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
 
                 {/* Mobile Dropdown Navigation Drawer */}
                 {mobileMenuOpen && (
-                    <div className="animate-in slide-in-from-top-2 space-y-3 border-b border-gray-100 bg-white px-4 pt-3 pb-6 shadow-lg md:hidden">
-                        <nav className="flex flex-col space-y-2 text-sm font-semibold text-gray-700">
+                    <div className="animate-in slide-in-from-top-2 border-b border-gray-200 bg-white px-4 pt-3 pb-6 shadow-xl md:hidden">
+                        <nav className="flex flex-col space-y-1 text-sm font-semibold text-gray-700">
                             <Link
                                 href="/"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                                className="rounded-lg px-3 py-2.5 transition-colors hover:bg-emerald-50 hover:text-emerald-700 active:bg-emerald-100"
                             >
                                 Trang chủ
                             </Link>
                             <Link
                                 href="/services"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                                className="rounded-lg px-3 py-2.5 transition-colors hover:bg-emerald-50 hover:text-emerald-700 active:bg-emerald-100"
                             >
                                 Gói cước &amp; Dịch vụ
                             </Link>
                             <Link
                                 href="/about"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                                className="rounded-lg px-3 py-2.5 transition-colors hover:bg-emerald-50 hover:text-emerald-700 active:bg-emerald-100"
                             >
                                 Về chúng tôi
                             </Link>
                             <Link
                                 href="/contact"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="rounded-lg px-3 py-2 hover:bg-emerald-50 hover:text-emerald-700"
+                                className="rounded-lg px-3 py-2.5 transition-colors hover:bg-emerald-50 hover:text-emerald-700 active:bg-emerald-100"
                             >
                                 Liên hệ tư vấn
                             </Link>
                         </nav>
                         {!user && (
-                            <div className="pt-2">
+                            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                                 <Link
-                                    href="/contact"
+                                    href="/register-center?plan=trial"
                                     onClick={() => setMobileMenuOpen(false)}
+                                    className="block w-full"
                                 >
                                     <Button
                                         variant="success"
                                         size="sm"
-                                        className="w-full justify-center"
+                                        className="w-full justify-center py-2.5"
                                         icon={<Sparkles className="h-4 w-4" />}
                                     >
                                         Dùng thử miễn phí 30 ngày
@@ -246,7 +249,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
             </header>
 
             {/* Main Content Body */}
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 w-full overflow-x-hidden">{children}</main>
 
             {/* Public Footer */}
             <footer className="border-t border-gray-800 bg-slate-900 pt-12 pb-8 text-white">

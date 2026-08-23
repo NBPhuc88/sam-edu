@@ -81,24 +81,24 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
     return (
         <PublicLayout title="Liên Hệ Tư Vấn Giải Pháp - Giáo Dục Sam">
             {/* Header */}
-            <section className="border-b border-gray-200 bg-slate-50 py-12">
+            <section className="border-b border-gray-200 bg-slate-50 py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl space-y-3 px-4 text-center sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    <h1 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">
                         Liên Hệ Tư Vấn Giải Pháp
                     </h1>
-                    <p className="mx-auto max-w-xl text-sm text-gray-600">
+                    <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-600">
                         Gửi câu hỏi hoặc yêu cầu tư vấn giải pháp quản lý cho trung tâm đào tạo của bạn. Đội ngũ chuyên viên Sam Edu sẽ hỗ trợ bạn 24/7.
                     </p>
                 </div>
             </section>
 
             {/* Main Contact Section */}
-            <section className="bg-white py-16">
+            <section className="bg-white py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
                         {/* Information Sidebar */}
                         <div className="space-y-6">
-                            <Card className="space-y-4 border-gray-200 p-6">
+                            <Card className="space-y-4 border-gray-200 p-5 sm:p-6">
                                 <h3 className="border-b border-gray-100 pb-3 text-base font-bold text-gray-900">
                                     Thông Tin Trụ Sở
                                 </h3>
@@ -182,7 +182,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
 
                         {/* Contact Consultation Form */}
                         <div className="lg:col-span-2">
-                            <Card className="border-gray-200 p-6 sm:p-8 shadow-sm">
+                            <Card className="border-gray-200 p-5 sm:p-8 shadow-xs">
                                 {isSubmitted || flash?.success ? (
                                     <div className="space-y-4 py-8 text-center">
                                         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">

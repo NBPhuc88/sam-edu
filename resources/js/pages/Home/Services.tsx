@@ -69,16 +69,16 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
             keywords="bảng giá phần mềm giáo dục, gói cước quản lý trung tâm, SaaS giáo dục, bảng giá Sam Edu"
         >
             {/* Hero Header */}
-            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-16 text-center sm:py-20">
+            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-12 text-center sm:py-20">
                 <div className="mx-auto max-w-4xl space-y-4 px-4 sm:px-6 lg:px-8">
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                         <Tag className="h-3.5 w-3.5" />
-                        <span>Bảng Giá Minh Bạch & Tiết Kiệm</span>
+                        <span>Bảng Giá Minh Bạch &amp; Tiết Kiệm</span>
                     </div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                    <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
                         Bảng Giá Gói Dịch Vụ Linh Hoạt
                     </h1>
-                    <p className="mx-auto max-w-2xl text-base text-gray-600 sm:text-lg">
+                    <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-lg">
                         Chọn gói cước phù hợp nhất với quy mô trung tâm của
                         bạn. Tự động hóa điểm danh, xếp lịch và kết nối phụ
                         huynh tức thì.
@@ -87,13 +87,13 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
             </section>
 
             {/* Pricing Cards */}
-            <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {plans &&
                         plans.map((plan) => (
                             <Card
                                 key={plan.id}
-                                className={`relative flex flex-col justify-between p-8 transition-all hover:shadow-xl ${plan.is_featured
+                                className={`relative flex flex-col justify-between p-5 sm:p-8 transition-all hover:shadow-xl ${plan.is_featured
                                     ? 'border-2 border-emerald-600 shadow-lg ring-2 ring-emerald-500/20'
                                     : 'border-gray-200 bg-white'
                                     }`}
@@ -219,10 +219,10 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
             </section>
 
             {/* Feature Comparison Table */}
-            <section className="border-t border-gray-200 bg-slate-50 py-16">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+            <section className="border-t border-gray-200 bg-slate-50 py-12 sm:py-16">
+                <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
                     <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                        <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
                             So Sánh Chi Tiết Tính Năng
                         </h2>
                         <p className="text-xs text-gray-500">
@@ -231,8 +231,8 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                         </p>
                     </div>
 
-                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs">
-                        <table className="w-full text-left text-xs">
+                    <div className="w-full overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs">
+                        <table className="w-full min-w-[620px] text-left text-xs">
                             <thead className="border-b border-gray-200 bg-gray-50 font-semibold text-gray-700">
                                 <tr>
                                     <th className="p-4 sm:w-1/3">

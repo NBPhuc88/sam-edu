@@ -158,33 +158,33 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             keywords="Về Sam Edu, Giáo dục Sam, phần mềm quản lý trung tâm, giải pháp giáo dục 2026, khảo thí trực tuyến"
         >
             {/* ─── Hero Section ────────────────────────────────────────── */}
-            <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-emerald-900 via-slate-900 to-slate-950 py-20 text-white sm:py-28">
+            <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-emerald-900 via-slate-900 to-slate-950 py-14 text-white sm:py-24 lg:py-28">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.18),transparent_50%)]" />
-                <div className="relative mx-auto max-w-7xl space-y-6 px-4 text-center sm:px-6 lg:px-8">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/30 backdrop-blur-sm">
+                <div className="relative mx-auto max-w-7xl space-y-5 sm:space-y-6 px-4 text-center sm:px-6 lg:px-8">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/30 backdrop-blur-sm">
                         <Sparkles className="h-4 w-4" />
                         <span>Kiến Tạo Chuẩn Mực Quản Trị Giáo Dục Số 2026</span>
                     </div>
 
-                    <h1 className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                    <h1 className="mx-auto max-w-4xl text-2xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-6xl">
                         Đơn Giản Hóa Quản Trị, <br className="hidden sm:inline" />
                         <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200 bg-clip-text text-transparent">
                             Nâng Tầm Chất Lượng Giáo Dục
                         </span>
                     </h1>
 
-                    <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
-                        {companyName} ra đời với sứ mệnh xóa bỏ gánh nặng sổ sách hành chính thủ công cho các trung tâm đào tạo, mang đến nền tảng chuyển đổi số toàn diện kết hợp giữa **Quản Lý Học Vụ Chuẩn Hóa** và **Hệ Thống Khảo Thí Đột Phá**.
+                    <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-300 sm:text-lg">
+                        {companyName} ra đời với sứ mệnh xóa bỏ gánh nặng sổ sách hành chính thủ công cho các trung tâm đào tạo, mang đến nền tảng chuyển đổi số toàn diện kết hợp giữa <strong>Quản Lý Học Vụ Chuẩn Hóa</strong> và <strong>Hệ Thống Khảo Thí Đột Phá</strong>.
                     </p>
 
-                    <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-                        <a href="#roi-calculator">
-                            <Button variant="success" size="lg" icon={<Sliders className="h-5 w-5" />}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-3 max-w-sm mx-auto sm:max-w-none">
+                        <a href="#roi-calculator" className="w-full sm:w-auto">
+                            <Button variant="success" size="lg" className="w-full justify-center" icon={<Sliders className="h-5 w-5" />}>
                                 Tính Hiệu Quả Cho Trung Tâm
                             </Button>
                         </a>
-                        <Link href="/contact">
-                            <Button variant="secondary" size="lg" icon={<ArrowRight className="h-5 w-5" />}>
+                        <Link href="/contact" className="w-full sm:w-auto">
+                            <Button variant="secondary" size="lg" className="w-full justify-center" icon={<ArrowRight className="h-5 w-5" />}>
                                 Đăng Ký Tư Vấn Ngay
                             </Button>
                         </Link>
@@ -193,23 +193,23 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             </section>
 
             {/* ─── Core Values Grid ────────────────────────────────────────── */}
-            <section className="bg-white py-16 sm:py-20">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+            <section className="bg-white py-12 sm:py-16 lg:py-20">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
                     <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                        <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
                             Kim Chỉ Nam &amp; Giá Trị Cốt Lõi
                         </h2>
-                        <p className="mx-auto max-w-xl text-sm text-gray-500">
+                        <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-500">
                             Những nguyên tắc định hình văn hóa sản phẩm và sự cam kết của Sam Edu
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                        <Card className="group relative space-y-4 border-gray-200 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:scale-110">
-                                <Target className="h-7 w-7" />
+                    <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
+                        <Card className="group relative space-y-3.5 border-gray-200 p-5 sm:p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl">
+                            <div className="mx-auto flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:scale-110">
+                                <Target className="h-6 w-6 sm:h-7 sm:w-7" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900">
                                 Tầm Nhìn 2026 - 2030
                             </h3>
                             <p className="text-xs leading-relaxed text-gray-600">
@@ -217,11 +217,11 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </p>
                         </Card>
 
-                        <Card className="group relative space-y-4 border-gray-200 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 transition-transform group-hover:scale-110">
-                                <Heart className="h-7 w-7" />
+                        <Card className="group relative space-y-3.5 border-gray-200 p-5 sm:p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl">
+                            <div className="mx-auto flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 transition-transform group-hover:scale-110">
+                                <Heart className="h-6 w-6 sm:h-7 sm:w-7" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900">
                                 Sứ Mệnh Vì Giáo Dục
                             </h3>
                             <p className="text-xs leading-relaxed text-gray-600">
@@ -229,11 +229,11 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </p>
                         </Card>
 
-                        <Card className="group relative space-y-4 border-gray-200 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:scale-110">
-                                <Award className="h-7 w-7" />
+                        <Card className="group relative space-y-3.5 border-gray-200 p-5 sm:p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl">
+                            <div className="mx-auto flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:scale-110">
+                                <Award className="h-6 w-6 sm:h-7 sm:w-7" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900">
                                 Cam Kết Chất Lượng
                             </h3>
                             <p className="text-xs leading-relaxed text-gray-600">
@@ -245,29 +245,29 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             </section>
 
             {/* ─── Interactive Pillars Section ───────────────────────────── */}
-            <section className="border-t border-b border-gray-200 bg-slate-50 py-16 sm:py-24">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
-                    <div className="space-y-3 text-center">
+            <section className="border-t border-b border-gray-200 bg-slate-50 py-12 sm:py-16 lg:py-24">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
+                    <div className="space-y-2 sm:space-y-3 text-center">
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                             <Layers className="h-3.5 w-3.5" />
                             <span>Khám Phá Chi Tiết</span>
                         </div>
-                        <h2 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">
+                        <h2 className="text-xl font-extrabold text-gray-900 sm:text-3xl lg:text-4xl">
                             4 Trụ Cột Đột Phá Của Sam Edu
                         </h2>
-                        <p className="mx-auto max-w-2xl text-sm text-gray-600">
+                        <p className="mx-auto max-w-2xl text-xs sm:text-sm text-gray-600">
                             Chọn từng trụ cột bên dưới để khám phá sức mạnh công nghệ mà Sam Edu trang bị cho trung tâm của bạn:
                         </p>
                     </div>
 
                     {/* Interactive Tab Switcher */}
-                    <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-200/80 p-1.5 sm:grid-cols-4 sm:gap-3">
+                    <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-gray-200/80 p-1.5 sm:grid-cols-4 sm:gap-3">
                         {pillars.map((pillar, idx) => (
                             <button
                                 key={pillar.id}
                                 type="button"
                                 onClick={() => setActivePillar(idx)}
-                                className={`flex items-center justify-center gap-2 rounded-xl py-3 px-3 text-xs font-bold transition-all ${
+                                className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl py-2.5 px-2 sm:py-3 sm:px-3 text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${
                                     activePillar === idx
                                         ? 'bg-white text-emerald-800 shadow-md ring-1 ring-black/5'
                                         : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
@@ -282,23 +282,23 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                 >
                                     {pillar.icon}
                                 </span>
-                                <span className="truncate">{pillar.title}</span>
+                                <span className="line-clamp-2 sm:line-clamp-1">{pillar.title}</span>
                             </button>
                         ))}
                     </div>
 
                     {/* Active Pillar Detail Card */}
-                    <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-lg sm:p-10">
+                    <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-white p-5 sm:p-8 lg:p-10 shadow-lg">
                         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
-                            <div className="space-y-5 lg:col-span-7">
+                            <div className="space-y-4 sm:space-y-5 lg:col-span-7">
                                 <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
                                     <Sparkles className="h-3.5 w-3.5" />
                                     {pillars[activePillar].badge}
                                 </div>
-                                <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">
+                                <h3 className="text-lg font-extrabold text-gray-900 sm:text-2xl lg:text-3xl">
                                     {pillars[activePillar].title}
                                 </h3>
-                                <p className="text-sm font-medium text-emerald-700">
+                                <p className="text-xs sm:text-sm font-medium text-emerald-700">
                                     {pillars[activePillar].subtitle}
                                 </p>
                                 <p className="text-xs leading-relaxed text-gray-600 sm:text-sm">
@@ -326,7 +326,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </div>
 
                             {/* Visual Metric & CTA Box */}
-                            <div className="space-y-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white lg:col-span-5">
+                            <div className="space-y-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 sm:p-6 text-white lg:col-span-5">
                                 <div className="flex items-center justify-between border-b border-gray-700 pb-3">
                                     <span className="text-xs font-semibold text-gray-400">
                                         Chuẩn Hóa Trải Nghiệm
@@ -374,8 +374,8 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                     </div>
                                 </div>
 
-                                <div className="pt-4">
-                                    <Link href="/services">
+                                <div className="pt-3 sm:pt-4">
+                                    <Link href="/services" className="block w-full">
                                         <Button
                                             variant="success"
                                             size="sm"
@@ -393,29 +393,29 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             </section>
 
             {/* ─── Comparison Matrix: Traditional vs Sam Edu ─────────────── */}
-            <section className="bg-white py-16 sm:py-24">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
-                    <div className="space-y-3 text-center">
-                        <h2 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">
+            <section className="bg-white py-12 sm:py-16 lg:py-24">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
+                    <div className="space-y-2 sm:space-y-3 text-center">
+                        <h2 className="text-xl font-extrabold text-gray-900 sm:text-3xl lg:text-4xl">
                             Khác Biệt Vượt Trội So Với Quản Lý Truyền Thống
                         </h2>
-                        <p className="mx-auto max-w-2xl text-sm text-gray-600">
+                        <p className="mx-auto max-w-2xl text-xs sm:text-sm text-gray-600">
                             Vì sao các trung tâm đào tạo hiện đại đang nhanh chóng chuyển dịch sang hệ sinh thái số Sam Edu?
                         </p>
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs sm:text-sm">
+                    <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-xs">
+                        <div className="w-full overflow-x-auto">
+                            <table className="w-full min-w-[540px] text-left text-xs sm:text-sm">
                                 <thead className="bg-slate-100 text-gray-900">
                                     <tr>
-                                        <th className="py-4 px-4 font-bold sm:px-6">
+                                        <th className="py-3.5 px-3.5 font-bold sm:py-4 sm:px-6">
                                             Hạng Mục Vận Hành
                                         </th>
-                                        <th className="py-4 px-4 font-bold text-red-700 sm:px-6">
+                                        <th className="py-3.5 px-3.5 font-bold text-red-700 sm:py-4 sm:px-6">
                                             Quản Lý Bằng Excel / Sổ Sách
                                         </th>
-                                        <th className="py-4 px-4 font-bold text-emerald-800 bg-emerald-50 sm:px-6">
+                                        <th className="py-3.5 px-3.5 font-bold text-emerald-800 bg-emerald-50 sm:py-4 sm:px-6">
                                             Hệ Sinh Thái Sam Edu
                                         </th>
                                     </tr>
@@ -426,16 +426,16 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                             key={idx}
                                             className="transition-colors hover:bg-gray-50/80"
                                         >
-                                            <td className="py-4 px-4 font-semibold text-gray-900 sm:px-6">
+                                            <td className="py-3.5 px-3.5 font-semibold text-gray-900 sm:py-4 sm:px-6">
                                                 {item.feature}
                                             </td>
-                                            <td className="py-4 px-4 text-gray-600 sm:px-6">
+                                            <td className="py-3.5 px-3.5 text-gray-600 sm:py-4 sm:px-6">
                                                 <div className="flex items-start gap-2 text-rose-700">
                                                     <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
                                                     <span>{item.traditional}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-4 font-medium text-emerald-950 bg-emerald-50/40 sm:px-6">
+                                            <td className="py-3.5 px-3.5 font-medium text-emerald-950 bg-emerald-50/40 sm:py-4 sm:px-6">
                                                 <div className="flex items-start gap-2 text-emerald-800">
                                                     <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
                                                     <span>{item.samEdu}</span>
@@ -453,32 +453,32 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             {/* ─── Interactive ROI / Value Estimator ───────────────────────── */}
             <section
                 id="roi-calculator"
-                className="border-t border-gray-200 bg-gradient-to-b from-slate-900 to-slate-950 py-16 text-white sm:py-24 scroll-mt-16"
+                className="border-t border-gray-200 bg-gradient-to-b from-slate-900 to-slate-950 py-12 sm:py-16 lg:py-24 text-white scroll-mt-16"
             >
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
-                    <div className="space-y-3 text-center">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
+                    <div className="space-y-2 sm:space-y-3 text-center">
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/30">
                             <Zap className="h-3.5 w-3.5" />
                             <span>Công Cụ Tương Tác Trực Tuyến</span>
                         </div>
-                        <h2 className="text-2xl font-extrabold text-white sm:text-4xl">
+                        <h2 className="text-xl font-extrabold text-white sm:text-3xl lg:text-4xl">
                             Ước Tính Hiệu Quả Cho Trung Tâm Của Bạn
                         </h2>
-                        <p className="mx-auto max-w-2xl text-sm text-gray-400">
+                        <p className="mx-auto max-w-2xl text-xs sm:text-sm text-gray-400">
                             Kéo thanh trượt để xem ngay số giờ hành chính bạn sẽ tiết kiệm và gói dịch vụ phù hợp nhất:
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 items-center gap-8 rounded-3xl border border-gray-800 bg-slate-900/90 p-6 shadow-2xl sm:p-10 lg:grid-cols-12">
+                    <div className="grid grid-cols-1 items-center gap-6 sm:gap-8 rounded-2xl sm:rounded-3xl border border-gray-800 bg-slate-900/90 p-5 sm:p-8 lg:p-10 shadow-2xl lg:grid-cols-12">
                         {/* Sliders Input Column */}
-                        <div className="space-y-8 lg:col-span-6">
+                        <div className="space-y-6 sm:space-y-8 lg:col-span-6">
                             {/* Classes Slider */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
+                            <div className="space-y-2.5 sm:space-y-3">
+                                <div className="flex items-center justify-between text-xs sm:text-sm">
                                     <span className="font-semibold text-gray-300">
                                         Số lượng lớp học đang vận hành:
                                     </span>
-                                    <span className="rounded-lg bg-emerald-500/20 px-3 py-1 text-base font-extrabold text-emerald-400 ring-1 ring-emerald-500/30">
+                                    <span className="rounded-lg bg-emerald-500/20 px-2.5 py-0.5 sm:px-3 sm:py-1 text-sm sm:text-base font-extrabold text-emerald-400 ring-1 ring-emerald-500/30">
                                         {classesCount} Lớp
                                     </span>
                                 </div>
@@ -501,12 +501,12 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </div>
 
                             {/* Students Slider */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
+                            <div className="space-y-2.5 sm:space-y-3">
+                                <div className="flex items-center justify-between text-xs sm:text-sm">
                                     <span className="font-semibold text-gray-300">
                                         Tổng số học sinh trung tâm:
                                     </span>
-                                    <span className="rounded-lg bg-teal-500/20 px-3 py-1 text-base font-extrabold text-teal-300 ring-1 ring-teal-500/30">
+                                    <span className="rounded-lg bg-teal-500/20 px-2.5 py-0.5 sm:px-3 sm:py-1 text-sm sm:text-base font-extrabold text-teal-300 ring-1 ring-teal-500/30">
                                         {studentsCount} Học sinh
                                     </span>
                                 </div>
@@ -530,12 +530,12 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                         </div>
 
                         {/* Calculated Results Column */}
-                        <div className="space-y-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-6 sm:p-8 lg:col-span-6">
-                            <div className="space-y-1 border-b border-emerald-500/20 pb-4">
+                        <div className="space-y-5 sm:space-y-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-5 sm:p-8 lg:col-span-6">
+                            <div className="space-y-1 border-b border-emerald-500/20 pb-3 sm:pb-4">
                                 <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
                                     Giá Trị Ước Tính Thu Được Mỗi Tháng
                                 </div>
-                                <div className="text-3xl font-extrabold text-white sm:text-4xl">
+                                <div className="text-2xl sm:text-4xl font-extrabold text-white">
                                     Tiết kiệm ~{savedAdminHours} Giờ
                                 </div>
                                 <p className="text-xs text-gray-300">
@@ -543,32 +543,32 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 text-xs">
-                                <div className="rounded-xl bg-slate-900/80 p-3.5 border border-gray-800">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs">
+                                <div className="rounded-xl bg-slate-900/80 p-3 sm:p-3.5 border border-gray-800">
                                     <div className="text-gray-400">Giảm sai sót học phí</div>
-                                    <div className="mt-1 text-lg font-bold text-emerald-400">98%</div>
+                                    <div className="mt-1 text-base sm:text-lg font-bold text-emerald-400">98%</div>
                                 </div>
-                                <div className="rounded-xl bg-slate-900/80 p-3.5 border border-gray-800">
+                                <div className="rounded-xl bg-slate-900/80 p-3 sm:p-3.5 border border-gray-800">
                                     <div className="text-gray-400">Tốc độ trả điểm thi</div>
-                                    <div className="mt-1 text-lg font-bold text-teal-300">Tức thì</div>
+                                    <div className="mt-1 text-base sm:text-lg font-bold text-teal-300">Tức thì</div>
                                 </div>
                             </div>
 
-                            <div className="rounded-xl bg-slate-900/90 p-4 border border-emerald-500/40">
+                            <div className="rounded-xl bg-slate-900/90 p-3.5 sm:p-4 border border-emerald-500/40">
                                 <div className="text-[11px] font-semibold text-gray-400 uppercase">
                                     Gói dịch vụ khuyến nghị tối ưu:
                                 </div>
-                                <div className="mt-1 text-base font-extrabold text-white">
+                                <div className="mt-1 text-sm sm:text-base font-extrabold text-white">
                                     {suggestedPlan}
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <Link href="/services" className="flex-1">
+                            <div className="pt-1 sm:pt-2">
+                                <Link href="/services" className="block w-full">
                                     <Button
                                         variant="success"
                                         size="sm"
-                                        className="w-full justify-center"
+                                        className="w-full justify-center py-2.5"
                                         icon={<ArrowRight className="h-4 w-4" />}
                                     >
                                         Bắt Đầu Dùng Thử 30 Ngày
@@ -581,21 +581,21 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             </section>
 
             {/* ─── Service Standards & Commitments ─────────────────────── */}
-            <section className="bg-white py-16 sm:py-20">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+            <section className="bg-white py-12 sm:py-16 lg:py-20">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
                     <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                        <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
                             Cam Kết &amp; Tiêu Chuẩn Vận Hành
                         </h2>
-                        <p className="mx-auto max-w-xl text-sm text-gray-500">
+                        <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-500">
                             Đảm bảo tính liên tục, an toàn dữ liệu và trải nghiệm mượt mà cho mọi trung tâm đào tạo
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
-                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-5 text-center transition-all hover:bg-white hover:border-emerald-200 hover:shadow-xs">
-                            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                                <ShieldCheck className="h-6 w-6" />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-4 sm:p-5 text-center transition-all hover:bg-white hover:border-emerald-200 hover:shadow-xs">
+                            <div className="mx-auto flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                                <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900">
                                 Bảo Mật Dữ Liệu
@@ -605,9 +605,9 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </p>
                         </Card>
 
-                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-5 text-center transition-all hover:bg-white hover:border-blue-200 hover:shadow-xs">
-                            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-                                <Zap className="h-6 w-6" />
+                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-4 sm:p-5 text-center transition-all hover:bg-white hover:border-blue-200 hover:shadow-xs">
+                            <div className="mx-auto flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                                <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900">
                                 Vận Hành Ổn Định
@@ -617,9 +617,9 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </p>
                         </Card>
 
-                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-5 text-center transition-all hover:bg-white hover:border-teal-200 hover:shadow-xs">
-                            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
-                                <Sparkles className="h-6 w-6" />
+                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-4 sm:p-5 text-center transition-all hover:bg-white hover:border-teal-200 hover:shadow-xs">
+                            <div className="mx-auto flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900">
                                 Dễ Dàng Sử Dụng
@@ -629,9 +629,9 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             </p>
                         </Card>
 
-                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-5 text-center transition-all hover:border-amber-200 hover:shadow-xs">
-                            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                                <Lock className="h-6 w-6" />
+                        <Card className="space-y-2.5 border-gray-100 bg-slate-50/60 p-4 sm:p-5 text-center transition-all hover:border-amber-200 hover:shadow-xs">
+                            <div className="mx-auto flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                                <Lock className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <h4 className="text-sm font-bold text-gray-900">
                                 Đăng Nhập 1 Thiết Bị
@@ -645,22 +645,22 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             </section>
 
             {/* ─── Final CTA Banner ────────────────────────────────────────── */}
-            <section className="bg-emerald-700 py-16 text-white text-center">
-                <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-2xl font-extrabold sm:text-4xl">
+            <section className="bg-emerald-700 py-12 sm:py-16 text-white text-center">
+                <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6 px-4 sm:px-6 lg:px-8">
+                    <h2 className="text-xl font-extrabold sm:text-3xl lg:text-4xl">
                         Sẵn Sàng Đồng Hành Cùng Giáo Dục Sam?
                     </h2>
-                    <p className="text-sm text-emerald-100 sm:text-base">
+                    <p className="text-xs sm:text-base text-emerald-100">
                         Khởi tạo trung tâm và trải nghiệm miễn phí 30 ngày đầy đủ tính năng ngay hôm nay. Không cần thẻ tín dụng, kích hoạt trong 30 giây.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-                        <Link href="/register-center?plan=trial">
-                            <Button variant="secondary" size="lg" icon={<Sparkles className="h-5 w-5" />}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 max-w-sm mx-auto sm:max-w-none">
+                        <Link href="/register-center?plan=trial" className="w-full sm:w-auto">
+                            <Button variant="secondary" size="lg" className="w-full justify-center" icon={<Sparkles className="h-5 w-5" />}>
                                 Đăng Ký Dùng Thử 30 Ngày
                             </Button>
                         </Link>
-                        <Link href="/contact">
-                            <Button variant="edit" size="lg" icon={<ArrowRight className="h-5 w-5" />}>
+                        <Link href="/contact" className="w-full sm:w-auto">
+                            <Button variant="edit" size="lg" className="w-full justify-center" icon={<ArrowRight className="h-5 w-5" />}>
                                 Liên Hệ Ban Tư Vấn
                             </Button>
                         </Link>

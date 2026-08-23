@@ -189,12 +189,12 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     return (
         <PublicLayout title="Đăng Ký Trung Tâm Mới - Giáo Dục Sam">
             {/* Header */}
-            <section className="border-b border-gray-200 bg-slate-50 py-12">
+            <section className="border-b border-gray-200 bg-slate-50 py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl space-y-3 px-4 text-center sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    <h1 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">
                         Đăng Ký Trung Tâm Mới
                     </h1>
-                    <p className="mx-auto max-w-xl text-sm text-gray-600">
+                    <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-600">
                         Khởi tạo thông tin trung tâm đào tạo, chọn gói dịch vụ
                         phù hợp và trải nghiệm ngay giải pháp quản lý giáo dục
                         2026.
@@ -203,12 +203,12 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
             </section>
 
             {/* Main Content */}
-            <section className="bg-white py-16">
+            <section className="bg-white py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
                         {/* Information Sidebar */}
                         <div className="space-y-6">
-                            <Card className="space-y-4 border-gray-200 p-6">
+                            <Card className="space-y-4 border-gray-200 p-5 sm:p-6">
                                 <h3 className="border-b border-gray-100 pb-3 text-base font-bold text-gray-900">
                                     Thông Tin Hỗ Trợ
                                 </h3>
@@ -297,7 +297,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
                         {/* Onboarding Wizard Container */}
                         <div className="lg:col-span-2">
-                            <Card className="border-gray-200 p-6 shadow-sm sm:p-8">
+                            <Card className="border-gray-200 p-5 shadow-xs sm:p-8">
                                 {errorMessage && (
                                     <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700">
                                         {errorMessage}

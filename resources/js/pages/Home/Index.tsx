@@ -51,28 +51,29 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
             )}
 
             {/* Hero Section */}
-            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-16 sm:py-24">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 text-center sm:px-6 lg:px-8">
+            <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-12 sm:py-20 lg:py-24">
+                <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6 px-4 text-center sm:px-6 lg:px-8">
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                         <Sparkles className="h-3.5 w-3.5" />
                         <span>Nền tảng Quản lý Giáo dục Đa trung tâm 2026</span>
                     </div>
 
-                    <h1 className="mx-auto max-w-4xl text-3xl leading-tight font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                    <h1 className="mx-auto max-w-4xl text-2xl leading-tight font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
                         {hero?.title || 'Giải Pháp Quản Lý Giáo Dục'}
                     </h1>
 
-                    <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
+                    <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-lg">
                         {hero?.subtitle ||
                             'Hệ thống tối ưu hóa quy trình quản lý học sinh, sắp xếp lịch học, điểm danh thông minh, khảo thí 9 dạng câu hỏi và chat lớp học trực tuyến.'}
                     </p>
 
-                    <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-3 max-w-sm mx-auto sm:max-w-none">
                         {user ? (
-                            <Link href="/dashboard">
+                            <Link href="/dashboard" className="w-full sm:w-auto">
                                 <Button
                                     variant="success"
                                     size="lg"
+                                    className="w-full justify-center"
                                     icon={
                                         <LayoutDashboard className="h-5 w-5" />
                                     }
@@ -82,19 +83,21 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                             </Link>
                         ) : (
                             <>
-                                <Link href="/contact">
+                                <Link href="/contact" className="w-full sm:w-auto">
                                     <Button
                                         variant="success"
                                         size="lg"
+                                        className="w-full justify-center"
                                         icon={<Sparkles className="h-5 w-5" />}
                                     >
                                         Dùng thử miễn phí 30 ngày
                                     </Button>
                                 </Link>
-                                <Link href="/login">
+                                <Link href="/login" className="w-full sm:w-auto">
                                     <Button
                                         variant="secondary"
                                         size="lg"
+                                        className="w-full justify-center"
                                         icon={
                                             <ArrowRight className="h-5 w-5" />
                                         }
@@ -109,14 +112,14 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
             </section>
 
             {/* Core Features Section (Phân tầng theo Gói Cước & Dịch Vụ) */}
-            <section className="bg-white py-16 sm:py-24">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
-                    <div className="space-y-3 text-center">
+            <section className="bg-white py-12 sm:py-20 lg:py-24">
+                <div className="mx-auto max-w-7xl space-y-10 sm:space-y-12 px-4 sm:px-6 lg:px-8">
+                    <div className="space-y-2 sm:space-y-3 text-center">
                         <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                             <Sparkles className="h-3.5 w-3.5" />
                             <span>Hệ Thống Tính Năng Chuẩn Hóa 2026</span>
                         </div>
-                        <h2 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">
+                        <h2 className="text-xl font-extrabold text-gray-900 sm:text-3xl lg:text-4xl">
                             Tính Năng Đột Phá Cho Trung Tâm
                         </h2>
                         <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-600">
@@ -266,24 +269,24 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
             </section>
 
             {/* Pricing Section (Dynamically loaded from Database) */}
-            <section id="pricing-section" className="border-t border-b border-gray-200 bg-slate-50 py-16 scroll-mt-16">
-                <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+            <section id="pricing-section" className="border-t border-b border-gray-200 bg-slate-50 py-12 sm:py-16 scroll-mt-16">
+                <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
                     <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                            Gói Cước & Dịch Vụ Phần Mềm
+                        <h2 className="text-xl font-bold text-gray-900 sm:text-3xl">
+                            Gói Cước &amp; Dịch Vụ Phần Mềm
                         </h2>
-                        <p className="mx-auto max-w-xl text-sm text-gray-500">
+                        <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-500">
                             Lựa chọn gói phù hợp với quy mô trung tâm của bạn
                             với chi phí tối ưu nhất
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {plans &&
                             plans.map((plan: Plan) => (
                                 <Card
                                     key={plan.id}
-                                    className={`relative flex flex-col justify-between p-6 transition-all hover:shadow-lg ${plan.is_featured
+                                    className={`relative flex flex-col justify-between p-5 sm:p-6 transition-all hover:shadow-lg ${plan.is_featured
                                             ? 'border-2 border-emerald-600 bg-white shadow-md ring-2 ring-emerald-500/20'
                                             : 'border-gray-200 bg-white'
                                         }`}

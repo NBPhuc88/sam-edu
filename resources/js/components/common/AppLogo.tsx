@@ -35,6 +35,11 @@ export interface AppLogoProps {
      */
     textColor?: 'dark' | 'light';
     /**
+     * Ẩn phụ đề trên thiết bị di động (màn hình nhỏ < sm)
+     * @default false
+     */
+    hideSubtitleOnMobile?: boolean;
+    /**
      * Tùy chọn ảnh thay vì chữ (nếu muốn)
      */
     src?: string;
@@ -57,6 +62,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
     brandName = 'Giáo dục Sam',
     subtitle,
     textColor = 'dark',
+    hideSubtitleOnMobile = false,
     src,
 }) => {
     const emblemElement = src ? (
@@ -82,19 +88,21 @@ export const AppLogo: React.FC<AppLogoProps> = ({
     const isLight = textColor === 'light';
 
     return (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {emblemElement}
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
                 <span
-                    className={`font-extrabold leading-tight tracking-tight ${
+                    className={`font-extrabold leading-tight tracking-tight truncate ${
                         isLight ? 'text-white' : 'text-gray-900'
-                    } ${size === 'lg' || size === 'xl' ? 'text-lg sm:text-xl' : 'text-sm sm:text-base'}`}
+                    } ${size === 'lg' || size === 'xl' ? 'text-base sm:text-xl' : 'text-sm sm:text-base'}`}
                 >
                     {brandName}
                 </span>
                 {subtitle && (
                     <span
-                        className={`text-2xs font-medium ${
+                        className={`text-2xs font-medium truncate ${
+                            hideSubtitleOnMobile ? 'hidden sm:block' : ''
+                        } ${
                             isLight ? 'text-gray-400' : 'text-gray-500'
                         }`}
                     >
