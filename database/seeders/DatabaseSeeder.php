@@ -10,14 +10,13 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database with core system data only.
      */
     public function run(): void
     {
         $this->call([
+            SuperAdminSeeder::class,
             SystemContentSeeder::class,
-            ExamTypeSeeder::class,
-            TestCenterSeeder::class,
         ]);
     }
 }
