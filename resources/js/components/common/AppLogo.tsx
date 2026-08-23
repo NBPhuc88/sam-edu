@@ -7,15 +7,10 @@ export interface AppLogoProps {
      */
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     /**
-     * Đường dẫn file logo (mặc định lấy từ /logo.png)
-     * @default '/logo.png'
+     * Chữ hiển thị trong emblem (mặc định là SAM)
+     * @default 'SAM'
      */
-    src?: string;
-    /**
-     * Văn bản thay thế
-     * @default 'SAM-EDU Logo'
-     */
-    alt?: string;
+    text?: string;
     /**
      * Tùy biến CSS class thêm
      */
@@ -39,44 +34,56 @@ export interface AppLogoProps {
      * @default 'dark'
      */
     textColor?: 'dark' | 'light';
+    /**
+     * Tùy chọn ảnh thay vì chữ (nếu muốn)
+     */
+    src?: string;
 }
 
 const sizeClasses = {
-    xs: 'h-6 w-6 rounded-md',
-    sm: 'h-8 w-8 rounded-lg',
-    md: 'h-10 w-10 rounded-xl',
-    lg: 'h-12 w-12 rounded-xl',
-    xl: 'h-16 w-16 rounded-2xl',
-    '2xl': 'h-20 w-20 rounded-3xl',
+    xs: 'h-6 w-6 rounded-md text-[10px]',
+    sm: 'h-8 w-8 rounded-lg text-xs',
+    md: 'h-9 w-9 rounded-xl text-sm',
+    lg: 'h-12 w-12 rounded-xl text-lg',
+    xl: 'h-16 w-16 rounded-2xl text-2xl font-black',
+    '2xl': 'h-20 w-20 rounded-3xl text-3xl font-black',
 };
 
 export const AppLogo: React.FC<AppLogoProps> = ({
     size = 'md',
-    src = '/logo.png',
-    alt = 'SAM-EDU Logo',
+    text = 'SAM',
     className = '',
     withText = false,
     brandName = 'Giáo dục Sam',
     subtitle,
     textColor = 'dark',
+    src,
 }) => {
-    const imgElement = (
+    const emblemElement = src ? (
         <img
             src={src}
-            alt={alt}
+            alt={brandName}
             className={`shrink-0 object-contain bg-white p-0.5 shadow-2xs border border-gray-100/80 ${sizeClasses[size] || sizeClasses.md} ${className}`}
         />
+    ) : (
+        <div
+            className={`flex shrink-0 select-none items-center justify-center bg-emerald-600 font-black text-white shadow-xs tracking-wider ${
+                sizeClasses[size] || sizeClasses.md
+            } ${className}`}
+        >
+            {text}
+        </div>
     );
 
     if (!withText) {
-        return imgElement;
+        return emblemElement;
     }
 
     const isLight = textColor === 'light';
 
     return (
         <div className="flex items-center gap-2.5">
-            {imgElement}
+            {emblemElement}
             <div className="flex flex-col">
                 <span
                     className={`font-extrabold leading-tight tracking-tight ${
