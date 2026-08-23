@@ -9,8 +9,10 @@ use App\Models\ClassChatMessage;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Chat\ChatRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 
@@ -18,7 +20,8 @@ class ChatService implements ChatServiceInterface
 {
     public function __construct(
         protected ChatRepositoryInterface $chatRepository,
-        protected SchoolClassRepositoryInterface $schoolClassRepository
+        protected SchoolClassRepositoryInterface $schoolClassRepository,
+        protected CenterRepositoryInterface $centerRepository
     ) {
     }
 
@@ -276,6 +279,114 @@ class ChatService implements ChatServiceInterface
             'pinned_by_name' => $msg->pinned_by_name,
             'created_at'     => (string) ($msg->created_at ?? now()->toIso8601String()),
             'time_formatted' => (string) ($msg->created_at ?? date('H:i, d/m')),
+        ];
+    }
+
+    /**
+     * @param  ?string              $search
+     * @param  ?int                 $centerId
+     * @param  ?int                 $classId
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @param  mixed                $user
+     * @return LengthAwarePaginator
+     */
+    public function getPaginatedChatGroups(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?int $classId = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1,
+        mixed $user = null
+    ): LengthAwarePaginator {
+        if (! $user) {
+            $user = Auth::guard('admin')->user()
+                ?? Auth::guard('teacher')->user()
+                ?? Auth::guard('student')->user();
+        }
+
+        $centerIds = null;
+        $teacherId = null;
+        $studentId = null;
+
+        if ($user instanceof Admin) {
+            if ($user->isSuperAdmin()) {
+                $centerIds = $centerId;
+            } else {
+                $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
+                $centerIds        = empty($allowedCenterIds) ? [-1] : $allowedCenterIds;
+            }
+        } elseif ($user instanceof Teacher) {
+            $teacherId = (int) $user->id;
+            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+        } elseif ($user instanceof Student) {
+            $studentStatusInt = is_object($user->status) ? $user->status->value : (int) $user->status;
+
+            if ($studentStatusInt !== 1) {
+                abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
+            }
+            $studentId = (int) $user->id;
+            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+        }
+
+        return $this->chatRepository->getPaginatedClassChatGroups(
+            $search,
+            $centerIds,
+            $classId,
+            $status,
+            $perPage,
+            $page,
+            $teacherId,
+            $studentId
+        );
+    }
+
+    /**
+     * @param  mixed                $user
+     * @return array<string, mixed>
+     */
+    public function getChatGroupFormData(mixed $user = null): array
+    {
+        if (! $user) {
+            $user = Auth::guard('admin')->user()
+                ?? Auth::guard('teacher')->user()
+                ?? Auth::guard('student')->user();
+        }
+
+        $isSuperAdmin = $user instanceof Admin && $user->isSuperAdmin();
+        $centers      = [];
+        $centerIds    = null;
+        $teacherId    = null;
+        $studentId    = null;
+
+        if ($user instanceof Admin) {
+            if ($user->isSuperAdmin()) {
+                $centers   = $this->centerRepository->getActiveCenters();
+                $centerIds = null;
+            } else {
+                $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
+                $centerIds        = empty($allowedCenterIds) ? [-1] : $allowedCenterIds;
+            }
+        } elseif ($user instanceof Teacher) {
+            $teacherId = (int) $user->id;
+            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+        } elseif ($user instanceof Student) {
+            $studentId = (int) $user->id;
+            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+        }
+
+        $accessibleClasses = $this->chatRepository->getAccessibleClassesList(
+            $centerIds,
+            $teacherId,
+            $studentId
+        );
+
+        return [
+            'centers'      => $centers,
+            'classes'      => $accessibleClasses,
+            'isSuperAdmin' => $isSuperAdmin,
         ];
     }
 }

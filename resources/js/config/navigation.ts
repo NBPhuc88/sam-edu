@@ -15,6 +15,7 @@ import {
     FileCheck,
     LayoutDashboard,
     Lock,
+    MessageSquare,
     Settings,
     Sliders,
     User,
@@ -101,6 +102,13 @@ export const masterNavigation: NavItem[] = [
         permission: 'statistics.index',
     },
     {
+        label: 'Nhóm Chat',
+        path: '/chats',
+        icon: MessageSquare,
+        permission: 'classes.chat',
+        planFeature: 'chat',
+    },
+    {
         label: 'Thông Báo',
         path: '/notifications',
         icon: Bell,
@@ -136,14 +144,20 @@ function filterNavItemsByPermissionsAndPlan(
     for (const item of items) {
         // Item đơn không có children
         if (!item.children || item.children.length === 0) {
+            if (item.planFeature && !isTrial && !allowedFeatures.includes(item.planFeature)) {
+                continue;
+            }
             if (!item.permission || permissions.includes(item.permission)) {
                 filtered.push(item);
             }
             continue;
         }
 
-        // Item có children: lọc theo quyền permissions của role
+        // Item có children: lọc theo quyền permissions của role và tính năng gói
         const validChildren = item.children.filter((child) => {
+            if (child.planFeature && !isTrial && !allowedFeatures.includes(child.planFeature)) {
+                return false;
+            }
             if (!child.permission) {
                 return true;
             }

@@ -197,6 +197,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::delete('/{id}', [\App\Http\Controllers\RoomController::class, 'destroy'])->name('destroy');
     });
 
+    // Class Chat Groups List Route
+    Route::get('/chats', [ChatController::class, 'groups'])->name('chats.index');
+
     // Class Management (CRUD), Class Student & Real-time Group Chat Routes
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SchoolClassController::class, 'index'])->name('index');

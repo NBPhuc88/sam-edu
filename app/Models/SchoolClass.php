@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SchoolClass extends Model
@@ -87,5 +88,21 @@ class SchoolClass extends Model
     public function classExams(): HasMany
     {
         return $this->hasMany(ClassExam::class, 'class_id');
+    }
+
+    /**
+     * @return HasMany<ClassChatMessage, $this>
+     */
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ClassChatMessage::class, 'class_id');
+    }
+
+    /**
+     * @return HasOne<ClassChatMessage, $this>
+     */
+    public function latestChatMessage(): HasOne
+    {
+        return $this->hasOne(ClassChatMessage::class, 'class_id')->latestOfMany();
     }
 }

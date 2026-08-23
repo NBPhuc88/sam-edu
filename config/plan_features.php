@@ -52,11 +52,13 @@ return [
             'name'        => 'Chat nhóm lớp học',
             'description' => 'Trao đổi tin nhắn và tài liệu trong nhóm lớp học',
             'route_names' => [
+                'chats.index',
                 'classes.chat.index',
                 'classes.chat.messages',
                 'classes.chat.send',
                 'classes.chat.pin',
             ],
+            'route_prefixes' => ['chats.', 'classes.chat.'],
         ],
     ],
 ];

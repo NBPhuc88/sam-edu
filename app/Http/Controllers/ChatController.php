@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Chat\FilterChatGroupRequest;
 use App\Http\Requests\Chat\SendClassChatMessageRequest;
 use App\Models\Admin;
 use App\Models\Student;
@@ -18,6 +19,41 @@ class ChatController extends Controller
     public function __construct(
         protected ChatServiceInterface $chatService
     ) {
+    }
+
+    public function groups(FilterChatGroupRequest $request): InertiaResponse
+    {
+        $search   = $request->input('search');
+        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $status   = $request->input('status');
+        $page     = $request->integer('page', 1);
+        $perPage  = $request->integer('per_page', 12);
+
+        $chatGroups = $this->chatService->getPaginatedChatGroups(
+            is_string($search) ? $search : null,
+            $centerId,
+            $classId,
+            is_string($status) ? $status : null,
+            $perPage,
+            $page
+        );
+
+        $formData = $this->chatService->getChatGroupFormData();
+
+        return Inertia::render('Admin/Chat/Index', [
+            'chatGroups' => $chatGroups,
+            'centers'    => $formData['centers'] ?? [],
+            'classes'    => $formData['classes'] ?? [],
+            'filters'    => [
+                'search'    => $search ?? '',
+                'center_id' => $centerId,
+                'class_id'  => $classId,
+                'status'    => $status ?? '1',
+                'per_page'  => $perPage,
+            ],
+            'isSuperAdmin' => (bool) ($formData['isSuperAdmin'] ?? false),
+        ]);
     }
 
     public function index(Request $request, int $classId): InertiaResponse

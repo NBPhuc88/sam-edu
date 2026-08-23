@@ -106,4 +106,159 @@ class ChatRepository implements ChatRepositoryInterface
 
         return $targetMessage->fresh();
     }
+
+    /**
+     * @param  ?string                                               $search
+     * @param  array<int>|int|null                                   $centerIds
+     * @param  ?int                                                  $classId
+     * @param  ?string                                               $status
+     * @param  int                                                   $perPage
+     * @param  int                                                   $page
+     * @param  ?int                                                  $teacherId
+     * @param  ?int                                                  $studentId
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedClassChatGroups(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?int $classId = null,
+        ?string $status = null,
+        int $perPage = 15,
+        int $page = 1,
+        ?int $teacherId = null,
+        ?int $studentId = null
+    ): \Illuminate\Contracts\Pagination\LengthAwarePaginator {
+        $query = \App\Models\SchoolClass::query()
+            ->select(
+                'id',
+                'center_id',
+                'name',
+                'code',
+                'description',
+                'max_students',
+                'start_date',
+                'end_date',
+                'status',
+                'created_at',
+                'updated_at'
+            )
+            ->with([
+                'center:id,name,code',
+                'classSubjects:id,class_id,subject_id,teacher_id,status',
+                'classSubjects.subject:id,name,code',
+                'classSubjects.teacher:id,full_name,teacher_code',
+                'latestChatMessage',
+            ])
+            ->withCount('students')
+            ->withCount('chatMessages');
+
+        if ($classId !== null) {
+            $query->where('id', $classId);
+        }
+
+        if ($studentId !== null) {
+            $query->whereHas('students', function ($q) use ($studentId) {
+                $q->where('students.id', $studentId);
+            });
+        }
+
+        if ($teacherId !== null) {
+            $query->where(function ($q) use ($teacherId) {
+                $q->whereHas('classSubjects', function ($sq) use ($teacherId) {
+                    $sq->where('teacher_id', $teacherId);
+                });
+            });
+        }
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        if ($status === null || $status === '') {
+            $query->where('status', 1);
+        } elseif ($status !== 'all') {
+            if (is_numeric($status)) {
+                $query->where('status', (int) $status);
+            } else {
+                $statusMap = [
+                    'inactive'  => 0,
+                    'active'    => 1,
+                    'completed' => 2,
+                ];
+
+                if (isset($statusMap[$status])) {
+                    $query->where('status', $statusMap[$status]);
+                }
+            }
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                    ->orWhere('code', 'like', "%{$term}%")
+                    ->orWhereHas('center', function ($cq) use ($term) {
+                        $cq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('classSubjects.subject', function ($sq) use ($term) {
+                        $sq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('classSubjects.teacher', function ($tq) use ($term) {
+                        $tq->where('full_name', 'like', "%{$term}%")
+                            ->orWhere('teacher_code', 'like', "%{$term}%");
+                    });
+            });
+        }
+
+        return $query->orderBy('status', 'asc')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /**
+     * @param  array<int>|int|null                                                    $centerIds
+     * @param  ?int                                                                   $teacherId
+     * @param  ?int                                                                   $studentId
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\SchoolClass>
+     */
+    public function getAccessibleClassesList(
+        array|int|null $centerIds = null,
+        ?int $teacherId = null,
+        ?int $studentId = null
+    ): Collection {
+        $query = \App\Models\SchoolClass::query()
+            ->select('id', 'name', 'code', 'center_id', 'status')
+            ->where('status', 1);
+
+        if ($studentId !== null) {
+            $query->whereHas('students', function ($q) use ($studentId) {
+                $q->where('students.id', $studentId);
+            });
+        }
+
+        if ($teacherId !== null) {
+            $query->whereHas('classSubjects', function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId);
+            });
+        }
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        /** @var Collection<int, \App\Models\SchoolClass> $classes */
+        $classes = $query->orderBy('name', 'asc')->get();
+
+        return $classes;
+    }
 }
