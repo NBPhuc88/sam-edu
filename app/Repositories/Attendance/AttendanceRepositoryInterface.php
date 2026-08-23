@@ -16,4 +16,10 @@ interface AttendanceRepositoryInterface
      * @return bool
      */
     public function saveSessionAttendances(int $sessionId, array $attendances, ?int $markedByTeacherId = null, ?int $markedByAdminId = null): bool;
+
+    /**
+     * @param  int  $sessionId
+     * @return bool
+     */
+    public function resetSessionAttendance(int $sessionId): bool;
 }

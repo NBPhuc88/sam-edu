@@ -118,6 +118,7 @@ return [
                 ['code' => 'classes.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa lớp học', 'description' => 'Cập nhật thông tin lớp học'],
                 ['code' => 'classes.delete', 'action' => 'delete', 'name' => 'Xóa lớp học', 'description' => 'Xóa lớp học'],
                 ['code' => 'classes.students', 'action' => 'index', 'name' => 'Quản lý học sinh lớp', 'description' => 'Xem & thêm học sinh vào lớp'],
+                ['code' => 'classes.exam-results', 'action' => 'index', 'name' => 'Bảng điểm bài thi lớp', 'description' => 'Xem bảng điểm & xuất dữ liệu kết quả thi của lớp học'],
                 ['code' => 'classes.chat', 'action' => 'index', 'name' => 'Chat nhóm lớp học', 'description' => 'Tham gia nhóm chat trao đổi của lớp'],
             ],
         ],

@@ -30,7 +30,7 @@ class PermissionSeeder extends Seeder
                 'students.index', 'students.create', 'students.edit', 'students.delete',
                 'subjects.index', 'subjects.create', 'subjects.edit', 'subjects.delete',
                 'rooms.index', 'rooms.create', 'rooms.edit', 'rooms.delete',
-                'classes.index', 'classes.create', 'classes.edit', 'classes.delete', 'classes.students', 'classes.chat',
+                'classes.index', 'classes.create', 'classes.edit', 'classes.delete', 'classes.students', 'classes.exam-results', 'classes.chat',
                 'schedules.index', 'schedules.create', 'schedules.edit', 'schedules.delete',
                 'sessions.index', 'sessions.edit', 'attendance.index', 'attendance.save',
                 'exams.index', 'exams.create', 'exams.edit', 'exams.delete',
@@ -44,7 +44,7 @@ class PermissionSeeder extends Seeder
             'teacher' => [
                 'dashboard.index',
                 'students.index',
-                'classes.index', 'classes.chat',
+                'classes.index', 'classes.exam-results', 'classes.chat',
                 'schedules.index',
                 'sessions.index', 'attendance.index', 'attendance.save',
                 'exams.index', 'exams.create', 'exams.edit', 'exams.delete',
@@ -55,7 +55,7 @@ class PermissionSeeder extends Seeder
 
             'student' => [
                 'dashboard.index',
-                'classes.index', 'classes.chat',
+                'classes.index', 'classes.exam-results', 'classes.chat',
                 'schedules.index',
                 'tuitions.index',
                 'online-exam.enter', 'practice-exams.index',

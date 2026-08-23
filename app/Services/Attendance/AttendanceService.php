@@ -142,4 +142,36 @@ class AttendanceService implements AttendanceServiceInterface
 
         return $result;
     }
+
+    /**
+     * @param  int                $sessionId
+     * @param  Admin|Teacher|null $user
+     * @return bool
+     */
+    public function resetAttendance(int $sessionId, Admin|Teacher|null $user = null): bool
+    {
+        $session = $this->attendanceRepository->findSession($sessionId);
+
+        if (! $session) {
+            throw new NotFoundHttpException("Không tìm thấy ca học với ID #{$sessionId}");
+        }
+
+        // Check permissions
+        if ($user instanceof Admin && ! $user->isSuperAdmin()) {
+            $allowedCenterIds = $user->centers()->pluck('centers.id')->toArray();
+            $centerId         = $session->classSubject?->schoolClass?->center_id;
+
+            if ($centerId && ! in_array($centerId, $allowedCenterIds, true)) {
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
+            }
+        } elseif ($user instanceof Teacher) {
+            $assignedTeacherId = $session->teacher_id ?? $session->classSubject?->teacher_id;
+
+            if ($assignedTeacherId !== $user->id && $session->classSubject?->teacher_id !== $user->id) {
+                throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
+            }
+        }
+
+        return $this->attendanceRepository->resetSessionAttendance($sessionId);
+    }
 }

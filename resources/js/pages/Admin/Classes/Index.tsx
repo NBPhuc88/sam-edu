@@ -396,14 +396,16 @@ return;
 
                                             <td className="px-6 py-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    <Tooltip content="Bảng điểm & Bài thi đã thi">
-                                                        <Link
-                                                            href={`/classes/${cls.id}/exam-results`}
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-colors shadow-2xs"
-                                                        >
-                                                            <Award className="h-4 w-4" />
-                                                        </Link>
-                                                    </Tooltip>
+                                                    {can('classes.exam-results') && (
+                                                        <Tooltip content="Bảng điểm & Bài thi đã thi">
+                                                            <Link
+                                                                href={`/classes/${cls.id}/exam-results`}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-colors shadow-2xs"
+                                                            >
+                                                                <Award className="h-4 w-4" />
+                                                            </Link>
+                                                        </Tooltip>
+                                                    )}
                                                     <Tooltip content="Xem thời khóa biểu lớp học">
                                                         <Link
                                                             href={`/classes/${cls.id}/schedule`}

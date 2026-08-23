@@ -174,6 +174,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::get('/', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('index');
         Route::get('/session/{sessionId}', [\App\Http\Controllers\AttendanceController::class, 'show'])->name('session');
         Route::post('/session/{sessionId}', [\App\Http\Controllers\AttendanceController::class, 'save'])->name('save');
+        Route::post('/session/{sessionId}/reset', [\App\Http\Controllers\AttendanceController::class, 'reset'])->name('reset');
     });
 
     // Subject Management Routes (Center Scope CRUD)

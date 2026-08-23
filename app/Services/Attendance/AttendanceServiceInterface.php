@@ -21,4 +21,11 @@ interface AttendanceServiceInterface
      * @return bool
      */
     public function saveAttendance(int $sessionId, array $attendances, Admin|Teacher|null $user = null): bool;
+
+    /**
+     * @param  int                $sessionId
+     * @param  Admin|Teacher|null $user
+     * @return bool
+     */
+    public function resetAttendance(int $sessionId, Admin|Teacher|null $user = null): bool;
 }

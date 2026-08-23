@@ -6,10 +6,13 @@ import {
     DoorOpen,
     Save,
     Users,
+    RotateCcw,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
@@ -89,6 +92,8 @@ export default function AttendanceShowPage({
     const { can } = usePermission();
     const [students, setStudents] = useState<StudentAttendanceItem[]>(initialStudents);
     const [isSaving, setIsSaving] = useState(false);
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
 
     const handleStatusChange = (studentId: number, status: 'present' | 'absent' | 'late' | 'excused') => {
         setStudents((prev) =>
@@ -125,6 +130,43 @@ export default function AttendanceShowPage({
         );
     };
 
+    const handleResetAttendance = () => {
+        setIsResetting(true);
+        router.post(
+            `/attendance/session/${session.id}/reset`,
+            {},
+            {
+                onFinish: () => {
+                    setIsResetting(false);
+                    setIsResetConfirmOpen(false);
+                    setStudents((prev) =>
+                        prev.map((s) => ({
+                            ...s,
+                            status: 'present',
+                            note: '',
+                            check_in_at: null,
+                            marked_at: null,
+                        })),
+                    );
+                },
+            },
+        );
+    };
+
+    const getSessionStatusBadge = (status: string) => {
+        switch (status) {
+            case 'completed':
+                return <Badge variant="active">Đã Dạy (Hoàn Thành)</Badge>;
+            case 'cancelled':
+                return <Badge variant="danger">Đã Hủy</Badge>;
+            case 'rescheduled':
+                return <Badge variant="expired">Đổi Lịch</Badge>;
+            case 'scheduled':
+            default:
+                return <Badge variant="pending">Chưa Dạy (Lên Lịch)</Badge>;
+        }
+    };
+
     const presentCount = students.filter((s) => s.status === 'present').length;
     const lateCount = students.filter((s) => s.status === 'late').length;
     const excusedCount = students.filter((s) => s.status === 'excused').length;
@@ -134,77 +176,54 @@ export default function AttendanceShowPage({
         <AppLayout title={`Điểm Danh: ${subject?.name || 'Môn học'} - ${schoolClass?.name || 'Lớp học'}`}>
             <Head title={`Điểm Danh: ${subject?.name} - ${schoolClass?.name}`} />
 
-            <div className="mx-auto max-w-6xl space-y-6">
-                {/* Header Top Bar */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
+            <div className="mx-auto max-w-7xl space-y-6">
+                {/* Header Top Card (Full-width text & info) */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
+                    <div className="flex items-start sm:items-center gap-3.5">
                         <Button
                             type="button"
                             variant="secondary"
                             size="sm"
                             icon={<ArrowLeft className="h-4 w-4" />}
                             onClick={() => window.history.back()}
+                            className="shrink-0 mt-0.5 sm:mt-0"
                         >
                             Quay Lại
                         </Button>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
                                     Điểm Danh: {subject?.name}
                                 </h1>
-                                <span className="rounded-md bg-emerald-50 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
+                                <span className="rounded-md bg-emerald-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
                                     {schoolClass?.name} ({schoolClass?.code})
                                 </span>
+                                {getSessionStatusBadge(session.status)}
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                                <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
+                                <span className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-md border border-emerald-200">
                                     <Clock className="h-3.5 w-3.5" />
                                     {session.session_date} ({session.start_time?.substring(0, 5)} - {session.end_time?.substring(0, 5)})
                                 </span>
-                                <span>•</span>
-                                <span>
-                                    Buổi học: <strong className="text-gray-900">Buổi {sessionOrder}{totalSessions ? ` / ${totalSessions} buổi` : ''}</strong>
+                                <span className="flex items-center gap-1.5">
+                                    Buổi học: <strong className="text-gray-900 font-semibold">Buổi {sessionOrder}{totalSessions ? ` / ${totalSessions} buổi` : ''}</strong>
                                 </span>
                                 <span>•</span>
-                                <span>
-                                    GV: <strong className="text-gray-900">{teacher?.full_name || 'N/A'}</strong>
+                                <span className="flex items-center gap-1.5">
+                                    GV: <strong className="text-gray-900 font-semibold">{teacher?.full_name || 'N/A'}</strong>
                                 </span>
                                 {room && (
                                     <>
                                         <span>•</span>
-                                        <span className="flex items-center gap-1">
+                                        <span className="flex items-center gap-1 text-gray-600">
                                             <DoorOpen className="h-3.5 w-3.5 text-gray-400" />
-                                            {room.name}
+                                            Phòng: <strong className="text-gray-800">{room.name}</strong>
                                         </span>
                                     </>
                                 )}
                             </div>
                         </div>
                     </div>
-
-                    {can('attendance.save') && (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="md"
-                                icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                                onClick={handleMarkAllPresent}
-                            >
-                                Tất Cả Có Mặt
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="success"
-                                size="md"
-                                icon={<Save className="h-4 w-4" />}
-                                isLoading={isSaving}
-                                onClick={handleSubmit}
-                            >
-                                Lưu Điểm Danh
-                            </Button>
-                        </div>
-                    )}
                 </div>
 
                 {/* Counters Card */}
@@ -254,6 +273,54 @@ export default function AttendanceShowPage({
                 {/* Student Attendance Form / Table */}
                 <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
                     <form onSubmit={handleSubmit}>
+                        {/* Action Toolbar Header above table */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-200 bg-slate-50/90 px-6 py-3.5">
+                            <div className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-emerald-600" />
+                                <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+                                    Danh Sách Học Sinh Điểm Danh
+                                </h3>
+                                <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-xs font-bold text-gray-700 font-mono">
+                                    {students.length}
+                                </span>
+                            </div>
+
+                            {can('attendance.save') && (
+                                <div className="flex items-center justify-end gap-2.5">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        icon={<RotateCcw className="h-4 w-4 text-rose-500" />}
+                                        isLoading={isResetting}
+                                        onClick={() => setIsResetConfirmOpen(true)}
+                                        title="Xóa dữ liệu điểm danh và chuyển trạng thái về Chưa dạy"
+                                        className="!border-rose-200 !text-rose-600 hover:!bg-rose-50 hover:!border-rose-300"
+                                    >
+                                        Reset Điểm Danh
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                        onClick={handleMarkAllPresent}
+                                    >
+                                        Tất Cả Có Mặt
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="success"
+                                        size="sm"
+                                        icon={<Save className="h-4 w-4" />}
+                                        isLoading={isSaving}
+                                    >
+                                        Lưu Điểm Danh
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-gray-600">
                                 <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -383,25 +450,61 @@ export default function AttendanceShowPage({
                         </div>
 
                         {students && students.length > 0 && (
-                            <div className="flex items-center justify-between border-t border-gray-100 bg-slate-50 px-6 py-4">
-                                <div className="text-xs text-gray-500">
-                                    Đang xem {students.length} học sinh trong ca học
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 bg-slate-50/80 px-6 py-4">
+                                <div className="text-xs text-gray-500 font-medium">
+                                    Đang xem <span className="font-bold text-gray-800">{students.length}</span> học sinh trong ca học
                                 </div>
                                 {can('attendance.save') && (
-                                    <Button
-                                        type="submit"
-                                        variant="success"
-                                        size="md"
-                                        icon={<Save className="h-4 w-4" />}
-                                        isLoading={isSaving}
-                                    >
-                                        Lưu Điểm Danh
-                                    </Button>
+                                    <div className="flex items-center justify-end gap-2.5">
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            icon={<RotateCcw className="h-4 w-4 text-rose-500" />}
+                                            isLoading={isResetting}
+                                            onClick={() => setIsResetConfirmOpen(true)}
+                                            title="Xóa dữ liệu điểm danh và chuyển trạng thái về Chưa dạy"
+                                            className="!border-rose-200 !text-rose-600 hover:!bg-rose-50 hover:!border-rose-300"
+                                        >
+                                            Reset Điểm Danh
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                                            onClick={handleMarkAllPresent}
+                                        >
+                                            Tất Cả Có Mặt
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            variant="success"
+                                            size="sm"
+                                            icon={<Save className="h-4 w-4" />}
+                                            isLoading={isSaving}
+                                        >
+                                            Lưu Điểm Danh
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                         )}
                     </form>
                 </Card>
+
+                {/* Confirm Dialog for Reset Attendance */}
+                <ConfirmDialog
+                    isOpen={isResetConfirmOpen}
+                    onClose={() => setIsResetConfirmOpen(false)}
+                    onConfirm={handleResetAttendance}
+                    title="Xác Nhận Đặt Lại Điểm Danh"
+                    message="Bạn có chắc chắn muốn xóa toàn bộ kết quả điểm danh của buổi học này và đặt lại trạng thái ca học thành 'Chưa dạy' (scheduled)? Thao tác này phù hợp khi điểm danh nhầm buổi."
+                    confirmText="Đặt Lại Điểm Danh"
+                    cancelText="Hủy"
+                    variant="danger"
+                    isLoading={isResetting}
+                />
             </div>
         </AppLayout>
     );

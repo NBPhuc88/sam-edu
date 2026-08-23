@@ -67,4 +67,14 @@ class AttendanceRepository implements AttendanceRepositoryInterface
             return true;
         });
     }
+
+    public function resetSessionAttendance(int $sessionId): bool
+    {
+        return DB::transaction(function () use ($sessionId) {
+            Attendance::where('session_id', $sessionId)->delete();
+            ClassSession::where('id', $sessionId)->update(['status' => 'scheduled']);
+
+            return true;
+        });
+    }
 }

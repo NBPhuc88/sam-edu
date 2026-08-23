@@ -88,4 +88,12 @@ class AttendanceController extends Controller
 
         return back()->with('success', 'Lưu dữ liệu điểm danh thành công!');
     }
+
+    public function reset(int $sessionId): RedirectResponse
+    {
+        $user = $this->getAuthUser();
+        $this->attendanceService->resetAttendance($sessionId, $user);
+
+        return back()->with('success', 'Đã đặt lại điểm danh ca học và chuyển trạng thái về chưa dạy thành công!');
+    }
 }
