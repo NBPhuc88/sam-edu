@@ -26,6 +26,7 @@ class UpdateAdminRequest extends FormRequest
 
         return [
             'full_name'    => ['required', 'string', 'max:100'],
+            'username'     => ['required', 'string', 'max:50', Rule::unique('admins', 'username')->ignore($id)],
             'email'        => ['nullable', 'email', 'max:100', Rule::unique('admins', 'email')->ignore($id)],
             'phone'        => ['nullable', 'string', 'max:20'],
             'password'     => ['nullable', 'string', 'min:6'],

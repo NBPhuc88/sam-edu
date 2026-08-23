@@ -345,14 +345,17 @@ class StudentService implements StudentServiceInterface
             ? $this->parseDate($data['admission_date'])
             : $student->getRawOriginal('admission_date');
 
-        $oldEmail       = $student->email;
-        $isPassChanged  = ! empty($data['password']);
-        $newEmail       = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $student->email;
-        $isEmailChanged = $newEmail && $oldEmail !== $newEmail;
+        $oldEmail          = $student->email;
+        $oldUsername       = $student->username;
+        $isPassChanged     = ! empty($data['password']);
+        $newEmail          = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $student->email;
+        $newUsername       = array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $student->username;
+        $isEmailChanged    = $newEmail && $oldEmail !== $newEmail;
+        $isUsernameChanged = $newUsername && $oldUsername !== $newUsername;
 
         $updateData = [
             'center_id'           => $data['center_id'] ?? $student->center_id,
-            'username'            => array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $student->username,
+            'username'            => $newUsername,
             'email'               => $newEmail,
             'status'              => $newStatus,
             'student_code'        => isset($data['student_code']) ? trim($data['student_code']) : $student->student_code,
@@ -395,6 +398,20 @@ class StudentService implements StudentServiceInterface
                 new \App\Mail\PasswordChangedMail(
                     fullName: $updatedStudent->full_name,
                     username: (string) ($updatedStudent->username ?? $updatedStudent->student_code),
+                    roleLabel: 'Học sinh',
+                    centerName: $center?->name,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/login')
+                )
+            );
+        }
+
+        if ($isUsernameChanged && ! empty($updatedStudent->email)) {
+            \Illuminate\Support\Facades\Mail::to($updatedStudent->email)->queue(
+                new \App\Mail\UsernameChangedMail(
+                    fullName: $updatedStudent->full_name,
+                    oldUsername: (string) $oldUsername,
+                    newUsername: (string) $newUsername,
                     roleLabel: 'Học sinh',
                     centerName: $center?->name,
                     changedAt: date('d/m/Y H:i:s'),

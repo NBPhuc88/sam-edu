@@ -213,14 +213,17 @@ class TeacherService implements TeacherServiceInterface
             }
         }
 
-        $oldEmail       = $teacher->email;
-        $isPassChanged  = ! empty($data['password']);
-        $newEmail       = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $teacher->email;
-        $isEmailChanged = $newEmail && $oldEmail !== $newEmail;
+        $oldEmail          = $teacher->email;
+        $oldUsername       = $teacher->username;
+        $isPassChanged     = ! empty($data['password']);
+        $newEmail          = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $teacher->email;
+        $newUsername       = array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $teacher->username;
+        $isEmailChanged    = $newEmail && $oldEmail !== $newEmail;
+        $isUsernameChanged = $newUsername && $oldUsername !== $newUsername;
 
         $updateData = [
             'center_id'      => $data['center_id'] ?? $teacher->center_id,
-            'username'       => isset($data['username']) ? trim($data['username']) : $teacher->username,
+            'username'       => $newUsername,
             'email'          => $newEmail,
             'status'         => $data['status'] ?? $teacher->status,
             'teacher_code'   => isset($data['teacher_code']) ? trim($data['teacher_code']) : $teacher->teacher_code,
@@ -260,6 +263,20 @@ class TeacherService implements TeacherServiceInterface
                 new \App\Mail\PasswordChangedMail(
                     fullName: $updatedTeacher->full_name,
                     username: $updatedTeacher->username,
+                    roleLabel: 'Giáo viên',
+                    centerName: $center?->name,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/teachers')
+                )
+            );
+        }
+
+        if ($isUsernameChanged && ! empty($updatedTeacher->email)) {
+            \Illuminate\Support\Facades\Mail::to($updatedTeacher->email)->queue(
+                new \App\Mail\UsernameChangedMail(
+                    fullName: $updatedTeacher->full_name,
+                    oldUsername: (string) $oldUsername,
+                    newUsername: (string) $newUsername,
                     roleLabel: 'Giáo viên',
                     centerName: $center?->name,
                     changedAt: date('d/m/Y H:i:s'),

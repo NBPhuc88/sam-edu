@@ -97,13 +97,17 @@ class AdminService implements AdminServiceInterface
             }
         }
 
-        $oldEmail       = $targetAdmin->email;
-        $isPassChanged  = ! empty($data['password']);
-        $newEmail       = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $targetAdmin->email;
-        $isEmailChanged = $newEmail && $oldEmail !== $newEmail;
+        $oldEmail          = $targetAdmin->email;
+        $oldUsername       = $targetAdmin->username;
+        $isPassChanged     = ! empty($data['password']);
+        $newEmail          = array_key_exists('email', $data) ? (! empty($data['email']) ? trim($data['email']) : null) : $targetAdmin->email;
+        $newUsername       = array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $targetAdmin->username;
+        $isEmailChanged    = $newEmail && $oldEmail !== $newEmail;
+        $isUsernameChanged = $newUsername && $oldUsername !== $newUsername;
 
         $updateData = [
             'full_name' => $data['full_name'],
+            'username'  => $newUsername,
             'email'     => $newEmail,
             'phone'     => $data['phone'] ?? null,
             'role'      => $data['role'],
@@ -130,6 +134,20 @@ class AdminService implements AdminServiceInterface
                 new \App\Mail\PasswordChangedMail(
                     fullName: $admin->full_name,
                     username: $admin->username,
+                    roleLabel: $roleLabel,
+                    centerName: $centerName,
+                    changedAt: date('d/m/Y H:i:s'),
+                    loginUrl: url('/admins')
+                )
+            );
+        }
+
+        if ($isUsernameChanged && ! empty($admin->email)) {
+            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
+                new \App\Mail\UsernameChangedMail(
+                    fullName: $admin->full_name,
+                    oldUsername: (string) $oldUsername,
+                    newUsername: (string) $newUsername,
                     roleLabel: $roleLabel,
                     centerName: $centerName,
                     changedAt: date('d/m/Y H:i:s'),

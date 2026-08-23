@@ -385,22 +385,20 @@ return;
                             />
                         </div>
 
-                        {!editingAdmin && (
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                                    Tên đăng nhập (Username) (*)
-                                </label>
-                                <Input
-                                    placeholder="Nhập username"
-                                    value={form.data.username}
-                                    onChange={(e) =>
-                                        form.setData('username', e.target.value)
-                                    }
-                                    error={form.errors.username}
-                                    className="!py-3 !text-sm"
-                                />
-                            </div>
-                        )}
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                Tên đăng nhập (Username) (*)
+                            </label>
+                            <Input
+                                placeholder="Nhập username"
+                                value={form.data.username}
+                                onChange={(e) =>
+                                    form.setData('username', e.target.value)
+                                }
+                                error={form.errors.username}
+                                className="!py-3 !text-sm"
+                            />
+                        </div>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 items-start">
                             <div>
