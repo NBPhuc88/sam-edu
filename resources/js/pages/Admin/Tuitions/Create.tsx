@@ -72,6 +72,19 @@ export const Create: React.FC<CreateProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const formatCurrency = (amount: number | string) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+        }).format(Number(amount) || 0);
+    };
+
+    const isInitialAmountExceeded =
+        hasInitialPayment &&
+        Number(initialAmount) > 0 &&
+        Number(totalAmount) > 0 &&
+        Number(initialAmount) > Number(totalAmount);
+
     // Filter classes and students by selected center
     const filteredClasses = centerId
         ? classes.filter((c) => String(c.center_id) === String(centerId))
@@ -100,6 +113,11 @@ export const Create: React.FC<CreateProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isInitialAmountExceeded) {
+            return;
+        }
+
         setIsSubmitting(true);
 
         const payload: any = {
@@ -334,13 +352,22 @@ export const Create: React.FC<CreateProps> = ({
                                     <Input
                                         type="number"
                                         min="1000"
+                                        max={totalAmount ? Number(totalAmount) : undefined}
                                         step="1000"
                                         value={initialAmount}
                                         onChange={(e) => setInitialAmount(e.target.value)}
                                         placeholder="Ví dụ: 5000000"
-                                        className="!py-3 !text-sm"
+                                        className={`!py-3 !text-sm ${isInitialAmountExceeded ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                                         required={hasInitialPayment}
                                     />
+                                    {isInitialAmountExceeded && (
+                                        <p className="mt-1.5 text-xs font-semibold text-red-600">
+                                            Số tiền đóng đợt 1 ({formatCurrency(initialAmount)}) không được vượt quá tổng học phí ({formatCurrency(totalAmount)}).
+                                        </p>
+                                    )}
+                                    {errors.initial_payment_amount && (
+                                        <p className="mt-1.5 text-xs text-red-600">{errors.initial_payment_amount}</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -412,6 +439,7 @@ export const Create: React.FC<CreateProps> = ({
                             variant="success"
                             size="lg"
                             isLoading={isSubmitting}
+                            disabled={isSubmitting || isInitialAmountExceeded}
                             icon={<Save className="h-5 w-5" />}
                         >
                             Tạo Hồ Sơ Học Phí

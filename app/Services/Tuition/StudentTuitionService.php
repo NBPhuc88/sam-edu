@@ -179,8 +179,16 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền quản lý học phí của Trung tâm này.');
         }
 
-        $totalAmount = (float) $data['total_amount'];
-        $title       = $data['title'] ?? null;
+        $totalAmount          = (float) $data['total_amount'];
+        $initialPaymentAmount = ! empty($data['initial_payment_amount']) ? (float) $data['initial_payment_amount'] : 0;
+
+        if ($initialPaymentAmount > $totalAmount) {
+            throw ValidationException::withMessages([
+                'initial_payment_amount' => 'Số tiền đóng đợt 1 (' . number_format($initialPaymentAmount, 0, ',', '.') . 'đ) không được vượt quá tổng số tiền học phí cần đóng (' . number_format($totalAmount, 0, ',', '.') . 'đ).',
+            ]);
+        }
+
+        $title = $data['title'] ?? null;
 
         if (empty($title)) {
             $class = $this->schoolClassRepository->find((int) $data['class_id']);
@@ -202,9 +210,9 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ]);
 
         // Nếu người dùng nhập luôn đợt thanh toán ban đầu (First installment)
-        if (! empty($data['initial_payment_amount']) && (float) $data['initial_payment_amount'] > 0) {
+        if ($initialPaymentAmount > 0) {
             $this->recordPayment($tuition->id, [
-                'amount'           => (float) $data['initial_payment_amount'],
+                'amount'           => $initialPaymentAmount,
                 'payment_date'     => $data['initial_payment_date'] ?? now()->format('Y-m-d'),
                 'payment_method'   => $data['initial_payment_method'] ?? 'bank_transfer',
                 'transaction_code' => $data['initial_transaction_code'] ?? null,
@@ -231,6 +239,17 @@ class StudentTuitionService implements StudentTuitionServiceInterface
 
             if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
                 throw new AccessDeniedHttpException('Bạn không có quyền chuyển hồ sơ sang Trung tâm này.');
+            }
+        }
+
+        if (isset($data['total_amount'])) {
+            $newTotalAmount    = (float) $data['total_amount'];
+            $currentPaidAmount = (float) $tuition->paid_amount;
+
+            if ($newTotalAmount < $currentPaidAmount) {
+                throw ValidationException::withMessages([
+                    'total_amount' => 'Tổng học phí (' . number_format($newTotalAmount, 0, ',', '.') . 'đ) không được nhỏ hơn tổng số tiền học sinh đã đóng (' . number_format($currentPaidAmount, 0, ',', '.') . 'đ).',
+                ]);
             }
         }
 
@@ -276,6 +295,14 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             throw ValidationException::withMessages(['amount' => 'Số tiền đóng phải lớn hơn 0đ.']);
         }
 
+        $remainingAmount = (float) $tuition->remaining_amount;
+
+        if ($amount > $remainingAmount) {
+            throw ValidationException::withMessages([
+                'amount' => 'Số tiền đóng (' . number_format($amount, 0, ',', '.') . 'đ) không được vượt quá số tiền cần đóng còn lại (' . number_format($remainingAmount, 0, ',', '.') . 'đ).',
+            ]);
+        }
+
         $payment = $this->tuitionPaymentRepository->create([
             'student_tuition_id' => $tuition->id,
             'amount'             => $amount,
@@ -306,10 +333,24 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         }
 
         // Check permission via tuition
-        $this->findTuition($payment->student_tuition_id, $admin);
+        $tuition = $this->findTuition($payment->student_tuition_id, $admin);
 
-        if (isset($data['amount']) && (float) $data['amount'] <= 0) {
-            throw ValidationException::withMessages(['amount' => 'Số tiền đóng phải lớn hơn 0đ.']);
+        if (isset($data['amount'])) {
+            $amount = (float) $data['amount'];
+
+            if ($amount <= 0) {
+                throw ValidationException::withMessages(['amount' => 'Số tiền đóng phải lớn hơn 0đ.']);
+            }
+
+            // Maximum allowed amount for this payment = total_amount - sum(other payments)
+            $otherPaymentsSum = (float) $tuition->payments()->where('id', '!=', $paymentId)->sum('amount');
+            $maxAllowedAmount = max(0, (float) $tuition->total_amount - $otherPaymentsSum);
+
+            if ($amount > $maxAllowedAmount) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Số tiền đóng (' . number_format($amount, 0, ',', '.') . 'đ) không được vượt quá số tiền tối đa có thể đóng (' . number_format($maxAllowedAmount, 0, ',', '.') . 'đ).',
+                ]);
+            }
         }
 
         $updatedPayment = $this->tuitionPaymentRepository->update($paymentId, [

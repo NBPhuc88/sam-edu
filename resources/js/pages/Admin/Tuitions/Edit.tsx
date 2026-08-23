@@ -82,11 +82,26 @@ export const Edit: React.FC<EditProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const formatCurrency = (amount: number | string) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+        }).format(Number(amount) || 0);
+    };
+
+    const paidAmount = Number(tuition.paid_amount) || 0;
+    const isTotalAmountBelowPaid = Number(totalAmount) < paidAmount;
+
     const filteredClasses = classes.filter((c) => String(c.center_id) === String(centerId));
     const filteredStudents = students.filter((s) => String(s.center_id) === String(centerId));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isTotalAmountBelowPaid) {
+            return;
+        }
+
         setIsSubmitting(true);
 
         router.patch(
@@ -218,13 +233,22 @@ export const Edit: React.FC<EditProps> = ({
                                 </label>
                                 <Input
                                     type="number"
-                                    min="0"
+                                    min={paidAmount}
                                     step="1000"
                                     value={totalAmount}
                                     onChange={(e) => setTotalAmount(e.target.value)}
-                                    className="!py-3 !text-sm"
+                                    className={`!py-3 !text-sm ${isTotalAmountBelowPaid ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                                     required
                                 />
+                                {isTotalAmountBelowPaid ? (
+                                    <p className="mt-1.5 text-xs font-semibold text-red-600">
+                                        Tổng học phí ({formatCurrency(totalAmount)}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
+                                    </p>
+                                ) : paidAmount > 0 ? (
+                                    <p className="mt-1.5 text-xs text-gray-500">
+                                        Đã đóng: <strong className="text-gray-800">{formatCurrency(paidAmount)}</strong>. Tổng học phí tối thiểu phải bằng số tiền đã đóng.
+                                    </p>
+                                ) : null}
                                 {errors.total_amount && (
                                     <p className="mt-1.5 text-xs text-red-600">{errors.total_amount}</p>
                                 )}
@@ -269,6 +293,7 @@ export const Edit: React.FC<EditProps> = ({
                             variant="edit"
                             size="lg"
                             isLoading={isSubmitting}
+                            disabled={isSubmitting || isTotalAmountBelowPaid}
                             icon={<Save className="h-5 w-5" />}
                         >
                             Cập Nhật Hồ Sơ

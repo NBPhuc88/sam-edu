@@ -28,9 +28,9 @@ class AssignStudentClassesRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'class_ids.array'      => 'Danh sách lớp học không hợp lệ.',
-            'class_ids.*.integer'  => 'Mã lớp học không hợp lệ.',
-            'class_ids.*.exists'   => 'Lớp học đã chọn không tồn tại.',
+            'class_ids.array'     => 'Danh sách lớp học không hợp lệ.',
+            'class_ids.*.integer' => 'Mã lớp học không hợp lệ.',
+            'class_ids.*.exists'  => 'Lớp học đã chọn không tồn tại.',
         ];
     }
 }

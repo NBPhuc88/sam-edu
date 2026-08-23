@@ -75,9 +75,10 @@ interface ShowProps {
         };
         payments: TuitionPaymentItem[];
     };
+    errors?: Record<string, string>;
 }
 
-export const Show: React.FC<ShowProps> = ({ tuition }) => {
+export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const { can } = usePermission();
     // Add Payment Modal State
     const [addPaymentOpen, setAddPaymentOpen] = useState(false);
@@ -149,9 +150,22 @@ export const Show: React.FC<ShowProps> = ({ tuition }) => {
     const remaining = Number(tuition.remaining_amount) || 0;
     const percent = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
 
+    const isAddAmountExceeded = remaining > 0 && Number(addAmount) > remaining;
+    const isAddAmountInvalid = Number(addAmount) <= 0 || isAddAmountExceeded || remaining <= 0;
+
+    const otherPaymentsTotal = paid - (editingPayment ? Number(editingPayment.amount) : 0);
+    const maxEditAllowed = Math.max(0, total - otherPaymentsTotal);
+    const isEditAmountExceeded = Number(editAmount) > maxEditAllowed;
+    const isEditAmountInvalid = Number(editAmount) <= 0 || isEditAmountExceeded;
+
     // Handle submit Add Payment
     const handleAddPayment = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isAddAmountInvalid) {
+            return;
+        }
+
         setIsAdding(true);
 
         router.post(
@@ -189,9 +203,9 @@ export const Show: React.FC<ShowProps> = ({ tuition }) => {
     const handleEditPayment = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!editingPayment) {
-return;
-}
+        if (!editingPayment || isEditAmountInvalid) {
+            return;
+        }
 
         setIsEditing(true);
 
@@ -488,103 +502,145 @@ return;
                 onClose={() => setAddPaymentOpen(false)}
                 title="Ghi Nhận Thu Tiền Đợt Mới"
             >
-                <form onSubmit={handleAddPayment} className="space-y-4">
-                    <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                            Số Tiền Thu Đợt Này (VNĐ) (*)
-                        </label>
-                        <Input
-                            type="number"
-                            min="1000"
-                            step="1000"
-                            value={addAmount}
-                            onChange={(e) => setAddAmount(e.target.value)}
-                            placeholder="Nhập số tiền thu..."
-                            className="!py-2.5 !text-sm"
-                            required
-                        />
-                        {remaining > 0 && (
-                            <p className="mt-1 text-xs text-gray-500">
-                                Số tiền còn nợ hiện tại: <strong>{formatCurrency(remaining)}</strong>
-                            </p>
-                        )}
+                {remaining <= 0 ? (
+                    <div className="space-y-4 py-2">
+                        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+                            <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" />
+                            <div>
+                                <h4 className="font-bold">Hồ sơ học phí đã hoàn tất</h4>
+                                <p className="mt-0.5 text-xs text-emerald-700">
+                                    Học sinh đã thanh toán đủ 100% tổng học phí ({formatCurrency(total)}). Không còn số dư cần đóng.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                onClick={() => setAddPaymentOpen(false)}
+                            >
+                                Đóng
+                            </Button>
+                        </div>
                     </div>
+                ) : (
+                    <form onSubmit={handleAddPayment} className="space-y-4">
+                        <div>
+                            <div className="mb-1.5 flex items-center justify-between">
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Số Tiền Thu Đợt Này (VNĐ) (*)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setAddAmount(String(remaining))}
+                                    className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                >
+                                    Đóng toàn bộ còn lại
+                                </button>
+                            </div>
+                            <Input
+                                type="number"
+                                min="1000"
+                                max={remaining}
+                                step="1000"
+                                value={addAmount}
+                                onChange={(e) => setAddAmount(e.target.value)}
+                                placeholder="Nhập số tiền thu..."
+                                className={`!py-2.5 !text-sm ${isAddAmountExceeded ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                                required
+                            />
+                            {isAddAmountExceeded ? (
+                                <p className="mt-1 text-xs font-semibold text-red-600">
+                                    Số tiền đóng ({formatCurrency(addAmount)}) không được vượt quá số tiền còn nợ ({formatCurrency(remaining)}).
+                                </p>
+                            ) : (
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Số tiền còn nợ hiện tại: <strong className="text-gray-800">{formatCurrency(remaining)}</strong>
+                                </p>
+                            )}
+                            {errors?.amount && (
+                                <p className="mt-1 text-xs font-medium text-red-600">{errors.amount}</p>
+                            )}
+                        </div>
 
-                    <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                            Ngày Thu Tiền (*)
-                        </label>
-                        <DatePicker
-                            value={addDate}
-                            onChange={(val) => setAddDate(val)}
-                            className="!py-2.5 !text-sm w-full"
-                            required
-                        />
-                    </div>
+                        <div>
+                            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                Ngày Thu Tiền (*)
+                            </label>
+                            <DatePicker
+                                value={addDate}
+                                onChange={(val) => setAddDate(val)}
+                                className="!py-2.5 !text-sm w-full"
+                                required
+                            />
+                        </div>
 
-                    <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                            Hình Thức Thanh Toán (*)
-                        </label>
-                        <select
-                            value={addMethod}
-                            onChange={(e) => setAddMethod(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                        >
-                            <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                            <option value="cash">Tiền mặt</option>
-                            <option value="momo">Ví MoMo</option>
-                            <option value="zalopay">Ví ZaloPay</option>
-                            <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                            <option value="other">Khác</option>
-                        </select>
-                    </div>
+                        <div>
+                            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                Hình Thức Thanh Toán (*)
+                            </label>
+                            <select
+                                value={addMethod}
+                                onChange={(e) => setAddMethod(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                            >
+                                <option value="bank_transfer">Chuyển khoản ngân hàng</option>
+                                <option value="cash">Tiền mặt</option>
+                                <option value="momo">Ví MoMo</option>
+                                <option value="zalopay">Ví ZaloPay</option>
+                                <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
 
-                    <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                            Mã Phiếu Thu / Mã Giao Dịch
-                        </label>
-                        <Input
-                            value={addCode}
-                            onChange={(e) => setAddCode(e.target.value)}
-                            placeholder="VD: PT-20260110-01"
-                            className="!py-2.5 !text-sm"
-                        />
-                    </div>
+                        <div>
+                            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                Mã Phiếu Thu / Mã Giao Dịch
+                            </label>
+                            <Input
+                                value={addCode}
+                                onChange={(e) => setAddCode(e.target.value)}
+                                placeholder="VD: PT-20260110-01"
+                                className="!py-2.5 !text-sm"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                            Ghi Chú Đợt Thu
-                        </label>
-                        <Input
-                            value={addNote}
-                            onChange={(e) => setAddNote(e.target.value)}
-                            placeholder="VD: Đợt 2 - Thu bổ sung trước kỳ thi"
-                            className="!py-2.5 !text-sm"
-                        />
-                    </div>
+                        <div>
+                            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                                Ghi Chú Đợt Thu
+                            </label>
+                            <Input
+                                value={addNote}
+                                onChange={(e) => setAddNote(e.target.value)}
+                                placeholder="VD: Đợt 2 - Thu bổ sung trước kỳ thi"
+                                className="!py-2.5 !text-sm"
+                            />
+                        </div>
 
-                    <div className="flex items-center justify-end gap-2.5 pt-2">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="md"
-                            onClick={() => setAddPaymentOpen(false)}
-                            disabled={isAdding}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="success"
-                            size="md"
-                            isLoading={isAdding}
-                            icon={<CheckCircle2 className="h-4.5 w-4.5" />}
-                        >
-                            Xác Nhận Thu Tiền
-                        </Button>
-                    </div>
-                </form>
+                        <div className="flex items-center justify-end gap-2.5 pt-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                onClick={() => setAddPaymentOpen(false)}
+                                disabled={isAdding}
+                            >
+                                Hủy Bỏ
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                isLoading={isAdding}
+                                disabled={isAdding || isAddAmountInvalid}
+                                icon={<CheckCircle2 className="h-4.5 w-4.5" />}
+                            >
+                                Xác Nhận Thu Tiền
+                            </Button>
+                        </div>
+                    </form>
+                )}
             </Modal>
 
             {/* Modal 2: Chỉnh Sửa Đợt Thu Tiền */}
@@ -601,12 +657,25 @@ return;
                         <Input
                             type="number"
                             min="1000"
+                            max={maxEditAllowed}
                             step="1000"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
-                            className="!py-2.5 !text-sm"
+                            className={`!py-2.5 !text-sm ${isEditAmountExceeded ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                             required
                         />
+                        {isEditAmountExceeded ? (
+                            <p className="mt-1 text-xs font-semibold text-red-600">
+                                Số tiền đóng ({formatCurrency(editAmount)}) vượt quá số tiền tối đa cho phép ({formatCurrency(maxEditAllowed)}).
+                            </p>
+                        ) : (
+                            <p className="mt-1 text-xs text-gray-500">
+                                Số tiền tối đa có thể nhập cho đợt này: <strong className="text-gray-800">{formatCurrency(maxEditAllowed)}</strong>
+                            </p>
+                        )}
+                        {errors?.amount && (
+                            <p className="mt-1 text-xs font-medium text-red-600">{errors.amount}</p>
+                        )}
                     </div>
 
                     <div>
@@ -676,6 +745,7 @@ return;
                             variant="edit"
                             size="md"
                             isLoading={isEditing}
+                            disabled={isEditing || isEditAmountInvalid}
                             icon={<Edit2 className="h-4.5 w-4.5" />}
                         >
                             Lưu Thay Đổi

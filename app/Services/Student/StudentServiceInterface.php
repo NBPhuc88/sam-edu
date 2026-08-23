@@ -76,9 +76,9 @@ interface StudentServiceInterface
     public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void;
 
     /**
-     * @param  int        $classId
-     * @param  array<int> $studentIds
-     * @param  ?Admin     $admin
+     * @param  int                                        $classId
+     * @param  array<int>                                 $studentIds
+     * @param  ?Admin                                     $admin
      * @return array{success_count: int, message: string}
      */
     public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array;
