@@ -10,6 +10,9 @@ import {
     Trash2,
     AlertCircle,
     Filter,
+    GraduationCap,
+    CheckSquare,
+    Square,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -19,6 +22,8 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import AssignClassModal from './components/AssignClassModal';
+import BulkAssignClassModal from './components/BulkAssignClassModal';
 
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
@@ -121,6 +126,35 @@ export default function StudentIndex({
                 setSelectedClassId('');
             }
         }
+    };
+
+    // Selection & Bulk Actions state
+    const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [assigningStudent, setAssigningStudent] = useState<Student | null>(null);
+    const [bulkAssignModalOpen, setBulkAssignModalOpen] = useState(false);
+
+    const toggleSelectStudent = (id: number) => {
+        setSelectedStudentIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAllStudents = () => {
+        if (!students.data || students.data.length === 0) return;
+        const currentIds = students.data.map((s) => s.id);
+        const allSelected = currentIds.every((id) => selectedStudentIds.includes(id));
+
+        if (allSelected) {
+            setSelectedStudentIds((prev) => prev.filter((id) => !currentIds.includes(id)));
+        } else {
+            setSelectedStudentIds((prev) => Array.from(new Set([...prev, ...currentIds])));
+        }
+    };
+
+    const openAssignModal = (student: Student) => {
+        setAssigningStudent(student);
+        setAssignModalOpen(true);
     };
 
     // Import modal state
@@ -421,12 +455,59 @@ return;
                     </form>
                 </Card>
 
+                {/* Bulk Actions Banner */}
+                {selectedStudentIds.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <Badge variant="active" className="px-3 py-1 text-sm font-bold">
+                                Đã chọn {selectedStudentIds.length} học sinh
+                            </Badge>
+                            <span className="text-xs text-emerald-800 hidden sm:inline">
+                                Áp dụng thao tác phân lớp hàng loạt cho danh sách đã chọn
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setSelectedStudentIds([])}
+                            >
+                                Bỏ chọn
+                            </Button>
+                            {can('students.edit') && (
+                                <Button
+                                    type="button"
+                                    variant="success"
+                                    size="sm"
+                                    icon={<GraduationCap className="h-4 w-4" />}
+                                    onClick={() => setBulkAssignModalOpen(true)}
+                                >
+                                    Ghi Danh Vào Lớp ({selectedStudentIds.length})
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Main Students Table */}
                 <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
+                                    <th className="w-10 px-4 py-4 text-center">
+                                        <input
+                                            type="checkbox"
+                                            aria-label="Chọn tất cả học sinh"
+                                            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                            checked={
+                                                (students.data?.length ?? 0) > 0 &&
+                                                students.data.every((s) => selectedStudentIds.includes(s.id))
+                                            }
+                                            onChange={toggleSelectAllStudents}
+                                        />
+                                    </th>
                                     <th className="px-6 py-4">Học Sinh</th>
                                     <th className="px-6 py-4">Tài Khoản & Liên Hệ</th>
                                     <th className="px-6 py-4">Phụ Huynh</th>
@@ -444,11 +525,22 @@ return;
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {students.data && students.data.length > 0 ? (
-                                    students.data.map((student) => (
+                                    students.data.map((student) => {
+                                        const isSelected = selectedStudentIds.includes(student.id);
+                                        return (
                                         <tr
                                             key={student.id}
-                                            className="transition-colors hover:bg-slate-50/80"
+                                            className={`transition-colors ${isSelected ? 'bg-emerald-50/40 hover:bg-emerald-50/60' : 'hover:bg-slate-50/80'}`}
                                         >
+                                            <td className="w-10 px-4 py-4 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    aria-label={`Chọn học sinh ${student.full_name}`}
+                                                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleSelectStudent(student.id)}
+                                                />
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
@@ -564,7 +656,19 @@ return;
 
                                             {(can('students.edit') || can('students.delete')) && (
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        {can('students.edit') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<GraduationCap className="h-4 w-4 text-emerald-600" />}
+                                                                onClick={() => openAssignModal(student)}
+                                                                title="Phân lớp cho học sinh"
+                                                            >
+                                                                Phân Lớp
+                                                            </Button>
+                                                        )}
                                                         {can('students.edit') && (
                                                             <Link href={`/students/${student.id}/edit`}>
                                                                 <Button
@@ -592,7 +696,7 @@ return;
                                                 </td>
                                             )}
                                         </tr>
-                                    ))
+                                    );})
                                 ) : (
                                     <tr>
                                         <td
@@ -750,6 +854,30 @@ return;
                     </p>
                 </div>
             </Modal>
+
+            {/* Single Student Assign Class Modal */}
+            <AssignClassModal
+                isOpen={assignModalOpen}
+                onClose={() => {
+                    setAssignModalOpen(false);
+                    setAssigningStudent(null);
+                }}
+                student={assigningStudent}
+                allClasses={classes}
+            />
+
+            {/* Bulk Assign Students to Class Modal */}
+            <BulkAssignClassModal
+                isOpen={bulkAssignModalOpen}
+                onClose={() => {
+                    setBulkAssignModalOpen(false);
+                    setSelectedStudentIds([]);
+                }}
+                selectedStudentIds={selectedStudentIds}
+                allClasses={classes}
+                centers={centers}
+                selectedCenterId={selectedCenterId ? Number(selectedCenterId) : undefined}
+            />
         </AppLayout>
     );
 }

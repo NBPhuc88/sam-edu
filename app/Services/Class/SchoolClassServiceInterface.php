@@ -78,4 +78,28 @@ interface SchoolClassServiceInterface
      * @return array<string, mixed>
      */
     public function getClassTimetableData(int $classId, ?string $weekDate = null, ?Admin $admin = null, ?Teacher $teacher = null): array;
+
+    /**
+     * @param  int                                                                $classId
+     * @param  ?string                                                            $search
+     * @param  ?Admin                                                             $admin
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
+     */
+    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int        $classId
+     * @param  array<int> $studentIds
+     * @param  ?Admin     $admin
+     * @return int
+     */
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): int;
+
+    /**
+     * @param  int    $classId
+     * @param  int    $studentId
+     * @param  ?Admin $admin
+     * @return bool
+     */
+    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null): bool;
 }

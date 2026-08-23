@@ -159,7 +159,10 @@ class StudentRepository implements StudentRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?Student
     {
         $query = Student::query()
-            ->with('center:id,name,code');
+            ->with([
+                'center:id,name,code',
+                'classes:id,name,code,center_id',
+            ]);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -245,5 +248,39 @@ class StudentRepository implements StudentRepositoryInterface
         }
 
         return $query->orderBy('full_name')->get();
+    }
+
+    public function syncClasses(Student $student, array $classIds, array $pivotDefaults = []): void
+    {
+        $syncData     = [];
+        $defaultPivot = array_merge([
+            'status'      => 'active',
+            'enrolled_at' => now(),
+        ], $pivotDefaults);
+
+        foreach ($classIds as $classId) {
+            $syncData[$classId] = $defaultPivot;
+        }
+
+        $student->classes()->sync($syncData);
+    }
+
+    public function attachClasses(Student $student, array $classIds, array $pivotDefaults = []): void
+    {
+        $defaultPivot = array_merge([
+            'status'      => 'active',
+            'enrolled_at' => now(),
+        ], $pivotDefaults);
+
+        foreach ($classIds as $classId) {
+            if (! $student->classes()->where('classes.id', $classId)->exists()) {
+                $student->classes()->attach($classId, $defaultPivot);
+            }
+        }
+    }
+
+    public function detachClass(Student $student, int $classId): bool
+    {
+        return (bool) $student->classes()->detach($classId);
     }
 }

@@ -67,4 +67,26 @@ interface StudentServiceInterface
      * @return bool
      */
     public function deleteStudent(int $id, ?Admin $admin = null): bool;
+
+    /**
+     * @param int        $studentId
+     * @param array<int> $classIds
+     * @param ?Admin     $admin
+     */
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void;
+
+    /**
+     * @param  int        $classId
+     * @param  array<int> $studentIds
+     * @param  ?Admin     $admin
+     * @return array{success_count: int, message: string}
+     */
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array;
+
+    /**
+     * @param int    $studentId
+     * @param int    $classId
+     * @param ?Admin $admin
+     */
+    public function removeStudentFromClass(int $studentId, int $classId, ?Admin $admin = null): bool;
 }

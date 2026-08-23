@@ -6,6 +6,9 @@ import {
     FileSpreadsheet,
     ArrowLeft,
     GraduationCap,
+    UserPlus,
+    Trash2,
+    AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -18,6 +21,7 @@ import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
+import AddStudentModal from './components/AddStudentModal';
 
 interface SchoolClass {
     id: number;
@@ -70,10 +74,13 @@ export default function ClassStudentsPage({
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
         .props;
     const [search, setSearch] = useState(filters.search || '');
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [removingStudent, setRemovingStudent] = useState<Student | null>(null);
+    const [isRemoving, setIsRemoving] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -193,7 +200,39 @@ export default function ClassStudentsPage({
                 </Badge>
             ),
         },
+        ...(!isTeacher
+            ? [
+                  {
+                      header: 'Thao tác',
+                      cell: (row: Student) => (
+                          <div className="flex items-center justify-end">
+                              <Button
+                                  variant="danger"
+                                  size="sm"
+                                  icon={<Trash2 className="h-4 w-4" />}
+                                  onClick={() => setRemovingStudent(row)}
+                                  title="Xóa học sinh khỏi lớp"
+                              >
+                                  Xóa Khỏi Lớp
+                              </Button>
+                          </div>
+                      ),
+                  },
+              ]
+            : []),
     ];
+
+    const confirmRemove = () => {
+        if (!removingStudent) return;
+        setIsRemoving(true);
+        router.delete(`/classes/${schoolClass.id}/students/${removingStudent.id}`, {
+            preserveScroll: true,
+            onFinish: () => {
+                setIsRemoving(false);
+                setRemovingStudent(null);
+            },
+        });
+    };
 
     return (
         <AppLayout title={`Học sinh lớp ${schoolClass.name}`}>
@@ -227,6 +266,16 @@ export default function ClassStudentsPage({
                         </div>
 
                         <div className="flex items-center gap-3">
+                            {!isTeacher && (
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    onClick={() => setIsAddModalOpen(true)}
+                                    icon={<UserPlus className="h-4.5 w-4.5" />}
+                                >
+                                    Thêm Học Sinh
+                                </Button>
+                            )}
                             <Button
                                 variant="secondary"
                                 size="md"
@@ -245,7 +294,7 @@ export default function ClassStudentsPage({
                             </Button>
                             {!isTeacher && (
                                 <Button
-                                    variant="success"
+                                    variant="secondary"
                                     size="md"
                                     onClick={() => {
                                         if (!canExportCsv) {
@@ -257,7 +306,7 @@ export default function ClassStudentsPage({
                                     className="flex items-center gap-2"
                                     title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Nhập danh sách học sinh vào lớp'}
                                 >
-                                    <Upload className="h-4.5 w-4.5" />
+                                    <Upload className="h-4.5 w-4.5 text-gray-600" />
                                     Import CSV Lớp {!canExportCsv && '🔒'}
                                 </Button>
                             )}
@@ -430,6 +479,55 @@ export default function ClassStudentsPage({
                             </p>
                         )}
                     </div>
+                </div>
+            </Modal>
+
+            {/* Add Student Modal */}
+            <AddStudentModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                classId={schoolClass.id}
+                className={schoolClass.name}
+                classCode={schoolClass.code}
+            />
+
+            {/* Remove Student Confirmation Modal */}
+            <Modal
+                isOpen={!!removingStudent}
+                onClose={() => setRemovingStudent(null)}
+                title="Xác Nhận Xóa Học Sinh Khỏi Lớp"
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setRemovingStudent(null)}
+                            disabled={isRemoving}
+                        >
+                            Hủy Bỏ
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="md"
+                            onClick={confirmRemove}
+                            isLoading={isRemoving}
+                            icon={<Trash2 className="h-5 w-5" />}
+                        >
+                            Xác Nhận Xóa
+                        </Button>
+                    </>
+                }
+            >
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-red-600">
+                        <AlertCircle className="h-6 w-6 shrink-0" />
+                        <p className="text-base font-semibold">
+                            Bạn có chắc muốn xóa học sinh "{removingStudent?.full_name}" khỏi lớp "{schoolClass.name}"?
+                        </p>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                        Học sinh sẽ được gỡ khỏi danh sách lớp học này. Hồ sơ học sinh trong trung tâm vẫn được giữ nguyên.
+                    </p>
                 </div>
             </Modal>
         </AppLayout>

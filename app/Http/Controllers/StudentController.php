@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Student\AssignStudentClassesRequest;
+use App\Http\Requests\Student\BulkAssignClassStudentsRequest;
 use App\Http\Requests\Student\FilterStudentRequest;
 use App\Http\Requests\Student\ImportCsvRequest;
 use App\Http\Requests\Student\StoreStudentRequest;
@@ -86,6 +88,7 @@ class StudentController extends Controller
 
         return Inertia::render('Admin/Students/Create', [
             'centers' => $formData['centers'],
+            'classes' => $formData['classes'] ?? [],
         ]);
     }
 
@@ -117,6 +120,7 @@ class StudentController extends Controller
         return Inertia::render('Admin/Students/Edit', [
             'student' => $student,
             'centers' => $formData['centers'],
+            'classes' => $formData['classes'] ?? [],
         ]);
     }
 
@@ -146,6 +150,49 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')
             ->with('success', 'Xóa học sinh thành công!');
+    }
+
+    public function assignClasses(AssignStudentClassesRequest $request, int $id): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $classIds = $request->input('class_ids', []);
+        $this->studentService->assignClassesToStudent($id, is_array($classIds) ? $classIds : [], $admin);
+
+        return back()->with('success', 'Cập nhật danh sách lớp học của học sinh thành công!');
+    }
+
+    public function bulkAssign(BulkAssignClassStudentsRequest $request): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $classId    = (int) $request->input('class_id');
+        $studentIds = (array) $request->input('student_ids', []);
+
+        $result = $this->studentService->bulkAssignStudentsToClass($classId, $studentIds, $admin);
+
+        return back()->with('success', $result['message']);
+    }
+
+    public function removeClass(int $id, int $classId): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $this->studentService->removeStudentFromClass($id, $classId, $admin);
+
+        return back()->with('success', 'Đã xóa học sinh khỏi lớp học.');
     }
 
     public function export(Request $request): StreamedResponse

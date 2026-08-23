@@ -4,6 +4,7 @@ namespace App\Services\Class;
 
 use App\Models\Admin;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -599,5 +600,32 @@ class SchoolClassService implements SchoolClassServiceInterface
             'sessions'           => $processedSessions,
             'recurringSchedules' => $recurringSchedules,
         ];
+    }
+
+    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $schoolClass = $this->findClass($classId, $admin);
+
+        return $this->schoolClassRepository->getAvailableStudentsForClass($classId, (int) $schoolClass->center_id, $search);
+    }
+
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): int
+    {
+        $schoolClass = $this->findClass($classId, $admin);
+
+        // Lọc danh sách học sinh chỉ thuộc cùng trung tâm của lớp
+        $validStudentIds = Student::where('center_id', $schoolClass->center_id)
+            ->whereIn('id', $studentIds)
+            ->pluck('id')
+            ->toArray();
+
+        return $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
+    }
+
+    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null): bool
+    {
+        $this->findClass($classId, $admin);
+
+        return $this->schoolClassRepository->detachStudent($classId, $studentId);
     }
 }

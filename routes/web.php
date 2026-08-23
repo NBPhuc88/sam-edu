@@ -143,6 +143,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::get('/{id}/edit', [StudentController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [StudentController::class, 'update'])->name('update');
         Route::delete('/{id}', [StudentController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/assign-classes', [StudentController::class, 'assignClasses'])->name('assign-classes');
+        Route::post('/bulk-assign-classes', [StudentController::class, 'bulkAssign'])->name('bulk-assign-classes');
+        Route::delete('/{id}/classes/{classId}', [StudentController::class, 'removeClass'])->name('remove-class');
         Route::get('/export', [StudentController::class, 'export'])->name('export');
         Route::post('/import', [StudentController::class, 'import'])->name('import');
         Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');
@@ -203,6 +206,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::get('/{classId}/students', [SchoolClassStudentController::class, 'index'])->name('students.index');
         Route::get('/{classId}/students/export', [SchoolClassStudentController::class, 'export'])->name('students.export');
         Route::post('/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('students.import');
+        Route::get('/{classId}/students/available', [SchoolClassStudentController::class, 'availableStudents'])->name('students.available');
+        Route::post('/{classId}/students/add', [SchoolClassStudentController::class, 'addStudents'])->name('students.add');
+        Route::delete('/{classId}/students/{studentId}', [SchoolClassStudentController::class, 'removeStudent'])->name('students.remove');
 
         Route::prefix('{classId}/chat')->name('chat.')->group(function () {
             Route::get('/', [ChatController::class, 'index'])->name('index');

@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Class\AddStudentsToClassRequest;
 use App\Http\Requests\Class\FilterClassStudentRequest;
 use App\Http\Requests\Student\ImportCsvRequest;
 use App\Services\Class\SchoolClassServiceInterface;
 use App\Services\Class\StudentExportImportServiceInterface;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
 
@@ -64,9 +65,9 @@ class SchoolClassStudentController extends Controller
 
     public function export(int $classId): StreamedResponse
     {
-        $admin       = $this->getAuthAdmin();
-        $schoolClass = $this->schoolClassService->getClassWithCenter($classId, $admin);
-        $fileName    = 'danh_sach_hoc_sinh_lop_' . Str::slug($schoolClass->code) . '_' . date('Y-m-d_H-i-s') . '.csv';
+        [$admin, $teacher] = $this->getAuthUser();
+        $schoolClass       = $this->schoolClassService->getClassWithCenter($classId, $admin, $teacher);
+        $fileName          = 'danh_sach_hoc_sinh_lop_' . Str::slug($schoolClass->code) . '_' . date('Y-m-d_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
@@ -92,8 +93,8 @@ class SchoolClassStudentController extends Controller
 
     public function import(ImportCsvRequest $request, int $classId): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
-        $this->schoolClassService->findClass($classId, $admin);
+        [$admin, $teacher] = $this->getAuthUser();
+        $this->schoolClassService->findClass($classId, $admin, $teacher);
 
         $file = $request->file('file');
 
@@ -135,5 +136,38 @@ class SchoolClassStudentController extends Controller
 
             fclose($handle);
         }, 200, $headers);
+    }
+
+    public function availableStudents(Request $request, int $classId): \Illuminate\Http\JsonResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+        $search            = $request->input('search');
+
+        $students = $this->schoolClassService->getAvailableStudents(
+            $classId,
+            is_string($search) ? $search : null,
+            $admin
+        );
+
+        return response()->json($students);
+    }
+
+    public function addStudents(AddStudentsToClassRequest $request, int $classId): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        $studentIds = (array) $request->input('student_ids', []);
+        $count      = $this->schoolClassService->addStudentsToClass($classId, $studentIds, $admin);
+
+        return back()->with('success', "Đã thêm thành công {$count} học sinh vào lớp học.");
+    }
+
+    public function removeStudent(int $classId, int $studentId): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        $this->schoolClassService->removeStudentFromClass($classId, $studentId, $admin);
+
+        return back()->with('success', 'Đã xóa học sinh khỏi lớp học.');
     }
 }

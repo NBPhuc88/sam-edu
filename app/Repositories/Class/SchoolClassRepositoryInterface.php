@@ -126,4 +126,21 @@ interface SchoolClassRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
      */
     public function getClassesForScheduleForm(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
+
+    public function detachStudent(int $classId, int $studentId): bool;
+
+    /**
+     * @param  int        $classId
+     * @param  array<int> $studentIds
+     * @return int
+     */
+    public function attachStudents(int $classId, array $studentIds): int;
+
+    /**
+     * @param  int                                                                $classId
+     * @param  int                                                                $centerId
+     * @param  ?string                                                            $search
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
+     */
+    public function getAvailableStudentsForClass(int $classId, int $centerId, ?string $search = null): \Illuminate\Database\Eloquent\Collection;
 }

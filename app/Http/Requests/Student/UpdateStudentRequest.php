@@ -66,6 +66,8 @@ class UpdateStudentRequest extends FormRequest
             'admission_date'      => ['nullable'],
             'status'              => ['sometimes', 'required'],
             'note'                => ['nullable', 'string'],
+            'class_ids'           => ['nullable', 'array'],
+            'class_ids.*'         => ['integer', 'exists:classes,id'],
         ];
     }
 

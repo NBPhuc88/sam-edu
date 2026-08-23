@@ -268,6 +268,17 @@ class StudentService implements StudentServiceInterface
             'note'                => $data['note'] ?? null,
         ]);
 
+        if (! empty($data['class_ids']) && is_array($data['class_ids'])) {
+            $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
+                ->whereIn('id', $data['class_ids'])
+                ->pluck('id')
+                ->toArray();
+
+            if (! empty($validClassIds)) {
+                $this->studentRepository->syncClasses($student, $validClassIds);
+            }
+        }
+
         if (! empty($student->email) && ! empty($student->username)) {
             $center = $this->centerRepository->find($centerId);
             \Illuminate\Support\Facades\Mail::to($student->email)->queue(
@@ -393,6 +404,14 @@ class StudentService implements StudentServiceInterface
         $updatedStudent = $this->studentRepository->update($id, $updateData);
         $center         = $this->centerRepository->find((int) $updatedStudent->center_id);
 
+        if (array_key_exists('class_ids', $data) && is_array($data['class_ids'])) {
+            $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
+                ->whereIn('id', $data['class_ids'])
+                ->pluck('id')
+                ->toArray();
+            $this->studentRepository->syncClasses($updatedStudent, $validClassIds);
+        }
+
         if ($isPassChanged && ! empty($updatedStudent->email)) {
             \Illuminate\Support\Facades\Mail::to($updatedStudent->email)->queue(
                 new \App\Mail\PasswordChangedMail(
@@ -469,5 +488,56 @@ class StudentService implements StudentServiceInterface
         $student = $this->findStudent($id, $admin);
 
         return $this->studentRepository->delete($student->id);
+    }
+
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void
+    {
+        $student  = $this->findStudent($studentId, $admin);
+        $centerId = (int) $student->center_id;
+
+        $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
+            ->whereIn('id', $classIds)
+            ->pluck('id')
+            ->toArray();
+
+        $this->studentRepository->syncClasses($student, $validClassIds);
+    }
+
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array
+    {
+        $class = $this->schoolClassRepository->find($classId);
+
+        if (! $class) {
+            throw new NotFoundHttpException('Không tìm thấy lớp học.');
+        }
+
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($allowedCenterIds !== null && ! in_array($class->center_id, $allowedCenterIds, true)) {
+            throw new AccessDeniedHttpException('Bạn không có quyền thao tác trên lớp học này.');
+        }
+
+        $validStudents = Student::where('center_id', $class->center_id)
+            ->whereIn('id', $studentIds)
+            ->get();
+
+        $successCount = 0;
+
+        foreach ($validStudents as $student) {
+            $this->studentRepository->attachClasses($student, [$classId]);
+            $successCount++;
+        }
+
+        return [
+            'success_count' => $successCount,
+            'message'       => "Đã phân {$successCount} học sinh vào lớp '{$class->name}'.",
+        ];
+    }
+
+    public function removeStudentFromClass(int $studentId, int $classId, ?Admin $admin = null): bool
+    {
+        $student = $this->findStudent($studentId, $admin);
+
+        return $this->studentRepository->detachClass($student, $classId);
     }
 }

@@ -1,10 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User, HeartHandshake, Calendar } from 'lucide-react';
-import React, { useState } from 'react';
+import { ArrowLeft, Save, User, HeartHandshake, Calendar, GraduationCap, Check } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import Badge from '@/components/ui/Badge';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -13,12 +14,20 @@ interface Center {
     code: string;
 }
 
+interface SchoolClassOption {
+    id: number;
+    name: string;
+    code: string;
+    center_id: number;
+}
+
 interface CreateProps {
     centers: Center[];
+    classes?: SchoolClassOption[];
     errors?: Record<string, string>;
 }
 
-export default function StudentCreate({ centers = [], errors = {} }: CreateProps) {
+export default function StudentCreate({ centers = [], classes = [], errors = {} }: CreateProps) {
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
@@ -40,8 +49,20 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
     const [admissionDate, setAdmissionDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [status, setStatus] = useState<string>('active');
     const [note, setNote] = useState<string>('');
+    const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Filter classes for currently selected center
+    const availableClasses = useMemo(() => {
+        return classes.filter((c) => !centerId || Number(c.center_id) === Number(centerId));
+    }, [classes, centerId]);
+
+    const toggleClass = (classId: number) => {
+        setSelectedClassIds((prev) =>
+            prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
+        );
+    };
 
     // Auto generate username from full name
     const handleFullNameChange = (val: string) => {
@@ -84,6 +105,7 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                 admission_date: admissionDate || undefined,
                 status,
                 note: note || undefined,
+                class_ids: selectedClassIds,
             },
             {
                 onFinish: () => setIsSubmitting(false),
@@ -386,6 +408,67 @@ export default function StudentCreate({ centers = [], errors = {} }: CreateProps
                                 />
                             </div>
                         </div>
+                    </Card>
+
+                    {/* Class Enrollment Card */}
+                    <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                                <GraduationCap className="h-5 w-5 text-indigo-600" />
+                                4. Ghi Danh Vào Lớp Học (Tùy Chọn)
+                            </h2>
+                            {selectedClassIds.length > 0 && (
+                                <Badge variant="active">
+                                    Đã chọn {selectedClassIds.length} lớp học
+                                </Badge>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-500 mb-4">
+                            Chọn các lớp học mà học sinh sẽ tham gia ngay sau khi được tạo hồ sơ.
+                        </p>
+
+                        {availableClasses.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 bg-slate-50">
+                                Trung tâm được chọn hiện chưa có lớp học nào. Bạn có thể phân lớp sau khi tạo học sinh.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {availableClasses.map((cls) => {
+                                    const isSelected = selectedClassIds.includes(cls.id);
+                                    return (
+                                        <div
+                                            key={cls.id}
+                                            onClick={() => toggleClass(cls.id)}
+                                            className={`cursor-pointer rounded-xl border p-3.5 flex items-center justify-between transition-all select-none ${
+                                                isSelected
+                                                    ? 'bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
+                                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 overflow-hidden">
+                                                <div
+                                                    className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                            : 'border-gray-300 bg-white'
+                                                    }`}
+                                                >
+                                                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                                </div>
+                                                <div className="truncate">
+                                                    <p className="font-semibold text-gray-900 text-sm truncate">
+                                                        {cls.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 font-mono">
+                                                        {cls.code}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </Card>
 
                     {/* Submit Buttons */}

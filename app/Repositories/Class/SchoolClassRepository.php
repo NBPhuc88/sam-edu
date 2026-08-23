@@ -487,4 +487,58 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
 
         return $query->orderBy('name')->get();
     }
+
+    public function detachStudent(int $classId, int $studentId): bool
+    {
+        return (bool) ClassStudent::where('class_id', $classId)
+            ->where('student_id', $studentId)
+            ->delete();
+    }
+
+    public function attachStudents(int $classId, array $studentIds): int
+    {
+        $added = 0;
+
+        foreach ($studentIds as $studentId) {
+            ClassStudent::updateOrCreate(
+                [
+                    'class_id'   => $classId,
+                    'student_id' => $studentId,
+                ],
+                [
+                    'status'      => 'active',
+                    'enrolled_at' => now(),
+                ]
+            );
+            $added++;
+        }
+
+        return $added;
+    }
+
+    public function getAvailableStudentsForClass(int $classId, int $centerId, ?string $search = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $enrolledStudentIds = ClassStudent::where('class_id', $classId)->pluck('student_id')->toArray();
+
+        $query = Student::query()
+            ->select('id', 'full_name', 'student_code', 'phone', 'email', 'status', 'center_id')
+            ->where('center_id', $centerId)
+            ->where('status', 1);
+
+        if (! empty($enrolledStudentIds)) {
+            $query->whereNotIn('id', $enrolledStudentIds);
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('full_name', 'like', "%{$term}%")
+                    ->orWhere('student_code', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%");
+            });
+        }
+
+        return $query->orderBy('full_name')->take(50)->get();
+    }
 }

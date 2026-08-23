@@ -92,4 +92,24 @@ interface StudentRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
      */
     public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param Student              $student
+     * @param array<int>           $classIds
+     * @param array<string, mixed> $pivotDefaults
+     */
+    public function syncClasses(Student $student, array $classIds, array $pivotDefaults = []): void;
+
+    /**
+     * @param Student              $student
+     * @param array<int>           $classIds
+     * @param array<string, mixed> $pivotDefaults
+     */
+    public function attachClasses(Student $student, array $classIds, array $pivotDefaults = []): void;
+
+    /**
+     * @param Student $student
+     * @param int     $classId
+     */
+    public function detachClass(Student $student, int $classId): bool;
 }

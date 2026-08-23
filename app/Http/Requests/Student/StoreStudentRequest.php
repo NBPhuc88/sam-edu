@@ -41,6 +41,8 @@ class StoreStudentRequest extends FormRequest
             'admission_date'      => ['nullable', 'date'],
             'status'              => ['nullable', 'string', 'in:active,inactive,locked,graduated,suspended'],
             'note'                => ['nullable', 'string'],
+            'class_ids'           => ['nullable', 'array'],
+            'class_ids.*'         => ['integer', 'exists:classes,id'],
         ];
     }
 
