@@ -13,6 +13,7 @@ import { Head, usePage } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import Toast from '../components/ui/Toast';
+import ScrollToTop from '../components/ui/ScrollToTop';
 import apiClient from '../lib/axios';
 
 interface AppLayoutProps {
@@ -113,6 +114,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             >
                 {children}
             </DashboardLayout>
+            <ScrollToTop />
         </>
     );
 };

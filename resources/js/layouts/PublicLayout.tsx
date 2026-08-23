@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Button from '../components/ui/Button';
+import ScrollToTop from '../components/ui/ScrollToTop';
 
 interface PublicLayoutProps {
     children: React.ReactNode;
@@ -366,6 +367,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </div>
                 </div>
             </footer>
+            <ScrollToTop />
         </div>
     );
 };
