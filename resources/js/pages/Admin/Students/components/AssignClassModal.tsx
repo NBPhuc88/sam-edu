@@ -108,22 +108,22 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
             isOpen={isOpen}
             onClose={onClose}
             title={`Phân Lớp Học - ${student.full_name}`}
-            maxWidth="2xl"
+            maxWidth="3xl"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
                     <div>
                         <p className="text-xs text-gray-500">Mã học sinh</p>
-                        <p className="font-semibold text-gray-900">{student.student_code}</p>
+                        <p className="font-bold text-gray-900 text-base">{student.student_code}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-xs text-gray-500">Số lớp đã chọn</p>
-                        <Badge variant="active">{selectedClassIds.length} lớp học</Badge>
+                        <p className="text-xs text-gray-500 mb-0.5">Số lớp đã chọn</p>
+                        <Badge variant="active" className="font-semibold">{selectedClassIds.length} lớp học</Badge>
                     </div>
                 </div>
 
                 {centerClasses.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 space-y-2">
+                    <div className="text-center py-8 text-gray-500 space-y-2 bg-slate-50 rounded-xl border border-slate-200">
                         <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
                         <p className="font-medium text-gray-800">Không có lớp học nào</p>
                         <p className="text-xs">
@@ -139,14 +139,16 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                                     placeholder="Tìm theo tên hoặc mã lớp..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
+                                    className="!py-2.5 !text-sm"
                                 />
                             </div>
                             {filteredClasses.length > 0 && (
                                 <Button
                                     type="button"
                                     variant="secondary"
-                                    size="sm"
+                                    size="md"
                                     onClick={handleSelectAll}
+                                    className="shrink-0"
                                 >
                                     {filteredClasses.every((c) => selectedClassIds.includes(c.id))
                                         ? 'Bỏ chọn tất cả'
@@ -155,9 +157,9 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                             )}
                         </div>
 
-                        <div className="max-h-64 overflow-y-auto space-y-2 pr-1 divide-y divide-gray-100">
+                        <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1.5 border border-gray-200 rounded-xl p-2 bg-slate-50/50">
                             {filteredClasses.length === 0 ? (
-                                <p className="text-center py-6 text-sm text-gray-500">
+                                <p className="text-center py-8 text-sm text-gray-500">
                                     Không tìm thấy lớp học nào khớp với "{search}".
                                 </p>
                             ) : (
@@ -167,15 +169,15 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                                         <div
                                             key={cls.id}
                                             onClick={() => toggleClass(cls.id)}
-                                            className={`pt-2 first:pt-0 cursor-pointer flex items-center justify-between p-3 rounded-xl border transition-all ${
+                                            className={`cursor-pointer flex items-center justify-between gap-3.5 p-3 rounded-xl border transition-all select-none ${
                                                 isSelected
-                                                    ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400'
+                                                    ? 'bg-emerald-50/90 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
                                                     : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
                                             }`}
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div
-                                                    className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                                                    className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border transition-colors ${
                                                         isSelected
                                                             ? 'bg-emerald-600 border-emerald-600 text-white'
                                                             : 'border-gray-300 bg-white'
@@ -183,18 +185,18 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                                                 >
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-gray-900 text-sm">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="font-semibold text-gray-900 text-sm leading-tight">
                                                             {cls.name}
                                                         </span>
-                                                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-mono font-medium">
+                                                        <span className="shrink-0 text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-mono font-medium border border-gray-200">
                                                             {cls.code}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <Badge variant={isSelected ? 'active' : 'info'}>
+                                            <Badge variant={isSelected ? 'active' : 'info'} className="shrink-0 whitespace-nowrap">
                                                 {isSelected ? 'Đang học' : 'Chưa ghi danh'}
                                             </Badge>
                                         </div>
@@ -205,7 +207,7 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                     </>
                 )}
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
                     <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
                         Đóng
                     </Button>

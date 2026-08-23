@@ -96,7 +96,7 @@ export default function BulkAssignClassModal({
             isOpen={isOpen}
             onClose={onClose}
             title="Ghi Danh Học Sinh Vào Lớp Học Hàng Loạt"
-            maxWidth="2xl"
+            maxWidth="3xl"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between">
@@ -145,23 +145,24 @@ export default function BulkAssignClassModal({
                     <div className="mb-2">
                         <Input
                             icon={<Search className="w-4 h-4 text-gray-400" />}
-                            placeholder="Tìm kiếm lớp học..."
+                            placeholder="Tìm kiếm lớp học theo tên hoặc mã..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            className="!py-2.5 !text-sm"
                         />
                     </div>
 
                     {availableClasses.length === 0 ? (
-                        <div className="text-center py-6 text-gray-500 space-y-1 bg-slate-50 rounded-xl border border-slate-200">
-                            <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
+                        <div className="text-center py-8 text-gray-500 space-y-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
                             <p className="font-medium text-gray-800 text-sm">Không có lớp học nào</p>
                             <p className="text-xs">Trung tâm này chưa có lớp học nào đang mở.</p>
                         </div>
                     ) : (
-                        <div className="max-h-60 overflow-y-auto space-y-2 pr-1 border border-gray-200 rounded-xl p-2 bg-slate-50/50">
+                        <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1.5 border border-gray-200 rounded-xl p-2 bg-slate-50/50">
                             {filteredClasses.length === 0 ? (
-                                <p className="text-center py-4 text-xs text-gray-500">
-                                    Không tìm thấy lớp học phù hợp.
+                                <p className="text-center py-8 text-sm text-gray-500">
+                                    Không tìm thấy lớp học phù hợp với từ khóa "{search}".
                                 </p>
                             ) : (
                                 filteredClasses.map((cls) => {
@@ -170,15 +171,15 @@ export default function BulkAssignClassModal({
                                         <div
                                             key={cls.id}
                                             onClick={() => setSelectedClassId(cls.id)}
-                                            className={`cursor-pointer flex items-center justify-between p-3 rounded-xl border transition-all ${
+                                            className={`cursor-pointer flex items-center justify-between gap-3.5 p-3 rounded-xl border transition-all select-none ${
                                                 isSelected
-                                                    ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
+                                                    ? 'bg-emerald-50/90 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
                                                     : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
                                             }`}
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div
-                                                    className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${
+                                                    className={`w-5 h-5 rounded-full shrink-0 flex items-center justify-center border transition-colors ${
                                                         isSelected
                                                             ? 'bg-emerald-600 border-emerald-600 text-white'
                                                             : 'border-gray-300 bg-white'
@@ -186,17 +187,19 @@ export default function BulkAssignClassModal({
                                                 >
                                                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                                                 </div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-900 text-sm">
-                                                        {cls.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 font-mono">
-                                                        Mã lớp: {cls.code}
-                                                    </p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="font-semibold text-gray-900 text-sm leading-tight">
+                                                            {cls.name}
+                                                        </p>
+                                                        <span className="shrink-0 text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-mono font-medium border border-gray-200">
+                                                            {cls.code}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             {isSelected && (
-                                                <Badge variant="active">Đã chọn</Badge>
+                                                <Badge variant="active" className="shrink-0 whitespace-nowrap">Đã chọn</Badge>
                                             )}
                                         </div>
                                     );
@@ -206,7 +209,7 @@ export default function BulkAssignClassModal({
                     )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
                     <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
                         Đóng
                     </Button>
