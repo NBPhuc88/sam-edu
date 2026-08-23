@@ -56,12 +56,14 @@ interface Props {
     filters: {
         search?: string;
     };
+    isTeacher?: boolean;
 }
 
 export default function ClassStudentsPage({
     schoolClass,
     students,
     filters,
+    isTeacher = false,
 }: Props) {
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
         .props;
@@ -232,15 +234,17 @@ export default function ClassStudentsPage({
                                 <Download className="h-4.5 w-4.5 text-gray-600" />
                                 Export CSV Lớp
                             </Button>
-                            <Button
-                                variant="success"
-                                size="md"
-                                onClick={() => setIsImportModalOpen(true)}
-                                className="flex items-center gap-2"
-                            >
-                                <Upload className="h-4.5 w-4.5" />
-                                Import CSV Lớp
-                            </Button>
+                            {!isTeacher && (
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Upload className="h-4.5 w-4.5" />
+                                    Import CSV Lớp
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -23,18 +23,20 @@ class SchoolClassStudentController extends Controller
     ) {
     }
 
-    protected function getAuthAdmin(): ?Admin
+    protected function getAuthUser(): array
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
+        /** @var \App\Models\Teacher|null $teacher */
+        $teacher = Auth::guard('teacher')->user();
 
-        return $admin;
+        return [$admin, $teacher];
     }
 
     public function index(FilterClassStudentRequest $request, int $classId): InertiaResponse
     {
-        $admin       = $this->getAuthAdmin();
-        $schoolClass = $this->schoolClassService->getClassWithCenter($classId, $admin);
+        [$admin, $teacher] = $this->getAuthUser();
+        $schoolClass       = $this->schoolClassService->getClassWithCenter($classId, $admin, $teacher);
 
         $search  = $request->input('search');
         $page    = $request->integer('page', 1);
@@ -45,7 +47,8 @@ class SchoolClassStudentController extends Controller
             is_string($search) ? $search : null,
             $perPage,
             $page,
-            $admin
+            $admin,
+            $teacher
         );
 
         return Inertia::render('Admin/Classes/Students', [
@@ -55,6 +58,7 @@ class SchoolClassStudentController extends Controller
                 'search'   => $search ?? '',
                 'per_page' => $perPage,
             ],
+            'isTeacher' => (bool) $teacher,
         ]);
     }
 

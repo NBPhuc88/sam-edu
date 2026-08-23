@@ -271,9 +271,7 @@ return;
                                     )}
                                     <th className="px-6 py-4 whitespace-nowrap">Sĩ Số</th>
                                     <th className="px-6 py-4 whitespace-nowrap">Trạng Thái</th>
-                                    {(can('classes.edit') || can('classes.delete')) && (
-                                        <th className="px-6 py-4 text-right whitespace-nowrap">Thao Tác</th>
-                                    )}
+                                    <th className="px-6 py-4 text-right whitespace-nowrap">Thao Tác</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -383,69 +381,67 @@ return;
                                                 {getStatusBadge(cls.status)}
                                             </td>
 
-                                            {(can('classes.edit') || can('classes.delete')) && (
-                                                <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                    <div className="flex items-center justify-end gap-1.5">
-                                                        <Tooltip content="Xem thời khóa biểu lớp học">
-                                                            <Link
-                                                                href={`/classes/${cls.id}/schedule`}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shadow-2xs"
-                                                            >
-                                                                <Calendar className="h-4 w-4" />
-                                                            </Link>
-                                                        </Tooltip>
-                                                        <Tooltip content="Danh sách học sinh trong lớp">
-                                                            <Link
-                                                                href={`/classes/${cls.id}/students`}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-2xs"
-                                                            >
-                                                                <Users className="h-4 w-4" />
-                                                            </Link>
-                                                        </Tooltip>
-                                                        <Tooltip content="Nhóm chat trao đổi lớp học">
-                                                            <Link
-                                                                href={`/classes/${cls.id}/chat`}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors shadow-2xs"
-                                                            >
-                                                                <MessageSquare className="h-4 w-4" />
-                                                            </Link>
-                                                        </Tooltip>
-                                                        {can('classes.edit') && (
-                                                            <Tooltip content="Chỉnh sửa lớp học">
-                                                                <Link href={`/classes/${cls.id}/edit`}>
-                                                                    <Button
-                                                                        variant="edit"
-                                                                        size="sm"
-                                                                        icon={<Edit2 className="h-3.5 w-3.5" />}
-                                                                        className="h-8 px-2.5 text-xs"
-                                                                    >
-                                                                        Sửa
-                                                                    </Button>
-                                                                </Link>
-                                                            </Tooltip>
-                                                        )}
-                                                        {can('classes.delete') && (
-                                                            <Tooltip content="Xóa lớp học">
+                                            <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <Tooltip content="Xem thời khóa biểu lớp học">
+                                                        <Link
+                                                            href={`/classes/${cls.id}/schedule`}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shadow-2xs"
+                                                        >
+                                                            <Calendar className="h-4 w-4" />
+                                                        </Link>
+                                                    </Tooltip>
+                                                    <Tooltip content="Danh sách học sinh trong lớp">
+                                                        <Link
+                                                            href={`/classes/${cls.id}/students`}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-2xs"
+                                                        >
+                                                            <Users className="h-4 w-4" />
+                                                        </Link>
+                                                    </Tooltip>
+                                                    <Tooltip content="Nhóm chat trao đổi lớp học">
+                                                        <Link
+                                                            href={`/classes/${cls.id}/chat`}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition-colors shadow-2xs"
+                                                        >
+                                                            <MessageSquare className="h-4 w-4" />
+                                                        </Link>
+                                                    </Tooltip>
+                                                    {!isTeacher && can('classes.edit') && (
+                                                        <Tooltip content="Chỉnh sửa lớp học">
+                                                            <Link href={`/classes/${cls.id}/edit`}>
                                                                 <Button
-                                                                    variant="danger"
+                                                                    variant="edit"
                                                                     size="sm"
-                                                                    icon={<Trash2 className="h-3.5 w-3.5" />}
-                                                                    onClick={() => openDeleteModal(cls)}
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
                                                                     className="h-8 px-2.5 text-xs"
                                                                 >
-                                                                    Xóa
+                                                                    Sửa
                                                                 </Button>
-                                                            </Tooltip>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            )}
+                                                            </Link>
+                                                        </Tooltip>
+                                                    )}
+                                                    {!isTeacher && can('classes.delete') && (
+                                                        <Tooltip content="Xóa lớp học">
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                onClick={() => openDeleteModal(cls)}
+                                                                className="h-8 px-2.5 text-xs"
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={(isSuperAdmin ? 1 : 0) + 4 + (can('classes.edit') || can('classes.delete') ? 1 : 0)}
+                                            colSpan={(isSuperAdmin ? 1 : 0) + 5}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">
