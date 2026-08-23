@@ -50,9 +50,7 @@ class AttendanceController extends Controller
 
         // If user is teacher, redirect to their schedule or find nearest upcoming/today session
         if ($user instanceof Teacher) {
-            $todaySession = \App\Models\ClassSession::where('teacher_id', $user->id)
-                ->whereDate('session_date', today())
-                ->first();
+            $todaySession = $this->attendanceService->getTodayTeacherSession($user->id);
 
             if ($todaySession) {
                 return redirect()->route('attendance.session', ['sessionId' => $todaySession->id]);

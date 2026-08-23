@@ -59,16 +59,7 @@ class StudentTuitionController extends Controller
             null
         );
 
-        $studentTuitionsAll = \App\Models\StudentTuition::where('student_id', $student->id)->get();
-        $stats              = [
-            'total_amount'     => (float) $studentTuitionsAll->sum('total_amount'),
-            'paid_amount'      => (float) $studentTuitionsAll->sum('paid_amount'),
-            'remaining_amount' => (float) $studentTuitionsAll->sum('remaining_amount'),
-            'total_records'    => $studentTuitionsAll->count(),
-            'completed_count'  => $studentTuitionsAll->where('status', 'paid')->count(),
-            'partial_count'    => $studentTuitionsAll->where('status', 'partial')->count(),
-            'unpaid_count'     => $studentTuitionsAll->whereIn('status', ['unpaid', 'overdue'])->count(),
-        ];
+        $stats = $this->studentTuitionService->getStudentTuitionSummary($student->id);
 
         return Inertia::render('Student/Tuitions/Index', [
             'student'  => $student,

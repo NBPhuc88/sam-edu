@@ -126,4 +126,22 @@ interface StudentRepositoryInterface
      * @return \Illuminate\Support\Collection
      */
     public function getStudentWeeklySchedules(int $studentId): \Illuminate\Support\Collection;
+
+    /**
+     * Đếm số học sinh đang hoạt động (status = 1) của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveByCenterId(int $centerId, ?int $excludeId = null): int;
+
+    /**
+     * Lọc danh sách ID lớp học hợp lệ thuộc trung tâm.
+     *
+     * @param  int        $centerId
+     * @param  array<int> $classIds
+     * @return array<int>
+     */
+    public function filterValidClassIds(int $centerId, array $classIds): array;
 }

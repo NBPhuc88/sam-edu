@@ -277,4 +277,23 @@ class RoomRepository implements RoomRepositoryInterface
     {
         return Room::where('center_id', $centerId)->count();
     }
+
+    /**
+     * Đếm số phòng học đang hoạt động hoặc tạm dừng của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveAndPaused(int $centerId, ?int $excludeId = null): int
+    {
+        $query = Room::where('center_id', $centerId)
+            ->whereIn('status', ['active', 'paused']);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->count();
+    }
 }

@@ -4,8 +4,8 @@ namespace App\Services\Grading;
 
 use App\Models\Admin;
 use App\Models\ClassExamSubmission;
-use App\Models\ExamResult;
 use App\Models\Teacher;
+use App\Repositories\Exam\ExamResultRepositoryInterface;
 use App\Repositories\Grading\GradingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 class GradingService implements GradingServiceInterface
 {
     public function __construct(
-        protected GradingRepositoryInterface $gradingRepository
+        protected GradingRepositoryInterface $gradingRepository,
+        protected ExamResultRepositoryInterface $examResultRepository
     ) {
     }
 
@@ -150,7 +151,7 @@ class GradingService implements GradingServiceInterface
 
             // Đồng bộ điểm sang bảng exam_results nếu có liên kết kỳ thi
             if ($submission->classExam?->exam_id && $submission->student_id) {
-                ExamResult::updateOrCreate(
+                $this->examResultRepository->updateOrCreate(
                     [
                         'exam_id'    => $submission->classExam->exam_id,
                         'student_id' => $submission->student_id,

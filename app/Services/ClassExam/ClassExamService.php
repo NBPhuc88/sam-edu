@@ -64,9 +64,7 @@ class ClassExamService implements ClassExamServiceInterface
         return DB::transaction(function () use ($data, $admin, $teacher) {
             // Nếu là giáo viên, kiểm tra xem có dạy lớp này không
             if ($teacher) {
-                $isAssigned = \App\Models\SchoolClass::where('id', $data['class_id'])
-                    ->whereHas('classSubjects', fn ($q) => $q->where('teacher_id', $teacher->id))
-                    ->exists();
+                $isAssigned = $this->schoolClassRepository->isTeacherAssignedToClass($teacher->id, (int) $data['class_id']);
 
                 if (! $isAssigned) {
                     throw new AccessDeniedHttpException('Bạn không có quyền tạo kỳ thi cho lớp học này.');
@@ -163,9 +161,7 @@ class ClassExamService implements ClassExamServiceInterface
 
         return DB::transaction(function () use ($classExam, $data, $teacher) {
             if ($teacher && isset($data['class_id']) && (int) $data['class_id'] !== (int) $classExam->class_id) {
-                $isAssigned = \App\Models\SchoolClass::where('id', $data['class_id'])
-                    ->whereHas('classSubjects', fn ($q) => $q->where('teacher_id', $teacher->id))
-                    ->exists();
+                $isAssigned = $this->schoolClassRepository->isTeacherAssignedToClass($teacher->id, (int) $data['class_id']);
 
                 if (! $isAssigned) {
                     throw new AccessDeniedHttpException('Bạn không có quyền chuyển kỳ thi sang lớp học này.');
@@ -198,7 +194,7 @@ class ClassExamService implements ClassExamServiceInterface
     {
         if ($teacher) {
             $teacherClassIds  = $teacher->classSubjects()->pluck('class_id')->unique()->toArray();
-            $classes          = \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']);
+            $classes          = $this->schoolClassRepository->getByIds($teacherClassIds, ['id', 'name', 'code', 'center_id']);
             $managedCenterIds = $teacher->center_id ? [(int) $teacher->center_id] : null;
 
             return [

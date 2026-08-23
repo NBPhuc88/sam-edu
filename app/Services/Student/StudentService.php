@@ -124,7 +124,7 @@ class StudentService implements StudentServiceInterface
     {
         if ($teacher) {
             $teacherClassIds = $this->getTeacherClassIds($teacher);
-            $classes         = \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']);
+            $classes         = $this->schoolClassRepository->getByIds($teacherClassIds, ['id', 'name', 'code', 'center_id']);
             $centers         = $teacher->center_id ? $this->centerRepository->getByIds([(int) $teacher->center_id], ['id', 'name', 'code']) : [];
 
             return [
@@ -231,9 +231,7 @@ class StudentService implements StudentServiceInterface
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
-                $activeStudentsCount = Student::where('center_id', $centerId)
-                    ->where('status', 1)
-                    ->count();
+                $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId);
 
                 if ($activeStudentsCount >= $center->max_students) {
                     throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
@@ -270,10 +268,7 @@ class StudentService implements StudentServiceInterface
         ]);
 
         if (! empty($data['class_ids']) && is_array($data['class_ids'])) {
-            $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
-                ->whereIn('id', $data['class_ids'])
-                ->pluck('id')
-                ->toArray();
+            $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $data['class_ids']);
 
             if (! empty($validClassIds)) {
                 $this->studentRepository->syncClasses($student, $validClassIds);
@@ -338,10 +333,7 @@ class StudentService implements StudentServiceInterface
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
-                $activeStudentsCount = Student::where('center_id', $centerId)
-                    ->where('id', '!=', $student->id)
-                    ->where('status', 1)
-                    ->count();
+                $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId, $student->id);
 
                 if ($activeStudentsCount >= $center->max_students) {
                     throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
@@ -406,10 +398,7 @@ class StudentService implements StudentServiceInterface
         $center         = $this->centerRepository->find((int) $updatedStudent->center_id);
 
         if (array_key_exists('class_ids', $data) && is_array($data['class_ids'])) {
-            $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
-                ->whereIn('id', $data['class_ids'])
-                ->pluck('id')
-                ->toArray();
+            $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $data['class_ids']);
             $this->studentRepository->syncClasses($updatedStudent, $validClassIds);
         }
 
@@ -496,10 +485,7 @@ class StudentService implements StudentServiceInterface
         $student  = $this->findStudent($studentId, $admin);
         $centerId = (int) $student->center_id;
 
-        $validClassIds = \App\Models\SchoolClass::where('center_id', $centerId)
-            ->whereIn('id', $classIds)
-            ->pluck('id')
-            ->toArray();
+        $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $classIds);
 
         $this->studentRepository->syncClasses($student, $validClassIds);
     }
@@ -518,9 +504,8 @@ class StudentService implements StudentServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền thao tác trên lớp học này.');
         }
 
-        $validStudents = Student::where('center_id', $class->center_id)
-            ->whereIn('id', $studentIds)
-            ->get();
+        $validStudents = $this->studentRepository->getActiveStudents([(int) $class->center_id])
+            ->whereIn('id', $studentIds);
 
         $successCount = 0;
 

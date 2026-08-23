@@ -112,30 +112,8 @@ class ExamService implements ExamServiceInterface
             $centerId = (int) $user->center_id;
 
             // Giáo viên chỉ chọn được các môn học mình đang dạy thuộc trung tâm
-            $taughtSubjectIds = DB::table('class_subjects')
-                ->where('teacher_id', $user->id)
-                ->pluck('subject_id')
-                ->unique()
-                ->toArray();
-
-            if (! empty($taughtSubjectIds)) {
-                $subjects = \App\Models\Subject::whereIn('id', $taughtSubjectIds)
-                    ->where('center_id', $centerId)
-                    ->where('status', 'active')
-                    ->orderBy('name')
-                    ->get();
-            } else {
-                $subjects = \App\Models\Subject::where('center_id', $centerId)
-                    ->where('status', 'active')
-                    ->orderBy('name')
-                    ->get();
-            }
-
-            // Chỉ show loại đề thi của trung tâm mình
-            $examTypes = \App\Models\ExamType::where('center_id', $centerId)
-                ->where('status', 'active')
-                ->orderBy('name')
-                ->get();
+            $subjects  = $this->subjectRepository->getTaughtSubjectsByTeacher($user->id, $centerId);
+            $examTypes = $this->examTypeRepository->getByCenterOnly($centerId);
 
             return [
                 'centers'    => $this->centerRepository->getByIds([$centerId], ['id', 'name', 'code']),

@@ -164,4 +164,39 @@ class SubjectRepository implements SubjectRepositoryInterface
 
         return $query->orderBy('name')->get();
     }
+
+    /**
+     * Lấy danh sách môn học mà giáo viên được phân công giảng dạy tại trung tâm.
+     *
+     * @param  int                                                    $teacherId
+     * @param  int                                                    $centerId
+     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+     */
+    public function getTaughtSubjectsByTeacher(int $teacherId, int $centerId): \Illuminate\Database\Eloquent\Collection
+    {
+        $taughtSubjectIds = \App\Models\ClassSubject::where('teacher_id', $teacherId)
+            ->pluck('subject_id')
+            ->unique()
+            ->toArray();
+
+        $query = Subject::select(
+            'id',
+            'center_id',
+            'code',
+            'name',
+            'description',
+            'total_sessions',
+            'duration_minutes',
+            'tuition_fee',
+            'status'
+        )
+            ->where('center_id', $centerId)
+            ->where('status', 'active');
+
+        if (! empty($taughtSubjectIds)) {
+            $query->whereIn('id', $taughtSubjectIds);
+        }
+
+        return $query->orderBy('name')->get();
+    }
 }

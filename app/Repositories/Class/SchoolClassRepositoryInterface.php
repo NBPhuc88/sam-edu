@@ -145,4 +145,18 @@ interface SchoolClassRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
      */
     public function getAvailableStudentsForClass(int $classId, int $centerId, ?string $search = null): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int  $teacherId
+     * @param  int  $classId
+     * @return bool
+     */
+    public function isTeacherAssignedToClass(int $teacherId, int $classId): bool;
+
+    /**
+     * @param  array<int>                                                 $ids
+     * @param  array<string>                                              $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getByIds(array $ids, array $columns = ['*']): \Illuminate\Database\Eloquent\Collection;
 }

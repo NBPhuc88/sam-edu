@@ -113,6 +113,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\ExamType\ExamTypeServiceInterface::class, \App\Services\ExamType\ExamTypeService::class);
         $this->app->bind(\App\Services\Permission\PermissionServiceInterface::class, \App\Services\Permission\PermissionService::class);
         $this->app->bind(\App\Services\Profile\ProfileServiceInterface::class, \App\Services\Profile\ProfileService::class);
+        $this->app->bind(\App\Services\Impact\DeleteImpactServiceInterface::class, \App\Services\Impact\DeleteImpactService::class);
+        $this->app->bind(\App\Services\Transcript\StudentTranscriptServiceInterface::class, \App\Services\Transcript\StudentTranscriptService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);

@@ -413,4 +413,17 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             ->whereDoesntHave('attendances')
             ->delete();
     }
+
+    /**
+     * Lấy buổi học diễn ra trong ngày hôm nay của giáo viên.
+     *
+     * @param  int           $teacherId
+     * @return ?ClassSession
+     */
+    public function getTodaySessionByTeacher(int $teacherId): ?ClassSession
+    {
+        return ClassSession::where('teacher_id', $teacherId)
+            ->whereDate('session_date', today())
+            ->first();
+    }
 }

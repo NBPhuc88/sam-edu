@@ -88,6 +88,20 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
     }
 
     /**
+     * @param  int                       $centerId
+     * @return Collection<int, ExamType>
+     */
+    public function getByCenterOnly(int $centerId): Collection
+    {
+        return ExamType::query()
+            ->select('id', 'center_id', 'code', 'name', 'description', 'status')
+            ->where('center_id', $centerId)
+            ->where('status', 'active')
+            ->orderBy('name', 'asc')
+            ->get();
+    }
+
+    /**
      * @param  int       $id
      * @return ?ExamType
      */

@@ -423,4 +423,38 @@ class StudentRepository implements StudentRepositoryInterface
 
         return $result->sortBy(['weekday', 'start_time'])->values();
     }
+
+    /**
+     * Đếm số học sinh đang hoạt động (status = 1) của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveByCenterId(int $centerId, ?int $excludeId = null): int
+    {
+        $query = Student::where('center_id', $centerId)
+            ->where('status', 1);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * Lọc danh sách ID lớp học hợp lệ thuộc trung tâm.
+     *
+     * @param  int        $centerId
+     * @param  array<int> $classIds
+     * @return array<int>
+     */
+    public function filterValidClassIds(int $centerId, array $classIds): array
+    {
+        return \App\Models\SchoolClass::where('center_id', $centerId)
+            ->whereIn('id', $classIds)
+            ->pluck('id')
+            ->toArray();
+    }
 }

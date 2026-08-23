@@ -56,4 +56,13 @@ interface SubjectRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
      */
     public function getByCenterIds(?array $centerIds = null): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * Lấy danh sách môn học mà giáo viên được phân công giảng dạy tại trung tâm.
+     *
+     * @param  int                                                    $teacherId
+     * @param  int                                                    $centerId
+     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+     */
+    public function getTaughtSubjectsByTeacher(int $teacherId, int $centerId): \Illuminate\Database\Eloquent\Collection;
 }

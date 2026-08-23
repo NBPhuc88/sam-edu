@@ -236,4 +236,23 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             'pending_count'    => $pendingCount,
         ];
     }
+
+    /**
+     * @param  int                  $studentId
+     * @return array<string, mixed>
+     */
+    public function getStudentTuitionSummary(int $studentId): array
+    {
+        $tuitions = StudentTuition::where('student_id', $studentId)->get();
+
+        return [
+            'total_amount'     => (float) $tuitions->sum('total_amount'),
+            'paid_amount'      => (float) $tuitions->sum('paid_amount'),
+            'remaining_amount' => (float) $tuitions->sum('remaining_amount'),
+            'total_records'    => $tuitions->count(),
+            'completed_count'  => $tuitions->where('status', 'paid')->count(),
+            'partial_count'    => $tuitions->where('status', 'partial')->count(),
+            'unpaid_count'     => $tuitions->whereIn('status', ['unpaid', 'overdue'])->count(),
+        ];
+    }
 }

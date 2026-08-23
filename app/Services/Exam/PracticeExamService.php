@@ -6,11 +6,17 @@ use App\Models\Admin;
 use App\Models\Exam;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Repositories\Exam\ExamRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PracticeExamService implements PracticeExamServiceInterface
 {
+    public function __construct(
+        protected ExamRepositoryInterface $examRepository
+    ) {
+    }
+
     /**
      * Lấy danh sách đề thi đánh dấu thi thử (is_practice = true)
      *
@@ -28,59 +34,20 @@ class PracticeExamService implements PracticeExamServiceInterface
         ?Admin $admin = null,
         int $perPage = 12
     ): LengthAwarePaginator {
-        $query = Exam::query()
-            ->where('is_practice', true)
-            ->where('status', 'published')
-            ->with([
-                'center:id,name,code',
-                'subject:id,name,code',
-                'examType:id,name,code',
-            ])
-            ->withCount(['sections', 'questions']);
+        $centerIds = null;
 
         // Phân quyền theo Trung tâm
         if ($admin && ! $admin->isSuperAdmin()) {
-            $centerIds = $admin->centers()->pluck('centers.id')->toArray();
-            $query->whereIn('center_id', array_unique($centerIds));
+            $centerIds = array_unique($admin->centers()->pluck('centers.id')->toArray());
         } elseif ($teacher && ! empty($teacher->center_id)) {
-            $query->where('center_id', $teacher->center_id);
+            $centerIds = (int) $teacher->center_id;
         } elseif ($student && ! empty($student->center_id)) {
-            $query->where('center_id', $student->center_id);
+            $centerIds = (int) $student->center_id;
         }
 
-        // Tìm kiếm theo từ khóa (tên đề thi, mã đề thi)
-        if (! empty($filters['search'])) {
-            $search = trim($filters['search']);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
+        $page = isset($filters['page']) && is_numeric($filters['page']) ? (int) $filters['page'] : 1;
 
-        // Lọc theo Center
-        if (! empty($filters['center_id'])) {
-            $query->where('center_id', (int) $filters['center_id']);
-        }
-
-        // Lọc theo Subject
-        if (! empty($filters['subject_id'])) {
-            $query->where('subject_id', (int) $filters['subject_id']);
-        }
-
-        // Lọc theo Loại đề thi (exam_type_id hoặc exam_type code)
-        $examTypeFilter = $filters['exam_type_id'] ?? ($filters['exam_type'] ?? null);
-
-        if (! empty($examTypeFilter) && $examTypeFilter !== 'all') {
-            if (is_numeric($examTypeFilter)) {
-                $query->where('exam_type_id', (int) $examTypeFilter);
-            } else {
-                $query->whereHas('examType', function ($q) use ($examTypeFilter) {
-                    $q->where('code', $examTypeFilter);
-                });
-            }
-        }
-
-        return $query->orderBy('created_at', 'desc')->deferredPaginate($perPage)->withQueryString();
+        return $this->examRepository->getPracticeExams($filters, $centerIds, $perPage, $page)->withQueryString();
     }
 
     /**

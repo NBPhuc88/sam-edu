@@ -573,4 +573,26 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
 
         return $query->orderBy('full_name')->take(50)->get();
     }
+
+    /**
+     * @param  int  $teacherId
+     * @param  int  $classId
+     * @return bool
+     */
+    public function isTeacherAssignedToClass(int $teacherId, int $classId): bool
+    {
+        return SchoolClass::where('id', $classId)
+            ->whereHas('classSubjects', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->exists();
+    }
+
+    /**
+     * @param  array<int>                                                 $ids
+     * @param  array<string>                                              $columns
+     * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>
+     */
+    public function getByIds(array $ids, array $columns = ['*']): \Illuminate\Database\Eloquent\Collection
+    {
+        return SchoolClass::whereIn('id', $ids)->get($columns);
+    }
 }

@@ -73,4 +73,13 @@ interface RoomRepositoryInterface
     public function getStats(?array $allowedCenterIds = null): array;
 
     public function countByCenterId(int $centerId): int;
+
+    /**
+     * Đếm số phòng học đang hoạt động hoặc tạm dừng của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveAndPaused(int $centerId, ?int $excludeId = null): int;
 }

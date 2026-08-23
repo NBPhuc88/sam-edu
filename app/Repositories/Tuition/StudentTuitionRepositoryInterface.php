@@ -68,4 +68,10 @@ interface StudentTuitionRepositoryInterface
         ?int $classId = null,
         ?string $month = null
     ): array;
+
+    /**
+     * @param  int                  $studentId
+     * @return array<string, mixed>
+     */
+    public function getStudentTuitionSummary(int $studentId): array;
 }

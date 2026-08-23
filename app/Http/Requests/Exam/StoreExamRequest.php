@@ -15,6 +15,7 @@ class StoreExamRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $user = $this->user();
+
         if (! $this->filled('center_id') && $user && isset($user->center_id)) {
             $this->merge([
                 'center_id' => $user->center_id,

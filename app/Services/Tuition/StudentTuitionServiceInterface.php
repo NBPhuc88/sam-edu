@@ -48,6 +48,12 @@ interface StudentTuitionServiceInterface
     ): array;
 
     /**
+     * @param  int                  $studentId
+     * @return array<string, mixed>
+     */
+    public function getStudentTuitionSummary(int $studentId): array;
+
+    /**
      * @param  ?Admin               $admin
      * @param  ?int                 $selectedCenterId
      * @return array<string, mixed>

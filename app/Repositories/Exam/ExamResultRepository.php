@@ -32,4 +32,38 @@ class ExamResultRepository implements ExamResultRepositoryInterface
             ->latest()
             ->get();
     }
+
+    /**
+     * @param  int                         $studentId
+     * @param  ?int                        $classId
+     * @return Collection<int, ExamResult>
+     */
+    public function getTranscriptResults(int $studentId, ?int $classId = null): Collection
+    {
+        $query = ExamResult::query()
+            ->with([
+                'exam:id,title,subject_id,max_score',
+                'exam.subject:id,name,code',
+                'classExam.schoolClass:id,name,code',
+            ])
+            ->where('student_id', $studentId);
+
+        if ($classId) {
+            $query->whereHas('classExam', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    /**
+     * @param  array<string, mixed> $attributes
+     * @param  array<string, mixed> $values
+     * @return ExamResult
+     */
+    public function updateOrCreate(array $attributes, array $values = []): ExamResult
+    {
+        return ExamResult::updateOrCreate($attributes, $values);
+    }
 }

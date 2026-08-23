@@ -134,6 +134,15 @@ class StudentTuitionService implements StudentTuitionServiceInterface
     }
 
     /**
+     * @param  int                  $studentId
+     * @return array<string, mixed>
+     */
+    public function getStudentTuitionSummary(int $studentId): array
+    {
+        return $this->studentTuitionRepository->getStudentTuitionSummary($studentId);
+    }
+
+    /**
      * @param  ?Admin               $admin
      * @param  ?int                 $selectedCenterId
      * @return array<string, mixed>

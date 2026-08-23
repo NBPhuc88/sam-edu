@@ -28,4 +28,10 @@ interface AttendanceServiceInterface
      * @return bool
      */
     public function resetAttendance(int $sessionId, Admin|Teacher|null $user = null): bool;
+
+    /**
+     * @param  int                       $teacherId
+     * @return ?\App\Models\ClassSession
+     */
+    public function getTodayTeacherSession(int $teacherId): ?\App\Models\ClassSession;
 }

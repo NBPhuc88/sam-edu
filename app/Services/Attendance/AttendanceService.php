@@ -174,4 +174,13 @@ class AttendanceService implements AttendanceServiceInterface
 
         return $this->attendanceRepository->resetSessionAttendance($sessionId);
     }
+
+    /**
+     * @param  int                       $teacherId
+     * @return ?\App\Models\ClassSession
+     */
+    public function getTodayTeacherSession(int $teacherId): ?\App\Models\ClassSession
+    {
+        return $this->sessionRepository->getTodaySessionByTeacher($teacherId);
+    }
 }

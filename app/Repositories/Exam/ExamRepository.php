@@ -481,4 +481,54 @@ class ExamRepository implements ExamRepositoryInterface
 
         return $query->orderBy('name')->get();
     }
+
+    /**
+     * @param  array<string, mixed> $filters
+     * @param  array<int>|int|null  $centerIds
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function getPracticeExams(array $filters, array|int|null $centerIds = null, int $perPage = 12, int $page = 1): LengthAwarePaginator
+    {
+        $query = Exam::query()
+            ->where('is_practice', true)
+            ->where('status', 'published')
+            ->with([
+                'center:id,name,code',
+                'subject:id,name,code',
+                'examType:id,name,code',
+            ])
+            ->withCount(['sections', 'questions']);
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        if (! empty($filters['search'])) {
+            $search = trim($filters['search']);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if (! empty($filters['center_id'])) {
+            $query->where('center_id', (int) $filters['center_id']);
+        }
+
+        if (! empty($filters['subject_id'])) {
+            $query->where('subject_id', (int) $filters['subject_id']);
+        }
+
+        if (! empty($filters['exam_type_id'])) {
+            $query->where('exam_type_id', (int) $filters['exam_type_id']);
+        }
+
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
+    }
 }

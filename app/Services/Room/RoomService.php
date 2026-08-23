@@ -98,9 +98,7 @@ class RoomService implements RoomServiceInterface
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
-                $activePausedCount = Room::where('center_id', $centerId)
-                    ->whereIn('status', ['active', 'paused'])
-                    ->count();
+                $activePausedCount = $this->roomRepository->countActiveAndPaused($centerId);
 
                 if ($activePausedCount >= $center->max_classes) {
                     throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");
@@ -156,10 +154,7 @@ class RoomService implements RoomServiceInterface
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
-                $activePausedCount = Room::where('center_id', $centerId)
-                    ->where('id', '!=', $room->id)
-                    ->whereIn('status', ['active', 'paused'])
-                    ->count();
+                $activePausedCount = $this->roomRepository->countActiveAndPaused($centerId, $room->id);
 
                 if ($activePausedCount >= $center->max_classes) {
                     throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");

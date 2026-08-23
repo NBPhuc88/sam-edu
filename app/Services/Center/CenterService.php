@@ -52,7 +52,7 @@ class CenterService implements CenterServiceInterface
 
         // Tự động đồng bộ plan_type, max_classes, max_students từ gói được chọn
         if (! empty($data['subscription_plan'])) {
-            $plan = \App\Models\SubscriptionPlan::where('code', $data['subscription_plan'])->first();
+            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
 
             if ($plan) {
                 $data['plan_type']    = $plan->plan_type;
@@ -80,7 +80,7 @@ class CenterService implements CenterServiceInterface
     {
         // Khi Super Admin cập nhật/nâng cấp gói dịch vụ của Trung tâm
         if (! empty($data['subscription_plan'])) {
-            $plan = \App\Models\SubscriptionPlan::where('code', $data['subscription_plan'])->first();
+            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
 
             if ($plan) {
                 $data['plan_type']    = $plan->plan_type;

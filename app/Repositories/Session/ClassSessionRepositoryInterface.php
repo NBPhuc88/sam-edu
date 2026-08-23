@@ -133,4 +133,12 @@ interface ClassSessionRepositoryInterface
     public function deleteFutureUnattendedSessions(int $classSubjectId, string $fromDate): int;
 
     public function deleteFutureSessionsByScheduleId(int $classScheduleId, string $fromDate): int;
+
+    /**
+     * Lấy buổi học diễn ra trong ngày hôm nay của giáo viên.
+     *
+     * @param  int           $teacherId
+     * @return ?ClassSession
+     */
+    public function getTodaySessionByTeacher(int $teacherId): ?ClassSession;
 }

@@ -31,6 +31,12 @@ interface ExamTypeRepositoryInterface
     public function getAllActive(array|int|null $centerIds = null): Collection;
 
     /**
+     * @param  int                       $centerId
+     * @return Collection<int, ExamType>
+     */
+    public function getByCenterOnly(int $centerId): Collection;
+
+    /**
      * @param  int       $id
      * @return ?ExamType
      */

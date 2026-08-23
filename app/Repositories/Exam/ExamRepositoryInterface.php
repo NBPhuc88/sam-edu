@@ -94,4 +94,13 @@ interface ExamRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Exam>
      */
     public function getPublishedExamsForDropdown(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  array<string, mixed> $filters
+     * @param  array<int>|int|null  $centerIds
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function getPracticeExams(array $filters, array|int|null $centerIds = null, int $perPage = 12, int $page = 1): LengthAwarePaginator;
 }
