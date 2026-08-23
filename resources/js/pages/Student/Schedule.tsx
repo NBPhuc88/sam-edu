@@ -301,11 +301,10 @@ export default function StudentSchedulePage({
                             <button
                                 type="button"
                                 onClick={() => setViewMode('sessions')}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                                    viewMode === 'sessions'
-                                        ? 'bg-white text-emerald-800 shadow-xs'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${viewMode === 'sessions'
+                                    ? 'bg-white text-emerald-800 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                    }`}
                             >
                                 <CalendarDays className="h-3.5 w-3.5" />
                                 <span>Lịch Học Thực Tế</span>
@@ -313,18 +312,17 @@ export default function StudentSchedulePage({
                             <button
                                 type="button"
                                 onClick={() => setViewMode('recurring')}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                                    viewMode === 'recurring'
-                                        ? 'bg-white text-emerald-800 shadow-xs'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${viewMode === 'recurring'
+                                    ? 'bg-white text-emerald-800 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                    }`}
                             >
                                 <Layers className="h-3.5 w-3.5" />
                                 <span>Lịch Học Cố Định</span>
                             </button>
                         </div>
 
-                        <Button
+                        {/* <Button
                             variant="secondary"
                             size="sm"
                             icon={<Printer className="h-4 w-4 text-gray-600" />}
@@ -332,7 +330,7 @@ export default function StudentSchedulePage({
                             className="hidden sm:inline-flex"
                         >
                             In Lịch Học
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
 
@@ -399,11 +397,10 @@ export default function StudentSchedulePage({
                                 {weekDays.map((day) => (
                                     <th
                                         key={day.weekday_number}
-                                        className={`px-3 py-3.5 font-bold text-center border-r border-gray-200 min-w-[170px] ${
-                                            day.is_today
-                                                ? 'bg-emerald-50 text-emerald-950 border-b-2 border-b-emerald-600'
-                                                : 'text-gray-700'
-                                        }`}
+                                        className={`px-3 py-3.5 font-bold text-center border-r border-gray-200 min-w-[170px] ${day.is_today
+                                            ? 'bg-emerald-50 text-emerald-950 border-b-2 border-b-emerald-600'
+                                            : 'text-gray-700'
+                                            }`}
                                     >
                                         <div className="flex flex-col items-center">
                                             <span className="text-xs font-extrabold">{day.weekday_label}</span>
@@ -446,9 +443,8 @@ export default function StudentSchedulePage({
                                             return (
                                                 <td
                                                     key={`${slot.label}-${day.weekday_number}`}
-                                                    className={`p-1.5 align-top border-r border-gray-200 ${
-                                                        day.is_today ? 'bg-emerald-50/20' : ''
-                                                    }`}
+                                                    className={`p-1.5 align-top border-r border-gray-200 ${day.is_today ? 'bg-emerald-50/20' : ''
+                                                        }`}
                                                 >
                                                     {viewMode === 'sessions' ? (
                                                         <div className="space-y-1.5">
@@ -458,11 +454,10 @@ export default function StudentSchedulePage({
                                                                     <div
                                                                         key={sess.id}
                                                                         onClick={() => handleOpenDetailModal(sess)}
-                                                                        className={`group cursor-pointer rounded-xl p-2.5 border transition-all duration-150 hover:shadow-md ${
-                                                                            isOldRescheduled
-                                                                                ? 'bg-amber-50/70 border-amber-200 text-amber-900 hover:border-amber-300'
-                                                                                : 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-50'
-                                                                        }`}
+                                                                        className={`group cursor-pointer rounded-xl p-2.5 border transition-all duration-150 hover:shadow-md ${isOldRescheduled
+                                                                            ? 'bg-amber-50/70 border-amber-200 text-amber-900 hover:border-amber-300'
+                                                                            : 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-50'
+                                                                            }`}
                                                                     >
                                                                         <div className="flex items-start justify-between gap-1 mb-1">
                                                                             <span className="font-extrabold text-xs text-gray-900 line-clamp-1">
