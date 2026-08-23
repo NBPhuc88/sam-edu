@@ -22,13 +22,13 @@ class SystemContentSeeder extends Seeder
             ],
             [
                 'key'         => 'hero_subtitle',
-                'value'       => 'Giải pháp SaaS toàn diện tối ưu hóa quy trình quản lý học viên, sắp xếp thời khóa biểu thông minh, điểm danh, tổ chức kỳ thi 4 kỹ năng và thu học phí tự động.',
+                'value'       => 'Giải pháp SaaS toàn diện tối ưu hóa quy trình quản lý học viên, sắp xếp thời khóa biểu thông minh, điểm danh, tổ chức kỳ thi 4 kỹ năng và.',
                 'group'       => 'homepage',
                 'description' => 'Mô tả banner chính',
             ],
             [
                 'key'         => 'promo_banner_text',
-                'value'       => 'Chương trình Khuyến Mãi 2026 - Giảm 30% khi đăng ký gói 1 năm + 14 ngày trải nghiệm dùng thử miễn phí',
+                'value'       => 'Chương trình Khuyến Mãi 2026 - Giảm 20% khi đăng ký gói 1 năm + 14 ngày trải nghiệm dùng thử miễn phí',
                 'group'       => 'promotions',
                 'description' => 'Thông báo banner khuyến mãi',
             ],

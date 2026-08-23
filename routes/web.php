@@ -9,6 +9,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SchoolClassStudentController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubscriptionPlanController;
@@ -105,6 +106,12 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::post('/', [\App\Http\Controllers\PermissionController::class, 'update'])->name('edit');
         Route::post('/reset', [\App\Http\Controllers\PermissionController::class, 'reset'])->name('reset');
         Route::post('/sync', [\App\Http\Controllers\PermissionController::class, 'sync'])->name('sync');
+    });
+
+    // System Settings Configuration Routes
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingController::class, 'index'])->name('index');
+        Route::post('/', [SettingController::class, 'update'])->name('update');
     });
 
     // SaaS Subscription Plans Configuration Routes (Super Admin)

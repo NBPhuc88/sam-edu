@@ -211,5 +211,14 @@ return [
                 ['code' => 'tuitions.payments', 'action' => 'edit', 'name' => 'Thu tiền & đợt đóng', 'description' => 'Ghi nhận đợt nộp học phí'],
             ],
         ],
+        [
+            'key'          => 'settings',
+            'name'         => 'Cài Đặt Hệ Thống',
+            'module_order' => 19,
+            'actions'      => [
+                ['code' => 'settings.index', 'action' => 'index', 'name' => 'Xem cài đặt hệ thống', 'description' => 'Xem cấu hình thông tin hệ thống, liên hệ, SEO'],
+                ['code' => 'settings.edit', 'action' => 'edit', 'name' => 'Cập nhật cài đặt', 'description' => 'Chỉnh sửa cấu hình hệ thống & thông tin liên hệ'],
+            ],
+        ],
     ],
 ];

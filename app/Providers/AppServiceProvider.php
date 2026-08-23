@@ -115,6 +115,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Profile\ProfileServiceInterface::class, \App\Services\Profile\ProfileService::class);
         $this->app->bind(\App\Services\Impact\DeleteImpactServiceInterface::class, \App\Services\Impact\DeleteImpactService::class);
         $this->app->bind(\App\Services\Transcript\StudentTranscriptServiceInterface::class, \App\Services\Transcript\StudentTranscriptService::class);
+        $this->app->bind(\App\Services\Setting\SettingServiceInterface::class, \App\Services\Setting\SettingService::class);
 
         // Repository Bindings
         $this->app->bind(PasswordResetRepositoryInterface::class, PasswordResetRepository::class);
@@ -135,6 +136,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PaymentTransactionRepositoryInterface::class, PaymentTransactionRepository::class);
         $this->app->bind(ContactRequestRepositoryInterface::class, ContactRequestRepository::class);
         $this->app->bind(\App\Repositories\Setting\SystemSettingRepositoryInterface::class, \App\Repositories\Setting\SystemSettingRepository::class);
+        $this->app->bind(\App\Repositories\Setting\SeoMetadataRepositoryInterface::class, \App\Repositories\Setting\SeoMetadataRepository::class);
         $this->app->bind(\App\Repositories\Subscription\SubscriptionPlanRepositoryInterface::class, \App\Repositories\Subscription\SubscriptionPlanRepository::class);
         $this->app->bind(\App\Repositories\Subscription\CenterSubscriptionRepositoryInterface::class, \App\Repositories\Subscription\CenterSubscriptionRepository::class);
         $this->app->bind(\App\Repositories\Exam\ExamResultRepositoryInterface::class, \App\Repositories\Exam\ExamResultRepository::class);
