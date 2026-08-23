@@ -165,7 +165,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                     </Button>
                                 </Link>
                                 <Link
-                                    href="/register-center?plan=trial_14d"
+                                    href="/register-center?plan=trial"
                                     className="hidden sm:inline-flex"
                                 >
                                     <Button
@@ -173,7 +173,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                         size="sm"
                                         icon={<Sparkles className="h-4 w-4" />}
                                     >
-                                        Dùng thử 14 ngày
+                                        Dùng thử 1 tháng
                                     </Button>
                                 </Link>
                             </>

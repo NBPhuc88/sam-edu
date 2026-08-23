@@ -52,7 +52,7 @@ Route::get('/force-change-password', [PasswordResetController::class, 'showForce
 Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update');
 
 // ─── Protected Routes (Bất kỳ guard nào: admin | center | teacher | student) ──
-Route::middleware(['auth.any', 'auto.permission'])->group(function () {
+Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(function () {
 
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

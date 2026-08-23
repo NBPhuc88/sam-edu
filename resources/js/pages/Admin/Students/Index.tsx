@@ -21,6 +21,7 @@ import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
+import { useCanExportCsv } from '@/hooks/usePlanFeature';
 interface Center {
     id: number;
     name: string;
@@ -89,6 +90,7 @@ export default function StudentIndex({
     isTeacher = false,
 }: Props) {
     const { can } = usePermission();
+    const canExportCsv = useCanExportCsv();
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
@@ -296,14 +298,16 @@ return;
                                 Import CSV
                             </Button>
                         )}
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            icon={<Download className="h-4.5 w-4.5" />}
-                            onClick={handleExport}
-                        >
-                            Export CSV
-                        </Button>
+                        {canExportCsv && (
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                icon={<Download className="h-4.5 w-4.5" />}
+                                onClick={handleExport}
+                            >
+                                Export CSV
+                            </Button>
+                        )}
                         {can('students.create') && (
                             <Link href="/students/create">
                                 <Button

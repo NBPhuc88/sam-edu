@@ -50,10 +50,8 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
         if (selectedPlan?.duration_days) {
             date.setDate(date.getDate() + Number(selectedPlan.duration_days));
-        } else if (planCode === 'trial_14d') {
-            date.setDate(date.getDate() + 14);
-        } else if (planCode === 'yearly') {
-            date.setDate(date.getDate() + 365);
+        } else if (planCode === 'trial') {
+            date.setDate(date.getDate() + 30);
         } else {
             date.setDate(date.getDate() + 30);
         }
@@ -63,7 +61,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
     // Form state initialized with initial values or defaults
     const [formData, setFormData] = useState<CenterFormData>(() => {
-        const defaultPlan = initialValues?.subscription_plan || 'monthly';
+        const defaultPlan = initialValues?.subscription_plan || 'basic_5';
         const defaultExpires = initialValues?.expires_at
             ? toISODateString(initialValues.expires_at)
             : mode === 'create'

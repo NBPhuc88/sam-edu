@@ -176,9 +176,29 @@ return;
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 uppercase">
-                                                    {center.subscription_plan}
-                                                </span>
+                                                {(() => {
+                                                    const planLabels: Record<string, string> = {
+                                                        trial: 'Dùng Thử',
+                                                        basic_5: 'Cơ Bản (5 Lớp)',
+                                                        basic_20: 'Cơ Bản (20 Lớp)',
+                                                        advanced_5: 'Nâng Cao (5 Lớp)',
+                                                        advanced_20: 'Nâng Cao (20 Lớp)',
+                                                    };
+                                                    const isAdv = center.subscription_plan?.startsWith('advanced');
+                                                    const isTr = center.subscription_plan === 'trial';
+
+                                                    return (
+                                                        <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                                                            isAdv
+                                                                ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                                                                : isTr
+                                                                  ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                                                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                                        }`}>
+                                                            {planLabels[center.subscription_plan] || center.subscription_plan}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex items-center gap-3 text-gray-700">

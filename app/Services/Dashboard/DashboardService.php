@@ -142,23 +142,21 @@ class DashboardService implements DashboardServiceInterface
 
         $renewedCenters = $this->centerRepository->getByIdsCollection($renewedCenterIds);
 
-        $allCenters = $newCenters->concat($renewedCenters)->unique('id');
-
-        $trialCount   = $allCenters->where('subscription_plan', 'trial_14d')->count();
-        $monthlyCount = $allCenters->where('subscription_plan', 'monthly')->count();
-        $yearlyCount  = $allCenters->where('subscription_plan', 'yearly')->count();
+        $trialCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'trial' || $c->subscription_plan === 'trial')->count();
+        $basicCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'basic' || str_starts_with($c->subscription_plan ?? '', 'basic'))->count();
+        $advancedCount = $allCenters->filter(fn ($c) => $c->plan_type === 'advanced' || str_starts_with($c->subscription_plan ?? '', 'advanced'))->count();
 
         // Mặc định cho hiển thị nếu chưa có dữ liệu thực tế
-        if ($trialCount === 0 && $monthlyCount === 0 && $yearlyCount === 0) {
-            $trialCount   = 1;
-            $monthlyCount = 2;
-            $yearlyCount  = 3;
+        if ($trialCount === 0 && $basicCount === 0 && $advancedCount === 0) {
+            $trialCount    = 1;
+            $basicCount    = 2;
+            $advancedCount = 3;
         }
 
         return [
-            ['name' => 'Gói Dùng Thử 14 Ngày', 'value' => $trialCount, 'color' => '#3b82f6'],
-            ['name' => 'Gói Hàng Tháng', 'value' => $monthlyCount, 'color' => '#f59e0b'],
-            ['name' => 'Gói Theo Năm', 'value' => $yearlyCount, 'color' => '#10b981'],
+            ['name' => 'Gói Dùng Thử 1 Tháng', 'value' => $trialCount, 'color' => '#3b82f6'],
+            ['name' => 'Gói Cơ Bản', 'value' => $basicCount, 'color' => '#f59e0b'],
+            ['name' => 'Gói Nâng Cao', 'value' => $advancedCount, 'color' => '#10b981'],
         ];
     }
 

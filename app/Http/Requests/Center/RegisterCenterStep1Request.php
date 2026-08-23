@@ -26,7 +26,7 @@ class RegisterCenterStep1Request extends FormRequest
             'phone'             => ['required', 'string', 'max:30'],
             'email'             => ['required', 'email', 'max:255'],
             'address'           => ['nullable', 'string', 'max:500'],
-            'subscription_plan' => ['required', 'string', 'in:trial_14d,monthly,yearly'],
+            'subscription_plan' => ['required', 'string', 'exists:subscription_plans,code'],
             'payment_method'    => ['nullable', 'string', 'in:zalopay,bank_transfer,momo,vnpay'],
         ];
     }

@@ -28,7 +28,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
      */
     public function registerStep1(array $data): array
     {
-        $planCode      = (string) ($data['subscription_plan'] ?? 'trial_14d');
+        $planCode      = (string) ($data['subscription_plan'] ?? 'trial');
         $paymentMethod = (string) ($data['payment_method'] ?? 'zalopay');
         $plan          = $this->subscriptionPlanRepository->findByCode($planCode);
 
@@ -46,12 +46,13 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'phone'             => $data['phone'],
                 'email'             => $data['email'],
                 'address'           => $data['address'] ?? null,
-                'status'            => $planCode === 'trial_14d' ? 'active' : 'pending_payment',
+                'status'            => $planCode === 'trial' ? 'active' : 'pending_payment',
                 'subscription_plan' => $planCode,
-                'expires_at'        => $planCode === 'trial_14d' ? now()->addDays(14) : null,
-                'trial_ends_at'     => $planCode === 'trial_14d' ? now()->addDays(14) : null,
-                'max_students'      => $plan->max_students ?? 30,
-                'max_classes'       => $plan->max_classes ?? 3,
+                'plan_type'         => $plan->plan_type ?? ($planCode === 'trial' ? 'trial' : 'basic'),
+                'expires_at'        => $planCode === 'trial' ? now()->addDays(30) : null,
+                'trial_ends_at'     => $planCode === 'trial' ? now()->addDays(30) : null,
+                'max_students'      => $plan->max_students ?? ($planCode === 'trial' ? 600 : 150),
+                'max_classes'       => $plan->max_classes ?? ($planCode === 'trial' ? 20 : 5),
             ]);
 
             $this->sendAdminNotificationMail($center);
@@ -67,7 +68,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             ];
         }
 
-        if ($planCode === 'trial_14d') {
+        if ($planCode === 'trial') {
             $center = $this->centerRepository->create([
                 'code'              => $code,
                 'name'              => $data['name'],
@@ -75,11 +76,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'email'             => $data['email'],
                 'address'           => $data['address'] ?? null,
                 'status'            => 'active',
-                'subscription_plan' => 'trial_14d',
-                'expires_at'        => now()->addDays(14),
-                'trial_ends_at'     => now()->addDays(14),
-                'max_students'      => $plan->max_students ?? 30,
-                'max_classes'       => $plan->max_classes ?? 3,
+                'subscription_plan' => 'trial',
+                'plan_type'         => 'trial',
+                'expires_at'        => now()->addDays(30),
+                'trial_ends_at'     => now()->addDays(30),
+                'max_students'      => $plan->max_students ?? 600,
+                'max_classes'       => $plan->max_classes ?? 20,
             ]);
 
             $this->sendAdminNotificationMail($center);
@@ -91,12 +93,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'code'      => $center->code,
                 'name'      => $center->name,
                 'plan'      => $center->subscription_plan,
-                'message'   => 'Đăng ký dùng thử 14 ngày thành công! Ban quản trị Sam Edu đã ghi nhận thông tin trung tâm.',
+                'message'   => 'Đăng ký dùng thử 30 ngày thành công! Ban quản trị Sam Edu đã ghi nhận thông tin trung tâm.',
             ];
         }
 
-        $amount       = $plan ? $plan->price : ($planCode === 'yearly' ? 4800000 : 500000);
-        $durationDays = $plan ? $plan->duration_days : ($planCode === 'yearly' ? 365 : 30);
+        $amount       = $plan ? $plan->price : 500000;
+        $durationDays = $plan ? $plan->duration_days : 30;
 
         $center = $this->centerRepository->create([
             'code'              => $code,
@@ -106,6 +108,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'address'           => $data['address'] ?? null,
             'status'            => 'pending_payment',
             'subscription_plan' => $planCode,
+            'plan_type'         => $plan->plan_type ?? 'basic',
             'expires_at'        => null,
             'max_students'      => $plan->max_students ?? null,
             'max_classes'       => $plan->max_classes ?? null,
@@ -195,11 +198,16 @@ class CenterRegisterService implements CenterRegisterServiceInterface
 
             if ($center) {
                 $metadata     = $transaction->metadata ?? [];
-                $durationDays = (int) ($metadata['duration_days'] ?? 365);
+                $durationDays = (int) ($metadata['duration_days'] ?? 30);
+                $paidPlanCode = $metadata['plan_code'] ?? 'basic_5';
+                $planObj      = $this->subscriptionPlanRepository->findByCode($paidPlanCode);
 
                 $this->centerRepository->update($center->id, [
                     'status'            => 'active',
-                    'subscription_plan' => $metadata['plan_code'] ?? 'yearly',
+                    'subscription_plan' => $paidPlanCode,
+                    'plan_type'         => $planObj->plan_type ?? 'basic',
+                    'max_students'      => $planObj->max_students ?? $center->max_students,
+                    'max_classes'       => $planObj->max_classes ?? $center->max_classes,
                     'expires_at'        => now()->addDays($durationDays),
                 ]);
             }

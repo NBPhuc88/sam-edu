@@ -23,8 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Alias cho middleware kiểm tra đăng nhập bất kỳ guard (admin|center|teacher|student)
         $middleware->alias([
-            'auth.any'        => \App\Http\Middleware\RequireAuth::class,
-            'auto.permission' => \App\Http\Middleware\AutoCheckPermission::class,
+            'auth.any'           => \App\Http\Middleware\RequireAuth::class,
+            'auto.permission'    => \App\Http\Middleware\AutoCheckPermission::class,
+            'check.plan.feature' => \App\Http\Middleware\CheckPlanFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

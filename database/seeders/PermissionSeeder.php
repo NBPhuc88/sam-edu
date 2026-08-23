@@ -33,7 +33,6 @@ class PermissionSeeder extends Seeder
                 'classes.index', 'classes.create', 'classes.edit', 'classes.delete', 'classes.students', 'classes.chat',
                 'schedules.index', 'schedules.create', 'schedules.edit', 'schedules.delete',
                 'sessions.index', 'sessions.edit', 'attendance.index', 'attendance.save',
-                'holidays.index', 'holidays.create', 'holidays.edit', 'holidays.delete',
                 'exams.index', 'exams.create', 'exams.edit', 'exams.delete',
                 'exam-types.index', 'exam-types.create', 'exam-types.edit', 'exam-types.delete',
                 'class-exams.index', 'class-exams.create', 'class-exams.edit', 'class-exams.delete',

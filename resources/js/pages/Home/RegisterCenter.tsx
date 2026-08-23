@@ -40,22 +40,20 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [address, setAddress] = useState('');
-    const [selectedPlan, setSelectedPlan] = useState<
-        'trial_14d' | 'monthly' | 'yearly'
-    >(() => {
+    const [selectedPlan, setSelectedPlan] = useState<string>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const planParam = params.get('plan');
 
             if (
                 planParam &&
-                ['trial_14d', 'monthly', 'yearly'].includes(planParam)
+                ['trial', 'basic_5', 'basic_20', 'advanced_5', 'advanced_20'].includes(planParam)
             ) {
-                return planParam as 'trial_14d' | 'monthly' | 'yearly';
+                return planParam;
             }
         }
 
-        return 'trial_14d';
+        return 'trial';
     });
     const [paymentMethod, setPaymentMethod] = useState<
         'zalopay' | 'bank_transfer' | 'momo' | 'vnpay'
@@ -367,30 +365,23 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             <label className="block text-xs font-bold text-gray-800">
                                                 Chọn gói cước trải nghiệm (*):
                                             </label>
-                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                                {/* Trial */}
                                                 <div
-                                                    onClick={() =>
-                                                        setSelectedPlan(
-                                                            'trial_14d',
-                                                        )
-                                                    }
+                                                    onClick={() => setSelectedPlan('trial')}
                                                     className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan ===
-                                                        'trial_14d'
+                                                        selectedPlan === 'trial'
                                                             ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
                                                             : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
-                                                            DÙNG THỬ 14 NGÀY
+                                                            DÙNG THỬ 1 THÁNG
                                                         </span>
                                                         <input
                                                             type="radio"
-                                                            checked={
-                                                                selectedPlan ===
-                                                                'trial_14d'
-                                                            }
+                                                            checked={selectedPlan === 'trial'}
                                                             readOnly
                                                         />
                                                     </div>
@@ -398,83 +389,115 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         Miễn phí 0đ
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-gray-500">
-                                                        Trải nghiệm 14 ngày full
-                                                        tính năng
+                                                        30 ngày · Tối đa 20 lớp · 600 HS (Full tính năng)
                                                     </p>
                                                 </div>
 
+                                                {/* Basic 5 */}
                                                 <div
-                                                    onClick={() =>
-                                                        setSelectedPlan(
-                                                            'monthly',
-                                                        )
-                                                    }
+                                                    onClick={() => setSelectedPlan('basic_5')}
                                                     className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan ===
-                                                        'monthly'
+                                                        selectedPlan === 'basic_5'
                                                             ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
                                                             : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-extrabold text-blue-800">
-                                                            HÀNG THÁNG
+                                                            CƠ BẢN · 5 LỚP
                                                         </span>
                                                         <input
                                                             type="radio"
-                                                            checked={
-                                                                selectedPlan ===
-                                                                'monthly'
-                                                            }
+                                                            checked={selectedPlan === 'basic_5'}
                                                             readOnly
                                                         />
                                                     </div>
                                                     <div className="mt-2 text-base font-bold text-gray-900">
-                                                        500.000đ{' '}
-                                                        <span className="text-[10px] font-normal text-gray-500">
-                                                            /tháng
-                                                        </span>
+                                                        250.000đ <span className="text-[10px] font-normal text-gray-500">/tháng</span>
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-gray-500">
-                                                        Linh hoạt 30 ngày sử
-                                                        dụng
+                                                        Tối đa 5 lớp · 150 học sinh
                                                     </p>
                                                 </div>
 
+                                                {/* Basic 20 */}
                                                 <div
-                                                    onClick={() =>
-                                                        setSelectedPlan(
-                                                            'yearly',
-                                                        )
-                                                    }
+                                                    onClick={() => setSelectedPlan('basic_20')}
                                                     className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan ===
-                                                        'yearly'
+                                                        selectedPlan === 'basic_20'
+                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-extrabold text-blue-800">
+                                                            CƠ BẢN · 20 LỚP
+                                                        </span>
+                                                        <input
+                                                            type="radio"
+                                                            checked={selectedPlan === 'basic_20'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 text-base font-bold text-gray-900">
+                                                        500.000đ <span className="text-[10px] font-normal text-gray-500">/tháng</span>
+                                                    </div>
+                                                    <p className="mt-1 text-[11px] text-gray-500">
+                                                        Tối đa 20 lớp · 600 học sinh
+                                                    </p>
+                                                </div>
+
+                                                {/* Advanced 5 */}
+                                                <div
+                                                    onClick={() => setSelectedPlan('advanced_5')}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                                                        selectedPlan === 'advanced_5'
+                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-extrabold text-purple-800">
+                                                            NÂNG CAO · 5 LỚP
+                                                        </span>
+                                                        <input
+                                                            type="radio"
+                                                            checked={selectedPlan === 'advanced_5'}
+                                                            readOnly
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 text-base font-bold text-gray-900">
+                                                        500.000đ <span className="text-[10px] font-normal text-gray-500">/tháng</span>
+                                                    </div>
+                                                    <p className="mt-1 text-[11px] text-gray-500">
+                                                        5 lớp · 150 HS (Đề thi + Chat + CSV)
+                                                    </p>
+                                                </div>
+
+                                                {/* Advanced 20 */}
+                                                <div
+                                                    onClick={() => setSelectedPlan('advanced_20')}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all sm:col-span-2 lg:col-span-2 ${
+                                                        selectedPlan === 'advanced_20'
                                                             ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
                                                             : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
-                                                            TIẾT KIỆM 20%
+                                                            ⭐ NÂNG CAO · 20 LỚP (PHỔ BIẾN)
                                                         </span>
                                                         <input
                                                             type="radio"
-                                                            checked={
-                                                                selectedPlan ===
-                                                                'yearly'
-                                                            }
+                                                            checked={selectedPlan === 'advanced_20'}
                                                             readOnly
                                                         />
                                                     </div>
                                                     <div className="mt-2 text-base font-bold text-gray-900">
-                                                        4.800.000đ{' '}
-                                                        <span className="text-[10px] font-normal text-gray-500">
-                                                            /năm
-                                                        </span>
+                                                        1.000.000đ <span className="text-[10px] font-normal text-gray-500">/tháng (hoặc 9.600.000đ/năm - Giảm 20%)</span>
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-gray-500">
-                                                        Tối ưu chi phí nhất
+                                                        20 lớp · 600 HS · Toàn bộ tính năng cao cấp & hỗ trợ 24/7
                                                     </p>
                                                 </div>
                                             </div>
@@ -482,7 +505,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
                                         {/* Payment Method Selection (Khi bật thanh toán trực tuyến) */}
                                         {enableOnlinePayment &&
-                                            selectedPlan !== 'trial_14d' && (
+                                            selectedPlan !== 'trial' && (
                                                 <div className="space-y-3 pt-2">
                                                     <label className="block text-xs font-bold text-gray-800">
                                                         Chọn phương thức thanh

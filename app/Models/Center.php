@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $address
  * @property string      $status
  * @property string      $subscription_plan
+ * @property string      $plan_type
  * @property Carbon|null $expires_at
  * @property Carbon|null $trial_ends_at
  * @property int|null    $max_students
@@ -39,6 +40,7 @@ class Center extends Model
         'address',
         'status',
         'subscription_plan',
+        'plan_type',
         'expires_at',
         'trial_ends_at',
         'max_students',
@@ -55,6 +57,22 @@ class Center extends Model
             'created_at'    => 'datetime:d-m-Y H:i',
             'updated_at'    => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    public function currentPlan(): ?SubscriptionPlan
+    {
+        return SubscriptionPlan::where('code', $this->subscription_plan)->first();
+    }
+
+    public function hasFeature(string $featureCode): bool
+    {
+        if ($this->plan_type === 'trial' || $this->subscription_plan === 'trial') {
+            return true;
+        }
+
+        $plan = $this->currentPlan();
+
+        return $plan ? $plan->hasFeature($featureCode) : false;
     }
 
     /**

@@ -50,10 +50,21 @@ class CenterService implements CenterServiceInterface
             $data['code'] = 'CENTER-' . sprintf('%02d', $this->centerRepository->count() + 1);
         }
 
+        // Tự động đồng bộ plan_type, max_classes, max_students từ gói được chọn
+        if (! empty($data['subscription_plan'])) {
+            $plan = \App\Models\SubscriptionPlan::where('code', $data['subscription_plan'])->first();
+
+            if ($plan) {
+                $data['plan_type']    = $plan->plan_type;
+                $data['max_classes']  = $data['max_classes'] ?? $plan->max_classes;
+                $data['max_students'] = $data['max_students'] ?? $plan->max_students;
+            }
+        }
+
         // Set default trial expiration if creating new trial plan
-        if (($data['subscription_plan'] ?? '') === 'trial_14d' && empty($data['expires_at'])) {
-            $data['expires_at']    = now()->addDays(14);
-            $data['trial_ends_at'] = now()->addDays(14);
+        if (($data['subscription_plan'] ?? '') === 'trial' && empty($data['expires_at'])) {
+            $data['expires_at']    = now()->addDays(30);
+            $data['trial_ends_at'] = now()->addDays(30);
         }
 
         return $this->centerRepository->create($data);
@@ -67,6 +78,17 @@ class CenterService implements CenterServiceInterface
      */
     public function updateCenter(int $id, array $data): Center
     {
+        // Khi Super Admin cập nhật/nâng cấp gói dịch vụ của Trung tâm
+        if (! empty($data['subscription_plan'])) {
+            $plan = \App\Models\SubscriptionPlan::where('code', $data['subscription_plan'])->first();
+
+            if ($plan) {
+                $data['plan_type']    = $plan->plan_type;
+                $data['max_classes']  = $plan->max_classes;
+                $data['max_students'] = $plan->max_students;
+            }
+        }
+
         $center = $this->centerRepository->update($id, $data);
 
         // Gửi mail thông báo qua Queue về email của trung tâm

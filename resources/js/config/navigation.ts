@@ -27,6 +27,7 @@ export interface NavItem {
     path?: string;
     icon?: LucideIcon;
     permission?: string;
+    planFeature?: string;
     children?: NavItem[];
 }
 
@@ -71,18 +72,18 @@ export const masterNavigation: NavItem[] = [
         label: 'Cấu Hình Đề Thi',
         icon: Sliders,
         children: [
-            { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index' },
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index' },
+            { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index', planFeature: 'exam-types' },
+            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index', planFeature: 'exams' },
         ],
     },
     {
         label: 'Thi & Chấm Thi',
         icon: FileCheck,
         children: [
-            { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index' },
-            { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index' },
-            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter' },
-            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index' },
+            { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index', planFeature: 'class-exams' },
+            { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index', planFeature: 'grading' },
+            { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter', planFeature: 'online-exam' },
+            { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index', planFeature: 'practice-exams' },
         ],
     },
     {
@@ -114,15 +115,17 @@ export const masterNavigation: NavItem[] = [
 ];
 
 /**
- * Lọc danh sách menu theo quyền động.
+ * Lọc danh sách menu theo quyền động và gói dịch vụ.
  * - Super Admin luôn thấy toàn bộ menu.
- * - Các vai trò khác chỉ thấy menu và menu con mà họ được cấp quyền trong Database.
- * - Nhóm cha có children tự động ẩn nếu không có menu con nào được cấp quyền.
+ * - Các vai trò khác chỉ thấy menu mà họ được cấp quyền trong Database VÀ gói dịch vụ của Trung tâm cho phép.
+ * - Nhóm cha có children tự động ẩn nếu không có menu con nào hợp lệ.
  */
-function filterNavItemsByPermissions(
+function filterNavItemsByPermissionsAndPlan(
     items: NavItem[],
     permissions: string[],
     isSuperAdmin: boolean,
+    allowedFeatures: string[] = [],
+    isTrial: boolean = false,
 ): NavItem[] {
     if (isSuperAdmin) {
         return items;
@@ -131,6 +134,11 @@ function filterNavItemsByPermissions(
     const filtered: NavItem[] = [];
 
     for (const item of items) {
+        // Kiểm tra quyền feature theo gói dịch vụ
+        if (item.planFeature && !isTrial && !allowedFeatures.includes(item.planFeature)) {
+            continue;
+        }
+
         // Item đơn không có children
         if (!item.children || item.children.length === 0) {
             if (!item.permission || permissions.includes(item.permission)) {
@@ -141,6 +149,9 @@ function filterNavItemsByPermissions(
 
         // Item có children: lọc các con hợp lệ
         const validChildren = item.children.filter((child) => {
+            if (child.planFeature && !isTrial && !allowedFeatures.includes(child.planFeature)) {
+                return false;
+            }
             if (!child.permission) {
                 return true;
             }
@@ -160,20 +171,23 @@ function filterNavItemsByPermissions(
 }
 
 /**
- * Lấy danh sách menu động cho người dùng hiện tại dựa trên permissions từ Database.
+ * Lấy danh sách menu động cho người dùng hiện tại dựa trên permissions và gói dịch vụ.
  */
 export function getNavigationItems(
     role: string | null,
     adminRole?: string | null,
     permissions: string[] = [],
+    allowedFeatures: string[] = [],
+    planType?: string | null,
 ): NavItem[] {
     if (!role) {
         return [];
     }
 
     const isSuperAdmin = role === 'admin' && adminRole === 'super_admin';
+    const isTrial = planType === 'trial';
 
-    return filterNavItemsByPermissions(masterNavigation, permissions, isSuperAdmin);
+    return filterNavItemsByPermissionsAndPlan(masterNavigation, permissions, isSuperAdmin, allowedFeatures, isTrial);
 }
 
 export function getAccountLabel(role: string | null, adminRole?: string | null): string {

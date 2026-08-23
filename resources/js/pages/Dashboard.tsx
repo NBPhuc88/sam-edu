@@ -67,11 +67,23 @@ export const Dashboard: React.FC<any> = (props) => {
             },
             {
                 header: 'Gói Dịch Vụ',
-                cell: (row) => (
-                    <Badge variant={row.subscription_plan === 'yearly' ? 'active' : 'pending'}>
-                        {row.subscription_plan === 'yearly' ? 'Gói Theo Năm' : row.subscription_plan === 'monthly' ? 'Gói Hàng Tháng' : 'Dùng Thử 14 Ngày'}
-                    </Badge>
-                ),
+                cell: (row) => {
+                    const planLabels: Record<string, string> = {
+                        trial: 'Dùng Thử (1 Tháng)',
+                        basic_5: 'Cơ Bản (5 Lớp)',
+                        basic_20: 'Cơ Bản (20 Lớp)',
+                        advanced_5: 'Nâng Cao (5 Lớp)',
+                        advanced_20: 'Nâng Cao (20 Lớp)',
+                    };
+                    const isAdvanced = row.subscription_plan?.startsWith('advanced');
+                    const isTrial = row.subscription_plan === 'trial';
+
+                    return (
+                        <Badge variant={isAdvanced ? 'active' : isTrial ? 'info' : 'pending'}>
+                            {planLabels[row.subscription_plan] || row.subscription_plan || 'Cơ Bản'}
+                        </Badge>
+                    );
+                },
             },
             {
                 header: 'Số Điện Thoại',

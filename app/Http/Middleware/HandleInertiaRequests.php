@@ -109,11 +109,17 @@ class HandleInertiaRequests extends Middleware
                 $expiringSoon      = $expiresAt ? (! $isExpired && $daysRemaining <= 7) : false;
                 $expiring1DayAlert = $expiresAt ? (! $isExpired && $daysRemaining <= 1) : false;
 
+                $currentPlan = $centerModel->currentPlan();
+
                 $centerData = [
                     'id'                => $centerModel->id,
                     'code'              => $centerModel->code,
                     'name'              => $centerModel->name,
                     'subscription_plan' => $centerModel->subscription_plan,
+                    'plan_type'         => $centerModel->plan_type,
+                    'allowed_features'  => $currentPlan?->allowed_features ?? [],
+                    'max_classes'       => $centerModel->max_classes,
+                    'max_students'      => $centerModel->max_students,
                     'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
                     'is_expired'        => $isExpired,
                     'expiring_soon'     => $expiringSoon,

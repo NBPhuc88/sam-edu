@@ -10,12 +10,14 @@ use Illuminate\Support\Carbon;
  * @property int                     $id
  * @property string                  $code
  * @property string                  $name
+ * @property string                  $plan_type
  * @property float                   $price
  * @property float|null              $yearly_price
  * @property int                     $duration_days
  * @property int|null                $max_students
  * @property int|null                $max_classes
  * @property array<int, string>|null $features
+ * @property array<int, string>|null $allowed_features
  * @property string|null             $badge_text
  * @property bool                    $is_featured
  * @property Carbon|null             $created_at
@@ -28,12 +30,14 @@ class SubscriptionPlan extends Model
     protected $fillable = [
         'code',
         'name',
+        'plan_type',
         'price',
         'yearly_price',
         'duration_days',
         'max_students',
         'max_classes',
         'features',
+        'allowed_features',
         'badge_text',
         'is_featured',
     ];
@@ -41,13 +45,25 @@ class SubscriptionPlan extends Model
     protected function casts(): array
     {
         return [
-            'price'         => 'float',
-            'yearly_price'  => 'float',
-            'duration_days' => 'integer',
-            'max_students'  => 'integer',
-            'max_classes'   => 'integer',
-            'features'      => 'array',
-            'is_featured'   => 'boolean',
+            'price'            => 'float',
+            'yearly_price'     => 'float',
+            'duration_days'    => 'integer',
+            'max_students'     => 'integer',
+            'max_classes'      => 'integer',
+            'features'         => 'array',
+            'allowed_features' => 'array',
+            'is_featured'      => 'boolean',
         ];
+    }
+
+    public function hasFeature(string $featureCode): bool
+    {
+        if ($this->plan_type === 'trial') {
+            return true;
+        }
+
+        $allowed = $this->allowed_features ?? [];
+
+        return in_array($featureCode, $allowed, true);
     }
 }

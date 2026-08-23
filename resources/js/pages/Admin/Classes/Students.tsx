@@ -17,6 +17,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { useCanExportCsv } from '@/hooks/usePlanFeature';
 
 interface SchoolClass {
     id: number;
@@ -65,6 +66,7 @@ export default function ClassStudentsPage({
     filters,
     isTeacher = false,
 }: Props) {
+    const canExportCsv = useCanExportCsv();
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
         .props;
     const [search, setSearch] = useState(filters.search || '');
@@ -225,15 +227,17 @@ export default function ClassStudentsPage({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <Button
-                                variant="secondary"
-                                size="md"
-                                onClick={handleExport}
-                                className="flex items-center gap-2"
-                            >
-                                <Download className="h-4.5 w-4.5 text-gray-600" />
-                                Export CSV Lớp
-                            </Button>
+                            {canExportCsv && (
+                                <Button
+                                    variant="secondary"
+                                    size="md"
+                                    onClick={handleExport}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Download className="h-4.5 w-4.5 text-gray-600" />
+                                    Export CSV Lớp
+                                </Button>
+                            )}
                             {!isTeacher && (
                                 <Button
                                     variant="success"
