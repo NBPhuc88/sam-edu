@@ -40,12 +40,12 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
 
     const faqs = [
         {
-            q: 'Gói 14 ngày dùng thử miễn phí có giới hạn tính năng không?',
-            a: 'Không, gói dùng thử 14 ngày cho phép bạn trải nghiệm đầy đủ các tính năng cơ bản của hệ thống như quản lý 3 lớp học, điểm danh, lưu trữ học sinh và theo dõi học phí.',
+            q: 'Gói 30 ngày dùng thử miễn phí có giới hạn tính năng không?',
+            a: 'Không, gói dùng thử 30 ngày cho phép bạn trải nghiệm đầy đủ các tính năng cơ bản của hệ thống như quản lý 3 lớp học, điểm danh, lưu trữ học sinh và theo dõi học phí.',
         },
         {
-            q: 'Hình thức thanh toán và gia hạn dịch vụ như thế nào?',
-            a: 'Hệ thống tích hợp thanh toán trực tiếp qua ZaloPay QR Code v2. Bạn có thể quét mã QR thanh toán nhanh và hệ thống sẽ tự động kích hoạt/gia hạn dịch vụ ngay lập tức.',
+            q: 'Hình thức đăng ký và kích hoạt dịch vụ như thế nào?',
+            a: 'Bạn có thể đăng ký dùng thử 30 ngày hoàn toàn miễn phí hoặc liên hệ ban quản trị để được hướng dẫn kích hoạt gói dịch vụ một cách nhanh chóng.',
         },
         {
             q: 'Tôi có thể nâng cấp từ gói Hàng Tháng lên gói Theo Năm được không?',
@@ -213,47 +213,6 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                 </div>
             </section>
 
-            {/* ZaloPay Banner Section */}
-            <section className="bg-slate-900 py-12 text-white">
-                <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 lg:flex-row lg:px-8">
-                    <div className="flex items-center gap-4 text-center lg:text-left">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
-                            <CreditCard className="h-7 w-7" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white sm:text-xl">
-                                Tự Động Gia Hạn Qua ZaloPay QR Code v2
-                            </h3>
-                            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                                Quét mã QR tiện lợi, xử lý giao dịch tức thì
-                                24/7 không cần chờ duyệt thủ công.
-                            </p>
-                        </div>
-                    </div>
-                    {user ? (
-                        <Link href="/dashboard">
-                            <Button
-                                variant="success"
-                                size="lg"
-                                icon={<LayoutDashboard className="h-5 w-5" />}
-                            >
-                                Gia hạn ngay
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Link href="/contact">
-                            <Button
-                                variant="success"
-                                size="lg"
-                                icon={<ArrowRight className="h-5 w-5" />}
-                            >
-                                Liên hệ tư vấn ZaloPay
-                            </Button>
-                        </Link>
-                    )}
-                </div>
-            </section>
-
             {/* Feature Comparison Table */}
             <section className="border-t border-gray-200 bg-slate-50 py-16">
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
@@ -375,147 +334,137 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                     : ''
                                                     }`}
                                             >
-                                                {plan.price > 0 ? (
-                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                                                ) : (
-                                                    <span className="text-gray-400">
-                                                        —
-                                                    </span>
-                                                )}
-                                            </td>
-                                        ))}
-                                </tr>
-                                <tr>
-                                    <td className="p-4 font-semibold text-gray-900">
-                                        Thanh toán ZaloPay QR Code v2
-                                    </td>
+                                                {plan.price > 0 < tr >
+                                                    <td className="p-4 font-semibold text-gray-900">
+                                                        Biểu đồ thống kê &amp; phân tích
+                                                    </td>
                                     {plans &&
-                                        plans.map((plan) => (
-                                            <td
-                                                key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {plan.price > 0 ? (
-                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                                                ) : (
-                                                    <span className="text-gray-400">
+                                                    plans.map((plan) => (
+                                                        <td
+                                                            key={plan.id}
+                                                            className={`p-4 text-center ${plan.is_featured
+                                                                ? 'bg-emerald-50/30'
+                                                                : ''
+                                                                }`}
+                                                        >
+                                                            <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                        </td>
+                                                    ))}
+                                            </tr>ssName = "text-gray-400" >
                                                         —
-                                                    </span>
+                                </span>
                                                 )}
-                                            </td>
+                            </td>
                                         ))}
-                                </tr>
-                                <tr>
-                                    <td className="p-4 font-semibold text-gray-900">
-                                        Biểu đồ thống kê Recharts
+                        </tr>
+                        <tr>
+                            <td className="p-4 font-semibold text-gray-900">
+                                Biểu đồ thống kê Recharts
+                            </td>
+                            {plans &&
+                                plans.map((plan) => (
+                                    <td
+                                        key={plan.id}
+                                        className={`p-4 text-center ${plan.is_featured
+                                            ? 'bg-emerald-50/30'
+                                            : ''
+                                            }`}
+                                    >
+                                        {plan.code === 'yearly' ? (
+                                            <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                        ) : (
+                                            <span className="text-gray-400">
+                                                —
+                                            </span>
+                                        )}
                                     </td>
-                                    {plans &&
-                                        plans.map((plan) => (
-                                            <td
-                                                key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {plan.code === 'yearly' ? (
-                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                                                ) : (
-                                                    <span className="text-gray-400">
-                                                        —
-                                                    </span>
-                                                )}
-                                            </td>
-                                        ))}
-                                </tr>
-                                <tr>
-                                    <td className="p-4 font-semibold text-gray-900">
-                                        Hỗ trợ kỹ thuật
+                                ))}
+                        </tr>
+                        <tr>
+                            <td className="p-4 font-semibold text-gray-900">
+                                Hỗ trợ kỹ thuật
+                            </td>
+                            {plans &&
+                                plans.map((plan) => (
+                                    <td
+                                        key={plan.id}
+                                        className={`p-4 text-center ${plan.is_featured
+                                            ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                            : 'text-gray-500'
+                                            }`}
+                                    >
+                                        {plan.price === 0
+                                            ? 'Email'
+                                            : plan.code === 'yearly'
+                                                ? 'Ưu tiên VIP 24/7'
+                                                : 'Hotline 24/7'}
                                     </td>
-                                    {plans &&
-                                        plans.map((plan) => (
-                                            <td
-                                                key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30 font-bold text-emerald-700'
-                                                    : 'text-gray-500'
-                                                    }`}
-                                            >
-                                                {plan.price === 0
-                                                    ? 'Email'
-                                                    : plan.code === 'yearly'
-                                                        ? 'Ưu tiên VIP 24/7'
-                                                        : 'Hotline 24/7'}
-                                            </td>
-                                        ))}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+                                ))}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+            </section >
 
-            {/* FAQ Section */}
-            <section className="bg-white py-16">
-                <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <div className="space-y-2 text-center">
-                        <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-                            <HelpCircle className="h-7 w-7 text-emerald-600" />
-                            Câu Hỏi Thường Gặp
-                        </h2>
-                        <p className="text-xs text-gray-500">
-                            Giải đáp những thắc mắc phổ biến về gói cước và
-                            phương thức vận hành
+    {/* FAQ Section */ }
+    < section className = "bg-white py-16" >
+        <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
+            <div className="space-y-2 text-center">
+                <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+                    <HelpCircle className="h-7 w-7 text-emerald-600" />
+                    Câu Hỏi Thường Gặp
+                </h2>
+                <p className="text-xs text-gray-500">
+                    Giải đáp những thắc mắc phổ biến về gói cước và
+                    phương thức vận hành
+                </p>
+            </div>
+
+            <div className="space-y-4">
+                {faqs.map((faq, idx) => (
+                    <Card
+                        key={idx}
+                        className="space-y-2 border-gray-200 p-5"
+                    >
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                            <Zap className="h-4 w-4 shrink-0 text-emerald-600" />
+                            {faq.q}
+                        </h3>
+                        <p className="pl-6 text-xs leading-relaxed text-gray-600">
+                            {faq.a}
                         </p>
-                    </div>
+                    </Card>
+                ))}
+            </div>
+        </div>
+            </section >
 
-                    <div className="space-y-4">
-                        {faqs.map((faq, idx) => (
-                            <Card
-                                key={idx}
-                                className="space-y-2 border-gray-200 p-5"
-                            >
-                                <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
-                                    <Zap className="h-4 w-4 shrink-0 text-emerald-600" />
-                                    {faq.q}
-                                </h3>
-                                <p className="pl-6 text-xs leading-relaxed text-gray-600">
-                                    {faq.a}
-                                </p>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Final Call to Action */}
-            <section className="bg-emerald-600 py-12 text-white">
-                <div className="mx-auto max-w-5xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
-                    <h2 className="text-2xl font-extrabold sm:text-3xl">
-                        Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
-                    </h2>
-                    <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
-                        Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc
-                        liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn
-                        lộ trình phù hợp nhất.
-                    </p>
-                    <div className="flex justify-center gap-4 pt-2">
-                        <Link href="/contact">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ShieldCheck className="h-5 w-5" />}
-                            >
-                                Đăng ký tư vấn ngay
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </section>
-        </PublicLayout>
+    {/* Final Call to Action */ }
+    < section className = "bg-emerald-600 py-12 text-white" >
+        <div className="mx-auto max-w-5xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
+            <h2 className="text-2xl font-extrabold sm:text-3xl">
+                Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
+            </h2>
+            <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
+                Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc
+                liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn
+                lộ trình phù hợp nhất.
+            </p>
+            <div className="flex justify-center gap-4 pt-2">
+                <Link href="/contact">
+                    <Button
+                        variant="secondary"
+                        size="lg"
+                        icon={<ShieldCheck className="h-5 w-5" />}
+                    >
+                        Đăng ký tư vấn ngay
+                    </Button>
+                </Link>
+            </div>
+        </div>
+            </section >
+        </PublicLayout >
     );
 };
 
