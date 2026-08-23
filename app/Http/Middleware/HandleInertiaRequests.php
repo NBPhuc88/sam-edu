@@ -83,11 +83,44 @@ class HandleInertiaRequests extends Middleware
         }
 
         $permissions = [];
+        $centerData  = null;
 
         if ($user && $role) {
             $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
             $adminRole         = $role === 'admin' ? ($user->role ?? 'admin') : null;
             $permissions       = $permissionService->getPermissionsForUser($role, $adminRole);
+
+            $centerModel = null;
+
+            if ($role === 'admin') {
+                if ($adminRole !== 'super_admin' && method_exists($user, 'centers')) {
+                    $centerModel = $user->centers()->first();
+                }
+            } elseif ($role === 'teacher' || $role === 'student') {
+                if (! empty($user->center_id)) {
+                    $centerModel = \App\Models\Center::find($user->center_id);
+                }
+            }
+
+            if ($centerModel) {
+                $expiresAt         = $centerModel->expires_at;
+                $isExpired         = $expiresAt ? $expiresAt->isPast() : false;
+                $daysRemaining     = $expiresAt ? (int) max(0, ceil(now()->diffInHours($expiresAt, false) / 24)) : 999;
+                $expiringSoon      = $expiresAt ? (! $isExpired && $daysRemaining <= 7) : false;
+                $expiring1DayAlert = $expiresAt ? (! $isExpired && $daysRemaining <= 1) : false;
+
+                $centerData = [
+                    'id'                => $centerModel->id,
+                    'code'              => $centerModel->code,
+                    'name'              => $centerModel->name,
+                    'subscription_plan' => $centerModel->subscription_plan,
+                    'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
+                    'is_expired'        => $isExpired,
+                    'expiring_soon'     => $expiringSoon,
+                    'expiring_1day'     => $expiring1DayAlert,
+                    'days_remaining'    => $daysRemaining,
+                ];
+            }
         }
 
         $routeName = $request->route()?->getName();
@@ -109,6 +142,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name'               => config('app.name'),
             'subscription_plans' => SubscriptionPlan::orderBy('price', 'asc')->get(),
+            'center'             => $centerData,
             'auth'               => [
                 'user'        => $userData,
                 'role'        => $role,

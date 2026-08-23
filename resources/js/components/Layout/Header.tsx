@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { CreditCard, LogOut, Menu, X } from 'lucide-react';
+import { Building2, CreditCard, LogOut, Menu, X } from 'lucide-react';
 import React from 'react';
 import Button from '../ui/Button';
 
@@ -13,8 +13,22 @@ interface AuthUser {
     avatar?: string | null;
 }
 
+interface CenterData {
+    id: number;
+    code: string;
+    name: string;
+    subscription_plan?: string | null;
+    expires_at?: string | null;
+    is_expired?: boolean;
+    expiring_soon?: boolean;
+    expiring_1day?: boolean;
+    days_remaining?: number;
+}
+
 interface HeaderProps {
     user: AuthUser | null;
+    role?: string | null;
+    center?: CenterData | null;
     sidebarOpen: boolean;
     onToggleSidebar: () => void;
     onOpenPayment?: () => void;
@@ -23,6 +37,8 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
     user,
+    role,
+    center,
     sidebarOpen,
     onToggleSidebar,
     onOpenPayment,
@@ -31,6 +47,12 @@ export const Header: React.FC<HeaderProps> = ({
     const handleLogout = () => {
         router.post('/logout');
     };
+
+    // Hiển thị logo và tên Trung tâm ở chính giữa header cho: Admin phụ, Giáo viên, Học sinh
+    const isSubAdmin = role === 'admin' && user?.admin_role !== 'super_admin';
+    const isTeacher = role === 'teacher';
+    const isStudent = role === 'student';
+    const showCenterBrand = (isSubAdmin || isTeacher || isStudent) && !!center?.name;
 
     return (
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 backdrop-blur-md px-4 shadow-xs">
@@ -59,6 +81,25 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                 </div>
             </div>
+
+            {/* Center — Logo của trung tâm & Tên Trung tâm */}
+            {showCenterBrand && center ? (
+                <div className="flex max-w-[45%] sm:max-w-[55%] md:max-w-[60%] items-center gap-2 sm:gap-2.5 rounded-full bg-emerald-50/80 py-1 px-2.5 sm:px-3.5 border border-emerald-200/70 shadow-2xs">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+                        <Building2 className="h-4 w-4" />
+                    </div>
+                    <div className="flex items-center overflow-hidden">
+                        <span
+                            className="truncate text-xs sm:text-sm font-bold text-gray-900"
+                            title={center.name}
+                        >
+                            {center.name}
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                <div />
+            )}
 
             {/* Right — User info + actions */}
             <div className="flex items-center gap-3">
