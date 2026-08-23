@@ -98,12 +98,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
     return (
         <>
-            <Head title={title}>
-                <link rel="shortcut icon" href="/favicon.ico?v=2" />
-                <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-                <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
-                <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
-            </Head>
+            <Head title={title} />
             <Toast
                 isOpen={toast.isOpen}
                 message={toast.message}

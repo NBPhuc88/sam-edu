@@ -77,11 +77,6 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={pageCanonical} />
 
-                {/* Favicons */}
-                <link rel="icon" href="/favicon.png" sizes="any" />
-                <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-                <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
                 {/* Open Graph Tags */}
                 <meta property="og:title" content={pageTitle} />
                 <meta property="og:description" content={pageDescription} />
