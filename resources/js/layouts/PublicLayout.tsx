@@ -267,8 +267,8 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                 <div className="flex items-center gap-2">
                                     <MapPin className="h-4 w-4 shrink-0 text-emerald-400" />
                                     <span>
-                                        Tòa nhà Sam Tower, Số 100 Phố Giáo Dục,
-                                        Q. Cầu Giấy, Hà Nội
+                                        {contactInfo?.address ||
+                                            'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Q. Cầu Giấy, Hà Nội'}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
