@@ -10,7 +10,9 @@ class StudentRepository implements StudentRepositoryInterface
     public function findByUsernameOrEmail(string $username): ?Student
     {
         /** @var Student|null $student */
-        $student = Student::where('username', $username)->orWhere('email', $username)->first();
+        $student = Student::whereRaw('BINARY username = ?', [$username])
+            ->orWhere('email', $username)
+            ->first();
 
         return $student;
     }

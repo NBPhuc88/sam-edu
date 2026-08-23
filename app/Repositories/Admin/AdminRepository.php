@@ -10,7 +10,9 @@ class AdminRepository implements AdminRepositoryInterface
     public function findByUsernameOrEmail(string $username): ?Admin
     {
         /** @var Admin|null $admin */
-        $admin = Admin::where('username', $username)->orWhere('email', $username)->first();
+        $admin = Admin::whereRaw('BINARY username = ?', [$username])
+            ->orWhere('email', $username)
+            ->first();
 
         return $admin;
     }
