@@ -35,7 +35,7 @@ class AdminController extends Controller
         $search   = (string) $request->input('search', '');
         $role     = (string) $request->input('role', '');
         $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
-        $admins   = $this->adminService->getPaginatedAdmins($perPage, $search ?: null, $role ?: null);
+        $admins   = $this->adminService->getPaginatedAdmins($perPage, $search ?: null, $role ?: 'admin');
         $formData = $this->adminService->getFormData();
 
         return Inertia::render('Admin/Admins/Index', [
