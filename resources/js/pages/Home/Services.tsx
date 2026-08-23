@@ -1,10 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     Check,
-    CreditCard,
     HelpCircle,
-    LayoutDashboard,
     ShieldCheck,
     Sparkles,
     Tag,
@@ -28,6 +25,7 @@ interface Plan {
     features: string[] | null;
     badge_text: string | null;
     is_featured: boolean;
+    plan_type?: string | null;
 }
 
 interface ServicesProps {
@@ -37,6 +35,13 @@ interface ServicesProps {
 export const Services: React.FC<ServicesProps> = ({ plans }) => {
     const { auth } = usePage().props as any;
     const user = auth?.user;
+
+    const isAdvancedOrTrial = (plan: Plan) => {
+        if (plan.plan_type) {
+            return plan.plan_type === 'advanced' || plan.plan_type === 'trial';
+        }
+        return plan.code?.startsWith('advanced') || plan.code === 'trial';
+    };
 
     const faqs = [
         {
@@ -202,7 +207,7 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                                 icon={<Sparkles className="h-4 w-4" />}
                                             >
                                                 {plan.price === 0
-                                                    ? 'Đăng ký dùng thử 14 ngày'
+                                                    ? 'Đăng ký dùng thử 30 ngày'
                                                     : 'Đăng ký gói này'}
                                             </Button>
                                         </Link>
@@ -262,60 +267,52 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-gray-700">
-                                <tr>
-                                    <td className="p-4 font-semibold text-gray-900">
-                                        Quản lý trung tâm
+                                {/* Category 1: Vận Hành & Học Vụ */}
+                                <tr className="bg-slate-100/75">
+                                    <td
+                                        colSpan={(plans?.length || 0) + 1}
+                                        className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-700"
+                                    >
+                                        1. Vận Hành &amp; Học Vụ Trung Tâm
                                     </td>
-                                    {plans &&
-                                        plans.map((plan) => (
-                                            <td
-                                                key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30 font-bold text-emerald-700'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {plan.code === 'yearly'
-                                                    ? 'Đa trung tâm'
-                                                    : '1 Trung tâm'}
-                                            </td>
-                                        ))}
                                 </tr>
                                 <tr>
                                     <td className="p-4 font-semibold text-gray-900">
-                                        Giới hạn Học sinh &amp; Lớp học
+                                        Giới hạn Lớp học &amp; Học sinh
                                     </td>
                                     {plans &&
                                         plans.map((plan) => (
                                             <td
                                                 key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30 font-bold text-emerald-700'
-                                                    : ''
-                                                    }`}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                                        : 'font-medium'
+                                                }`}
                                             >
-                                                {plan.max_students
-                                                    ? `${plan.max_students} HS`
-                                                    : 'Không GH'}{' '}
-                                                /{' '}
                                                 {plan.max_classes
                                                     ? `${plan.max_classes} Lớp`
+                                                    : 'Không GH'}{' '}
+                                                /{' '}
+                                                {plan.max_students
+                                                    ? `${plan.max_students} HS`
                                                     : 'Không GH'}
                                             </td>
                                         ))}
                                 </tr>
                                 <tr>
                                     <td className="p-4 font-semibold text-gray-900">
-                                        Điểm danh &amp; Hồ sơ học sinh
+                                        Quản lý Giáo viên, Môn học &amp; Phòng học
                                     </td>
                                     {plans &&
                                         plans.map((plan) => (
                                             <td
                                                 key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30'
-                                                    : ''
-                                                    }`}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
                                             >
                                                 <Check className="mx-auto h-4 w-4 text-emerald-600" />
                                             </td>
@@ -323,148 +320,353 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
                                 </tr>
                                 <tr>
                                     <td className="p-4 font-semibold text-gray-900">
-                                        Nhóm Chat Lớp Trực Tuyến
+                                        Hồ sơ Học sinh &amp; Điểm danh ca học
                                     </td>
                                     {plans &&
                                         plans.map((plan) => (
                                             <td
                                                 key={plan.id}
-                                                className={`p-4 text-center ${plan.is_featured
-                                                    ? 'bg-emerald-50/30'
-                                                    : ''
-                                                    }`}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
                                             >
-                                                {plan.price > 0 < tr >
-                                                    <td className="p-4 font-semibold text-gray-900">
-                                                        Biểu đồ thống kê &amp; phân tích
-                                                    </td>
-                                    {plans &&
-                                                    plans.map((plan) => (
-                                                        <td
-                                                            key={plan.id}
-                                                            className={`p-4 text-center ${plan.is_featured
-                                                                ? 'bg-emerald-50/30'
-                                                                : ''
-                                                                }`}
-                                                        >
-                                                            <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                                                        </td>
-                                                    ))}
-                                            </tr>ssName = "text-gray-400" >
-                                                        —
-                                </span>
-                                                )}
-                            </td>
+                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                            </td>
                                         ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 font-semibold text-gray-900">
-                                Biểu đồ thống kê Recharts
-                            </td>
-                            {plans &&
-                                plans.map((plan) => (
-                                    <td
-                                        key={plan.id}
-                                        className={`p-4 text-center ${plan.is_featured
-                                            ? 'bg-emerald-50/30'
-                                            : ''
-                                            }`}
-                                    >
-                                        {plan.code === 'yearly' ? (
-                                            <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                                        ) : (
-                                            <span className="text-gray-400">
-                                                —
-                                            </span>
-                                        )}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Thời khóa biểu thông minh &amp; Đổi ca bù
                                     </td>
-                                ))}
-                        </tr>
-                        <tr>
-                            <td className="p-4 font-semibold text-gray-900">
-                                Hỗ trợ kỹ thuật
-                            </td>
-                            {plans &&
-                                plans.map((plan) => (
-                                    <td
-                                        key={plan.id}
-                                        className={`p-4 text-center ${plan.is_featured
-                                            ? 'bg-emerald-50/30 font-bold text-emerald-700'
-                                            : 'text-gray-500'
-                                            }`}
-                                    >
-                                        {plan.price === 0
-                                            ? 'Email'
-                                            : plan.code === 'yearly'
-                                                ? 'Ưu tiên VIP 24/7'
-                                                : 'Hotline 24/7'}
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Quản lý Học phí &amp; Các đợt đóng tiền
                                     </td>
-                                ))}
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-            </section >
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                            </td>
+                                        ))}
+                                </tr>
 
-    {/* FAQ Section */ }
-    < section className = "bg-white py-16" >
-        <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
-            <div className="space-y-2 text-center">
-                <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-                    <HelpCircle className="h-7 w-7 text-emerald-600" />
-                    Câu Hỏi Thường Gặp
-                </h2>
-                <p className="text-xs text-gray-500">
-                    Giải đáp những thắc mắc phổ biến về gói cước và
-                    phương thức vận hành
-                </p>
-            </div>
+                                {/* Category 2: Quản Lý Khảo Thí & Bài Thi Trực Tuyến */}
+                                <tr className="bg-slate-100/75">
+                                    <td
+                                        colSpan={(plans?.length || 0) + 1}
+                                        className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-700"
+                                    >
+                                        2. Quản Lý Đề Thi &amp; Bài Thi Trực Tuyến (Gói Nâng Cao &amp; Dùng Thử)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Soạn thảo đề thi 9 dạng câu hỏi tương tác
+                                        <div className="mt-0.5 text-[11px] font-normal text-gray-500">
+                                            Trắc nghiệm, Điền từ, Ghép nối, Ghép hình, Sắp xếp, Tự luận...
+                                        </div>
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Phòng thi trực tuyến &amp; Tự động lưu câu trả lời
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Chấm điểm tự động &amp; Chấm bài tự luận
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Thi thử, luyện tập cá nhân &amp; Lời giải chi tiết
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Xem lại bài làm, giải thích đáp án &amp; Phiếu điểm cá nhân
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Thống kê kết quả thi, phổ điểm &amp; Bảng xếp hạng lớp
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
 
-            <div className="space-y-4">
-                {faqs.map((faq, idx) => (
-                    <Card
-                        key={idx}
-                        className="space-y-2 border-gray-200 p-5"
-                    >
-                        <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
-                            <Zap className="h-4 w-4 shrink-0 text-emerald-600" />
-                            {faq.q}
-                        </h3>
-                        <p className="pl-6 text-xs leading-relaxed text-gray-600">
-                            {faq.a}
+                                {/* Category 3: Tương Tác, Tiện Ích & Bảo Mật */}
+                                <tr className="bg-slate-100/75">
+                                    <td
+                                        colSpan={(plans?.length || 0) + 1}
+                                        className="px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-700"
+                                    >
+                                        3. Tương Tác, Tiện Ích &amp; Bảo Mật
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Nhóm Chat Lớp Học Trực Tuyến
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Xuất danh sách Học sinh, Giáo viên (Excel / CSV)
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                {isAdvancedOrTrial(plan) ? (
+                                                    <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                                ) : (
+                                                    <span className="text-gray-400 font-semibold">—</span>
+                                                )}
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Bảo mật đăng nhập 1 thiết bị &amp; Phân quyền quản trị
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <Check className="mx-auto h-4 w-4 text-emerald-600" />
+                                            </td>
+                                        ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-4 font-semibold text-gray-900">
+                                        Kênh hỗ trợ kỹ thuật
+                                    </td>
+                                    {plans &&
+                                        plans.map((plan) => (
+                                            <td
+                                                key={plan.id}
+                                                className={`p-4 text-center ${
+                                                    plan.is_featured
+                                                        ? 'bg-emerald-50/30 font-bold text-emerald-700'
+                                                        : 'text-gray-500'
+                                                }`}
+                                            >
+                                                {plan.price === 0
+                                                    ? 'Email'
+                                                    : 'Hotline 24/7'}
+                                            </td>
+                                        ))}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section className="bg-white py-16">
+                <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    <div className="space-y-2 text-center">
+                        <h2 className="flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+                            <HelpCircle className="h-7 w-7 text-emerald-600" />
+                            Câu Hỏi Thường Gặp
+                        </h2>
+                        <p className="text-xs text-gray-500">
+                            Giải đáp những thắc mắc phổ biến về gói cước và phương thức vận hành
                         </p>
-                    </Card>
-                ))}
-            </div>
-        </div>
-            </section >
+                    </div>
 
-    {/* Final Call to Action */ }
-    < section className = "bg-emerald-600 py-12 text-white" >
-        <div className="mx-auto max-w-5xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-extrabold sm:text-3xl">
-                Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
-            </h2>
-            <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
-                Bắt đầu trải nghiệm ngay 14 ngày dùng thử miễn phí hoặc
-                liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn
-                lộ trình phù hợp nhất.
-            </p>
-            <div className="flex justify-center gap-4 pt-2">
-                <Link href="/contact">
-                    <Button
-                        variant="secondary"
-                        size="lg"
-                        icon={<ShieldCheck className="h-5 w-5" />}
-                    >
-                        Đăng ký tư vấn ngay
-                    </Button>
-                </Link>
-            </div>
-        </div>
-            </section >
-        </PublicLayout >
+                    <div className="space-y-4">
+                        {faqs.map((faq, idx) => (
+                            <Card key={idx} className="space-y-2 border-gray-200 p-5">
+                                <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                                    <Zap className="h-4 w-4 shrink-0 text-emerald-600" />
+                                    {faq.q}
+                                </h3>
+                                <p className="pl-6 text-xs leading-relaxed text-gray-600">
+                                    {faq.a}
+                                </p>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Final Call to Action */}
+            <section className="bg-emerald-600 py-12 text-white">
+                <div className="mx-auto max-w-5xl space-y-4 px-4 text-center sm:px-6 lg:px-8">
+                    <h2 className="text-2xl font-extrabold sm:text-3xl">
+                        Sẵn Sàng Tối Ưu Hóa Quản Lý Trung Tâm Của Bạn?
+                    </h2>
+                    <p className="mx-auto max-w-xl text-xs text-emerald-100 sm:text-sm">
+                        Bắt đầu trải nghiệm ngay 30 ngày dùng thử miễn phí hoặc liên hệ đội ngũ chuyên gia của chúng tôi để được tư vấn lộ trình phù hợp nhất.
+                    </p>
+                    <div className="flex justify-center gap-4 pt-2">
+                        <Link href="/contact">
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                icon={<ShieldCheck className="h-5 w-5" />}
+                            >
+                                Đăng ký tư vấn ngay
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        </PublicLayout>
     );
 };
 
