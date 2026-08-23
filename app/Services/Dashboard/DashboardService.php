@@ -312,16 +312,16 @@ class DashboardService implements DashboardServiceInterface
                 'room:id,name',
             ])
             ->where(function ($q) use ($teacherId) {
-                $q->where('teacher_id', $teacherId)
-                    ->orWhereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+                $q->where('class_sessions.teacher_id', $teacherId)
+                    ->orWhere(function ($fallbackQ) use ($teacherId) {
+                        $fallbackQ->whereNull('class_sessions.teacher_id')
+                            ->whereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+                    });
             })
             ->whereBetween('session_date', [$gridStart->toDateString(), $gridEnd->toDateString()])
             ->orderBy('session_date')
             ->orderBy('start_time')
             ->get();
-
-        // Lấy lịch định kỳ để dự phòng nếu ngày đó chưa sinh ca
-        $recurringSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
 
         $days       = [];
         $currentDay = $gridStart->copy();
@@ -372,30 +372,6 @@ class DashboardService implements DashboardServiceInterface
                         'subject_name' => $sess->classSubject?->subject?->name ?? 'Môn học',
                         'room_name'    => $sess->room?->name ?? 'Phòng học',
                         'status'       => $sess->status ?? 'scheduled',
-                        'is_today'     => $isToday,
-                    ];
-                }
-            } elseif ($isCurrentMonth) {
-                // Lấy recurring schedule nếu là ngày trong tháng
-                $dayRecurring = $recurringSchedules->where('weekday', $isoWeekday)->values();
-
-                foreach ($dayRecurring as $sched) {
-                    $startTimeStr = $sched->start_time ? substr($sched->start_time, 0, 5) : '08:00';
-                    $endTimeStr   = $sched->end_time ? substr($sched->end_time, 0, 5) : '09:30';
-
-                    $mapped[] = [
-                        'id'           => $sched->id,
-                        'session_id'   => null,
-                        'session_date' => $dayDateStr,
-                        'start_time'   => $startTimeStr,
-                        'end_time'     => $endTimeStr,
-                        'time'         => "{$startTimeStr} - {$endTimeStr}",
-                        'class_id'     => $sched->classSubject?->schoolClass?->id,
-                        'class_name'   => $sched->classSubject?->schoolClass?->name ?? 'Lớp học',
-                        'class_code'   => $sched->classSubject?->schoolClass?->code,
-                        'subject_name' => $sched->classSubject?->subject?->name ?? 'Môn học',
-                        'room_name'    => $sched->room?->name ?? 'Phòng học',
-                        'status'       => 'scheduled',
                         'is_today'     => $isToday,
                     ];
                 }
@@ -452,16 +428,16 @@ class DashboardService implements DashboardServiceInterface
                 'room:id,name',
             ])
             ->where(function ($q) use ($teacherId) {
-                $q->where('teacher_id', $teacherId)
-                    ->orWhereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+                $q->where('class_sessions.teacher_id', $teacherId)
+                    ->orWhere(function ($fallbackQ) use ($teacherId) {
+                        $fallbackQ->whereNull('class_sessions.teacher_id')
+                            ->whereHas('classSubject', fn ($cq) => $cq->where('teacher_id', $teacherId));
+                    });
             })
             ->whereBetween('session_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
             ->orderBy('session_date')
             ->orderBy('start_time')
             ->get();
-
-        // Lấy thêm lịch học định kỳ nếu chưa có sessions
-        $recurringSchedules = $this->classScheduleRepository->getTeacherSchedules($teacherId);
 
         $result = [];
 
@@ -500,30 +476,6 @@ class DashboardService implements DashboardServiceInterface
                         'subject_name' => $sess->classSubject?->subject?->name ?? 'Môn học',
                         'room_name'    => $sess->room?->name ?? 'Phòng học',
                         'status'       => $sess->status ?? 'scheduled',
-                        'is_today'     => $isToday,
-                    ];
-                }
-            } else {
-                // Fallback to recurring schedule for this weekday
-                $dayRecurring = $recurringSchedules->where('weekday', $dayCode)->values();
-
-                foreach ($dayRecurring as $sched) {
-                    $startTimeStr = $sched->start_time ? substr($sched->start_time, 0, 5) : '08:00';
-                    $endTimeStr   = $sched->end_time ? substr($sched->end_time, 0, 5) : '09:30';
-
-                    $mapped[] = [
-                        'id'           => $sched->id,
-                        'session_id'   => null,
-                        'session_date' => $dayDate,
-                        'start_time'   => $startTimeStr,
-                        'end_time'     => $endTimeStr,
-                        'time'         => "{$startTimeStr} - {$endTimeStr}",
-                        'class_id'     => $sched->classSubject?->schoolClass?->id,
-                        'class_name'   => $sched->classSubject?->schoolClass?->name ?? 'Lớp học',
-                        'class_code'   => $sched->classSubject?->schoolClass?->code,
-                        'subject_name' => $sched->classSubject?->subject?->name ?? 'Môn học',
-                        'room_name'    => $sched->room?->name ?? 'Phòng học',
-                        'status'       => 'scheduled',
                         'is_today'     => $isToday,
                     ];
                 }
