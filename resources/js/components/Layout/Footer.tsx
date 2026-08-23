@@ -1,9 +1,14 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Headphones, ExternalLink } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+    const { contactInfo } = usePage().props as any;
     const currentYear = new Date().getFullYear();
+
+    const companyName = contactInfo?.company_name || 'Hệ thống Quản lý Giáo dục Sam';
+    const phone = contactInfo?.phone || '0988.123.456';
+    const email = contactInfo?.email || 'phucstt01@gmail.com';
 
     return (
         <footer className="mt-auto border-t border-gray-200 bg-white px-4 py-4 text-xs text-gray-500 sm:px-6">
@@ -11,7 +16,7 @@ export const Footer: React.FC = () => {
                 {/* Left: System Info & Copyright */}
                 <div className="flex flex-wrap items-center justify-center gap-2 text-center sm:justify-start sm:text-left">
                     <span className="font-semibold text-gray-800">
-                        Hệ thống Quản lý Giáo dục Sam
+                        {companyName}
                     </span>
                     <span className="hidden text-gray-300 sm:inline">•</span>
                     <span>© {currentYear} Sam Edu. Bảo lưu mọi quyền.</span>
@@ -24,18 +29,18 @@ export const Footer: React.FC = () => {
                 {/* Right: Quick Support & External Links */}
                 <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end">
                     <a
-                        href="tel:0988123456"
+                        href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
                         className="inline-flex items-center gap-1 text-gray-600 transition-colors hover:text-emerald-700"
                         title="Hotline hỗ trợ kỹ thuật"
                     >
                         <Headphones className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>Hotline: 0988.123.456</span>
+                        <span>Hotline: {phone}</span>
                     </a>
 
                     <span className="hidden text-gray-300 sm:inline">•</span>
 
                     <a
-                        href="mailto:phucstt01@gmail.com"
+                        href={`mailto:${email}`}
                         className="text-gray-600 transition-colors hover:text-emerald-700"
                         title="Email hỗ trợ"
                     >

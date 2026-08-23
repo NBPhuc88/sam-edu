@@ -276,15 +276,21 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Phone className="h-4 w-4 shrink-0 text-emerald-400" />
-                                    <span>Hotline: 0988.123.456</span>
+                                    <a
+                                        href={`tel:${(contactInfo?.phone || '0988.123.456').replace(/[^0-9+]/g, '')}`}
+                                        className="transition-colors hover:text-emerald-400"
+                                    >
+                                        Hotline: {contactInfo?.phone || '0988.123.456'}
+                                    </a>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 shrink-0 text-emerald-400" />
-                                    <span>
-                                        Email:{' '}
-                                        {contactInfo?.email ||
-                                            'phucstt01@gmail.com'}
-                                    </span>
+                                    <a
+                                        href={`mailto:${contactInfo?.email || 'phucstt01@gmail.com'}`}
+                                        className="transition-colors hover:text-emerald-400"
+                                    >
+                                        Email: {contactInfo?.email || 'phucstt01@gmail.com'}
+                                    </a>
                                 </div>
                             </div>
                         </div>
