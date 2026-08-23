@@ -682,6 +682,8 @@ class TestCenterSeeder extends Seeder
                 'class_id'   => $schoolClass->id,
                 'subject_id' => $subject->id,
                 'teacher_id' => $teacher->id,
+                'start_date' => $startDate->toDateString(),
+                'end_date'   => $endDate->toDateString(),
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);

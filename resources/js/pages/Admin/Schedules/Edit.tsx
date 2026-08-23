@@ -84,6 +84,8 @@ interface ClassSchedule {
             id: number;
             name: string;
             code: string;
+            start_date?: string | null;
+            end_date?: string | null;
             center_id: number;
             center?: Center;
         };
@@ -366,7 +368,7 @@ export default function ScheduleEdit({
         schedule.room_id ? String(schedule.room_id) : '',
     );
     const [startDate, setStartDate] = useState<string>(
-        classSubject?.start_date ? String(classSubject.start_date).slice(0, 10) : ''
+        toISODateString(classSubject?.start_date || classSubject?.school_class?.start_date)
     );
     const [status] = useState<string>(schedule.status || 'active');
 

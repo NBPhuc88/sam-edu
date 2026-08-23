@@ -45,7 +45,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                     $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
                       ->withCount('classSessions');
                 },
-                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date',
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
@@ -135,7 +135,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                     $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
                       ->withCount('classSessions');
                 },
-                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date',
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
@@ -238,7 +238,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             )
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
-                'classSubject.schoolClass:id,name,code',
+                'classSubject.schoolClass:id,name,code,start_date,end_date',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])
@@ -266,7 +266,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             )
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
-                'classSubject.schoolClass:id,name,code',
+                'classSubject.schoolClass:id,name,code,start_date,end_date',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])

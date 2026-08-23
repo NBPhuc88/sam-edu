@@ -19,6 +19,7 @@ import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
+import { formatDate } from '@/lib/date';
 interface Center {
     id: number;
     name: string;
@@ -72,12 +73,14 @@ interface ClassSchedule {
     room?: Room;
     class_subject?: {
         id: number;
-        start_date?: string;
+        start_date?: string | null;
         end_date?: string | null;
         school_class?: {
             id: number;
             name: string;
             code: string;
+            start_date?: string | null;
+            end_date?: string | null;
             center?: Center;
         };
         subject?: {
@@ -457,8 +460,10 @@ export default function ScheduleIndex({
                                             </td>
 
                                             <td className="px-6 py-4 text-xs text-gray-600 font-mono">
-                                                <div>Từ: {sch.class_subject?.start_date || 'N/A'}</div>
-                                                {sch.class_subject?.end_date && <div>Đến: {sch.class_subject.end_date}</div>}
+                                                <div>Từ: {(sch.class_subject?.start_date || sch.class_subject?.school_class?.start_date) ? formatDate(sch.class_subject?.start_date || sch.class_subject?.school_class?.start_date) : 'N/A'}</div>
+                                                {(sch.class_subject?.end_date || sch.class_subject?.school_class?.end_date) && (
+                                                    <div>Đến: {formatDate(sch.class_subject?.end_date || sch.class_subject?.school_class?.end_date)}</div>
+                                                )}
                                             </td>
 
                                             <td className="px-6 py-4">
