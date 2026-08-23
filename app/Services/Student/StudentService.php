@@ -243,6 +243,9 @@ class StudentService implements StudentServiceInterface
         $rawPassword = ! empty($data['password']) ? (string) $data['password'] : null;
         $password    = $rawPassword ? Hash::make($rawPassword) : null;
 
+        $dateOfBirth   = $this->parseDate($data['date_of_birth'] ?? null);
+        $admissionDate = $this->parseDate($data['admission_date'] ?? null);
+
         $student = $this->studentRepository->create([
             'username'            => ! empty($data['username']) ? trim($data['username']) : null,
             'email'               => ! empty($data['email']) ? trim($data['email']) : null,
@@ -254,14 +257,14 @@ class StudentService implements StudentServiceInterface
             'last_name'           => $data['last_name'] ?? $lastName,
             'full_name'           => $fullName,
             'phone'               => $data['phone'] ?? null,
-            'date_of_birth'       => $data['date_of_birth'] ?? null,
+            'date_of_birth'       => $dateOfBirth,
             'gender'              => $data['gender'] ?? null,
             'address'             => $data['address'] ?? null,
             'avatar'              => $data['avatar'] ?? null,
             'parent_name'         => $data['parent_name'] ?? null,
             'parent_phone'        => $data['parent_phone'] ?? null,
             'parent_relationship' => $data['parent_relationship'] ?? null,
-            'admission_date'      => $data['admission_date'] ?? null,
+            'admission_date'      => $admissionDate,
             'note'                => $data['note'] ?? null,
         ]);
 
@@ -302,7 +305,8 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $newStatus = $student->status;
+        $currentStatusInt = is_object($student->status) ? $student->status->value : (int) $student->status;
+        $newStatus        = $currentStatusInt;
 
         if (isset($data['status'])) {
             if (is_numeric($data['status'])) {
@@ -316,8 +320,7 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $currentStatusInt = is_object($student->status) ? $student->status->value : (int) $student->status;
-        $centerId         = (int) ($data['center_id'] ?? $student->center_id);
+        $centerId = (int) ($data['center_id'] ?? $student->center_id);
 
         if ($currentStatusInt !== 1 && $newStatus === 1) {
             $center = $this->centerRepository->find($centerId);
@@ -334,6 +337,14 @@ class StudentService implements StudentServiceInterface
             }
         }
 
+        $dateOfBirth = array_key_exists('date_of_birth', $data)
+            ? $this->parseDate($data['date_of_birth'])
+            : $student->getRawOriginal('date_of_birth');
+
+        $admissionDate = array_key_exists('admission_date', $data)
+            ? $this->parseDate($data['admission_date'])
+            : $student->getRawOriginal('admission_date');
+
         $updateData = [
             'center_id'           => $data['center_id'] ?? $student->center_id,
             'username'            => array_key_exists('username', $data) ? (! empty($data['username']) ? trim($data['username']) : null) : $student->username,
@@ -341,13 +352,13 @@ class StudentService implements StudentServiceInterface
             'status'              => $newStatus,
             'student_code'        => isset($data['student_code']) ? trim($data['student_code']) : $student->student_code,
             'phone'               => array_key_exists('phone', $data) ? $data['phone'] : $student->phone,
-            'date_of_birth'       => array_key_exists('date_of_birth', $data) ? $data['date_of_birth'] : $student->date_of_birth,
+            'date_of_birth'       => $dateOfBirth,
             'gender'              => array_key_exists('gender', $data) ? $data['gender'] : $student->gender,
             'address'             => array_key_exists('address', $data) ? $data['address'] : $student->address,
             'parent_name'         => array_key_exists('parent_name', $data) ? $data['parent_name'] : $student->parent_name,
             'parent_phone'        => array_key_exists('parent_phone', $data) ? $data['parent_phone'] : $student->parent_phone,
             'parent_relationship' => array_key_exists('parent_relationship', $data) ? $data['parent_relationship'] : $student->parent_relationship,
-            'admission_date'      => array_key_exists('admission_date', $data) ? $data['admission_date'] : $student->admission_date,
+            'admission_date'      => $admissionDate,
             'note'                => array_key_exists('note', $data) ? $data['note'] : $student->note,
         ];
 
@@ -372,6 +383,27 @@ class StudentService implements StudentServiceInterface
         }
 
         return $this->studentRepository->update($id, $updateData);
+    }
+
+    /**
+     * Chuẩn hóa ngày tháng về định dạng Y-m-d cho MySQL.
+     * @param mixed $value
+     */
+    protected function parseDate(mixed $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        try {
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

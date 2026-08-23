@@ -12,6 +12,15 @@ class UpdateStudentRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('center_id') && $this->input('center_id') !== null && $this->input('center_id') !== '') {
+            $this->merge([
+                'center_id' => (int) $this->input('center_id'),
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -41,19 +50,21 @@ class UpdateStudentRequest extends FormRequest
                 'string',
                 'max:50',
                 Rule::unique('students', 'student_code')
-                    ->where(function ($query) {
-                        return $query->where('center_id', $this->input('center_id'));
+                    ->where(function ($query) use ($studentId) {
+                        $centerId = $this->input('center_id') ?? \App\Models\Student::where('id', $studentId)->value('center_id');
+
+                        return $query->where('center_id', $centerId);
                     })
                     ->ignore($studentId),
             ],
-            'date_of_birth'       => ['nullable', 'date'],
+            'date_of_birth'       => ['nullable'],
             'gender'              => ['nullable', 'string', 'in:male,female,other'],
             'address'             => ['nullable', 'string'],
             'parent_name'         => ['nullable', 'string', 'max:255'],
             'parent_phone'        => ['nullable', 'string', 'max:30'],
             'parent_relationship' => ['nullable', 'string', 'max:50'],
-            'admission_date'      => ['nullable', 'date'],
-            'status'              => ['sometimes', 'required', 'string', 'in:active,inactive,locked,graduated,suspended'],
+            'admission_date'      => ['nullable'],
+            'status'              => ['sometimes', 'required'],
             'note'                => ['nullable', 'string'],
         ];
     }

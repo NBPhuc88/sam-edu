@@ -159,22 +159,6 @@ class StudentRepository implements StudentRepositoryInterface
     public function find(int $id, ?array $allowedCenterIds = null): ?Student
     {
         $query = Student::query()
-            ->select(
-                'id',
-                'student_code',
-                'full_name',
-                'username',
-                'email',
-                'phone',
-                'gender',
-                'date_of_birth',
-                'address',
-                'parent_name',
-                'parent_phone',
-                'parent_relationship',
-                'status',
-                'center_id'
-            )
             ->with('center:id,name,code');
 
         if ($allowedCenterIds !== null) {

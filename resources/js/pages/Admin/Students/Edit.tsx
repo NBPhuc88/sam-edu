@@ -56,8 +56,17 @@ export default function StudentEdit({ student, centers = [], errors = {} }: Edit
     const [parentName, setParentName] = useState<string>(student.parent_name || '');
     const [parentPhone, setParentPhone] = useState<string>(student.parent_phone || '');
     const [parentRelationship, setParentRelationship] = useState<string>(student.parent_relationship || 'Bố/Mẹ');
+    const normalizeStatus = (val: any) => {
+        if (val === 1 || val === '1' || val === 'active') return 'active';
+        if (val === 0 || val === '0' || val === 'inactive' || val === 'paused') return 'inactive';
+        if (val === 2 || val === '2' || val === 'graduated' || val === 'completed') return 'graduated';
+        if (val === 'suspended') return 'suspended';
+        if (val === 'locked') return 'locked';
+        return 'active';
+    };
+
     const [admissionDate, setAdmissionDate] = useState<string>(student.admission_date || '');
-    const [status, setStatus] = useState<string>(student.status || 'active');
+    const [status, setStatus] = useState<string>(() => normalizeStatus(student.status));
     const [note, setNote] = useState<string>(student.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
