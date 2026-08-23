@@ -112,9 +112,26 @@ class CenterRepository implements CenterRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $center = $this->find($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $center = $this->find($id);
 
-        return (bool) $center->delete();
+            // 1. Soft delete tất cả lớp học thuộc trung tâm
+            $classIds = \App\Models\SchoolClass::where('center_id', $id)->pluck('id')->toArray();
+
+            foreach ($classIds as $classId) {
+                app(\App\Repositories\Class\SchoolClassRepositoryInterface::class)->delete($classId);
+            }
+
+            // 2. Soft delete giáo viên, học sinh, môn học, phòng học, đề thi, học phí
+            \App\Models\Teacher::where('center_id', $id)->delete();
+            \App\Models\Student::where('center_id', $id)->delete();
+            \App\Models\Subject::where('center_id', $id)->delete();
+            \App\Models\Room::where('center_id', $id)->delete();
+            \App\Models\Exam::where('center_id', $id)->delete();
+            \App\Models\StudentTuition::where('center_id', $id)->delete();
+
+            return (bool) $center->delete();
+        });
     }
 
     public function count(): int

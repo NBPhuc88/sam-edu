@@ -199,9 +199,23 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $student = Student::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $student = Student::findOrFail($id);
 
-        return (bool) $student->delete();
+            // Gỡ khỏi các lớp
+            \App\Models\ClassStudent::where('student_id', $id)->delete();
+
+            // Xóa điểm danh
+            \Illuminate\Support\Facades\DB::table('attendances')->where('student_id', $id)->delete();
+
+            // Xóa bài nộp thi
+            \App\Models\ClassExamSubmission::where('student_id', $id)->delete();
+
+            // Xóa học phí
+            \App\Models\StudentTuition::where('student_id', $id)->delete();
+
+            return (bool) $student->delete();
+        });
     }
 
     public function count(): int

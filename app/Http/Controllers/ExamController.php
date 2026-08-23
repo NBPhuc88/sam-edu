@@ -6,6 +6,7 @@ use App\Http\Requests\Exam\FilterExamRequest;
 use App\Http\Requests\Exam\StoreExamRequest;
 use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Models\Admin;
+use App\Models\Teacher;
 use App\Services\Exam\ExamServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -19,17 +20,24 @@ class ExamController extends Controller
     ) {
     }
 
-    protected function getAuthAdmin(): ?Admin
+    protected function getAuthUser(): Admin|Teacher|null
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
 
-        return $admin;
+        if ($admin) {
+            return $admin;
+        }
+
+        /** @var Teacher|null $teacher */
+        $teacher = Auth::guard('teacher')->user();
+
+        return $teacher;
     }
 
     public function index(FilterExamRequest $request): InertiaResponse
     {
-        $admin      = $this->getAuthAdmin();
+        $user       = $this->getAuthUser();
         $search     = $request->input('search');
         $centerId   = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId    = $request->input('class_id') ? (int) $request->input('class_id') : null;
@@ -48,10 +56,10 @@ class ExamController extends Controller
             is_string($status) ? $status : null,
             $perPage,
             $page,
-            $admin
+            $user
         );
-        $formData = $this->examService->getFormData($admin);
-        $stats    = $this->examService->getStats($admin);
+        $formData = $this->examService->getFormData($user);
+        $stats    = $this->examService->getStats($user);
 
         return Inertia::render('Admin/Exams/Index', [
             'exams'      => $exams,
@@ -75,8 +83,8 @@ class ExamController extends Controller
 
     public function create(): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
-        $formData = $this->examService->getFormData($admin);
+        $user     = $this->getAuthUser();
+        $formData = $this->examService->getFormData($user);
 
         return Inertia::render('Admin/Exams/Create', [
             'centers'    => $formData['centers'],
@@ -88,8 +96,8 @@ class ExamController extends Controller
 
     public function store(StoreExamRequest $request): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
-        $exam  = $this->examService->createExam($request->validated(), $admin);
+        $user = $this->getAuthUser();
+        $exam = $this->examService->createExam($request->validated(), $user);
 
         return redirect()->route('exams.index')
             ->with('success', "Tạo bài kiểm tra '{$exam->name}' thành công!");
@@ -97,9 +105,9 @@ class ExamController extends Controller
 
     public function edit(int $id): InertiaResponse
     {
-        $admin    = $this->getAuthAdmin();
-        $exam     = $this->examService->findExam($id, $admin);
-        $formData = $this->examService->getFormData($admin);
+        $user     = $this->getAuthUser();
+        $exam     = $this->examService->findExam($id, $user);
+        $formData = $this->examService->getFormData($user);
 
         return Inertia::render('Admin/Exams/Edit', [
             'exam'       => $exam,
@@ -112,8 +120,8 @@ class ExamController extends Controller
 
     public function update(UpdateExamRequest $request, int $id): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
-        $exam  = $this->examService->updateExam($id, $request->validated(), $admin);
+        $user = $this->getAuthUser();
+        $exam = $this->examService->updateExam($id, $request->validated(), $user);
 
         return redirect()->route('exams.index')
             ->with('success', "Cập nhật bài kiểm tra '{$exam->name}' thành công!");
@@ -121,8 +129,8 @@ class ExamController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $admin = $this->getAuthAdmin();
-        $this->examService->deleteExam($id, $admin);
+        $user = $this->getAuthUser();
+        $this->examService->deleteExam($id, $user);
 
         return redirect()->route('exams.index')
             ->with('success', 'Xóa bài kiểm tra thành công!');

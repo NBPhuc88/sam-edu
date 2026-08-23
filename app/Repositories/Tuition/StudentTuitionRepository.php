@@ -15,6 +15,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
+     * @param  ?string              $month
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -24,7 +25,8 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         ?int $studentId = null,
         ?string $status = null,
         int $perPage = 15,
-        int $page = 1
+        int $page = 1,
+        ?string $month = null
     ): LengthAwarePaginator {
         $query = StudentTuition::query()
             ->select(
@@ -67,6 +69,13 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
 
         if ($status !== null && $status !== '' && $status !== 'all') {
             $query->where('status', $status);
+        }
+
+        if ($month !== null && $month !== '' && $month !== 'all') {
+            $query->where(function ($q) use ($month) {
+                $q->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$month])
+                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
+            });
         }
 
         if ($search !== null && trim($search) !== '') {
@@ -179,14 +188,34 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
 
     /**
      * @param  array<int>|null      $allowedCenterIds
+     * @param  ?int                 $selectedCenterId
+     * @param  ?int                 $classId
+     * @param  ?string              $month
      * @return array<string, mixed>
      */
-    public function getSummaryStats(?array $allowedCenterIds = null): array
-    {
+    public function getSummaryStats(
+        ?array $allowedCenterIds = null,
+        ?int $selectedCenterId = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array {
         $query = StudentTuition::query();
 
-        if ($allowedCenterIds !== null) {
+        if ($selectedCenterId !== null) {
+            $query->where('center_id', $selectedCenterId);
+        } elseif ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        if ($classId !== null) {
+            $query->where('class_id', $classId);
+        }
+
+        if ($month !== null && $month !== '' && $month !== 'all') {
+            $query->where(function ($q) use ($month) {
+                $q->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$month])
+                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
+            });
         }
 
         $totalAmount     = (float) (clone $query)->sum('total_amount');

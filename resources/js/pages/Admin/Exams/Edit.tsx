@@ -91,7 +91,7 @@ export default function ExamEdit({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredSubjects = centerId
-        ? subjects.filter((s) => String(s.center_id) === String(centerId))
+        ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
     const filteredExamTypes = centerId

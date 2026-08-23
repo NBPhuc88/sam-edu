@@ -4,6 +4,7 @@ namespace App\Services\Exam;
 
 use App\Models\Admin;
 use App\Models\Exam;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface ExamServiceInterface
@@ -17,7 +18,7 @@ interface ExamServiceInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return LengthAwarePaginator
      */
     public function getPaginatedExams(
@@ -29,47 +30,47 @@ interface ExamServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        Admin|Teacher|null $user = null
     ): LengthAwarePaginator;
 
     /**
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array;
+    public function getFormData(Admin|Teacher|null $user = null): array;
 
     /**
-     * @param  int       $id
-     * @param  ?Admin    $admin
+     * @param  int                $id
+     * @param  Admin|Teacher|null $user
      * @return Exam|null
      */
-    public function findExam(int $id, ?Admin $admin = null): ?Exam;
+    public function findExam(int $id, Admin|Teacher|null $user = null): ?Exam;
 
     /**
      * @param  array<string, mixed> $data
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return Exam
      */
-    public function createExam(array $data, ?Admin $admin = null): Exam;
+    public function createExam(array $data, Admin|Teacher|null $user = null): Exam;
 
     /**
      * @param  int                  $id
      * @param  array<string, mixed> $data
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return Exam
      */
-    public function updateExam(int $id, array $data, ?Admin $admin = null): Exam;
+    public function updateExam(int $id, array $data, Admin|Teacher|null $user = null): Exam;
 
     /**
-     * @param  int    $id
-     * @param  ?Admin $admin
+     * @param  int                $id
+     * @param  Admin|Teacher|null $user
      * @return bool
      */
-    public function deleteExam(int $id, ?Admin $admin = null): bool;
+    public function deleteExam(int $id, Admin|Teacher|null $user = null): bool;
 
     /**
-     * @param  ?Admin             $admin
+     * @param  Admin|Teacher|null $user
      * @return array<string, int>
      */
-    public function getStats(?Admin $admin = null): array;
+    public function getStats(Admin|Teacher|null $user = null): array;
 }

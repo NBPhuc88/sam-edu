@@ -179,9 +179,16 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $teacher = Teacher::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $teacher = Teacher::findOrFail($id);
 
-        return (bool) $teacher->delete();
+            // Gỡ phân công giảng dạy
+            \App\Models\ClassSubject::where('teacher_id', $id)->delete();
+            \App\Models\ClassSession::where('teacher_id', $id)->update(['teacher_id' => null]);
+            \App\Models\Exam::where('created_by_teacher_id', $id)->update(['created_by_teacher_id' => null]);
+
+            return (bool) $teacher->delete();
+        });
     }
 
     public function count(): int

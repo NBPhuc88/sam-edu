@@ -42,8 +42,12 @@ export default function ExamCreate({
     const { auth } = usePage<any>().props;
     const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
+    const initialCenterId = auth?.user?.center_id
+        ? String(auth.user.center_id)
+        : (centers.length === 1 ? String(centers[0].id) : (centers[0]?.id ? String(centers[0].id) : ''));
+
     // Exam Metadata State
-    const [centerId, setCenterId] = useState<string>(auth?.user?.center_id ? String(auth.user.center_id) : '');
+    const [centerId, setCenterId] = useState<string>(initialCenterId);
     const [subjectId, setSubjectId] = useState<string>('');
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
@@ -72,12 +76,26 @@ export default function ExamCreate({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const filteredSubjects = centerId
-        ? subjects.filter((s) => String(s.center_id) === String(centerId))
+        ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
     const filteredExamTypes = centerId
         ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(centerId))
         : exam_types;
+
+    // Auto-select subject if only 1 exists
+    React.useEffect(() => {
+        if (!subjectId && filteredSubjects.length === 1) {
+            setSubjectId(String(filteredSubjects[0].id));
+        }
+    }, [filteredSubjects, subjectId]);
+
+    // Auto-select exam type if empty
+    React.useEffect(() => {
+        if (!examTypeId && filteredExamTypes.length > 0) {
+            setExamTypeId(String(filteredExamTypes[0].id));
+        }
+    }, [filteredExamTypes, examTypeId]);
 
     // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);

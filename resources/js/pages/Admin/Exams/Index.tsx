@@ -17,6 +17,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -720,48 +721,15 @@ export default function ExamIndex({
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <DeleteConfirmModal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="Xác Nhận Xóa Bài Kiểm Tra"
-            >
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-red-600">
-                        <AlertCircle className="h-8 w-8 shrink-0" />
-                        <div>
-                            <p className="font-bold text-gray-900">
-                                Bạn có chắc chắn muốn xóa bài kiểm tra này?
-                            </p>
-                            <p className="text-sm text-gray-500">
-                                Đề thi: <span className="font-semibold text-gray-800">{deletingExam?.name}</span> ({deletingExam?.code})
-                            </p>
-                        </div>
-                    </div>
-
-                    <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 border border-amber-200">
-                        Lưu ý: Tất cả các câu hỏi thuộc bài kiểm tra này sẽ được xóa đồng thời. Dữ liệu kết quả thi của học sinh (nếu có) sẽ được bảo toàn an toàn.
-                    </p>
-
-                    <div className="flex justify-end gap-3 pt-2">
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            onClick={() => setDeleteModalOpen(false)}
-                            disabled={isDeleting}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="md"
-                            isLoading={isDeleting}
-                            onClick={confirmDelete}
-                        >
-                            Xóa Bài Kiểm Tra
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                onConfirm={confirmDelete}
+                entity="exams"
+                entityId={deletingExam?.id || null}
+                entityName={`đề thi "${deletingExam?.name}" (${deletingExam?.code})`}
+                isDeleting={isDeleting}
+            />
         </AppLayout>
     );
 }

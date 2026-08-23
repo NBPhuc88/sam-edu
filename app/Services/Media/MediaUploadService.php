@@ -2,6 +2,7 @@
 
 namespace App\Services\Media;
 
+use App\Jobs\ProcessImageUploadJob;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -24,27 +25,52 @@ class MediaUploadService implements MediaUploadServiceInterface
             $extension = $file->guessExtension() ?? 'bin';
         }
 
-        // Standardize clean slug parts for filename
+        // Clean slug components
         $cleanObject = Str::slug($objectType, '_');
         $cleanId     = $objectId ? Str::slug((string) $objectId, '_') : 'gen';
-        $cleanSub    = $subId ? '_' . Str::slug($subId, '_') : '';
         $timestamp   = time();
         $randomHex   = Str::random(4);
 
-        // Format: [object_type]_[object_id]_[sub_id]_[timestamp]_[rand].[ext]
-        $fileName = "{$cleanObject}_{$cleanId}{$cleanSub}_{$timestamp}_{$randomHex}.{$extension}";
+        // Standardized folder structure: exams/{exam_id} or custom folder
+        $targetFolder = $folder;
 
-        // Store to public disk
-        $path = $file->storeAs($folder, $fileName, 'public');
+        if ($objectType === 'exam' || $objectType === 'exam_question') {
+            if ($objectId && $objectId !== 'general') {
+                $targetFolder = "exams/{$cleanId}";
+            } else {
+                $targetFolder = 'exams/general';
+            }
+        }
 
-        // URL generator
-        $publicUrl = Storage::disk('public')->url($path);
+        // Filename format: e.g. phan1_cau2_timestamp_rand.ext or sec_1_q_2_rand.ext
+        if ($subId) {
+            $cleanSub = Str::slug($subId, '_');
+            $fileName = "{$cleanSub}_{$timestamp}_{$randomHex}.{$extension}";
+        } else {
+            $fileName = "{$cleanObject}_{$cleanId}_{$timestamp}_{$randomHex}.{$extension}";
+        }
+
+        // Store file temporarily in private local disk
+        $tempPath = $file->storeAs('temp/uploads', $fileName, 'local');
+
+        // Dispatch background job to transfer file to /home/phuc/sam (disk 'sam')
+        ProcessImageUploadJob::dispatch(
+            tempRelativePath: $tempPath,
+            destinationFolder: $targetFolder,
+            fileName: $fileName,
+            targetDisk: 'sam'
+        );
+
+        $destinationRelativePath = trim($targetFolder, '/') . '/' . $fileName;
+
+        // URL generator referencing disk 'sam' -> /sam-storage/...
+        $samUrl = Storage::disk('sam')->url($destinationRelativePath);
 
         return [
             'success'   => true,
-            'url'       => $publicUrl,
+            'url'       => $samUrl,
             'file_name' => $fileName,
-            'file_path' => $path,
+            'file_path' => $destinationRelativePath,
         ];
     }
 }

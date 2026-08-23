@@ -203,9 +203,17 @@ class RoomRepository implements RoomRepositoryInterface
 
     public function delete(int $id): bool
     {
-        $room = Room::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $room = Room::findOrFail($id);
 
-        return (bool) $room->delete();
+            // Xóa trang thiết bị trong phòng
+            \App\Models\RoomEquipment::where('room_id', $id)->delete();
+
+            // Gỡ phòng khỏi các ca học
+            \App\Models\ClassSession::where('room_id', $id)->update(['room_id' => null]);
+
+            return (bool) $room->delete();
+        });
     }
 
     public function codeExists(int $centerId, string $code, ?int $ignoreId = null): bool

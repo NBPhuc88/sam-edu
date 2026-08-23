@@ -15,6 +15,7 @@ interface StudentTuitionRepositoryInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
+     * @param  ?string              $month
      * @return LengthAwarePaginator
      */
     public function paginate(
@@ -24,7 +25,8 @@ interface StudentTuitionRepositoryInterface
         ?int $studentId = null,
         ?string $status = null,
         int $perPage = 15,
-        int $page = 1
+        int $page = 1,
+        ?string $month = null
     ): LengthAwarePaginator;
 
     /**
@@ -55,7 +57,15 @@ interface StudentTuitionRepositoryInterface
 
     /**
      * @param  array<int>|null      $allowedCenterIds
+     * @param  ?int                 $selectedCenterId
+     * @param  ?int                 $classId
+     * @param  ?string              $month
      * @return array<string, mixed>
      */
-    public function getSummaryStats(?array $allowedCenterIds = null): array;
+    public function getSummaryStats(
+        ?array $allowedCenterIds = null,
+        ?int $selectedCenterId = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array;
 }

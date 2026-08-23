@@ -328,6 +328,9 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
 
     // General Media Upload API
     Route::post('/api/uploads/media', [\App\Http\Controllers\MediaUploadController::class, 'upload'])->name('uploads.media');
+
+    // Delete Impact Preview API
+    Route::get('/api/{entity}/{id}/delete-impact', [\App\Http\Controllers\DeleteImpactController::class, 'getImpact'])->name('delete.impact');
 });
 
 // ─── Fallback Route for 404 Not Found ────────────────────────────────────────

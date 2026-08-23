@@ -13,6 +13,7 @@ import {
     Award,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -514,44 +515,15 @@ return;
             </div>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <DeleteConfirmModal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="Xác Nhận Xóa Lớp Học"
-                footer={
-                    <>
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            onClick={() => setDeleteModalOpen(false)}
-                            disabled={isDeleting}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="md"
-                            onClick={confirmDelete}
-                            isLoading={isDeleting}
-                            icon={<Trash2 className="h-5 w-5" />}
-                        >
-                            Xác Nhận Xóa
-                        </Button>
-                    </>
-                }
-            >
-                <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-red-600">
-                        <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-base font-semibold">
-                            Bạn có chắc chắn muốn xóa lớp học "{deletingClass?.name}" (Mã: {deletingClass?.code})?
-                        </p>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        Lớp học và dữ liệu phân công môn học sẽ được ẩn khỏi hệ thống (soft delete).
-                    </p>
-                </div>
-            </Modal>
+                onConfirm={confirmDelete}
+                entity="classes"
+                entityId={deletingClass?.id || null}
+                entityName={`lớp học "${deletingClass?.name}" (${deletingClass?.code})`}
+                isDeleting={isDeleting}
+            />
         </AppLayout>
     );
 }

@@ -15,6 +15,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
@@ -83,6 +84,7 @@ interface IndexProps {
         center_id?: number | null;
         class_id?: number | null;
         status?: string;
+        month?: string;
     };
 }
 
@@ -108,6 +110,14 @@ export const Index: React.FC<IndexProps> = ({
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters?.status || 'all',
     );
+    const [selectedMonth, setSelectedMonth] = useState<string>(
+        filters?.month || 'all',
+    );
+
+    // Filter classes by selected center
+    const filteredClasses = selectedCenterId
+        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        : classes;
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -126,10 +136,11 @@ export const Index: React.FC<IndexProps> = ({
         router.get(
             '/tuitions',
             {
-                search: searchTerm,
+                search: searchTerm || undefined,
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
                 status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                month: selectedMonth !== 'all' ? selectedMonth : undefined,
             },
             { preserveState: true },
         );
@@ -140,6 +151,7 @@ export const Index: React.FC<IndexProps> = ({
         setSelectedCenterId('');
         setSelectedClassId('');
         setSelectedStatus('all');
+        setSelectedMonth('all');
         router.get('/tuitions', {}, { preserveState: true });
     };
 
@@ -176,10 +188,6 @@ return;
                 return <Badge variant="expired">Chưa đóng</Badge>;
         }
     };
-
-    const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
-        : classes;
 
     return (
         <AppLayout title="Quản Lý Học Phí Khóa Học - Giáo Dục Sam">
@@ -312,7 +320,7 @@ return;
                 {/* Filter Box */}
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">
                     <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                             <div>
                                 <Input
                                     placeholder="Tìm tên HS, mã HS, tiêu đề..."
@@ -356,6 +364,17 @@ return;
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div>
+                                <input
+                                    type="month"
+                                    value={selectedMonth === 'all' ? '' : selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value || 'all')}
+                                    title="Lọc theo tháng phát sinh/hạn nộp (Để trống để xem tổng tất cả)"
+                                    placeholder="Tất cả các tháng"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                />
                             </div>
 
                             <div>
@@ -601,44 +620,15 @@ return;
             </div>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <DeleteConfirmModal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                title="Xác Nhận Xóa Hồ Sơ Học Phí"
-                footer={
-                    <>
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            onClick={() => setDeleteModalOpen(false)}
-                            disabled={isDeleting}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="md"
-                            onClick={confirmDelete}
-                            isLoading={isDeleting}
-                            icon={<Trash2 className="h-5 w-5" />}
-                        >
-                            Xác Nhận Xóa
-                        </Button>
-                    </>
-                }
-            >
-                <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-red-600">
-                        <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-base font-semibold">
-                            Hành động này sẽ xóa khoản học phí của học sinh "{deletingTuition?.student?.full_name}" khỏi danh sách quản lý.
-                        </p>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        Các đợt đóng tiền liên quan sẽ được ẩn (soft delete) và có thể phục hồi nếu cần thiết từ cơ sở dữ liệu.
-                    </p>
-                </div>
-            </Modal>
+                onConfirm={confirmDelete}
+                entity="tuitions"
+                entityId={deletingTuition?.id || null}
+                entityName={`hồ sơ học phí của học sinh "${deletingTuition?.student?.full_name}"`}
+                isDeleting={isDeleting}
+            />
         </AppLayout>
     );
 };

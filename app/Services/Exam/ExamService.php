@@ -4,9 +4,11 @@ namespace App\Services\Exam;
 
 use App\Models\Admin;
 use App\Models\Exam;
+use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
+use App\Repositories\ExamType\ExamTypeRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -20,25 +22,33 @@ class ExamService implements ExamServiceInterface
         protected CenterRepositoryInterface $centerRepository,
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected SubjectRepositoryInterface $subjectRepository,
-        protected \App\Repositories\ExamType\ExamTypeRepositoryInterface $examTypeRepository
+        protected ExamTypeRepositoryInterface $examTypeRepository
     ) {
     }
 
     /**
-     * @param  ?Admin          $admin
-     * @return array<int>|null Null nghĩa là Super Admin (truy cập toàn bộ)
+     * @param  Admin|Teacher|null $user
+     * @return array<int>|null    Null nghĩa là Super Admin (truy cập toàn bộ)
      */
-    protected function getAllowedCenterIds(?Admin $admin): ?array
+    protected function getAllowedCenterIds(Admin|Teacher|null $user): ?array
     {
-        if (! $admin) {
+        if (! $user) {
             return [];
         }
 
-        if ($admin->isSuperAdmin()) {
-            return null; // All centers
+        if ($user instanceof Admin) {
+            if ($user->isSuperAdmin()) {
+                return null; // All centers
+            }
+
+            return $user->centers()->pluck('centers.id')->toArray();
         }
 
-        return $admin->centers()->pluck('centers.id')->toArray();
+        if ($user instanceof Teacher) {
+            return $user->center_id ? [(int) $user->center_id] : [];
+        }
+
+        return [];
     }
 
     /**
@@ -50,7 +60,7 @@ class ExamService implements ExamServiceInterface
      * @param  ?string              $status
      * @param  int                  $perPage
      * @param  int                  $page
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return LengthAwarePaginator
      */
     public function getPaginatedExams(
@@ -62,9 +72,9 @@ class ExamService implements ExamServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        Admin|Teacher|null $user = null
     ): LengthAwarePaginator {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($user);
 
         if ($allowedCenterIds !== null) {
             if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
@@ -91,29 +101,69 @@ class ExamService implements ExamServiceInterface
     }
 
     /**
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return array<string, mixed>
      */
-    public function getFormData(?Admin $admin = null): array
+    public function getFormData(Admin|Teacher|null $user = null): array
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($user);
+
+        if ($user instanceof Teacher) {
+            $centerId = (int) $user->center_id;
+
+            // Giáo viên chỉ chọn được các môn học mình đang dạy thuộc trung tâm
+            $taughtSubjectIds = DB::table('class_subjects')
+                ->where('teacher_id', $user->id)
+                ->pluck('subject_id')
+                ->unique()
+                ->toArray();
+
+            if (! empty($taughtSubjectIds)) {
+                $subjects = \App\Models\Subject::whereIn('id', $taughtSubjectIds)
+                    ->where('center_id', $centerId)
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get();
+            } else {
+                $subjects = \App\Models\Subject::where('center_id', $centerId)
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            // Chỉ show loại đề thi của trung tâm mình
+            $examTypes = \App\Models\ExamType::where('center_id', $centerId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+
+            return [
+                'centers'    => $this->centerRepository->getByIds([$centerId], ['id', 'name', 'code']),
+                'classes'    => $this->schoolClassRepository->getClassesByCenterIds([$centerId]),
+                'subjects'   => $subjects,
+                'exam_types' => $examTypes,
+            ];
+        }
+
+        $subjects  = $this->subjectRepository->getByCenterIds($allowedCenterIds);
+        $examTypes = $this->examTypeRepository->getAllActive($allowedCenterIds);
 
         return [
             'centers'    => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
             'classes'    => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
-            'subjects'   => $this->subjectRepository->getByCenterIds($allowedCenterIds),
-            'exam_types' => $this->examTypeRepository->getAllActive($allowedCenterIds),
+            'subjects'   => $subjects,
+            'exam_types' => $examTypes,
         ];
     }
 
     /**
-     * @param  int    $id
-     * @param  ?Admin $admin
+     * @param  int                $id
+     * @param  Admin|Teacher|null $user
      * @return Exam
      */
-    public function findExam(int $id, ?Admin $admin = null): Exam
+    public function findExam(int $id, Admin|Teacher|null $user = null): Exam
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($user);
         $exam             = $this->examRepository->find($id, $allowedCenterIds);
 
         if (! $exam) {
@@ -125,13 +175,13 @@ class ExamService implements ExamServiceInterface
 
     /**
      * @param  array<string, mixed> $data
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return Exam
      */
-    public function createExam(array $data, ?Admin $admin = null): Exam
+    public function createExam(array $data, Admin|Teacher|null $user = null): Exam
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
-        $centerId         = (int) $data['center_id'];
+        $allowedCenterIds = $this->getAllowedCenterIds($user);
+        $centerId         = (int) ($data['center_id'] ?? ($user instanceof Teacher ? $user->center_id : 0));
 
         if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
             throw new AccessDeniedHttpException('Bạn không có quyền thêm đề thi vào Trung tâm này.');
@@ -149,22 +199,23 @@ class ExamService implements ExamServiceInterface
         }
 
         $payload = [
-            'center_id'           => $centerId,
-            'subject_id'          => (int) $data['subject_id'],
-            'class_id'            => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
-            'name'                => trim($data['name']),
-            'code'                => $code,
-            'exam_type_id'        => ! empty($data['exam_type_id']) ? (int) $data['exam_type_id'] : null,
-            'description'         => $data['description'] ?? null,
-            'duration_minutes'    => (int) ($data['duration_minutes'] ?? 45),
-            'max_score'           => (float) ($data['max_score'] ?? 10.0),
-            'pass_score'          => (float) ($data['pass_score'] ?? 5.0),
-            'shuffle_questions'   => ! empty($data['shuffle_questions']),
-            'shuffle_options'     => ! empty($data['shuffle_options']),
-            'max_attempts'        => isset($data['max_attempts']) ? (int) $data['max_attempts'] : 1,
-            'is_practice'         => ! empty($data['is_practice']),
-            'status'              => $data['status'] ?? 'draft',
-            'created_by_admin_id' => $admin?->id,
+            'center_id'             => $centerId,
+            'subject_id'            => ! empty($data['subject_id']) ? (int) $data['subject_id'] : null,
+            'class_id'              => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
+            'name'                  => trim($data['name']),
+            'code'                  => $code,
+            'exam_type_id'          => ! empty($data['exam_type_id']) ? (int) $data['exam_type_id'] : null,
+            'description'           => $data['description'] ?? null,
+            'duration_minutes'      => (int) ($data['duration_minutes'] ?? 45),
+            'max_score'             => (float) ($data['max_score'] ?? 10.0),
+            'pass_score'            => (float) ($data['pass_score'] ?? 5.0),
+            'shuffle_questions'     => ! empty($data['shuffle_questions']),
+            'shuffle_options'       => ! empty($data['shuffle_options']),
+            'max_attempts'          => isset($data['max_attempts']) ? (int) $data['max_attempts'] : 1,
+            'is_practice'           => ! empty($data['is_practice']),
+            'status'                => $data['status'] ?? 'draft',
+            'created_by_admin_id'   => $user instanceof Admin ? $user->id : null,
+            'created_by_teacher_id' => $user instanceof Teacher ? $user->id : null,
         ];
 
         return DB::transaction(function () use ($payload, $data) {
@@ -184,16 +235,16 @@ class ExamService implements ExamServiceInterface
     /**
      * @param  int                  $id
      * @param  array<string, mixed> $data
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return Exam
      */
-    public function updateExam(int $id, array $data, ?Admin $admin = null): Exam
+    public function updateExam(int $id, array $data, Admin|Teacher|null $user = null): Exam
     {
-        $exam = $this->findExam($id, $admin);
+        $exam = $this->findExam($id, $user);
 
         if (isset($data['center_id'])) {
             $centerId         = (int) $data['center_id'];
-            $allowedCenterIds = $this->getAllowedCenterIds($admin);
+            $allowedCenterIds = $this->getAllowedCenterIds($user);
 
             if ($allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
                 throw new AccessDeniedHttpException('Bạn không có quyền chuyển đề thi sang Trung tâm này.');
@@ -208,7 +259,7 @@ class ExamService implements ExamServiceInterface
 
         $payload = [
             'center_id'         => $data['center_id'] ?? $exam->center_id,
-            'subject_id'        => isset($data['subject_id']) ? (int) $data['subject_id'] : $exam->subject_id,
+            'subject_id'        => isset($data['subject_id']) ? ($data['subject_id'] ? (int) $data['subject_id'] : null) : $exam->subject_id,
             'class_id'          => array_key_exists('class_id', $data) ? ($data['class_id'] ? (int) $data['class_id'] : null) : $exam->class_id,
             'name'              => isset($data['name']) ? trim($data['name']) : $exam->name,
             'code'              => $code,
@@ -239,24 +290,24 @@ class ExamService implements ExamServiceInterface
     }
 
     /**
-     * @param  int    $id
-     * @param  ?Admin $admin
+     * @param  int                $id
+     * @param  Admin|Teacher|null $user
      * @return bool
      */
-    public function deleteExam(int $id, ?Admin $admin = null): bool
+    public function deleteExam(int $id, Admin|Teacher|null $user = null): bool
     {
-        $exam = $this->findExam($id, $admin);
+        $exam = $this->findExam($id, $user);
 
         return $this->examRepository->delete($exam->id);
     }
 
     /**
-     * @param  ?Admin               $admin
+     * @param  Admin|Teacher|null   $user
      * @return array<string, mixed>
      */
-    public function getStats(?Admin $admin = null): array
+    public function getStats(Admin|Teacher|null $user = null): array
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $allowedCenterIds = $this->getAllowedCenterIds($user);
 
         return $this->examRepository->getStats($allowedCenterIds);
     }

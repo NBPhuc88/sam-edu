@@ -122,9 +122,17 @@ class SubjectRepository implements SubjectRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $subject = Subject::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $subject = Subject::findOrFail($id);
 
-        return (bool) $subject->delete();
+            // Gỡ phân công môn học khỏi các lớp
+            \App\Models\ClassSubject::where('subject_id', $id)->delete();
+
+            // Gỡ liên kết môn học ở các đề thi
+            \App\Models\Exam::where('subject_id', $id)->update(['subject_id' => null]);
+
+            return (bool) $subject->delete();
+        });
     }
 
     public function codeExists(int $centerId, string $code): bool

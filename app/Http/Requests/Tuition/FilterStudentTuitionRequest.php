@@ -26,6 +26,7 @@ class FilterStudentTuitionRequest extends FormRequest
             'center_id' => ['nullable', 'integer'],
             'class_id'  => ['nullable', 'integer'],
             'status'    => ['nullable', 'string'],
+            'month'     => ['nullable', 'string'],
             'page'      => ['nullable', 'integer', 'min:1'],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

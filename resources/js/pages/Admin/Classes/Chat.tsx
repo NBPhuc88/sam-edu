@@ -6,7 +6,6 @@ import {
     Send,
     ArrowLeft,
     Smile,
-    Paperclip,
     Palette,
     Check,
     X,
@@ -685,14 +684,6 @@ export default function ClassChatPage({
                                 disabled={isSending}
                                 className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
                             />
-
-                            <button
-                                type="button"
-                                title="Đính kèm tệp / hình ảnh"
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors shrink-0"
-                            >
-                                <Paperclip className="h-5 w-5" />
-                            </button>
 
                             <button
                                 type="submit"

@@ -228,9 +228,18 @@ class ExamRepository implements ExamRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $exam = Exam::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $exam = Exam::findOrFail($id);
 
-        return (bool) $exam->delete();
+            // Xóa phần thi & câu hỏi
+            \App\Models\ExamQuestion::where('exam_id', $id)->delete();
+            \App\Models\ExamSection::where('exam_id', $id)->delete();
+
+            // Xóa các kỳ thi của lớp dùng đề này
+            \App\Models\ClassExam::where('exam_id', $id)->delete();
+
+            return (bool) $exam->delete();
+        });
     }
 
     /**

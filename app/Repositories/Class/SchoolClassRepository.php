@@ -179,9 +179,30 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $schoolClass = SchoolClass::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $schoolClass = SchoolClass::findOrFail($id);
 
-        return (bool) $schoolClass->delete();
+            // 1. Ngắt liên kết học sinh
+            \App\Models\ClassStudent::where('class_id', $id)->delete();
+
+            // 2. Xóa các bài thi đã gán cho lớp
+            \App\Models\ClassExam::where('class_id', $id)->delete();
+
+            // 3. Xóa ca học & lịch học của các môn trong lớp
+            \App\Models\ClassSession::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
+            \App\Models\ClassSchedule::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
+
+            // 4. Xóa phân công môn học của lớp
+            \App\Models\ClassSubject::where('class_id', $id)->delete();
+
+            // 5. Xóa học phí của lớp
+            \App\Models\StudentTuition::where('class_id', $id)->delete();
+
+            // 6. Xóa tin nhắn nhóm chat
+            \Illuminate\Support\Facades\DB::table('class_chat_messages')->where('class_id', $id)->delete();
+
+            return (bool) $schoolClass->delete();
+        });
     }
 
     /**

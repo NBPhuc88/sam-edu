@@ -47,6 +47,15 @@ return [
             'report'     => false,
         ],
 
+        'sam' => [
+            'driver'     => 'local',
+            'root'       => env('SAM_STORAGE_PATH', '/home/phuc/sam'),
+            'url'        => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/sam-storage',
+            'visibility' => 'public',
+            'throw'      => false,
+            'report'     => false,
+        ],
+
         's3' => [
             'driver'                  => 's3',
             'key'                     => env('AWS_ACCESS_KEY_ID'),
@@ -74,7 +83,8 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        public_path('storage')     => storage_path('app/public'),
+        public_path('sam-storage') => env('SAM_STORAGE_PATH', '/home/phuc/sam'),
     ],
 
 ];

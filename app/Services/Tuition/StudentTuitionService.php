@@ -53,6 +53,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
+     * @param  ?string              $month
      * @return LengthAwarePaginator
      */
     public function getPaginatedTuitions(
@@ -63,7 +64,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?string $status = null,
         int $perPage = 15,
         int $page = 1,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        ?string $month = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
@@ -86,17 +88,24 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             $studentId,
             $status,
             $perPage,
-            $page
+            $page,
+            $month
         );
     }
 
     /**
      * @param  ?Admin               $admin
      * @param  ?int                 $selectedCenterId
+     * @param  ?int                 $classId
+     * @param  ?string              $month
      * @return array<string, mixed>
      */
-    public function getSummaryStats(?Admin $admin = null, ?int $selectedCenterId = null): array
-    {
+    public function getSummaryStats(
+        ?Admin $admin = null,
+        ?int $selectedCenterId = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null) {
@@ -109,7 +118,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             $centerIds = $selectedCenterId ? [$selectedCenterId] : null;
         }
 
-        $stats = $this->studentTuitionRepository->getSummaryStats($centerIds);
+        $stats = $this->studentTuitionRepository->getSummaryStats($centerIds, null, $classId, $month);
 
         $lastMonthStart = now()->startOfMonth()->subMonth()->toDateString();
         $lastMonthEnd   = now()->startOfMonth()->subMonth()->endOfMonth()->toDateString();

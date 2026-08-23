@@ -96,6 +96,7 @@ class StudentTuitionController extends Controller
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
         $status   = $request->input('status');
+        $month    = $request->input('month');
         $page     = $request->integer('page', 1);
         $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
 
@@ -107,10 +108,16 @@ class StudentTuitionController extends Controller
             is_string($status) ? $status : null,
             $perPage,
             $page,
-            $admin
+            $admin,
+            is_string($month) && $month !== 'all' ? $month : null
         );
 
-        $stats    = $this->studentTuitionService->getSummaryStats($admin, $centerId);
+        $stats = $this->studentTuitionService->getSummaryStats(
+            $admin,
+            $centerId,
+            $classId,
+            is_string($month) && $month !== 'all' ? $month : null
+        );
         $formData = $this->studentTuitionService->getFormData($admin, $centerId);
 
         return Inertia::render('Admin/Tuitions/Index', [
@@ -123,6 +130,7 @@ class StudentTuitionController extends Controller
                 'center_id' => $centerId,
                 'class_id'  => $classId,
                 'status'    => $status ?? 'all',
+                'month'     => $month ?? 'all',
                 'per_page'  => $perPage,
             ],
         ]);

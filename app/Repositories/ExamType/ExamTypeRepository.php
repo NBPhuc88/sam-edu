@@ -77,11 +77,11 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
             ->where('status', 'active');
 
         if ($centerIds !== null) {
-            if (is_array($centerIds)) {
-                $query->whereIn('center_id', $centerIds);
-            } else {
-                $query->where('center_id', $centerIds);
-            }
+            $ids = is_array($centerIds) ? $centerIds : [$centerIds];
+            $query->where(function ($q) use ($ids) {
+                $q->whereIn('center_id', $ids)
+                    ->orWhereNull('center_id');
+            });
         }
 
         return $query->orderBy('name', 'asc')->get();
@@ -124,9 +124,14 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        $examType = ExamType::findOrFail($id);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+            $examType = ExamType::findOrFail($id);
 
-        return (bool) $examType->delete();
+            // Gỡ liên kết ở các đề thi
+            \App\Models\Exam::where('exam_type_id', $id)->update(['exam_type_id' => null]);
+
+            return (bool) $examType->delete();
+        });
     }
 
     /**
