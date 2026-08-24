@@ -924,29 +924,14 @@ export default function QuestionBuilder({
 
                                                                     {/* Audio Section: ONLY FOR LISTENING */}
                                                                     {isListening && (
-                                                                        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2.5">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-900">
-                                                                                    <Volume2 className="h-4 w-4 text-blue-600" />
-                                                                                    Đường Dẫn File Audio Nghe (Listening Track MP3) (*)
-                                                                                </label>
-                                                                                <span className="text-2xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                                                                                    Phần Nghe
-                                                                                </span>
-                                                                            </div>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={q.audio_url || ''}
-                                                                                onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { audio_url: e.target.value || null })}
-                                                                                placeholder="VD: /storage/exams/audio/ielts_listening_section1.mp3..."
-                                                                                className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-blue-500 focus:outline-hidden"
-                                                                            />
-                                                                            {q.audio_url && (
-                                                                                <div className="mt-2 p-2 bg-white rounded-lg border border-blue-200 shadow-2xs">
-                                                                                    <audio controls src={q.audio_url} className="w-full h-8" />
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
+                                                                        <MediaUploader
+                                                                            value={q.audio_url || ''}
+                                                                            onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url || null })}
+                                                                            accept="audio/*"
+                                                                            label="File Audio Nghe (Listening Track MP3) (*)"
+                                                                            placeholder="Dán đường dẫn URL file audio hoặc chọn tải lên từ máy..."
+                                                                            folder="exams/audio"
+                                                                        />
                                                                     )}
 
                                                                     {/* Question Title */}

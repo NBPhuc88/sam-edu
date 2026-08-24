@@ -2,6 +2,7 @@
 
 namespace App\Services\OnlineExam;
 
+use App\Jobs\ProcessImageUploadJob;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -276,11 +277,15 @@ class OnlineExamService implements OnlineExamServiceInterface
         $extension = $file->getClientOriginalExtension() ?: 'webm';
         $fileName  = "{$cleanExamCode}_{$cleanStudentCode}_{$cleanQCode}_{$timestamp}_{$randomHex}.{$extension}";
 
-        // Lưu vào storage disk 'sam' tại /home/phuc/sam/exams/speaking/
-        $directory = 'exams/speaking';
-        $path      = $file->storeAs($directory, $fileName, 'sam');
+        $directory       = 'exams/speaking';
+        $destinationPath = "{$directory}/{$fileName}";
 
-        return $path;
+        // Store to temporary disk for background queue processing into public/asset
+        $tempRelativePath = $file->store('temp_uploads', 'local');
+
+        ProcessImageUploadJob::dispatch($tempRelativePath, $directory, $fileName, 'asset');
+
+        return $destinationPath;
     }
 
     public function streamSpeakingAudio(string $path): BinaryFileResponse
@@ -291,12 +296,14 @@ class OnlineExamService implements OnlineExamServiceInterface
             throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException('Đường dẫn file không hợp lệ.');
         }
 
+        $fullPath  = null;
+        $assetPath = public_path('asset/' . $cleanPath);
         $samDisk   = Storage::disk('sam');
         $localDisk = Storage::disk('local');
 
-        $fullPath = null;
-
-        if ($samDisk->exists($cleanPath)) {
+        if (file_exists($assetPath)) {
+            $fullPath = $assetPath;
+        } elseif ($samDisk->exists($cleanPath)) {
             $fullPath = $samDisk->path($cleanPath);
         } elseif ($localDisk->exists($cleanPath)) {
             $fullPath = $localDisk->path($cleanPath);

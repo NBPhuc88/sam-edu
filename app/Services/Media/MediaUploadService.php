@@ -2,6 +2,7 @@
 
 namespace App\Services\Media;
 
+use App\Jobs\ProcessImageUploadJob;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -51,16 +52,11 @@ class MediaUploadService implements MediaUploadServiceInterface
 
         $destinationRelativePath = trim($targetFolder, '/') . '/' . $fileName;
 
-        // Ensure public/asset/{folder} directory exists
-        $assetRoot = public_path('asset');
-        $destDir   = $assetRoot . '/' . trim($targetFolder, '/');
+        // Store to temporary disk for background queue processing
+        $tempRelativePath = $file->store('temp_uploads', 'local');
 
-        if (! is_dir($destDir)) {
-            @mkdir($destDir, 0777, true);
-        }
-
-        // Store file directly to public/asset
-        $file->move($destDir, $fileName);
+        // Dispatch background queue job to process and move file to public/asset
+        ProcessImageUploadJob::dispatch($tempRelativePath, $targetFolder, $fileName, 'asset');
 
         // URL generator referencing asset('asset/...')
         $assetUrl = asset('asset/' . $destinationRelativePath);

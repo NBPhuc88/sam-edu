@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Link as LinkIcon, X, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Upload, Link as LinkIcon, X, Image as ImageIcon, CheckCircle2, Volume2 } from 'lucide-react';
 import { registerPendingUpload, unregisterPendingUpload, isPendingBlobUrl } from '@/lib/uploadTracker';
 
 interface MediaUploaderProps {
@@ -26,13 +26,18 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     folder = 'exams/media',
     accept = 'image/*',
     label = 'Hình ảnh minh họa',
-    placeholder = 'Dán đường dẫn URL ảnh hoặc chọn tải lên từ máy...',
+    placeholder = 'Dán đường dẫn URL file hoặc chọn tải lên từ máy...',
     className = '',
     compact = false,
 }) => {
     const [mode, setMode] = useState<'upload' | 'url'>('upload');
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const isAudio = Boolean(
+        accept?.includes('audio') ||
+        (value && (value.endsWith('.mp3') || value.endsWith('.wav') || value.endsWith('.ogg') || value.endsWith('.webm') || value.endsWith('.m4a') || value.includes('audio')))
+    );
 
     const handleFileSelect = (file: File) => {
         if (!file) return;
@@ -87,7 +92,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     const getDisplayFileName = (url: string | null | undefined): string => {
         if (!url) return '';
-        if (isBlob) return 'Ảnh đã chọn (sẽ tải lên khi lưu)';
+        if (isBlob) return isAudio ? 'File âm thanh đã chọn (sẽ lưu khi bấm Lưu)' : 'Ảnh đã chọn (sẽ lưu khi bấm Lưu)';
         const clean = url.split('?')[0].split('#')[0];
         const parts = clean.split('/');
         return parts[parts.length - 1] || url;
@@ -107,14 +112,20 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 {value ? (
                     <div className="flex-1 flex items-center justify-between gap-2 rounded-lg border border-teal-200 bg-teal-50/50 px-2.5 py-1 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                            <img
-                                src={value}
-                                alt="Preview"
-                                className="h-6 w-6 rounded object-cover border border-teal-200 bg-white shrink-0"
-                                onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none';
-                                }}
-                            />
+                            {isAudio ? (
+                                <div className="p-1 rounded bg-teal-100 text-teal-700 shrink-0">
+                                    <Volume2 className="h-4 w-4" />
+                                </div>
+                            ) : (
+                                <img
+                                    src={value}
+                                    alt="Preview"
+                                    className="h-6 w-6 rounded object-cover border border-teal-200 bg-white shrink-0"
+                                    onError={(e) => {
+                                        (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                />
+                            )}
                             <span className="text-2xs font-mono text-teal-900 truncate" title={value}>
                                 {getDisplayFileName(value)}
                             </span>
@@ -123,7 +134,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             type="button"
                             onClick={handleClear}
                             className="flex h-5 w-5 shrink-0 items-center justify-center text-teal-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                            title="Xóa ảnh này"
+                            title="Xóa file này"
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>
@@ -141,10 +152,10 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                            title="Chọn file ảnh từ máy tính"
+                            title={isAudio ? 'Chọn file âm thanh từ máy' : 'Chọn file ảnh từ máy'}
                         >
                             <Upload className="h-3.5 w-3.5 text-gray-600" />
-                            <span>Chọn ảnh</span>
+                            <span>{isAudio ? 'Chọn Audio' : 'Chọn ảnh'}</span>
                         </button>
                     </>
                 )}
@@ -165,7 +176,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700">
-                    <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+                    {isAudio ? (
+                        <Volume2 className="h-3.5 w-3.5 text-pink-600" />
+                    ) : (
+                        <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+                    )}
                     <span>{label}</span>
                 </label>
 
@@ -197,7 +212,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 )}
             </div>
 
-            {/* When NO image attached: Show Upload Dropzone or URL Input */}
+            {/* When NO media attached: Show Upload Dropzone or URL Input */}
             {!value && (
                 <>
                     {mode === 'upload' ? (
@@ -212,7 +227,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                     <Upload className="h-5 w-5" />
                                 </div>
                                 <p className="text-xs font-semibold text-gray-700">
-                                    Nhấp để chọn file hoặc kéo thả ảnh vào đây
+                                    {isAudio
+                                        ? 'Nhấp để chọn file hoặc kéo thả file âm thanh vào đây (MP3, WAV, OGG, WEBM)'
+                                        : 'Nhấp để chọn file hoặc kéo thả ảnh vào đây'}
                                 </p>
                                 <p className="text-2xs text-gray-400">
                                     File sẽ được tự động tải lên máy chủ khi bạn bấm Lưu đề thi
@@ -241,26 +258,39 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
             {/* Preview Box with Single Delete Icon */}
             {value && (
-                <div className="relative rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 flex items-center justify-between">
+                <div className="relative rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                        <img
-                            src={value}
-                            alt="Preview"
-                            className="h-14 w-14 rounded-lg object-cover border border-emerald-200 bg-white shrink-0"
-                            onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                            }}
-                        />
+                        {isAudio ? (
+                            <div className="p-2 rounded-lg bg-pink-100 text-pink-700 shrink-0">
+                                <Volume2 className="h-6 w-6" />
+                            </div>
+                        ) : (
+                            <img
+                                src={value}
+                                alt="Preview"
+                                className="h-14 w-14 rounded-lg object-cover border border-emerald-200 bg-white shrink-0"
+                                onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                }}
+                            />
+                        )}
                         <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                                 <span className="text-xs font-bold text-gray-800 truncate">
-                                    {isBlob ? 'Ảnh đã chọn (chờ lưu)' : 'Đã đính kèm ảnh'}
+                                    {isBlob
+                                        ? (isAudio ? 'File âm thanh đã chọn (chờ lưu)' : 'Ảnh đã chọn (chờ lưu)')
+                                        : (isAudio ? 'Đã đính kèm file âm thanh' : 'Đã đính kèm ảnh')}
                                 </span>
                             </div>
                             <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={value}>
                                 {getDisplayFileName(value)}
                             </span>
+                            {isAudio && (
+                                <div className="mt-1.5">
+                                    <audio src={value} controls className="h-7 max-w-xs" />
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -270,7 +300,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             onClick={() => fileInputRef.current?.click()}
                             className="text-2xs font-semibold text-emerald-700 hover:text-emerald-900 px-2.5 py-1 rounded-lg bg-white border border-emerald-200 hover:bg-emerald-50 cursor-pointer transition-colors"
                         >
-                            Đổi ảnh
+                            Đổi file
                         </button>
                         <button
                             type="button"

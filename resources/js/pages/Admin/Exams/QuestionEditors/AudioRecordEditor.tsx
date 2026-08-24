@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mic, Clock, Volume2 } from 'lucide-react';
+import MediaUploader from '@/components/ui/MediaUploader';
 
 interface Props {
     metadata: {
@@ -21,24 +22,14 @@ export default function AudioRecordEditor({
     return (
         <div className="space-y-5">
             {/* Audio Prompt URL (Teacher's Audio Question) */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700">
-                    <Volume2 className="h-4 w-4 text-pink-600" />
-                    File Âm Thanh Đọc Đề Bài / Giọng Đọc Mẫu (Audio Prompt URL - Tùy chọn)
-                </label>
-                <input
-                    type="text"
-                    value={audioUrl || ''}
-                    onChange={(e) => onChangeAudioUrl(e.target.value)}
-                    placeholder="VD: /storage/exams/audio/speaking_part2_prompt.mp3..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-pink-500 focus:outline-hidden"
-                />
-                {audioUrl && (
-                    <div className="mt-2 p-2 bg-slate-50 rounded-lg">
-                        <audio controls src={audioUrl} className="w-full h-8" />
-                    </div>
-                )}
-            </div>
+            <MediaUploader
+                value={audioUrl || ''}
+                onChange={onChangeAudioUrl}
+                accept="audio/*"
+                label="File Âm Thanh Đọc Đề Bài / Giọng Đọc Mẫu (Audio Prompt - Tùy chọn)"
+                placeholder="Dán đường dẫn link audio hoặc chọn tải lên từ máy tính..."
+                folder="exams/audio"
+            />
 
             {/* Speaking Time Limits */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-xl bg-pink-50/40 p-4 border border-pink-200">
