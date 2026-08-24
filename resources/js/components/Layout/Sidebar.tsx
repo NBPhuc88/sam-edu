@@ -15,11 +15,24 @@ interface SidebarProps {
 
 /** Active path detection */
 function isActivePath(path: string, currentUrl: string): boolean {
-    if (path === '/dashboard' || path.endsWith('/dashboard')) {
-        return currentUrl === path;
+    const cleanUrl = currentUrl.split('?')[0].replace(/\/+$/, '') || '/';
+    const cleanPath = path.split('?')[0].replace(/\/+$/, '') || '/';
+
+    if (cleanPath === '/dashboard' || cleanPath.endsWith('/dashboard')) {
+        return cleanUrl === cleanPath;
     }
 
-    return currentUrl.startsWith(path);
+    if (cleanUrl === cleanPath) {
+        return true;
+    }
+
+    // Nếu path là /grading (Chấm Bài Thi) nhưng URL hiện tại là /grading/offline... (Chấm Bài Thi Giấy)
+    // thì không kích hoạt highlight cho menu /grading
+    if (cleanPath === '/grading' && cleanUrl.startsWith('/grading/offline')) {
+        return false;
+    }
+
+    return cleanUrl.startsWith(cleanPath + '/');
 }
 
 /** Single top-level nav link */
