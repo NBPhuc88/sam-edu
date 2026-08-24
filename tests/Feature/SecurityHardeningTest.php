@@ -126,3 +126,82 @@ test('media upload rejects dangerous SVG files to prevent stored XSS', function 
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['file']);
 });
+
+test('deleting a class exam submission automatically removes associated audio files from disk', function () {
+    \Illuminate\Support\Facades\Storage::fake('sam');
+
+    $audioPath = 'exams/speaking/test_audio_sample_123.webm';
+    \Illuminate\Support\Facades\Storage::disk('sam')->put($audioPath, 'dummy audio content');
+
+    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists($audioPath))->toBeTrue();
+
+    $student = \App\Models\Student::create([
+        'student_code' => 'STD000000099',
+        'username'     => 'test_student_clean',
+        'first_name'   => 'Test',
+        'last_name'    => 'Clean',
+        'full_name'    => 'Test Clean',
+        'email'        => 'student_clean@sam-edu.vn',
+        'password'     => 'password123',
+        'center_id'    => $this->center2->id,
+        'status'       => 1,
+    ]);
+
+    $subject = \App\Models\Subject::create([
+        'center_id'        => $this->center2->id,
+        'code'             => 'S000000099',
+        'name'             => 'Tiếng Anh Giao Tiếp',
+        'total_sessions'   => 20,
+        'duration_minutes' => 60,
+        'tuition_fee'      => 2000000,
+        'status'           => 'active',
+    ]);
+
+    $class = \App\Models\SchoolClass::create([
+        'center_id'    => $this->center2->id,
+        'code'         => 'C000000099',
+        'name'         => 'Lớp Giao Tiếp 01',
+        'max_students' => 20,
+        'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    $exam = \App\Models\Exam::create([
+        'center_id'        => $this->center2->id,
+        'subject_id'       => $subject->id,
+        'code'             => 'EX000000099',
+        'name'             => 'Đề Thi Speaking',
+        'duration_minutes' => 30,
+        'max_score'        => 10,
+        'status'           => 'published',
+    ]);
+
+    $classExam = \App\Models\ClassExam::create([
+        'code'             => 'CE000000099',
+        'access_code'      => '123456',
+        'class_id'         => $class->id,
+        'exam_id'          => $exam->id,
+        'title'            => 'Kiểm Tra Speaking',
+        'exam_date'        => now()->format('Y-m-d'),
+        'duration_minutes' => 30,
+        'max_score'        => 10,
+        'status'           => 'ongoing',
+    ]);
+
+    $submission = \App\Models\ClassExamSubmission::create([
+        'class_exam_id'  => $classExam->id,
+        'student_id'     => $student->id,
+        'attempt_number' => 1,
+        'status'         => 'submitted',
+        'answers'        => [
+            1 => 'answer text',
+            2 => $audioPath,
+        ],
+        'grading_details' => [],
+    ]);
+
+    // When submission is deleted
+    $submission->delete();
+
+    // The audio file must be automatically deleted from disk 'sam'
+    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists($audioPath))->toBeFalse();
+});

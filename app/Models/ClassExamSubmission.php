@@ -5,10 +5,47 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class ClassExamSubmission extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (ClassExamSubmission $submission) {
+            $submission->deleteAudioFiles();
+        });
+    }
+
+    /**
+     * Xóa các tệp ghi âm speaking liên quan đến bài làm này khỏi disk.
+     */
+    public function deleteAudioFiles(): void
+    {
+        $answers = $this->answers;
+
+        if (! is_array($answers)) {
+            return;
+        }
+
+        $samDisk   = Storage::disk('sam');
+        $localDisk = Storage::disk('local');
+
+        foreach ($answers as $answer) {
+            if (is_string($answer) && (str_starts_with($answer, 'exams/speaking/') || str_starts_with($answer, 'exam/'))) {
+                $cleanPath = trim(str_replace('\\', '/', $answer), '/');
+
+                if ($samDisk->exists($cleanPath)) {
+                    $samDisk->delete($cleanPath);
+                }
+
+                if ($localDisk->exists($cleanPath)) {
+                    $localDisk->delete($cleanPath);
+                }
+            }
+        }
+    }
 
     protected $fillable = [
         'class_exam_id',

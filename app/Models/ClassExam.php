@@ -13,6 +13,15 @@ class ClassExam extends Model
     use HasFactory;
     use SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (ClassExam $classExam) {
+            foreach ($classExam->submissions()->get() as $submission) {
+                $submission->delete();
+            }
+        });
+    }
+
     protected $fillable = [
         'code',
         'access_code',

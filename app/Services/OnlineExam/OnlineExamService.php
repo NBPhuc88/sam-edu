@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -266,12 +267,18 @@ class OnlineExamService implements OnlineExamServiceInterface
         $studentCode  = $student->student_code ?: ($student->username ?: "STD{$student->id}");
         $questionCode = $question->code ?: "Q{$question->id}";
 
-        $extension = $file->getClientOriginalExtension() ?: 'webm';
-        $fileName  = "{$examCode}_{$studentCode}_{$questionCode}.{$extension}";
+        $cleanExamCode    = Str::slug($examCode, '_');
+        $cleanStudentCode = Str::slug($studentCode, '_');
+        $cleanQCode       = Str::slug($questionCode, '_');
+        $timestamp        = time();
+        $randomHex        = Str::random(6);
 
-        // Lưu vào private storage: storage/app/private/exams/speaking/
+        $extension = $file->getClientOriginalExtension() ?: 'webm';
+        $fileName  = "{$cleanExamCode}_{$cleanStudentCode}_{$cleanQCode}_{$timestamp}_{$randomHex}.{$extension}";
+
+        // Lưu vào storage disk 'sam' tại /home/phuc/sam/exams/speaking/
         $directory = 'exams/speaking';
-        $path      = $file->storeAs($directory, $fileName, 'private');
+        $path      = $file->storeAs($directory, $fileName, 'sam');
 
         return $path;
     }
@@ -284,13 +291,19 @@ class OnlineExamService implements OnlineExamServiceInterface
             throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException('Đường dẫn file không hợp lệ.');
         }
 
-        $disk = Storage::disk('private');
+        $samDisk   = Storage::disk('sam');
+        $localDisk = Storage::disk('local');
 
-        if (! $disk->exists($cleanPath)) {
+        $fullPath = null;
+
+        if ($samDisk->exists($cleanPath)) {
+            $fullPath = $samDisk->path($cleanPath);
+        } elseif ($localDisk->exists($cleanPath)) {
+            $fullPath = $localDisk->path($cleanPath);
+        } else {
             throw new ModelNotFoundException('Không tìm thấy file ghi âm bài thi.');
         }
 
-        $fullPath = $disk->path($cleanPath);
         $mimeType = File::mimeType($fullPath) ?: 'audio/webm';
 
         return Response::file($fullPath, [

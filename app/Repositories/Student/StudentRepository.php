@@ -217,8 +217,8 @@ class StudentRepository implements StudentRepositoryInterface
             // Xóa điểm danh
             \Illuminate\Support\Facades\DB::table('attendances')->where('student_id', $id)->delete();
 
-            // Xóa bài nộp thi
-            \App\Models\ClassExamSubmission::where('student_id', $id)->delete();
+            // Xóa bài nộp thi (kèm dọn dẹp các tệp ghi âm speaking)
+            \App\Models\ClassExamSubmission::where('student_id', $id)->get()->each->delete();
 
             // Xóa học phí
             \App\Models\StudentTuition::where('student_id', $id)->delete();
