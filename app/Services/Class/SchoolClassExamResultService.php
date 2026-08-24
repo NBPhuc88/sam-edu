@@ -159,7 +159,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
         // Thống kê tổng quan lớp học
         $allClassSubmissions = ClassExamSubmission::query()
             ->whereIn('class_exam_id', $classExamIds)
-            ->whereIn('status', ['submitted', 'graded', 'passed', 'failed'])
+            ->where('status', '!=', 'in_progress')
             ->get();
 
         $totalSubmissions = $allClassSubmissions->count();

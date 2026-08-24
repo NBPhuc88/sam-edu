@@ -186,14 +186,14 @@ test('super admin can access offline grading create and store offline exam with 
     $sub1 = ClassExamSubmission::where('class_exam_id', $classExam->id)->where('student_id', $student1->id)->first();
     expect($sub1)->not->toBeNull()
         ->and((float) $sub1->score)->toBe(8.5)
-        ->and($sub1->status)->toBe('passed')
+        ->and($sub1->status)->toBe('submitted')
         ->and($sub1->is_graded)->toBeTrue()
         ->and($sub1->teacher_feedback)->toBe('Làm bài rất tốt!');
 
     $sub2 = ClassExamSubmission::where('class_exam_id', $classExam->id)->where('student_id', $student2->id)->first();
     expect($sub2)->not->toBeNull()
         ->and((float) $sub2->score)->toBe(4.0)
-        ->and($sub2->status)->toBe('failed')
+        ->and($sub2->status)->toBe('submitted')
         ->and($sub2->is_graded)->toBeTrue()
         ->and($sub2->teacher_feedback)->toBe('Cần ôn lại phần hàm số.');
 

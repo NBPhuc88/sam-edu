@@ -2,6 +2,7 @@
 
 namespace App\Services\Grading;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -414,7 +415,7 @@ class GradingService implements GradingServiceInterface
                 $comment   = ! empty($item['comment']) ? trim($item['comment']) : null;
 
                 $isPassed = $score !== null && $score >= $passScore;
-                $status   = $score !== null ? ($isPassed ? 'passed' : 'failed') : 'submitted';
+                $status   = Constant::SUBMISSION_STATUS_SUBMITTED;
                 $isGraded = $score !== null;
 
                 ClassExamSubmission::create([
