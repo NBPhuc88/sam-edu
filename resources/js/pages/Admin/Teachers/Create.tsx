@@ -65,7 +65,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
         setIsSubmitting(true);
 
         router.post(
-            '/admin/teachers',
+            '/teachers',
             {
                 center_id: centerId,
                 full_name: fullName,
@@ -95,7 +95,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href="/admin/teachers"
+                            href="/teachers"
                             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-xs transition-colors hover:bg-gray-50 hover:text-emerald-700"
                             title="Quay lại danh sách"
                         >
