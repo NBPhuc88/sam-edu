@@ -62,8 +62,8 @@ class MediaUploadService implements MediaUploadServiceInterface
         // Store file directly to public/asset
         $file->move($destDir, $fileName);
 
-        // URL generator referencing /asset/...
-        $assetUrl = '/asset/' . $destinationRelativePath;
+        // URL generator referencing asset('asset/...')
+        $assetUrl = asset('asset/' . $destinationRelativePath);
 
         return [
             'success'   => true,

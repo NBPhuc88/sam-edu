@@ -85,6 +85,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     const isBlob = isPendingBlobUrl(value);
 
+    const getDisplayFileName = (url: string | null | undefined): string => {
+        if (!url) return '';
+        if (isBlob) return 'Ảnh đã chọn (sẽ tải lên khi lưu)';
+        const clean = url.split('?')[0].split('#')[0];
+        const parts = clean.split('/');
+        return parts[parts.length - 1] || url;
+    };
+
     if (compact) {
         return (
             <div className={`flex items-center gap-1.5 min-w-0 ${className}`}>
@@ -108,7 +116,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 }}
                             />
                             <span className="text-2xs font-mono text-teal-900 truncate" title={value}>
-                                {isBlob ? 'Ảnh đã chọn (sẽ tải lên khi lưu)' : value}
+                                {getDisplayFileName(value)}
                             </span>
                         </div>
                         <button
@@ -251,7 +259,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 </span>
                             </div>
                             <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={value}>
-                                {isBlob ? 'Sẽ được tải lên máy chủ khi bấm Lưu đề thi' : value}
+                                {getDisplayFileName(value)}
                             </span>
                         </div>
                     </div>
