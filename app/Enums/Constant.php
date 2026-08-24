@@ -83,10 +83,40 @@ class Constant
     public const int CLASS_STATUS_ACTIVE    = 1; // Đang hoạt động
     public const int CLASS_STATUS_COMPLETED = 2; // Đã hoàn thành
 
+    public const array CLASS_STATUSES = [
+        self::CLASS_STATUS_INACTIVE,
+        self::CLASS_STATUS_ACTIVE,
+        self::CLASS_STATUS_COMPLETED,
+    ];
+
+    public const array CLASS_STATUS_LABELS = [
+        self::CLASS_STATUS_ACTIVE    => 'Đang hoạt động',
+        self::CLASS_STATUS_INACTIVE  => 'Tạm ngưng',
+        self::CLASS_STATUS_COMPLETED => 'Đã hoàn thành',
+    ];
+
     // Bảng students
-    public const int STUDENT_STATUS_INACTIVE  = 0; // Tạm ngưng / Khóa
+    public const int STUDENT_STATUS_INACTIVE  = 0; // Tạm ngưng / Khóa / Nghỉ học
     public const int STUDENT_STATUS_ACTIVE    = 1; // Đang theo học
     public const int STUDENT_STATUS_GRADUATED = 2; // Đã tốt nghiệp
+
+    public const array STUDENT_STATUSES = [
+        self::STUDENT_STATUS_INACTIVE,
+        self::STUDENT_STATUS_ACTIVE,
+        self::STUDENT_STATUS_GRADUATED,
+    ];
+
+    public const array STUDENT_STATUS_LABELS = [
+        self::STUDENT_STATUS_ACTIVE    => 'Đang học',
+        self::STUDENT_STATUS_INACTIVE  => 'Nghỉ học',
+        self::STUDENT_STATUS_GRADUATED => 'Đã tốt nghiệp',
+    ];
+
+    public const array STUDENT_STATUS_OPTIONS = [
+        ['value' => self::STUDENT_STATUS_ACTIVE, 'label' => 'Đang học'],
+        ['value' => self::STUDENT_STATUS_INACTIVE, 'label' => 'Nghỉ học'],
+        ['value' => self::STUDENT_STATUS_GRADUATED, 'label' => 'Đã tốt nghiệp'],
+    ];
 
     // ==========================================
     // 5. TRẠNG THÁI DẠNG CHUỖI (STRING ENUM STATUSES)

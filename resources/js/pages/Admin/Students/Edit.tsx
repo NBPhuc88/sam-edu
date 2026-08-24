@@ -41,7 +41,7 @@ interface Student {
     parent_phone: string | null;
     parent_relationship: string | null;
     admission_date: string | null;
-    status: string;
+    status: number | string;
     note: string | null;
     center_id: number;
     center?: Center;
@@ -87,17 +87,15 @@ export default function StudentEdit({ student, centers = [], classes = [], error
         );
     };
 
-    const normalizeStatus = (val: any) => {
-        if (val === 1 || val === '1' || val === 'active') return 'active';
-        if (val === 0 || val === '0' || val === 'inactive' || val === 'paused') return 'inactive';
-        if (val === 2 || val === '2' || val === 'graduated' || val === 'completed') return 'graduated';
-        if (val === 'suspended') return 'suspended';
-        if (val === 'locked') return 'locked';
-        return 'active';
+    const normalizeStatus = (val: any): number => {
+        if (val === 1 || val === '1' || val === 'active') return 1;
+        if (val === 0 || val === '0' || val === 'inactive' || val === 'paused' || val === 'suspended' || val === 'locked') return 0;
+        if (val === 2 || val === '2' || val === 'graduated' || val === 'completed') return 2;
+        return 1;
     };
 
     const [admissionDate, setAdmissionDate] = useState<string>(student.admission_date || '');
-    const [status, setStatus] = useState<string>(() => normalizeStatus(student.status));
+    const [status, setStatus] = useState<number>(() => normalizeStatus(student.status));
     const [note, setNote] = useState<string>(student.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -409,14 +407,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="active">Đang học</option>
-                                    <option value="inactive">Nghỉ học</option>
-                                    <option value="graduated">Đã tốt nghiệp</option>
-                                    <option value="suspended">Đình chỉ học</option>
-                                    <option value="locked">Khóa tài khoản</option>
+                                    <option value={1}>Đang học</option>
+                                    <option value={0}>Nghỉ học</option>
+                                    <option value={2}>Đã tốt nghiệp</option>
                                 </select>
                             </div>
 

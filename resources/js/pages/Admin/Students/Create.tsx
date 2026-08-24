@@ -47,7 +47,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     const [parentPhone, setParentPhone] = useState<string>('');
     const [parentRelationship, setParentRelationship] = useState<string>('Bố/Mẹ');
     const [admissionDate, setAdmissionDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [status, setStatus] = useState<string>('active');
+    const [status, setStatus] = useState<number>(1);
     const [note, setNote] = useState<string>('');
     const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
 
@@ -398,14 +398,12 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="active">Đang học</option>
-                                    <option value="inactive">Nghỉ học</option>
-                                    <option value="graduated">Đã tốt nghiệp</option>
-                                    <option value="suspended">Đình chỉ học</option>
-                                    <option value="locked">Khóa tài khoản</option>
+                                    <option value={1}>Đang học</option>
+                                    <option value={0}>Nghỉ học</option>
+                                    <option value={2}>Đã tốt nghiệp</option>
                                 </select>
                             </div>
 

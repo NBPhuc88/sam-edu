@@ -69,7 +69,7 @@ class UpdateStudentRequest extends FormRequest
             'parent_phone'        => ['nullable', new VietnamesePhoneNumber()],
             'parent_relationship' => ['nullable', 'string', 'max:50'],
             'admission_date'      => ['nullable', 'date'],
-            'status'              => ['sometimes', 'required'],
+            'status'              => ['sometimes', 'required', 'in:0,1,2,active,inactive,locked,graduated,suspended'],
             'note'                => ['nullable', 'string'],
             'class_ids'           => ['nullable', 'array'],
             'class_ids.*'         => ['integer', 'exists:classes,id'],

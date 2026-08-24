@@ -61,7 +61,7 @@ interface Student {
     parent_phone: string | null;
     parent_relationship: string | null;
     admission_date: string | null;
-    status: string;
+    status: number | string;
     center_id: number;
     center?: Center;
     classes?: StudentClassTag[];
@@ -109,7 +109,7 @@ export default function StudentIndex({
         filters.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined && filters.status !== null ? String(filters.status) : 'all',
     );
 
     // Filter available classes by selected center
@@ -268,20 +268,18 @@ return;
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang học</Badge>;
-            case 'inactive':
-                return <Badge variant="expired">Nghỉ học</Badge>;
-            case 'graduated':
-                return <Badge variant="pending">Tốt nghiệp</Badge>;
-            case 'suspended':
-            case 'locked':
-                return <Badge variant="danger">Đình chỉ / Khóa</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number | string) => {
+        const num = Number(status);
+
+        if (num === 1 || status === 'active') {
+            return <Badge variant="active">Đang học</Badge>;
         }
+
+        if (num === 2 || status === 'graduated') {
+            return <Badge variant="pending">Đã tốt nghiệp</Badge>;
+        }
+
+        return <Badge variant="expired">Nghỉ học</Badge>;
     };
 
     const getGenderLabel = (gender: string | null) => {
@@ -428,10 +426,9 @@ return;
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">Tất cả Trạng thái</option>
-                                    <option value="active">Đang học</option>
-                                    <option value="inactive">Nghỉ học</option>
-                                    <option value="graduated">Tốt nghiệp</option>
-                                    <option value="locked">Bị khóa</option>
+                                    <option value="1">Đang học</option>
+                                    <option value="0">Nghỉ học</option>
+                                    <option value="2">Đã tốt nghiệp</option>
                                 </select>
                             </div>
                         </div>

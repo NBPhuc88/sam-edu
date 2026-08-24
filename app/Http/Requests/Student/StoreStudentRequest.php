@@ -41,7 +41,7 @@ class StoreStudentRequest extends FormRequest
             'parent_phone'        => ['nullable', new VietnamesePhoneNumber()],
             'parent_relationship' => ['nullable', 'string', 'max:50'],
             'admission_date'      => ['nullable', 'date'],
-            'status'              => ['nullable', 'string', 'in:active,inactive,locked,graduated,suspended'],
+            'status'              => ['nullable', 'in:0,1,2,active,inactive,locked,graduated,suspended'],
             'note'                => ['nullable', 'string'],
             'class_ids'           => ['nullable', 'array'],
             'class_ids.*'         => ['integer', 'exists:classes,id'],
