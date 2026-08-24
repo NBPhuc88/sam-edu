@@ -58,6 +58,7 @@ interface DashboardLayoutProps {
     center?: CenterData | null;
     subscriptionPlans?: SubscriptionPlan[];
     onZaloPayRenew?: (planCode: string) => Promise<void>;
+    headerExtra?: React.ReactNode;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -67,6 +68,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     center,
     subscriptionPlans = [],
     onZaloPayRenew,
+    headerExtra,
 }) => {
     // Default sidebar to closed on Mobile (< 768px), open on Desktop (>= 768px)
     const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -177,6 +179,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             : undefined
                     }
                     centerExpired={center?.is_expired}
+                    headerExtra={headerExtra}
                 />
 
                 {/* Page Content */}

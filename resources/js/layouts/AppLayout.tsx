@@ -19,11 +19,13 @@ import apiClient from '../lib/axios';
 interface AppLayoutProps {
     children: React.ReactNode;
     title?: string;
+    headerExtra?: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
     children,
     title = 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục',
+    headerExtra,
 }) => {
     const { auth, center, subscription_plans, flash } = usePage().props as any;
 
@@ -111,6 +113,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 center={center ?? null}
                 subscriptionPlans={subscription_plans ?? []}
                 onZaloPayRenew={center ? handleZaloPayRenew : undefined}
+                headerExtra={headerExtra}
             >
                 {children}
             </DashboardLayout>

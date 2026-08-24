@@ -34,6 +34,7 @@ interface HeaderProps {
     onToggleSidebar: () => void;
     onOpenPayment?: () => void;
     centerExpired?: boolean;
+    headerExtra?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
     onToggleSidebar,
     onOpenPayment,
     centerExpired,
+    headerExtra,
 }) => {
     const handleLogout = () => {
         router.post('/logout');
@@ -78,8 +80,12 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
             </div>
 
-            {/* Center — Logo của trung tâm & Tên Trung tâm */}
-            {showCenterBrand && center ? (
+            {/* Center — Logo của trung tâm / Custom Header Extra */}
+            {headerExtra ? (
+                <div className="flex items-center justify-center">
+                    {headerExtra}
+                </div>
+            ) : showCenterBrand && center ? (
                 <div className="flex max-w-[45%] sm:max-w-[55%] md:max-w-[60%] items-center gap-2 sm:gap-2.5 rounded-full bg-emerald-50/80 py-1 px-2.5 sm:px-3.5 border border-emerald-200/70 shadow-2xs">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
                         <Building2 className="h-4 w-4" />

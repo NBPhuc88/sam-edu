@@ -245,46 +245,45 @@ export default function GradingShow({
     const activeSecMax = activeSecQuestions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
 
     return (
-        <AppLayout title={`Chấm Bài: ${submission.student?.full_name} - ${classExam.title}`}>
+        <AppLayout
+            title={`Chấm Bài: ${submission.student?.full_name} - ${classExam.title}`}
+            headerExtra={
+                <div className="flex items-center gap-2.5 rounded-xl bg-slate-900 px-3.5 py-1.5 text-white shadow-xs border border-slate-800">
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:inline">Tổng điểm bài thi:</span>
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider sm:hidden">Điểm:</span>
+                    <div className="flex items-baseline gap-1 leading-none">
+                        <span className="font-mono text-base sm:text-lg font-black text-emerald-400">
+                            {calculatedTotalScore.toFixed(2)}
+                        </span>
+                        <span className="font-mono text-2xs text-gray-400 font-semibold">/ {maxExamScore}đ</span>
+                    </div>
+                    <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                        isPassed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    }`}>
+                        {isPassed ? 'Đạt' : 'Chưa đạt'}
+                    </span>
+                </div>
+            }
+        >
             <Head title={`Chấm Bài: ${submission.student?.full_name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6 pb-16">
-                {/* Sticky Top Header with Live Total Score */}
-                <div className="sticky top-16 z-20 rounded-2xl border border-gray-200 bg-white/95 backdrop-blur-md p-3 sm:p-3.5 shadow-xs">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                                <Button variant="secondary" size="sm" className="h-8 px-2.5 text-xs font-semibold" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-                                    Quay Lại
-                                </Button>
-                            </Link>
-                            <div className="space-y-0.5">
-                                <h1 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                                    <PenTool className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                    <span className="truncate max-w-[160px] sm:max-w-xs md:max-w-md">{classExam.title}</span>
-                                </h1>
-                                <p className="text-2xs text-gray-500 font-medium">
-                                    Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name || '---'}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Sticky Live Total Score Display */}
-                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-900 px-3.5 py-1.5 text-white shadow-xs border border-slate-800">
-                            <div className="text-right">
-                                <span className="block text-[9px] font-semibold uppercase tracking-wider text-gray-400">Tổng điểm:</span>
-                                <div className="flex items-baseline gap-1 leading-none">
-                                    <span className="font-mono text-base font-black text-emerald-400">
-                                        {calculatedTotalScore.toFixed(2)}
-                                    </span>
-                                    <span className="font-mono text-2xs text-gray-400 font-semibold">/ {maxExamScore}đ</span>
-                                </div>
-                            </div>
-                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
-                                isPassed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            }`}>
-                                {isPassed ? 'Đạt' : 'Chưa đạt'}
-                            </span>
+                {/* Top Page Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
+                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                                Quay Lại Danh Sách
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <PenTool className="h-5 w-5 text-emerald-600" />
+                                Chấm Bài Thi: {classExam.title}
+                            </h1>
+                            <p className="text-2xs text-gray-500 font-medium">
+                                Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name || '---'}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -558,9 +557,9 @@ export default function GradingShow({
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1">
-                                        <div className="md:col-span-4 space-y-1">
-                                            <label className="text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center justify-between">
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1 items-end">
+                                        <div className="md:col-span-4 space-y-1.5">
+                                            <label className="h-5 text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center justify-between">
                                                 <span>Điểm chấm câu này:</span>
                                                 <span className="text-emerald-700 font-bold">Tối đa: {q.score}đ</span>
                                             </label>
@@ -572,22 +571,22 @@ export default function GradingShow({
                                                     max={q.score}
                                                     value={currentGrade.score_earned}
                                                     onChange={(e) => handleScoreChange(q.id, q.score, e.target.value)}
-                                                    className="w-full rounded-xl border border-emerald-400 bg-white px-3 py-2 text-sm font-black text-emerald-800 focus:border-emerald-600 focus:outline-hidden shadow-2xs"
+                                                    className="h-10 w-full rounded-xl border border-emerald-400 bg-white pl-3.5 pr-12 text-sm font-black text-emerald-800 focus:border-emerald-600 focus:outline-hidden shadow-2xs"
                                                 />
-                                                <span className="absolute right-3 top-2.5 text-xs font-bold text-gray-400">điểm</span>
+                                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">điểm</span>
                                             </div>
                                         </div>
 
-                                        <div className="md:col-span-8 space-y-1">
-                                            <label className="text-2xs font-bold uppercase tracking-wider text-gray-700">
-                                                Ghi chú / Lời phê cho câu này (Tùy chọn):
+                                        <div className="md:col-span-8 space-y-1.5">
+                                            <label className="h-5 text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center">
+                                                <span>Ghi chú / Lời phê cho câu này (Tùy chọn):</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 value={currentGrade.comment}
                                                 onChange={(e) => handleCommentChange(q.id, e.target.value)}
                                                 placeholder="VD: Cần chú ý cách dùng từ, phát âm âm cuối..."
-                                                className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-hidden shadow-2xs"
+                                                className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden shadow-2xs"
                                             />
                                         </div>
                                     </div>
