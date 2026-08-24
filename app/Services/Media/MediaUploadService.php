@@ -58,8 +58,8 @@ class MediaUploadService implements MediaUploadServiceInterface
         // Dispatch background queue job to process and move file to public/asset
         ProcessImageUploadJob::dispatch($tempRelativePath, $targetFolder, $fileName, 'asset');
 
-        // URL generator referencing asset('asset/...')
-        $assetUrl = asset('asset/' . $destinationRelativePath);
+        // URL generator referencing full asset URL -> http://domain/asset/...
+        $assetUrl = url('asset/' . $destinationRelativePath);
 
         return [
             'success'   => true,

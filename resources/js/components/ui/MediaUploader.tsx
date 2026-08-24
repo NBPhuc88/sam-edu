@@ -90,13 +90,19 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
     const isBlob = isPendingBlobUrl(value);
 
-    const getDisplayFileName = (url: string | null | undefined): string => {
+    const toFullAssetUrl = (url: string | null | undefined): string => {
         if (!url) return '';
-        if (isBlob) return isAudio ? 'File âm thanh đã chọn (sẽ lưu khi bấm Lưu)' : 'Ảnh đã chọn (sẽ lưu khi bấm Lưu)';
-        const clean = url.split('?')[0].split('#')[0];
-        const parts = clean.split('/');
-        return parts[parts.length - 1] || url;
+        if (url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+            return url;
+        }
+        const clean = url.startsWith('/') ? url : `/${url}`;
+        if (typeof window !== 'undefined' && window.location?.origin) {
+            return `${window.location.origin}${clean}`;
+        }
+        return clean;
     };
+
+    const displayUrl = toFullAssetUrl(value);
 
     if (compact) {
         return (
@@ -118,7 +124,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 </div>
                             ) : (
                                 <img
-                                    src={value}
+                                    src={displayUrl}
                                     alt="Preview"
                                     className="h-6 w-6 rounded object-cover border border-teal-200 bg-white shrink-0"
                                     onError={(e) => {
@@ -126,8 +132,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                     }}
                                 />
                             )}
-                            <span className="text-2xs font-mono text-teal-900 truncate" title={value}>
-                                {getDisplayFileName(value)}
+                            <span className="text-2xs font-mono text-teal-900 truncate" title={displayUrl}>
+                                {isBlob ? (isAudio ? 'Audio đã chọn (sẽ lưu khi bấm Lưu)' : 'Ảnh đã chọn (sẽ lưu khi bấm Lưu)') : displayUrl}
                             </span>
                         </div>
                         <button
@@ -266,7 +272,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             </div>
                         ) : (
                             <img
-                                src={value}
+                                src={displayUrl}
                                 alt="Preview"
                                 className="h-14 w-14 rounded-lg object-cover border border-emerald-200 bg-white shrink-0"
                                 onError={(e) => {
@@ -283,12 +289,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                         : (isAudio ? 'Đã đính kèm file âm thanh' : 'Đã đính kèm ảnh')}
                                 </span>
                             </div>
-                            <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={value}>
-                                {getDisplayFileName(value)}
+                            <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={displayUrl}>
+                                {isBlob
+                                    ? (isAudio ? 'Audio sẽ được tải lên khi lưu đề thi' : 'Ảnh sẽ được tải lên khi lưu đề thi')
+                                    : displayUrl}
                             </span>
                             {isAudio && (
                                 <div className="mt-1.5">
-                                    <audio src={value} controls className="h-7 max-w-xs" />
+                                    <audio src={displayUrl} controls className="h-7 max-w-xs" />
                                 </div>
                             )}
                         </div>
