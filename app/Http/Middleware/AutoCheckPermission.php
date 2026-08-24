@@ -39,9 +39,7 @@ class AutoCheckPermission
         'chats.index' => 'classes.chat',
 
         // Grading
-        'grading.offline.create' => 'grading.create',
-        'grading.offline.store'  => 'grading.create',
-        'grading.show'           => 'grading.grade',
+        'grading.show' => 'grading.grade',
 
         // Practice Exams
         'practice-exams.submit' => 'practice-exams.index',
@@ -55,11 +53,7 @@ class AutoCheckPermission
         'teachers.sample-csv' => 'teachers.import',
 
         // Classes & Schedules Sub-actions
-        'classes.students.sample-csv' => 'classes.students',
-        'classes.students.available'  => 'classes.students',
-        'classes.students.add'        => 'classes.students',
-        'classes.students.remove'     => 'classes.students',
-        'schedules.sessions'          => 'schedules.index',
+        'schedules.sessions' => 'schedules.index',
 
         // Attendance Sub-actions
         'attendance.session' => 'attendance.index',
