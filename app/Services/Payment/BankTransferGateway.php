@@ -15,10 +15,10 @@ class BankTransferGateway implements PaymentGatewayInterface
         $amount     = (int) ($data['amount'] ?? 0);
         $appTransId = (string) ($data['app_trans_id'] ?? '');
 
-        // Cấu hình tài khoản ngân hàng mặc định của Sam Edu
+        // Cấu hình tài khoản ngân hàng mặc định của SAM Digital
         $bankId       = config('payment.bank.bank_id', 'ICB'); // VietinBank / MB / Vietcombank
         $accountNo    = config('payment.bank.account_no', '1008889999');
-        $accountName  = config('payment.bank.account_name', 'CONG TY CP GIAO DUC SAM');
+        $accountName  = config('payment.bank.account_name', 'CONG TY CP SAM DIGITAL');
         $transferMemo = 'SAM ' . $appTransId;
 
         // Sinh mã VietQR tĩnh/động chuẩn Napas247 qua vietqr.io API

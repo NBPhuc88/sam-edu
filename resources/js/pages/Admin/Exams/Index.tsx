@@ -204,7 +204,7 @@ export default function ExamIndex({
     };
 
     return (
-        <AppLayout title="Kho Đề Thi - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Kho Đề Thi - SAM Digital">
             <Head title="Kho Đề Thi" />
 
             <div className="space-y-6">

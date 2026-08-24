@@ -167,7 +167,7 @@ export default function GradingIndex({
     };
 
     return (
-        <AppLayout title="Chấm Bài Thi - Hệ Thống Quản Lý Giáo Dục Sam">
+        <AppLayout title="Chấm Bài Thi - SAM Digital">
             <Head title="Chấm Bài Thi Theo Lớp" />
 
             <div className="space-y-6">

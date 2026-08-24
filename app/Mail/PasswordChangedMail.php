@@ -45,7 +45,7 @@ class PasswordChangedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Cảnh báo bảo mật: Mật khẩu {$this->roleLabel} vừa được thay đổi",
+            subject: "[SAM Digital] Cảnh báo bảo mật: Mật khẩu {$this->roleLabel} vừa được thay đổi",
         );
     }
 

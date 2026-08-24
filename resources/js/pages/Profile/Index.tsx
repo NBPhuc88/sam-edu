@@ -235,7 +235,7 @@ export default function ProfileIndex({ profile, errors = {} }: ProfileProps) {
     };
 
     return (
-        <AppLayout title="Thông Tin Tài Khoản - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thông Tin Tài Khoản - SAM Digital">
             <Head title="Thông Tin Tài Khoản" />
 
             <div className="mx-auto max-w-5xl space-y-6">

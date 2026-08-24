@@ -207,7 +207,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
     };
 
     return (
-        <AppLayout title="Quản Lý Giáo Viên - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Giáo Viên - SAM Digital">
             <Head title="Quản Lý Giáo Viên" />
 
             <div className="space-y-6">

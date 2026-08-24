@@ -222,7 +222,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     name="company_name"
                                     value={data.settings.company_name}
                                     onChange={(e) => handleSettingChange('company_name', e.target.value)}
-                                    placeholder="VD: Công ty Cổ phần Công nghệ Giáo dục Sam"
+                                    placeholder="VD: Công ty Cổ phần SAM Digital"
                                     icon={<Building2 className="h-4 w-4 text-gray-400" />}
                                     error={errors['settings.company_name']}
                                 />
@@ -304,7 +304,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     name="hero_title"
                                     value={data.settings.hero_title}
                                     onChange={(e) => handleSettingChange('hero_title', e.target.value)}
-                                    placeholder="VD: Hệ Thống Quản Lý Giáo Dục Đa Trung Tâm Sam"
+                                    placeholder="VD: SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục"
                                     error={errors['settings.hero_title']}
                                 />
 
@@ -455,7 +455,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                         id={`seo_${selectedSeoRoute}_title`}
                                         value={activeSeoItem.title ?? ''}
                                         onChange={(e) => handleSeoChange(selectedSeoRoute, 'title', e.target.value)}
-                                        placeholder="VD: Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - Sam Edu"
+                                        placeholder="VD: Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital"
                                         icon={<Globe className="h-4 w-4 text-gray-400" />}
                                     />
 

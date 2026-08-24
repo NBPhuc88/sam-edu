@@ -47,7 +47,7 @@ class ClassExamCreatedMail extends Mailable implements ShouldQueue
         $prefix    = $this->recipientRole === 'teacher' ? 'Lịch thi mới' : 'Thông báo Kỳ thi';
 
         return new Envelope(
-            subject: "[Sam Edu] {$prefix}: {$this->classExam->title} - Lớp {$className}",
+            subject: "[SAM Digital] {$prefix}: {$this->classExam->title} - Lớp {$className}",
         );
     }
 

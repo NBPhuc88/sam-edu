@@ -136,7 +136,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     };
 
     return (
-        <AppLayout title="Tạo Lớp Học Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Tạo Lớp Học Mới - SAM Digital">
             <Head title="Tạo Lớp Học Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

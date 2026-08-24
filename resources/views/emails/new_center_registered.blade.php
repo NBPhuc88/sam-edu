@@ -1,7 +1,7 @@
 <x-mail::message>
 # 🔔 Thông báo: Trung tâm mới vừa đăng ký!
 
-Hệ thống Quản lý Giáo dục **Sam Edu** vừa nhận được thông tin đăng ký trung tâm mới từ website:
+Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** vừa nhận được thông tin đăng ký trung tâm mới từ website:
 
 <x-mail::table>
 | Thông tin | Chi tiết |

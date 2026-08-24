@@ -172,7 +172,7 @@ return;
     };
 
     return (
-        <AppLayout title="Quản Lý Lớp Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Lớp Học - SAM Digital">
             <Head title="Quản Lý Lớp Học" />
 
             <div className="space-y-6">

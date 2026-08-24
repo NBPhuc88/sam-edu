@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
     const { contactInfo } = usePage().props as any;
     const currentYear = new Date().getFullYear();
 
-    const companyName = contactInfo?.company_name || 'Hệ thống Quản lý Giáo dục Sam';
+    const companyName = contactInfo?.company_name || 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục';
     const phone = contactInfo?.phone || '0988.123.456';
     const email = contactInfo?.email || 'phucstt01@gmail.com';
 
@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
                         {companyName}
                     </span>
                     <span className="hidden text-gray-300 sm:inline">•</span>
-                    <span>© {currentYear} Sam Edu. Bảo lưu mọi quyền.</span>
+                    <span>© {currentYear} SAM Digital. Bảo lưu mọi quyền.</span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-600/20">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         v1.0.0

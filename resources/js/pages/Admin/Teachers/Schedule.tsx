@@ -320,7 +320,7 @@ export default function TeacherSchedulePage({
     };
 
     return (
-        <AppLayout title={`Lịch Dạy Giáo Viên: ${teacher.full_name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Lịch Dạy Giáo Viên: ${teacher.full_name} - SAM Digital`}>
             <Head title={`Lịch Dạy: ${teacher.full_name}`} />
 
             <div className="space-y-6">

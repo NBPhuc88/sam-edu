@@ -252,7 +252,7 @@ return;
     };
 
     return (
-        <AppLayout title="Chi Tiết Hồ Sơ Học Phí - Giáo Dục Sam">
+        <AppLayout title="Chi Tiết Hồ Sơ Học Phí - SAM Digital">
             <Head title="Chi Tiết Hồ Sơ Học Phí" />
 
             <div className="space-y-6">

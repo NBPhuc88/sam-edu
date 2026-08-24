@@ -212,7 +212,7 @@ export default function ExamCreate({
     };
 
     return (
-        <AppLayout title="Tạo Đề Thi Mới - Kho Đề Thi - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Tạo Đề Thi Mới - Kho Đề Thi - SAM Digital">
             <Head title="Tạo Đề Thi Mới - Kho Đề Thi" />
 
             <div className="mx-auto max-w-6xl space-y-6">

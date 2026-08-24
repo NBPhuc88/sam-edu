@@ -144,7 +144,7 @@ export const Create: React.FC<CreateProps> = ({
     };
 
     return (
-        <AppLayout title="Tạo Khoản Thu Học Phí Mới - Giáo Dục Sam">
+        <AppLayout title="Tạo Khoản Thu Học Phí Mới - SAM Digital">
             <Head title="Tạo Khoản Thu Học Phí Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

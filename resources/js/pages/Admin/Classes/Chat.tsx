@@ -439,7 +439,7 @@ export default function ClassChatPage({
                                     {schoolClass.name}
                                 </h2>
                                 <p className="text-2xs sm:text-xs text-gray-500 truncate">
-                                    Mã lớp: {schoolClass.code} • {schoolClass.center?.name || 'Trung tâm Sam Edu'}
+                                    Mã lớp: {schoolClass.code} • {schoolClass.center?.name || 'Trung tâm SAM Digital'}
                                 </p>
                             </div>
                         </div>

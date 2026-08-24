@@ -788,7 +788,7 @@ export default function ScheduleCreate({
     };
 
     return (
-        <AppLayout title="Thiết Lập Lịch Học Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thiết Lập Lịch Học Mới - SAM Digital">
             <Head title="Thiết Lập Lịch Học Mới" />
 
             <div className="mx-auto max-w-6xl space-y-6">

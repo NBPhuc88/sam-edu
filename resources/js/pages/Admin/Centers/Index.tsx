@@ -75,7 +75,7 @@ return;
     };
 
     return (
-        <AppLayout title="Quản lý Danh sách Trung tâm - Giáo dục Sam">
+        <AppLayout title="Quản lý Danh sách Trung tâm - SAM Digital">
             <Head title="Quản lý Danh sách Trung tâm" />
 
             <div className="space-y-6">

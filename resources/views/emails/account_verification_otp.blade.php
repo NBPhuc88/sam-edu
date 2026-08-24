@@ -3,7 +3,7 @@
 
 Kính gửi **{{ $name }}**,
 
-Bạn đang thực hiện yêu cầu **{{ $actionLabel }}** trên Hệ thống Quản lý Giáo dục Sam Edu. Dưới đây là mã xác thực bảo mật 6 chữ số của bạn:
+Bạn đang thực hiện yêu cầu **{{ $actionLabel }}** trên SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục. Dưới đây là mã xác thực bảo mật 6 chữ số của bạn:
 
 <x-mail::panel>
 <div style="text-align: center; padding: 10px 0;">

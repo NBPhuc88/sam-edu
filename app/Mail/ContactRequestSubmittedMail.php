@@ -30,7 +30,7 @@ class ContactRequestSubmittedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Yêu cầu tư vấn mới từ '{$this->contactRequest->full_name}'",
+            subject: "[SAM Digital] Yêu cầu tư vấn mới từ '{$this->contactRequest->full_name}'",
         );
     }
 

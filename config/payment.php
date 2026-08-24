@@ -31,7 +31,7 @@ return [
     'bank' => [
         'bank_id'      => env('BANK_ID', 'ICB'),
         'account_no'   => env('BANK_ACCOUNT_NO', '1008889999'),
-        'account_name' => env('BANK_ACCOUNT_NAME', 'CONG TY CP GIAO DUC SAM'),
+        'account_name' => env('BANK_ACCOUNT_NAME', 'CONG TY CP SAM DIGITAL'),
     ],
 
 ];

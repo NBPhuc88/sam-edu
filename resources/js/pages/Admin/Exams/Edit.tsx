@@ -220,7 +220,7 @@ export default function ExamEdit({
     };
 
     return (
-        <AppLayout title={`Chỉnh Sửa Đề Thi: ${exam.name} - Kho Đề Thi - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Chỉnh Sửa Đề Thi: ${exam.name} - Kho Đề Thi - SAM Digital`}>
             <Head title={`Chỉnh Sửa: ${exam.name} - Kho Đề Thi`} />
 
             <div className="mx-auto max-w-6xl space-y-6">

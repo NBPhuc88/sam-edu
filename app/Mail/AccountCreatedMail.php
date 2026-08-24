@@ -45,7 +45,7 @@ class AccountCreatedMail extends Mailable implements ShouldQueue
         $centerPrefix = $this->centerName ? " tại {$this->centerName}" : '';
 
         return new Envelope(
-            subject: "[Sam Edu] Thông tin tài khoản {$this->roleLabel} mới{$centerPrefix}",
+            subject: "[SAM Digital] Thông tin tài khoản {$this->roleLabel} mới{$centerPrefix}",
         );
     }
 

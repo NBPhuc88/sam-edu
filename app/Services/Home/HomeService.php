@@ -51,7 +51,7 @@ class HomeService implements HomeServiceInterface
      */
     public function getAboutPageData(): array
     {
-        $companyName = $this->systemSettingRepository->getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
+        $companyName = $this->systemSettingRepository->getByKey('company_name', 'Công ty Cổ phần SAM Digital');
         $address     = $this->systemSettingRepository->getByKey('contact_address', 'Tòa nhà Sam Tower, Hà Nội');
 
         return [
@@ -67,7 +67,7 @@ class HomeService implements HomeServiceInterface
      */
     public function getContactPageData(): array
     {
-        $companyName = $this->systemSettingRepository->getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam');
+        $companyName = $this->systemSettingRepository->getByKey('company_name', 'Công ty Cổ phần SAM Digital');
         $address     = $this->systemSettingRepository->getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội');
         $phone       = $this->systemSettingRepository->getByKey('contact_phone', '0988.123.456');
         $email       = $this->systemSettingRepository->getByKey('contact_email', 'phucstt01@gmail.com');

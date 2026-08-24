@@ -49,7 +49,7 @@ class EmailChangedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Thông báo: Địa chỉ email {$this->roleLabel} đã được thay đổi",
+            subject: "[SAM Digital] Thông báo: Địa chỉ email {$this->roleLabel} đã được thay đổi",
         );
     }
 

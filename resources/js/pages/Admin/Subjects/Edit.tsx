@@ -75,7 +75,7 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
     };
 
     return (
-        <AppLayout title={`Chỉnh Sửa Môn Học: ${subject.name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Chỉnh Sửa Môn Học: ${subject.name} - SAM Digital`}>
             <Head title={`Chỉnh Sửa Môn Học: ${subject.name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">

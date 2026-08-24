@@ -241,7 +241,7 @@ export default function ClassEdit({
     };
 
     return (
-        <AppLayout title={`Chỉnh Sửa Lớp: ${schoolClass.name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Chỉnh Sửa Lớp: ${schoolClass.name} - SAM Digital`}>
             <Head title={`Chỉnh Sửa Lớp: ${schoolClass.name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">

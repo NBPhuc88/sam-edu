@@ -819,7 +819,7 @@ export default function ScheduleEdit({
     };
 
     return (
-        <AppLayout title="Cập Nhật Lịch Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Cập Nhật Lịch Học - SAM Digital">
             <Head title="Cập Nhật Lịch Học" />
 
             <div className="mx-auto max-w-6xl space-y-6">

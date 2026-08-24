@@ -47,7 +47,7 @@ class PasswordResetOtpMail extends Mailable implements ShouldQueue
         };
 
         return new Envelope(
-            subject: "[Sam Edu] Mã OTP đặt lại mật khẩu của bạn là: {$this->otp}",
+            subject: "[SAM Digital] Mã OTP đặt lại mật khẩu của bạn là: {$this->otp}",
         );
     }
 

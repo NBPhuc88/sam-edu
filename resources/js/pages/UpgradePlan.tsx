@@ -78,7 +78,7 @@ export default function UpgradePlan({
         },
         {
             title: 'Hỗ trợ kỹ thuật ưu tiên 24/7',
-            desc: 'Hỗ trợ vận hành trực tiếp từ đội ngũ chuyên gia Sam Edu.',
+            desc: 'Hỗ trợ vận hành trực tiếp từ đội ngũ chuyên gia SAM Digital.',
             icon: Zap,
         },
     ];

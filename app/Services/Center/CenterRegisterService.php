@@ -64,7 +64,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'code'      => $center->code,
                 'name'      => $center->name,
                 'plan'      => $center->subscription_plan,
-                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị Sam Edu sẽ liên hệ hỗ trợ kích hoạt trong thời gian sớm nhất.',
+                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị SAM Digital sẽ liên hệ hỗ trợ kích hoạt trong thời gian sớm nhất.',
             ];
         }
 
@@ -93,7 +93,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'code'      => $center->code,
                 'name'      => $center->name,
                 'plan'      => $center->subscription_plan,
-                'message'   => 'Đăng ký dùng thử 30 ngày thành công! Ban quản trị Sam Edu đã ghi nhận thông tin trung tâm.',
+                'message'   => 'Đăng ký dùng thử 30 ngày thành công! Ban quản trị SAM Digital đã ghi nhận thông tin trung tâm.',
             ];
         }
 

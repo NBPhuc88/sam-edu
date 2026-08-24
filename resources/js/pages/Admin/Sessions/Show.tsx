@@ -253,7 +253,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
     };
 
     return (
-        <AppLayout title={`Chi Tiết Buổi Học #${session.id} - Sam Edu`}>
+        <AppLayout title={`Chi Tiết Buổi Học #${session.id} - SAM Digital`}>
             <Head title={`Buổi Học #${session.id} - ${subject?.name || 'Môn Học'}`} />
 
             <div className="space-y-6">

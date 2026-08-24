@@ -3,7 +3,7 @@
 
 Kính gửi **{{ $fullName }}**,
 
-Tên đăng nhập cho tài khoản **{{ $roleLabel }}** của bạn trên Hệ thống Quản lý Giáo dục Sam Edu đã được cập nhật thành công:
+Tên đăng nhập cho tài khoản **{{ $roleLabel }}** của bạn trên SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục đã được cập nhật thành công:
 
 <x-mail::table>
 | Thông tin | Chi tiết |

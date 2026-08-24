@@ -32,7 +32,7 @@ class NewCenterRegisteredMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Thông báo: Trung tâm mới '{$this->center->name}' vừa đăng ký!",
+            subject: "[SAM Digital] Thông báo: Trung tâm mới '{$this->center->name}' vừa đăng ký!",
         );
     }
 

@@ -3,7 +3,7 @@
 
 Kính gửi **{{ $accountName }}**,
 
-Hệ thống Quản lý Giáo dục **Sam Edu** nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. 
+Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. 
 
 Mã xác thực OTP của bạn là:
 

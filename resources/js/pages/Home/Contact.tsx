@@ -79,7 +79,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
     };
 
     return (
-        <PublicLayout title="Liên Hệ Tư Vấn Giải Pháp - Giáo Dục Sam">
+        <PublicLayout title="Liên Hệ Tư Vấn Giải Pháp - SAM Digital">
             {/* Header */}
             <section className="border-b border-gray-200 bg-slate-50 py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl space-y-3 px-4 text-center sm:px-6 lg:px-8">
@@ -87,7 +87,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
                         Liên Hệ Tư Vấn Giải Pháp
                     </h1>
                     <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-600">
-                        Gửi câu hỏi hoặc yêu cầu tư vấn giải pháp quản lý cho trung tâm đào tạo của bạn. Đội ngũ chuyên viên Sam Edu sẽ hỗ trợ bạn 24/7.
+                        Gửi câu hỏi hoặc yêu cầu tư vấn giải pháp quản lý cho trung tâm đào tạo của bạn. Đội ngũ chuyên viên SAM Digital sẽ hỗ trợ bạn 24/7.
                     </p>
                 </div>
             </section>
@@ -114,7 +114,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
                                             </div>
                                             <div>
                                                 {contactInfo?.company_name ||
-                                                    'Công ty Cổ phần Giáo dục Sam'}
+                                                    'Công ty Cổ phần SAM Digital'}
                                             </div>
                                         </div>
                                     </div>
@@ -192,7 +192,7 @@ export const Contact: React.FC<ContactProps> = ({ contactInfo }) => {
                                             Gửi Yêu Cầu Tư Vấn Thành Công!
                                         </h3>
                                         <p className="mx-auto max-w-md text-xs text-gray-600 leading-relaxed">
-                                            Cảm ơn bạn đã liên hệ với Sam Edu. Đội ngũ chuyên viên tư vấn sẽ phản hồi lại bạn trong thời gian sớm nhất.
+                                            Cảm ơn bạn đã liên hệ với SAM Digital. Đội ngũ chuyên viên tư vấn sẽ phản hồi lại bạn trong thời gian sớm nhất.
                                         </p>
                                         <div className="pt-4">
                                             <Button

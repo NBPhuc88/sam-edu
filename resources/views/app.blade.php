@@ -17,7 +17,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Giáo Dục Sam') }}</title>
+            <title>{{ config('app.name', 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục') }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

@@ -22,7 +22,7 @@ export const Create: React.FC<CreateProps> = ({
     };
 
     return (
-        <AppLayout title="Thêm Trung Tâm Mới - Giáo dục Sam">
+        <AppLayout title="Thêm Trung Tâm Mới - SAM Digital">
             <Head title="Thêm Trung Tâm Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

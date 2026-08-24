@@ -33,7 +33,7 @@ class CenterUpdatedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Thông báo: Thông tin Trung tâm '{$this->center->name}' đã được cập nhật",
+            subject: "[SAM Digital] Thông báo: Thông tin Trung tâm '{$this->center->name}' đã được cập nhật",
         );
     }
 

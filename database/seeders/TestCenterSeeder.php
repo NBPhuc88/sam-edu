@@ -1369,7 +1369,7 @@ class TestCenterSeeder extends Seeder
 
         $notifId = DB::table('notifications')->insertGetId([
             'title'               => 'Thông Báo Lịch Nghỉ Lễ & Khai Giảng Khóa Mới',
-            'content'             => 'Hệ thống Sam Edu xin thông báo lịch nghỉ lễ và kế hoạch khai giảng các lớp học mới trong tháng tới. Quý thầy cô và học sinh vui lòng kiểm tra lịch học chi tiết trên ứng dụng.',
+            'content'             => 'Hệ thống SAM Digital xin thông báo lịch nghỉ lễ và kế hoạch khai giảng các lớp học mới trong tháng tới. Quý thầy cô và học sinh vui lòng kiểm tra lịch học chi tiết trên ứng dụng.',
             'type'                => 'system',
             'created_by_admin_id' => $superAdmin->id,
             'created_at'          => $this->now,

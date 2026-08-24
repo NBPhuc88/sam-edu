@@ -3,7 +3,7 @@
 
 Kính gửi **{{ $fullName }}**,
 
-Địa chỉ email liên kết với tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên Hệ thống Quản lý Giáo dục Sam Edu đã được cập nhật thành công.
+Địa chỉ email liên kết với tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục đã được cập nhật thành công.
 
 <x-mail::table>
 | Thông tin | Chi tiết |

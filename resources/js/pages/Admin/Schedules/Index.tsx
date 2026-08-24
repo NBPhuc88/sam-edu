@@ -239,7 +239,7 @@ export default function ScheduleIndex({
     };
 
     return (
-        <AppLayout title="Quản Lý Lịch Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Lịch Học - SAM Digital">
             <Head title="Quản Lý Lịch Học" />
 
             <div className="space-y-6">

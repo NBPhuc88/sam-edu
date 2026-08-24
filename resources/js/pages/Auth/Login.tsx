@@ -64,7 +64,7 @@ export const Login: React.FC = () => {
                 <div className="space-y-2 text-center">
                     <Link
                         href="/"
-                        title="Về trang chủ Sam Edu"
+                        title="Về trang chủ SAM Digital"
                         className="group inline-flex flex-col items-center gap-2"
                     >
                         <AppLogo
@@ -72,7 +72,7 @@ export const Login: React.FC = () => {
                             className="transition-transform group-hover:scale-105"
                         />
                         <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 transition-colors group-hover:text-emerald-700">
-                            Hệ thống Quản lý Giáo dục Sam
+                            SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục
                         </h1>
                     </Link>
                     <p className="text-xs text-gray-500">Đăng nhập</p>

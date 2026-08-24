@@ -22,7 +22,7 @@ export interface AppLogoProps {
     withText?: boolean;
     /**
      * Tiêu đề thương hiệu (khi withText = true)
-     * @default 'Giáo dục Sam'
+     * @default 'SAM Digital'
      */
     brandName?: string;
     /**
@@ -59,7 +59,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
     text = 'SAM',
     className = '',
     withText = false,
-    brandName = 'Giáo dục Sam',
+    brandName = 'SAM Digital',
     subtitle,
     textColor = 'dark',
     hideSubtitleOnMobile = false,
@@ -73,9 +73,8 @@ export const AppLogo: React.FC<AppLogoProps> = ({
         />
     ) : (
         <div
-            className={`flex shrink-0 select-none items-center justify-center bg-emerald-600 font-black text-white shadow-xs tracking-wider ${
-                sizeClasses[size] || sizeClasses.md
-            } ${className}`}
+            className={`flex shrink-0 select-none items-center justify-center bg-emerald-600 font-black text-white shadow-xs tracking-wider ${sizeClasses[size] || sizeClasses.md
+                } ${className}`}
         >
             {text}
         </div>
@@ -92,19 +91,16 @@ export const AppLogo: React.FC<AppLogoProps> = ({
             {emblemElement}
             <div className="flex flex-col min-w-0">
                 <span
-                    className={`font-extrabold leading-tight tracking-tight truncate ${
-                        isLight ? 'text-white' : 'text-gray-900'
-                    } ${size === 'lg' || size === 'xl' ? 'text-base sm:text-xl' : 'text-sm sm:text-base'}`}
+                    className={`font-extrabold leading-tight tracking-tight truncate ${isLight ? 'text-white' : 'text-gray-900'
+                        } ${size === 'lg' || size === 'xl' ? 'text-base sm:text-xl' : 'text-sm sm:text-base'}`}
                 >
                     {brandName}
                 </span>
                 {subtitle && (
                     <span
-                        className={`text-2xs font-medium truncate ${
-                            hideSubtitleOnMobile ? 'hidden sm:block' : ''
-                        } ${
-                            isLight ? 'text-gray-400' : 'text-gray-500'
-                        }`}
+                        className={`text-2xs font-medium truncate ${hideSubtitleOnMobile ? 'hidden sm:block' : ''
+                            } ${isLight ? 'text-gray-400' : 'text-gray-500'
+                            }`}
                     >
                         {subtitle}
                     </span>

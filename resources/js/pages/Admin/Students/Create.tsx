@@ -114,7 +114,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     };
 
     return (
-        <AppLayout title="Thêm Học Sinh Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thêm Học Sinh Mới - SAM Digital">
             <Head title="Thêm Học Sinh Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

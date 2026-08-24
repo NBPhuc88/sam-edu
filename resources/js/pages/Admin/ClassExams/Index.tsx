@@ -168,7 +168,7 @@ export default function ClassExamIndex({
     };
 
     return (
-        <AppLayout title="Quản Lý Kỳ Thi Lớp Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Kỳ Thi Lớp Học - SAM Digital">
             <Head title="Quản Lý Kỳ Thi Lớp Học" />
 
             <div className="space-y-6">

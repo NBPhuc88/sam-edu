@@ -56,7 +56,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
     };
 
     return (
-        <AppLayout title="Thêm Môn Học Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thêm Môn Học Mới - SAM Digital">
             <Head title="Thêm Môn Học Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

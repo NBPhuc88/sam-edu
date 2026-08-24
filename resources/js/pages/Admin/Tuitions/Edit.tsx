@@ -122,7 +122,7 @@ export const Edit: React.FC<EditProps> = ({
     };
 
     return (
-        <AppLayout title="Chỉnh Sửa Hồ Sơ Học Phí - Giáo Dục Sam">
+        <AppLayout title="Chỉnh Sửa Hồ Sơ Học Phí - SAM Digital">
             <Head title="Chỉnh Sửa Hồ Sơ Học Phí" />
 
             <div className="mx-auto max-w-4xl space-y-6">

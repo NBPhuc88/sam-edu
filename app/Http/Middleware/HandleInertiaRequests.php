@@ -158,7 +158,7 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $permissions,
             ],
             'contactInfo' => [
-                'company_name' => SystemSetting::getByKey('company_name', 'Công ty Cổ phần Giáo dục Sam'),
+                'company_name' => SystemSetting::getByKey('company_name', 'Công ty Cổ phần SAM Digital'),
                 'address'      => SystemSetting::getByKey('contact_address', 'Tòa nhà Sam Tower, Số 100 Phố Giáo Dục, Hà Nội'),
                 'phone'        => SystemSetting::getByKey('contact_phone', '0988.123.456'),
                 'email'        => SystemSetting::getByKey('contact_email', 'phucstt01@gmail.com'),

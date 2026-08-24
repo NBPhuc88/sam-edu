@@ -144,7 +144,7 @@ return;
     };
 
     return (
-        <AppLayout title="Quản lý Quản trị viên Systems - Giáo dục Sam">
+        <AppLayout title="Quản lý Quản trị viên Systems - SAM Digital">
             <div className="space-y-6">
                 {/* Header Title */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

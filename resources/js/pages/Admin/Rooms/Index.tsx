@@ -175,7 +175,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     };
 
     return (
-        <AppLayout title="Quản Lý Phòng Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Phòng Học - SAM Digital">
             <Head title="Quản Lý Phòng Học" />
 
             <div className="space-y-6">

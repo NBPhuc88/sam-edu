@@ -1,5 +1,5 @@
 <x-mail::message>
-# 🎉 Chào mừng bạn đến với Hệ thống Quản lý Giáo dục Sam Edu!
+# 🎉 Chào mừng bạn đến với SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục!
 
 Kính gửi **{{ $fullName }}**,
 

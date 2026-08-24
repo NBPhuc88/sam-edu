@@ -64,9 +64,9 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
 
     return (
         <PublicLayout
-            title="Bảng Giá & Dịch Vụ SaaS - Giáo Dục Sam"
-            description="Bảng giá các gói dịch vụ quản lý trung tâm giáo dục Sam Edu. Đăng ký dùng thử miễn phí 30 ngày hoặc chọn gói tiêu chuẩn linh hoạt."
-            keywords="bảng giá phần mềm giáo dục, gói cước quản lý trung tâm, SaaS giáo dục, bảng giá Sam Edu"
+            title="Bảng Giá & Dịch Vụ SaaS - SAM Digital"
+            description="Bảng giá các gói dịch vụ quản lý trung tâm giáo dục SAM Digital. Đăng ký dùng thử miễn phí 30 ngày hoặc chọn gói tiêu chuẩn linh hoạt."
+            keywords="bảng giá phần mềm giáo dục, gói cước quản lý trung tâm, SaaS giáo dục, bảng giá SAM Digital"
         >
             {/* Hero Header */}
             <section className="border-b border-gray-100 bg-gradient-to-b from-emerald-50/50 via-white to-white py-12 text-center sm:py-20">

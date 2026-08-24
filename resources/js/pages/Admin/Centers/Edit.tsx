@@ -40,7 +40,7 @@ export const Edit: React.FC<EditProps> = ({
     };
 
     return (
-        <AppLayout title={`Chỉnh sửa Trung Tâm: ${center.name} - Giáo dục Sam`}>
+        <AppLayout title={`Chỉnh sửa Trung Tâm: ${center.name} - SAM Digital`}>
             <Head title={`Sửa Trung Tâm: ${center.name}`} />
 
             <Toast

@@ -36,7 +36,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const pageTitle =
         seo?.title ||
         title ||
-        'Giải Pháp Quản Lý Giáo Dục - Hệ thống Quản lý Giáo dục Sam';
+        'Giải Pháp Quản Lý Giáo Dục - SAM Digital';
     const pageDescription =
         seo?.description ||
         description ||
@@ -44,7 +44,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const pageKeywords =
         seo?.keywords ||
         keywords ||
-        'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, Giáo dục Sam, Sam Edu';
+        'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, SAM Digital';
     const pageCanonical =
         seo?.canonical_url || canonicalUrl || 'https://sam-edu.test';
 
@@ -52,7 +52,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const schemaData = {
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
-        name: 'Hệ thống Quản lý Giáo dục Sam',
+        name: 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục',
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web',
         description: pageDescription,
@@ -63,7 +63,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
         },
         publisher: {
             '@type': 'Organization',
-            name: 'Công ty Cổ phần Giáo dục Sam',
+            name: 'Công ty Cổ phần SAM Digital',
             url: pageCanonical,
         },
     };
@@ -82,7 +82,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                 <meta property="og:description" content={pageDescription} />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={pageCanonical} />
-                <meta property="og:site_name" content="Giáo dục Sam" />
+                <meta property="og:site_name" content="SAM Digital" />
 
                 {/* Twitter Cards */}
                 <meta name="twitter:card" content="summary_large_image" />
@@ -105,8 +105,8 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     >
                         <AppLogo
                             withText={true}
-                            brandName="Giáo dục Sam"
-                            subtitle="Hệ thống Quản lý Giáo dục Sam"
+                            brandName="SAM Digital"
+                            subtitle="Hệ thống Quản lý Trung Tâm Giáo Dục"
                             size="md"
                             hideSubtitleOnMobile={true}
                         />
@@ -259,7 +259,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                         <div className="space-y-3 md:col-span-2">
                             <AppLogo
                                 withText={true}
-                                brandName={contactInfo?.company_name || 'Công ty Cổ phần Giáo dục Sam'}
+                                brandName={contactInfo?.company_name || 'Công ty Cổ phần SAM Digital'}
                                 textColor="light"
                                 size="sm"
                             />
@@ -362,7 +362,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                     </div>
 
                     <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-500">
-                        © 2026 Hệ thống Quản lý Giáo dục Sam. Tất cả quyền được
+                        © 2026 SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục. Tất cả quyền được
                         bảo lưu.
                     </div>
                 </div>

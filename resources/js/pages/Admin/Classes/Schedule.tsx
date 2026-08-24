@@ -314,7 +314,7 @@ export default function ClassSchedulePage({
     };
 
     return (
-        <AppLayout title={`Lịch Học ${schoolClass.name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Lịch Học ${schoolClass.name} - SAM Digital`}>
             <Head title={`Lịch Học: ${schoolClass.name}`} />
 
             <div className="space-y-6">

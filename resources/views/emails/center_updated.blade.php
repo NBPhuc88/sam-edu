@@ -3,7 +3,7 @@
 
 Kính gửi Ban Quản lý **{{ $center->name }}**,
 
-Hệ thống Quản lý Giáo dục **Sam Edu** xin thông báo: Thông tin của Trung tâm đã được cập nhật thành công từ phía Quản trị viên hệ thống.
+Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** xin thông báo: Thông tin của Trung tâm đã được cập nhật thành công từ phía Quản trị viên hệ thống.
 
 <x-mail::table>
 | Thông tin Trung tâm | Chi tiết mới nhất |
@@ -18,7 +18,7 @@ Hệ thống Quản lý Giáo dục **Sam Edu** xin thông báo: Thông tin củ
 | **Thời gian cập nhật** | {{ now()->format('d-m-Y H:i:s') }} |
 </x-mail::table>
 
-Nếu có thắc mắc hoặc cần hỗ trợ về thông tin này, vui lòng liên hệ ngay với Quản trị viên hệ thống Sam Edu.
+Nếu có thắc mắc hoặc cần hỗ trợ về thông tin này, vui lòng liên hệ ngay với Quản trị viên hệ thống SAM Digital.
 
 Trân trọng,<br>
 **{{ config('app.name') }} System Support**

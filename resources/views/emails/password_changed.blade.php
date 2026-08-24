@@ -3,7 +3,7 @@
 
 Kính gửi **{{ $fullName }}**,
 
-Mật khẩu cho tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên Hệ thống Quản lý Giáo dục Sam Edu đã được thay đổi thành công.
+Mật khẩu cho tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục đã được thay đổi thành công.
 
 <x-mail::table>
 | Thông tin | Chi tiết |

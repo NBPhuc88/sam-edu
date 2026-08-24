@@ -187,7 +187,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     }, [currentStep, appTransId, isPaymentSuccess, registeredCenter, selectedPlan]);
 
     return (
-        <PublicLayout title="Đăng Ký Trung Tâm Mới - Giáo Dục Sam">
+        <PublicLayout title="Đăng Ký Trung Tâm Mới - SAM Digital">
             {/* Header */}
             <section className="border-b border-gray-200 bg-slate-50 py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl space-y-3 px-4 text-center sm:px-6 lg:px-8">
@@ -224,7 +224,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             </div>
                                             <div>
                                                 {contactInfo?.company_name ||
-                                                    'Công ty Cổ phần Giáo dục Sam'}
+                                                    'Công ty Cổ phần SAM Digital'}
                                             </div>
                                         </div>
                                     </div>
@@ -647,7 +647,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         </span>{' '}
                                                         <strong className="text-blue-900">
                                                             {accountName ||
-                                                                'CONG TY CP GIAO DUC SAM'}
+                                                                'CONG TY CP SAM DIGITAL'}
                                                         </strong>
                                                     </div>
                                                     <div>
@@ -699,7 +699,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 <strong className="text-gray-900">
                                                     "{registeredCenter?.name}"
                                                 </strong>
-                                                . Ban Quản trị Sam Edu đã nhận
+                                                . Ban Quản trị SAM Digital đã nhận
                                                 được thông tin đăng ký của bạn.
                                             </p>
                                         </div>

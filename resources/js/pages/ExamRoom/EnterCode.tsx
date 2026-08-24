@@ -28,7 +28,7 @@ export default function EnterCode({ errors = {} }: Props) {
     };
 
     return (
-        <AppLayout title="Phòng Thi Trực Tuyến - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Phòng Thi Trực Tuyến - SAM Digital">
             <Head title="Nhập Mã Phòng Thi" />
 
             <div className="flex min-h-[70vh] items-center justify-center p-4">
@@ -88,7 +88,7 @@ export default function EnterCode({ errors = {} }: Props) {
 
                     <div className="flex items-center justify-center gap-2 text-2xs text-gray-400 font-medium">
                         <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                        <span>Hệ thống giám sát và bảo mật bài thi Sam Education</span>
+                        <span>Hệ thống giám sát và bảo mật bài thi SAM Digital</span>
                     </div>
                 </div>
             </div>

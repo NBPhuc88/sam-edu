@@ -135,7 +135,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     };
 
     return (
-        <AppLayout title={`Chỉnh Sửa Học Sinh: ${student.full_name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Chỉnh Sửa Học Sinh: ${student.full_name} - SAM Digital`}>
             <Head title={`Chỉnh Sửa Học Sinh: ${student.full_name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6">

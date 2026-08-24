@@ -62,7 +62,7 @@ export default function Lobby({
     };
 
     return (
-        <AppLayout title={`Phòng Thi: ${classExam.title} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Phòng Thi: ${classExam.title} - SAM Digital`}>
             <Head title={`Phòng Thi: ${classExam.title}`} />
 
             <div className="mx-auto max-w-4xl space-y-6 py-6 px-4">

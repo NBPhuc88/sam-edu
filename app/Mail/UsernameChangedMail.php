@@ -42,7 +42,7 @@ class UsernameChangedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Thông báo: Tên đăng nhập ({$this->newUsername}) của bạn đã được thay đổi",
+            subject: "[SAM Digital] Thông báo: Tên đăng nhập ({$this->newUsername}) của bạn đã được thay đổi",
         );
     }
 

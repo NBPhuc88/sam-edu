@@ -23,7 +23,7 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({
     children,
-    title = 'Hệ thống Quản lý Giáo dục Sam',
+    title = 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục',
 }) => {
     const { auth, center, subscription_plans, flash } = usePage().props as any;
 
@@ -71,10 +71,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
         try {
             const response = await apiClient.post('/api/payments/zalopay/create', {
-                center_id:     center?.id ?? 1,
-                plan_code:     targetPlan?.code ?? 'yearly',
-                plan_name:     targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
-                amount:        targetPlan?.price ?? 4800000,
+                center_id: center?.id ?? 1,
+                plan_code: targetPlan?.code ?? 'yearly',
+                plan_name: targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
+                amount: targetPlan?.price ?? 4800000,
                 duration_days: targetPlan?.duration_days ?? 365,
             });
 

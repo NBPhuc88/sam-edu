@@ -33,7 +33,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
     const companyName =
         company?.name ||
         contactInfo?.company_name ||
-        'Công ty Cổ phần Giáo dục Sam';
+        'Công ty Cổ phần SAM Digital';
 
     // Interactive Pillars State
     const [activePillar, setActivePillar] = useState<number>(0);
@@ -153,9 +153,9 @@ export const About: React.FC<AboutProps> = ({ company }) => {
 
     return (
         <PublicLayout
-            title="Về Chúng Tôi - Đột Phá Quản Trị Giáo Dục Sam Edu"
-            description="Tìm hiểu tầm nhìn, sứ mệnh và nền tảng công nghệ quản lý giáo dục đa trung tâm đột phá của Sam Edu. Hệ sinh thái toàn diện từ học vụ, khảo thí 9 dạng câu hỏi đến chat thời gian thực."
-            keywords="Về Sam Edu, Giáo dục Sam, phần mềm quản lý trung tâm, giải pháp giáo dục 2026, khảo thí trực tuyến"
+            title="Về Chúng Tôi - SAM Digital"
+            description="Tìm hiểu tầm nhìn, sứ mệnh và nền tảng công nghệ quản lý giáo dục đa trung tâm đột phá của SAM Digital. Hệ sinh thái toàn diện từ học vụ, khảo thí 9 dạng câu hỏi đến chat thời gian thực."
+            keywords="Về SAM Digital, SAM Digital, phần mềm quản lý trung tâm, giải pháp giáo dục 2026, khảo thí trực tuyến"
         >
             {/* ─── Hero Section ────────────────────────────────────────── */}
             <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-emerald-900 via-slate-900 to-slate-950 py-14 text-white sm:py-24 lg:py-28">
@@ -200,7 +200,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             Kim Chỉ Nam &amp; Giá Trị Cốt Lõi
                         </h2>
                         <p className="mx-auto max-w-xl text-xs sm:text-sm text-gray-500">
-                            Những nguyên tắc định hình văn hóa sản phẩm và sự cam kết của Sam Edu
+                            Những nguyên tắc định hình văn hóa sản phẩm và sự cam kết của SAM Digital
                         </p>
                     </div>
 
@@ -253,10 +253,10 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             <span>Khám Phá Chi Tiết</span>
                         </div>
                         <h2 className="text-xl font-extrabold text-gray-900 sm:text-3xl lg:text-4xl">
-                            4 Trụ Cột Đột Phá Của Sam Edu
+                            4 Trụ Cột Đột Phá Của SAM Digital
                         </h2>
                         <p className="mx-auto max-w-2xl text-xs sm:text-sm text-gray-600">
-                            Chọn từng trụ cột bên dưới để khám phá sức mạnh công nghệ mà Sam Edu trang bị cho trung tâm của bạn:
+                            Chọn từng trụ cột bên dưới để khám phá sức mạnh công nghệ mà SAM Digital trang bị cho trung tâm của bạn:
                         </p>
                     </div>
 
@@ -392,7 +392,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                 </div>
             </section>
 
-            {/* ─── Comparison Matrix: Traditional vs Sam Edu ─────────────── */}
+            {/* ─── Comparison Matrix: Traditional vs SAM Digital ─────────────── */}
             <section className="bg-white py-12 sm:py-16 lg:py-24">
                 <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12 px-4 sm:px-6 lg:px-8">
                     <div className="space-y-2 sm:space-y-3 text-center">
@@ -400,7 +400,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                             Khác Biệt Vượt Trội So Với Quản Lý Truyền Thống
                         </h2>
                         <p className="mx-auto max-w-2xl text-xs sm:text-sm text-gray-600">
-                            Vì sao các trung tâm đào tạo hiện đại đang nhanh chóng chuyển dịch sang hệ sinh thái số Sam Edu?
+                            Vì sao các trung tâm đào tạo hiện đại đang nhanh chóng chuyển dịch sang hệ sinh thái số SAM Digital?
                         </p>
                     </div>
 
@@ -416,7 +416,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                             Quản Lý Bằng Excel / Sổ Sách
                                         </th>
                                         <th className="py-3.5 px-3.5 font-bold text-emerald-800 bg-emerald-50 sm:py-4 sm:px-6">
-                                            Hệ Sinh Thái Sam Edu
+                                            Hệ Sinh Thái SAM Digital
                                         </th>
                                     </tr>
                                 </thead>
@@ -648,7 +648,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
             <section className="bg-emerald-700 py-12 sm:py-16 text-white text-center">
                 <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6 px-4 sm:px-6 lg:px-8">
                     <h2 className="text-xl font-extrabold sm:text-3xl lg:text-4xl">
-                        Sẵn Sàng Đồng Hành Cùng Giáo Dục Sam?
+                        Sẵn Sàng Đồng Hành Cùng SAM Digital?
                     </h2>
                     <p className="text-xs sm:text-base text-emerald-100">
                         Khởi tạo trung tâm và trải nghiệm miễn phí 30 ngày đầy đủ tính năng ngay hôm nay. Không cần thẻ tín dụng, kích hoạt trong 30 giây.

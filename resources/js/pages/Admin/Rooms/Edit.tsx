@@ -177,7 +177,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
     };
 
     return (
-        <AppLayout title={`Chỉnh Sửa Phòng Học: ${room.name} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Chỉnh Sửa Phòng Học: ${room.name} - SAM Digital`}>
             <Head title={`Chỉnh Sửa Phòng Học: ${room.name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6">

@@ -34,7 +34,7 @@ class AccountVerificationOtpMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[Sam Edu] Mã xác thực OTP ({$this->otp}) cho {$this->actionLabel}",
+            subject: "[SAM Digital] Mã xác thực OTP ({$this->otp}) cho {$this->actionLabel}",
         );
     }
 

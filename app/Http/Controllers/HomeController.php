@@ -65,6 +65,6 @@ class HomeController extends Controller
     {
         $this->contactRequestService->submitContact($request->validated());
 
-        return back()->with('success', 'Yêu cầu tư vấn của bạn đã được gửi thành công. Đội ngũ Giáo Dục Sam sẽ liên hệ lại trong thời gian sớm nhất!');
+        return back()->with('success', 'Yêu cầu tư vấn của bạn đã được gửi thành công. Đội ngũ SAM Digital sẽ liên hệ lại trong thời gian sớm nhất!');
     }
 }

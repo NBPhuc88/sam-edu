@@ -120,7 +120,7 @@ export default function ExamTypeIndex({ examTypes, centers = [], filters }: Prop
     };
 
     return (
-        <AppLayout title="Danh Sách Loại Đề Thi - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Danh Sách Loại Đề Thi - SAM Digital">
             <Head title="Quản Lý Loại Đề Thi" />
 
             <div className="space-y-6">

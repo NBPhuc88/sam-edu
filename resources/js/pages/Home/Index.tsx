@@ -38,9 +38,9 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
 
     return (
         <PublicLayout
-            title="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - Giáo Dục Sam"
+            title="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital"
             description="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực."
-            keywords="Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, Sam Edu, Giáo dục Sam"
+            keywords="Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, SAM Digital"
         >
             {/* Promotion Alert Banner */}
             {promotionBanner && (

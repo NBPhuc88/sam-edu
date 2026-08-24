@@ -49,7 +49,7 @@ export default function ExamTypeCreate({ centers = [], errors = {} }: Props) {
     };
 
     return (
-        <AppLayout title="Thêm Loại Đề Thi Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thêm Loại Đề Thi Mới - SAM Digital">
             <Head title="Thêm Loại Đề Thi Mới" />
 
             <div className="mx-auto max-w-4xl space-y-6">

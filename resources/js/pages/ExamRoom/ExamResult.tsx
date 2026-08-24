@@ -87,7 +87,7 @@ export default function ExamResult({
     const isManualPending = submission.requires_manual_grading && !submission.is_graded;
 
     return (
-        <AppLayout title={`Kết Quả Bài Thi: ${classExam.title} - Hệ Thống Giáo Dục Sam`}>
+        <AppLayout title={`Kết Quả Bài Thi: ${classExam.title} - SAM Digital`}>
             <Head title={`Kết Quả Bài Thi: ${classExam.title}`} />
 
             <div className="mx-auto max-w-4xl space-y-6 py-6 px-4">

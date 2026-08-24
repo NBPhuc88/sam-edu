@@ -63,7 +63,7 @@ export default function ExamTypeEdit({ examType, centers = [], errors = {} }: Pr
     };
 
     return (
-        <AppLayout title="Chỉnh Sửa Loại Đề Thi - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Chỉnh Sửa Loại Đề Thi - SAM Digital">
             <Head title="Chỉnh Sửa Loại Đề Thi" />
 
             <div className="mx-auto max-w-4xl space-y-6">

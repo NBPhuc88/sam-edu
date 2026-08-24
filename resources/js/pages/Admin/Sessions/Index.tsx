@@ -249,7 +249,7 @@ export default function SessionIndex({
     };
 
     return (
-        <AppLayout title="Quản Lý Buổi Học - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Quản Lý Buổi Học - SAM Digital">
             <Head title="Quản Lý Buổi Học" />
 
             <div className="space-y-6">

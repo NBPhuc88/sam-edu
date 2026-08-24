@@ -122,7 +122,7 @@ export default function PracticeList({
     };
 
     return (
-        <AppLayout title="Thi Thử & Luyện Tập Trực Tuyến - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thi Thử & Luyện Tập Trực Tuyến - SAM Digital">
             <Head title="Thi Thử & Luyện Tập Trực Tuyến" />
 
             <div className="mx-auto max-w-7xl space-y-6">

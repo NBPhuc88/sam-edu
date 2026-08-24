@@ -117,7 +117,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
     };
 
     return (
-        <AppLayout title="Thêm Phòng Học Mới - Hệ Thống Giáo Dục Sam">
+        <AppLayout title="Thêm Phòng Học Mới - SAM Digital">
             <Head title="Thêm Phòng Học Mới" />
 
             <div className="mx-auto max-w-5xl space-y-6">
