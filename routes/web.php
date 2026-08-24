@@ -175,8 +175,10 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::post('/bulk-assign-classes', [StudentController::class, 'bulkAssign'])->name('bulk-assign-classes');
         Route::delete('/{id}/classes/{classId}', [StudentController::class, 'removeClass'])->name('remove-class');
         Route::get('/export', [StudentController::class, 'export'])->name('export');
+        Route::get('/{id}/export-attendances', [StudentController::class, 'exportAttendances'])->name('export-attendances');
         Route::post('/import', [StudentController::class, 'import'])->name('import');
         Route::get('/sample-csv', [StudentController::class, 'downloadSample'])->name('sample-csv');
+        Route::get('/{id}/show', [StudentController::class, 'show'])->name('show');
         Route::get('/{id}/schedule', [StudentController::class, 'schedule'])->name('schedule');
     });
 
@@ -192,8 +194,10 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::patch('/{id}', [TeacherController::class, 'update'])->name('update');
         Route::delete('/{id}', [TeacherController::class, 'destroy'])->name('destroy');
         Route::get('/export', [TeacherController::class, 'export'])->name('export');
+        Route::get('/{id}/export-sessions', [TeacherController::class, 'exportSessions'])->name('export-sessions');
         Route::post('/import', [TeacherController::class, 'import'])->name('import');
         Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');
+        Route::get('/{id}/show', [TeacherController::class, 'show'])->name('show');
         Route::get('/{id}/schedule', [TeacherController::class, 'schedule'])->name('schedule');
     });
 

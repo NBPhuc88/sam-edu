@@ -13,6 +13,7 @@ use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -734,5 +735,168 @@ class StudentService implements StudentServiceInterface
             'sessions'           => $enrichedSessions,
             'recurringSchedules' => $recurringSchedules,
         ];
+    }
+
+    /**
+     * @param  int                  $studentId
+     * @param  ?string              $filterType
+     * @param  ?int                 $filterMonth
+     * @param  ?int                 $filterYear
+     * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
+     * @return array<string, mixed>
+     */
+    public function getStudentDetailData(
+        int $studentId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
+    ): array {
+        $student = $this->findStudent($studentId, $admin, $teacher);
+
+        if (! $student) {
+            throw new NotFoundHttpException('Học sinh không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $student->loadMissing('center:id,name,code');
+
+        [$startDate, $endDate, $filterMonth, $filterYear] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
+
+        $attendanceData = $this->studentRepository->getStudentAttendanceStats($studentId, $startDate, $endDate);
+
+        $mappedSessions = $attendanceData['sessions']->map(function ($s) {
+            $att = $s->attendances->first();
+
+            return [
+                'id'                => $s->id,
+                'session_date'      => $s->getRawOriginal('session_date') ?? $s->session_date,
+                'start_time'        => $s->start_time,
+                'end_time'          => $s->end_time,
+                'class_name'        => $s->classSubject?->schoolClass?->name,
+                'class_code'        => $s->classSubject?->schoolClass?->code,
+                'subject_name'      => $s->classSubject?->subject?->name,
+                'subject_code'      => $s->classSubject?->subject?->code,
+                'teacher_name'      => $s->teacher?->full_name,
+                'room_name'         => $s->room?->name,
+                'attendance_status' => $att?->status ?? 'unmarked',
+                'attendance_note'   => $att?->note,
+                'check_in_at'       => $att?->check_in_at,
+            ];
+        });
+
+        return [
+            'student'  => $student,
+            'sessions' => $mappedSessions,
+            'stats'    => $attendanceData['stats'],
+            'filters'  => [
+                'type'       => $filterType ?: 'month',
+                'month'      => $filterMonth,
+                'year'       => $filterYear,
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
+            ],
+            'isTeacher' => (bool) $teacher,
+        ];
+    }
+
+    /**
+     * @param  int                                      $studentId
+     * @param  ?string                                  $filterType
+     * @param  ?int                                     $filterMonth
+     * @param  ?int                                     $filterYear
+     * @param  ?Admin                                   $admin
+     * @return \Generator<int, array<int, string|null>>
+     */
+    public function exportStudentAttendanceCsv(
+        int $studentId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): \Generator {
+        $student = $this->findStudent($studentId, $admin);
+
+        if (! $student) {
+            throw new NotFoundHttpException('Học sinh không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        [$startDate, $endDate] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
+
+        $attendanceData = $this->studentRepository->getStudentAttendanceStats($studentId, $startDate, $endDate);
+
+        yield [
+            'STT',
+            'Ngày học',
+            'Giờ bắt đầu',
+            'Giờ kết thúc',
+            'Lớp học',
+            'Môn học',
+            'Giáo viên',
+            'Phòng học',
+            'Trạng thái điểm danh',
+            'Ghi chú',
+        ];
+
+        $statusLabels = [
+            'present'  => 'Có mặt',
+            'absent'   => 'Vắng',
+            'late'     => 'Đi trễ',
+            'excused'  => 'Có phép',
+            'leave'    => 'Nghỉ phép',
+            'unmarked' => 'Chưa điểm danh',
+        ];
+
+        $index = 1;
+
+        foreach ($attendanceData['sessions'] as $session) {
+            $att    = $session->attendances->first();
+            $status = $att?->status ?? 'unmarked';
+
+            yield [
+                (string) $index++,
+                (string) ($session->getRawOriginal('session_date') ?? $session->session_date),
+                (string) $session->start_time,
+                (string) $session->end_time,
+                $session->classSubject?->schoolClass?->name ?? 'N/A',
+                $session->classSubject?->subject?->name ?? 'N/A',
+                $session->teacher?->full_name ?? 'N/A',
+                $session->room?->name ?? 'N/A',
+                $statusLabels[$status] ?? $status,
+                $att?->note ?? '',
+            ];
+        }
+    }
+
+    /**
+     * @param  ?string                                       $filterType
+     * @param  ?int                                          $filterMonth
+     * @param  ?int                                          $filterYear
+     * @return array{0: ?string, 1: ?string, 2: int, 3: int}
+     */
+    protected function resolveDateRange(?string $filterType, ?int $filterMonth, ?int $filterYear): array
+    {
+        $now = CarbonImmutable::now();
+
+        if ($filterType === 'all') {
+            return [null, null, (int) $now->format('n'), (int) $now->format('Y')];
+        }
+
+        if ($filterType === 'select_month') {
+            $m = $filterMonth ?: (int) $now->format('n');
+            $y = $filterYear ?: (int) $now->format('Y');
+
+            $start = CarbonImmutable::createFromDate($y, $m, 1)->startOfMonth()->format('Y-m-d');
+            $end   = CarbonImmutable::createFromDate($y, $m, 1)->endOfMonth()->format('Y-m-d');
+
+            return [$start, $end, $m, $y];
+        }
+
+        // Mặc định: tháng hiện tại
+        $start = $now->startOfMonth()->format('Y-m-d');
+        $end   = $now->endOfMonth()->format('Y-m-d');
+
+        return [$start, $end, (int) $now->format('n'), (int) $now->format('Y')];
     }
 }

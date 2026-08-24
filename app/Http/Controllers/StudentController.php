@@ -330,4 +330,65 @@ class StudentController extends Controller
 
         return Inertia::render('Student/Schedule', $timetableData);
     }
+
+    public function show(Request $request, int $id): InertiaResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+        $filterType        = $request->query('type', 'month');
+        $filterMonth       = $request->query('month') ? (int) $request->query('month') : null;
+        $filterYear        = $request->query('year') ? (int) $request->query('year') : null;
+
+        $detailData = $this->studentService->getStudentDetailData(
+            $id,
+            is_string($filterType) ? $filterType : 'month',
+            $filterMonth,
+            $filterYear,
+            $admin,
+            $teacher
+        );
+
+        return Inertia::render('Admin/Students/Show', $detailData);
+    }
+
+    public function exportAttendances(Request $request, int $id): StreamedResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        if ($teacher) {
+            throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $filterType  = $request->query('type', 'month');
+        $filterMonth = $request->query('month') ? (int) $request->query('month') : null;
+        $filterYear  = $request->query('year') ? (int) $request->query('year') : null;
+
+        $fileName = 'diem_danh_hoc_sinh_' . $id . '_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ];
+
+        return response()->stream(function () use ($id, $filterType, $filterMonth, $filterYear, $admin) {
+            $handle = fopen('php://output', 'w');
+
+            if ($handle === false) {
+                return;
+            }
+
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            foreach ($this->studentService->exportStudentAttendanceCsv(
+                $id,
+                is_string($filterType) ? $filterType : 'month',
+                $filterMonth,
+                $filterYear,
+                $admin
+            ) as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
+    }
 }

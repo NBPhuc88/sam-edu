@@ -475,4 +475,78 @@ class StudentRepository implements StudentRepositoryInterface
             ->pluck('id')
             ->toArray();
     }
+
+    /**
+     * @param  int                                                                                                                 $studentId
+     * @param  ?string                                                                                                             $startDate
+     * @param  ?string                                                                                                             $endDate
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     */
+    public function getStudentAttendanceStats(int $studentId, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $classIds = ClassStudent::where('student_id', $studentId)->pluck('class_id')->toArray();
+
+        $query = ClassSession::query()
+            ->where(function ($q) use ($classIds, $studentId) {
+                if (! empty($classIds)) {
+                    $q->whereHas('classSubject', function ($csq) use ($classIds) {
+                        $csq->whereIn('class_id', $classIds);
+                    });
+                }
+                $q->orWhereHas('attendances', function ($aq) use ($studentId) {
+                    $aq->where('student_id', $studentId);
+                });
+            })
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'teacher:id,full_name,teacher_code',
+                'room:id,name',
+                'attendances' => function ($aq) use ($studentId) {
+                    $aq->where('student_id', $studentId);
+                },
+            ]);
+
+        if ($startDate !== null && $endDate !== null) {
+            $query->whereBetween('session_date', [$startDate, $endDate]);
+        }
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, ClassSession> $sessions */
+        $sessions = $query->orderBy('session_date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->get();
+
+        $presentCount  = 0;
+        $absentCount   = 0;
+        $lateCount     = 0;
+        $excusedCount  = 0;
+        $unmarkedCount = 0;
+
+        foreach ($sessions as $session) {
+            $attendance = $session->attendances->first();
+            $status     = $attendance ? $attendance->status : null;
+
+            match ($status) {
+                'present'          => $presentCount++,
+                'absent'           => $absentCount++,
+                'late'             => $lateCount++,
+                'excused', 'leave' => $excusedCount++,
+                default            => $unmarkedCount++,
+            };
+        }
+
+        $stats = [
+            'total'    => $sessions->count(),
+            'present'  => $presentCount,
+            'absent'   => $absentCount,
+            'late'     => $lateCount,
+            'excused'  => $excusedCount,
+            'unmarked' => $unmarkedCount,
+        ];
+
+        return [
+            'sessions' => $sessions,
+            'stats'    => $stats,
+        ];
+    }
 }

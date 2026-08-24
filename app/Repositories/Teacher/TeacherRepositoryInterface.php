@@ -102,4 +102,12 @@ interface TeacherRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Teacher>
      */
     public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  int                                                                                                                 $teacherId
+     * @param  ?string                                                                                                             $startDate
+     * @param  ?string                                                                                                             $endDate
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     */
+    public function getTeacherSessionStats(int $teacherId, ?string $startDate = null, ?string $endDate = null): array;
 }

@@ -13,6 +13,7 @@ use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -533,5 +534,157 @@ class TeacherService implements TeacherServiceInterface
             'sessions'           => $enrichedSessions,
             'recurringSchedules' => $recurringSchedules,
         ];
+    }
+
+    /**
+     * @param  int                  $teacherId
+     * @param  ?string              $filterType
+     * @param  ?int                 $filterMonth
+     * @param  ?int                 $filterYear
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getTeacherDetailData(
+        int $teacherId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): array {
+        $teacher = $this->findTeacher($teacherId, $admin);
+
+        if (! $teacher) {
+            throw new NotFoundHttpException('Giáo viên không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        $teacher->loadMissing('center:id,name,code');
+
+        [$startDate, $endDate, $filterMonth, $filterYear] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
+
+        $sessionData = $this->teacherRepository->getTeacherSessionStats($teacherId, $startDate, $endDate);
+
+        $mappedSessions = $sessionData['sessions']->map(function ($s) {
+            return [
+                'id'           => $s->id,
+                'session_date' => $s->getRawOriginal('session_date') ?? $s->session_date,
+                'start_time'   => $s->start_time,
+                'end_time'     => $s->end_time,
+                'status'       => $s->status,
+                'topic'        => $s->topic,
+                'note'         => $s->note,
+                'class_name'   => $s->classSubject?->schoolClass?->name,
+                'class_code'   => $s->classSubject?->schoolClass?->code,
+                'subject_name' => $s->classSubject?->subject?->name,
+                'subject_code' => $s->classSubject?->subject?->code,
+                'room_name'    => $s->room?->name,
+            ];
+        });
+
+        return [
+            'teacher'  => $teacher,
+            'sessions' => $mappedSessions,
+            'stats'    => $sessionData['stats'],
+            'filters'  => [
+                'type'       => $filterType ?: 'month',
+                'month'      => $filterMonth,
+                'year'       => $filterYear,
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
+            ],
+        ];
+    }
+
+    /**
+     * @param  int                                      $teacherId
+     * @param  ?string                                  $filterType
+     * @param  ?int                                     $filterMonth
+     * @param  ?int                                     $filterYear
+     * @param  ?Admin                                   $admin
+     * @return \Generator<int, array<int, string|null>>
+     */
+    public function exportTeacherSessionsCsv(
+        int $teacherId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): \Generator {
+        $teacher = $this->findTeacher($teacherId, $admin);
+
+        if (! $teacher) {
+            throw new NotFoundHttpException('Giáo viên không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        [$startDate, $endDate] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
+
+        $sessionData = $this->teacherRepository->getTeacherSessionStats($teacherId, $startDate, $endDate);
+
+        yield [
+            'STT',
+            'Ngày dạy',
+            'Giờ bắt đầu',
+            'Giờ kết thúc',
+            'Lớp học',
+            'Môn học',
+            'Phòng học',
+            'Chủ đề',
+            'Trạng thái',
+            'Ghi chú',
+        ];
+
+        $statusLabels = [
+            'scheduled'   => 'Đã lên lịch',
+            'completed'   => 'Đã hoàn thành',
+            'cancelled'   => 'Đã hủy',
+            'rescheduled' => 'Dời lịch',
+        ];
+
+        $index = 1;
+
+        foreach ($sessionData['sessions'] as $session) {
+            yield [
+                (string) $index++,
+                (string) ($session->getRawOriginal('session_date') ?? $session->session_date),
+                (string) $session->start_time,
+                (string) $session->end_time,
+                $session->classSubject?->schoolClass?->name ?? 'N/A',
+                $session->classSubject?->subject?->name ?? 'N/A',
+                $session->room?->name ?? 'N/A',
+                $session->topic ?? '',
+                $statusLabels[$session->status] ?? $session->status,
+                $session->note ?? '',
+            ];
+        }
+    }
+
+    /**
+     * @param  ?string                                       $filterType
+     * @param  ?int                                          $filterMonth
+     * @param  ?int                                          $filterYear
+     * @return array{0: ?string, 1: ?string, 2: int, 3: int}
+     */
+    protected function resolveDateRange(?string $filterType, ?int $filterMonth, ?int $filterYear): array
+    {
+        $now = CarbonImmutable::now();
+
+        if ($filterType === 'all') {
+            return [null, null, (int) $now->format('n'), (int) $now->format('Y')];
+        }
+
+        if ($filterType === 'select_month') {
+            $m = $filterMonth ?: (int) $now->format('n');
+            $y = $filterYear ?: (int) $now->format('Y');
+
+            $start = CarbonImmutable::createFromDate($y, $m, 1)->startOfMonth()->format('Y-m-d');
+            $end   = CarbonImmutable::createFromDate($y, $m, 1)->endOfMonth()->format('Y-m-d');
+
+            return [$start, $end, $m, $y];
+        }
+
+        // Mặc định: tháng hiện tại
+        $start = $now->startOfMonth()->format('Y-m-d');
+        $end   = $now->endOfMonth()->format('Y-m-d');
+
+        return [$start, $end, (int) $now->format('n'), (int) $now->format('Y')];
     }
 }

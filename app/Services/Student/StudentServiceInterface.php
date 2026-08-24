@@ -99,4 +99,38 @@ interface StudentServiceInterface
      * @return array<string, mixed>
      */
     public function getStudentTimetableData(int $studentId, ?string $weekDate = null, ?Student $student = null, ?Admin $admin = null): array;
+
+    /**
+     * @param  int                  $studentId
+     * @param  ?string              $filterType
+     * @param  ?int                 $filterMonth
+     * @param  ?int                 $filterYear
+     * @param  ?Admin               $admin
+     * @param  ?Teacher             $teacher
+     * @return array<string, mixed>
+     */
+    public function getStudentDetailData(
+        int $studentId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null,
+        ?Teacher $teacher = null
+    ): array;
+
+    /**
+     * @param  int                                      $studentId
+     * @param  ?string                                  $filterType
+     * @param  ?int                                     $filterMonth
+     * @param  ?int                                     $filterYear
+     * @param  ?Admin                                   $admin
+     * @return \Generator<int, array<int, string|null>>
+     */
+    public function exportStudentAttendanceCsv(
+        int $studentId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): \Generator;
 }

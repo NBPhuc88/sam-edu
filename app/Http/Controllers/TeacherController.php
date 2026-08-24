@@ -207,4 +207,59 @@ class TeacherController extends Controller
 
         return Inertia::render('Admin/Teachers/Schedule', $timetableData);
     }
+
+    public function show(Request $request, int $id): InertiaResponse
+    {
+        $admin       = $this->getAuthAdmin();
+        $filterType  = $request->query('type', 'month');
+        $filterMonth = $request->query('month') ? (int) $request->query('month') : null;
+        $filterYear  = $request->query('year') ? (int) $request->query('year') : null;
+
+        $detailData = $this->teacherService->getTeacherDetailData(
+            $id,
+            is_string($filterType) ? $filterType : 'month',
+            $filterMonth,
+            $filterYear,
+            $admin
+        );
+
+        return Inertia::render('Admin/Teachers/Show', $detailData);
+    }
+
+    public function exportSessions(Request $request, int $id): StreamedResponse
+    {
+        $admin       = $this->getAuthAdmin();
+        $filterType  = $request->query('type', 'month');
+        $filterMonth = $request->query('month') ? (int) $request->query('month') : null;
+        $filterYear  = $request->query('year') ? (int) $request->query('year') : null;
+
+        $fileName = 'ca_day_giao_vien_' . $id . '_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ];
+
+        return response()->stream(function () use ($id, $filterType, $filterMonth, $filterYear, $admin) {
+            $handle = fopen('php://output', 'w');
+
+            if ($handle === false) {
+                return;
+            }
+
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            foreach ($this->teacherService->exportTeacherSessionsCsv(
+                $id,
+                is_string($filterType) ? $filterType : 'month',
+                $filterMonth,
+                $filterYear,
+                $admin
+            ) as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
+    }
 }

@@ -11,6 +11,7 @@ import {
     AlertCircle,
     Filter,
     Calendar,
+    Eye,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -362,7 +363,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                     <th className="px-6 py-4">Chuyên Môn</th>
                                     <th className="px-6 py-4">Ngày Vào Làm</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    {(can('teachers.edit') || can('teachers.delete')) && (
+                                    {(can('teachers.show') || can('teachers.edit') || can('teachers.delete')) && (
                                         <th className="px-6 py-4 text-right">Thao Tác</th>
                                     )}
                                 </tr>
@@ -439,14 +440,26 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                                 {getStatusBadge(teacher.status)}
                                             </td>
 
-                                            {(can('teachers.edit') || can('teachers.delete')) && (
+                                            {(can('teachers.show') || can('teachers.edit') || can('teachers.delete')) && (
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        {can('teachers.show') && (
+                                                            <Link href={`/teachers/${teacher.id}/show`}>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="sm"
+                                                                    icon={<Eye className="h-4 w-4 text-emerald-600" />}
+                                                                    title="Xem chi tiết & thống kê ca dạy"
+                                                                >
+                                                                    Chi tiết
+                                                                </Button>
+                                                            </Link>
+                                                        )}
                                                         <Link href={`/teachers/${teacher.id}/schedule`}>
                                                             <Button
                                                                 variant="secondary"
                                                                 size="sm"
-                                                                icon={<Calendar className="h-4 w-4 text-emerald-600" />}
+                                                                icon={<Calendar className="h-4 w-4 text-blue-600" />}
                                                                 title="Xem thời khóa biểu / lịch dạy của giáo viên"
                                                             >
                                                                 Lịch Dạy

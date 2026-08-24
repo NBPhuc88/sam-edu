@@ -26,8 +26,8 @@ class PermissionSeeder extends Seeder
 
             'admin' => [
                 'dashboard.index', 'statistics.index',
-                'teachers.index', 'teachers.create', 'teachers.edit', 'teachers.delete', 'teachers.export', 'teachers.import', 'teachers.schedule',
-                'students.index', 'students.create', 'students.edit', 'students.delete', 'students.assign-classes', 'students.export', 'students.import', 'students.schedule',
+                'teachers.index', 'teachers.show', 'teachers.create', 'teachers.edit', 'teachers.delete', 'teachers.export', 'teachers.export-sessions', 'teachers.import', 'teachers.schedule',
+                'students.index', 'students.show', 'students.create', 'students.edit', 'students.delete', 'students.assign-classes', 'students.export', 'students.export-attendances', 'students.import', 'students.schedule',
                 'subjects.index', 'subjects.create', 'subjects.edit', 'subjects.delete',
                 'rooms.index', 'rooms.create', 'rooms.edit', 'rooms.delete',
                 'classes.index', 'classes.create', 'classes.edit', 'classes.delete', 'classes.schedule', 'classes.students', 'classes.exam-results', 'classes.chat',
@@ -45,7 +45,7 @@ class PermissionSeeder extends Seeder
             'teacher' => [
                 'dashboard.index',
                 'teachers.schedule',
-                'students.index', 'students.schedule',
+                'students.index', 'students.show', 'students.schedule',
                 'classes.index', 'classes.schedule', 'classes.exam-results', 'classes.chat',
                 'schedules.index',
                 'sessions.index', 'attendance.index', 'attendance.save',

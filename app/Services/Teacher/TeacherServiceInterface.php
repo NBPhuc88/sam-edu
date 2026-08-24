@@ -69,4 +69,36 @@ interface TeacherServiceInterface
      * @return array<string, mixed>
      */
     public function getTeacherTimetableData(int $teacherId, ?string $weekDate = null, ?Admin $admin = null): array;
+
+    /**
+     * @param  int                  $teacherId
+     * @param  ?string              $filterType
+     * @param  ?int                 $filterMonth
+     * @param  ?int                 $filterYear
+     * @param  ?Admin               $admin
+     * @return array<string, mixed>
+     */
+    public function getTeacherDetailData(
+        int $teacherId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): array;
+
+    /**
+     * @param  int                                      $teacherId
+     * @param  ?string                                  $filterType
+     * @param  ?int                                     $filterMonth
+     * @param  ?int                                     $filterYear
+     * @param  ?Admin                                   $admin
+     * @return \Generator<int, array<int, string|null>>
+     */
+    public function exportTeacherSessionsCsv(
+        int $teacherId,
+        ?string $filterType = 'month',
+        ?int $filterMonth = null,
+        ?int $filterYear = null,
+        ?Admin $admin = null
+    ): \Generator;
 }

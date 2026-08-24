@@ -13,6 +13,7 @@ import {
     GraduationCap,
     CheckSquare,
     Square,
+    Eye,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
@@ -518,7 +519,7 @@ return;
                                     )}
                                     <th className="px-6 py-4">Ngày Nhập Học</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    {(can('students.edit') || can('students.delete')) && (
+                                    {(can('students.show') || can('students.edit') || can('students.delete')) && (
                                         <th className="px-6 py-4 text-right">Thao Tác</th>
                                     )}
                                 </tr>
@@ -654,9 +655,21 @@ return;
                                                 {getStatusBadge(student.status)}
                                             </td>
 
-                                            {(can('students.edit') || can('students.delete')) && (
+                                            {(can('students.show') || can('students.edit') || can('students.delete')) && (
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
+                                                        {can('students.show') && (
+                                                            <Link href={`/students/${student.id}/show`}>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="sm"
+                                                                    icon={<Eye className="h-4 w-4 text-emerald-600" />}
+                                                                    title="Xem chi tiết & thống kê điểm danh"
+                                                                >
+                                                                    Chi tiết
+                                                                </Button>
+                                                            </Link>
+                                                        )}
                                                         {can('students.edit') && (
                                                             <Button
                                                                 type="button"
@@ -700,7 +713,7 @@ return;
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={can('students.edit') || can('students.delete') ? 7 : 6}
+                                            colSpan={can('students.show') || can('students.edit') || can('students.delete') ? 7 : 6}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

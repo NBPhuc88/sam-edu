@@ -366,4 +366,43 @@ class TeacherRepository implements TeacherRepositoryInterface
 
         return $query->orderBy('full_name')->get();
     }
+
+    /**
+     * @param  int                                                                                                                 $teacherId
+     * @param  ?string                                                                                                             $startDate
+     * @param  ?string                                                                                                             $endDate
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     */
+    public function getTeacherSessionStats(int $teacherId, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $query = ClassSession::query()
+            ->where('teacher_id', $teacherId)
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'room:id,name',
+            ]);
+
+        if ($startDate !== null && $endDate !== null) {
+            $query->whereBetween('session_date', [$startDate, $endDate]);
+        }
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, ClassSession> $sessions */
+        $sessions = $query->orderBy('session_date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->get();
+
+        $stats = [
+            'total'       => $sessions->count(),
+            'completed'   => $sessions->where('status', 'completed')->count(),
+            'scheduled'   => $sessions->where('status', 'scheduled')->count(),
+            'cancelled'   => $sessions->where('status', 'cancelled')->count(),
+            'rescheduled' => $sessions->where('status', 'rescheduled')->count(),
+        ];
+
+        return [
+            'sessions' => $sessions,
+            'stats'    => $stats,
+        ];
+    }
 }
