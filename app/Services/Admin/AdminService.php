@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\Constant;
 use App\Mail\AccountCreatedMail;
 use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
@@ -21,7 +22,7 @@ class AdminService implements AdminServiceInterface
     ) {
     }
 
-    public function getPaginatedAdmins(int $perPage = 15, ?string $search = null, ?string $role = null): LengthAwarePaginator
+    public function getPaginatedAdmins(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator
     {
         return $this->adminRepository->paginate($perPage, $search, $role);
     }
@@ -31,7 +32,7 @@ class AdminService implements AdminServiceInterface
      */
     public function createAdmin(array $data): Admin
     {
-        if ($data['role'] === 'super_admin') {
+        if ($data['role'] === Constant::ROLE_SUPER_ADMIN) {
             $hasSuperAdmin = $this->adminRepository->hasSuperAdmin();
 
             if ($hasSuperAdmin) {
@@ -48,11 +49,11 @@ class AdminService implements AdminServiceInterface
             'phone'      => $data['phone'] ?? null,
             'password'   => Hash::make((string) $data['password']),
             'role'       => $data['role'],
-            'status'     => 'active',
+            'status'     => Constant::STATUS_ACTIVE,
             'admin_code' => $adminCode,
         ]);
 
-        if ($data['role'] === 'admin') {
+        if ($data['role'] === Constant::ROLE_ADMIN) {
             $centerId = $data['center_id'] ?? ($data['center_ids'][0] ?? null);
 
             if ($centerId) {
@@ -90,11 +91,11 @@ class AdminService implements AdminServiceInterface
     {
         $targetAdmin = $this->adminRepository->find($id);
 
-        if ($targetAdmin->isSuperAdmin() && $data['role'] !== 'super_admin') {
+        if ($targetAdmin->isSuperAdmin() && $data['role'] !== Constant::ROLE_SUPER_ADMIN) {
             throw new \InvalidArgumentException('Không thể hạ cấp tài khoản Quản trị viên tối cao (Super Admin). Hệ thống phải luôn duy trì 1 Super Admin.');
         }
 
-        if (! $targetAdmin->isSuperAdmin() && $data['role'] === 'super_admin') {
+        if (! $targetAdmin->isSuperAdmin() && $data['role'] === Constant::ROLE_SUPER_ADMIN) {
             $hasOtherSuperAdmin = $this->adminRepository->hasOtherSuperAdmin($id);
 
             if ($hasOtherSuperAdmin) {
@@ -124,14 +125,14 @@ class AdminService implements AdminServiceInterface
 
         $admin = $this->adminRepository->update($id, $updateData);
 
-        if ($data['role'] === 'admin') {
+        if ($data['role'] === Constant::ROLE_ADMIN) {
             $centerId = $data['center_id'] ?? ($data['center_ids'][0] ?? null);
             $this->adminRepository->syncCenters($admin, $centerId ? [(int) $centerId] : []);
         } else {
             $this->adminRepository->syncCenters($admin, []);
         }
 
-        $roleLabel  = $admin->role === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên';
+        $roleLabel  = $admin->role === Constant::ROLE_SUPER_ADMIN ? 'Quản trị viên tối cao' : 'Quản trị viên';
         $centerName = $admin->centers->first()?->name;
 
         if ($isPassChanged && ! empty($admin->email)) {

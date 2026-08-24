@@ -2,6 +2,7 @@
 
 namespace App\Services\Holiday;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Holiday;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -17,7 +18,7 @@ interface HolidayServiceInterface
      * @param  ?Admin               $admin
      * @return LengthAwarePaginator
      */
-    public function getPaginatedHolidays(?int $year = null, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null): LengthAwarePaginator;
+    public function getPaginatedHolidays(?int $year = null, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE, ?Admin $admin = null): LengthAwarePaginator;
 
     /**
      * @param  int                      $year

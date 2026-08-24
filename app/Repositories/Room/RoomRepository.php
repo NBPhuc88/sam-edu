@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Room;
 
+use App\Enums\Constant;
 use App\Models\Room;
 use App\Models\RoomEquipment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -14,8 +15,8 @@ class RoomRepository implements RoomRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator {
         $query = Room::query()
             ->select(

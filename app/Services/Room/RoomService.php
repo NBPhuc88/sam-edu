@@ -2,6 +2,7 @@
 
 namespace App\Services\Room;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Room;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -40,11 +41,11 @@ class RoomService implements RoomServiceInterface
     }
 
     public function getPaginatedRooms(
-        ?string $search,
-        ?int $centerId,
-        ?string $status,
-        int $perPage,
-        int $page,
+        ?string $search = null,
+        ?int $centerId = null,
+        ?string $status = null,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
@@ -91,10 +92,10 @@ class RoomService implements RoomServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền tạo phòng học cho trung tâm này.');
         }
 
-        $status = $data['status'] ?? 'active';
+        $status = $data['status'] ?? Constant::STATUS_ACTIVE;
 
         // Kiểm tra giới hạn số phòng học đang hoạt động và tạm dừng không được vượt quá max_classes
-        if (in_array($status, ['active', 'paused'], true)) {
+        if (in_array($status, [Constant::STATUS_ACTIVE, 'paused'], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
@@ -117,11 +118,11 @@ class RoomService implements RoomServiceInterface
     {
         $count   = $this->roomRepository->countByCenterId($centerId);
         $nextNum = $count + 1;
-        $code    = sprintf('R%09d', $nextNum);
+        $code    = sprintf(Constant::PREFIX_ROOM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
 
         while ($this->roomRepository->codeExists($centerId, $code)) {
             $nextNum++;
-            $code = sprintf('R%09d', $nextNum);
+            $code = sprintf(Constant::PREFIX_ROOM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
         }
 
         return $code;

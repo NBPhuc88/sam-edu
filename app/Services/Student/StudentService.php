@@ -2,6 +2,7 @@
 
 namespace App\Services\Student;
 
+use App\Enums\Constant;
 use App\Mail\AccountCreatedMail;
 use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
@@ -75,8 +76,8 @@ class StudentService implements StudentServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null
     ): LengthAwarePaginator {
@@ -212,27 +213,27 @@ class StudentService implements StudentServiceInterface
 
         if (empty($studentCode)) {
             $count       = $this->studentRepository->countByCenterIds([$centerId]) + 1;
-            $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+            $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->studentRepository->codeExists($centerId, $studentCode)) {
                 $count++;
-                $studentCode = 'HS' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+                $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 
-        $status    = $data['status'] ?? 1;
-        $statusInt = 1;
+        $status    = $data['status'] ?? Constant::STUDENT_STATUS_ACTIVE;
+        $statusInt = Constant::STUDENT_STATUS_ACTIVE;
 
         if (is_numeric($status)) {
             $statusInt = (int) $status;
         } elseif ($status === 'inactive' || $status === 'paused') {
-            $statusInt = 0;
+            $statusInt = Constant::STUDENT_STATUS_INACTIVE;
         } elseif ($status === 'graduated' || $status === 'completed') {
-            $statusInt = 2;
+            $statusInt = Constant::STUDENT_STATUS_GRADUATED;
         }
 
         // Kiểm tra giới hạn số học sinh đang hoạt động không vượt quá max_students
-        if ($statusInt === 1) {
+        if ($statusInt === Constant::STUDENT_STATUS_ACTIVE) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Center;
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Exam;
 use App\Models\Room;
@@ -21,7 +22,7 @@ class CenterRepository implements CenterRepositoryInterface
      * @param int     $perPage
      * @param ?string $search
      */
-    public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator
+    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null): LengthAwarePaginator
     {
         $query = Center::query();
 

@@ -2,7 +2,9 @@
 
 namespace App\Services\Chat;
 
+use App\Enums\Constant;
 use App\Models\SchoolClass;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface ChatServiceInterface
 {
@@ -49,24 +51,24 @@ interface ChatServiceInterface
     public function authorizeAccess(int $classId, mixed $user = null): SchoolClass;
 
     /**
-     * @param  ?string                                               $search
-     * @param  ?int                                                  $centerId
-     * @param  ?int                                                  $classId
-     * @param  ?string                                               $status
-     * @param  int                                                   $perPage
-     * @param  int                                                   $page
-     * @param  mixed                                                 $user
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param  ?string              $search
+     * @param  ?int                 $centerId
+     * @param  ?int                 $classId
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @param  mixed                $user
+     * @return LengthAwarePaginator
      */
     public function getPaginatedChatGroups(
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         mixed $user = null
-    ): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+    ): LengthAwarePaginator;
 
     /**
      * @param  mixed                $user

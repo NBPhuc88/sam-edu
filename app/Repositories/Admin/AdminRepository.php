@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Admin;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -29,7 +30,7 @@ class AdminRepository implements AdminRepositoryInterface
         return Admin::findOrFail($id);
     }
 
-    public function paginate(int $perPage = 15, ?string $search = null, ?string $role = null): LengthAwarePaginator
+    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator
     {
         return Admin::query()
             ->select(
@@ -98,16 +99,16 @@ class AdminRepository implements AdminRepositoryInterface
 
     public function hasSuperAdmin(): bool
     {
-        return Admin::where('role', 'super_admin')->exists();
+        return Admin::where('role', Constant::ROLE_SUPER_ADMIN)->exists();
     }
 
     public function hasOtherSuperAdmin(int $id): bool
     {
-        return Admin::where('role', 'super_admin')->where('id', '!=', $id)->exists();
+        return Admin::where('role', Constant::ROLE_SUPER_ADMIN)->where('id', '!=', $id)->exists();
     }
 
     public function getNextAdminCode(): string
     {
-        return 'ADM' . str_pad((string) (Admin::max('id') + 1), 4, '0', STR_PAD_LEFT);
+        return Constant::PREFIX_ADMIN . str_pad((string) (Admin::max('id') + 1), 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
     }
 }

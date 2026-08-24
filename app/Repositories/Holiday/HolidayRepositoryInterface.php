@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Holiday;
 
+use App\Enums\Constant;
 use App\Models\Holiday;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,7 +16,7 @@ interface HolidayRepositoryInterface
      * @param  int                  $page
      * @return LengthAwarePaginator
      */
-    public function paginate(?int $year = null, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    public function paginate(?int $year = null, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE): LengthAwarePaginator;
 
     /**
      * @param  int                      $year

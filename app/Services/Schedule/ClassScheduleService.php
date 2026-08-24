@@ -2,6 +2,7 @@
 
 namespace App\Services\Schedule;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
@@ -72,8 +73,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         ?int $subjectId = null,
         ?int $teacherId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);

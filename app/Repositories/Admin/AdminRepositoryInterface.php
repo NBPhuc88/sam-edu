@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Admin;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -11,7 +12,7 @@ interface AdminRepositoryInterface
 
     public function find(int $id): Admin;
 
-    public function paginate(int $perPage = 15, ?string $search = null, ?string $role = null): LengthAwarePaginator;
+    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator;
 
     /**
      * @param array<string, mixed> $data

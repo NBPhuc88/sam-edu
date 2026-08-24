@@ -2,6 +2,7 @@
 
 namespace App\Services\ExamType;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ExamType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,8 +23,8 @@ interface ExamTypeServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator;
 

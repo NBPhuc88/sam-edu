@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Exam;
 
+use App\Enums\Constant;
 use App\Models\ClassExam;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
@@ -30,8 +31,8 @@ class ExamRepository implements ExamRepositoryInterface
         ?int $subjectId = null,
         int|string|null $examType = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator {
         $query = Exam::query()
             ->select(

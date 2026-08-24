@@ -2,6 +2,7 @@
 
 namespace App\Services\Class;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -70,8 +71,8 @@ class SchoolClassService implements SchoolClassServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null,
         ?Student $student = null
@@ -193,37 +194,37 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         if (empty($code)) {
             $count = $this->schoolClassRepository->countByCenterIds([$centerId]) + 1;
-            $code  = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            $code  = Constant::PREFIX_CLASS . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->schoolClassRepository->codeExists($centerId, $code)) {
                 $count++;
-                $code = 'LH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+                $code = Constant::PREFIX_CLASS . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 
-        $status = 1;
+        $status = Constant::CLASS_STATUS_ACTIVE;
 
         if (isset($data['status'])) {
             if (is_numeric($data['status'])) {
                 $status = (int) $data['status'];
             } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $status = 0;
+                $status = Constant::CLASS_STATUS_INACTIVE;
             } elseif ($data['status'] === 'completed') {
-                $status = 2;
+                $status = Constant::CLASS_STATUS_COMPLETED;
             } elseif ($data['status'] === 'closed') {
-                $status = 3;
+                $status = Constant::CLASS_STATUS_CANCELLED;
             } else {
-                $status = 1;
+                $status = Constant::CLASS_STATUS_ACTIVE;
             }
         }
 
         // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng (status 0, 1) không vượt quá max_classes
-        if (in_array($status, [0, 1], true)) {
+        if (in_array($status, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
                 $activePausedClassesCount = SchoolClass::where('center_id', $centerId)
-                    ->whereIn('status', [0, 1])
+                    ->whereIn('status', [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE])
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
@@ -418,7 +419,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->findWithCenter($classId);
     }
 
-    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null, ?Teacher $teacher = null): LengthAwarePaginator
+    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE, ?Admin $admin = null, ?Teacher $teacher = null): LengthAwarePaginator
     {
         $schoolClass = $this->getClassWithCenter($classId, $admin, $teacher);
 

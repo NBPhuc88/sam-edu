@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Class;
 
+use App\Enums\Constant;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,8 +23,8 @@ interface SchoolClassRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
         ?int $studentId = null
     ): LengthAwarePaginator;
@@ -71,7 +72,7 @@ interface SchoolClassRepositoryInterface
 
     public function attachStudent(int $classId, int $studentId, ?string $note = null): bool;
 
-    public function getPaginatedClassStudents(SchoolClass $schoolClass, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    public function getPaginatedClassStudents(SchoolClass $schoolClass, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE): LengthAwarePaginator;
 
     public function count(): int;
 

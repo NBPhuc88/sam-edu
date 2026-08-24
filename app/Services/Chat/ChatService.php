@@ -2,6 +2,7 @@
 
 namespace App\Services\Chat;
 
+use App\Enums\Constant;
 use App\Events\ClassChatMessagePinned;
 use App\Events\ClassChatMessageReacted;
 use App\Events\ClassChatMessageSent;
@@ -379,8 +380,8 @@ class ChatService implements ChatServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         mixed $user = null
     ): LengthAwarePaginator {
         if (! $user) {
@@ -406,7 +407,7 @@ class ChatService implements ChatServiceInterface
         } elseif ($user instanceof Student) {
             $studentStatusInt = is_object($user->status) ? $user->status->value : (int) $user->status;
 
-            if ($studentStatusInt !== 1) {
+            if ($studentStatusInt !== Constant::STUDENT_STATUS_ACTIVE) {
                 abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
             }
             $studentId = (int) $user->id;

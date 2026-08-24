@@ -2,6 +2,7 @@
 
 namespace App\Services\Tuition;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
@@ -27,8 +28,8 @@ interface StudentTuitionServiceInterface
         ?int $classId = null,
         ?int $studentId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?string $month = null
     ): LengthAwarePaginator;

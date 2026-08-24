@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Grading;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -15,7 +16,7 @@ class GradingRepository implements GradingRepositoryInterface
 {
     public function getClassesForGrading(?Teacher $teacher = null, ?Admin $admin = null): Collection
     {
-        $query = SchoolClass::query()->whereIn('status', [1, 2]);
+        $query = SchoolClass::query()->whereIn('status', [Constant::CLASS_STATUS_ACTIVE, Constant::CLASS_STATUS_COMPLETED]);
 
         if ($teacher) {
             $query->whereHas('classSubjects', function (Builder $sq) use ($teacher) {
@@ -61,8 +62,8 @@ class GradingRepository implements GradingRepositoryInterface
         ?int $classExamId,
         ?string $gradedStatus,
         ?string $search,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Teacher $teacher = null,
         ?Admin $admin = null
     ): LengthAwarePaginator {

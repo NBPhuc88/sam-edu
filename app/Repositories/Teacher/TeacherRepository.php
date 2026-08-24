@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Teacher;
 
+use App\Enums\Constant;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\ClassSubject;
@@ -82,8 +83,8 @@ class TeacherRepository implements TeacherRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator {
         $query = Teacher::query()
             ->select(

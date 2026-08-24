@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Schedule;
 
+use App\Enums\Constant;
 use App\Models\ClassSchedule;
 use App\Models\ClassSubject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -27,8 +28,8 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
         ?int $subjectId = null,
         ?int $teacherId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator {
         $query = ClassSchedule::query()
             ->select(

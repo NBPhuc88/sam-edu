@@ -2,6 +2,7 @@
 
 namespace App\Services\Subject;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Subject;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -48,8 +49,8 @@ class SubjectService implements SubjectServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
@@ -129,11 +130,11 @@ class SubjectService implements SubjectServiceInterface
 
         if (empty($code)) {
             $count = 1;
-            $code  = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            $code  = Constant::PREFIX_SUBJECT . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->subjectRepository->codeExists($centerId, $code)) {
                 $count++;
-                $code = 'MH' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+                $code = Constant::PREFIX_SUBJECT . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 
@@ -145,7 +146,7 @@ class SubjectService implements SubjectServiceInterface
             'total_sessions'   => ! empty($data['total_sessions']) ? (int) $data['total_sessions'] : null,
             'duration_minutes' => ! empty($data['duration_minutes']) ? (int) $data['duration_minutes'] : null,
             'tuition_fee'      => isset($data['tuition_fee']) ? (float) $data['tuition_fee'] : null,
-            'status'           => $data['status'] ?? 'active',
+            'status'           => $data['status'] ?? Constant::STATUS_ACTIVE,
         ]);
     }
 

@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Chat;
 
+use App\Enums\Constant;
 use App\Models\ClassChatMessage;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface ChatRepositoryInterface
@@ -39,26 +41,26 @@ interface ChatRepositoryInterface
     public function getGroupedReactions(int $messageId): array;
 
     /**
-     * @param  ?string                                               $search
-     * @param  array<int>|int|null                                   $centerIds
-     * @param  ?int                                                  $classId
-     * @param  ?string                                               $status
-     * @param  int                                                   $perPage
-     * @param  int                                                   $page
-     * @param  ?int                                                  $teacherId
-     * @param  ?int                                                  $studentId
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param  ?string              $search
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?int                 $classId
+     * @param  ?string              $status
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @param  ?int                 $teacherId
+     * @param  ?int                 $studentId
+     * @return LengthAwarePaginator
      */
     public function getPaginatedClassChatGroups(
         ?string $search = null,
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
         ?int $studentId = null
-    ): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+    ): LengthAwarePaginator;
 
     /**
      * @param  array<int>|int|null                                                    $centerIds

@@ -2,6 +2,7 @@
 
 namespace App\Services\Teacher;
 
+use App\Enums\Constant;
 use App\Mail\AccountCreatedMail;
 use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
@@ -57,8 +58,8 @@ class TeacherService implements TeacherServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
@@ -151,11 +152,11 @@ class TeacherService implements TeacherServiceInterface
 
         if (empty($teacherCode)) {
             $count       = $this->teacherRepository->countByCenterIds([$centerId]) + 1;
-            $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+            $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->teacherRepository->codeExists($centerId, $teacherCode)) {
                 $count++;
-                $teacherCode = 'GV' . str_pad((string) $count, 3, '0', STR_PAD_LEFT);
+                $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 
@@ -166,7 +167,7 @@ class TeacherService implements TeacherServiceInterface
             'username'       => trim($data['username']),
             'email'          => ! empty($data['email']) ? trim($data['email']) : null,
             'password'       => $password,
-            'status'         => $data['status'] ?? 'active',
+            'status'         => $data['status'] ?? Constant::STATUS_ACTIVE,
             'teacher_code'   => $teacherCode,
             'center_id'      => $centerId,
             'first_name'     => $data['first_name'] ?? $firstName,

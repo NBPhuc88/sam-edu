@@ -2,6 +2,7 @@
 
 namespace App\Repositories\ClassExam;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -17,8 +18,8 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         ?int $classId = null,
         ?int $examId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null
     ): LengthAwarePaginator {

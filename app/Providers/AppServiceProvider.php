@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\Constant;
 use App\Repositories\Admin\AdminRepository;
 use App\Repositories\Admin\AdminRepositoryInterface;
 use App\Repositories\Auth\PasswordResetRepository;
@@ -187,7 +188,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configurePagination(): void
     {
         Builder::macro('deferredPaginate', function (
-            int $perPage = 15,
+            int $perPage = Constant::DEFAULT_PER_PAGE,
             array $columns = ['*'],
             string $pageName = 'page',
             ?int $page = null

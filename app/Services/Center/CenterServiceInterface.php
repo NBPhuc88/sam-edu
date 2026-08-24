@@ -2,6 +2,7 @@
 
 namespace App\Services\Center;
 
+use App\Enums\Constant;
 use App\Models\Center;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -12,7 +13,7 @@ interface CenterServiceInterface
      * @param int     $perPage
      * @param ?string $search
      */
-    public function getPaginatedCenters(int $perPage = 15, ?string $search = null): LengthAwarePaginator;
+    public function getPaginatedCenters(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null): LengthAwarePaginator;
 
     /**
      * Get center details by ID.

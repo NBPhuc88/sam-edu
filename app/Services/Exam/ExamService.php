@@ -2,6 +2,7 @@
 
 namespace App\Services\Exam;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
@@ -73,8 +74,8 @@ class ExamService implements ExamServiceInterface
         ?int $subjectId = null,
         int|string|null $examType = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         Admin|Teacher|null $user = null
     ): LengthAwarePaginator {
         $allowedCenterIds = $this->getAllowedCenterIds($user);
@@ -172,7 +173,7 @@ class ExamService implements ExamServiceInterface
 
         if (empty($code)) {
             $count = $this->examRepository->countByCenterIds([$centerId]) + 1;
-            $code  = 'EX' . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+            $code  = Constant::PREFIX_EXAM_ALT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
         }
 
         if ($this->examRepository->codeExists($centerId, $code)) {
@@ -187,14 +188,14 @@ class ExamService implements ExamServiceInterface
             'code'                  => $code,
             'exam_type_id'          => ! empty($data['exam_type_id']) ? (int) $data['exam_type_id'] : null,
             'description'           => $data['description'] ?? null,
-            'duration_minutes'      => (int) ($data['duration_minutes'] ?? 45),
-            'max_score'             => (float) ($data['max_score'] ?? 10.0),
-            'pass_score'            => (float) ($data['pass_score'] ?? 5.0),
+            'duration_minutes'      => (int) ($data['duration_minutes'] ?? Constant::DEFAULT_EXAM_DURATION_MINUTES),
+            'max_score'             => (float) ($data['max_score'] ?? Constant::DEFAULT_EXAM_MAX_SCORE),
+            'pass_score'            => (float) ($data['pass_score'] ?? Constant::DEFAULT_EXAM_PASS_SCORE),
             'shuffle_questions'     => ! empty($data['shuffle_questions']),
             'shuffle_options'       => ! empty($data['shuffle_options']),
             'max_attempts'          => isset($data['max_attempts']) ? (int) $data['max_attempts'] : 1,
             'is_practice'           => ! empty($data['is_practice']),
-            'status'                => $data['status'] ?? 'draft',
+            'status'                => $data['status'] ?? Constant::EXAM_STATUS_DRAFT,
             'created_by_admin_id'   => $user instanceof Admin ? $user->id : null,
             'created_by_teacher_id' => $user instanceof Teacher ? $user->id : null,
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Services\Subject;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Subject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -21,8 +22,8 @@ interface SubjectServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator;
 

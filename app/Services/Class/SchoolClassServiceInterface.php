@@ -2,6 +2,7 @@
 
 namespace App\Services\Class;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -25,8 +26,8 @@ interface SchoolClassServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null,
         ?Student $student = null
@@ -72,7 +73,7 @@ interface SchoolClassServiceInterface
 
     public function getClassWithCenter(int $classId, ?Admin $admin = null, ?Teacher $teacher = null): SchoolClass;
 
-    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = 15, int $page = 1, ?Admin $admin = null, ?Teacher $teacher = null): LengthAwarePaginator;
+    public function getPaginatedClassStudents(int $classId, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE, ?Admin $admin = null, ?Teacher $teacher = null): LengthAwarePaginator;
 
     /**
      * @param  int                  $classId

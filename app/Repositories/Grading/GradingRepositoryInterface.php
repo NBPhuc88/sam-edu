@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Grading;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassExamSubmission;
 use App\Models\Teacher;
@@ -47,8 +48,8 @@ interface GradingRepositoryInterface
         ?int $classExamId,
         ?string $gradedStatus,
         ?string $search,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Teacher $teacher = null,
         ?Admin $admin = null
     ): LengthAwarePaginator;

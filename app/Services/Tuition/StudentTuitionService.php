@@ -2,6 +2,7 @@
 
 namespace App\Services\Tuition;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
@@ -62,8 +63,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?int $classId = null,
         ?int $studentId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?string $month = null
     ): LengthAwarePaginator {
@@ -427,11 +428,11 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $isOverdue = $tuition->due_date && Carbon::parse($tuition->due_date)->isPast() && $remainingAmount > 0;
 
         if ($remainingAmount <= 0 && $totalAmount > 0) {
-            $status = 'completed';
+            $status = Constant::TUITION_STATUS_COMPLETED;
         } elseif ($paidAmount > 0) {
-            $status = $isOverdue ? 'overdue' : 'partial';
+            $status = $isOverdue ? Constant::TUITION_STATUS_OVERDUE : Constant::TUITION_STATUS_PARTIAL;
         } else {
-            $status = $isOverdue ? 'overdue' : 'pending';
+            $status = $isOverdue ? Constant::TUITION_STATUS_OVERDUE : Constant::TUITION_STATUS_PENDING;
         }
 
         $this->studentTuitionRepository->update($tuitionId, [

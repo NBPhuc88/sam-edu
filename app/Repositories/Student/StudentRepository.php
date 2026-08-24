@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Student;
 
+use App\Enums\Constant;
 use App\Models\ClassExamSubmission;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
@@ -95,8 +96,8 @@ class StudentRepository implements StudentRepositoryInterface
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?array $allowedClassIds = null
     ): LengthAwarePaginator {
         $query = Student::query()

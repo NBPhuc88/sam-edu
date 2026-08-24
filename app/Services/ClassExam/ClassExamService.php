@@ -2,6 +2,7 @@
 
 namespace App\Services\ClassExam;
 
+use App\Enums\Constant;
 use App\Mail\ClassExamCreatedMail;
 use App\Models\Admin;
 use App\Models\ClassExam;
@@ -33,8 +34,8 @@ class ClassExamService implements ClassExamServiceInterface
         ?int $classId = null,
         ?int $examId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null
     ): LengthAwarePaginator {
@@ -109,7 +110,7 @@ class ClassExamService implements ClassExamServiceInterface
                 'duration_minutes'      => $data['duration_minutes'] ?? $exam->duration_minutes,
                 'max_score'             => $data['max_score'] ?? $exam->max_score,
                 'pass_score'            => $data['pass_score'] ?? $exam->pass_score,
-                'status'                => $data['status'] ?? 'scheduled',
+                'status'                => $data['status'] ?? Constant::CLASS_EXAM_STATUS_SCHEDULED,
                 'created_by_admin_id'   => $admin?->id,
                 'created_by_teacher_id' => $teacher?->id,
             ];

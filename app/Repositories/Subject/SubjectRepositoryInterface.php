@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Subject;
 
+use App\Enums\Constant;
 use App\Models\Subject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -19,8 +20,8 @@ interface SubjectRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator;
 
     /**

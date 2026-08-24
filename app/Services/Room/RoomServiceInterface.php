@@ -2,6 +2,7 @@
 
 namespace App\Services\Room;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Room;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -18,11 +19,11 @@ interface RoomServiceInterface
      * @return LengthAwarePaginator
      */
     public function getPaginatedRooms(
-        ?string $search,
-        ?int $centerId,
-        ?string $status,
-        int $perPage,
-        int $page,
+        ?string $search = null,
+        ?int $centerId = null,
+        ?string $status = null,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null
     ): LengthAwarePaginator;
 

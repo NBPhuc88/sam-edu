@@ -2,6 +2,7 @@
 
 namespace App\Repositories\ExamType;
 
+use App\Enums\Constant;
 use App\Models\ExamType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,8 +21,8 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
     ): LengthAwarePaginator {
         $query = ExamType::query()
             ->select(

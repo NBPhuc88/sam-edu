@@ -2,6 +2,7 @@
 
 namespace App\Services\Center;
 
+use App\Enums\Constant;
 use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -24,7 +25,7 @@ class CenterService implements CenterServiceInterface
      * @param int     $perPage
      * @param ?string $search
      */
-    public function getPaginatedCenters(int $perPage = 15, ?string $search = null): LengthAwarePaginator
+    public function getPaginatedCenters(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null): LengthAwarePaginator
     {
         return $this->centerRepository->paginate($perPage, $search);
     }
@@ -47,7 +48,7 @@ class CenterService implements CenterServiceInterface
     {
         // Auto generate center code if not provided
         if (empty($data['code'])) {
-            $data['code'] = 'CENTER-' . sprintf('%02d', $this->centerRepository->count() + 1);
+            $data['code'] = Constant::PREFIX_CENTER . sprintf('%0' . Constant::CODE_PAD_LENGTH . 'd', $this->centerRepository->count() + 1);
         }
 
         // Tự động đồng bộ plan_type, max_classes, max_students từ gói được chọn
@@ -62,9 +63,9 @@ class CenterService implements CenterServiceInterface
         }
 
         // Set default trial expiration if creating new trial plan
-        if (($data['subscription_plan'] ?? '') === 'trial' && empty($data['expires_at'])) {
-            $data['expires_at']    = now()->addDays(30);
-            $data['trial_ends_at'] = now()->addDays(30);
+        if (($data['subscription_plan'] ?? '') === Constant::CENTER_STATUS_TRIAL && empty($data['expires_at'])) {
+            $data['expires_at']    = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
+            $data['trial_ends_at'] = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
         }
 
         return $this->centerRepository->create($data);

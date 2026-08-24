@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Class;
 
+use App\Enums\Constant;
 use App\Models\ClassExam;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
@@ -30,8 +31,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
         ?int $studentId = null
     ): LengthAwarePaginator {
@@ -281,7 +282,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'student_id' => $studentId,
             ],
             [
-                'status'      => 'active',
+                'status'      => Constant::STATUS_ACTIVE,
                 'enrolled_at' => now(),
                 'note'        => $note,
             ]
@@ -290,7 +291,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         return true;
     }
 
-    public function getPaginatedClassStudents(SchoolClass $schoolClass, ?string $search = null, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    public function getPaginatedClassStudents(SchoolClass $schoolClass, ?string $search = null, int $perPage = Constant::DEFAULT_PER_PAGE, int $page = Constant::DEFAULT_PAGE): LengthAwarePaginator
     {
         $query = $schoolClass->students()
             ->withPivot('enrolled_at', 'status', 'note')

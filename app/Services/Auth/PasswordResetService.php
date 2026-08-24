@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Enums\Constant;
 use App\Mail\PasswordChangedMail;
 use App\Mail\PasswordResetOtpMail;
 use App\Models\Admin;
@@ -33,7 +34,8 @@ class PasswordResetService implements PasswordResetServiceInterface
         }
 
         // Generate 6-digit OTP
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $maxNum = (10 ** Constant::OTP_DIGITS) - 1;
+        $otp    = str_pad((string) random_int(0, $maxNum), Constant::OTP_DIGITS, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
         $this->repository->createOtp($email, $accountType, Hash::make($otp));
 
         // Queue OTP Mail
@@ -65,7 +67,7 @@ class PasswordResetService implements PasswordResetServiceInterface
         if (now()->isAfter($record->expires_at)) {
             return [
                 'success' => false,
-                'error'   => 'Mã OTP đã hết hạn (chỉ có hiệu lực trong 5 phút). Vui lòng yêu cầu mã mới!',
+                'error'   => 'Mã OTP đã hết hạn (chỉ có hiệu lực trong ' . Constant::OTP_EXPIRATION_MINUTES . ' phút). Vui lòng yêu cầu mã mới!',
             ];
         }
 
@@ -122,7 +124,7 @@ class PasswordResetService implements PasswordResetServiceInterface
             $loginUrl  = url('/login');
 
             if ($user instanceof Admin) {
-                $roleLabel = $user->role === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên';
+                $roleLabel = $user->role === Constant::ROLE_SUPER_ADMIN ? 'Quản trị viên tối cao' : 'Quản trị viên';
                 $loginUrl  = url('/admins');
             } elseif ($user instanceof Teacher) {
                 $roleLabel = 'Giáo viên';

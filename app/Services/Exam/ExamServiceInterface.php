@@ -2,6 +2,7 @@
 
 namespace App\Services\Exam;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Exam;
 use App\Models\Teacher;
@@ -28,8 +29,8 @@ interface ExamServiceInterface
         ?int $subjectId = null,
         int|string|null $examType = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         Admin|Teacher|null $user = null
     ): LengthAwarePaginator;
 

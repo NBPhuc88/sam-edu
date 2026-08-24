@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Student;
 
+use App\Enums\Constant;
 use App\Models\Student;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -39,8 +40,8 @@ interface StudentRepositoryInterface
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?array $allowedClassIds = null
     ): LengthAwarePaginator;
 

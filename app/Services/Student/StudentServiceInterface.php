@@ -2,6 +2,7 @@
 
 namespace App\Services\Student;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -25,8 +26,8 @@ interface StudentServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?Teacher $teacher = null
     ): LengthAwarePaginator;

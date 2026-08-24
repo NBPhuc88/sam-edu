@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Chat;
 
+use App\Enums\Constant;
 use App\Models\ClassChatMessage;
 use App\Models\ClassChatMessageReaction;
 use App\Models\SchoolClass;
@@ -216,8 +217,8 @@ class ChatRepository implements ChatRepositoryInterface
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?string $status = null,
-        int $perPage = 15,
-        int $page = 1,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
         ?int $studentId = null
     ): LengthAwarePaginator {

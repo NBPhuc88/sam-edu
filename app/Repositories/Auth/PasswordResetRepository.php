@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Auth;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -20,7 +21,7 @@ class PasswordResetRepository implements PasswordResetRepositoryInterface
             'email'        => $email,
             'account_type' => $accountType,
             'otp_hash'     => $otpHash,
-            'expires_at'   => now()->addMinutes(5),
+            'expires_at'   => now()->addMinutes(Constant::OTP_EXPIRATION_MINUTES),
             'created_at'   => now(),
         ]);
     }
