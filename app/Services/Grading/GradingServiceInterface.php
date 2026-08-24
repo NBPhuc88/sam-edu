@@ -38,4 +38,23 @@ interface GradingServiceInterface
      * @return ClassExamSubmission
      */
     public function gradeSubmission(int $submissionId, array $data, ?Teacher $teacher = null, ?Admin $admin = null): ClassExamSubmission;
+
+    /**
+     * Lấy dữ liệu cấu hình để tạo đợt chấm bài thi giấy (Offline).
+     *
+     * @param  Teacher|null         $teacher
+     * @param  Admin|null           $admin
+     * @return array<string, mixed>
+     */
+    public function getOfflineExamFormData(?Teacher $teacher = null, ?Admin $admin = null): array;
+
+    /**
+     * Tạo bài thi giấy (Offline), kỳ thi lớp và lưu toàn bộ bảng điểm học sinh.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  Teacher|null          $teacher
+     * @param  Admin|null            $admin
+     * @return \App\Models\ClassExam
+     */
+    public function createOfflineExamWithScores(array $data, ?Teacher $teacher = null, ?Admin $admin = null): \App\Models\ClassExam;
 }

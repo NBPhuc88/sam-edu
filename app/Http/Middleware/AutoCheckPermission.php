@@ -22,6 +22,53 @@ class AutoCheckPermission
         'destroy' => 'delete',
         'import'  => 'create',
         'export'  => 'index',
+        'show'    => 'index',
+    ];
+
+    /**
+     * Ánh xạ các route tùy chỉnh sang permission code tương ứng.
+     *
+     * @var array<string, string>
+     */
+    private const ROUTE_PERMISSION_MAP = [
+        // Dashboard & Statistics
+        'dashboard'  => 'dashboard.index',
+        'statistics' => 'statistics.index',
+
+        // Chat
+        'chats.index' => 'classes.chat',
+
+        // Grading
+        'grading.offline.create' => 'grading.create',
+        'grading.offline.store'  => 'grading.create',
+        'grading.show'           => 'grading.grade',
+
+        // Practice Exams
+        'practice-exams.submit' => 'practice-exams.index',
+
+        // Students Management Sub-actions
+        'students.sample-csv'          => 'students.import',
+        'students.bulk-assign-classes' => 'students.assign-classes',
+        'students.remove-class'        => 'students.assign-classes',
+
+        // Teachers Management Sub-actions
+        'teachers.sample-csv' => 'teachers.import',
+
+        // Classes & Schedules Sub-actions
+        'classes.students.sample-csv' => 'classes.students',
+        'classes.students.available'  => 'classes.students',
+        'classes.students.add'        => 'classes.students',
+        'classes.students.remove'     => 'classes.students',
+        'schedules.sessions'          => 'schedules.index',
+
+        // Attendance Sub-actions
+        'attendance.session' => 'attendance.index',
+        'attendance.reset'   => 'attendance.save',
+
+        // Holidays & Permissions Sub-actions
+        'holidays.seed'     => 'holidays.create',
+        'permissions.reset' => 'permissions.edit',
+        'permissions.sync'  => 'permissions.edit',
     ];
 
     public function __construct(
@@ -43,7 +90,7 @@ class AutoCheckPermission
             return $next($request);
         }
 
-        $permissionCode = $this->resolvePermissionCode($routeName);
+        $permissionCode = self::ROUTE_PERMISSION_MAP[$routeName] ?? $this->resolvePermissionCode($routeName);
 
         // Nếu không map được permission code nào trong danh mục hệ thống → cho qua
         if (! $permissionCode || ! $this->permissionService->permissionExists($permissionCode)) {

@@ -182,6 +182,17 @@ export default function GradingIndex({
                             Xem danh sách bài thi theo lớp, chấm điểm câu hỏi Tự luận (Viết) & Ghi âm (Nói) và quản lý kết quả thi
                         </p>
                     </div>
+
+                    <Link href="/grading/offline/create">
+                        <Button
+                            variant="success"
+                            size="md"
+                            icon={<PenTool className="h-4 w-4" />}
+                            className="shadow-xs font-bold"
+                        >
+                            + Chấm Bài Thi Giấy
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Statistics Cards */}

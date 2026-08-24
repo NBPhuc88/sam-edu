@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Grading\FilterGradingRequest;
 use App\Http\Requests\Grading\GradeSubmissionRequest;
+use App\Http\Requests\Grading\StoreOfflineExamRequest;
 use App\Models\Admin;
 use App\Models\Teacher;
 use App\Services\Grading\GradingServiceInterface;
@@ -48,6 +49,34 @@ class GradingController extends Controller
             'isTeacher'   => (bool) $teacher,
             'isAdmin'     => (bool) $admin,
         ]);
+    }
+
+    /**
+     * Giao diện tạo bài thi giấy (Offline) và bảng nhập điểm cho lớp.
+     */
+    public function createOffline(): InertiaResponse
+    {
+        [$teacher, $admin] = $this->getAuthUser();
+
+        $formData = $this->gradingService->getOfflineExamFormData($teacher, $admin);
+
+        return Inertia::render('Teacher/Grading/OfflineCreate', $formData);
+    }
+
+    /**
+     * Lưu bài thi giấy và bảng điểm học sinh.
+     * @param StoreOfflineExamRequest $request
+     */
+    public function storeOffline(StoreOfflineExamRequest $request): RedirectResponse
+    {
+        [$teacher, $admin] = $this->getAuthUser();
+
+        $classExam = $this->gradingService->createOfflineExamWithScores($request->validated(), $teacher, $admin);
+
+        return redirect()->route('grading.index', [
+            'class_id'      => $classExam->class_id,
+            'class_exam_id' => $classExam->id,
+        ])->with('success', "Đã tạo thành công bài thi '{$classExam->title}' và cập nhật bảng điểm cho lớp!");
     }
 
     /**

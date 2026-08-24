@@ -83,6 +83,7 @@ export const masterNavigation: NavItem[] = [
         children: [
             { label: 'Kỳ Thi Lớp Học', path: '/class-exams', permission: 'class-exams.index', planFeature: 'class-exams' },
             { label: 'Chấm Bài Thi', path: '/grading', permission: 'grading.index', planFeature: 'grading' },
+            { label: 'Chấm Bài Thi Giấy', path: '/grading/offline/create', permission: 'grading.create', planFeature: 'grading' },
             { label: 'Vào Phòng Thi', path: '/exam-room', permission: 'online-exam.enter', planFeature: 'online-exam' },
             { label: 'Thi Thử / Luyện Tập', path: '/practice-exams', permission: 'practice-exams.index', planFeature: 'practice-exams' },
         ],

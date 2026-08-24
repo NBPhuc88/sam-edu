@@ -70,9 +70,12 @@ return [
             'module_order' => 6,
             'actions'      => [
                 ['code' => 'teachers.index', 'action' => 'index', 'name' => 'Xem danh sách giáo viên', 'description' => 'Xem danh sách giáo viên'],
-                ['code' => 'teachers.create', 'action' => 'create', 'name' => 'Thêm mới giáo viên', 'description' => 'Tạo mới giáo viên & import CSV'],
+                ['code' => 'teachers.create', 'action' => 'create', 'name' => 'Thêm mới giáo viên', 'description' => 'Tạo mới tài khoản giáo viên'],
                 ['code' => 'teachers.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa giáo viên', 'description' => 'Cập nhật hồ sơ giáo viên'],
                 ['code' => 'teachers.delete', 'action' => 'delete', 'name' => 'Xóa giáo viên', 'description' => 'Xóa giáo viên khỏi hệ thống'],
+                ['code' => 'teachers.export', 'action' => 'index', 'name' => 'Xuất CSV giáo viên', 'description' => 'Xuất danh sách giáo viên ra file CSV'],
+                ['code' => 'teachers.import', 'action' => 'create', 'name' => 'Nhập CSV giáo viên', 'description' => 'Nhập danh sách giáo viên từ file CSV và tải file mẫu'],
+                ['code' => 'teachers.schedule', 'action' => 'index', 'name' => 'Xem lịch dạy giáo viên', 'description' => 'Xem thời khóa biểu giảng dạy của giáo viên'],
             ],
         ],
         [
@@ -81,9 +84,13 @@ return [
             'module_order' => 7,
             'actions'      => [
                 ['code' => 'students.index', 'action' => 'index', 'name' => 'Xem danh sách học sinh', 'description' => 'Xem danh sách học sinh'],
-                ['code' => 'students.create', 'action' => 'create', 'name' => 'Thêm mới học sinh', 'description' => 'Tạo mới học sinh & import CSV'],
+                ['code' => 'students.create', 'action' => 'create', 'name' => 'Thêm mới học sinh', 'description' => 'Tạo mới tài khoản học sinh'],
                 ['code' => 'students.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa học sinh', 'description' => 'Cập nhật hồ sơ học sinh'],
                 ['code' => 'students.delete', 'action' => 'delete', 'name' => 'Xóa học sinh', 'description' => 'Xóa học sinh khỏi hệ thống'],
+                ['code' => 'students.assign-classes', 'action' => 'edit', 'name' => 'Gán lớp cho học sinh', 'description' => 'Phân lớp, gán lớp hàng loạt và gỡ học sinh khỏi lớp'],
+                ['code' => 'students.export', 'action' => 'index', 'name' => 'Xuất CSV học sinh', 'description' => 'Xuất danh sách học sinh ra file CSV'],
+                ['code' => 'students.import', 'action' => 'create', 'name' => 'Nhập CSV học sinh', 'description' => 'Nhập học sinh từ file CSV và tải file mẫu'],
+                ['code' => 'students.schedule', 'action' => 'index', 'name' => 'Xem lịch học của học sinh', 'description' => 'Xem thời khóa biểu học của học sinh'],
             ],
         ],
         [
@@ -117,7 +124,8 @@ return [
                 ['code' => 'classes.create', 'action' => 'create', 'name' => 'Thêm mới lớp học', 'description' => 'Tạo mới lớp học'],
                 ['code' => 'classes.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa lớp học', 'description' => 'Cập nhật thông tin lớp học'],
                 ['code' => 'classes.delete', 'action' => 'delete', 'name' => 'Xóa lớp học', 'description' => 'Xóa lớp học'],
-                ['code' => 'classes.students', 'action' => 'index', 'name' => 'Quản lý học sinh lớp', 'description' => 'Xem & thêm học sinh vào lớp'],
+                ['code' => 'classes.schedule', 'action' => 'index', 'name' => 'Xem thời khóa biểu lớp', 'description' => 'Xem lịch học chi tiết của từng lớp'],
+                ['code' => 'classes.students', 'action' => 'index', 'name' => 'Quản lý học sinh lớp', 'description' => 'Xem, thêm, gỡ và import/export danh sách học sinh trong lớp'],
                 ['code' => 'classes.exam-results', 'action' => 'index', 'name' => 'Bảng điểm bài thi lớp', 'description' => 'Xem bảng điểm & xuất dữ liệu kết quả thi của lớp học'],
                 ['code' => 'classes.chat', 'action' => 'index', 'name' => 'Chat nhóm lớp học', 'description' => 'Tham gia nhóm chat trao đổi của lớp'],
             ],
@@ -127,7 +135,7 @@ return [
             'name'         => 'Thời Khóa Biểu & Lịch Học',
             'module_order' => 11,
             'actions'      => [
-                ['code' => 'schedules.index', 'action' => 'index', 'name' => 'Xem thời khóa biểu', 'description' => 'Xem lịch học các lớp'],
+                ['code' => 'schedules.index', 'action' => 'index', 'name' => 'Xem thời khóa biểu', 'description' => 'Xem lịch học các lớp và danh sách ca học'],
                 ['code' => 'schedules.create', 'action' => 'create', 'name' => 'Thêm mới lịch học', 'description' => 'Tạo lịch học cố định'],
                 ['code' => 'schedules.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa lịch học', 'description' => 'Cập nhật lịch học'],
                 ['code' => 'schedules.delete', 'action' => 'delete', 'name' => 'Xóa lịch học', 'description' => 'Xóa lịch học cố định'],
@@ -138,10 +146,10 @@ return [
             'name'         => 'Quản Lý Ca Học & Điểm Danh',
             'module_order' => 12,
             'actions'      => [
-                ['code' => 'sessions.index', 'action' => 'index', 'name' => 'Xem danh sách buổi học', 'description' => 'Xem danh sách các buổi học'],
+                ['code' => 'sessions.index', 'action' => 'index', 'name' => 'Xem danh sách buổi học', 'description' => 'Xem danh sách các buổi học và chi tiết ca học'],
                 ['code' => 'sessions.edit', 'action' => 'edit', 'name' => 'Đổi lịch & báo nghỉ', 'description' => 'Đổi lịch ca học, xếp dạy bù'],
                 ['code' => 'attendance.index', 'action' => 'index', 'name' => 'Xem điểm danh ca học', 'description' => 'Xem bảng điểm danh'],
-                ['code' => 'attendance.save', 'action' => 'edit', 'name' => 'Điểm danh học sinh', 'description' => 'Thực hiện điểm danh buổi học'],
+                ['code' => 'attendance.save', 'action' => 'edit', 'name' => 'Điểm danh học sinh', 'description' => 'Thực hiện điểm danh và đặt lại điểm danh buổi học'],
             ],
         ],
         [
@@ -150,7 +158,7 @@ return [
             'module_order' => 13,
             'actions'      => [
                 ['code' => 'holidays.index', 'action' => 'index', 'name' => 'Xem danh sách ngày lễ', 'description' => 'Xem lịch nghỉ lễ'],
-                ['code' => 'holidays.create', 'action' => 'create', 'name' => 'Thêm mới ngày lễ', 'description' => 'Tạo mới hoặc seed ngày lễ'],
+                ['code' => 'holidays.create', 'action' => 'create', 'name' => 'Thêm mới ngày lễ', 'description' => 'Tạo mới hoặc seed ngày lễ tự động'],
                 ['code' => 'holidays.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa ngày lễ', 'description' => 'Cập nhật ngày lễ'],
                 ['code' => 'holidays.delete', 'action' => 'delete', 'name' => 'Xóa ngày lễ', 'description' => 'Xóa ngày nghỉ lễ'],
             ],
@@ -187,6 +195,7 @@ return [
                 ['code' => 'class-exams.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa kỳ thi lớp', 'description' => 'Cập nhật thời gian & cấu hình thi'],
                 ['code' => 'class-exams.delete', 'action' => 'delete', 'name' => 'Hủy kỳ thi lớp', 'description' => 'Hủy bỏ kỳ thi lớp'],
                 ['code' => 'grading.index', 'action' => 'index', 'name' => 'Xem danh sách chấm bài', 'description' => 'Xem bài nộp cần chấm điểm'],
+                ['code' => 'grading.create', 'action' => 'create', 'name' => 'Chấm bài thi giấy', 'description' => 'Khởi tạo bài thi giấy và nhập bảng điểm cho lớp'],
                 ['code' => 'grading.grade', 'action' => 'edit', 'name' => 'Chấm điểm bài thi', 'description' => 'Chấm điểm tự luận/nói/viết'],
             ],
         ],
@@ -208,7 +217,8 @@ return [
                 ['code' => 'tuitions.create', 'action' => 'create', 'name' => 'Tạo khoản học phí mới', 'description' => 'Lập phiếu thu học phí cho học sinh'],
                 ['code' => 'tuitions.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa học phí', 'description' => 'Cập nhật số tiền/hạn nộp học phí'],
                 ['code' => 'tuitions.delete', 'action' => 'delete', 'name' => 'Xóa khoản học phí', 'description' => 'Xóa khoản học phí'],
-                ['code' => 'tuitions.payments', 'action' => 'edit', 'name' => 'Thu tiền & đợt đóng', 'description' => 'Ghi nhận đợt nộp học phí'],
+                ['code' => 'tuitions.export', 'action' => 'index', 'name' => 'Xuất dữ liệu học phí', 'description' => 'Xuất bảng học phí ra file Excel/CSV'],
+                ['code' => 'tuitions.payments', 'action' => 'edit', 'name' => 'Thu tiền & đợt đóng', 'description' => 'Ghi nhận và cập nhật các đợt nộp học phí'],
             ],
         ],
         [

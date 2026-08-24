@@ -3,13 +3,18 @@
 namespace App\Services\Grading;
 
 use App\Models\Admin;
+use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
+use App\Models\Exam;
+use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Repositories\Exam\ExamResultRepositoryInterface;
 use App\Repositories\Grading\GradingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GradingService implements GradingServiceInterface
 {
@@ -220,5 +225,232 @@ class GradingService implements GradingServiceInterface
         }
 
         throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Vui lòng đăng nhập với tư cách giáo viên hoặc quản trị viên.');
+    }
+
+    /**
+     * Lấy dữ liệu cấu hình để tạo đợt chấm bài thi giấy (Offline).
+     *
+     * @param  Teacher|null         $teacher
+     * @param  Admin|null           $admin
+     * @return array<string, mixed>
+     */
+    public function getOfflineExamFormData(?Teacher $teacher = null, ?Admin $admin = null): array
+    {
+        $classesQuery = SchoolClass::query()
+            ->select('id', 'center_id', 'name', 'code', 'status')
+            ->whereIn('status', [1, 2])
+            ->with([
+                'center:id,name,code',
+                'classSubjects' => function ($q) use ($teacher) {
+                    $q->select('id', 'class_id', 'subject_id', 'teacher_id')
+                        ->with(['subject:id,name,code', 'teacher:id,full_name,teacher_code']);
+
+                    if ($teacher) {
+                        $q->where('teacher_id', $teacher->id);
+                    }
+                },
+                'students' => function ($q) {
+                    $q->select('students.id', 'students.student_code', 'students.full_name', 'students.phone', 'students.gender', 'students.avatar')
+                        ->where('students.status', 1)
+                        ->orderBy('students.full_name');
+                },
+            ]);
+
+        if ($admin) {
+            if (! $admin->isSuperAdmin()) {
+                $allowedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
+                $classesQuery->whereIn('center_id', $allowedCenterIds);
+            }
+        } elseif ($teacher) {
+            $classesQuery->whereHas('classSubjects', function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher->id);
+            });
+        } else {
+            throw new AccessDeniedHttpException('Vui lòng đăng nhập để truy cập tính năng này.');
+        }
+
+        $classes = $classesQuery->orderBy('name')->get();
+
+        $formattedClasses = $classes->map(function (SchoolClass $cls) use ($teacher) {
+            $subjects = $cls->classSubjects->map(function ($cs) {
+                return [
+                    'id'   => $cs->subject?->id,
+                    'name' => $cs->subject?->name,
+                    'code' => $cs->subject?->code,
+                ];
+            })->filter(fn ($s) => ! empty($s['id']))->unique('id')->values();
+
+            $students = $cls->students->map(function ($std) {
+                return [
+                    'id'           => $std->id,
+                    'student_code' => $std->student_code,
+                    'full_name'    => $std->full_name,
+                    'phone'        => $std->phone,
+                    'gender'       => $std->gender,
+                    'avatar'       => $std->avatar,
+                ];
+            })->values();
+
+            return [
+                'id'        => $cls->id,
+                'name'      => $cls->name,
+                'code'      => $cls->code,
+                'center_id' => $cls->center_id,
+                'center'    => $cls->center ? [
+                    'id'   => $cls->center->id,
+                    'name' => $cls->center->name,
+                    'code' => $cls->center->code,
+                ] : null,
+                'subjects' => $subjects,
+                'students' => $students,
+            ];
+        });
+
+        return [
+            'classes'   => $formattedClasses,
+            'isTeacher' => (bool) $teacher,
+            'isAdmin'   => (bool) $admin,
+        ];
+    }
+
+    /**
+     * Tạo bài thi giấy (Offline), kỳ thi lớp và lưu toàn bộ bảng điểm học sinh.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  Teacher|null          $teacher
+     * @param  Admin|null            $admin
+     * @return \App\Models\ClassExam
+     */
+    public function createOfflineExamWithScores(array $data, ?Teacher $teacher = null, ?Admin $admin = null): ClassExam
+    {
+        $classId   = (int) $data['class_id'];
+        $subjectId = (int) $data['subject_id'];
+
+        /** @var SchoolClass|null $class */
+        $class = SchoolClass::with(['classSubjects'])->find($classId);
+
+        if (! $class) {
+            throw new NotFoundHttpException('Không tìm thấy lớp học.');
+        }
+
+        // Authorize access
+        if ($admin) {
+            if (! $admin->isSuperAdmin()) {
+                $allowedCenterIds = $admin->centers()->pluck('centers.id')->toArray();
+
+                if (! in_array($class->center_id, $allowedCenterIds, true)) {
+                    throw new AccessDeniedHttpException('Bạn không có quyền quản lý lớp học thuộc Trung tâm này.');
+                }
+            }
+        } elseif ($teacher) {
+            $isAssigned = $class->classSubjects()
+                ->where('subject_id', $subjectId)
+                ->where('teacher_id', $teacher->id)
+                ->exists();
+
+            if (! $isAssigned) {
+                throw new AccessDeniedHttpException('Bạn chỉ được tạo bài thi cho môn học và lớp học do mình trực tiếp giảng dạy.');
+            }
+        } else {
+            throw new AccessDeniedHttpException('Yêu cầu đăng nhập để tạo bài thi.');
+        }
+
+        return DB::transaction(function () use ($data, $class, $subjectId, $teacher, $admin) {
+            $maxScore  = (float) $data['max_score'];
+            $passScore = isset($data['pass_score']) && $data['pass_score'] !== null && $data['pass_score'] !== ''
+                ? (float) $data['pass_score']
+                : round($maxScore * 0.5, 2);
+
+            // Auto-generate unique Exam Code EX000000001
+            $nextId   = (int) (Exam::max('id') ?? 0) + 1;
+            $examCode = sprintf('EX%09d', $nextId);
+
+            while (Exam::where('code', $examCode)->exists()) {
+                $nextId++;
+                $examCode = sprintf('EX%09d', $nextId);
+            }
+
+            // 1. Tạo Exam
+            $exam = Exam::create([
+                'center_id'             => $class->center_id,
+                'class_id'              => $class->id,
+                'subject_id'            => $subjectId,
+                'code'                  => $examCode,
+                'name'                  => trim($data['title']),
+                'description'           => $data['description'] ?? null,
+                'max_score'             => $maxScore,
+                'pass_score'            => $passScore,
+                'status'                => 'published',
+                'is_practice'           => false,
+                'created_by_teacher_id' => $teacher?->id,
+                'created_by_admin_id'   => $admin?->id,
+            ]);
+
+            // 2. Tạo ClassExam
+            $classExam = ClassExam::create([
+                'class_id'              => $class->id,
+                'exam_id'               => $exam->id,
+                'title'                 => trim($data['title']),
+                'exam_date'             => $data['exam_date'],
+                'max_score'             => $maxScore,
+                'pass_score'            => $passScore,
+                'status'                => 'completed',
+                'created_by_teacher_id' => $teacher?->id,
+                'created_by_admin_id'   => $admin?->id,
+            ]);
+
+            // 3. Tạo Submissions và cập nhật Exam Results
+            $scoresInput = $data['scores'] ?? [];
+            $now         = Carbon::now();
+
+            foreach ($scoresInput as $item) {
+                if (empty($item['student_id'])) {
+                    continue;
+                }
+
+                $studentId = (int) $item['student_id'];
+                $hasScore  = isset($item['score']) && $item['score'] !== '' && $item['score'] !== null;
+                $score     = $hasScore ? (float) $item['score'] : null;
+                $comment   = ! empty($item['comment']) ? trim($item['comment']) : null;
+
+                $isPassed = $score !== null && $score >= $passScore;
+                $status   = $score !== null ? ($isPassed ? 'passed' : 'failed') : 'submitted';
+                $isGraded = $score !== null;
+
+                ClassExamSubmission::create([
+                    'class_exam_id'           => $classExam->id,
+                    'student_id'              => $studentId,
+                    'score'                   => $score,
+                    'total_correct'           => 0,
+                    'status'                  => $status,
+                    'is_graded'               => $isGraded,
+                    'requires_manual_grading' => false,
+                    'graded_at'               => $isGraded ? $now : null,
+                    'graded_by_teacher_id'    => $isGraded ? $teacher?->id : null,
+                    'graded_by_admin_id'      => $isGraded ? $admin?->id : null,
+                    'teacher_feedback'        => $comment,
+                    'submitted_at'            => $now,
+                ]);
+
+                if ($score !== null) {
+                    $this->examResultRepository->updateOrCreate(
+                        [
+                            'exam_id'    => $exam->id,
+                            'student_id' => $studentId,
+                        ],
+                        [
+                            'score'                 => $score,
+                            'grade'                 => $this->calculateGradeLabel($score, $maxScore),
+                            'comment'               => $comment,
+                            'entered_by_teacher_id' => $teacher?->id,
+                            'entered_by_admin_id'   => $admin?->id,
+                            'entered_at'            => $now,
+                        ]
+                    );
+                }
+            }
+
+            return $classExam;
+        });
     }
 }
