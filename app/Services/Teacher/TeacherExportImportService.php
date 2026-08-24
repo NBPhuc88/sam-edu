@@ -106,6 +106,18 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
      */
     public function importTeachersCsv(string $filePath, ?int $centerId = null): array
     {
+        if (! $centerId) {
+            $centerId = \App\Models\Center::first()?->id;
+        }
+
+        if (! $centerId) {
+            return [
+                'imported' => 0,
+                'updated'  => 0,
+                'errors'   => ['Không tìm thấy thông tin trung tâm hợp lệ để thực hiện import.'],
+            ];
+        }
+
         $importedCount = 0;
         $updatedCount  = 0;
         $errors        = [];
@@ -141,6 +153,9 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             $existingTeacher = $this->teacherRepository->findByCode($teacherCode)
                 ?? $this->teacherRepository->findByUsernameOrEmail($username);
 
+            $dob      = $row['ngày sinh'] ?? $row['date_of_birth'] ?? null;
+            $hireDate = $row['ngày vào làm'] ?? $row['hire_date'] ?? null;
+
             $data = [
                 'teacher_code'   => $teacherCode,
                 'username'       => $username,
@@ -149,13 +164,13 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 'last_name'      => $lastName,
                 'full_name'      => $fullName,
                 'phone'          => $row['số điện thoại'] ?? $row['phone'] ?? null,
-                'date_of_birth'  => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
+                'date_of_birth'  => ! empty($dob) ? $dob : null,
                 'gender'         => $row['giới tính'] ?? $row['gender'] ?? 'male',
-                'hire_date'      => ! empty($row['ngày vào làm'] ?? $row['hire_date']) ? $row['ngày vào làm'] ?? $row['hire_date'] : null,
+                'hire_date'      => ! empty($hireDate) ? $hireDate : null,
                 'specialization' => $row['chuyên môn'] ?? $row['specialization'] ?? null,
                 'note'           => $row['ghi chú'] ?? $row['note'] ?? null,
                 'status'         => $row['trạng thái'] ?? $row['status'] ?? 'active',
-                'center_id'      => $centerId ?? 1,
+                'center_id'      => $centerId,
             ];
 
             if ($existingTeacher) {

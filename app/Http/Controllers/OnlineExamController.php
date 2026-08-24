@@ -273,6 +273,12 @@ class OnlineExamController extends Controller
             abort(404, 'Đường dẫn file không hợp lệ.');
         }
 
-        return $this->onlineExamService->streamSpeakingAudio($path);
+        $cleanPath = trim(str_replace('\\', '/', $path), '/');
+
+        if (str_contains($cleanPath, '..') || (! str_starts_with($cleanPath, 'exams/') && ! str_starts_with($cleanPath, 'exam/'))) {
+            abort(403, 'Đường dẫn file không hợp lệ.');
+        }
+
+        return $this->onlineExamService->streamSpeakingAudio($cleanPath);
     }
 }

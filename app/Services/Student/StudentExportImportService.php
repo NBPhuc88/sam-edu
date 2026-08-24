@@ -111,6 +111,18 @@ class StudentExportImportService implements StudentExportImportServiceInterface
      */
     public function importStudentsCsv(string $filePath, ?int $centerId = null): array
     {
+        if (! $centerId) {
+            $centerId = \App\Models\Center::first()?->id;
+        }
+
+        if (! $centerId) {
+            return [
+                'imported' => 0,
+                'updated'  => 0,
+                'errors'   => ['Không tìm thấy thông tin trung tâm hợp lệ để thực hiện import.'],
+            ];
+        }
+
         $importedCount = 0;
         $updatedCount  = 0;
         $errors        = [];
@@ -146,6 +158,8 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             $existingStudent = $this->studentRepository->findByCode($studentCode)
                 ?? $this->studentRepository->findByUsernameOrEmail($username);
 
+            $dob = $row['ngày sinh'] ?? $row['date_of_birth'] ?? null;
+
             $data = [
                 'student_code'        => $studentCode,
                 'username'            => $username,
@@ -154,14 +168,14 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'last_name'           => $lastName,
                 'full_name'           => $fullName,
                 'phone'               => $row['số điện thoại'] ?? $row['phone'] ?? null,
-                'date_of_birth'       => ! empty($row['ngày sinh'] ?? $row['date_of_birth']) ? $row['ngày sinh'] ?? $row['date_of_birth'] : null,
+                'date_of_birth'       => ! empty($dob) ? $dob : null,
                 'gender'              => $row['giới tính'] ?? $row['gender'] ?? 'male',
                 'address'             => $row['địa chỉ'] ?? $row['address'] ?? null,
                 'parent_name'         => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                 'parent_phone'        => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                 'parent_relationship' => $row['mối quan hệ phụ huynh'] ?? $row['parent_relationship'] ?? 'bố',
                 'status'              => isset($row['trạng thái']) ? (int) $row['trạng thái'] : 1,
-                'center_id'           => $centerId ?? 1,
+                'center_id'           => $centerId,
             ];
 
             if ($existingStudent) {

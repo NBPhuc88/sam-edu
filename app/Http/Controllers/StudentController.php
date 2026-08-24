@@ -231,8 +231,18 @@ class StudentController extends Controller
             return back()->with('error', 'Vui lòng chọn tệp CSV.');
         }
 
-        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $result   = $this->studentExportImportService->importStudentsCsv($file->getPathname(), $centerId);
+        [$admin]  = $this->getAuthUser();
+        $centerId = null;
+
+        if ($admin) {
+            if ($admin->isSuperAdmin()) {
+                $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+            } else {
+                $centerId = (int) $admin->centers()->value('centers.id');
+            }
+        }
+
+        $result = $this->studentExportImportService->importStudentsCsv($file->getPathname(), $centerId);
 
         $msg = "Import thành công: {$result['imported']} học sinh mới, cập nhật: {$result['updated']} học sinh.";
 

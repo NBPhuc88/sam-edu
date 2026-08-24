@@ -24,7 +24,7 @@ class MediaUploadController extends Controller
                 'required',
                 'file',
                 'max:20480', // max 20MB
-                'mimes:jpg,jpeg,png,webp,svg,gif,mp3,wav,ogg,webm,m4a',
+                'mimes:jpg,jpeg,png,webp,gif,mp3,wav,ogg,webm,m4a',
             ],
             'object_type' => ['nullable', 'string', 'max:50'],
             'object_id'   => ['nullable', 'string', 'max:50'],

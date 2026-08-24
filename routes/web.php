@@ -28,32 +28,32 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/services', [HomeController::class, 'services'])->name('services');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
+Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit')->middleware('throttle:10,1');
 
 // Real Center Onboarding Routes
 Route::prefix('register-center')->name('register-center.')->group(function () {
     Route::get('/', [CenterRegisterController::class, 'showRegisterForm'])->name('index');
-    Route::post('/step1', [CenterRegisterController::class, 'registerStep1'])->name('step1');
+    Route::post('/step1', [CenterRegisterController::class, 'registerStep1'])->name('step1')->middleware('throttle:10,1');
     Route::get('/check-payment/{appTransId}', [CenterRegisterController::class, 'checkPaymentStatus'])->name('check-payment');
 });
 
 // ─── Authentication Routes (Public) ──────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ─── Forgot Password & OTP Login Routes ──────────────────────────────────────
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])->name('password.request');
-Route::post('/forgot-password/send-otp', [PasswordResetController::class, 'sendOtp'])->name('password.send_otp');
+Route::post('/forgot-password/send-otp', [PasswordResetController::class, 'sendOtp'])->name('password.send_otp')->middleware('throttle:5,1');
 Route::get('/verify-otp', [PasswordResetController::class, 'showVerifyOtpForm'])->name('password.verify_otp.show');
-Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp'])->name('password.verify_otp');
+Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp'])->name('password.verify_otp')->middleware('throttle:5,1');
 
 // ─── Mandatory Password Change Route (Protected & Force Change) ─────────────
 Route::get('/force-change-password', [PasswordResetController::class, 'showForceChangePasswordForm'])->name('password.force_change.show');
-Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update');
+Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update')->middleware('throttle:10,1');
 
 // ─── Protected Routes (Bất kỳ guard nào: admin | center | teacher | student) ──
-Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(function () {
+Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttle:120,1'])->group(function () {
 
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -62,12 +62,12 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     // User Profile / Account Information
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ProfileController::class, 'index'])->name('index');
-        Route::post('/password/send-otp', [\App\Http\Controllers\ProfileController::class, 'sendPasswordChangeOtp'])->name('password.send_otp');
-        Route::post('/password/update', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
-        Route::post('/email/send-old-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailOldOtp'])->name('email.send_old_otp');
-        Route::post('/email/verify-old-otp', [\App\Http\Controllers\ProfileController::class, 'verifyChangeEmailOldOtp'])->name('email.verify_old_otp');
-        Route::post('/email/send-new-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailNewOtp'])->name('email.send_new_otp');
-        Route::post('/email/update', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('email.update');
+        Route::post('/password/send-otp', [\App\Http\Controllers\ProfileController::class, 'sendPasswordChangeOtp'])->name('password.send_otp')->middleware('throttle:5,1');
+        Route::post('/password/update', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update')->middleware('throttle:10,1');
+        Route::post('/email/send-old-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailOldOtp'])->name('email.send_old_otp')->middleware('throttle:5,1');
+        Route::post('/email/verify-old-otp', [\App\Http\Controllers\ProfileController::class, 'verifyChangeEmailOldOtp'])->name('email.verify_old_otp')->middleware('throttle:5,1');
+        Route::post('/email/send-new-otp', [\App\Http\Controllers\ProfileController::class, 'sendChangeEmailNewOtp'])->name('email.send_new_otp')->middleware('throttle:5,1');
+        Route::post('/email/update', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('email.update')->middleware('throttle:10,1');
     });
 
     // Student Transcript & PDF Export (Phục vụ học sinh xem & in bảng điểm)
@@ -231,7 +231,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
         Route::prefix('{classId}/chat')->name('chat.')->group(function () {
             Route::get('/', [ChatController::class, 'index'])->name('index');
             Route::get('/messages', [ChatController::class, 'getMessages'])->name('messages');
-            Route::post('/messages', [ChatController::class, 'sendMessage'])->name('send');
+            Route::post('/messages', [ChatController::class, 'sendMessage'])->name('send')->middleware('throttle:60,1');
             Route::post('/messages/{messageId}/pin', [ChatController::class, 'togglePin'])->name('pin');
         });
     });
@@ -326,10 +326,10 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     Route::get('/class-exams/{id}/room', [\App\Http\Controllers\OnlineExamController::class, 'showLobby'])->name('online-exam.lobby');
     Route::post('/class-exams/{id}/start', [\App\Http\Controllers\OnlineExamController::class, 'startExam'])->name('online-exam.start');
     Route::get('/class-exams/{id}/take/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'takeExam'])->name('online-exam.take');
-    Route::post('/class-exams/{id}/autosave/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'autoSave'])->name('online-exam.autosave');
+    Route::post('/class-exams/{id}/autosave/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'autoSave'])->name('online-exam.autosave')->middleware('throttle:120,1');
     Route::post('/class-exams/{id}/submit/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'submitExam'])->name('online-exam.submit');
     Route::get('/class-exams/{id}/results/{submissionId}', [\App\Http\Controllers\OnlineExamController::class, 'showResult'])->name('online-exam.result');
-    Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio');
+    Route::post('/class-exams/{id}/upload-audio', [\App\Http\Controllers\OnlineExamController::class, 'uploadAudio'])->name('online-exam.upload-audio')->middleware('throttle:30,1');
     Route::get('/class-exams/audio-stream', [\App\Http\Controllers\OnlineExamController::class, 'streamAudio'])->name('online-exam.audio-stream');
 
     // Practice & Mock Exam Routes (Thi Thử & Luyện Tập)
@@ -338,7 +338,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     Route::post('/exams/{id}/practice-submit', [\App\Http\Controllers\PracticeExamController::class, 'submit'])->name('practice-exams.submit');
 
     // General Media Upload API
-    Route::post('/api/uploads/media', [\App\Http\Controllers\MediaUploadController::class, 'upload'])->name('uploads.media');
+    Route::post('/api/uploads/media', [\App\Http\Controllers\MediaUploadController::class, 'upload'])->name('uploads.media')->middleware('throttle:30,1');
 
     // Delete Impact Preview API
     Route::get('/api/{entity}/{id}/delete-impact', [\App\Http\Controllers\DeleteImpactController::class, 'getImpact'])->name('delete.impact');

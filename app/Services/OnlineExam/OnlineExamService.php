@@ -269,8 +269,8 @@ class OnlineExamService implements OnlineExamServiceInterface
         $extension = $file->getClientOriginalExtension() ?: 'webm';
         $fileName  = "{$examCode}_{$studentCode}_{$questionCode}.{$extension}";
 
-        // Lưu vào private storage: storage/app/private/exam/
-        $directory = 'exam';
+        // Lưu vào private storage: storage/app/private/exams/speaking/
+        $directory = 'exams/speaking';
         $path      = $file->storeAs($directory, $fileName, 'private');
 
         return $path;
@@ -278,13 +278,19 @@ class OnlineExamService implements OnlineExamServiceInterface
 
     public function streamSpeakingAudio(string $path): BinaryFileResponse
     {
+        $cleanPath = trim(str_replace('\\', '/', $path), '/');
+
+        if (str_contains($cleanPath, '..') || (! str_starts_with($cleanPath, 'exams/') && ! str_starts_with($cleanPath, 'exam/'))) {
+            throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException('Đường dẫn file không hợp lệ.');
+        }
+
         $disk = Storage::disk('private');
 
-        if (! $disk->exists($path)) {
+        if (! $disk->exists($cleanPath)) {
             throw new ModelNotFoundException('Không tìm thấy file ghi âm bài thi.');
         }
 
-        $fullPath = $disk->path($path);
+        $fullPath = $disk->path($cleanPath);
         $mimeType = File::mimeType($fullPath) ?: 'audio/webm';
 
         return Response::file($fullPath, [
