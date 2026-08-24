@@ -62,7 +62,7 @@ class SchoolClassController extends Controller
             'filters' => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
-                'status'    => $status ?? '1',
+                'status'    => $status ?? 'all',
                 'per_page'  => $perPage,
             ],
             'isTeacher' => (bool) $teacher,

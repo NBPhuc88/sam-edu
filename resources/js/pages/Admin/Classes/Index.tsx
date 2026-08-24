@@ -103,7 +103,7 @@ export default function ClassIndex({
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || '1',
+        filters.status || 'all',
     );
 
     // Delete modal state

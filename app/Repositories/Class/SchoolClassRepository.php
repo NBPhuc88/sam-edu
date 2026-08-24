@@ -76,10 +76,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             }
         }
 
-        // Mặc định chỉ hiển thị lớp đang học (status = 1) nếu không truyền filter status
-        if ($status === null || $status === '') {
-            $query->where('status', 1);
-        } elseif ($status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== 'all') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {
@@ -87,6 +84,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                     'inactive'  => 0,
                     'active'    => 1,
                     'completed' => 2,
+                    'closed'    => 3,
                 ];
 
                 if (isset($statusMap[$status])) {
