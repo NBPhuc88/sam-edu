@@ -97,7 +97,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Follow existing application Enum naming conventions.
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
-- Always use `use` import statements at the top of PHP files. Never write inline FQCNs (e.g. `\App\Models\...`, `\App\Http\...`, `\Illuminate\...`) in method signatures, properties, or logic code.
 
 === deployments rules ===
 
