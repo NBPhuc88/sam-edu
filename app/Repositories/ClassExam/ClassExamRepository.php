@@ -26,6 +26,8 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         $query = ClassExam::query()
             ->select(
                 'id',
+                'code',
+                'access_code',
                 'class_id',
                 'exam_id',
                 'created_by_teacher_id',
@@ -36,6 +38,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'end_time',
                 'duration_minutes',
                 'max_score',
+                'pass_score',
                 'status',
                 'created_at'
             )
@@ -98,6 +101,8 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         $query = ClassExam::query()
             ->select(
                 'id',
+                'code',
+                'access_code',
                 'class_id',
                 'exam_id',
                 'created_by_teacher_id',
@@ -106,10 +111,12 @@ class ClassExamRepository implements ClassExamRepositoryInterface
                 'exam_date',
                 'start_time',
                 'end_time',
+                'valid_from',
+                'valid_to',
                 'duration_minutes',
                 'max_score',
+                'pass_score',
                 'status',
-                'note',
                 'created_at'
             )
             ->with([
