@@ -13,6 +13,8 @@ import {
     Filter,
     Calendar,
     Wallet,
+    Download,
+    BarChart3,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
@@ -23,6 +25,7 @@ import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
+import TuitionChartSection, { TuitionChartStatsData } from './components/TuitionChartSection';
 
 import { usePermission } from '@/hooks/usePermission';
 interface StudentTuitionItem {
@@ -77,6 +80,7 @@ interface IndexProps {
         last_month_name?: string;
         this_month_name?: string;
     };
+    chartStats?: TuitionChartStatsData;
     centers: Array<{ id: number; name: string; code: string }>;
     classes: Array<{ id: number; name: string; code: string; center_id: number }>;
     filters: {
@@ -92,6 +96,7 @@ interface IndexProps {
 export const Index: React.FC<IndexProps> = ({
     tuitions,
     stats,
+    chartStats,
     centers,
     classes,
     filters,
@@ -146,6 +151,17 @@ export const Index: React.FC<IndexProps> = ({
         );
     };
 
+    const handleExport = () => {
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (selectedCenterId) params.append('center_id', selectedCenterId);
+        if (selectedClassId) params.append('class_id', selectedClassId);
+        if (selectedStatus && selectedStatus !== 'all') params.append('status', selectedStatus);
+        if (selectedMonth && selectedMonth !== 'all') params.append('month', selectedMonth);
+
+        window.location.href = `/tuitions/export?${params.toString()}`;
+    };
+
     const handleResetFilter = () => {
         setSearchTerm('');
         setSelectedCenterId('');
@@ -162,8 +178,8 @@ export const Index: React.FC<IndexProps> = ({
 
     const confirmDelete = () => {
         if (!deletingTuition) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/tuitions/${deletingTuition.id}`, {
@@ -220,6 +236,7 @@ return;
 
                 {/* 5 Summary Statistics Cards */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+
                     <Card className="border-l-4 border-l-blue-500 bg-white p-5 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div>
@@ -316,6 +333,10 @@ return;
                     </Card>
                 </div>
 
+                {/* Detailed Charts Section */}
+                {chartStats && (
+                    <TuitionChartSection chartStats={chartStats} />
+                )}
 
                 {/* Filter Box */}
                 <Card className="border-gray-200 bg-white p-5 shadow-xs">
@@ -392,23 +413,35 @@ return;
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2.5 pt-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
                             <Button
                                 type="button"
-                                variant="secondary"
-                                size="md"
-                                onClick={handleResetFilter}
-                            >
-                                Đặt lại bộ lọc
-                            </Button>
-                            <Button
-                                type="submit"
                                 variant="success"
                                 size="md"
-                                icon={<Filter className="h-4 w-4" />}
+                                icon={<Download className="h-4 w-4" />}
+                                onClick={handleExport}
+                                title="Xuất tệp CSV/Excel danh sách học phí đã qua bộ lọc"
                             >
-                                Lọc Dữ Liệu
+                                Xuất Dữ Liệu Excel / CSV
                             </Button>
+                            <div className="flex items-center gap-2.5">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="md"
+                                    onClick={handleResetFilter}
+                                >
+                                    Đặt lại bộ lọc
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="success"
+                                    size="md"
+                                    icon={<Filter className="h-4 w-4" />}
+                                >
+                                    Lọc Dữ Liệu
+                                </Button>
+                            </div>
                         </div>
                     </form>
                 </Card>

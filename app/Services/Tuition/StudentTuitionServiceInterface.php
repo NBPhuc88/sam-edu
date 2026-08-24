@@ -117,4 +117,36 @@ interface StudentTuitionServiceInterface
      * @return void
      */
     public function recalculateSummary(int $tuitionId): void;
+
+    /**
+     * @param  ?string    $search
+     * @param  ?int       $centerId
+     * @param  ?int       $classId
+     * @param  ?string    $status
+     * @param  ?string    $month
+     * @param  ?Admin     $admin
+     * @return \Generator
+     */
+    public function exportTuitionsCsv(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null,
+        ?Admin $admin = null
+    ): \Generator;
+
+    /**
+     * @param  ?Admin               $admin
+     * @param  ?int                 $selectedCenterId
+     * @param  ?int                 $classId
+     * @param  ?string              $month
+     * @return array<string, mixed>
+     */
+    public function getDetailedChartStats(
+        ?Admin $admin = null,
+        ?int $selectedCenterId = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array;
 }

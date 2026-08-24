@@ -72,9 +72,11 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         if ($month !== null && $month !== '' && $month !== 'all') {
-            $query->where(function ($q) use ($month) {
-                $q->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$month])
-                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
+            $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
+            $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
+            $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
+                $q->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                    ->orWhereBetween('created_at', [$startOfMonth, $endOfMonth]);
             });
         }
 
@@ -212,9 +214,11 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         if ($month !== null && $month !== '' && $month !== 'all') {
-            $query->where(function ($q) use ($month) {
-                $q->whereRaw("DATE_FORMAT(due_date, '%Y-%m') = ?", [$month])
-                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month]);
+            $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
+            $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
+            $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
+                $q->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                    ->orWhereBetween('created_at', [$startOfMonth, $endOfMonth]);
             });
         }
 
@@ -253,6 +257,179 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             'completed_count'  => $tuitions->where('status', 'paid')->count(),
             'partial_count'    => $tuitions->where('status', 'partial')->count(),
             'unpaid_count'     => $tuitions->whereIn('status', ['unpaid', 'overdue'])->count(),
+        ];
+    }
+
+    /**
+     * @param  ?string                                  $search
+     * @param  array<int>|int|null                      $centerIds
+     * @param  ?int                                     $classId
+     * @param  ?string                                  $status
+     * @param  ?string                                  $month
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getTuitionsForExport(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null
+    ): \Illuminate\Database\Eloquent\Collection {
+        $query = StudentTuition::query()
+            ->with([
+                'student:id,full_name,student_code,phone',
+                'schoolClass:id,name,code',
+                'center:id,name,code',
+                'payments:id,student_tuition_id,amount,payment_date,payment_method,transaction_code,received_by,note',
+            ])
+            ->withCount('payments');
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        if ($classId !== null) {
+            $query->where('class_id', $classId);
+        }
+
+        if ($status !== null && $status !== '' && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($month !== null && $month !== '' && $month !== 'all') {
+            $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
+            $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
+            $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
+                $q->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                    ->orWhereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            });
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                    ->orWhereHas('student', function ($sq) use ($term) {
+                        $sq->where('full_name', 'like', "%{$term}%")
+                            ->orWhere('student_code', 'like', "%{$term}%")
+                            ->orWhere('phone', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('schoolClass', function ($cq) use ($term) {
+                        $cq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('center', function ($ctq) use ($term) {
+                        $ctq->where('name', 'like', "%{$term}%")
+                            ->orWhere('code', 'like', "%{$term}%");
+                    });
+            });
+        }
+
+        return $query->latest('id')->get();
+    }
+
+    /**
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?int                 $classId
+     * @param  ?string              $month
+     * @return array<string, mixed>
+     */
+    public function getDetailedChartStats(
+        array|int|null $centerIds = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array {
+        $query = StudentTuition::query();
+
+        if ($centerIds !== null) {
+            if (is_array($centerIds)) {
+                $query->whereIn('center_id', $centerIds);
+            } else {
+                $query->where('center_id', $centerIds);
+            }
+        }
+
+        if ($classId !== null) {
+            $query->where('class_id', $classId);
+        }
+
+        if ($month !== null && $month !== '' && $month !== 'all') {
+            $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
+            $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
+            $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
+                $q->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                    ->orWhereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            });
+        }
+
+        // 1. Status distribution for Pie Chart
+        $completedCount = (int) (clone $query)->where('status', 'completed')->count();
+        $partialCount   = (int) (clone $query)->where('status', 'partial')->count();
+        $pendingCount   = (int) (clone $query)->where('status', 'pending')->count();
+        $overdueCount   = (int) (clone $query)->where('status', 'overdue')->count();
+
+        $statusPie = [
+            ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'status' => 'completed', 'color' => '#10b981'],
+            ['name' => 'Còn nợ (Đóng dở)', 'value' => $partialCount, 'status' => 'partial', 'color' => '#f59e0b'],
+            ['name' => 'Chưa đóng', 'value' => $pendingCount, 'status' => 'pending', 'color' => '#6b7280'],
+            ['name' => 'Quá hạn', 'value' => $overdueCount, 'status' => 'overdue', 'color' => '#ef4444'],
+        ];
+
+        // Filter out items with 0 value if total records exist, or keep original
+        $nonZeroPie        = array_values(array_filter($statusPie, fn ($item) => $item['value'] > 0));
+        $statusPieFiltered = ! empty($nonZeroPie) ? $nonZeroPie : $statusPie;
+
+        // 2. Monthly Trend (6 months recent)
+        $monthlyTrend = [];
+        $baseDate     = ($month && $month !== 'all') ? \Illuminate\Support\Carbon::parse($month . '-01') : now();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $m          = (clone $baseDate)->subMonths($i);
+            $monthKey   = $m->format('Y-m');
+            $monthLabel = 'Thg ' . $m->format('m/Y');
+
+            $mQuery = StudentTuition::query();
+
+            if ($centerIds !== null) {
+                if (is_array($centerIds)) {
+                    $mQuery->whereIn('center_id', $centerIds);
+                } else {
+                    $mQuery->where('center_id', $centerIds);
+                }
+            }
+
+            if ($classId !== null) {
+                $mQuery->where('class_id', $classId);
+            }
+
+            $mStart = (clone $m)->startOfMonth()->toDateTimeString();
+            $mEnd   = (clone $m)->endOfMonth()->toDateTimeString();
+
+            $mQuery->where(function ($q) use ($mStart, $mEnd) {
+                $q->whereBetween('due_date', [$mStart, $mEnd])
+                    ->orWhereBetween('created_at', [$mStart, $mEnd]);
+            });
+
+            $total     = (float) (clone $mQuery)->sum('total_amount');
+            $paid      = (float) (clone $mQuery)->sum('paid_amount');
+            $remaining = (float) (clone $mQuery)->sum('remaining_amount');
+
+            $monthlyTrend[] = [
+                'month_key'        => $monthKey,
+                'name'             => $monthLabel,
+                'total_amount'     => $total,
+                'paid_amount'      => $paid,
+                'remaining_amount' => $remaining,
+            ];
+        }
+
+        return [
+            'status_pie'    => $statusPieFiltered,
+            'monthly_trend' => $monthlyTrend,
         ];
     }
 }

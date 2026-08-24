@@ -109,14 +109,21 @@ class StudentTuitionController extends Controller
             $classId,
             is_string($month) && $month !== 'all' ? $month : null
         );
+        $chartStats = $this->studentTuitionService->getDetailedChartStats(
+            $admin,
+            $centerId,
+            $classId,
+            is_string($month) && $month !== 'all' ? $month : null
+        );
         $formData = $this->studentTuitionService->getFormData($admin, $centerId);
 
         return Inertia::render('Admin/Tuitions/Index', [
-            'tuitions' => $tuitions,
-            'stats'    => $stats,
-            'centers'  => $formData['centers'],
-            'classes'  => $formData['classes'],
-            'filters'  => [
+            'tuitions'   => $tuitions,
+            'stats'      => $stats,
+            'chartStats' => $chartStats,
+            'centers'    => $formData['centers'],
+            'classes'    => $formData['classes'],
+            'filters'    => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
                 'class_id'  => $classId,
@@ -125,6 +132,48 @@ class StudentTuitionController extends Controller
                 'per_page'  => $perPage,
             ],
         ]);
+    }
+
+    public function export(FilterStudentTuitionRequest $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $admin    = $this->getAuthAdmin();
+        $search   = $request->input('search');
+        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $status   = $request->input('status');
+        $month    = $request->input('month');
+
+        $fileName = 'danh_sach_hoc_phi_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ];
+
+        return response()->stream(function () use ($search, $centerId, $classId, $status, $month, $admin) {
+            $handle = fopen('php://output', 'w');
+
+            if ($handle === false) {
+                return;
+            }
+
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            $rows = $this->studentTuitionService->exportTuitionsCsv(
+                is_string($search) ? $search : null,
+                $centerId,
+                $classId,
+                is_string($status) && $status !== 'all' ? $status : null,
+                is_string($month) && $month !== 'all' ? $month : null,
+                $admin
+            );
+
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
     }
 
     public function create(Request $request): InertiaResponse

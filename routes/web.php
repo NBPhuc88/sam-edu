@@ -268,6 +268,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature'])->group(
     // Student Tuition & Course Fee Management Routes
     Route::prefix('tuitions')->name('tuitions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\StudentTuitionController::class, 'index'])->name('index');
+        Route::get('/export', [\App\Http\Controllers\StudentTuitionController::class, 'export'])->name('export');
         Route::get('/create', [\App\Http\Controllers\StudentTuitionController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\StudentTuitionController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\StudentTuitionController::class, 'show'])->name('show');

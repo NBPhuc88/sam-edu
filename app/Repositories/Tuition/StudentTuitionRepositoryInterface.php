@@ -74,4 +74,32 @@ interface StudentTuitionRepositoryInterface
      * @return array<string, mixed>
      */
     public function getStudentTuitionSummary(int $studentId): array;
+
+    /**
+     * @param  ?string                                  $search
+     * @param  array<int>|int|null                      $centerIds
+     * @param  ?int                                     $classId
+     * @param  ?string                                  $status
+     * @param  ?string                                  $month
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getTuitionsForExport(
+        ?string $search = null,
+        array|int|null $centerIds = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null
+    ): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @param  array<int>|int|null  $centerIds
+     * @param  ?int                 $classId
+     * @param  ?string              $month
+     * @return array<string, mixed>
+     */
+    public function getDetailedChartStats(
+        array|int|null $centerIds = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array;
 }

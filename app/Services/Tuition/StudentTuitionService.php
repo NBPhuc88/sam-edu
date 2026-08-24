@@ -440,4 +440,117 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'status'           => $status,
         ]);
     }
+
+    /**
+     * @param  ?Admin               $admin
+     * @param  ?int                 $selectedCenterId
+     * @param  ?int                 $classId
+     * @param  ?string              $month
+     * @return array<string, mixed>
+     */
+    public function getDetailedChartStats(
+        ?Admin $admin = null,
+        ?int $selectedCenterId = null,
+        ?int $classId = null,
+        ?string $month = null
+    ): array {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($allowedCenterIds !== null) {
+            if ($selectedCenterId !== null && in_array($selectedCenterId, $allowedCenterIds, true)) {
+                $centerIds = [$selectedCenterId];
+            } else {
+                $centerIds = $allowedCenterIds;
+            }
+        } else {
+            $centerIds = $selectedCenterId ? [$selectedCenterId] : null;
+        }
+
+        return $this->studentTuitionRepository->getDetailedChartStats($centerIds, $classId, $month);
+    }
+
+    /**
+     * @param  ?string    $search
+     * @param  ?int       $centerId
+     * @param  ?int       $classId
+     * @param  ?string    $status
+     * @param  ?string    $month
+     * @param  ?Admin     $admin
+     * @return \Generator
+     */
+    public function exportTuitionsCsv(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null,
+        ?Admin $admin = null
+    ): \Generator {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($allowedCenterIds !== null) {
+            if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                $centerIds = []; // No access
+            } elseif ($centerId !== null) {
+                $centerIds = [$centerId];
+            } else {
+                $centerIds = $allowedCenterIds;
+            }
+        } else {
+            $centerIds = $centerId;
+        }
+
+        yield [
+            'STT',
+            'Mã Học Sinh',
+            'Họ Và Tên Học Sinh',
+            'Số Điện Thoại',
+            'Lớp Học',
+            'Trung Tâm',
+            'Tiêu Đề Hồ Sơ',
+            'Tổng Học Phí (VND)',
+            'Đã Đóng (VND)',
+            'Còn Nợ (VND)',
+            'Trạng Thái',
+            'Hạn Đóng',
+            'Số Đợt Thu',
+            'Ngày Tạo',
+        ];
+
+        $tuitions = $this->studentTuitionRepository->getTuitionsForExport(
+            $search,
+            $centerIds,
+            $classId,
+            $status,
+            $month
+        );
+
+        $stt = 1;
+
+        foreach ($tuitions as $item) {
+            $statusLabel = match ($item->status) {
+                'completed' => 'Đã hoàn thành',
+                'partial'   => 'Còn nợ (Đóng dở)',
+                'overdue'   => 'Quá hạn',
+                default     => 'Chưa đóng',
+            };
+
+            yield [
+                $stt++,
+                $item->student?->student_code ?? '',
+                $item->student?->full_name ?? '',
+                $item->student?->phone ?? '',
+                $item->schoolClass?->name ?? '',
+                $item->center?->name ?? '',
+                $item->title ?? '',
+                (float) $item->total_amount,
+                (float) $item->paid_amount,
+                (float) $item->remaining_amount,
+                $statusLabel,
+                $item->due_date ? Carbon::parse($item->due_date)->format('Y-m-d') : '',
+                $item->payments_count ?? 0,
+                $item->created_at ? Carbon::parse($item->created_at)->format('Y-m-d H:i') : '',
+            ];
+        }
+    }
 }
