@@ -250,37 +250,37 @@ export default function GradingShow({
 
             <div className="mx-auto max-w-5xl space-y-6 pb-16">
                 {/* Sticky Top Header with Live Total Score */}
-                <div className="sticky top-0 z-30 -mx-4 -mt-6 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs mb-6">
-                    <div className="mx-auto max-w-5xl flex flex-wrap items-center justify-between gap-4">
+                <div className="sticky top-16 z-20 rounded-2xl border border-gray-200 bg-white/95 backdrop-blur-md p-3 sm:p-3.5 shadow-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                                <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
-                                    Quay Lại Danh Sách
+                                <Button variant="secondary" size="sm" className="h-8 px-2.5 text-xs font-semibold" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
+                                    Quay Lại
                                 </Button>
                             </Link>
-                            <div>
-                                <h1 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
-                                    <PenTool className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
-                                    <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-md">{classExam.title}</span>
+                            <div className="space-y-0.5">
+                                <h1 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                    <PenTool className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                    <span className="truncate max-w-[160px] sm:max-w-xs md:max-w-md">{classExam.title}</span>
                                 </h1>
                                 <p className="text-2xs text-gray-500 font-medium">
-                                    Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
+                                    Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name || '---'}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
                                 </p>
                             </div>
                         </div>
 
                         {/* Sticky Live Total Score Display */}
-                        <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-2 rounded-xl shadow-xs border border-slate-800">
+                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-900 px-3.5 py-1.5 text-white shadow-xs border border-slate-800">
                             <div className="text-right">
-                                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Tổng điểm bài thi</span>
+                                <span className="block text-[9px] font-semibold uppercase tracking-wider text-gray-400">Tổng điểm:</span>
                                 <div className="flex items-baseline gap-1 leading-none">
-                                    <span className="text-xl font-black text-emerald-400 font-mono">
+                                    <span className="font-mono text-base font-black text-emerald-400">
                                         {calculatedTotalScore.toFixed(2)}
                                     </span>
-                                    <span className="text-xs text-gray-400 font-semibold font-mono">/ {maxExamScore} điểm</span>
+                                    <span className="font-mono text-2xs text-gray-400 font-semibold">/ {maxExamScore}đ</span>
                                 </div>
                             </div>
-                            <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg ${
+                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
                                 isPassed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                             }`}>
                                 {isPassed ? 'Đạt' : 'Chưa đạt'}
