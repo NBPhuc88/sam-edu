@@ -120,12 +120,15 @@ export default function MatchingImageEditor({
     };
 
     const handleImageChange = (index: number, fields: Partial<ImageItem>) => {
-        const updated = [...images];
-        updated[index] = { ...updated[index], ...fields };
-        updateAll({ ...options, sentences, images: updated }, correctAnswer);
+        const baseImages = options?.images && options.images.length > 0 ? options.images : images;
+        const updated = baseImages.map((img, i) => (i === index ? { ...img, ...fields } : img));
+        const baseSentences = options?.sentences && options.sentences.length > 0 ? options.sentences : sentences;
+        updateAll({ ...options, sentences: baseSentences, images: updated }, correctAnswer);
     };
 
     const handlePairChange = (sentenceId: string, imageId: string) => {
+        const baseImages = options?.images && options.images.length > 0 ? options.images : images;
+        const baseSentences = options?.sentences && options.sentences.length > 0 ? options.sentences : sentences;
         const newAns = {
             ...correctAnswer,
             [sentenceId]: imageId,
@@ -133,7 +136,7 @@ export default function MatchingImageEditor({
         if (!imageId) {
             delete newAns[sentenceId];
         }
-        updateAll({ ...options, sentences, images }, newAns);
+        updateAll({ ...options, sentences: baseSentences, images: baseImages }, newAns);
     };
 
     return (

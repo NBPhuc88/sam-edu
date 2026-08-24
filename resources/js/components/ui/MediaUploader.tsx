@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Link as LinkIcon, X, Loader2, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
-import apiClient from '@/lib/axios';
+import { Upload, Link as LinkIcon, X, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { registerPendingUpload, unregisterPendingUpload, isPendingBlobUrl } from '@/lib/uploadTracker';
 
 interface MediaUploaderProps {
     value?: string | null;
     onChange: (url: string) => void;
+    onUploadingChange?: (isUploading: boolean) => void;
     objectType?: string;
     objectId?: string | number | null;
     subId?: string | null;
@@ -30,72 +31,59 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     compact = false,
 }) => {
     const [mode, setMode] = useState<'upload' | 'url'>('upload');
-    const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState<number>(0);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileUpload = async (file: File) => {
+    const handleFileSelect = (file: File) => {
         if (!file) return;
 
         setErrorMsg(null);
-        setUploading(true);
-        setProgress(10);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('object_type', objectType);
-        formData.append('object_id', String(objectId || 'general'));
-        if (subId) {
-            formData.append('sub_id', subId);
+        // Clean up old blob preview URL if existing
+        if (isPendingBlobUrl(value)) {
+            unregisterPendingUpload(value!);
         }
-        formData.append('folder', folder);
 
         try {
-            const response = await apiClient.post('/api/uploads/media', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-                onUploadProgress: (progressEvent) => {
-                    if (progressEvent.total) {
-                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        setProgress(percent);
-                    }
-                },
+            const previewUrl = URL.createObjectURL(file);
+            registerPendingUpload(previewUrl, file, {
+                objectType,
+                objectId,
+                subId,
+                folder,
             });
-
-            if (response.data?.url) {
-                onChange(response.data.url);
-            }
+            onChange(previewUrl);
         } catch (err: any) {
-            setErrorMsg(err.response?.data?.message || 'Tải file thất bại. Vui lòng thử lại!');
-        } finally {
-            setUploading(false);
-            setProgress(0);
+            setErrorMsg('Không thể đọc file đã chọn. Vui lòng thử lại!');
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
-            handleFileUpload(files[0]);
+            handleFileSelect(files[0]);
         }
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFileUpload(e.dataTransfer.files[0]);
+            handleFileSelect(e.dataTransfer.files[0]);
         }
     };
 
     const handleClear = () => {
+        if (isPendingBlobUrl(value)) {
+            unregisterPendingUpload(value!);
+        }
         onChange('');
         setErrorMsg(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
+
+    const isBlob = isPendingBlobUrl(value);
 
     if (compact) {
         return (
@@ -120,7 +108,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 }}
                             />
                             <span className="text-2xs font-mono text-teal-900 truncate" title={value}>
-                                {value}
+                                {isBlob ? 'Ảnh đã chọn (sẽ tải lên khi lưu)' : value}
                             </span>
                         </div>
                         <button
@@ -144,16 +132,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            disabled={uploading}
-                            className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
-                            title="Tải file từ máy tính"
+                            className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-gray-50 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                            title="Chọn file ảnh từ máy tính"
                         >
-                            {uploading ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-600" />
-                            ) : (
-                                <Upload className="h-3.5 w-3.5 text-gray-600" />
-                            )}
-                            <span>{uploading ? `${progress}%` : 'Tải lên'}</span>
+                            <Upload className="h-3.5 w-3.5 text-gray-600" />
+                            <span>Chọn ảnh</span>
                         </button>
                     </>
                 )}
@@ -189,7 +172,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                     : 'text-gray-500 hover:text-gray-900'
                             }`}
                         >
-                            Tải file lên
+                            Chọn file từ máy
                         </button>
                         <button
                             type="button"
@@ -216,26 +199,17 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             onClick={() => fileInputRef.current?.click()}
                             className="cursor-pointer border-2 border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50/40 rounded-xl p-4 text-center transition-all group"
                         >
-                            {uploading ? (
-                                <div className="flex flex-col items-center gap-2 py-2">
-                                    <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-                                    <span className="text-xs font-semibold text-emerald-700">
-                                        Đang tải lên ({progress}%)...
-                                    </span>
+                            <div className="flex flex-col items-center gap-1.5">
+                                <div className="p-2 rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                                    <Upload className="h-5 w-5" />
                                 </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-1.5">
-                                    <div className="p-2 rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-                                        <Upload className="h-5 w-5" />
-                                    </div>
-                                    <p className="text-xs font-semibold text-gray-700">
-                                        Nhấp để chọn file hoặc kéo thả ảnh vào đây
-                                    </p>
-                                    <p className="text-2xs text-gray-400">
-                                        Định dạng PNG, JPG, WEBP, GIF tối đa 10MB
-                                    </p>
-                                </div>
-                            )}
+                                <p className="text-xs font-semibold text-gray-700">
+                                    Nhấp để chọn file hoặc kéo thả ảnh vào đây
+                                </p>
+                                <p className="text-2xs text-gray-400">
+                                    File sẽ được tự động tải lên máy chủ khi bạn bấm Lưu đề thi
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <div className="relative flex items-center">
@@ -273,11 +247,11 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             <div className="flex items-center gap-1.5">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                                 <span className="text-xs font-bold text-gray-800 truncate">
-                                    Đã đính kèm ảnh
+                                    {isBlob ? 'Ảnh đã chọn (chờ lưu)' : 'Đã đính kèm ảnh'}
                                 </span>
                             </div>
                             <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={value}>
-                                {value}
+                                {isBlob ? 'Sẽ được tải lên máy chủ khi bấm Lưu đề thi' : value}
                             </span>
                         </div>
                     </div>

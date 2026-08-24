@@ -68,7 +68,7 @@ class StoreExamRequest extends FormRequest
             'sections.*.questions.*.code'           => ['nullable', 'string', 'max:50'],
             'sections.*.questions.*.title'          => ['nullable', 'string', 'max:500'],
             'sections.*.questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'string', 'in:single_choice,multiple_choice,true_false,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
             'sections.*.questions.*.content'        => ['nullable', 'string'],
             'sections.*.questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'sections.*.questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -85,7 +85,7 @@ class StoreExamRequest extends FormRequest
             'questions.*.code'           => ['nullable', 'string', 'max:50'],
             'questions.*.title'          => ['nullable', 'string', 'max:500'],
             'questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'questions.*.question_type'  => ['required_with:questions', 'string', 'in:single_choice,multiple_choice,true_false,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'questions.*.question_type'  => ['required_with:questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
             'questions.*.content'        => ['nullable', 'string'],
             'questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -169,7 +169,7 @@ class StoreExamRequest extends FormRequest
                             }
 
                             // 1. Trắc nghiệm 1 đáp án, Đúng/Sai, Tìm lỗi sai
-                            if (in_array($qType, ['true_false', 'true_false_not_given', 'single_choice', 'find_mistake'], true)) {
+                            if (in_array($qType, ['true_false_not_given', 'single_choice', 'find_mistake'], true)) {
                                 if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",

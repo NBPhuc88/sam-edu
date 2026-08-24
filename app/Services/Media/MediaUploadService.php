@@ -2,7 +2,6 @@
 
 namespace App\Services\Media;
 
-use App\Jobs\ProcessImageUploadJob;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -50,18 +49,23 @@ class MediaUploadService implements MediaUploadServiceInterface
             $fileName = "{$cleanObject}_{$cleanId}_{$timestamp}_{$randomHex}.{$extension}";
         }
 
-        // Store file temporarily in private local disk
-        $tempPath = $file->storeAs('temp/uploads', $fileName, 'local');
-
-        // Dispatch background job to transfer file to /home/phuc/sam (disk 'sam')
-        ProcessImageUploadJob::dispatch(
-            tempRelativePath: $tempPath,
-            destinationFolder: $targetFolder,
-            fileName: $fileName,
-            targetDisk: 'sam'
-        );
-
         $destinationRelativePath = trim($targetFolder, '/') . '/' . $fileName;
+
+        // Ensure root directory of disk 'sam' exists on the filesystem
+        $samRoot = config('filesystems.disks.sam.root', '/home/phuc/sam');
+
+        if (! is_dir($samRoot)) {
+            @mkdir($samRoot, 0777, true);
+        }
+
+        $destDir = dirname($samRoot . '/' . $destinationRelativePath);
+
+        if (! is_dir($destDir)) {
+            @mkdir($destDir, 0777, true);
+        }
+
+        // Store file directly to 'sam' disk
+        $file->storeAs($targetFolder, $fileName, 'sam');
 
         // URL generator referencing disk 'sam' -> /sam-storage/...
         $samUrl = Storage::disk('sam')->url($destinationRelativePath);

@@ -1514,7 +1514,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             'section_id'    => $secReading->id,
             'code'          => 'Q04_TF',
             'title'         => 'Xác định tính đúng sai của mệnh đề (True / False / Not Given)',
-            'question_type' => 'true_false',
+            'question_type' => 'true_false_not_given',
             'skill'         => 'reading',
             'content'       => 'According to the passage, the ancient architectural structure was completely preserved in its original form without any restoration work.',
             'score'         => 1.0,

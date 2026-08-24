@@ -15,25 +15,46 @@ export default function ChoiceRunner({
     onChange,
 }: Props) {
     if (questionType === 'true_false_not_given') {
-        const tfOptions = ['TRUE', 'FALSE', 'NOT GIVEN'];
-        const currentVal = value ? String(value).toUpperCase() : '';
+        let tfOptions: Array<{ id: string; label: string }> = [];
+
+        if (Array.isArray(options) && options.length > 0) {
+            tfOptions = options.map((opt: any) => {
+                if (typeof opt === 'string') {
+                    return { id: opt, label: opt };
+                }
+                return {
+                    id: String(opt.id ?? opt.key ?? opt.value ?? ''),
+                    label: String(opt.label ?? opt.text ?? opt.content ?? opt.id ?? ''),
+                };
+            });
+        }
+
+        if (tfOptions.length === 0) {
+            tfOptions = [
+                { id: 'TRUE', label: 'TRUE' },
+                { id: 'FALSE', label: 'FALSE' },
+                { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
+            ];
+        }
+
+        const currentVal = value !== null && value !== undefined ? String(value).trim().toUpperCase() : '';
 
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className={`grid grid-cols-1 ${tfOptions.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-2.5`}>
                 {tfOptions.map((opt) => {
-                    const isSelected = currentVal === opt;
+                    const isSelected = currentVal === opt.id.toUpperCase();
                     return (
                         <button
-                            key={opt}
+                            key={opt.id}
                             type="button"
-                            onClick={() => onChange(opt)}
+                            onClick={() => onChange(opt.id)}
                             className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all ${
                                 isSelected
                                     ? 'border-2 border-emerald-500 bg-emerald-50/80 text-emerald-950 font-extrabold shadow-2xs scale-[1.02]'
                                     : 'border-gray-200 bg-white text-gray-700 hover:bg-slate-50 hover:border-gray-300'
                             }`}
                         >
-                            <span className="text-sm tracking-wide">{opt}</span>
+                            <span className="text-sm tracking-wide">{opt.label}</span>
                             {isSelected && (
                                 <span className="inline-flex items-center gap-1 text-2xs font-bold text-emerald-700 mt-1">
                                     <Check className="h-3 w-3 stroke-[3]" /> Đã chọn

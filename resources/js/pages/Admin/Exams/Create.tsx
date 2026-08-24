@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
+import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, ExamSectionData, Subject } from './types';
 
@@ -74,6 +75,7 @@ export default function ExamCreate({
     ]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadProgressText, setUploadProgressText] = useState<string | null>(null);
 
     const filteredSubjects = centerId
         ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
@@ -106,51 +108,69 @@ export default function ExamCreate({
 
     const calculatedMaxScore = totalScore > 0 ? totalScore : 10;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setUploadProgressText(null);
 
-        const payload = {
-            center_id: centerId ? Number(centerId) : null,
-            subject_id: subjectId ? Number(subjectId) : null,
-            name: name.trim(),
-            code: code.trim() || null,
-            exam_type_id: examTypeId ? Number(examTypeId) : null,
-            duration_minutes: durationMinutes ? Number(durationMinutes) : null,
-            max_score: calculatedMaxScore,
-            pass_score: passScore ? Number(passScore) : null,
-            shuffle_questions: shuffleQuestions,
-            shuffle_options: shuffleOptions,
-            max_attempts: maxAttempts ? Number(maxAttempts) : 1,
-            is_practice: isPractice,
-            description: description.trim() || null,
-            status,
-            sections: sections.map((sec, sIdx) => ({
-                title: sec.title,
-                description: sec.description || null,
-                skill: sec.skill,
-                order_index: sIdx,
-                questions: (sec.questions || []).map((q, qIdx) => ({
-                    code: q.code || null,
-                    title: (q.title || '').trim() || null,
-                    question_type: q.question_type,
+        try {
+            // Upload all pending local images only when saving
+            const cleanSections = await uploadPendingMediaInObject(
+                sections,
+                (completed, total) => {
+                    setUploadProgressText(`Đang tải tệp lên máy chủ (${completed}/${total})...`);
+                },
+            );
+            setUploadProgressText(null);
+
+            const payload = {
+                center_id: centerId ? Number(centerId) : null,
+                subject_id: subjectId ? Number(subjectId) : null,
+                name: name.trim(),
+                code: code.trim() || null,
+                exam_type_id: examTypeId ? Number(examTypeId) : null,
+                duration_minutes: durationMinutes ? Number(durationMinutes) : null,
+                max_score: calculatedMaxScore,
+                pass_score: passScore ? Number(passScore) : null,
+                shuffle_questions: shuffleQuestions,
+                shuffle_options: shuffleOptions,
+                max_attempts: maxAttempts ? Number(maxAttempts) : 1,
+                is_practice: isPractice,
+                description: description.trim() || null,
+                status,
+                sections: cleanSections.map((sec, sIdx) => ({
+                    title: sec.title,
+                    description: sec.description || null,
                     skill: sec.skill,
-                    content: q.content,
-                    image_url: q.image_url || null,
-                    audio_url: q.audio_url || null,
-                    score: Number(q.score) || 1,
-                    options: q.options ?? null,
-                    correct_answer: q.correct_answer ?? null,
-                    explanation: q.explanation || null,
-                    metadata: q.metadata ?? null,
-                    order_index: qIdx,
+                    order_index: sIdx,
+                    questions: (sec.questions || []).map((q, qIdx) => ({
+                        code: q.code || null,
+                        title: (q.title || '').trim() || null,
+                        question_type: q.question_type,
+                        skill: sec.skill,
+                        content: q.content,
+                        image_url: q.image_url || null,
+                        audio_url: q.audio_url || null,
+                        score: Number(q.score) || 1,
+                        options: q.options ?? null,
+                        correct_answer: q.correct_answer ?? null,
+                        explanation: q.explanation || null,
+                        metadata: q.metadata ?? null,
+                        order_index: qIdx,
+                    })),
                 })),
-            })),
-        };
+            };
 
-        router.post('/exams', payload as any, {
-            onFinish: () => setIsSubmitting(false),
-        });
+            router.post('/exams', payload as any, {
+                onFinish: () => {
+                    setIsSubmitting(false);
+                    setUploadProgressText(null);
+                },
+            });
+        } catch (err: any) {
+            setIsSubmitting(false);
+            setUploadProgressText(null);
+        }
     };
 
     const formatValidationError = (key: string, msg: string): string => {
@@ -550,10 +570,11 @@ export default function ExamCreate({
                             type="submit"
                             variant="success"
                             size="lg"
-                            isLoading={isSubmitting}
+                            disabled={isSubmitting || Boolean(uploadProgressText)}
+                            isLoading={isSubmitting || Boolean(uploadProgressText)}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            Lưu Đề Thi Vào Kho ({sections.length} phần thi • {totalQuestionsCount} câu • {calculatedMaxScore} điểm)
+                            {uploadProgressText || `Lưu Đề Thi Vào Kho (${sections.length} phần thi • ${totalQuestionsCount} câu • ${calculatedMaxScore} điểm)`}
                         </Button>
                     </div>
                 </form>

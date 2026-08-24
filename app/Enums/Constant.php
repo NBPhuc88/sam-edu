@@ -220,7 +220,6 @@ class Constant
 
     public const string QUESTION_TYPE_SINGLE_CHOICE        = 'single_choice';
     public const string QUESTION_TYPE_MULTIPLE_CHOICE      = 'multiple_choice';
-    public const string QUESTION_TYPE_TRUE_FALSE           = 'true_false';
     public const string QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN = 'true_false_not_given';
     public const string QUESTION_TYPE_FILL_IN_BLANK        = 'fill_in_blank';
     public const string QUESTION_TYPE_DRAG_DROP_CLOZE      = 'drag_drop_cloze';

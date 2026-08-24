@@ -10,15 +10,37 @@ export default function ChoiceReview({ question }: Props) {
     const { question_type, options, correct_answer, user_answer } = question;
 
     if (question_type === 'true_false_not_given') {
-        const tfOptions = ['TRUE', 'FALSE', 'NOT GIVEN'];
+        let tfOptions: Array<{ id: string; label: string }> = [];
+
+        if (Array.isArray(options) && options.length > 0) {
+            tfOptions = options.map((opt: any) => {
+                if (typeof opt === 'string') {
+                    return { id: opt, label: opt };
+                }
+                return {
+                    id: String(opt.id ?? opt.key ?? opt.value ?? ''),
+                    label: String(opt.label ?? opt.text ?? opt.content ?? opt.id ?? ''),
+                };
+            });
+        }
+
+        if (tfOptions.length === 0) {
+            tfOptions = [
+                { id: 'TRUE', label: 'TRUE' },
+                { id: 'FALSE', label: 'FALSE' },
+                { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
+            ];
+        }
+
         const correctVal = String(correct_answer ?? '').trim().toUpperCase();
         const userVal = user_answer !== null && user_answer !== undefined ? String(user_answer).trim().toUpperCase() : null;
 
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+            <div className={`grid grid-cols-1 ${tfOptions.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-2.5 pt-2`}>
                 {tfOptions.map((opt) => {
-                    const isCorrectChoice = opt === correctVal;
-                    const isUserChoice = opt === userVal;
+                    const optIdUpper = opt.id.toUpperCase();
+                    const isCorrectChoice = optIdUpper === correctVal;
+                    const isUserChoice = optIdUpper === userVal;
 
                     let cardClass = 'border-gray-200 bg-white text-gray-700 opacity-60';
                     let badgeNode = null;
@@ -48,10 +70,10 @@ export default function ChoiceReview({ question }: Props) {
 
                     return (
                         <div
-                            key={opt}
+                            key={opt.id}
                             className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all ${cardClass}`}
                         >
-                            <span className="text-sm font-bold tracking-wide">{opt}</span>
+                            <span className="text-sm font-bold tracking-wide">{opt.label}</span>
                             {badgeNode && <div className="mt-1.5">{badgeNode}</div>}
                         </div>
                     );

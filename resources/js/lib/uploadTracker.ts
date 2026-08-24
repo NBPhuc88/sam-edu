@@ -1,0 +1,121 @@
+import apiClient from '@/lib/axios';
+
+export interface PendingUploadMeta {
+    previewUrl: string;
+    file: File;
+    objectType: string;
+    objectId?: string | number | null;
+    subId?: string | null;
+    folder?: string;
+}
+
+const pendingUploadsMap = new Map<string, PendingUploadMeta>();
+
+/**
+ * Register a local file with its blob preview URL for deferred upload on save
+ */
+export const registerPendingUpload = (
+    previewUrl: string,
+    file: File,
+    meta: {
+        objectType?: string;
+        objectId?: string | number | null;
+        subId?: string | null;
+        folder?: string;
+    } = {}
+) => {
+    pendingUploadsMap.set(previewUrl, {
+        previewUrl,
+        file,
+        objectType: meta.objectType || 'exam_question',
+        objectId: meta.objectId || 'general',
+        subId: meta.subId || null,
+        folder: meta.folder || 'exams/media',
+    });
+};
+
+/**
+ * Unregister and clean up preview URL
+ */
+export const unregisterPendingUpload = (previewUrl: string) => {
+    if (pendingUploadsMap.has(previewUrl)) {
+        try {
+            URL.revokeObjectURL(previewUrl);
+        } catch (_) {}
+        pendingUploadsMap.delete(previewUrl);
+    }
+};
+
+/**
+ * Check if a URL is a pending local blob URL
+ */
+export const isPendingBlobUrl = (url: string | null | undefined): boolean => {
+    return Boolean(url && typeof url === 'string' && url.startsWith('blob:'));
+};
+
+/**
+ * Upload all pending files referenced in an object / data tree and replace blob URLs with server URLs
+ */
+export const uploadPendingMediaInObject = async <T>(
+    data: T,
+    onProgress?: (completed: number, total: number) => void
+): Promise<T> => {
+    if (!data) return data;
+
+    const jsonStr = JSON.stringify(data);
+    const blobUrls = new Set<string>();
+    const regex = /blob:[^"'\s]+/g;
+    let match;
+    while ((match = regex.exec(jsonStr)) !== null) {
+        blobUrls.add(match[0]);
+    }
+
+    if (blobUrls.size === 0) {
+        return data;
+    }
+
+    const urlReplacements = new Map<string, string>();
+    const total = blobUrls.size;
+    let completed = 0;
+
+    for (const previewUrl of blobUrls) {
+        const item = pendingUploadsMap.get(previewUrl);
+        if (item) {
+            const formData = new FormData();
+            formData.append('file', item.file);
+            formData.append('object_type', item.objectType);
+            formData.append('object_id', String(item.objectId || 'general'));
+            if (item.subId) {
+                formData.append('sub_id', item.subId);
+            }
+            formData.append('folder', item.folder || 'exams/media');
+
+            const res = await apiClient.post('/api/uploads/media', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (res.data?.url) {
+                urlReplacements.set(previewUrl, res.data.url);
+                try {
+                    URL.revokeObjectURL(previewUrl);
+                } catch (_) {}
+                pendingUploadsMap.delete(previewUrl);
+            }
+        }
+        completed++;
+        onProgress?.(completed, total);
+    }
+
+    if (urlReplacements.size === 0) {
+        return data;
+    }
+
+    let replacedJson = jsonStr;
+    urlReplacements.forEach((realUrl, previewUrl) => {
+        replacedJson = replacedJson.split(previewUrl).join(realUrl);
+    });
+
+    return JSON.parse(replacedJson);
+};

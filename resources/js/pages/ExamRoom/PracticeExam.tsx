@@ -375,16 +375,34 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
             }
 
             case 'true_false_not_given': {
-                const tfOptions = [
-                    { id: 'TRUE', label: 'TRUE' },
-                    { id: 'FALSE', label: 'FALSE' },
-                    { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
-                ];
+                let tfOptions: Array<{ id: string; label: string }> = [];
+
+                if (Array.isArray(q.options) && q.options.length > 0) {
+                    tfOptions = q.options.map((opt: any) => {
+                        if (typeof opt === 'string') {
+                            return { id: opt, label: opt };
+                        }
+                        return {
+                            id: String(opt.id ?? opt.key ?? opt.value ?? ''),
+                            label: String(opt.label ?? opt.text ?? opt.content ?? opt.id ?? ''),
+                        };
+                    });
+                }
+
+                if (tfOptions.length === 0) {
+                    tfOptions = [
+                        { id: 'TRUE', label: 'TRUE' },
+                        { id: 'FALSE', label: 'FALSE' },
+                        { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
+                    ];
+                }
+
+                const currentValStr = currentVal !== null && currentVal !== undefined ? String(currentVal).trim().toUpperCase() : '';
 
                 return (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className={`grid grid-cols-1 ${tfOptions.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
                         {tfOptions.map((opt) => {
-                            const isSelected = String(currentVal) === opt.id;
+                            const isSelected = currentValStr === opt.id.toUpperCase();
                             return (
                                 <label
                                     key={opt.id}

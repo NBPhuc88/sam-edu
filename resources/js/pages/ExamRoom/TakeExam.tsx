@@ -495,21 +495,40 @@ export default function TakeExam({
 
                                                 {/* 3. True / False / Not Given */}
                                                 {q.question_type === 'true_false_not_given' && (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                                        {['TRUE', 'FALSE', 'NOT GIVEN'].map((tfVal) => {
-                                                            const isSelected = currentVal === tfVal;
+                                                    <div className={`grid grid-cols-1 ${
+                                                        Array.isArray(q.options) && q.options.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
+                                                    } gap-2.5`}>
+                                                        {(Array.isArray(q.options) && q.options.length > 0
+                                                            ? q.options.map((opt: any) =>
+                                                                  typeof opt === 'string'
+                                                                      ? { id: opt, label: opt }
+                                                                      : {
+                                                                            id: String(opt.id ?? opt.key ?? opt.value ?? ''),
+                                                                            label: String(opt.label ?? opt.text ?? opt.content ?? opt.id ?? ''),
+                                                                        }
+                                                              )
+                                                            : [
+                                                                  { id: 'TRUE', label: 'TRUE' },
+                                                                  { id: 'FALSE', label: 'FALSE' },
+                                                                  { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
+                                                              ]
+                                                        ).map((opt) => {
+                                                            const isSelected =
+                                                                currentVal !== null &&
+                                                                currentVal !== undefined &&
+                                                                String(currentVal).trim().toUpperCase() === opt.id.toUpperCase();
                                                             return (
                                                                 <button
-                                                                    key={tfVal}
+                                                                    key={opt.id}
                                                                     type="button"
-                                                                    onClick={() => handleAnswerChange(q.id!, tfVal)}
+                                                                    onClick={() => handleAnswerChange(q.id!, opt.id)}
                                                                     className={`p-3 rounded-xl border text-xs font-bold text-center transition-all ${
                                                                         isSelected
                                                                             ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
                                                                             : 'border-gray-200 bg-white text-gray-800 hover:bg-slate-50'
                                                                     }`}
                                                                 >
-                                                                    {tfVal}
+                                                                    {opt.label}
                                                                 </button>
                                                             );
                                                         })}
