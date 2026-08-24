@@ -71,3 +71,27 @@ test('super admin can update system settings and seo metadata', function () {
     expect(SystemSetting::getByKey('contact_phone'))->toBe('0999.888.777');
     expect(SystemSetting::getByKey('hero_title'))->toBe('Nền tảng Giáo dục 2026');
 });
+
+test('regular admin cannot access or update settings', function () {
+    $admin = Admin::create([
+        'admin_code' => 'ADM-REGULAR-01',
+        'username'   => 'sub_admin_setting',
+        'email'      => 'sub_admin@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Admin Phụ',
+        'role'       => 'admin',
+        'status'     => 'active',
+    ]);
+
+    // Truy cập xem cài đặt -> 404 (AutoCheckPermission không có quyền)
+    $response = $this->actingAs($admin, 'admin')->get(route('settings.index'));
+    $response->assertNotFound();
+
+    // Cố gắng cập nhật cài đặt -> 404
+    $updateResponse = $this->actingAs($admin, 'admin')->post(route('settings.update'), [
+        'settings' => [
+            'company_name' => 'Hack Name',
+        ],
+    ]);
+    $updateResponse->assertNotFound();
+});

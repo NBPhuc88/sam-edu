@@ -39,7 +39,6 @@ class PermissionSeeder extends Seeder
                 'grading.index', 'grading.create', 'grading.grade',
                 'online-exam.enter', 'practice-exams.index',
                 'tuitions.index', 'tuitions.create', 'tuitions.edit', 'tuitions.delete', 'tuitions.export', 'tuitions.payments',
-                'settings.index', 'settings.edit',
             ],
 
             'teacher' => [
