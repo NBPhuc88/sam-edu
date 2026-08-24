@@ -78,6 +78,11 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > **GỬI MAIL QUA QUEUE**:
 > Tất cả các tác vụ gửi Email (thông báo đăng ký, cập nhật thông tin, mã OTP...) BẮT BUỘC phải thực hiện bất đồng bộ qua **Queue** (`Mail::to(...)->queue(...)`) và Mailable class phải `implements ShouldQueue`.
 
+> [!IMPORTANT]
+> **QUY TẮC IMPORT PHP Ở ĐẦU FILE (USE STATEMENTS IMPORT RULE)**:
+> - **Nghiêm cấm viết FQCN inline trong mã nguồn**: Tuyệt đối KHÔNG viết import inline kiểu `\App\Models\Exam::query()`, `\App\Http\Requests\Chat\ReactClassChatMessageRequest`, `\Illuminate\Support\Facades\Mail` hay `\App\Mail\...` bên trong logic code, method signatures, return types hoặc properties.
+> - **Bắt buộc khai báo `use` ở đầu file**: Tất cả các Model, Service, Repository, FormRequest, Mailable, Facade, Collection, v.v. đều phải được khai báo bằng lệnh `use` ở phần đầu file PHP và sử dụng tên class ngắn gọn (short class name) bên dưới.
+
 ---
 
 ## 4. Hệ thống Đăng nhập Multi-Guard & Phân quyền
