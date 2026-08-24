@@ -38,7 +38,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     const [fullName, setFullName] = useState<string>('');
     const [username, setUsername] = useState<string>('');
     const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('12345678');
+    const [password, setPassword] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
     const [gender, setGender] = useState<string>('male');
@@ -64,23 +64,8 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
         );
     };
 
-    // Auto generate username from full name
     const handleFullNameChange = (val: string) => {
         setFullName(val);
-
-        if (!username) {
-            const clean = val
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd')
-                .replace(/Đ/g, 'd')
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, '');
-
-            if (clean) {
-                setUsername(clean);
-            }
-        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -207,7 +192,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
-                                    placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
+                                    placeholder="Để trống nếu không cấp tài khoản đăng nhập"
                                     maxLength={19}
                                     className="!py-3 !text-sm"
                                 />
@@ -225,7 +210,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="•••••••• (để trống nếu chưa cấp)"
+                                    placeholder="Để trống nếu không cấp mật khẩu"
                                     maxLength={20}
                                     className="!py-3 !text-sm"
                                 />

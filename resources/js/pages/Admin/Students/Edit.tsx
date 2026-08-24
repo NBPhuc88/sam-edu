@@ -226,7 +226,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
-                                    placeholder="Ví dụ: hs_tranmai (để trống nếu chưa cấp)"
+                                    placeholder="Để trống nếu không cấp tài khoản đăng nhập"
                                     maxLength={19}
                                     className="!py-3 !text-sm"
                                 />
@@ -238,7 +238,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                             {/* Password */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mật Khẩu Mới (Để trống nếu không đổi)
+                                    Mật Khẩu Mới (Để trống nếu không đổi/không dùng)
                                 </label>
                                 <Input
                                     type="password"

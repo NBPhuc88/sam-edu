@@ -4,6 +4,7 @@ namespace App\Http\Requests\Student;
 
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class StoreStudentRequest extends FormRequest
@@ -11,6 +12,22 @@ class StoreStudentRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        /** @var \App\Models\Admin|null $user */
+        $user = Auth::guard('admin')->user();
+
+        if (! $this->filled('center_id') && $user) {
+            if (! $user->isSuperAdmin()) {
+                $centerId = $user->centers()->value('centers.id');
+
+                if ($centerId) {
+                    $this->merge(['center_id' => (int) $centerId]);
+                }
+            }
+        }
     }
 
     /**
