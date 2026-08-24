@@ -372,12 +372,20 @@ export default function ScheduleCreate({
     const currentClass = classes.find((c) => String(c.id) === String(selectedClassId));
     const centerId = currentClass ? Number(currentClass.center_id) : null;
 
+    const classSubjects = React.useMemo(() => {
+        return (currentClass?.class_subjects || (currentClass as any)?.classSubjects || []) as {
+            id: number;
+            subject?: Subject;
+            teacher?: Teacher;
+        }[];
+    }, [currentClass]);
+
     const displaySubjects = React.useMemo(() => {
         const list: Subject[] = [];
         const seenIds = new Set<number>();
 
-        if (currentClass?.class_subjects) {
-            for (const cs of currentClass.class_subjects) {
+        if (classSubjects && Array.isArray(classSubjects)) {
+            for (const cs of classSubjects) {
                 if (cs.subject && !seenIds.has(cs.subject.id)) {
                     seenIds.add(cs.subject.id);
                     const fullSub = subjects.find((s) => s.id === cs.subject?.id);
@@ -386,50 +394,20 @@ export default function ScheduleCreate({
                         name: cs.subject.name,
                         code: cs.subject.code,
                         center_id: centerId || 0,
+                        total_sessions: cs.subject.total_sessions,
+                        duration_minutes: cs.subject.duration_minutes,
                     });
                 }
             }
         }
 
-        const centerSubjects = subjects.filter((s) => !centerId || Number(s.center_id) === centerId);
-        for (const s of centerSubjects) {
-            if (!seenIds.has(s.id)) {
-                seenIds.add(s.id);
-                list.push(s);
-            }
-        }
+        return list;
+    }, [classSubjects, centerId, subjects]);
 
-        return list.length > 0 ? list : subjects;
-    }, [currentClass, centerId, subjects]);
-
-    const displayTeachers = React.useMemo(() => {
-        const list: Teacher[] = [];
-        const seenIds = new Set<number>();
-
-        if (currentClass?.class_subjects) {
-            for (const cs of currentClass.class_subjects) {
-                if (cs.teacher && !seenIds.has(cs.teacher.id)) {
-                    seenIds.add(cs.teacher.id);
-                    list.push({
-                        id: cs.teacher.id,
-                        full_name: cs.teacher.full_name,
-                        teacher_code: cs.teacher.teacher_code,
-                        center_id: centerId || 0,
-                    });
-                }
-            }
-        }
-
-        const centerTeachers = teachers.filter((t) => !centerId || Number(t.center_id) === centerId);
-        for (const t of centerTeachers) {
-            if (!seenIds.has(t.id)) {
-                seenIds.add(t.id);
-                list.push(t);
-            }
-        }
-
-        return list.length > 0 ? list : teachers;
-    }, [currentClass, centerId, teachers]);
+    const matchedClassSubject = classSubjects.find(
+        (cs) => String(cs.subject?.id) === String(selectedSubjectId)
+    );
+    const assignedTeacher = matchedClassSubject?.teacher;
 
     const displayRooms = React.useMemo(() => {
         const centerRooms = rooms.filter((r) => !centerId || Number(r.center_id) === centerId);
@@ -463,10 +441,36 @@ export default function ScheduleCreate({
         );
     }, [startDate, weeklyTimes, totalSessions, offDays, extraDays, activeHolidayDates]);
 
+    useEffect(() => {
+        const initialCsList = (initialClass?.class_subjects || (initialClass as any)?.classSubjects || []) as {
+            id: number;
+            subject?: Subject;
+            teacher?: Teacher;
+        }[];
+        if (initialCsList.length === 1 && initialCsList[0]?.subject) {
+            setSelectedSubjectId(String(initialCsList[0].subject.id));
+            if (initialCsList[0].teacher?.id) {
+                setSelectedTeacherId(String(initialCsList[0].teacher.id));
+            }
+        }
+    }, []);
+
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
-        setSelectedSubjectId('');
-        setSelectedTeacherId('');
+        const cls = classes.find((c) => String(c.id) === String(newClassId));
+        const csList = (cls?.class_subjects || (cls as any)?.classSubjects || []) as {
+            id: number;
+            subject?: Subject;
+            teacher?: Teacher;
+        }[];
+
+        if (csList.length === 1 && csList[0]?.subject) {
+            setSelectedSubjectId(String(csList[0].subject.id));
+            setSelectedTeacherId(csList[0].teacher?.id ? String(csList[0].teacher.id) : '');
+        } else {
+            setSelectedSubjectId('');
+            setSelectedTeacherId('');
+        }
     };
 
     const handleSubjectChange = (newSubjectId: string) => {
@@ -476,11 +480,13 @@ export default function ScheduleCreate({
             return;
         }
 
-        const matchedCs = currentClass?.class_subjects?.find(
+        const matchedCs = classSubjects.find(
             (cs) => String(cs.subject?.id) === String(newSubjectId)
         );
         if (matchedCs?.teacher?.id) {
             setSelectedTeacherId(String(matchedCs.teacher.id));
+        } else {
+            setSelectedTeacherId('');
         }
     };
 
@@ -853,39 +859,62 @@ export default function ScheduleCreate({
                                     onChange={(e) => handleSubjectChange(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
-                                    disabled={!selectedClassId}
+                                    disabled={!selectedClassId || displaySubjects.length === 0}
                                 >
-                                    <option value="">-- Chọn môn học --</option>
+                                    <option value="">
+                                        {!selectedClassId
+                                            ? '-- Vui lòng chọn lớp học trước --'
+                                            : displaySubjects.length === 0
+                                              ? '-- Lớp học chưa được gán môn học nào --'
+                                              : '-- Chọn môn học của lớp --'}
+                                    </option>
                                     {displaySubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.code}) - {s.total_sessions ? `${s.total_sessions} buổi` : 'N/A'}
                                         </option>
                                     ))}
                                 </select>
+                                {selectedClassId && displaySubjects.length === 0 && (
+                                    <p className="mt-1.5 text-xs text-amber-600">
+                                        Lớp học này chưa được phân công môn học. Vui lòng vào chỉnh sửa Lớp học để gán môn học và giáo viên.
+                                    </p>
+                                )}
                                 {errors.subject_id && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.subject_id}</p>
                                 )}
                             </div>
 
-                            {/* Teacher Selection */}
+                            {/* Teacher Selection (Locked to the assigned teacher of the class subject) */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Giáo Viên Phụ Trách <span className="text-red-500">*</span>
+                                    <span className="ml-1 text-xs font-normal text-gray-500">(Theo phân công môn của lớp)</span>
                                 </label>
-                                <select
-                                    value={selectedTeacherId}
-                                    onChange={(e) => setSelectedTeacherId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                    disabled={!selectedClassId}
-                                >
-                                    <option value="">-- Chọn giáo viên --</option>
-                                    {displayTeachers.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.full_name} ({t.teacher_code})
-                                        </option>
-                                    ))}
-                                </select>
+                                {assignedTeacher ? (
+                                    <div className="flex items-center justify-between rounded-lg border border-gray-300 bg-slate-50 px-4 py-3 text-sm font-medium text-gray-900 shadow-xs">
+                                        <div className="flex items-center gap-2">
+                                            <GraduationCap className="h-4 w-4 text-emerald-600" />
+                                            <span className="font-bold text-gray-900">
+                                                {assignedTeacher.full_name}
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                ({assignedTeacher.teacher_code})
+                                            </span>
+                                        </div>
+                                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                            Giáo viên phụ trách
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-dashed border-gray-300 bg-slate-50 px-4 py-3 text-sm italic text-gray-500">
+                                        {!selectedClassId
+                                            ? 'Vui lòng chọn lớp học trước'
+                                            : !selectedSubjectId
+                                              ? 'Vui lòng chọn môn học để hiển thị giáo viên'
+                                              : 'Môn học này chưa có giáo viên phụ trách'}
+                                    </div>
+                                )}
+                                <input type="hidden" name="teacher_id" value={selectedTeacherId} />
                                 {errors.teacher_id && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.teacher_id}</p>
                                 )}

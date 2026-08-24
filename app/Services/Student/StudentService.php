@@ -880,7 +880,7 @@ class StudentService implements StudentServiceInterface
         $now = CarbonImmutable::now();
 
         if ($filterType === 'all') {
-            return [null, null, (int) $now->format('n'), (int) $now->format('Y')];
+            return [null, $now->format('Y-m-d'), (int) $now->format('n'), (int) $now->format('Y')];
         }
 
         if ($filterType === 'select_month') {

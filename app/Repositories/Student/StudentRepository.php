@@ -517,6 +517,12 @@ class StudentRepository implements StudentRepositoryInterface
 
         if ($startDate !== null && $endDate !== null) {
             $query->whereBetween('session_date', [$startDate, $endDate]);
+        } elseif ($endDate !== null) {
+            $query->where('session_date', '<=', $endDate);
+        } elseif ($startDate !== null) {
+            $query->where('session_date', '>=', $startDate);
+        } else {
+            $query->where('session_date', '<=', now()->format('Y-m-d'));
         }
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, ClassSession> $sessions */

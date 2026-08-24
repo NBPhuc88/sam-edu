@@ -327,6 +327,20 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         $subject = $this->subjectRepository->find($subjectId);
 
+        $existingClassSubject = ClassSubject::where('class_id', $classId)
+            ->where('subject_id', $subjectId)
+            ->first();
+
+        if (! $existingClassSubject) {
+            throw ValidationException::withMessages([
+                'subject_id' => 'Môn học chưa được gán cho lớp học này. Vui lòng cấu hình môn học cho lớp trước.',
+            ]);
+        }
+
+        if ($existingClassSubject->teacher_id) {
+            $teacherId = (int) $existingClassSubject->teacher_id;
+        }
+
         return DB::transaction(function () use ($data, $schoolClass, $subject, $subjectId, $teacherId) {
             // 1. Tìm hoặc tạo liên kết ClassSubject
             $classSubject = $this->scheduleRepository->findOrCreateClassSubject(
