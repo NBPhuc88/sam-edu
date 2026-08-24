@@ -398,6 +398,31 @@ class ComprehensiveSampleDataSeeder extends Seeder
         // H. Tạo Học sinh
         $students = $this->createStudentsForCenter($center, $config['student_prefix']);
 
+        // Dọn dẹp dữ liệu cũ của trung tâm để khởi tạo lại đồng bộ
+        $centerClassIds = SchoolClass::withTrashed()->where('center_id', $center->id)->pluck('id')->toArray();
+
+        if (! empty($centerClassIds)) {
+            $csIds   = ClassSubject::whereIn('class_id', $centerClassIds)->pluck('id')->toArray();
+            $sessIds = ClassSession::whereIn('class_subject_id', $csIds)->pluck('id')->toArray();
+
+            if (! empty($sessIds)) {
+                DB::table('attendances')->whereIn('session_id', $sessIds)->delete();
+                SessionReschedule::whereIn('session_id', $sessIds)->delete();
+                ClassSession::whereIn('id', $sessIds)->delete();
+            }
+            ClassSchedule::whereIn('class_subject_id', $csIds)->delete();
+            ClassStudent::whereIn('class_id', $centerClassIds)->delete();
+            ClassChatMessageReaction::whereIn('class_id', $centerClassIds)->delete();
+            ClassChatMessage::whereIn('class_id', $centerClassIds)->delete();
+            ClassExamSubmission::whereIn('class_exam_id', function ($q) use ($centerClassIds) {
+                $q->select('id')->from('class_exams')->whereIn('class_id', $centerClassIds);
+            })->delete();
+            ClassExam::whereIn('class_id', $centerClassIds)->delete();
+            StudentTuition::whereIn('class_id', $centerClassIds)->delete();
+            ClassSubject::whereIn('class_id', $centerClassIds)->delete();
+            SchoolClass::withTrashed()->whereIn('id', $centerClassIds)->forceDelete();
+        }
+
         // I. Tạo Lớp học, Lịch học, Ca học, Đổi lịch, Điểm danh, Chat & Reactions
         $classes = $this->createClassesAndSchedules(
             $center,
@@ -614,18 +639,18 @@ class ComprehensiveSampleDataSeeder extends Seeder
      */
     private function createStudentsForCenter(Center $center, string $prefix): array
     {
-        $firstNames  = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ'];
-        $middleNames = ['Văn', 'Thị', 'Đức', 'Hải', 'Quang', 'Minh', 'Ngọc', 'Thu', 'Hữu', 'Bảo', 'Gia', 'Khánh'];
-        $lastNames   = ['Nam', 'An', 'Bình', 'Cường', 'Dương', 'Hà', 'Huy', 'Khoa', 'Linh', 'Long', 'My', 'Phong', 'Trang', 'Tú', 'Uyên', 'Vy', 'Đạt', 'Dũng'];
+        $firstNames  = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý'];
+        $middleNames = ['Văn', 'Thị', 'Đức', 'Hải', 'Quang', 'Minh', 'Ngọc', 'Thu', 'Hữu', 'Bảo', 'Gia', 'Khánh', 'Anh', 'Thanh', 'Tuấn'];
+        $lastNames   = ['Nam', 'An', 'Bình', 'Cường', 'Dương', 'Hà', 'Huy', 'Khoa', 'Linh', 'Long', 'My', 'Phong', 'Trang', 'Tú', 'Uyên', 'Vy', 'Đạt', 'Dũng', 'Tiến', 'Hương', 'Nhi', 'Hùng', 'Sơn', 'Thảo'];
 
         $relationships = ['Bố', 'Mẹ', 'Người giám hộ'];
 
         $students      = [];
-        $totalStudents = 18; // 18 học sinh mỗi trung tâm
+        $totalStudents = 24; // 24 học sinh mỗi trung tâm để phân bổ phong phú các lớp
 
         for ($i = 1; $i <= $totalStudents; $i++) {
-            $fn       = $firstNames[($i + $center->id) % count($firstNames)] . ' ' . $middleNames[($i * 2 + $center->id) % count($middleNames)];
-            $ln       = $lastNames[($i * 3 + $center->id) % count($lastNames)];
+            $fn       = $firstNames[($i + $center->id * 3) % count($firstNames)] . ' ' . $middleNames[($i * 2 + $center->id * 5) % count($middleNames)];
+            $ln       = $lastNames[($i * 3 + $center->id * 7) % count($lastNames)];
             $fullName = "{$fn} {$ln}";
 
             $username = "{$prefix}_" . sprintf('%02d', $i);
@@ -658,7 +683,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 'parent_name'         => $parentName,
                 'parent_phone'        => $parentPhone,
                 'parent_relationship' => $parentRel,
-                'admission_date'      => Carbon::now()->subMonths(3)->toDateString(),
+                'admission_date'      => Carbon::now()->subMonths(1 + ($i % 5))->toDateString(),
                 'status'              => 1, // 1 = active (tinyint)
             ];
 
@@ -702,31 +727,296 @@ class ComprehensiveSampleDataSeeder extends Seeder
         $classes    = [];
         $holidayIds = array_map(fn ($h) => $h->id, $nationalHolidays);
 
-        foreach ($subjects as $idx => $subject) {
-            $teacher   = $teachers[$idx % count($teachers)];
-            $room      = $rooms[$idx % count($rooms)];
-            $classNum  = $idx + 1;
-            $classCode = sprintf('C%09d', ($center->id * 100) + $classNum);
-            $className = "Lớp {$subject->name} - K{$classNum} ({$classPrefix})";
+        // Mẫu nhận xét điểm danh đa dạng, sinh động
+        $presentNotes = [
+            'Có mặt đúng giờ, hăng hái phát biểu xây dựng bài.',
+            'Làm bài tập về nhà đầy đủ, phát âm chuẩn xác.',
+            'Tham gia thảo luận nhóm sôi nổi, đóng góp nhiều ý tưởng.',
+            'Hoàn thành xuất sắc bài kiểm tra ngắn đầu giờ (10/10).',
+            'Tập trung lắng nghe, ghi chép bài cẩn thận và tiếp thu nhanh.',
+            'Tương tác tốt với giáo viên và các bạn trong lớp.',
+            'Phát âm chuẩn, ngữ điệu tự nhiên trong phần thực hành nói.',
+        ];
 
-            $startDate = Carbon::now()->subWeeks(4)->startOfWeek();
-            $endDate   = (clone $startDate)->addWeeks(12)->endOfWeek();
+        $lateNotes = [
+            'Đến muộn 10 phút do kẹt xe giờ cao điểm, đã bổ sung bài.',
+            'Vào lớp muộn 15 phút do bận kiểm tra tại trường chính khóa.',
+            'Đến trễ 10 phút, đã chủ động liên hệ bạn để chép lại bài đầu giờ.',
+            'Đến muộn 20 phút do thời tiết mưa to, đã được giáo viên bù bài cuối giờ.',
+        ];
 
-            // 1. Tạo Lớp học (status = 1: Đang học)
-            $schoolClass = SchoolClass::updateOrCreate(
-                ['code' => $classCode],
+        $excusedNotes = [
+            'Nghỉ có phép - Phụ huynh gọi điện báo học sinh bị sốt/ốm.',
+            'Nghỉ có phép - Gia đình bận việc đột xuất, đã gửi đơn xin phép.',
+            'Nghỉ có phép - Trùng lịch thi khảo sát chất lượng tại trường THPT.',
+            'Nghỉ có phép - Học sinh tham gia đội tuyển học sinh giỏi của trường.',
+        ];
+
+        $leaveNotes = [
+            'Xin phép về sớm 30 phút do có lịch hẹn khám nha khoa/bác sĩ.',
+            'Xin phép ra sớm 20 phút vì việc gia đình đột xuất.',
+            'Xin phép về sớm 15 phút do phải kịp chuyến xe về quê.',
+        ];
+
+        $absentNotes = [
+            'Vắng không phép, giáo vụ trung tâm đã liên hệ phụ huynh để nắm tình hình.',
+            'Nghỉ học không báo trước, chưa liên lạc được với học sinh.',
+            'Vắng mặt không lý do.',
+        ];
+
+        // Ngân hàng chủ đề bài giảng theo từng chuyên môn
+        $topicsLibrary = [
+            'IELTS' => [
+                'Orientation, Diagnostic Assessment & Lộ trình cá nhân hóa',
+                'Phonetics Mastery & Connected Speech Patterns trong IELTS Speaking',
+                'Listening Section 1: Note Completion & Form Filling Tactics',
+                'Reading: Skimming & Scanning Speed Reading Drills',
+                'Writing Task 1: Interpreting Charts, Line Graphs & Trend Vocabulary',
+                'Speaking Part 1: Fluency, Coherence & Expanding Short Answers',
+                'Listening Section 2: Multiple Choice & Map Labeling Techniques',
+                'Reading: True / False / Not Given & Identifying Writer Views',
+                'Writing Task 2: Agree/Disagree & Discussion Essay Structures',
+                'Speaking Part 2: Structuring Cue Card 1-Minute Preparation',
+                'Listening Section 3: Academic Discussions & Signal Words',
+                'Reading: Matching Headings & Paragraph Summary Strategies',
+                'Writing Task 1: Describing Processes, Maps & Complex Cycles',
+                'Speaking Part 3: Abstract Discussion & Complex Hypothesis Formation',
+                'Listening Section 4: Academic Lectures & Fast-Paced Dictation',
+                'Reading: Multiple Choice & Sentence Completion Tactics',
+                'Writing Task 2: Problem - Solution & Two-Part Question Models',
+                'Full Mock Test Simulation (Listening & Reading Modules)',
+                'Comprehensive Exam Review, Common Pitfalls & Band Score Boost',
+                'Final Individual Speaking Assessment & Personalized Feedback',
+                'Mastering Collocations & Idiomatic Expressions for Band 7.5+',
+                'Writing Task 2: Advanced Cohesion and Coherence Devices',
+                'Speed Reading Strategies for Academic Scientific Texts',
+                'Targeted Practice: Complex Pronunciation & Intonation Rules',
+            ],
+            'TOEIC' => [
+                'Tổng quan cấu trúc TOEIC & Phương pháp đạt mục tiêu 850+',
+                'Part 1: Phân tích hình ảnh người và vật, bẫy thì động từ',
+                'Part 2: Kỹ năng bắt từ khóa (Wh-questions & Tag questions)',
+                'Part 3: Đoạn hội thoại ngắn tại văn phòng & Suy luận ý định',
+                'Part 4: Bài phát biểu, thông báo & Đọc lướt câu hỏi trước',
+                'Part 5: 100 dạng ngữ pháp trọng điểm (Từ loại & Mệnh đề quan hệ)',
+                'Part 6: Điền từ vào đoạn văn bản & Liên từ kết nối',
+                'Part 7: Đọc hiểu văn bản đơn, email & Đơn hàng thương mại',
+                'Part 7 Nâng cao: Đọc hiểu văn bản đôi và ba',
+                'Luyện đề Full Test TOEIC Part 1 - Part 4',
+                'Luyện đề Full Test TOEIC Part 5 - Part 7',
+                'Tổng kết khóa học, chữa đề chi tiết & Chiến thuật phòng thi',
+                'Từ vựng chuyên sâu về Hợp đồng, Mua bán & Chuỗi cung ứng',
+                'Ngữ pháp nâng cao: Đảo ngữ & Cấu trúc câu điều kiện rút gọn',
+                'Kỹ thuật phân bổ thời gian 75 phút cho phần Reading TOEIC',
+                'Chữa đề ETS TOEIC Test 01 & Giải thích chi tiết từng bẫy',
+            ],
+            'COMMUNICATION' => [
+                'Social Networking & Self Introduction in Professional Contexts',
+                'Daily Office Conversations & Small Talk Techniques',
+                'Email Etiquette & Professional Business Correspondence',
+                'Handling Telephone Inquiries & Customer Service Excellence',
+                'Conducting Effective Meetings & Leading Discussions',
+                'Delivering Impactful Business Presentations',
+                'Negotiation Skills & Resolving Workplace Conflicts',
+                'Cross-cultural Communication in Multinational Companies',
+                'Job Interview Preparation & Mock Interviews with Native Speaker',
+                'Final Project Presentation & Certification Awarding',
+                'Vocabulary for Marketing, Finance & Sales Pitching',
+                'Debating Current Social & Economic Topics in English',
+            ],
+            'CHINESE' => [
+                'Nhập môn phát âm chuẩn Pinyin & Quy tắc biến điệu thanh điệu',
+                'Các bộ thủ thông dụng & Phương pháp nhớ chữ Hán nhanh',
+                'Giao tiếp hàng ngày: Chào hỏi, giới thiệu bản thân & gia đình',
+                'Chủ đề mua sắm, hỏi giá & Phương thức thanh toán điện tử',
+                'Chủ đề ẩm thực, gọi món & Đặt phòng nhà hàng',
+                'Chủ đề hỏi đường, phương tiện giao thông & Du lịch',
+                'Chủ đề thời tiết, sở thích & Lịch trình hoạt động',
+                'Ngữ pháp trọng điểm HSK: Câu chữ 把, câu chữ 被 & Bổ ngữ kết quả',
+                'Luyện kỹ năng Đọc hiểu văn bản HSK & Bài tập nối câu',
+                'Luyện kỹ năng Nghe hiểu hội thoại thực tế',
+                'Luyện viết đoạn văn ngắn giới thiệu về sở thích cá nhân',
+                'Tổng ôn tập HSK & Thi thử chuẩn hóa quốc tế',
+                'Ngữ pháp HSK 5: Phân biệt các cặp liên từ dễ gây nhầm lẫn',
+                'Kỹ năng viết luận ngắn 80 chữ theo từ khóa cho trước',
+            ],
+            'JAPANESE' => [
+                'Tổng ôn tập bảng chữ cái Hiragana & Katakana',
+                'Từ vựng trọng tâm N3 theo chủ đề Đời sống sinh hoạt',
+                'Ngữ pháp N3: Các mẫu câu diễn đạt mục đích và nguyên nhân',
+                'Ngữ pháp N3: Các mẫu câu phỏng đoán và truyền đạt thông tin',
+                'Luyện đọc hiểu N3: Đoạn văn ngắn và trung bình',
+                'Luyện nghe hiểu N3: Nghe hiểu tình huống thực tế và bài phát biểu',
+                'Hán tự (Kanji) N3: 150 chữ Hán thường gặp trong kỳ thi',
+                'Thi thử toàn diện JLPT N3 & Phân tích đáp án chi tiết',
+                'Kính ngữ Sonkeigo và Khiêm nhường ngữ Kenjougo trong công sở',
+                'Luyện đề Dokkai chuyên sâu dạng so sánh ý kiến tác giả',
+            ],
+            'KOREAN' => [
+                'Bảng chữ cái Hangul & Quy tắc phát âm nối âm, biến âm',
+                'Từ vựng TOPIK II: Đời sống văn phòng và môi trường làm việc',
+                'Ngữ pháp trung cấp: Thể sai khiến, bị động và giả định',
+                'Luyện kỹ năng Đọc hiểu TOPIK II: Đoạn văn tin tức và xã hội',
+                'Luyện kỹ năng Viết TOPIK II: Viết bài luận 600-700 chữ câu 53, 54',
+                'Luyện kỹ năng Nghe TOPIK II: Hội thoại nhiều người và tin tức',
+                'Thi thử mô phỏng TOPIK II & Tổng kết lộ trình',
+                'Các quán dụng ngữ và tục ngữ tiếng Hàn thường xuất hiện trong đề thi',
+                'Kỹ năng phân tích biểu đồ câu 53 TOPIK II đạt điểm tối đa',
+            ],
+            'KIDS' => [
+                'Hello World: Greetings, Alphabet & Colors Exploration',
+                'My Lovely Family & Pets: Animal Kingdom Vocabulary',
+                'Numbers, Shapes & Counting Adventures',
+                'My School, Classroom Objects & Action Verbs',
+                'Food & Drinks: Yummy Snacks and Healthy Habits',
+                'My Body & Clothes: Daily Routine and Dressing Up',
+                'Weather & Seasons: Outdoor Games and Activities',
+                'Story Time: Fun Fairy Tales & Role Playing Games',
+                'Cambridge Starters Mock Test: Listening & Coloring Fun',
+                'Cambridge Starters Mock Test: Speaking Show & Tell',
+                'Mini Drama: Animals in the Jungle Show',
+                'Song & Rhyme: Phonics Fun with Teacher and Friends',
+            ],
+        ];
+
+        // Xây dựng danh sách các lớp học phong phú cho từng Trung tâm
+        // Bao gồm: Lớp đang học (ca tối, ca sáng, ca chiều, cuối tuần) + Lớp đã hoàn thành để dữ liệu thống kê lịch sử dồi dào
+        $classesPlan = [];
+
+        foreach ($subjects as $sIdx => $subj) {
+            $subjKey = 'IELTS';
+
+            if (str_contains($subj->name, 'TOEIC')) {
+                $subjKey = 'TOEIC';
+            } elseif (str_contains($subj->name, 'Giao Tiếp')) {
+                $subjKey = 'COMMUNICATION';
+            } elseif (str_contains($subj->name, 'Trung') || str_contains($subj->name, 'HSK')) {
+                $subjKey = 'CHINESE';
+            } elseif (str_contains($subj->name, 'Nhật') || str_contains($subj->name, 'JLPT')) {
+                $subjKey = 'JAPANESE';
+            } elseif (str_contains($subj->name, 'Hàn') || str_contains($subj->name, 'TOPIK')) {
+                $subjKey = 'KOREAN';
+            } elseif (str_contains($subj->name, 'Trẻ Em') || str_contains($subj->name, 'Cambridge')) {
+                $subjKey = 'KIDS';
+            }
+
+            // 1. Lớp Đang học (Active) - Khóa chính (Ca tối 2-4-6 hoặc 3-5-7)
+            $teacher1 = $teachers[$sIdx % count($teachers)];
+            $room1    = $rooms[$sIdx % count($rooms)];
+            $days1    = $sIdx % 2 === 0 ? [1, 3, 5] : [2, 4, 6]; // 1: T2, 3: T4, 5: T6 | 2: T3, 4: T5, 6: T7
+            $startT1  = $sIdx % 2 === 0 ? '18:00' : '19:45';
+            $endT1    = $sIdx % 2 === 0 ? '19:30' : '21:15';
+
+            $classesPlan[] = [
+                'subject'      => $subj,
+                'teacher'      => $teacher1,
+                'room'         => $room1,
+                'name'         => "Lớp {$subj->name} - K1 ({$classPrefix})",
+                'code_suffix'  => ($sIdx * 10) + 1,
+                'status'       => 1, // Active
+                'start_date'   => Carbon::now()->subWeeks(8)->startOfWeek(),
+                'end_date'     => Carbon::now()->addWeeks(8)->endOfWeek(),
+                'days'         => $days1,
+                'start_time'   => $startT1,
+                'end_time'     => $endT1,
+                'max_students' => 25,
+                'subj_key'     => $subjKey,
+                'student_off'  => $sIdx * 3,
+            ];
+
+            // 2. Lớp Đã hoàn thành (Completed - status = 2) cho 2 môn đầu tiên của trung tâm
+            // Để đảm bảo có dữ liệu lịch sử thống kê đầy đủ cho các tháng trước (tháng 5, 6, 7, 8)
+            if ($sIdx < 2) {
+                $teacher2 = $teachers[($sIdx + 1) % count($teachers)];
+                $room2    = $rooms[($sIdx + 1) % count($rooms)];
+                $days2    = $sIdx === 0 ? [2, 4] : [1, 4]; // T3-T5 hoặc T2-T5 sáng
+                $startT2  = '08:30';
+                $endT2    = '10:00';
+
+                $classesPlan[] = [
+                    'subject'      => $subj,
+                    'teacher'      => $teacher2,
+                    'room'         => $room2,
+                    'name'         => "Lớp {$subj->name} - K-Pre ({$classPrefix})",
+                    'code_suffix'  => ($sIdx * 10) + 2,
+                    'status'       => 2, // Completed
+                    'start_date'   => Carbon::now()->subWeeks(20)->startOfWeek(),
+                    'end_date'     => Carbon::now()->subWeeks(4)->endOfWeek(),
+                    'days'         => $days2,
+                    'start_time'   => $startT2,
+                    'end_time'     => $endT2,
+                    'max_students' => 20,
+                    'subj_key'     => $subjKey,
+                    'student_off'  => $sIdx * 4 + 5,
+                ];
+            }
+
+            // 3. Lớp Cuối tuần / Ca ngày (Active) cho môn học thứ 2 hoặc 4
+            if ($sIdx % 2 === 1 || $sIdx === 0) {
+                $teacher3 = $teachers[($sIdx + 2) % count($teachers)];
+                $room3    = $rooms[($sIdx + 2) % count($rooms)];
+                $days3    = [6, 7]; // Thứ 7, Chủ Nhật
+                $startT3  = $sIdx % 2 === 0 ? '09:00' : '15:30';
+                $endT3    = $sIdx % 2 === 0 ? '11:15' : '17:45';
+
+                $classesPlan[] = [
+                    'subject'      => $subj,
+                    'teacher'      => $teacher3,
+                    'room'         => $room3,
+                    'name'         => "Lớp {$subj->name} - Weekend Intensive ({$classPrefix})",
+                    'code_suffix'  => ($sIdx * 10) + 3,
+                    'status'       => 1, // Active
+                    'start_date'   => Carbon::now()->subWeeks(6)->startOfWeek(),
+                    'end_date'     => Carbon::now()->addWeeks(6)->endOfWeek(),
+                    'days'         => $days3,
+                    'start_time'   => $startT3,
+                    'end_time'     => $endT3,
+                    'max_students' => 22,
+                    'subj_key'     => $subjKey,
+                    'student_off'  => $sIdx * 2 + 8,
+                ];
+            }
+        }
+
+        // Tạo từng lớp học, lịch học, ca học và điểm danh
+        $attendanceBatch = [];
+
+        foreach ($classesPlan as $planIdx => $plan) {
+            $subject   = $plan['subject'];
+            $teacher   = $plan['teacher'];
+            $room      = $plan['room'];
+            $classCode = sprintf('C%09d', ($center->id * 100) + $plan['code_suffix']);
+            $className = $plan['name'];
+            $startDate = $plan['start_date'];
+            $endDate   = $plan['end_date'];
+            $days      = $plan['days'];
+            $startTime = $plan['start_time'];
+            $endTime   = $plan['end_time'];
+
+            // 1. Tạo Lớp học
+            $schoolClass = SchoolClass::withTrashed()->updateOrCreate(
                 [
-                    'center_id'    => $center->id,
+                    'center_id' => $center->id,
+                    'code'      => $classCode,
+                ],
+                [
                     'name'         => $className,
-                    'max_students' => 25,
+                    'max_students' => $plan['max_students'],
                     'start_date'   => $startDate->toDateString(),
                     'end_date'     => $endDate->toDateString(),
-                    'status'       => 1, // 1 = active (tinyint)
+                    'status'       => $plan['status'],
+                    'deleted_at'   => null,
                 ]
             );
 
-            // 2. Ghi danh học sinh vào lớp (10-12 học sinh mỗi lớp)
-            $enrolledStudents = array_slice($students, ($idx * 4) % count($students), 10);
+            // 2. Ghi danh học sinh vào lớp (10-14 học sinh mỗi lớp)
+            $studentOffset    = $plan['student_off'] % count($students);
+            $enrolledStudents = [];
+            $enrollCount      = min(12, count($students));
+
+            for ($ei = 0; $ei < $enrollCount; $ei++) {
+                $enrolledStudents[] = $students[($studentOffset + $ei) % count($students)];
+            }
 
             foreach ($enrolledStudents as $std) {
                 ClassStudent::updateOrCreate(
@@ -741,7 +1031,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 );
             }
 
-            // 3. Liên kết môn học & giáo viên (class_subjects)
+            // 3. Liên kết môn học & giáo viên phụ trách (class_subjects)
             $classSubject = ClassSubject::updateOrCreate(
                 [
                     'class_id'   => $schoolClass->id,
@@ -754,14 +1044,10 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 ]
             );
 
-            // 4. Lịch học cố định hàng tuần (2-4-6 hoặc 3-5-7)
-            $daysOfWeek = $idx % 2 === 0 ? [1, 3, 5] : [2, 4, 6]; // 1: Thứ 2, 3: Thứ 4...
-            $startTime  = $idx % 2 === 0 ? '18:00' : '19:45';
-            $endTime    = $idx % 2 === 0 ? '19:30' : '21:15';
-
+            // 4. Lịch học cố định hàng tuần (class_schedules)
             $weeksJson = [];
 
-            foreach ($daysOfWeek as $dow) {
+            foreach ($days as $dow) {
                 $weeksJson[(string) $dow] = [
                     [
                         $startTime,
@@ -770,9 +1056,9 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 ];
             }
 
-            // Clean up previous schedules/sessions for this subject if re-seeding
             ClassSchedule::where('class_subject_id', $classSubject->id)->delete();
             ClassChatMessage::where('class_id', $schoolClass->id)->delete();
+            ClassSession::where('class_subject_id', $classSubject->id)->delete();
 
             $classSchedule = ClassSchedule::create([
                 'class_subject_id'     => $classSubject->id,
@@ -783,18 +1069,43 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 'excluded_holiday_ids' => $holidayIds,
             ]);
 
-            // 5. Sinh chuỗi Ca học thực tế (12 buổi đã qua, 12 buổi sắp tới)
+            // 5. Sinh chuỗi Ca học thực tế (ClassSession) trải dài các tháng
             $currentDate  = clone $startDate;
             $sessionCount = 0;
-            $maxSessions  = 24;
+            $topicsPool   = $topicsLibrary[$plan['subj_key']] ?? $topicsLibrary['IELTS'];
+            $maxSessions  = $plan['status'] === 2 ? 30 : 36;
 
             while ($currentDate->lte($endDate) && $sessionCount < $maxSessions) {
-                $dow = $currentDate->dayOfWeekIso - 1; // 0 = Thứ 2, 1 = Thứ 3, ...
+                $dow = $currentDate->dayOfWeekIso; // 1 = Thứ 2, 2 = Thứ 3, ..., 7 = Chủ Nhật
 
-                if (in_array($dow, $daysOfWeek, true)) {
+                if (in_array($dow, $days, true)) {
                     $sessionCount++;
-                    $isPast        = $currentDate->lt(Carbon::now());
+                    $isPast = $currentDate->lt(Carbon::now());
+
+                    $topicTitle = $topicsPool[($sessionCount - 1) % count($topicsPool)];
+                    $fullTopic  = "Bài học số {$sessionCount}: {$topicTitle}";
+
+                    // Xác định trạng thái ca học
                     $sessionStatus = $isPast ? 'completed' : 'scheduled';
+                    $sessionNote   = 'Ca học diễn ra đúng kế hoạch theo tiến độ giáo trình.';
+
+                    // Tạo ca học đã hủy (Cancelled) mẫu để test bộ lọc & thống kê ca hủy
+                    $isCancelled = false;
+
+                    if ($plan['status'] === 1 && $sessionCount === 7 && $isPast) {
+                        $isCancelled   = true;
+                        $sessionStatus = 'cancelled';
+                        $sessionNote   = 'Nghỉ do mưa bão diện rộng theo công điện thành phố. Buổi học được bố trí học bù vào cuối kỳ.';
+                    }
+
+                    // Tạo ca học dời lịch (Rescheduled) mẫu
+                    $isRescheduled = false;
+
+                    if ($plan['status'] === 1 && $sessionCount === 4) {
+                        $isRescheduled = true;
+                        $sessionStatus = 'rescheduled';
+                        $sessionNote   = 'Giáo viên tham dự hội thảo chuyên môn quốc tế, dời lịch sang ngày kế tiếp.';
+                    }
 
                     $session = ClassSession::create([
                         'class_subject_id'  => $classSubject->id,
@@ -805,11 +1116,12 @@ class ComprehensiveSampleDataSeeder extends Seeder
                         'start_time'        => "{$startTime}:00",
                         'end_time'          => "{$endTime}:00",
                         'status'            => $sessionStatus,
-                        'topic'             => "Bài học số {$sessionCount}: Phát triển kỹ năng chuyên sâu {$subject->name}",
+                        'topic'             => $fullTopic,
+                        'note'              => $sessionNote,
                     ]);
 
-                    // Đổi lịch mẫu cho ca học số 4 (SessionReschedule)
-                    if ($sessionCount === 4) {
+                    // Ghi nhận bản ghi dời lịch (SessionReschedule)
+                    if ($isRescheduled) {
                         SessionReschedule::create([
                             'session_id'            => $session->id,
                             'old_date'              => $session->session_date,
@@ -827,30 +1139,61 @@ class ComprehensiveSampleDataSeeder extends Seeder
                         ]);
                     }
 
-                    // Nếu ca học đã hoàn thành -> Điểm danh cho học sinh
-                    if ($isPast) {
-                        foreach ($enrolledStudents as $sIdx => $std) {
-                            $attStatus = 'present';
-                            $attNote   = 'Tham gia đầy đủ, làm bài tập xuất sắc.';
+                    // 6. ĐIỂM DANH HỌC SINH (Chỉ cho các ca học đã hoàn thành)
+                    if ($sessionStatus === 'completed') {
+                        $sessDateStr = Carbon::parse($session->session_date)->format('Y-m-d');
 
-                            if ($sIdx % 7 === 0) {
-                                $attStatus = 'late';
-                                $attNote   = 'Đến muộn 10 phút vì lý do tắc đường.';
-                            } elseif ($sIdx % 9 === 0) {
-                                $attStatus = 'absent';
-                                $attNote   = 'Nghỉ học có phép (Phụ huynh đã gọi điện xin phép).';
+                        foreach ($enrolledStudents as $sIdx => $std) {
+                            // Phân bổ trạng thái điểm danh thực tế (78% present, 8% late, 7% excused, 4% leave, 3% absent)
+                            $hashVal = ($session->id * 17 + $std->id * 23 + $sessionCount * 7) % 100;
+
+                            if ($hashVal < 78) {
+                                $attStatus    = 'present';
+                                $attNote      = $presentNotes[($session->id + $std->id) % count($presentNotes)];
+                                $minBefore    = (($session->id + $std->id) % 12) + 1;
+                                $checkInTime  = Carbon::parse("{$sessDateStr} {$startTime}")->subMinutes($minBefore)->toDateTimeString();
+                                $checkOutTime = Carbon::parse("{$sessDateStr} {$endTime}")->toDateTimeString();
+                            } elseif ($hashVal < 86) {
+                                $attStatus    = 'late';
+                                $attNote      = $lateNotes[($session->id + $std->id) % count($lateNotes)];
+                                $lateMin      = 5 + (($session->id + $std->id) % 15);
+                                $checkInTime  = Carbon::parse("{$sessDateStr} {$startTime}")->addMinutes($lateMin)->toDateTimeString();
+                                $checkOutTime = Carbon::parse("{$sessDateStr} {$endTime}")->toDateTimeString();
+                            } elseif ($hashVal < 93) {
+                                $attStatus    = 'excused';
+                                $attNote      = $excusedNotes[($session->id + $std->id) % count($excusedNotes)];
+                                $checkInTime  = null;
+                                $checkOutTime = null;
+                            } elseif ($hashVal < 97) {
+                                $attStatus    = 'leave';
+                                $attNote      = $leaveNotes[($session->id + $std->id) % count($leaveNotes)];
+                                $checkInTime  = Carbon::parse("{$sessDateStr} {$startTime}")->subMinutes(5)->toDateTimeString();
+                                $checkOutTime = Carbon::parse("{$sessDateStr} {$endTime}")->subMinutes(30)->toDateTimeString();
+                            } else {
+                                $attStatus    = 'absent';
+                                $attNote      = $absentNotes[($session->id + $std->id) % count($absentNotes)];
+                                $checkInTime  = null;
+                                $checkOutTime = null;
                             }
 
-                            DB::table('attendances')->insert([
+                            $attendanceBatch[] = [
                                 'session_id'           => $session->id,
                                 'student_id'           => $std->id,
                                 'status'               => $attStatus,
+                                'check_in_at'          => $checkInTime,
+                                'check_out_at'         => $checkOutTime,
                                 'note'                 => $attNote,
                                 'marked_by_teacher_id' => $teacher->id,
-                                'marked_at'            => $currentDate->toDateTimeString(),
+                                'marked_by_admin_id'   => null,
+                                'marked_at'            => Carbon::parse("{$sessDateStr} {$endTime}")->addMinutes(10)->toDateTimeString(),
                                 'created_at'           => $this->now,
                                 'updated_at'           => $this->now,
-                            ]);
+                            ];
+
+                            if (count($attendanceBatch) >= 200) {
+                                DB::table('attendances')->insert($attendanceBatch);
+                                $attendanceBatch = [];
+                            }
                         }
                     }
                 }
@@ -858,13 +1201,13 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 $currentDate->addDay();
             }
 
-            // 6. Tin nhắn trao đổi lớp học (Class Chat) & Reactions
+            // 7. Tin nhắn trao đổi lớp học (Class Chat) & Reactions
             $chatMessages = [
                 [
                     'sender_type' => 'teacher',
                     'sender_id'   => $teacher->id,
                     'sender_name' => $teacher->full_name,
-                    'message'     => 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt 3 tháng tới.',
+                    'message'     => 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt quá trình học tập.',
                     'is_pinned'   => true,
                     'reply_to_id' => null,
                 ],
@@ -880,7 +1223,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'sender_type' => 'student',
                     'sender_id'   => $enrolledStudents[1]->id,
                     'sender_name' => $enrolledStudents[1]->full_name,
-                    'message'     => 'Thầy/Cô cho em hỏi bài tập buổi 2 nộp hạn chót vào lúc nào ạ?',
+                    'message'     => 'Thầy/Cô cho em hỏi tài liệu học phần tuần này đã tải lên chưa ạ?',
                     'is_pinned'   => false,
                     'reply_to_id' => null,
                 ],
@@ -911,13 +1254,12 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'sender_type'    => 'teacher',
                     'sender_id'      => $teacher->id,
                     'sender_name'    => $teacher->full_name,
-                    'message'        => 'Hạn nộp bài tập là trước 12:00 trưa ngày mai em nhé!',
+                    'message'        => 'Thầy đã đính kèm tài liệu trong mục Tài liệu của lớp, các em tải về ôn tập nhé!',
                     'is_pinned'      => false,
                     'pinned_at'      => null,
                     'pinned_by_name' => null,
                 ]);
 
-                // Tạo cảm xúc (reactions) cho tin nhắn
                 ClassChatMessageReaction::create([
                     'message_id'  => $savedMessages[0]->id,
                     'class_id'    => $schoolClass->id,
@@ -947,6 +1289,12 @@ class ComprehensiveSampleDataSeeder extends Seeder
             }
 
             $classes[] = $schoolClass;
+        }
+
+        // Chèn nốt số lượng attendance còn lại trong buffer
+        if (! empty($attendanceBatch)) {
+            DB::table('attendances')->insert($attendanceBatch);
+            $attendanceBatch = [];
         }
 
         return $classes;
@@ -1145,19 +1493,19 @@ class ComprehensiveSampleDataSeeder extends Seeder
             'section_id'    => $secReading->id,
             'code'          => 'Q03_BLANK',
             'title'         => 'Điền từ vào chỗ trống trong đoạn văn bản (Text Completion)',
-            'question_type' => 'fill_blank',
+            'question_type' => 'fill_in_blank',
             'skill'         => 'reading',
-            'content'       => 'The manager insisted on submitting the quarterly financial [blank1] before the official [blank2] tomorrow afternoon.',
+            'content'       => 'The manager insisted on submitting the quarterly financial [blank_1] before the official [blank_2] tomorrow afternoon.',
             'score'         => 2.0,
             'options'       => [
-                ['id' => 'blank1', 'hint' => 'báo cáo'],
-                ['id' => 'blank2', 'hint' => 'hạn chót'],
+                ['id' => 'blank_1', 'hint' => 'báo cáo'],
+                ['id' => 'blank_2', 'hint' => 'hạn chót'],
             ],
             'correct_answer' => [
-                'blank1' => 'report',
-                'blank2' => 'deadline',
+                'blank_1' => 'report',
+                'blank_2' => 'deadline',
             ],
-            'explanation' => 'Điền "report" (bản báo cáo tài chính) vào ô [blank1] và "deadline" (hạn chót) vào ô [blank2].',
+            'explanation' => 'Điền "report" (bản báo cáo tài chính) vào ô [blank_1] và "deadline" (hạn chót) vào ô [blank_2].',
         ]);
 
         // 4. True/False/Not Given
@@ -1321,7 +1669,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
         foreach ($classes as $cIdx => $schoolClass) {
             StudentTuition::where('class_id', $schoolClass->id)->delete();
             $enrolled = DB::table('class_students')->where('class_id', $schoolClass->id)->pluck('student_id')->toArray();
-            $fee      = $schoolClass->subject ? $schoolClass->subject->tuition_fee : 3000000;
+            $fee      = $schoolClass->classSubjects()->first()?->subject?->tuition_fee ?? 3000000;
 
             foreach ($enrolled as $sIdx => $studentId) {
                 $isFullPaid = $sIdx % 3 === 0;
