@@ -249,36 +249,44 @@ export default function GradingShow({
             <Head title={`Chấm Bài: ${submission.student?.full_name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6 pb-16">
-                {/* Top Action Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
-                                Quay Lại Danh Sách
-                            </Button>
-                        </Link>
-                        <div>
-                            <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <PenTool className="h-5 w-5 text-emerald-600" />
-                                Chấm Bài Thi: {classExam.title}
-                            </h1>
-                            <p className="text-2xs text-gray-500 font-medium">
-                                Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
-                            </p>
+                {/* Sticky Top Header with Live Total Score */}
+                <div className="sticky top-0 z-30 -mx-4 -mt-6 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs mb-6">
+                    <div className="mx-auto max-w-5xl flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
+                                <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
+                                    Quay Lại Danh Sách
+                                </Button>
+                            </Link>
+                            <div>
+                                <h1 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
+                                    <PenTool className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+                                    <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-md">{classExam.title}</span>
+                                </h1>
+                                <p className="text-2xs text-gray-500 font-medium">
+                                    Lớp: <span className="text-emerald-700 font-bold">{classExam.schoolClass?.name}</span> | Thí sinh: <span className="font-bold text-gray-900">{submission.student?.full_name}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Sticky Live Total Score Display */}
+                        <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-2 rounded-xl shadow-xs border border-slate-800">
+                            <div className="text-right">
+                                <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Tổng điểm bài thi</span>
+                                <div className="flex items-baseline gap-1 leading-none">
+                                    <span className="text-xl font-black text-emerald-400 font-mono">
+                                        {calculatedTotalScore.toFixed(2)}
+                                    </span>
+                                    <span className="text-xs text-gray-400 font-semibold font-mono">/ {maxExamScore} điểm</span>
+                                </div>
+                            </div>
+                            <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg ${
+                                isPassed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            }`}>
+                                {isPassed ? 'Đạt' : 'Chưa đạt'}
+                            </span>
                         </div>
                     </div>
-
-                    <Button
-                        type="button"
-                        variant="success"
-                        size="md"
-                        className="font-bold shadow-md"
-                        icon={<Save className="h-4 w-4" />}
-                        onClick={() => setConfirmModalOpen(true)}
-                        isLoading={isSaving}
-                    >
-                        Lưu & Hoàn Tất Chấm Bài
-                    </Button>
                 </div>
 
                 {/* Candidate & Score Summary Card */}
@@ -618,35 +626,24 @@ export default function GradingShow({
                     />
                 </Card>
 
-                {/* Sticky Bottom Action Floating Bar */}
-                <div className="sticky bottom-4 z-20 rounded-2xl bg-slate-900/90 backdrop-blur-md p-4 text-white shadow-xl flex flex-wrap items-center justify-between gap-4 border border-slate-700">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <p className="text-2xs font-medium uppercase tracking-wider text-gray-400">Tổng điểm bài thi</p>
-                            <p className="text-2xl font-black text-emerald-400">
-                                {calculatedTotalScore.toFixed(2)} <span className="text-xs font-semibold text-gray-300">/ {maxExamScore} điểm</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                            <Button variant="secondary" size="md" className="bg-white/10 text-white border-white/20 hover:bg-white/20 font-bold">
-                                Hủy & Quay Lại
-                            </Button>
-                        </Link>
-                        <Button
-                            type="button"
-                            variant="success"
-                            size="md"
-                            className="font-bold px-6 shadow-md"
-                            icon={<Save className="h-4 w-4" />}
-                            onClick={() => setConfirmModalOpen(true)}
-                            isLoading={isSaving}
-                        >
-                            Lưu Điểm & Hoàn Tất
+                {/* Bottom Action Buttons (Static / In-flow at bottom of page) */}
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                    <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
+                        <Button variant="secondary" size="md" className="font-bold px-5">
+                            Hủy & Quay Lại
                         </Button>
-                    </div>
+                    </Link>
+                    <Button
+                        type="button"
+                        variant="success"
+                        size="md"
+                        className="font-bold px-8 shadow-md"
+                        icon={<Save className="h-4 w-4" />}
+                        onClick={() => setConfirmModalOpen(true)}
+                        isLoading={isSaving}
+                    >
+                        Lưu Điểm & Hoàn Tất
+                    </Button>
                 </div>
 
                 {/* Confirm Dialog */}
