@@ -173,5 +173,5 @@ npx tsc --noEmit
 npm run build
 
 # 3. Chạy toàn bộ test backend
-docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan test --compact
+docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan test --compact
 ```

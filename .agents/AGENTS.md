@@ -4,12 +4,22 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 
 ---
 
+> [!CAUTION]
+> ## 0. QUY TẮC BẮT BUỘC VỀ PHẠM VI DỰ ÁN (STRICT WORKSPACE BOUNDARY)
+> - **CHỈ THAO TÁC DUY NHẤT TRONG THƯ MỤC CỦA DỰ ÁN NÀY (`sam-edu`)**: AI Agent chỉ được phép đọc, tạo, chỉnh sửa, xóa file hoặc thực thi lệnh bên trong thư mục làm việc của dự án hiện tại (`/home/phuc/Desktop/web/projects/sam-edu`).
+> - **NGHIÊM CẤM TUYỆT ĐỐI CHỈNH SỬA / CAN THIỆP SANG PROJECT KHÁC**:
+>   - Tuyệt đối **KHÔNG ĐƯỢC PHÉP** can thiệp, mở, sửa đổi file, tạo file, xoá file hay chạy lệnh làm ảnh hưởng sang bất kỳ project nào khác (ví dụ: `demo`, `sam-edu-demo`, các project khác trong `~/Desktop/web/projects/` hay bất kỳ thư mục nào ngoài workspace này).
+>   - Mọi thao tác Terminal/Docker chỉ được trỏ đúng container và thư mục của `sam-edu` (`/var/www/sam-edu`).
+>   - Tuyệt đối không nhầm lẫn đường dẫn hoặc tác động chéo giữa các workspace khác nhau.
+
+---
+
 ## 1. Tổng quan & Tech Stack (Overview & Stack)
 
 - **Hệ thống**: SaaS Quản lý Đa Trung tâm Giáo dục (Multi-Center Student Management System).
 - **Backend**: Laravel 13, PHP 8.3+, MySQL (`DB_CONNECTION=mysql`).
 - **Frontend**: React 19 + Vite 6 + Inertia.js v3 (`@inertiajs/react`).
-- **Styling**: Tailwind CSS v4 + custom styles tại [`resources/css/components.css`](file:///home/phuc/Desktop/php/projects/sam-edu/resources/css/components.css).
+- **Styling**: Tailwind CSS v4 + custom styles tại [`resources/css/components.css`](file:///home/phuc/Desktop/web/projects/sam-edu/resources/css/components.css).
 
 ---
 
@@ -61,7 +71,7 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >   - **`classes.status`**: `0` = Tạm ngưng (`inactive`), `1` = Đang học (`active`), `2` = Đã hoàn thành (`completed`).
 >   - **`students.status`**: `0` = Tạm ngưng/Khóa (`inactive`), `1` = Đang học (`active`), `2` = Đã tốt nghiệp (`graduated`).
 > - **Khi viết truy vấn Backend**: Bắt buộc so sánh bằng số nguyên: `->where('status', 1)` hoặc `->whereIn('status', [1, 2])`. **Tuyệt đối không so sánh bằng chuỗi** `where('status', 'active')` để tránh lỗi so sánh kiểu MySQL làm mất dữ liệu.
-> - Chi tiết toàn bộ các bảng xem tại: [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/php/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
+> - Chi tiết toàn bộ các bảng xem tại: [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/web/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
 
 ---
 
@@ -187,14 +197,19 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 
 ---
 
-## 8. Kiểm tra & Biên dịch (Verification Commands)
+## 8. Quy tắc Kiểm tra & Chạy Test (Testing & Verification Rules)
 
-Mọi chỉnh sửa mã nguồn trước khi hoàn tất CẦN đảm bảo các lệnh kiểm tra sau chạy thành công 0 lỗi:
-
-- **TypeScript / Frontend Type Check**: `npx tsc --noEmit`
-- **Frontend Build**: `npm run build`
-- **PHP Formatting**: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 vendor/bin/pint <files>`
-- **Backend Tests**: `docker compose -f /home/phuc/Desktop/php/docker/docker-compose.yml exec -w /var/www/sam-edu workspace-83 php artisan test --compact`
+> [!IMPORTANT]
+> **QUY TẮC KHÔNG TỰ Ý CHẠY TEST BACKEND (NO AUTOMATIC TESTS)**:
+> - **KHÔNG ĐƯỢC TỰ ĐỘNG CHẠY TEST**: AI Agent **tuyệt đối không tự ý chạy các lệnh test backend** (`php artisan test`, Pest test, Feature/Unit tests...).
+> - **CUNG CẤP CÂU LỆNH ĐỂ USER TỰ CHẠY**: Khi hoàn tất thay đổi hoặc cần kiểm thử tính năng, AI Agent chỉ xuất câu lệnh test tương ứng trong câu trả lời để người dùng tự thực thi.
+> - **Lệnh Frontend verification (cho phép kiểm tra syntax/types)**:
+>   - `npx tsc --noEmit`
+>   - `npm run build`
+> - **Câu lệnh test Backend gửi cho User khi cần**:
+>   ```bash
+>   docker compose -f ~/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan test --compact
+>   ```
 
 ---
 
