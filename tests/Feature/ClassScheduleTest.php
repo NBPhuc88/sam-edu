@@ -58,6 +58,13 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'status'       => \App\Enums\EntityStatus::ACTIVE,
     ]);
 
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
+    ]);
+
     $service = app(ClassScheduleServiceInterface::class);
 
     $data = [
@@ -138,6 +145,13 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'name'         => 'Lớp IELTS C1 - Test 2',
         'max_students' => 25,
         'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -221,6 +235,13 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'name'         => 'Lớp Cấp Tốc - Test',
         'max_students' => 25,
         'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -313,6 +334,13 @@ test('does not recreate sessions when only teacher or room changes without date 
         'status'       => \App\Enums\EntityStatus::ACTIVE,
     ]);
 
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher1->id,
+        'status'     => 'active',
+    ]);
+
     $service = app(ClassScheduleServiceInterface::class);
 
     $schedule = $service->createSchedule([
@@ -396,6 +424,13 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'name'         => 'Lớp Diff Test',
         'max_students' => 20,
         'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -533,6 +568,13 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'status'       => \App\Enums\EntityStatus::ACTIVE,
     ]);
 
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
+    ]);
+
     $service = app(ClassScheduleServiceInterface::class);
 
     $schedule = $service->createSchedule([
@@ -603,6 +645,13 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'name'         => 'Lớp Test Repo',
         'max_students' => 20,
         'status'       => \App\Enums\EntityStatus::ACTIVE,
+    ]);
+
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
     ]);
 
     $admin = Admin::create([

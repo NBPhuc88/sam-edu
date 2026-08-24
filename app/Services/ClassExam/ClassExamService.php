@@ -13,6 +13,7 @@ use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\ClassExam\ClassExamRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -89,12 +90,20 @@ class ClassExamService implements ClassExamServiceInterface
             $accessCode = ! empty($data['access_code']) ? trim($data['access_code']) : str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
 
             // Tính toán valid_from và valid_to
-            $examDate  = $data['exam_date'];
+            $examDate  = Carbon::parse($data['exam_date'])->format('Y-m-d');
             $startTime = ! empty($data['start_time']) ? $data['start_time'] : '00:00:00';
             $endTime   = ! empty($data['end_time']) ? $data['end_time'] : '23:59:59';
 
-            $validFrom = "{$examDate} {$startTime}";
-            $validTo   = "{$examDate} {$endTime}";
+            if (strlen($startTime) === 5) {
+                $startTime .= ':00';
+            }
+
+            if (strlen($endTime) === 5) {
+                $endTime .= ':00';
+            }
+
+            $validFrom = Carbon::parse("{$examDate} {$startTime}")->format('Y-m-d H:i:s');
+            $validTo   = Carbon::parse("{$examDate} {$endTime}")->format('Y-m-d H:i:s');
 
             $payload = [
                 'code'                  => $code,
@@ -172,13 +181,29 @@ class ClassExamService implements ClassExamServiceInterface
                 }
             }
 
-            if (isset($data['exam_date'])) {
-                $examDate  = $data['exam_date'];
-                $startTime = ! empty($data['start_time']) ? $data['start_time'] : ($classExam->start_time ? $classExam->start_time->format('H:i:s') : '00:00:00');
-                $endTime   = ! empty($data['end_time']) ? $data['end_time'] : ($classExam->end_time ? $classExam->end_time->format('H:i:s') : '23:59:59');
+            $rawDate = $data['exam_date'] ?? $classExam->exam_date;
 
-                $data['valid_from'] = "{$examDate} {$startTime}";
-                $data['valid_to']   = "{$examDate} {$endTime}";
+            if ($rawDate) {
+                $examDate          = Carbon::parse($rawDate)->format('Y-m-d');
+                $data['exam_date'] = $examDate;
+
+                $startTime = ! empty($data['start_time'])
+                    ? $data['start_time']
+                    : ($classExam->start_time ? (is_string($classExam->start_time) ? $classExam->start_time : $classExam->start_time->format('H:i:s')) : '00:00:00');
+                $endTime = ! empty($data['end_time'])
+                    ? $data['end_time']
+                    : ($classExam->end_time ? (is_string($classExam->end_time) ? $classExam->end_time : $classExam->end_time->format('H:i:s')) : '23:59:59');
+
+                if (strlen($startTime) === 5) {
+                    $startTime .= ':00';
+                }
+
+                if (strlen($endTime) === 5) {
+                    $endTime .= ':00';
+                }
+
+                $data['valid_from'] = Carbon::parse("{$examDate} {$startTime}")->format('Y-m-d H:i:s');
+                $data['valid_to']   = Carbon::parse("{$examDate} {$endTime}")->format('Y-m-d H:i:s');
             }
 
             return $this->classExamRepository->update($classExam, $data);
