@@ -3,6 +3,7 @@
 namespace App\Services\Attendance;
 
 use App\Models\Admin;
+use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Attendance\AttendanceRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
@@ -176,10 +177,10 @@ class AttendanceService implements AttendanceServiceInterface
     }
 
     /**
-     * @param  int                       $teacherId
-     * @return ?\App\Models\ClassSession
+     * @param  int           $teacherId
+     * @return ?ClassSession
      */
-    public function getTodayTeacherSession(int $teacherId): ?\App\Models\ClassSession
+    public function getTodayTeacherSession(int $teacherId): ?ClassSession
     {
         return $this->sessionRepository->getTodaySessionByTeacher($teacherId);
     }

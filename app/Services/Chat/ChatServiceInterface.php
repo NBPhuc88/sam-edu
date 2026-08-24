@@ -2,6 +2,8 @@
 
 namespace App\Services\Chat;
 
+use App\Models\SchoolClass;
+
 interface ChatServiceInterface
 {
     /**
@@ -20,9 +22,10 @@ interface ChatServiceInterface
      * @param  int                  $classId
      * @param  array<string, mixed> $senderInfo
      * @param  string               $message
+     * @param  ?int                 $replyToId
      * @return array<string, mixed>
      */
-    public function sendMessage(int $classId, array $senderInfo, string $message): array;
+    public function sendMessage(int $classId, array $senderInfo, string $message, ?int $replyToId = null): array;
 
     /**
      * @param  int                       $classId
@@ -32,9 +35,18 @@ interface ChatServiceInterface
      */
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?array;
 
-    public function getClassWithCenter(int $classId, mixed $user = null): \App\Models\SchoolClass;
+    /**
+     * @param  int                              $classId
+     * @param  int                              $messageId
+     * @param  array<string, mixed>             $senderInfo
+     * @param  string                           $emoji
+     * @return array<int, array<string, mixed>>
+     */
+    public function toggleReaction(int $classId, int $messageId, array $senderInfo, string $emoji): array;
 
-    public function authorizeAccess(int $classId, mixed $user = null): \App\Models\SchoolClass;
+    public function getClassWithCenter(int $classId, mixed $user = null): SchoolClass;
+
+    public function authorizeAccess(int $classId, mixed $user = null): SchoolClass;
 
     /**
      * @param  ?string                                               $search

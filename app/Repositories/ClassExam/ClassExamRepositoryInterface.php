@@ -4,6 +4,8 @@ namespace App\Repositories\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\ClassExamSubmission;
+use App\Models\ExamQuestion;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -63,22 +65,22 @@ interface ClassExamRepositoryInterface
 
     public function getNextClassExamCode(): string;
 
-    public function getStudentSubmission(int $classExamId, int $studentId): ?\App\Models\ClassExamSubmission;
+    public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission;
 
     /**
      * @param array<string, mixed> $data
      */
-    public function createSubmission(array $data): \App\Models\ClassExamSubmission;
+    public function createSubmission(array $data): ClassExamSubmission;
 
     /**
-     * @param \App\Models\ClassExamSubmission $submission
-     * @param array<string, mixed>            $data
+     * @param ClassExamSubmission  $submission
+     * @param array<string, mixed> $data
      */
-    public function updateSubmission(\App\Models\ClassExamSubmission $submission, array $data): \App\Models\ClassExamSubmission;
+    public function updateSubmission(ClassExamSubmission $submission, array $data): ClassExamSubmission;
 
-    public function findSubmissionWithDetails(int $submissionId): ?\App\Models\ClassExamSubmission;
+    public function findSubmissionWithDetails(int $submissionId): ?ClassExamSubmission;
 
-    public function findSubmissionForGrading(int $submissionId): ?\App\Models\ClassExamSubmission;
+    public function findSubmissionForGrading(int $submissionId): ?ClassExamSubmission;
 
-    public function findQuestionById(int $questionId): ?\App\Models\ExamQuestion;
+    public function findQuestionById(int $questionId): ?ExamQuestion;
 }

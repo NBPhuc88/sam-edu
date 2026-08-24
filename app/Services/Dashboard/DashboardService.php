@@ -4,6 +4,8 @@ namespace App\Services\Dashboard;
 
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\ClassSession;
+use App\Models\ClassStudent;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -310,7 +312,7 @@ class DashboardService implements DashboardServiceInterface
         $gridEnd = $endOfMonth->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
         // Lấy các ca học thực tế trong toàn bộ khung lưới tháng của giáo viên
-        $sessions = \App\Models\ClassSession::query()
+        $sessions = ClassSession::query()
             ->with([
                 'classSubject.schoolClass:id,name,code,center_id',
                 'classSubject.subject:id,name,code',
@@ -426,7 +428,7 @@ class DashboardService implements DashboardServiceInterface
         ];
 
         // Lấy các ca học thực tế trong tuần của giáo viên
-        $sessions = \App\Models\ClassSession::query()
+        $sessions = ClassSession::query()
             ->with([
                 'classSubject.schoolClass:id,name,code,center_id',
                 'classSubject.subject:id,name,code',
@@ -528,12 +530,12 @@ class DashboardService implements DashboardServiceInterface
         $gridEnd = $endOfMonth->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
         // Lấy danh sách lớp học mà học sinh tham gia
-        $classIds = \App\Models\ClassStudent::where('student_id', $studentId)->pluck('class_id')->toArray();
+        $classIds = ClassStudent::where('student_id', $studentId)->pluck('class_id')->toArray();
 
         $sessions = collect();
 
         if (! empty($classIds)) {
-            $sessions = \App\Models\ClassSession::query()
+            $sessions = ClassSession::query()
                 ->with([
                     'classSubject.schoolClass:id,name,code,center_id',
                     'classSubject.subject:id,name,code',

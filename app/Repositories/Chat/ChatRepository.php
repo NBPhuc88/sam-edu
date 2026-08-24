@@ -3,6 +3,9 @@
 namespace App\Repositories\Chat;
 
 use App\Models\ClassChatMessage;
+use App\Models\ClassChatMessageReaction;
+use App\Models\SchoolClass;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class ChatRepository implements ChatRepositoryInterface
@@ -19,6 +22,7 @@ class ChatRepository implements ChatRepositoryInterface
             ->select(
                 'id',
                 'class_id',
+                'reply_to_id',
                 'sender_type',
                 'sender_id',
                 'sender_name',
@@ -28,6 +32,10 @@ class ChatRepository implements ChatRepositoryInterface
                 'pinned_by_name',
                 'created_at'
             )
+            ->with([
+                'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+                'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+            ])
             ->where('class_id', $classId)
             ->orderBy('id', 'desc')
             ->limit($limit)
@@ -45,6 +53,7 @@ class ChatRepository implements ChatRepositoryInterface
             ->select(
                 'id',
                 'class_id',
+                'reply_to_id',
                 'sender_type',
                 'sender_id',
                 'sender_name',
@@ -54,6 +63,10 @@ class ChatRepository implements ChatRepositoryInterface
                 'pinned_by_name',
                 'created_at'
             )
+            ->with([
+                'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+                'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+            ])
             ->where('class_id', $classId)
             ->where('is_pinned', true)
             ->orderBy('pinned_at', 'desc')
@@ -69,6 +82,11 @@ class ChatRepository implements ChatRepositoryInterface
     {
         /** @var ClassChatMessage $message */
         $message = ClassChatMessage::create($data);
+
+        $message->load([
+            'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+            'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+        ]);
 
         return $message;
     }
@@ -104,7 +122,82 @@ class ChatRepository implements ChatRepositoryInterface
             ]);
         }
 
+        $targetMessage->load([
+            'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+            'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+        ]);
+
         return $targetMessage->fresh();
+    }
+
+    /**
+     * @param  int                              $classId
+     * @param  int                              $messageId
+     * @param  array<string, mixed>             $senderInfo
+     * @param  string                           $emoji
+     * @return array<int, array<string, mixed>>
+     */
+    public function toggleReaction(int $classId, int $messageId, array $senderInfo, string $emoji): array
+    {
+        $existing = ClassChatMessageReaction::where('message_id', $messageId)
+            ->where('sender_type', $senderInfo['sender_type'])
+            ->where('sender_id', $senderInfo['sender_id'])
+            ->first();
+
+        if ($existing) {
+            if ($existing->emoji === $emoji) {
+                // Nhấp lại cùng emoji -> Xóa cảm xúc
+                $existing->delete();
+            } else {
+                // Đổi sang emoji khác
+                $existing->update([
+                    'emoji' => $emoji,
+                ]);
+            }
+        } else {
+            // Thả cảm xúc mới
+            ClassChatMessageReaction::create([
+                'class_id'    => $classId,
+                'message_id'  => $messageId,
+                'sender_type' => $senderInfo['sender_type'],
+                'sender_id'   => $senderInfo['sender_id'],
+                'sender_name' => $senderInfo['sender_name'],
+                'emoji'       => $emoji,
+            ]);
+        }
+
+        return $this->getGroupedReactions($messageId);
+    }
+
+    /**
+     * @param  int                              $messageId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getGroupedReactions(int $messageId): array
+    {
+        $reactions = ClassChatMessageReaction::where('message_id', $messageId)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $grouped = [];
+
+        foreach ($reactions as $r) {
+            if (! isset($grouped[$r->emoji])) {
+                $grouped[$r->emoji] = [
+                    'emoji' => $r->emoji,
+                    'count' => 0,
+                    'users' => [],
+                ];
+            }
+            $grouped[$r->emoji]['count']++;
+            $grouped[$r->emoji]['users'][] = [
+                'sender_type' => $r->sender_type,
+                'sender_id'   => $r->sender_id,
+                'sender_name' => $r->sender_name,
+            ];
+        }
+
+        return array_values($grouped);
     }
 
     /**
@@ -127,8 +220,8 @@ class ChatRepository implements ChatRepositoryInterface
         int $page = 1,
         ?int $teacherId = null,
         ?int $studentId = null
-    ): \Illuminate\Contracts\Pagination\LengthAwarePaginator {
-        $query = \App\Models\SchoolClass::query()
+    ): LengthAwarePaginator {
+        $query = SchoolClass::query()
             ->select(
                 'id',
                 'center_id',
@@ -222,17 +315,17 @@ class ChatRepository implements ChatRepositoryInterface
     }
 
     /**
-     * @param  array<int>|int|null                                                    $centerIds
-     * @param  ?int                                                                   $teacherId
-     * @param  ?int                                                                   $studentId
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\SchoolClass>
+     * @param  array<int>|int|null          $centerIds
+     * @param  ?int                         $teacherId
+     * @param  ?int                         $studentId
+     * @return Collection<int, SchoolClass>
      */
     public function getAccessibleClassesList(
         array|int|null $centerIds = null,
         ?int $teacherId = null,
         ?int $studentId = null
     ): Collection {
-        $query = \App\Models\SchoolClass::query()
+        $query = SchoolClass::query()
             ->select('id', 'name', 'code', 'center_id', 'status')
             ->where('status', 1);
 
@@ -256,7 +349,7 @@ class ChatRepository implements ChatRepositoryInterface
             }
         }
 
-        /** @var Collection<int, \App\Models\SchoolClass> $classes */
+        /** @var Collection<int, SchoolClass> $classes */
         $classes = $query->orderBy('name', 'asc')->get();
 
         return $classes;

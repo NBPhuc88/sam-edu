@@ -2,8 +2,12 @@
 
 namespace App\Repositories\Subject;
 
+use App\Models\ClassSubject;
+use App\Models\Exam;
 use App\Models\Subject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SubjectRepository implements SubjectRepositoryInterface
 {
@@ -122,14 +126,14 @@ class SubjectRepository implements SubjectRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $subject = Subject::findOrFail($id);
 
             // Gỡ phân công môn học khỏi các lớp
-            \App\Models\ClassSubject::where('subject_id', $id)->delete();
+            ClassSubject::where('subject_id', $id)->delete();
 
             // Gỡ liên kết môn học ở các đề thi
-            \App\Models\Exam::where('subject_id', $id)->update(['subject_id' => null]);
+            Exam::where('subject_id', $id)->update(['subject_id' => null]);
 
             return (bool) $subject->delete();
         });
@@ -167,14 +171,14 @@ class SubjectRepository implements SubjectRepositoryInterface
 
     /**
      * Lấy danh sách môn học mà giáo viên được phân công giảng dạy tại trung tâm.
-     *
-     * @param  int                                                    $teacherId
-     * @param  int                                                    $centerId
-     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+    /**
+     * @param  int                      $teacherId
+     * @param  int                      $centerId
+     * @return Collection<int, Subject>
      */
-    public function getTaughtSubjectsByTeacher(int $teacherId, int $centerId): \Illuminate\Database\Eloquent\Collection
+    public function getTaughtSubjectsByTeacher(int $teacherId, int $centerId): Collection
     {
-        $taughtSubjectIds = \App\Models\ClassSubject::where('teacher_id', $teacherId)
+        $taughtSubjectIds = ClassSubject::where('teacher_id', $teacherId)
             ->pluck('subject_id')
             ->unique()
             ->toArray();

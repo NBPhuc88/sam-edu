@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\ExamType;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -80,7 +81,7 @@ class PracticeExamController extends Controller
         $subjects = $subjectsQuery->orderBy('name')->get();
 
         // Danh sách Loại bài kiểm tra cho bộ lọc
-        $examTypesQuery = \App\Models\ExamType::select(['id', 'name', 'code', 'center_id'])->where('status', 'active');
+        $examTypesQuery = ExamType::select(['id', 'name', 'code', 'center_id'])->where('status', 'active');
 
         if ($admin && ! $admin->isSuperAdmin()) {
             $adminCenterIds = $admin->centers()->pluck('centers.id')->toArray();

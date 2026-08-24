@@ -24,6 +24,21 @@ interface ChatRepositoryInterface
     public function togglePinMessage(int $classId, int $messageId, string $pinnedByName): ?ClassChatMessage;
 
     /**
+     * @param  int                              $classId
+     * @param  int                              $messageId
+     * @param  array<string, mixed>             $senderInfo
+     * @param  string                           $emoji
+     * @return array<int, array<string, mixed>>
+     */
+    public function toggleReaction(int $classId, int $messageId, array $senderInfo, string $emoji): array;
+
+    /**
+     * @param  int                              $messageId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getGroupedReactions(int $messageId): array;
+
+    /**
      * @param  ?string                                               $search
      * @param  array<int>|int|null                                   $centerIds
      * @param  ?int                                                  $classId

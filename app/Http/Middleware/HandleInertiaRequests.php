@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Center;
 use App\Models\SeoMetadata;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
+use App\Services\Permission\PermissionServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -86,7 +88,7 @@ class HandleInertiaRequests extends Middleware
         $centerData  = null;
 
         if ($user && $role) {
-            $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+            $permissionService = app(PermissionServiceInterface::class);
             $adminRole         = $role === 'admin' ? ($user->role ?? 'admin') : null;
             $permissions       = $permissionService->getPermissionsForUser($role, $adminRole);
 
@@ -98,7 +100,7 @@ class HandleInertiaRequests extends Middleware
                 }
             } elseif ($role === 'teacher' || $role === 'student') {
                 if (! empty($user->center_id)) {
-                    $centerModel = \App\Models\Center::find($user->center_id);
+                    $centerModel = Center::find($user->center_id);
                 }
             }
 

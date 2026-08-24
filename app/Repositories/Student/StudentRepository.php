@@ -2,14 +2,22 @@
 
 namespace App\Repositories\Student;
 
+use App\Models\ClassExamSubmission;
+use App\Models\ClassSchedule;
+use App\Models\ClassSession;
+use App\Models\ClassStudent;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentRepository implements StudentRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Student
     {
-        $isMysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
 
         /** @var Student|null $student */
         $student = Student::where(function ($query) use ($username, $isMysql) {
@@ -208,20 +216,20 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $student = Student::findOrFail($id);
 
             // Gỡ khỏi các lớp
-            \App\Models\ClassStudent::where('student_id', $id)->delete();
+            ClassStudent::where('student_id', $id)->delete();
 
             // Xóa điểm danh
-            \Illuminate\Support\Facades\DB::table('attendances')->where('student_id', $id)->delete();
+            DB::table('attendances')->where('student_id', $id)->delete();
 
             // Xóa bài nộp thi (kèm dọn dẹp các tệp ghi âm speaking)
-            \App\Models\ClassExamSubmission::where('student_id', $id)->get()->each->delete();
+            ClassExamSubmission::where('student_id', $id)->get()->each->delete();
 
             // Xóa học phí
-            \App\Models\StudentTuition::where('student_id', $id)->delete();
+            StudentTuition::where('student_id', $id)->delete();
 
             return (bool) $student->delete();
         });
@@ -308,22 +316,22 @@ class StudentRepository implements StudentRepositoryInterface
     }
 
     /**
-     * @param  int                                                                     $studentId
-     * @param  string                                                                  $startDate
-     * @param  string                                                                  $endDate
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     * @param  int                           $studentId
+     * @param  string                        $startDate
+     * @param  string                        $endDate
+     * @return Collection<int, ClassSession>
      */
-    public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): Collection
     {
-        $classIds = \App\Models\ClassStudent::where('student_id', $studentId)
+        $classIds = ClassStudent::where('student_id', $studentId)
             ->pluck('class_id')
             ->toArray();
 
         if (empty($classIds)) {
-            return new \Illuminate\Database\Eloquent\Collection();
+            return new Collection();
         }
 
-        return \App\Models\ClassSession::query()
+        return ClassSession::query()
             ->select(
                 'id',
                 'class_subject_id',
@@ -375,7 +383,7 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function getStudentWeeklySchedules(int $studentId): \Illuminate\Support\Collection
     {
-        $classIds = \App\Models\ClassStudent::where('student_id', $studentId)
+        $classIds = ClassStudent::where('student_id', $studentId)
             ->pluck('class_id')
             ->toArray();
 
@@ -383,7 +391,7 @@ class StudentRepository implements StudentRepositoryInterface
             return collect();
         }
 
-        $schedules = \App\Models\ClassSchedule::query()
+        $schedules = ClassSchedule::query()
             ->whereHas('classSubject', function ($q) use ($classIds) {
                 $q->whereIn('class_id', $classIds);
             })
@@ -461,7 +469,7 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function filterValidClassIds(int $centerId, array $classIds): array
     {
-        return \App\Models\SchoolClass::where('center_id', $centerId)
+        return SchoolClass::where('center_id', $centerId)
             ->whereIn('id', $classIds)
             ->pluck('id')
             ->toArray();

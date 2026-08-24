@@ -4,14 +4,17 @@ namespace App\Repositories\Teacher;
 
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
+use App\Models\ClassSubject;
+use App\Models\Exam;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class TeacherRepository implements TeacherRepositoryInterface
 {
     public function findByUsernameOrEmail(string $username): ?Teacher
     {
-        $isMysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
 
         /** @var Teacher|null $teacher */
         $teacher = Teacher::where(function ($query) use ($username, $isMysql) {
@@ -188,13 +191,13 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $teacher = Teacher::findOrFail($id);
 
             // Gỡ phân công giảng dạy
-            \App\Models\ClassSubject::where('teacher_id', $id)->delete();
-            \App\Models\ClassSession::where('teacher_id', $id)->update(['teacher_id' => null]);
-            \App\Models\Exam::where('created_by_teacher_id', $id)->update(['created_by_teacher_id' => null]);
+            ClassSubject::where('teacher_id', $id)->delete();
+            ClassSession::where('teacher_id', $id)->update(['teacher_id' => null]);
+            Exam::where('created_by_teacher_id', $id)->update(['created_by_teacher_id' => null]);
 
             return (bool) $teacher->delete();
         });

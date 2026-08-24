@@ -4,6 +4,8 @@ namespace App\Repositories\ClassExam;
 
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\ClassExamSubmission;
+use App\Models\ExamQuestion;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -226,9 +228,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         return sprintf('CE%09d', $maxId + 1);
     }
 
-    public function getStudentSubmission(int $classExamId, int $studentId): ?\App\Models\ClassExamSubmission
+    public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission
     {
-        return \App\Models\ClassExamSubmission::query()
+        return ClassExamSubmission::query()
             ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
             ->where('class_exam_id', $classExamId)
             ->where('student_id', $studentId)
@@ -236,21 +238,21 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             ->first();
     }
 
-    public function createSubmission(array $data): \App\Models\ClassExamSubmission
+    public function createSubmission(array $data): ClassExamSubmission
     {
-        return \App\Models\ClassExamSubmission::create($data);
+        return ClassExamSubmission::create($data);
     }
 
-    public function updateSubmission(\App\Models\ClassExamSubmission $submission, array $data): \App\Models\ClassExamSubmission
+    public function updateSubmission(ClassExamSubmission $submission, array $data): ClassExamSubmission
     {
         $submission->update($data);
 
         return $submission;
     }
 
-    public function findSubmissionWithDetails(int $submissionId): ?\App\Models\ClassExamSubmission
+    public function findSubmissionWithDetails(int $submissionId): ?ClassExamSubmission
     {
-        return \App\Models\ClassExamSubmission::query()
+        return ClassExamSubmission::query()
             ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
             ->with([
                 'student:id,student_code,full_name,email,phone',
@@ -265,9 +267,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             ->find($submissionId);
     }
 
-    public function findSubmissionForGrading(int $submissionId): ?\App\Models\ClassExamSubmission
+    public function findSubmissionForGrading(int $submissionId): ?ClassExamSubmission
     {
-        return \App\Models\ClassExamSubmission::query()
+        return ClassExamSubmission::query()
             ->select('id', 'class_exam_id', 'student_id', 'attempt_number', 'started_at', 'submitted_at', 'duration_seconds_used', 'score', 'total_correct', 'total_questions', 'status', 'answers', 'grading_details')
             ->with([
                 'classExam:id,class_id,exam_id,title,exam_date,start_time,end_time,duration_minutes,max_score,pass_score,status',
@@ -278,8 +280,8 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             ->find($submissionId);
     }
 
-    public function findQuestionById(int $questionId): ?\App\Models\ExamQuestion
+    public function findQuestionById(int $questionId): ?ExamQuestion
     {
-        return \App\Models\ExamQuestion::select('id', 'exam_id', 'section_id', 'code', 'title', 'question_type', 'skill', 'content', 'image_url', 'audio_url', 'score')->find($questionId);
+        return ExamQuestion::select('id', 'exam_id', 'section_id', 'code', 'title', 'question_type', 'skill', 'content', 'image_url', 'audio_url', 'score')->find($questionId);
     }
 }

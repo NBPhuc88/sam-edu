@@ -2,6 +2,8 @@
 
 namespace App\Services\Student;
 
+use App\Models\Center;
+use App\Models\Student;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -112,7 +114,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     public function importStudentsCsv(string $filePath, ?int $centerId = null): array
     {
         if (! $centerId) {
-            $centerId = \App\Models\Center::first()?->id;
+            $centerId = Center::first()?->id;
         }
 
         if (! $centerId) {
@@ -184,10 +186,10 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             } else {
                 // Kiểm tra giới hạn số học sinh active
                 if ($centerId && $data['status'] === 1) {
-                    $center = \App\Models\Center::find($centerId);
+                    $center = Center::find($centerId);
 
                     if ($center && $center->max_students !== null) {
-                        $activeCount = \App\Models\Student::where('center_id', $centerId)->where('status', 1)->count();
+                        $activeCount = Student::where('center_id', $centerId)->where('status', 1)->count();
 
                         if ($activeCount >= $center->max_students) {
                             $errors[] = "Dòng {$lineIndex}: Không thể thêm học sinh mới do trung tâm đã đạt giới hạn tối đa ({$center->max_students}) học sinh của gói dịch vụ.";

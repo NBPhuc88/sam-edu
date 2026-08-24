@@ -3,6 +3,7 @@
 namespace App\Services\Chat;
 
 use App\Events\ClassChatMessagePinned;
+use App\Events\ClassChatMessageReacted;
 use App\Events\ClassChatMessageSent;
 use App\Models\Admin;
 use App\Models\ClassChatMessage;
@@ -188,9 +189,10 @@ class ChatService implements ChatServiceInterface
      * @param  int                  $classId
      * @param  array<string, mixed> $senderInfo
      * @param  string               $message
+     * @param  ?int                 $replyToId
      * @return array<string, mixed>
      */
-    public function sendMessage(int $classId, array $senderInfo, string $message): array
+    public function sendMessage(int $classId, array $senderInfo, string $message, ?int $replyToId = null): array
     {
         $schoolClass    = $this->authorizeAccess($classId);
         $classStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
@@ -201,6 +203,7 @@ class ChatService implements ChatServiceInterface
 
         $created = $this->chatRepository->createMessage([
             'class_id'      => $classId,
+            'reply_to_id'   => $replyToId,
             'sender_type'   => $senderInfo['sender_type'] ?? 'student',
             'sender_id'     => $senderInfo['sender_id'] ?? 0,
             'sender_name'   => $senderInfo['sender_name'] ?? 'Thành viên',
@@ -261,14 +264,93 @@ class ChatService implements ChatServiceInterface
     }
 
     /**
+     * @param  int                              $classId
+     * @param  int                              $messageId
+     * @param  array<string, mixed>             $senderInfo
+     * @param  string                           $emoji
+     * @return array<int, array<string, mixed>>
+     */
+    public function toggleReaction(int $classId, int $messageId, array $senderInfo, string $emoji): array
+    {
+        $this->authorizeAccess($classId);
+
+        $reactions = $this->chatRepository->toggleReaction($classId, $messageId, $senderInfo, $emoji);
+
+        // Xóa cache tin nhắn Redis để lần đọc sau cập nhật
+        try {
+            Redis::del("chat:class:{$classId}:messages");
+        } catch (\Throwable $e) {
+            // Fallback
+        }
+
+        event(new ClassChatMessageReacted($classId, $messageId, $reactions));
+
+        return $reactions;
+    }
+
+    /**
      * @param  ClassChatMessage     $msg
      * @return array<string, mixed>
      */
     protected function formatMessageArray(ClassChatMessage $msg): array
     {
+        $replyToData = null;
+
+        if ($msg->relationLoaded('replyTo') && $msg->replyTo) {
+            $replyToData = [
+                'id'          => $msg->replyTo->id,
+                'class_id'    => $msg->replyTo->class_id,
+                'sender_type' => $msg->replyTo->sender_type,
+                'sender_id'   => $msg->replyTo->sender_id,
+                'sender_name' => $msg->replyTo->sender_name,
+                'message'     => \Illuminate\Support\Str::limit($msg->replyTo->message, 80),
+            ];
+        } elseif ($msg->reply_to_id) {
+            $orig = ClassChatMessage::find($msg->reply_to_id);
+
+            if ($orig) {
+                $replyToData = [
+                    'id'          => $orig->id,
+                    'class_id'    => $orig->class_id,
+                    'sender_type' => $orig->sender_type,
+                    'sender_id'   => $orig->sender_id,
+                    'sender_name' => $orig->sender_name,
+                    'message'     => \Illuminate\Support\Str::limit($orig->message, 80),
+                ];
+            }
+        }
+
+        $reactionsData = [];
+
+        if ($msg->relationLoaded('reactions') && $msg->reactions) {
+            $grouped = [];
+
+            foreach ($msg->reactions as $r) {
+                if (! isset($grouped[$r->emoji])) {
+                    $grouped[$r->emoji] = [
+                        'emoji' => $r->emoji,
+                        'count' => 0,
+                        'users' => [],
+                    ];
+                }
+                $grouped[$r->emoji]['count']++;
+                $grouped[$r->emoji]['users'][] = [
+                    'sender_type' => $r->sender_type,
+                    'sender_id'   => $r->sender_id,
+                    'sender_name' => $r->sender_name,
+                ];
+            }
+            $reactionsData = array_values($grouped);
+        } else {
+            $reactionsData = $this->chatRepository->getGroupedReactions($msg->id);
+        }
+
         return [
             'id'             => $msg->id,
             'class_id'       => $msg->class_id,
+            'reply_to_id'    => $msg->reply_to_id,
+            'reply_to'       => $replyToData,
+            'reactions'      => $reactionsData,
             'sender_type'    => $msg->sender_type,
             'sender_id'      => $msg->sender_id,
             'sender_name'    => $msg->sender_name,
@@ -278,7 +360,7 @@ class ChatService implements ChatServiceInterface
             'pinned_at'      => $msg->pinned_at ? (string) $msg->pinned_at : null,
             'pinned_by_name' => $msg->pinned_by_name,
             'created_at'     => (string) ($msg->created_at ?? now()->toIso8601String()),
-            'time_formatted' => (string) ($msg->created_at ?? date('H:i, d/m')),
+            'time_formatted' => (string) ($msg->created_at ? $msg->created_at->format('H:i, d/m') : date('H:i, d/m')),
         ];
     }
 

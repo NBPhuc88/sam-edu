@@ -3,6 +3,7 @@
 namespace App\Repositories\Schedule;
 
 use App\Models\ClassSchedule;
+use App\Models\ClassSubject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -80,7 +81,7 @@ interface ClassScheduleRepositoryInterface
      */
     public function findByClassSubjectId(int $classSubjectId): ?ClassSchedule;
 
-    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): \App\Models\ClassSubject;
+    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): ClassSubject;
 
     /**
      * @param array<string, mixed> $attributes

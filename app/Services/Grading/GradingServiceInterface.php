@@ -3,6 +3,7 @@
 namespace App\Services\Grading;
 
 use App\Models\Admin;
+use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
 use App\Models\Teacher;
 
@@ -21,10 +22,10 @@ interface GradingServiceInterface
     /**
      * Lấy chi tiết bài nộp của học sinh để giáo viên chấm điểm.
      *
-     * @param  int                                                                      $submissionId
-     * @param  Teacher|null                                                             $teacher
-     * @param  Admin|null                                                               $admin
-     * @return array{submission: ClassExamSubmission, classExam: \App\Models\ClassExam}
+     * @param  int                                                          $submissionId
+     * @param  Teacher|null                                                 $teacher
+     * @param  Admin|null                                                   $admin
+     * @return array{submission: ClassExamSubmission, classExam: ClassExam}
      */
     public function getSubmissionForGrading(int $submissionId, ?Teacher $teacher = null, ?Admin $admin = null): array;
 
@@ -51,10 +52,10 @@ interface GradingServiceInterface
     /**
      * Tạo bài thi giấy (Offline), kỳ thi lớp và lưu toàn bộ bảng điểm học sinh.
      *
-     * @param  array<string, mixed>  $data
-     * @param  Teacher|null          $teacher
-     * @param  Admin|null            $admin
-     * @return \App\Models\ClassExam
+     * @param  array<string, mixed> $data
+     * @param  Teacher|null         $teacher
+     * @param  Admin|null           $admin
+     * @return ClassExam
      */
-    public function createOfflineExamWithScores(array $data, ?Teacher $teacher = null, ?Admin $admin = null): \App\Models\ClassExam;
+    public function createOfflineExamWithScores(array $data, ?Teacher $teacher = null, ?Admin $admin = null): ClassExam;
 }

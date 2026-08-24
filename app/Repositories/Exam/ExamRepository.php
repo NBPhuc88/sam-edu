@@ -2,11 +2,13 @@
 
 namespace App\Repositories\Exam;
 
+use App\Models\ClassExam;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\ExamSection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ExamRepository implements ExamRepositoryInterface
 {
@@ -228,15 +230,15 @@ class ExamRepository implements ExamRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $exam = Exam::findOrFail($id);
 
             // Xóa phần thi & câu hỏi
-            \App\Models\ExamQuestion::where('exam_id', $id)->delete();
-            \App\Models\ExamSection::where('exam_id', $id)->delete();
+            ExamQuestion::where('exam_id', $id)->delete();
+            ExamSection::where('exam_id', $id)->delete();
 
             // Xóa các kỳ thi của lớp dùng đề này
-            \App\Models\ClassExam::where('exam_id', $id)->delete();
+            ClassExam::where('exam_id', $id)->delete();
 
             return (bool) $exam->delete();
         });

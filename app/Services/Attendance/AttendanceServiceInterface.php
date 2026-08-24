@@ -3,6 +3,7 @@
 namespace App\Services\Attendance;
 
 use App\Models\Admin;
+use App\Models\ClassSession;
 use App\Models\Teacher;
 
 interface AttendanceServiceInterface
@@ -30,8 +31,8 @@ interface AttendanceServiceInterface
     public function resetAttendance(int $sessionId, Admin|Teacher|null $user = null): bool;
 
     /**
-     * @param  int                       $teacherId
-     * @return ?\App\Models\ClassSession
+     * @param  int           $teacherId
+     * @return ?ClassSession
      */
-    public function getTodayTeacherSession(int $teacherId): ?\App\Models\ClassSession;
+    public function getTodayTeacherSession(int $teacherId): ?ClassSession;
 }

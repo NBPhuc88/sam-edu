@@ -2,6 +2,10 @@
 
 namespace App\Services\Teacher;
 
+use App\Mail\AccountCreatedMail;
+use App\Mail\EmailChangedMail;
+use App\Mail\PasswordChangedMail;
+use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -10,6 +14,7 @@ use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -178,8 +183,8 @@ class TeacherService implements TeacherServiceInterface
 
         if (! empty($teacher->email)) {
             $center = $this->centerRepository->find($centerId);
-            \Illuminate\Support\Facades\Mail::to($teacher->email)->queue(
-                new \App\Mail\AccountCreatedMail(
+            Mail::to($teacher->email)->queue(
+                new AccountCreatedMail(
                     fullName: $teacher->full_name,
                     username: $teacher->username,
                     roleLabel: 'Giáo viên',
@@ -259,8 +264,8 @@ class TeacherService implements TeacherServiceInterface
         $center         = $this->centerRepository->find((int) $updatedTeacher->center_id);
 
         if ($isPassChanged && ! empty($updatedTeacher->email)) {
-            \Illuminate\Support\Facades\Mail::to($updatedTeacher->email)->queue(
-                new \App\Mail\PasswordChangedMail(
+            Mail::to($updatedTeacher->email)->queue(
+                new PasswordChangedMail(
                     fullName: $updatedTeacher->full_name,
                     username: $updatedTeacher->username,
                     roleLabel: 'Giáo viên',
@@ -272,8 +277,8 @@ class TeacherService implements TeacherServiceInterface
         }
 
         if ($isUsernameChanged && ! empty($updatedTeacher->email)) {
-            \Illuminate\Support\Facades\Mail::to($updatedTeacher->email)->queue(
-                new \App\Mail\UsernameChangedMail(
+            Mail::to($updatedTeacher->email)->queue(
+                new UsernameChangedMail(
                     fullName: $updatedTeacher->full_name,
                     oldUsername: (string) $oldUsername,
                     newUsername: (string) $newUsername,
@@ -286,8 +291,8 @@ class TeacherService implements TeacherServiceInterface
         }
 
         if ($isEmailChanged) {
-            \Illuminate\Support\Facades\Mail::to($newEmail)->queue(
-                new \App\Mail\EmailChangedMail(
+            Mail::to($newEmail)->queue(
+                new EmailChangedMail(
                     fullName: $updatedTeacher->full_name,
                     username: $updatedTeacher->username,
                     oldEmail: (string) $oldEmail,

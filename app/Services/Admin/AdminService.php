@@ -2,11 +2,16 @@
 
 namespace App\Services\Admin;
 
+use App\Mail\AccountCreatedMail;
+use App\Mail\EmailChangedMail;
+use App\Mail\PasswordChangedMail;
+use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
 use App\Repositories\Admin\AdminRepositoryInterface;
 use App\Repositories\Center\CenterRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class AdminService implements AdminServiceInterface
 {
@@ -61,8 +66,8 @@ class AdminService implements AdminServiceInterface
             $roleLabel   = $admin->isSuperAdmin() ? 'Quản trị viên Tối cao (Super Admin)' : 'Quản trị viên Trung tâm (Admin)';
             $rawPassword = ! empty($data['password']) ? (string) $data['password'] : null;
 
-            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
-                new \App\Mail\AccountCreatedMail(
+            Mail::to($admin->email)->queue(
+                new AccountCreatedMail(
                     fullName: $admin->full_name,
                     username: $admin->username,
                     roleLabel: $roleLabel,
@@ -130,8 +135,8 @@ class AdminService implements AdminServiceInterface
         $centerName = $admin->centers->first()?->name;
 
         if ($isPassChanged && ! empty($admin->email)) {
-            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
-                new \App\Mail\PasswordChangedMail(
+            Mail::to($admin->email)->queue(
+                new PasswordChangedMail(
                     fullName: $admin->full_name,
                     username: $admin->username,
                     roleLabel: $roleLabel,
@@ -143,8 +148,8 @@ class AdminService implements AdminServiceInterface
         }
 
         if ($isUsernameChanged && ! empty($admin->email)) {
-            \Illuminate\Support\Facades\Mail::to($admin->email)->queue(
-                new \App\Mail\UsernameChangedMail(
+            Mail::to($admin->email)->queue(
+                new UsernameChangedMail(
                     fullName: $admin->full_name,
                     oldUsername: (string) $oldUsername,
                     newUsername: (string) $newUsername,
@@ -157,8 +162,8 @@ class AdminService implements AdminServiceInterface
         }
 
         if ($isEmailChanged) {
-            \Illuminate\Support\Facades\Mail::to($newEmail)->queue(
-                new \App\Mail\EmailChangedMail(
+            Mail::to($newEmail)->queue(
+                new EmailChangedMail(
                     fullName: $admin->full_name,
                     username: $admin->username,
                     oldEmail: (string) $oldEmail,

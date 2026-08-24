@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Chat\FilterChatGroupRequest;
+use App\Http\Requests\Chat\ReactClassChatMessageRequest;
 use App\Http\Requests\Chat\SendClassChatMessageRequest;
 use App\Models\Admin;
 use App\Models\Student;
@@ -89,12 +90,27 @@ class ChatController extends Controller
         $schoolClass = $this->chatService->authorizeAccess($classId);
         $senderInfo  = $this->getCurrentUserSenderInfo();
         $messageText = (string) $request->input('message');
+        $replyToId   = $request->input('reply_to_id') ? (int) $request->input('reply_to_id') : null;
 
-        $sentMessage = $this->chatService->sendMessage($schoolClass->id, $senderInfo, $messageText);
+        $sentMessage = $this->chatService->sendMessage($schoolClass->id, $senderInfo, $messageText, $replyToId);
 
         return response()->json([
             'success' => true,
             'message' => $sentMessage,
+        ]);
+    }
+
+    public function react(ReactClassChatMessageRequest $request, int $classId, int $messageId): JsonResponse
+    {
+        $this->chatService->authorizeAccess($classId);
+        $senderInfo = $this->getCurrentUserSenderInfo();
+        $emoji      = (string) $request->input('emoji');
+
+        $reactions = $this->chatService->toggleReaction($classId, $messageId, $senderInfo, $emoji);
+
+        return response()->json([
+            'success'   => true,
+            'reactions' => $reactions,
         ]);
     }
 

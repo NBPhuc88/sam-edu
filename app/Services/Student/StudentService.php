@@ -2,6 +2,10 @@
 
 namespace App\Services\Student;
 
+use App\Mail\AccountCreatedMail;
+use App\Mail\EmailChangedMail;
+use App\Mail\PasswordChangedMail;
+use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -11,6 +15,7 @@ use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -277,8 +282,8 @@ class StudentService implements StudentServiceInterface
 
         if (! empty($student->email) && ! empty($student->username)) {
             $center = $this->centerRepository->find($centerId);
-            \Illuminate\Support\Facades\Mail::to($student->email)->queue(
-                new \App\Mail\AccountCreatedMail(
+            Mail::to($student->email)->queue(
+                new AccountCreatedMail(
                     fullName: $student->full_name,
                     username: $student->username,
                     roleLabel: 'Học sinh',
@@ -403,8 +408,8 @@ class StudentService implements StudentServiceInterface
         }
 
         if ($isPassChanged && ! empty($updatedStudent->email)) {
-            \Illuminate\Support\Facades\Mail::to($updatedStudent->email)->queue(
-                new \App\Mail\PasswordChangedMail(
+            Mail::to($updatedStudent->email)->queue(
+                new PasswordChangedMail(
                     fullName: $updatedStudent->full_name,
                     username: (string) ($updatedStudent->username ?? $updatedStudent->student_code),
                     roleLabel: 'Học sinh',
@@ -416,8 +421,8 @@ class StudentService implements StudentServiceInterface
         }
 
         if ($isUsernameChanged && ! empty($updatedStudent->email)) {
-            \Illuminate\Support\Facades\Mail::to($updatedStudent->email)->queue(
-                new \App\Mail\UsernameChangedMail(
+            Mail::to($updatedStudent->email)->queue(
+                new UsernameChangedMail(
                     fullName: $updatedStudent->full_name,
                     oldUsername: (string) $oldUsername,
                     newUsername: (string) $newUsername,
@@ -430,8 +435,8 @@ class StudentService implements StudentServiceInterface
         }
 
         if ($isEmailChanged) {
-            \Illuminate\Support\Facades\Mail::to($newEmail)->queue(
-                new \App\Mail\EmailChangedMail(
+            Mail::to($newEmail)->queue(
+                new EmailChangedMail(
                     fullName: $updatedStudent->full_name,
                     username: (string) ($updatedStudent->username ?? $updatedStudent->student_code),
                     oldEmail: (string) $oldEmail,

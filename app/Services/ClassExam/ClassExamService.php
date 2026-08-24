@@ -2,8 +2,10 @@
 
 namespace App\Services\ClassExam;
 
+use App\Mail\ClassExamCreatedMail;
 use App\Models\Admin;
 use App\Models\ClassExam;
+use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -11,6 +13,7 @@ use App\Repositories\ClassExam\ClassExamRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -114,7 +117,7 @@ class ClassExamService implements ClassExamServiceInterface
             $classExam = $this->classExamRepository->create($payload);
 
             // Gửi email thông báo kỳ thi qua Queue cho học sinh và giáo viên phụ trách lớp
-            $schoolClass = \App\Models\SchoolClass::with(['students' => function ($q) {
+            $schoolClass = SchoolClass::with(['students' => function ($q) {
                 $q->wherePivot('status', 1)->where('students.status', 1);
             }, 'classSubjects.teacher'])->find($data['class_id']);
 
@@ -122,8 +125,8 @@ class ClassExamService implements ClassExamServiceInterface
                 // 1. Gửi cho tất cả học sinh đang học trong lớp
                 foreach ($schoolClass->students as $student) {
                     if (! empty($student->email)) {
-                        \Illuminate\Support\Facades\Mail::to($student->email)->queue(
-                            new \App\Mail\ClassExamCreatedMail(
+                        Mail::to($student->email)->queue(
+                            new ClassExamCreatedMail(
                                 classExam: $classExam,
                                 recipientName: $student->full_name,
                                 recipientRole: 'student'
@@ -140,8 +143,8 @@ class ClassExamService implements ClassExamServiceInterface
 
                 foreach ($teachers as $t) {
                     if (! empty($t->email)) {
-                        \Illuminate\Support\Facades\Mail::to($t->email)->queue(
-                            new \App\Mail\ClassExamCreatedMail(
+                        Mail::to($t->email)->queue(
+                            new ClassExamCreatedMail(
                                 classExam: $classExam,
                                 recipientName: $t->full_name,
                                 recipientRole: 'teacher'

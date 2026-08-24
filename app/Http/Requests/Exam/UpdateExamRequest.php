@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Exam;
 
+use App\Models\Exam;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateExamRequest extends FormRequest
 {
@@ -32,7 +34,7 @@ class UpdateExamRequest extends FormRequest
         $centerId = $this->input('center_id');
 
         if (! $centerId && $examId) {
-            $centerId = \App\Models\Exam::where('id', $examId)->value('center_id');
+            $centerId = Exam::where('id', $examId)->value('center_id');
         }
 
         return [
@@ -155,11 +157,11 @@ class UpdateExamRequest extends FormRequest
     }
 
     /**
-     * @param \Illuminate\Validation\Validator $validator
+     * @param Validator $validator
      */
-    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function (\Illuminate\Validation\Validator $validator) {
+        $validator->after(function (Validator $validator) {
             $sections = $this->input('sections', []);
 
             if (is_array($sections)) {

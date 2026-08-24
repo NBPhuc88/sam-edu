@@ -3,6 +3,7 @@
 namespace App\Repositories\Schedule;
 
 use App\Models\ClassSchedule;
+use App\Models\ClassSubject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -276,9 +277,9 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->get();
     }
 
-    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): \App\Models\ClassSubject
+    public function findOrCreateClassSubject(int $classId, int $subjectId, array $attributes): ClassSubject
     {
-        return \App\Models\ClassSubject::firstOrCreate(
+        return ClassSubject::firstOrCreate(
             ['class_id' => $classId, 'subject_id' => $subjectId],
             $attributes
         );
@@ -286,7 +287,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
 
     public function updateClassSubject(int $classSubjectId, array $attributes): bool
     {
-        return (bool) \App\Models\ClassSubject::where('id', $classSubjectId)->update($attributes);
+        return (bool) ClassSubject::where('id', $classSubjectId)->update($attributes);
     }
 
     public function deleteByClassSubjectId(int $classSubjectId): int

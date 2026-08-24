@@ -253,6 +253,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
             Route::get('/', [ChatController::class, 'index'])->name('index');
             Route::get('/messages', [ChatController::class, 'getMessages'])->name('messages');
             Route::post('/messages', [ChatController::class, 'sendMessage'])->name('send')->middleware('throttle:60,1');
+            Route::post('/messages/{messageId}/reactions', [ChatController::class, 'react'])->name('react');
             Route::post('/messages/{messageId}/pin', [ChatController::class, 'togglePin'])->name('pin');
         });
     });

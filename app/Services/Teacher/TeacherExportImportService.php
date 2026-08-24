@@ -2,6 +2,7 @@
 
 namespace App\Services\Teacher;
 
+use App\Models\Center;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -107,7 +108,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
     public function importTeachersCsv(string $filePath, ?int $centerId = null): array
     {
         if (! $centerId) {
-            $centerId = \App\Models\Center::first()?->id;
+            $centerId = Center::first()?->id;
         }
 
         if (! $centerId) {

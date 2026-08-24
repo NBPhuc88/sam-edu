@@ -316,10 +316,10 @@ class GradingService implements GradingServiceInterface
     /**
      * Tạo bài thi giấy (Offline), kỳ thi lớp và lưu toàn bộ bảng điểm học sinh.
      *
-     * @param  array<string, mixed>  $data
-     * @param  Teacher|null          $teacher
-     * @param  Admin|null            $admin
-     * @return \App\Models\ClassExam
+     * @param  array<string, mixed> $data
+     * @param  Teacher|null         $teacher
+     * @param  Admin|null           $admin
+     * @return ClassExam
      */
     public function createOfflineExamWithScores(array $data, ?Teacher $teacher = null, ?Admin $admin = null): ClassExam
     {

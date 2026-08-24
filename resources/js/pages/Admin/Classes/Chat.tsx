@@ -9,10 +9,16 @@ import {
     Palette,
     Check,
     X,
+    Reply,
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
+import ChatEmojiPicker from './components/ChatEmojiPicker';
+import MessageReactionBar from './components/MessageReactionBar';
+import MessageReactionsDisplay, {
+    ReactionItem,
+} from './components/MessageReactionsDisplay';
 
 interface SchoolClass {
     id: number;
@@ -29,9 +35,21 @@ interface CurrentUser {
     can_pin: boolean;
 }
 
+interface ReplyToData {
+    id: number;
+    class_id: number;
+    sender_type: string;
+    sender_id: number;
+    sender_name: string;
+    message: string;
+}
+
 interface ChatMessageData {
     id: number;
     class_id: number;
+    reply_to_id?: number | null;
+    reply_to?: ReplyToData | null;
+    reactions?: ReactionItem[];
     sender_type: 'admin' | 'teacher' | 'student';
     sender_id: number;
     sender_name: string;
@@ -42,7 +60,6 @@ interface ChatMessageData {
     pinned_by_name: string | null;
     created_at: string;
     time_formatted: string;
-    reaction?: string | null;
 }
 
 interface Props {
@@ -54,10 +71,10 @@ interface Props {
 
 // Telegram Sender Name Distinct Colors
 const SENDER_COLORS = [
-    'text-[#e11d48]', // Rose / Red (e.g. Phạm Quốc Việt)
-    'text-[#d97706]', // Amber / Orange (e.g. Lê Khánh Linh)
-    'text-[#16a34a]', // Emerald / Green (e.g. Gryffindor Cuong)
-    'text-[#ea580c]', // Coral / Orange-Red (e.g. Nam heli)
+    'text-[#e11d48]', // Rose / Red
+    'text-[#d97706]', // Amber / Orange
+    'text-[#16a34a]', // Emerald / Green
+    'text-[#ea580c]', // Coral / Orange-Red
     'text-[#2563eb]', // Blue
     'text-[#9333ea]', // Purple
     'text-[#0891b2]', // Cyan
@@ -171,12 +188,18 @@ export const CHAT_THEMES: ChatTheme[] = [
 ];
 
 function getSenderColor(name: string, id: number): string {
-    const hash = (id * 37 + name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % SENDER_COLORS.length;
+    const hash =
+        (id * 37 +
+            name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
+        SENDER_COLORS.length;
     return SENDER_COLORS[Math.abs(hash)];
 }
 
 function getAvatarBgColor(name: string, id: number): string {
-    const hash = (id * 19 + name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % AVATAR_BG_COLORS.length;
+    const hash =
+        (id * 19 +
+            name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
+        AVATAR_BG_COLORS.length;
     return AVATAR_BG_COLORS[Math.abs(hash)];
 }
 
@@ -205,17 +228,24 @@ export default function ClassChatPage({
     initialPinnedMessage,
 }: Props) {
     const [messages, setMessages] = useState<ChatMessageData[]>(
-        initialMessages || [],
+        initialMessages || []
     );
     const [pinnedMessage, setPinnedMessage] = useState<ChatMessageData | null>(
-        initialPinnedMessage,
+        initialPinnedMessage
     );
     const [inputMessage, setInputMessage] = useState('');
+    const [replyingTo, setReplyingTo] = useState<ChatMessageData | null>(null);
+    const [activeHoverMessageId, setActiveHoverMessageId] = useState<
+        number | null
+    >(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    const [wsConnected, setWsConnected] = useState(true);
     const [selectedThemeId, setSelectedThemeId] = useState<string>(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('sam_chat_wallpaper_theme') || 'classic_green';
+            return (
+                localStorage.getItem('sam_chat_wallpaper_theme') ||
+                'classic_green'
+            );
         }
         return 'classic_green';
     });
@@ -226,6 +256,7 @@ export default function ClassChatPage({
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
     const handleSelectTheme = (themeId: string) => {
         setSelectedThemeId(themeId);
@@ -243,12 +274,20 @@ export default function ClassChatPage({
         scrollToBottom('auto');
     }, []);
 
+    // Focus input when reply is triggered
+    useEffect(() => {
+        if (replyingTo && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [replyingTo]);
+
     // ─── Realtime WebSocket Subscription (Soketi / Pusher) ───
     useEffect(() => {
         const echo = getEcho();
         const channelName = `class-chat.${schoolClass.id}`;
         const channel = echo.channel(channelName);
 
+        // 1. New Message Sent
         channel.listen('.message.sent', (newMsg: ChatMessageData) => {
             setMessages((prev) => {
                 if (prev.some((m) => m.id === newMsg.id)) {
@@ -259,6 +298,7 @@ export default function ClassChatPage({
             setTimeout(() => scrollToBottom('smooth'), 100);
         });
 
+        // 2. Message Pinned / Unpinned
         channel.listen(
             '.message.pinned',
             (data: {
@@ -271,18 +311,35 @@ export default function ClassChatPage({
                     prev.map((msg) => ({
                         ...msg,
                         is_pinned: newPinned ? msg.id === newPinned.id : false,
-                    })),
+                    }))
                 );
-            },
+            }
         );
 
-        setWsConnected(true);
+        // 3. Message Reacted
+        channel.listen(
+            '.message.reacted',
+            (data: {
+                class_id: number;
+                message_id: number;
+                reactions: ReactionItem[];
+            }) => {
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === data.message_id
+                            ? { ...msg, reactions: data.reactions }
+                            : msg
+                    )
+                );
+            }
+        );
 
         return () => {
             echo.leave(channelName);
         };
     }, [schoolClass.id]);
 
+    // Send Message (with optional reply_to_id)
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -291,7 +348,11 @@ export default function ClassChatPage({
         }
 
         const textToSend = inputMessage.trim();
+        const replyToId = replyingTo ? replyingTo.id : null;
+
         setInputMessage('');
+        setReplyingTo(null);
+        setShowEmojiPicker(false);
         setIsSending(true);
 
         try {
@@ -300,6 +361,7 @@ export default function ClassChatPage({
                 message: ChatMessageData;
             }>(`/classes/${schoolClass.id}/chat/messages`, {
                 message: textToSend,
+                reply_to_id: replyToId,
             });
 
             if (response.data?.success && response.data.message) {
@@ -314,12 +376,13 @@ export default function ClassChatPage({
             }
         } catch (error) {
             console.error('Lỗi khi gửi tin nhắn:', error);
-            setInputMessage(textToSend); // khôi phục tin nhắn nếu lỗi
+            setInputMessage(textToSend);
         } finally {
             setIsSending(false);
         }
     };
 
+    // Toggle Pin Message
     const handleTogglePin = async (messageId: number) => {
         if (!currentUser.can_pin) {
             return;
@@ -338,7 +401,7 @@ export default function ClassChatPage({
                     prev.map((msg) => ({
                         ...msg,
                         is_pinned: newPinned ? msg.id === newPinned.id : false,
-                    })),
+                    }))
                 );
             }
         } catch (error) {
@@ -346,6 +409,35 @@ export default function ClassChatPage({
         }
     };
 
+    // Toggle Reaction
+    const handleToggleReaction = async (messageId: number, emoji: string) => {
+        try {
+            const response = await axios.post<{
+                success: boolean;
+                reactions: ReactionItem[];
+            }>(
+                `/classes/${schoolClass.id}/chat/messages/${messageId}/reactions`,
+                {
+                    emoji,
+                }
+            );
+
+            if (response.data?.success) {
+                const updatedReactions = response.data.reactions;
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === messageId
+                            ? { ...msg, reactions: updatedReactions }
+                            : msg
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Lỗi khi thả cảm xúc:', error);
+        }
+    };
+
+    // Scroll to message with flash animation
     const scrollToMessage = (messageId: number) => {
         const elem = messageRefs.current[messageId];
         if (elem) {
@@ -355,6 +447,32 @@ export default function ClassChatPage({
                 elem.classList.remove('ring-4', 'ring-amber-300');
             }, 2000);
         }
+    };
+
+    // Insert Emoji into input at cursor position
+    const handleSelectEmoji = (emoji: string) => {
+        if (!inputRef.current) {
+            setInputMessage((prev) => prev + emoji);
+            return;
+        }
+
+        const start = inputRef.current.selectionStart || 0;
+        const end = inputRef.current.selectionEnd || 0;
+        const updated =
+            inputMessage.substring(0, start) +
+            emoji +
+            inputMessage.substring(end);
+        setInputMessage(updated);
+
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+                inputRef.current.setSelectionRange(
+                    start + emoji.length,
+                    start + emoji.length
+                );
+            }
+        }, 10);
     };
 
     const renderRoleBadge = (type: string) => {
@@ -377,7 +495,9 @@ export default function ClassChatPage({
     };
 
     // SVG Doodle Pattern dynamic background generator
-    const getTelegramWallpaperStyle = (theme: ChatTheme): React.CSSProperties => {
+    const getTelegramWallpaperStyle = (
+        theme: ChatTheme
+    ): React.CSSProperties => {
         return {
             backgroundColor: theme.bgColor,
             backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06) 0%, transparent 80%), url("data:image/svg+xml,%3Csvg width='320' height='320' viewBox='0 0 320 320' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='${theme.patternOpacity}' fill-rule='evenodd'%3E%3Cpath d='M38 48c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10zm4 0c0 3.3 2.7 6 6 6s6-2.7 6-6-2.7-6-6-6-6 2.7-6 6zm100-24l6 12 13 2-9 9 2 13-12-6-12 6 2-13-9-9 13-2 6-12zm-3 8.5l-3.5 7-7.7 1.1 5.6 5.4-1.3 7.7 6.9-3.6 6.9 3.6-1.3-7.7 5.6-5.4-7.7-1.1-3.5-7zM246 36c6.6 0 12 5.4 12 12s-5.4 12-12 12-12-5.4-12-12 5.4-12 12-12zm0 4c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm-180 94c8.8 0 16 7.2 16 16 0 4.8-2.1 9.1-5.5 12l5.5 12-12-5.5c-1.3.3-2.6.5-4 .5-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 4c-6.6 0-12 5.4-12 12s5.4 12 12 12c1.2 0 2.4-.2 3.5-.6l6.5 3-3-6.5c1.9-2.2 3-5 3-7.9 0-6.6-5.4-12-12-12zm184 8c12 0 22 10 22 22s-10 22-22 22-22-10-22-22 10-22 22-22zm0 4c-9.9 0-18 8.1-18 18s8.1 18 18 18 18-8.1 18-18-8.1-18-18-18zm-100 24c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm0 4c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zm-104 90l16-8 16 8-4-18 13-13-18-3-7-16-7 16-18 3 13 13-4 18zm140 10c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20zm4 0c0 8.8 7.2 16 16 16s16-7.2 16-16-7.2-16-16-16-16 7.2-16 16zm-50 40c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10zm110-30l10 5-2-11 8-8-11-2-5-10-5 10-11 2 8 8-2 11 10-5z'/%3E%3C/g%3E%3C/svg%3E")`,
@@ -409,10 +529,14 @@ export default function ClassChatPage({
                         >
                             <span
                                 className="h-3.5 w-3.5 rounded-full border border-black/20 shadow-2xs shrink-0"
-                                style={{ backgroundColor: activeTheme.previewColor }}
+                                style={{
+                                    backgroundColor: activeTheme.previewColor,
+                                }}
                             />
                             <Palette className="h-3.5 w-3.5 text-gray-600" />
-                            <span className="hidden sm:inline">Hình nền: {activeTheme.name.split(' (')[0]}</span>
+                            <span className="hidden sm:inline">
+                                Hình nền: {activeTheme.name.split(' (')[0]}
+                            </span>
                             <span className="sm:hidden">Nền</span>
                         </button>
 
@@ -439,7 +563,9 @@ export default function ClassChatPage({
                                     {schoolClass.name}
                                 </h2>
                                 <p className="text-2xs sm:text-xs text-gray-500 truncate">
-                                    Mã lớp: {schoolClass.code} • {schoolClass.center?.name || 'Trung tâm SAM Digital'}
+                                    Mã lớp: {schoolClass.code} •{' '}
+                                    {schoolClass.center?.name ||
+                                        'Trung tâm SAM Digital'}
                                 </p>
                             </div>
                         </div>
@@ -458,7 +584,9 @@ export default function ClassChatPage({
                     {pinnedMessage && (
                         <div className="shrink-0 flex items-center justify-between gap-3 border-b border-amber-200/80 bg-white/95 backdrop-blur-xs px-4 py-2 sm:px-5 text-gray-900 shadow-2xs border-l-4 border-l-amber-500">
                             <div
-                                onClick={() => scrollToMessage(pinnedMessage.id)}
+                                onClick={() =>
+                                    scrollToMessage(pinnedMessage.id)
+                                }
                                 className="flex min-w-0 flex-1 items-center gap-2.5 cursor-pointer group"
                                 title="Nhấp để cuộn tới tin nhắn này"
                             >
@@ -467,7 +595,10 @@ export default function ClassChatPage({
                                     <div className="flex items-center gap-1.5 font-bold text-amber-900">
                                         <span>Tin nhắn đã ghim</span>
                                         <span className="text-2xs font-normal text-gray-500">
-                                            (từ {pinnedMessage.pinned_by_name || 'Admin/Giáo viên'})
+                                            (từ{' '}
+                                            {pinnedMessage.pinned_by_name ||
+                                                'Admin/Giáo viên'}
+                                            )
                                         </span>
                                     </div>
                                     <div className="truncate text-gray-700">
@@ -479,7 +610,9 @@ export default function ClassChatPage({
                             {currentUser.can_pin && (
                                 <button
                                     type="button"
-                                    onClick={() => handleTogglePin(pinnedMessage.id)}
+                                    onClick={() =>
+                                        handleTogglePin(pinnedMessage.id)
+                                    }
                                     title="Bỏ ghim tin nhắn này"
                                     className="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                                 >
@@ -503,18 +636,27 @@ export default function ClassChatPage({
                                     Chưa có tin nhắn nào trong nhóm chat này
                                 </p>
                                 <p className="mt-1 text-xs text-white/80 max-w-xs drop-shadow-xs">
-                                    Hãy là người đầu tiên gửi tin nhắn để cùng trao đổi học tập với lớp!
+                                    Hãy là người đầu tiên gửi tin nhắn để cùng
+                                    trao đổi học tập với lớp!
                                 </p>
                             </div>
                         ) : (
                             messages.map((msg, index) => {
                                 const isSelf =
-                                    msg.sender_type === currentUser.sender_type &&
+                                    msg.sender_type ===
+                                        currentUser.sender_type &&
                                     msg.sender_id === currentUser.sender_id;
 
+                                const isHovered =
+                                    activeHoverMessageId === msg.id;
+
                                 // Grouping logic (Cluster consecutive messages from the same sender)
-                                const prevMsg = index > 0 ? messages[index - 1] : null;
-                                const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
+                                const prevMsg =
+                                    index > 0 ? messages[index - 1] : null;
+                                const nextMsg =
+                                    index < messages.length - 1
+                                        ? messages[index + 1]
+                                        : null;
 
                                 const isSameSenderAsPrev =
                                     prevMsg !== null &&
@@ -529,8 +671,14 @@ export default function ClassChatPage({
                                 const isFirstInGroup = !isSameSenderAsPrev;
                                 const isLastInGroup = !isSameSenderAsNext;
 
-                                const senderColorClass = getSenderColor(msg.sender_name, msg.sender_id);
-                                const avatarBgColor = getAvatarBgColor(msg.sender_name, msg.sender_id);
+                                const senderColorClass = getSenderColor(
+                                    msg.sender_name,
+                                    msg.sender_id
+                                );
+                                const avatarBgColor = getAvatarBgColor(
+                                    msg.sender_name,
+                                    msg.sender_id
+                                );
                                 const initials = getInitials(msg.sender_name);
                                 const isSticker = isImageOrSticker(msg.message);
 
@@ -540,20 +688,38 @@ export default function ClassChatPage({
                                         ref={(el) => {
                                             messageRefs.current[msg.id] = el;
                                         }}
-                                        className={`flex items-end gap-2 transition-all duration-300 ${isFirstInGroup ? 'mt-3' : 'mt-0.5'
-                                            } ${isSelf ? 'justify-end' : 'justify-start'}`}
+                                        onMouseEnter={() =>
+                                            setActiveHoverMessageId(msg.id)
+                                        }
+                                        onMouseLeave={() =>
+                                            setActiveHoverMessageId(null)
+                                        }
+                                        className={`flex items-end gap-2 transition-all duration-300 ${
+                                            isFirstInGroup ? 'mt-3' : 'mt-0.5'
+                                        } ${
+                                            isSelf
+                                                ? 'justify-end'
+                                                : 'justify-start'
+                                        }`}
                                     >
-                                        {/* Avatar on Left (for other senders, shown at the BOTTOM of the message cluster) */}
+                                        {/* Avatar on Left (for other senders) */}
                                         {!isSelf && (
                                             <div className="w-8.5 shrink-0 flex items-end">
                                                 {isLastInGroup ? (
                                                     msg.sender_avatar ? (
                                                         <img
-                                                            src={msg.sender_avatar}
-                                                            alt={msg.sender_name}
+                                                            src={
+                                                                msg.sender_avatar
+                                                            }
+                                                            alt={
+                                                                msg.sender_name
+                                                            }
                                                             className="h-8.5 w-8.5 rounded-full object-cover shadow-xs border border-white/40"
                                                             onError={(e) => {
-                                                                (e.target as HTMLElement).style.display = 'none';
+                                                                (
+                                                                    e.target as HTMLElement
+                                                                ).style.display =
+                                                                    'none';
                                                             }}
                                                         />
                                                     ) : (
@@ -571,9 +737,25 @@ export default function ClassChatPage({
 
                                         {/* Message Bubble Container */}
                                         <div
-                                            className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${isSelf ? 'items-end' : 'items-start'
-                                                }`}
+                                            className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${
+                                                isSelf
+                                                    ? 'items-end'
+                                                    : 'items-start'
+                                            }`}
                                         >
+                                            {/* Quick Reaction Floating Bar on Hover */}
+                                            {isHovered && (
+                                                <MessageReactionBar
+                                                    isSelf={isSelf}
+                                                    onReact={(emoji) =>
+                                                        handleToggleReaction(
+                                                            msg.id,
+                                                            emoji
+                                                        )
+                                                    }
+                                                />
+                                            )}
+
                                             {/* Sticker / Image Message */}
                                             {isSticker ? (
                                                 <div className="relative overflow-hidden rounded-2xl shadow-sm bg-white/10 backdrop-blur-2xs">
@@ -582,7 +764,10 @@ export default function ClassChatPage({
                                                         alt="sticker"
                                                         className="max-h-56 max-w-56 object-contain rounded-2xl"
                                                         onError={(e) => {
-                                                            (e.target as HTMLElement).style.display = 'none';
+                                                            (
+                                                                e.target as HTMLElement
+                                                            ).style.display =
+                                                                'none';
                                                         }}
                                                     />
                                                     <span className="absolute bottom-1.5 right-2 rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
@@ -592,71 +777,175 @@ export default function ClassChatPage({
                                             ) : (
                                                 /* Standard Telegram Text Bubble */
                                                 <div
-                                                    className={`relative px-3.5 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.12)] break-words text-[13.5px] leading-[1.35] transition-shadow ${isSelf
-                                                        ? `${activeTheme.selfBubbleClass} ${activeTheme.selfTextClass} rounded-2xl ${isLastInGroup ? 'rounded-br-xs' : ''
-                                                        }`
-                                                        : `bg-white text-gray-900 rounded-2xl ${isLastInGroup ? 'rounded-bl-xs' : ''
-                                                        }`
-                                                        } ${msg.is_pinned
+                                                    className={`relative px-3.5 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.12)] break-words text-[13.5px] leading-[1.35] transition-shadow ${
+                                                        isSelf
+                                                            ? `${activeTheme.selfBubbleClass} ${
+                                                                  activeTheme.selfTextClass
+                                                              } rounded-2xl ${
+                                                                  isLastInGroup
+                                                                      ? 'rounded-br-xs'
+                                                                      : ''
+                                                              }`
+                                                            : `bg-white text-gray-900 rounded-2xl ${
+                                                                  isLastInGroup
+                                                                      ? 'rounded-bl-xs'
+                                                                      : ''
+                                                              }`
+                                                    } ${
+                                                        msg.is_pinned
                                                             ? 'ring-2 ring-amber-400 bg-amber-50/90'
                                                             : ''
-                                                        }`}
+                                                    }`}
                                                 >
                                                     {/* Sender Name & Role Badge (Only on first message of cluster for non-self) */}
-                                                    {!isSelf && isFirstInGroup && (
-                                                        <div className="flex items-center justify-between gap-2.5 mb-1 select-none">
-                                                            <span
-                                                                className={`font-bold text-[13px] tracking-tight ${senderColorClass}`}
-                                                            >
-                                                                {msg.sender_name}
-                                                            </span>
-                                                            {renderRoleBadge(msg.sender_type)}
+                                                    {!isSelf &&
+                                                        isFirstInGroup && (
+                                                            <div className="flex items-center justify-between gap-2.5 mb-1 select-none">
+                                                                <span
+                                                                    className={`font-bold text-[13px] tracking-tight ${senderColorClass}`}
+                                                                >
+                                                                    {
+                                                                        msg.sender_name
+                                                                    }
+                                                                </span>
+                                                                {renderRoleBadge(
+                                                                    msg.sender_type
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                    {/* Telegram Style Quoted Message (Reply) */}
+                                                    {msg.reply_to && (
+                                                        <div
+                                                            onClick={() =>
+                                                                scrollToMessage(
+                                                                    msg.reply_to!
+                                                                        .id
+                                                                )
+                                                            }
+                                                            className={`mb-1.5 cursor-pointer rounded-lg border-l-3 px-2.5 py-1 text-xs transition-all hover:opacity-90 select-none ${
+                                                                isSelf
+                                                                    ? 'border-emerald-600 bg-black/5 text-gray-800'
+                                                                    : 'border-emerald-500 bg-emerald-50/70 text-gray-800'
+                                                            }`}
+                                                            title="Nhấp để xem tin nhắn gốc"
+                                                        >
+                                                            <div className="font-bold text-emerald-800 text-[11px] truncate flex items-center gap-1">
+                                                                <Reply className="h-3 w-3 inline" />
+                                                                <span>
+                                                                    {
+                                                                        msg
+                                                                            .reply_to
+                                                                            .sender_name
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            <div className="truncate text-gray-600 text-2xs italic">
+                                                                {
+                                                                    msg.reply_to
+                                                                        .message
+                                                                }
+                                                            </div>
                                                         </div>
                                                     )}
 
                                                     {/* Text Message Content + Telegram Inline Timestamp */}
                                                     <div>
-                                                        <span>{msg.message}</span>
+                                                        <span>
+                                                            {msg.message}
+                                                        </span>
                                                         <span
-                                                            className={`float-right ml-3 mt-1 inline-block text-[11px] font-normal select-none leading-none ${isSelf && activeTheme.id === 'midnight_dark'
-                                                                ? 'text-slate-300'
-                                                                : 'text-gray-400'
-                                                                }`}
+                                                            className={`float-right ml-3 mt-1 inline-block text-[11px] font-normal select-none leading-none ${
+                                                                isSelf &&
+                                                                activeTheme.id ===
+                                                                    'midnight_dark'
+                                                                    ? 'text-slate-300'
+                                                                    : 'text-gray-400'
+                                                            }`}
                                                         >
                                                             {msg.time_formatted}
                                                         </span>
                                                     </div>
 
-                                                    {/* Optional Pin Action button on hover */}
-                                                    {currentUser.can_pin && (
+                                                    {/* Action Buttons on Hover (Reply & Pin) */}
+                                                    <div
+                                                        className={`absolute -top-3 ${
+                                                            isSelf
+                                                                ? '-left-14'
+                                                                : '-right-14'
+                                                        } flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10`}
+                                                    >
+                                                        {/* Reply Button */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleTogglePin(msg.id)}
-                                                            title={msg.is_pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
-                                                            className={`absolute -top-2 ${isSelf ? '-left-6' : '-right-6'
-                                                                } rounded-full bg-white/90 p-1 shadow-xs transition-opacity hover:bg-white ${msg.is_pinned
-                                                                    ? 'text-amber-600 opacity-100'
-                                                                    : 'text-gray-400 opacity-0 group-hover:opacity-100'
-                                                                }`}
+                                                            onClick={() =>
+                                                                setReplyingTo(
+                                                                    msg
+                                                                )
+                                                            }
+                                                            title="Trả lời tin nhắn này"
+                                                            className="rounded-full bg-white p-1.5 text-gray-500 shadow-md hover:bg-emerald-50 hover:text-emerald-700 transition-all active:scale-95 cursor-pointer"
                                                         >
-                                                            <Pin
-                                                                className={`h-3.5 w-3.5 ${msg.is_pinned ? 'fill-amber-500' : ''
-                                                                    }`}
-                                                            />
+                                                            <Reply className="h-3.5 w-3.5" />
                                                         </button>
-                                                    )}
+
+                                                        {/* Pin Button */}
+                                                        {currentUser.can_pin && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleTogglePin(
+                                                                        msg.id
+                                                                    )
+                                                                }
+                                                                title={
+                                                                    msg.is_pinned
+                                                                        ? 'Bỏ ghim'
+                                                                        : 'Ghim tin nhắn'
+                                                                }
+                                                                className={`rounded-full bg-white p-1.5 shadow-md transition-all active:scale-95 cursor-pointer ${
+                                                                    msg.is_pinned
+                                                                        ? 'text-amber-600'
+                                                                        : 'text-gray-500 hover:bg-amber-50 hover:text-amber-600'
+                                                                }`}
+                                                            >
+                                                                <Pin
+                                                                    className={`h-3.5 w-3.5 ${
+                                                                        msg.is_pinned
+                                                                            ? 'fill-amber-500'
+                                                                            : ''
+                                                                    }`}
+                                                                />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
 
-                                            {/* Reaction Badge if any (e.g. Heart / Emoji reaction matching screenshot) */}
-                                            {msg.reaction && (
-                                                <div className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-xs shadow-xs border border-gray-100 -mt-1.5 ml-2 z-10 select-none">
-                                                    <span>{msg.reaction}</span>
-                                                    <span className="rounded-full bg-amber-100 px-1 text-[10px] font-bold text-amber-700">
-                                                        KL
-                                                    </span>
-                                                </div>
-                                            )}
+                                            {/* Reactions Badges below Message Bubble */}
+                                            {msg.reactions &&
+                                                msg.reactions.length > 0 && (
+                                                    <MessageReactionsDisplay
+                                                        reactions={
+                                                            msg.reactions
+                                                        }
+                                                        currentUserId={
+                                                            currentUser.sender_id
+                                                        }
+                                                        currentUserType={
+                                                            currentUser.sender_type
+                                                        }
+                                                        onToggleReaction={(
+                                                            emoji
+                                                        ) =>
+                                                            handleToggleReaction(
+                                                                msg.id,
+                                                                emoji
+                                                            )
+                                                        }
+                                                        isSelf={isSelf}
+                                                    />
+                                                )}
                                         </div>
                                     </div>
                                 );
@@ -665,22 +954,74 @@ export default function ClassChatPage({
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Telegram Style Chat Input Footer */}
-                    <div className="shrink-0 border-t border-gray-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3">
-                        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                    {/* Telegram Style Chat Input Footer with Active Reply Banner */}
+                    <div className="shrink-0 border-t border-gray-200 bg-white relative">
+                        {/* Active Reply Banner */}
+                        {replyingTo && (
+                            <div className="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/90 px-4 py-2 text-xs animate-in slide-in-from-bottom-2 duration-150">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Reply className="h-4 w-4 text-emerald-600 shrink-0" />
+                                    <div className="min-w-0">
+                                        <span className="font-bold text-emerald-950">
+                                            Đang trả lời {replyingTo.sender_name}
+                                            :
+                                        </span>{' '}
+                                        <span className="text-gray-600 truncate inline-block max-w-xs sm:max-w-md align-bottom">
+                                            {replyingTo.message}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setReplyingTo(null)}
+                                    title="Hủy trả lời"
+                                    className="rounded-full p-1 text-gray-400 hover:bg-emerald-100 hover:text-gray-700 transition-colors"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Emoji Picker Popup */}
+                        <ChatEmojiPicker
+                            isOpen={showEmojiPicker}
+                            onClose={() => setShowEmojiPicker(false)}
+                            onSelectEmoji={handleSelectEmoji}
+                        />
+
+                        {/* Input Controls */}
+                        <form
+                            onSubmit={handleSendMessage}
+                            className="flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3"
+                        >
+                            {/* Emoji Picker Toggle Button */}
                             <button
                                 type="button"
-                                title="Biểu tượng cảm xúc"
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                                onClick={() =>
+                                    setShowEmojiPicker((prev) => !prev)
+                                }
+                                title="Bảng chọn biểu tượng cảm xúc (Emoji)"
+                                className={`p-2 rounded-full transition-colors shrink-0 cursor-pointer ${
+                                    showEmojiPicker
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : 'text-gray-500 hover:text-emerald-700 hover:bg-gray-100'
+                                }`}
                             >
                                 <Smile className="h-5 w-5" />
                             </button>
 
                             <input
+                                ref={inputRef}
                                 type="text"
-                                placeholder="Viết tin nhắn..."
+                                placeholder={
+                                    replyingTo
+                                        ? `Trả lời ${replyingTo.sender_name}...`
+                                        : 'Viết tin nhắn...'
+                                }
                                 value={inputMessage}
-                                onChange={(e) => setInputMessage(e.target.value)}
+                                onChange={(e) =>
+                                    setInputMessage(e.target.value)
+                                }
                                 disabled={isSending}
                                 className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
                             />
@@ -688,7 +1029,7 @@ export default function ClassChatPage({
                             <button
                                 type="submit"
                                 disabled={isSending || !inputMessage.trim()}
-                                className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0"
+                                className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0 cursor-pointer"
                                 title="Gửi tin nhắn"
                             >
                                 <Send className="h-4 w-4 ml-0.5" />
@@ -712,7 +1053,8 @@ export default function ClassChatPage({
                                         Chọn Hình Nền Trò Chuyện
                                     </h3>
                                     <p className="text-xs text-gray-500">
-                                        Tùy chỉnh màu sắc & hoa văn doodle Telegram theo phong cách yêu thích
+                                        Tùy chỉnh màu sắc & hoa văn doodle
+                                        Telegram theo phong cách yêu thích
                                     </p>
                                 </div>
                             </div>
@@ -733,15 +1075,20 @@ export default function ClassChatPage({
                                     <button
                                         key={theme.id}
                                         type="button"
-                                        onClick={() => handleSelectTheme(theme.id)}
-                                        className={`group relative flex flex-col items-center rounded-xl p-2.5 text-left border-2 transition-all cursor-pointer ${isSelected
-                                            ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
-                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-2xs'
-                                            }`}
+                                        onClick={() =>
+                                            handleSelectTheme(theme.id)
+                                        }
+                                        className={`group relative flex flex-col items-center rounded-xl p-2.5 text-left border-2 transition-all cursor-pointer ${
+                                            isSelected
+                                                ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
+                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-2xs'
+                                        }`}
                                     >
                                         {/* Preview Wallpaper Tile with Doodle Pattern */}
                                         <div
-                                            style={getTelegramWallpaperStyle(theme)}
+                                            style={getTelegramWallpaperStyle(
+                                                theme
+                                            )}
                                             className="relative h-24 w-full rounded-lg shadow-inner overflow-hidden border border-black/10 flex items-center justify-center transition-transform group-hover:scale-102"
                                         >
                                             <div className="rounded-md bg-white/90 px-2 py-0.5 text-2xs font-bold text-gray-800 shadow-2xs backdrop-blur-xs">
@@ -764,7 +1111,8 @@ export default function ClassChatPage({
 
                         <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-3">
                             <span className="text-2xs text-gray-400">
-                                Lựa chọn hình nền sẽ được lưu tự động trên trình duyệt này.
+                                Lựa chọn hình nền sẽ được lưu tự động trên trình
+                                duyệt này.
                             </span>
                             <button
                                 type="button"

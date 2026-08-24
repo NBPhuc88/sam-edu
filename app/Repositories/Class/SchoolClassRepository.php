@@ -2,12 +2,17 @@
 
 namespace App\Repositories\Class;
 
+use App\Models\ClassExam;
 use App\Models\ClassSchedule;
+use App\Models\ClassSession;
 use App\Models\ClassStudent;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SchoolClassRepository implements SchoolClassRepositoryInterface
 {
@@ -179,27 +184,27 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id) {
             $schoolClass = SchoolClass::findOrFail($id);
 
             // 1. Ngắt liên kết học sinh
-            \App\Models\ClassStudent::where('class_id', $id)->delete();
+            ClassStudent::where('class_id', $id)->delete();
 
             // 2. Xóa các bài thi đã gán cho lớp
-            \App\Models\ClassExam::where('class_id', $id)->delete();
+            ClassExam::where('class_id', $id)->delete();
 
             // 3. Xóa ca học & lịch học của các môn trong lớp
-            \App\Models\ClassSession::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
-            \App\Models\ClassSchedule::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
+            ClassSession::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
+            ClassSchedule::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
 
             // 4. Xóa phân công môn học của lớp
-            \App\Models\ClassSubject::where('class_id', $id)->delete();
+            ClassSubject::where('class_id', $id)->delete();
 
             // 5. Xóa học phí của lớp
-            \App\Models\StudentTuition::where('class_id', $id)->delete();
+            StudentTuition::where('class_id', $id)->delete();
 
             // 6. Xóa tin nhắn nhóm chat
-            \Illuminate\Support\Facades\DB::table('class_chat_messages')->where('class_id', $id)->delete();
+            DB::table('class_chat_messages')->where('class_id', $id)->delete();
 
             return (bool) $schoolClass->delete();
         });
@@ -382,14 +387,14 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
-     * @param  int                                                                     $classId
-     * @param  string                                                                  $startDate (Y-m-d)
-     * @param  string                                                                  $endDate   (Y-m-d)
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     * @param  int                           $classId
+     * @param  string                        $startDate (Y-m-d)
+     * @param  string                        $endDate   (Y-m-d)
+     * @return Collection<int, ClassSession>
      */
-    public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    public function getClassSessionsBetweenDates(int $classId, string $startDate, string $endDate): Collection
     {
-        return \App\Models\ClassSession::query()
+        return ClassSession::query()
             ->select(
                 'id',
                 'class_subject_id',
