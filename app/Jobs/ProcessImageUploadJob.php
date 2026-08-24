@@ -68,8 +68,8 @@ class ProcessImageUploadJob implements ShouldQueue
         $destinationPath = trim($this->destinationFolder, '/') . '/' . $this->fileName;
 
         // Ensure root directory of disk exists
-        $targetStorage = Storage::disk($this->targetDisk);
-        $rootPath      = config("filesystems.disks.{$this->targetDisk}.root", '/home/phuc/sam');
+        $targetStorage = Storage::disk('asset');
+        $rootPath      = config('filesystems.disks.asset.root', public_path('asset'));
 
         if (! is_dir($rootPath)) {
             @mkdir($rootPath, 0777, true);

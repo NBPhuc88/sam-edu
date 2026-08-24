@@ -41,7 +41,7 @@ export const unregisterPendingUpload = (previewUrl: string) => {
     if (pendingUploadsMap.has(previewUrl)) {
         try {
             URL.revokeObjectURL(previewUrl);
-        } catch (_) {}
+        } catch (_) { }
         pendingUploadsMap.delete(previewUrl);
     }
 };
@@ -63,33 +63,34 @@ export const uploadPendingMediaInObject = async <T>(
     if (!data) return data;
 
     const jsonStr = JSON.stringify(data);
-    const blobUrls = new Set<string>();
-    const regex = /blob:[^"'\s]+/g;
-    let match;
-    while ((match = regex.exec(jsonStr)) !== null) {
-        blobUrls.add(match[0]);
+
+    // Find all registered pending uploads that are referenced anywhere inside the data structure
+    const activePendingList: PendingUploadMeta[] = [];
+    for (const [previewUrl, item] of pendingUploadsMap.entries()) {
+        if (jsonStr.includes(previewUrl)) {
+            activePendingList.push(item);
+        }
     }
 
-    if (blobUrls.size === 0) {
+    if (activePendingList.length === 0) {
         return data;
     }
 
     const urlReplacements = new Map<string, string>();
-    const total = blobUrls.size;
+    const total = activePendingList.length;
     let completed = 0;
 
-    for (const previewUrl of blobUrls) {
-        const item = pendingUploadsMap.get(previewUrl);
-        if (item) {
-            const formData = new FormData();
-            formData.append('file', item.file);
-            formData.append('object_type', item.objectType);
-            formData.append('object_id', String(item.objectId || 'general'));
-            if (item.subId) {
-                formData.append('sub_id', item.subId);
-            }
-            formData.append('folder', item.folder || 'exams/media');
+    for (const item of activePendingList) {
+        const formData = new FormData();
+        formData.append('file', item.file);
+        formData.append('object_type', item.objectType);
+        formData.append('object_id', String(item.objectId || 'general'));
+        if (item.subId) {
+            formData.append('sub_id', item.subId);
+        }
+        formData.append('folder', item.folder || 'exams/media');
 
+        try {
             const res = await apiClient.post('/api/uploads/media', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -97,13 +98,17 @@ export const uploadPendingMediaInObject = async <T>(
             });
 
             if (res.data?.url) {
-                urlReplacements.set(previewUrl, res.data.url);
+                urlReplacements.set(item.previewUrl, res.data.url);
                 try {
-                    URL.revokeObjectURL(previewUrl);
-                } catch (_) {}
-                pendingUploadsMap.delete(previewUrl);
+                    URL.revokeObjectURL(item.previewUrl);
+                } catch (_) { }
+                pendingUploadsMap.delete(item.previewUrl);
             }
+        } catch (err) {
+            console.error('[uploadPendingMediaInObject] Failed to upload pending file:', item, err);
+            throw err;
         }
+
         completed++;
         onProgress?.(completed, total);
     }

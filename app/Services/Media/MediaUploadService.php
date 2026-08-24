@@ -51,28 +51,23 @@ class MediaUploadService implements MediaUploadServiceInterface
 
         $destinationRelativePath = trim($targetFolder, '/') . '/' . $fileName;
 
-        // Ensure root directory of disk 'sam' exists on the filesystem
-        $samRoot = config('filesystems.disks.sam.root', '/home/phuc/sam');
-
-        if (! is_dir($samRoot)) {
-            @mkdir($samRoot, 0777, true);
-        }
-
-        $destDir = dirname($samRoot . '/' . $destinationRelativePath);
+        // Ensure public/asset/{folder} directory exists
+        $assetRoot = public_path('asset');
+        $destDir   = $assetRoot . '/' . trim($targetFolder, '/');
 
         if (! is_dir($destDir)) {
             @mkdir($destDir, 0777, true);
         }
 
-        // Store file directly to 'sam' disk
-        $file->storeAs($targetFolder, $fileName, 'sam');
+        // Store file directly to public/asset
+        $file->move($destDir, $fileName);
 
-        // URL generator referencing disk 'sam' -> /sam-storage/...
-        $samUrl = Storage::disk('sam')->url($destinationRelativePath);
+        // URL generator referencing /asset/...
+        $assetUrl = '/asset/' . $destinationRelativePath;
 
         return [
             'success'   => true,
-            'url'       => $samUrl,
+            'url'       => $assetUrl,
             'file_name' => $fileName,
             'file_path' => $destinationRelativePath,
         ];
@@ -85,6 +80,7 @@ class MediaUploadService implements MediaUploadServiceInterface
     {
         $samDisk    = Storage::disk('sam');
         $publicDisk = Storage::disk('public');
+        $assetDisk  = Storage::disk('asset');
 
         // 1. Xóa toàn bộ thư mục exams/{examId}
         $examFolder = "exams/{$examId}";
@@ -95,6 +91,10 @@ class MediaUploadService implements MediaUploadServiceInterface
 
         if ($publicDisk->exists($examFolder)) {
             $publicDisk->deleteDirectory($examFolder);
+        }
+
+        if ($assetDisk->exists($examFolder)) {
+            $assetDisk->deleteDirectory($examFolder);
         }
 
         // 2. Xóa các file media riêng lẻ được truyền vào (nếu có lưu ở ngoài folder exams/{examId})
@@ -113,6 +113,10 @@ class MediaUploadService implements MediaUploadServiceInterface
                 if ($publicDisk->exists($cleanPath)) {
                     $publicDisk->delete($cleanPath);
                 }
+
+                if ($assetDisk->exists($cleanPath)) {
+                    $assetDisk->delete($cleanPath);
+                }
             }
         }
     }
@@ -123,12 +127,14 @@ class MediaUploadService implements MediaUploadServiceInterface
      */
     protected function normalizeStoragePath(string $path): string
     {
-        // Loại bỏ domain nếu là full URL (ví dụ: http://localhost/sam-storage/exams/1/abc.png)
+        // Loại bỏ domain nếu là full URL (ví dụ: http://localhost/asset/exams/1/abc.png)
         $parsed = parse_url($path, PHP_URL_PATH);
         $path   = $parsed ? ltrim($parsed, '/') : ltrim($path, '/');
 
-        // Loại bỏ tiền tố sam-storage/ hoặc storage/
-        if (str_starts_with($path, 'sam-storage/')) {
+        // Loại bỏ tiền tố asset/, sam-storage/ hoặc storage/
+        if (str_starts_with($path, 'asset/')) {
+            $path = substr($path, strlen('asset/'));
+        } elseif (str_starts_with($path, 'sam-storage/')) {
             $path = substr($path, strlen('sam-storage/'));
         } elseif (str_starts_with($path, 'storage/')) {
             $path = substr($path, strlen('storage/'));

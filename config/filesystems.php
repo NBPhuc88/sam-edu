@@ -49,8 +49,17 @@ return [
 
         'sam' => [
             'driver'     => 'local',
-            'root'       => env('SAM_STORAGE_PATH', '/home/phuc/sam'),
-            'url'        => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/sam-storage',
+            'root'       => public_path('asset'),
+            'url'        => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/asset',
+            'visibility' => 'public',
+            'throw'      => false,
+            'report'     => false,
+        ],
+
+        'asset' => [
+            'driver'     => 'local',
+            'root'       => public_path('asset'),
+            'url'        => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/asset',
             'visibility' => 'public',
             'throw'      => false,
             'report'     => false,
@@ -84,7 +93,7 @@ return [
 
     'links' => [
         public_path('storage')     => storage_path('app/public'),
-        public_path('sam-storage') => env('SAM_STORAGE_PATH', '/home/phuc/sam'),
+        public_path('sam-storage') => env('SAM_STORAGE_PATH', storage_path('app/sam')),
     ],
 
 ];
