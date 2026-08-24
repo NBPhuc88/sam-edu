@@ -24,6 +24,7 @@ import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
+import { formatDate } from '@/lib/date';
 interface Center {
     id: number;
     name: string;
@@ -358,8 +359,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                             <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
                                     <th className="px-6 py-4">Giáo Viên</th>
-                                    <th className="px-6 py-4">Tài Khoản & Liên Hệ</th>
-                                    <th className="px-6 py-4">Trung Tâm</th>
+                                    <th className="px-6 py-4">Số Điện Thoại</th>
                                     <th className="px-6 py-4">Chuyên Môn</th>
                                     <th className="px-6 py-4">Ngày Vào Làm</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
@@ -393,31 +393,8 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-4">
-                                                <div className="font-mono font-medium text-gray-800">
-                                                    @{teacher.username}
-                                                </div>
-                                                <div className="mt-0.5 text-xs text-gray-500 max-w-[200px] truncate">
-                                                    {teacher.phone && <span>{teacher.phone}</span>}
-                                                    {teacher.email && (
-                                                        <span>{teacher.phone ? ' • ' : ''}{teacher.email}</span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="max-w-[180px]">
-                                                    <TruncatedText
-                                                        text={teacher.center?.name || 'N/A'}
-                                                        maxLines={1}
-                                                        className="font-semibold text-gray-800"
-                                                    />
-                                                    {teacher.center?.code && (
-                                                        <div className="font-mono text-xs text-gray-400">
-                                                            {teacher.center.code}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            <td className="px-6 py-4 font-mono text-gray-700">
+                                                {teacher.phone || <span className="text-gray-400 italic font-sans text-xs">---</span>}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -433,7 +410,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                             </td>
 
                                             <td className="px-6 py-4 font-mono text-gray-600">
-                                                {teacher.hire_date || '-'}
+                                                {teacher.hire_date ? formatDate(teacher.hire_date, '/') : '-'}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -496,7 +473,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={can('teachers.edit') || can('teachers.delete') ? 7 : 6}
+                                            colSpan={can('teachers.show') || can('teachers.edit') || can('teachers.delete') ? 6 : 5}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">

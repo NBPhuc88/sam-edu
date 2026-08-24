@@ -28,6 +28,7 @@ import BulkAssignClassModal from './components/BulkAssignClassModal';
 
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
+import { formatDate } from '@/lib/date';
 interface Center {
     id: number;
     name: string;
@@ -510,14 +511,8 @@ return;
                                         />
                                     </th>
                                     <th className="px-6 py-4">Học Sinh</th>
-                                    <th className="px-6 py-4">Tài Khoản & Liên Hệ</th>
-                                    <th className="px-6 py-4">Phụ Huynh</th>
-                                    {isSuperAdmin ? (
-                                        <th className="px-6 py-4">Trung Tâm</th>
-                                    ) : (
-                                        <th className="px-6 py-4">Lớp Học</th>
-                                    )}
-                                    <th className="px-6 py-4">Ngày Nhập Học</th>
+                                    <th className="px-6 py-4">Số Điện Thoại</th>
+                                    <th className="px-6 py-4">Sinh Nhật</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
                                     {(can('students.show') || can('students.edit') || can('students.delete')) && (
                                         <th className="px-6 py-4 text-right">Thao Tác</th>
@@ -556,7 +551,7 @@ return;
                                                         <div className="font-mono text-xs text-gray-400">
                                                             Mã: {student.student_code} • {getGenderLabel(student.gender)}
                                                         </div>
-                                                        {isSuperAdmin && student.classes && student.classes.length > 0 && (
+                                                        {student.classes && student.classes.length > 0 && (
                                                             <div className="mt-1 flex flex-wrap gap-1">
                                                                 {student.classes.map((cls) => (
                                                                     <Tooltip
@@ -576,79 +571,18 @@ return;
                                                 </div>
                                             </td>
 
-                                            <td className="px-6 py-4">
-                                                <div className="font-mono font-medium text-gray-800">
-                                                    {student.username ? (
-                                                        `@${student.username}`
-                                                    ) : (
-                                                        <span className="text-xs italic text-gray-400">Chưa cấp tài khoản</span>
-                                                    )}
-                                                </div>
-                                                <div className="mt-0.5 text-xs text-gray-500 max-w-[200px] truncate">
-                                                    {student.phone && <span>{student.phone}</span>}
-                                                    {student.email && (
-                                                        <span>{student.phone ? ' • ' : ''}{student.email}</span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                {student.parent_name ? (
-                                                    <div className="max-w-[180px]">
-                                                        <TruncatedText
-                                                            text={`${student.parent_name}${student.parent_relationship ? ` (${student.parent_relationship})` : ''}`}
-                                                            maxLines={1}
-                                                            className="font-semibold text-gray-800"
-                                                        />
-                                                        {student.parent_phone && (
-                                                            <div className="font-mono text-xs text-gray-500">
-                                                                {student.parent_phone}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                            <td className="px-6 py-4 font-mono text-gray-700">
+                                                {student.phone || (student.parent_phone ? (
+                                                    <span className="text-gray-500" title={`SĐT Phụ huynh: ${student.parent_phone}`}>
+                                                        {student.parent_phone} <span className="text-[10px] text-gray-400 font-sans">(PH)</span>
+                                                    </span>
                                                 ) : (
-                                                    <span className="italic text-gray-400">Chưa có thông tin</span>
-                                                )}
+                                                    <span className="text-gray-400 italic font-sans text-xs">---</span>
+                                                ))}
                                             </td>
 
-                                            {isSuperAdmin ? (
-                                                <td className="px-6 py-4">
-                                                    <div className="max-w-[180px]">
-                                                        <TruncatedText
-                                                            text={student.center?.name || 'N/A'}
-                                                            maxLines={1}
-                                                            className="font-semibold text-gray-800"
-                                                        />
-                                                        {student.center?.code && (
-                                                            <div className="font-mono text-xs text-gray-400">
-                                                                {student.center.code}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            ) : (
-                                                <td className="px-6 py-4">
-                                                    {student.classes && student.classes.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1 max-w-[220px]">
-                                                            {student.classes.map((cls) => (
-                                                                <Tooltip
-                                                                    key={cls.id}
-                                                                    content={`Lớp: ${cls.name} (${cls.code})`}
-                                                                >
-                                                                    <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 max-w-[160px] truncate">
-                                                                        {cls.name}
-                                                                    </span>
-                                                                </Tooltip>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-400 italic">Chưa xếp lớp</span>
-                                                    )}
-                                                </td>
-                                            )}
-
-                                            <td className="px-6 py-4 font-mono text-gray-600">
-                                                {student.admission_date || '-'}
+                                            <td className="px-6 py-4 font-mono text-gray-700">
+                                                {student.date_of_birth ? formatDate(student.date_of_birth, '/') : <span className="text-gray-400 italic font-sans text-xs">---</span>}
                                             </td>
 
                                             <td className="px-6 py-4">
@@ -713,7 +647,7 @@ return;
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={can('students.show') || can('students.edit') || can('students.delete') ? 7 : 6}
+                                            colSpan={can('students.show') || can('students.edit') || can('students.delete') ? 6 : 5}
                                             className="px-6 py-12 text-center text-sm text-gray-500"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-2">
