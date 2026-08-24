@@ -379,6 +379,10 @@ return;
                                 <span className="text-gray-500">Tiêu đề khoản thu:</span>
                                 <span className="font-medium text-gray-900">{tuition.title || 'Học phí lớp học'}</span>
                             </div>
+                            <div className="flex justify-between border-b border-gray-100 pb-2.5">
+                                <span className="text-gray-500">Người tạo hồ sơ:</span>
+                                <span className="font-medium text-gray-900">{tuition.creator?.full_name || tuition.creator?.username || '—'}</span>
+                            </div>
                             {tuition.note && (
                                 <div className="pt-1">
                                     <span className="text-gray-500">Ghi chú:</span>
@@ -426,6 +430,7 @@ return;
                                         <th className="px-4 py-3.5">Số Tiền</th>
                                         <th className="px-4 py-3.5">Hình Thức</th>
                                         <th className="px-4 py-3.5">Mã Phiếu / GD</th>
+                                        <th className="px-4 py-3.5">Admin Thu Tiền</th>
                                         <th className="px-4 py-3.5">Ghi Chú</th>
                                         {(can('tuitions.edit') || can('tuitions.delete')) && (
                                             <th className="px-4 py-3.5 text-right">Thao Tác</th>
@@ -452,6 +457,11 @@ return;
                                                 </td>
                                                 <td className="px-4 py-3.5 font-mono text-xs text-gray-600">
                                                     {p.transaction_code || '-'}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs font-medium text-gray-800">
+                                                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-800 border border-slate-200">
+                                                        {p.receiver?.full_name || p.receiver?.username || '—'}
+                                                    </span>
                                                 </td>
                                                 <td className="px-4 py-3.5 text-gray-500 text-xs">
                                                     {p.note || '-'}

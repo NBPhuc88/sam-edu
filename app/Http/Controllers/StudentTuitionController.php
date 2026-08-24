@@ -143,10 +143,10 @@ class StudentTuitionController extends Controller
         $status   = $request->input('status');
         $month    = $request->input('month');
 
-        $fileName = 'danh_sach_hoc_phi_' . date('Y-m-d_H-i-s') . '.csv';
+        $fileName = 'danh_sach_hoc_phi_' . date('Y-m-d_H-i-s') . '.xls';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
@@ -157,19 +157,15 @@ class StudentTuitionController extends Controller
                 return;
             }
 
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            $rows = $this->studentTuitionService->exportTuitionsCsv(
+            foreach ($this->studentTuitionService->exportTuitionsHtml(
                 is_string($search) ? $search : null,
                 $centerId,
                 $classId,
                 is_string($status) && $status !== 'all' ? $status : null,
                 is_string($month) && $month !== 'all' ? $month : null,
                 $admin
-            );
-
-            foreach ($rows as $row) {
-                fputcsv($handle, $row);
+            ) as $chunk) {
+                fwrite($handle, $chunk);
             }
 
             fclose($handle);

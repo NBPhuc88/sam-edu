@@ -477,6 +477,200 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
+    /**
+     * @param  ?string    $search
+     * @param  ?int       $centerId
+     * @param  ?int       $classId
+     * @param  ?string    $status
+     * @param  ?string    $month
+     * @param  ?Admin     $admin
+     * @return \Generator
+     */
+    public function exportTuitionsHtml(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null,
+        ?Admin $admin = null
+    ): \Generator {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($allowedCenterIds !== null) {
+            if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                $centerIds = []; // No access
+            } elseif ($centerId !== null) {
+                $centerIds = [$centerId];
+            } else {
+                $centerIds = $allowedCenterIds;
+            }
+        } else {
+            $centerIds = $centerId;
+        }
+
+        yield '<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />' . "\n";
+        yield '<style>
+            table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px; }
+            th { background-color: #4F81BD; color: #FFFFFF; font-weight: bold; border: 1px solid #385D8A; padding: 8px; text-align: center; vertical-align: middle; }
+            td { border: 1px solid #D9D9D9; padding: 6px 10px; vertical-align: middle; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .text-format { mso-number-format:"\@"; }
+            .number-format { mso-number-format:"\#\,\#\#0"; }
+            .status-completed { color: #047857; font-weight: bold; }
+            .status-partial { color: #b45309; font-weight: bold; }
+            .status-pending { color: #4b5563; }
+            .status-overdue { color: #b91c1c; font-weight: bold; }
+        </style></head><body>' . "\n";
+
+        yield '<table><thead><tr>' . "\n";
+        yield '<th>STT</th>'
+            . '<th>Mã Học Sinh</th>'
+            . '<th>Họ Tên Học Sinh</th>'
+            . '<th>Số Điện Thoại</th>'
+            . '<th>Lớp Học</th>'
+            . '<th>Trung Tâm</th>'
+            . '<th>Tiêu Đề Khoản Thu</th>'
+            . '<th>Tổng Học Phí (VND)</th>'
+            . '<th>Đã Đóng (VND)</th>'
+            . '<th>Còn Nợ (VND)</th>'
+            . '<th>Trạng Thái</th>'
+            . '<th>Hạn Đóng</th>'
+            . '<th>Đợt Thu</th>'
+            . '<th>Số Tiền Đợt (VND)</th>'
+            . '<th>Ngày Thu</th>'
+            . '<th>Phương Thức</th>'
+            . '<th>Mã Giao Dịch</th>'
+            . '<th>Admin Thu Tiền</th>'
+            . '<th>Admin Tạo Khoản Thu</th>' . "\n";
+        yield '</tr></thead><tbody>' . "\n";
+
+        $tuitions = $this->studentTuitionRepository->getTuitionsForExport(
+            $search,
+            $centerIds,
+            $classId,
+            $status,
+            $month
+        );
+
+        $stt = 1;
+
+        foreach ($tuitions as $item) {
+            $statusLabel = match ($item->status) {
+                'completed' => 'Đã hoàn thành',
+                'partial'   => 'Còn nợ (Đóng dở)',
+                'overdue'   => 'Quá hạn',
+                default     => 'Chưa đóng',
+            };
+
+            $statusClass = match ($item->status) {
+                'completed' => 'status-completed',
+                'partial'   => 'status-partial',
+                'overdue'   => 'status-overdue',
+                default     => 'status-pending',
+            };
+
+            // Lấy danh sách lớp học của học sinh (nối bằng dấu phẩy)
+            $classNames = '';
+
+            if ($item->student && $item->student->classes->isNotEmpty()) {
+                $classNames = $item->student->classes->pluck('name')->implode(', ');
+            } elseif ($item->schoolClass) {
+                $classNames = $item->schoolClass->name;
+            }
+
+            $creatorName              = htmlspecialchars($item->creator?->full_name ?? ($item->creator?->username ?? '—'), ENT_QUOTES, 'UTF-8');
+            $studentCode              = htmlspecialchars($item->student?->student_code ?? '', ENT_QUOTES, 'UTF-8');
+            $studentName              = htmlspecialchars($item->student?->full_name ?? '', ENT_QUOTES, 'UTF-8');
+            $studentPhone             = htmlspecialchars($item->student?->phone ?? '', ENT_QUOTES, 'UTF-8');
+            $classNameEsc             = htmlspecialchars($classNames, ENT_QUOTES, 'UTF-8');
+            $centerName               = htmlspecialchars($item->center?->name ?? '', ENT_QUOTES, 'UTF-8');
+            $titleEsc                 = htmlspecialchars($item->title ?? '', ENT_QUOTES, 'UTF-8');
+            $dueDateFormatted         = $item->due_date ? Carbon::parse($item->due_date)->format('d/m/Y') : '—';
+            $totalAmountFormatted     = number_format((float) $item->total_amount, 0, ',', '.');
+            $paidAmountFormatted      = number_format((float) $item->paid_amount, 0, ',', '.');
+            $remainingAmountFormatted = number_format((float) $item->remaining_amount, 0, ',', '.');
+
+            $payments = $item->payments;
+
+            if ($payments->isNotEmpty()) {
+                foreach ($payments as $idx => $payment) {
+                    $installmentLabel       = 'Đợt ' . ($idx + 1);
+                    $paymentAmountFormatted = number_format((float) $payment->amount, 0, ',', '.');
+                    $paymentDateFormatted   = $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d/m/Y') : '—';
+                    $paymentMethodLabel     = match ($payment->payment_method) {
+                        'cash'          => 'Tiền mặt',
+                        'bank_transfer' => 'Chuyển khoản',
+                        'momo'          => 'Ví MoMo',
+                        'zalopay'       => 'Ví ZaloPay',
+                        'credit_card'   => 'Thẻ tín dụng',
+                        default         => $payment->payment_method ?? 'Khác',
+                    };
+                    $transactionCode = htmlspecialchars($payment->transaction_code ?? '—', ENT_QUOTES, 'UTF-8');
+                    $receiverName    = htmlspecialchars($payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—'), ENT_QUOTES, 'UTF-8');
+
+                    yield '<tr>'
+                        . "<td class=\"text-center\">{$stt}</td>"
+                        . "<td class=\"text-center text-format\">{$studentCode}</td>"
+                        . "<td>{$studentName}</td>"
+                        . "<td class=\"text-center text-format\">{$studentPhone}</td>"
+                        . "<td>{$classNameEsc}</td>"
+                        . "<td>{$centerName}</td>"
+                        . "<td>{$titleEsc}</td>"
+                        . "<td class=\"text-right number-format\">{$totalAmountFormatted}</td>"
+                        . "<td class=\"text-right number-format\">{$paidAmountFormatted}</td>"
+                        . "<td class=\"text-right number-format\">{$remainingAmountFormatted}</td>"
+                        . "<td class=\"text-center {$statusClass}\">{$statusLabel}</td>"
+                        . "<td class=\"text-center\">{$dueDateFormatted}</td>"
+                        . "<td class=\"text-center font-bold\">{$installmentLabel}</td>"
+                        . "<td class=\"text-right number-format font-bold\">{$paymentAmountFormatted}</td>"
+                        . "<td class=\"text-center\">{$paymentDateFormatted}</td>"
+                        . "<td class=\"text-center\">{$paymentMethodLabel}</td>"
+                        . "<td class=\"text-center text-format\">{$transactionCode}</td>"
+                        . "<td>{$receiverName}</td>"
+                        . "<td>{$creatorName}</td>"
+                        . "</tr>\n";
+
+                    $stt++;
+                }
+            } else {
+                yield '<tr>'
+                    . "<td class=\"text-center\">{$stt}</td>"
+                    . "<td class=\"text-center text-format\">{$studentCode}</td>"
+                    . "<td>{$studentName}</td>"
+                    . "<td class=\"text-center text-format\">{$studentPhone}</td>"
+                    . "<td>{$classNameEsc}</td>"
+                    . "<td>{$centerName}</td>"
+                    . "<td>{$titleEsc}</td>"
+                    . "<td class=\"text-right number-format\">{$totalAmountFormatted}</td>"
+                    . "<td class=\"text-right number-format\">{$paidAmountFormatted}</td>"
+                    . "<td class=\"text-right number-format\">{$remainingAmountFormatted}</td>"
+                    . "<td class=\"text-center {$statusClass}\">{$statusLabel}</td>"
+                    . "<td class=\"text-center\">{$dueDateFormatted}</td>"
+                    . '<td class="text-center">Chưa đóng</td>'
+                    . '<td class="text-right number-format">0</td>'
+                    . '<td class="text-center">—</td>'
+                    . '<td class="text-center">—</td>'
+                    . '<td class="text-center">—</td>'
+                    . '<td class="text-center">—</td>'
+                    . "<td>{$creatorName}</td>"
+                    . "</tr>\n";
+
+                $stt++;
+            }
+        }
+
+        yield "</tbody></table></body></html>\n";
+    }
+
+    /**
+     * @param  ?string    $search
+     * @param  ?int       $centerId
+     * @param  ?int       $classId
+     * @param  ?string    $status
+     * @param  ?string    $month
+     * @param  ?Admin     $admin
+     * @return \Generator
      */
     public function exportTuitionsCsv(
         ?string $search = null,
@@ -513,8 +707,13 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'Còn Nợ (VND)',
             'Trạng Thái',
             'Hạn Đóng',
-            'Số Đợt Thu',
-            'Ngày Tạo',
+            'Đợt Thu',
+            'Số Tiền Đợt (VND)',
+            'Ngày Thu',
+            'Phương Thức Thanh Toán',
+            'Mã Giao Dịch',
+            'Admin Thu Tiền',
+            'Admin Tạo Khoản Thu',
         ];
 
         $tuitions = $this->studentTuitionRepository->getTuitionsForExport(
@@ -535,22 +734,75 @@ class StudentTuitionService implements StudentTuitionServiceInterface
                 default     => 'Chưa đóng',
             };
 
-            yield [
-                $stt++,
-                $item->student?->student_code ?? '',
-                $item->student?->full_name ?? '',
-                $item->student?->phone ?? '',
-                $item->schoolClass?->name ?? '',
-                $item->center?->name ?? '',
-                $item->title ?? '',
-                (float) $item->total_amount,
-                (float) $item->paid_amount,
-                (float) $item->remaining_amount,
-                $statusLabel,
-                $item->due_date ? Carbon::parse($item->due_date)->format('Y-m-d') : '',
-                $item->payments_count ?? 0,
-                $item->created_at ? Carbon::parse($item->created_at)->format('Y-m-d H:i') : '',
-            ];
+            $classNames = '';
+
+            if ($item->student && $item->student->classes->isNotEmpty()) {
+                $classNames = $item->student->classes->pluck('name')->implode(', ');
+            } elseif ($item->schoolClass) {
+                $classNames = $item->schoolClass->name;
+            }
+
+            $creatorName = $item->creator?->full_name ?? ($item->creator?->username ?? '—');
+            $payments    = $item->payments;
+
+            if ($payments->isNotEmpty()) {
+                foreach ($payments as $idx => $payment) {
+                    $installmentLabel   = 'Đợt ' . ($idx + 1);
+                    $paymentMethodLabel = match ($payment->payment_method) {
+                        'cash'          => 'Tiền mặt',
+                        'bank_transfer' => 'Chuyển khoản',
+                        'momo'          => 'Ví MoMo',
+                        'zalopay'       => 'Ví ZaloPay',
+                        'credit_card'   => 'Thẻ tín dụng',
+                        default         => $payment->payment_method ?? 'Khác',
+                    };
+                    $receiverName = $payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—');
+
+                    yield [
+                        $stt++,
+                        $item->student?->student_code ?? '',
+                        $item->student?->full_name ?? '',
+                        $item->student?->phone ?? '',
+                        $classNames,
+                        $item->center?->name ?? '',
+                        $item->title ?? '',
+                        (float) $item->total_amount,
+                        (float) $item->paid_amount,
+                        (float) $item->remaining_amount,
+                        $statusLabel,
+                        $item->due_date ? Carbon::parse($item->due_date)->format('Y-m-d') : '',
+                        $installmentLabel,
+                        (float) $payment->amount,
+                        $payment->payment_date ? Carbon::parse($payment->payment_date)->format('Y-m-d') : '',
+                        $paymentMethodLabel,
+                        $payment->transaction_code ?? '—',
+                        $receiverName,
+                        $creatorName,
+                    ];
+                }
+            } else {
+                yield [
+                    $stt++,
+                    $item->student?->student_code ?? '',
+                    $item->student?->full_name ?? '',
+                    $item->student?->phone ?? '',
+                    $classNames,
+                    $item->center?->name ?? '',
+                    $item->title ?? '',
+                    (float) $item->total_amount,
+                    (float) $item->paid_amount,
+                    (float) $item->remaining_amount,
+                    $statusLabel,
+                    $item->due_date ? Carbon::parse($item->due_date)->format('Y-m-d') : '',
+                    'Chưa đóng',
+                    0,
+                    '—',
+                    '—',
+                    '—',
+                    '—',
+                    $creatorName,
+                ];
+            }
         }
     }
 }

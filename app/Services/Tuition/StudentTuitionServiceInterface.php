@@ -127,6 +127,24 @@ interface StudentTuitionServiceInterface
      * @param  ?Admin     $admin
      * @return \Generator
      */
+    public function exportTuitionsHtml(
+        ?string $search = null,
+        ?int $centerId = null,
+        ?int $classId = null,
+        ?string $status = null,
+        ?string $month = null,
+        ?Admin $admin = null
+    ): \Generator;
+
+    /**
+     * @param  ?string    $search
+     * @param  ?int       $centerId
+     * @param  ?int       $classId
+     * @param  ?string    $status
+     * @param  ?string    $month
+     * @param  ?Admin     $admin
+     * @return \Generator
+     */
     public function exportTuitionsCsv(
         ?string $search = null,
         ?int $centerId = null,

@@ -41,6 +41,11 @@ interface StudentTuitionItem {
     due_date: string | null;
     note: string | null;
     payments_count: number;
+    creator?: {
+        id: number;
+        full_name: string;
+        username: string;
+    };
     student?: {
         id: number;
         full_name: string;
@@ -505,6 +510,11 @@ export const Index: React.FC<IndexProps> = ({
                                                                 className="text-xs text-gray-500"
                                                             />
                                                         </div>
+                                                        {item.creator && (
+                                                            <div className="mt-0.5 text-[11px] text-gray-400">
+                                                                Tạo bởi: <span className="font-medium text-gray-600">{item.creator.full_name || item.creator.username}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
 

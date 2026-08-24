@@ -47,7 +47,21 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'student:id,full_name,student_code,phone',
                 'schoolClass:id,name,code',
                 'center:id,name,code',
-                'payments:id,student_tuition_id,amount,payment_date,payment_method,transaction_code,received_by,note',
+                'creator:id,username,full_name',
+                'payments' => function ($q) {
+                    $q->select(
+                        'id',
+                        'student_tuition_id',
+                        'received_by',
+                        'amount',
+                        'payment_date',
+                        'payment_method',
+                        'transaction_code',
+                        'note',
+                        'created_at'
+                    )
+                    ->with('receiver:id,username,full_name');
+                },
             ])
             ->withCount('payments');
 
@@ -277,10 +291,29 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
     ): \Illuminate\Database\Eloquent\Collection {
         $query = StudentTuition::query()
             ->with([
-                'student:id,full_name,student_code,phone',
+                'student' => function ($q) {
+                    $q->select('id', 'full_name', 'student_code', 'phone')
+                        ->with('classes:id,name,code');
+                },
                 'schoolClass:id,name,code',
                 'center:id,name,code',
-                'payments:id,student_tuition_id,amount,payment_date,payment_method,transaction_code,received_by,note',
+                'creator:id,username,full_name',
+                'payments' => function ($q) {
+                    $q->select(
+                        'id',
+                        'student_tuition_id',
+                        'received_by',
+                        'amount',
+                        'payment_date',
+                        'payment_method',
+                        'transaction_code',
+                        'note',
+                        'created_at'
+                    )
+                    ->with('receiver:id,username,full_name')
+                    ->orderBy('payment_date', 'asc')
+                    ->orderBy('id', 'asc');
+                },
             ])
             ->withCount('payments');
 
