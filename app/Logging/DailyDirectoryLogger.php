@@ -26,16 +26,17 @@ class DailyDirectoryLogger
         $dir = storage_path("logs/{$folder}/{$yearMonth}");
 
         if (! is_dir($dir)) {
-            @mkdir($dir, 0755, true);
+            @mkdir($dir, 0777, true);
+            @chmod($dir, 0777);
         }
 
-        $logPath = "{$dir}/{$day}.log";
+        $filePermission = $config['permission'] ?? 0666;
 
         $handler = new StreamHandler(
             $logPath,
             $config['level'] ?? Logger::DEBUG,
             true,
-            0664
+            $filePermission
         );
 
         $formatter = new LineFormatter(

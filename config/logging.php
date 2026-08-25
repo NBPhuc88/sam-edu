@@ -59,6 +59,7 @@ return [
             'folder'               => 'laravel',
             'channel_name'         => 'laravel',
             'level'                => env('LOG_LEVEL', 'debug'),
+            'permission'           => 0666,
             'replace_placeholders' => true,
         ],
 
@@ -68,6 +69,7 @@ return [
             'folder'               => 'laravel',
             'channel_name'         => 'laravel',
             'level'                => env('LOG_LEVEL', 'debug'),
+            'permission'           => 0666,
             'replace_placeholders' => true,
         ],
 
@@ -77,6 +79,7 @@ return [
             'folder'               => 'browser',
             'channel_name'         => 'browser',
             'level'                => env('LOG_LEVEL', 'debug'),
+            'permission'           => 0666,
             'replace_placeholders' => true,
         ],
 
@@ -86,6 +89,7 @@ return [
             'folder'               => 'queue',
             'channel_name'         => 'queue',
             'level'                => env('LOG_LEVEL', 'debug'),
+            'permission'           => 0666,
             'replace_placeholders' => true,
         ],
 
