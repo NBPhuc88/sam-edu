@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Http\Requests\Statistic\FilterStatisticRequest;
 use App\Services\Statistic\StatisticServiceInterface;
 use Inertia\Inertia;
@@ -21,7 +22,10 @@ class StatisticController extends Controller
     public function index(FilterStatisticRequest $request): Response
     {
         $selectedCenterId = $request->query('center_id') ? (int) $request->query('center_id') : null;
-        $data             = $this->statisticService->getStatisticData($selectedCenterId);
+        $perPage          = (int) ($request->query('per_page') ?: Constant::DEFAULT_PER_PAGE);
+        $page             = (int) ($request->query('page') ?: Constant::DEFAULT_PAGE);
+
+        $data = $this->statisticService->getStatisticData($selectedCenterId, $perPage, $page);
 
         if (! empty($data['forbidden'])) {
             return Inertia::render('Error', [

@@ -329,6 +329,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             'center_id',
             'name',
             'code',
+            'max_students',
             'status'
         )->whereIn('center_id', $centerIds)
         ->with(['center:id,name,code'])
@@ -339,6 +340,37 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         }
 
         return $query->get();
+    }
+
+    /**
+     * @param  array<int, int>      $centerIds
+     * @param  array<int, int>|null $classIds
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginateClassesWithStudentCount(
+        array $centerIds,
+        ?array $classIds = null,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
+    ): LengthAwarePaginator {
+        $query = SchoolClass::select(
+            'id',
+            'center_id',
+            'name',
+            'code',
+            'max_students',
+            'status'
+        )->whereIn('center_id', $centerIds)
+        ->with(['center:id,name,code'])
+        ->withCount('students');
+
+        if ($classIds !== null) {
+            $query->whereIn('id', $classIds);
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

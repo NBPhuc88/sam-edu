@@ -2,6 +2,7 @@
 
 namespace App\Services\Statistic;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -20,10 +21,15 @@ class StatisticService implements StatisticServiceInterface
 
     /**
      * @param  ?int                 $selectedCenterId
+     * @param  int                  $perPage
+     * @param  int                  $page
      * @return array<string, mixed>
      */
-    public function getStatisticData(?int $selectedCenterId = null): array
-    {
+    public function getStatisticData(
+        ?int $selectedCenterId = null,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
+    ): array {
         $user = null;
         $role = 'admin';
 
@@ -82,9 +88,25 @@ class StatisticService implements StatisticServiceInterface
             $teacherClassIds = $user->classSubjects()->pluck('class_id')->unique()->toArray();
         }
 
-        $classes = $this->schoolClassRepository->getClassesWithStudentCount($activeCenterIds, $teacherClassIds);
+        $allClasses = $this->schoolClassRepository->getClassesWithStudentCount($activeCenterIds, $teacherClassIds);
 
-        $classStats = $classes->map(function (SchoolClass $schoolClass) {
+        $classChartStats = $allClasses->map(function (SchoolClass $schoolClass) {
+            return [
+                'id'            => $schoolClass->id,
+                'code'          => $schoolClass->code,
+                'name'          => $schoolClass->name,
+                'student_count' => (int) $schoolClass->students_count,
+            ];
+        });
+
+        $paginatedClasses = $this->schoolClassRepository->paginateClassesWithStudentCount(
+            $activeCenterIds,
+            $teacherClassIds,
+            $perPage,
+            $page
+        );
+
+        $classStats = $paginatedClasses->through(function (SchoolClass $schoolClass) {
             $studentCount  = (int) $schoolClass->students_count;
             $maxCapacity   = (int) ($schoolClass->max_students ?: 30);
             $occupancyRate = min(100, (int) round(($studentCount / $maxCapacity) * 100));
@@ -109,6 +131,8 @@ class StatisticService implements StatisticServiceInterface
             'allowedCenters'   => $this->centerRepository->getByIds($allowedCenterIds, ['id', 'code', 'name']),
             'centerStats'      => $centerStats,
             'classStats'       => $classStats,
+            'classChartStats'  => $classChartStats,
+            'totalClasses'     => $allClasses->count(),
             'selectedCenterId' => $selectedCenterId ? (int) $selectedCenterId : null,
         ];
     }

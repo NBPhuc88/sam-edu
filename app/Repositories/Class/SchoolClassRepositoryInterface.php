@@ -98,6 +98,20 @@ interface SchoolClassRepositoryInterface
     public function getClassesWithStudentCount(array $centerIds, ?array $classIds = null): \Illuminate\Database\Eloquent\Collection;
 
     /**
+     * @param  array<int, int>      $centerIds
+     * @param  array<int, int>|null $classIds
+     * @param  int                  $perPage
+     * @param  int                  $page
+     * @return LengthAwarePaginator
+     */
+    public function paginateClassesWithStudentCount(
+        array $centerIds,
+        ?array $classIds = null,
+        int $perPage = Constant::DEFAULT_PER_PAGE,
+        int $page = Constant::DEFAULT_PAGE
+    ): LengthAwarePaginator;
+
+    /**
      * @param  array<int>|int|null                                        $centerIds
      * @param  array<string>                                              $columns
      * @return \Illuminate\Database\Eloquent\Collection<int, SchoolClass>

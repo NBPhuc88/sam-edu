@@ -14,6 +14,7 @@ import Badge from '../../components/ui/Badge';
 import Card from '../../components/ui/Card';
 import type { Column } from '../../components/ui/DataTable';
 import DataTable from '../../components/ui/DataTable';
+import Pagination, { PaginationLink } from '../../components/ui/Pagination';
 import AppLayout from '../../layouts/AppLayout';
 
 interface ClassStat {
@@ -25,15 +26,52 @@ interface ClassStat {
     student_count: number;
     max_capacity: number;
     occupancy_rate: number;
-    status: string;
+    status: string | number;
 }
 
-export const Statistics: React.FC<any> = ({
+interface CenterStat {
+    id: number;
+    code: string;
+    name: string;
+    student_count: number;
+    class_count: number;
+    teacher_count: number;
+}
+
+interface PaginatedData<T> {
+    data: T[];
+    current_page: number;
+    first_page_url: string;
+    from: number | null;
+    last_page: number;
+    links: PaginationLink[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number | null;
+    total: number;
+}
+
+interface StatisticsProps {
+    role: string;
+    isSuperAdmin: boolean;
+    allowedCenters?: { id: number; code: string; name: string }[];
+    centerStats: CenterStat[];
+    classStats: PaginatedData<ClassStat>;
+    classChartStats?: { id: number; code: string; name: string; student_count: number }[];
+    totalClasses?: number;
+    selectedCenterId: number | null;
+}
+
+export const Statistics: React.FC<StatisticsProps> = ({
     role,
     isSuperAdmin,
     allowedCenters,
     centerStats,
     classStats,
+    classChartStats,
+    totalClasses,
     selectedCenterId,
 }) => {
     const handleCenterFilterChange = (
@@ -41,15 +79,15 @@ export const Statistics: React.FC<any> = ({
     ) => {
         const val = e.target.value;
 
-        if (val) {
-            router.get(
-                '/statistics',
-                { center_id: val },
-                { preserveState: true },
-            );
-        } else {
-            router.get('/statistics', {}, { preserveState: true });
-        }
+        router.get(
+            '/statistics',
+            {
+                center_id: val || undefined,
+                per_page: classStats?.per_page !== 15 ? classStats?.per_page : undefined,
+                page: 1,
+            },
+            { preserveState: true },
+        );
     };
 
     // Columns definition for Class Statistics Table
@@ -148,7 +186,7 @@ export const Statistics: React.FC<any> = ({
                                 <option value="">
                                     Tất cả Trung tâm được phép
                                 </option>
-                                {allowedCenters.map((c: any) => (
+                                {allowedCenters.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name} ({c.code})
                                     </option>
@@ -183,7 +221,7 @@ export const Statistics: React.FC<any> = ({
                                     Tổng Lớp Học Phạm Vi
                                 </p>
                                 <h4 className="mt-1.5 text-2xl font-bold text-gray-900">
-                                    {classStats?.length || 0}
+                                    {totalClasses ?? classStats?.total ?? 0}
                                 </h4>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
@@ -201,7 +239,7 @@ export const Statistics: React.FC<any> = ({
                                 <h4 className="mt-1.5 text-2xl font-bold text-gray-900">
                                     {centerStats
                                         ? centerStats.reduce(
-                                              (sum: number, c: any) =>
+                                              (sum: number, c: CenterStat) =>
                                                   sum + (c.student_count || 0),
                                               0,
                                           )
@@ -250,7 +288,7 @@ export const Statistics: React.FC<any> = ({
                     <Card title="Thống Kê Học Sinh Theo Lớp Học">
                         <div className="h-72 w-full pt-4">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={classStats || []}>
+                                <BarChart data={classChartStats || classStats?.data || []}>
                                     <CartesianGrid
                                         strokeDasharray="3 3"
                                         vertical={false}
@@ -278,7 +316,34 @@ export const Statistics: React.FC<any> = ({
 
                 {/* TanStack Table: Detailed Class Occupancy */}
                 <Card title="Bảng Chi Tiết Sĩ Số Học Sinh Cho Từng Lớp Học">
-                    <DataTable columns={classColumns} data={classStats || []} />
+                    <DataTable
+                        columns={classColumns}
+                        data={classStats?.data || []}
+                        emptyMessage="Không có dữ liệu lớp học"
+                    />
+                    {classStats && (
+                        <div className="mt-4">
+                            <Pagination
+                                links={classStats.links}
+                                from={classStats.from}
+                                to={classStats.to}
+                                total={classStats.total}
+                                perPage={classStats.per_page}
+                                currentParams={{ center_id: selectedCenterId }}
+                                onPerPageChange={(newPerPage) => {
+                                    router.get(
+                                        '/statistics',
+                                        {
+                                            center_id: selectedCenterId || undefined,
+                                            per_page: newPerPage,
+                                            page: 1,
+                                        },
+                                        { preserveState: true },
+                                    );
+                                }}
+                            />
+                        </div>
+                    )}
                 </Card>
             </div>
         </AppLayout>
@@ -286,3 +351,4 @@ export const Statistics: React.FC<any> = ({
 };
 
 export default Statistics;
+
