@@ -286,11 +286,10 @@ export default function TeacherShow({
                         <button
                             type="button"
                             onClick={() => handleFilterChange('month')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                                filterType === 'month'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'month'
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                            }`}
+                                }`}
                         >
                             Tháng này
                         </button>
@@ -298,13 +297,12 @@ export default function TeacherShow({
                         <button
                             type="button"
                             onClick={() => handleFilterChange('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                                filterType === 'all'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'all'
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                            }`}
+                                }`}
                         >
-                            Từ trước đến nay
+                            Tất cả
                         </button>
 
                         <button
@@ -313,11 +311,10 @@ export default function TeacherShow({
                                 setFilterType('select_month');
                                 handleFilterChange('select_month', selectedMonth, selectedYear);
                             }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                                filterType === 'select_month'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'select_month'
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                            }`}
+                                }`}
                         >
                             Chọn tháng
                         </button>
