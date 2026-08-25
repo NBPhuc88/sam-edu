@@ -25,7 +25,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime, formatDateTime } from '@/lib/date';
+import { formatDate, formatTime, formatDateTime, toISODateString } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -156,7 +156,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
 
     // Reschedule form state
     const { data, setData, patch, processing, errors } = useForm({
-        session_date: session.session_date ? String(session.session_date).substring(0, 10) : '',
+        session_date: session.session_date ? toISODateString(String(session.session_date)) : '',
         start_time: session.start_time ? session.start_time.substring(0, 5) : '08:00',
         end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
         teacher_id: session.teacher_id ? String(session.teacher_id) : '',
@@ -164,6 +164,19 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         status: session.status || 'scheduled',
         reason: '',
     });
+
+    const openRescheduleModal = () => {
+        setData({
+            session_date: session.session_date ? toISODateString(String(session.session_date)) : '',
+            start_time: session.start_time ? session.start_time.substring(0, 5) : '08:00',
+            end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
+            teacher_id: session.teacher_id ? String(session.teacher_id) : '',
+            room_id: session.room_id ? String(session.room_id) : '',
+            status: session.status || 'scheduled',
+            reason: '',
+        });
+        setIsRescheduleModalOpen(true);
+    };
 
     const handleRescheduleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -295,7 +308,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             variant="edit"
                             size="md"
                             icon={<Edit3 className="h-4.5 w-4.5" />}
-                            onClick={() => setIsRescheduleModalOpen(true)}
+                            onClick={openRescheduleModal}
                         >
                             Đổi Lịch / Phân Công Lại
                         </Button>

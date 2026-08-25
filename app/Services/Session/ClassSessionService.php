@@ -314,9 +314,9 @@ class ClassSessionService implements ClassSessionServiceInterface
                 }
             }
         } elseif ($user instanceof Teacher) {
-            $assignedTeacherId = $session->teacher_id ?? $session->classSubject?->teacher_id;
+            $assignedTeacherId = $session->teacher_id ?: $session->classSubject?->teacher_id;
 
-            if ($assignedTeacherId !== $user->id && $session->classSubject?->teacher_id !== $user->id) {
+            if ((int) $assignedTeacherId !== (int) $user->id) {
                 throw new NotFoundHttpException('Không tìm thấy buổi học hoặc bạn không có quyền truy cập.');
             }
         }

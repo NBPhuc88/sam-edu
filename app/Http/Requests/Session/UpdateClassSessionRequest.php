@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Session;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateClassSessionRequest extends FormRequest
@@ -12,6 +13,21 @@ class UpdateClassSessionRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('session_date') && ! empty($this->session_date) && is_string($this->session_date)) {
+            try {
+                $parsed = Carbon::parse($this->session_date)->format('Y-m-d');
+                $this->merge(['session_date' => $parsed]);
+            } catch (\Throwable) {
+                // Keep original to let validator report error
+            }
+        }
     }
 
     /**
@@ -40,14 +56,15 @@ class UpdateClassSessionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'session_date.required' => 'Vui lòng chọn ngày học.',
-            'start_time.required'   => 'Vui lòng chọn giờ bắt đầu.',
-            'end_time.required'     => 'Vui lòng chọn giờ kết thúc.',
-            'end_time.after'        => 'Giờ kết thúc phải sau giờ bắt đầu.',
-            'teacher_id.required'   => 'Vui lòng chọn giáo viên phụ trách.',
-            'teacher_id.exists'     => 'Giáo viên được chọn không tồn tại.',
-            'room_id.exists'        => 'Phòng học được chọn không tồn tại.',
-            'status.required'       => 'Vui lòng chọn trạng thái buổi học.',
+            'session_date.required'    => 'Vui lòng chọn ngày học.',
+            'session_date.date_format' => 'Định dạng ngày học không hợp lệ (Y-m-d).',
+            'start_time.required'      => 'Vui lòng chọn giờ bắt đầu.',
+            'end_time.required'        => 'Vui lòng chọn giờ kết thúc.',
+            'end_time.after'           => 'Giờ kết thúc phải sau giờ bắt đầu.',
+            'teacher_id.required'      => 'Vui lòng chọn giáo viên phụ trách.',
+            'teacher_id.exists'        => 'Giáo viên được chọn không tồn tại.',
+            'room_id.exists'           => 'Phòng học được chọn không tồn tại.',
+            'status.required'          => 'Vui lòng chọn trạng thái buổi học.',
         ];
     }
 }
