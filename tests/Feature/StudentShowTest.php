@@ -123,7 +123,7 @@ test('super admin can access student show page', function () {
         fn ($page) => $page
             ->component('Admin/Students/Show')
             ->has('student')
-            ->has('sessions', 1)
+            ->has('sessions.data', 1)
             ->has('stats')
             ->where('stats.present', 1)
             ->where('stats.total', 1)

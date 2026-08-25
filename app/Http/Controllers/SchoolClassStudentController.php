@@ -14,6 +14,7 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Admin;
+use App\Models\Teacher;
 use Illuminate\Support\Facades\Auth;
 
 class SchoolClassStudentController extends Controller
@@ -28,7 +29,7 @@ class SchoolClassStudentController extends Controller
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
-        /** @var \App\Models\Teacher|null $teacher */
+        /** @var Teacher|null $teacher */
         $teacher = Auth::guard('teacher')->user();
 
         return [$admin, $teacher];
@@ -146,7 +147,8 @@ class SchoolClassStudentController extends Controller
         $students = $this->schoolClassService->getAvailableStudents(
             $classId,
             is_string($search) ? $search : null,
-            $admin
+            $admin,
+            $teacher
         );
 
         return response()->json($students);
@@ -157,7 +159,7 @@ class SchoolClassStudentController extends Controller
         [$admin, $teacher] = $this->getAuthUser();
 
         $studentIds = (array) $request->input('student_ids', []);
-        $count      = $this->schoolClassService->addStudentsToClass($classId, $studentIds, $admin);
+        $count      = $this->schoolClassService->addStudentsToClass($classId, $studentIds, $admin, $teacher);
 
         return back()->with('success', "Đã thêm thành công {$count} học sinh vào lớp học.");
     }
@@ -166,7 +168,7 @@ class SchoolClassStudentController extends Controller
     {
         [$admin, $teacher] = $this->getAuthUser();
 
-        $this->schoolClassService->removeStudentFromClass($classId, $studentId, $admin);
+        $this->schoolClassService->removeStudentFromClass($classId, $studentId, $admin, $teacher);
 
         return back()->with('success', 'Đã xóa học sinh khỏi lớp học.');
     }

@@ -2,12 +2,16 @@
 
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\ClassSubject;
+use App\Models\Permission;
+use App\Models\RolePermission;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
 beforeEach(function () {
@@ -226,4 +230,37 @@ test('admin can add available students to a class from class detail page', funct
     $removeResponse->assertSessionHas('success');
 
     expect($student->classes()->where('classes.id', $this->class1->id)->exists())->toBeFalse();
+});
+
+test('teacher can view student list of class they teach', function () {
+    // Grant classes.students permission to teacher role
+    $permission = Permission::where('code', 'classes.students')->first();
+
+    if ($permission) {
+        RolePermission::create([
+            'role'          => 'teacher',
+            'permission_id' => $permission->id,
+        ]);
+        Cache::forget('permissions_role_teacher');
+    }
+
+    // Create class subject for teacher
+    ClassSubject::create([
+        'class_id'   => $this->class1->id,
+        'subject_id' => $this->subject->id,
+        'teacher_id' => $this->teacher->id,
+        'status'     => 'active',
+    ]);
+
+    $response = $this->actingAs($this->teacher, 'teacher')
+        ->get(route('classes.students.index', ['classId' => $this->class1->id]));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->component('Admin/Classes/Students')
+            ->has('schoolClass')
+            ->has('students')
+            ->where('isTeacher', true)
+    );
 });

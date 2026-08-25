@@ -4,7 +4,9 @@ namespace App\Services\Class;
 
 use App\Enums\Constant;
 use App\Models\Admin;
+use App\Models\ClassSession;
 use App\Models\SchoolClass;
+use App\Models\SessionReschedule;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
@@ -13,6 +15,7 @@ use App\Repositories\Subject\SubjectRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -158,19 +161,57 @@ class SchoolClassService implements SchoolClassServiceInterface
      */
     public function findClass(int $id, ?Admin $admin = null, ?Teacher $teacher = null): ?SchoolClass
     {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin, $teacher);
-        $schoolClass      = $this->schoolClassRepository->find($id, $allowedCenterIds);
+        if (! $admin && ! $teacher) {
+            /** @var Admin|null $authAdmin */
+            $authAdmin = Auth::guard('admin')->user();
+            $admin     = $authAdmin;
 
-        if (! $schoolClass) {
-            throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
+            if (! $admin) {
+                /** @var Teacher|null $authTeacher */
+                $authTeacher = Auth::guard('teacher')->user();
+                $teacher     = $authTeacher;
+            }
+        }
+
+        if ($admin) {
+            $allowedCenterIds = $this->getAllowedCenterIds($admin);
+            $schoolClass      = $this->schoolClassRepository->find($id, $allowedCenterIds);
+
+            if (! $schoolClass) {
+                throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
+            }
+
+            return $schoolClass;
         }
 
         if ($teacher) {
-            $isAssigned = $schoolClass->classSubjects()->where('teacher_id', $teacher->id)->exists();
+            $schoolClass = $this->schoolClassRepository->find($id);
 
-            if (! $isAssigned) {
+            if (! $schoolClass) {
                 throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
             }
+
+            $isAssigned = $schoolClass->classSubjects()->where('teacher_id', $teacher->id)->exists()
+                || ClassSession::where('teacher_id', $teacher->id)
+                    ->whereHas('classSubject', fn ($q) => $q->where('class_id', $schoolClass->id))
+                    ->exists()
+                || SessionReschedule::where('new_teacher_id', $teacher->id)
+                    ->whereHas('session.classSubject', fn ($q) => $q->where('class_id', $schoolClass->id))
+                    ->exists();
+
+            $isSameCenter = $teacher->center_id && (int) $schoolClass->center_id === (int) $teacher->center_id;
+
+            if (! $isAssigned && ! $isSameCenter) {
+                throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
+            }
+
+            return $schoolClass;
+        }
+
+        $schoolClass = $this->schoolClassRepository->find($id);
+
+        if (! $schoolClass) {
+            throw new NotFoundHttpException('Không tìm thấy lớp học hoặc bạn không có quyền truy cập.');
         }
 
         return $schoolClass;
@@ -669,16 +710,16 @@ class SchoolClassService implements SchoolClassServiceInterface
         ];
     }
 
-    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null): \Illuminate\Database\Eloquent\Collection
+    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null, ?Teacher $teacher = null): \Illuminate\Database\Eloquent\Collection
     {
-        $schoolClass = $this->findClass($classId, $admin);
+        $schoolClass = $this->findClass($classId, $admin, $teacher);
 
         return $this->schoolClassRepository->getAvailableStudentsForClass($classId, (int) $schoolClass->center_id, $search);
     }
 
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): int
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null): int
     {
-        $schoolClass = $this->findClass($classId, $admin);
+        $schoolClass = $this->findClass($classId, $admin, $teacher);
 
         // Lọc danh sách học sinh chỉ thuộc cùng trung tâm của lớp
         $validStudentIds = Student::where('center_id', $schoolClass->center_id)
@@ -689,9 +730,9 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
     }
 
-    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null): bool
+    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null, ?Teacher $teacher = null): bool
     {
-        $this->findClass($classId, $admin);
+        $this->findClass($classId, $admin, $teacher);
 
         return $this->schoolClassRepository->detachStudent($classId, $studentId);
     }

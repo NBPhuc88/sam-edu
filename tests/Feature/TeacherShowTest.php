@@ -93,7 +93,7 @@ test('super admin can access teacher show page', function () {
         fn ($page) => $page
             ->component('Admin/Teachers/Show')
             ->has('teacher')
-            ->has('sessions', 1)
+            ->has('sessions.data', 1)
             ->has('stats')
             ->where('stats.completed', 1)
             ->where('stats.total', 1)

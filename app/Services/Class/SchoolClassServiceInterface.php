@@ -88,23 +88,26 @@ interface SchoolClassServiceInterface
      * @param  int                                                                $classId
      * @param  ?string                                                            $search
      * @param  ?Admin                                                             $admin
+     * @param  ?Teacher                                                           $teacher
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Student>
      */
-    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null): \Illuminate\Database\Eloquent\Collection;
+    public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null, ?Teacher $teacher = null): \Illuminate\Database\Eloquent\Collection;
 
     /**
      * @param  int        $classId
      * @param  array<int> $studentIds
      * @param  ?Admin     $admin
+     * @param  ?Teacher   $teacher
      * @return int
      */
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): int;
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null): int;
 
     /**
-     * @param  int    $classId
-     * @param  int    $studentId
-     * @param  ?Admin $admin
+     * @param  int      $classId
+     * @param  int      $studentId
+     * @param  ?Admin   $admin
+     * @param  ?Teacher $teacher
      * @return bool
      */
-    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null): bool;
+    public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null, ?Teacher $teacher = null): bool;
 }
