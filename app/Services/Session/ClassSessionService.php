@@ -4,6 +4,8 @@ namespace App\Services\Session;
 
 use App\Models\Admin;
 use App\Models\ClassSession;
+use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -351,8 +353,8 @@ class ClassSessionService implements ClassSessionServiceInterface
 
             return [
                 'centers'  => $this->centerRepository->getActiveCenters($allowedCenterIds),
-                'classes'  => \App\Models\SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']),
-                'subjects' => \App\Models\Subject::whereIn('id', $teacherSubjectIds)->get(['id', 'name', 'code', 'center_id']),
+                'classes'  => SchoolClass::whereIn('id', $teacherClassIds)->get(['id', 'name', 'code', 'center_id']),
+                'subjects' => Subject::whereIn('id', $teacherSubjectIds)->get(['id', 'name', 'code', 'center_id']),
                 'teachers' => [],
                 'rooms'    => [],
             ];
@@ -366,6 +368,32 @@ class ClassSessionService implements ClassSessionServiceInterface
             'subjects' => $this->subjectRepository->getByCenterIds($allowedCenterIds),
             'teachers' => $this->teacherRepository->getActiveTeachers($allowedCenterIds, ['id', 'full_name', 'teacher_code', 'center_id']),
             'rooms'    => $this->roomRepository->getByCenterIds($allowedCenterIds),
+        ];
+    }
+
+    /**
+     * Tự động quét và cập nhật trạng thái các ca học theo thời gian thực.
+     *
+     * @return array{in_progress: int, completed: int, unattended: int}
+     */
+    public function autoUpdateSessionStatuses(): array
+    {
+        $today       = now()->toDateString();
+        $currentTime = now()->toTimeString();
+
+        // 1. Chuyển các ca học đang trong giờ học hôm nay sang 'in_progress'
+        $inProgressCount = $this->sessionRepository->updateSessionsToInProgress($today, $currentTime);
+
+        // 2. Chuyển các ca học đã kết thúc và đã điểm danh sang 'completed'
+        $completedCount = $this->sessionRepository->updateEndedAttendedSessionsToCompleted($today, $currentTime);
+
+        // 3. Chuyển các ca học đã kết thúc nhưng chưa điểm danh sang 'unattended'
+        $unattendedCount = $this->sessionRepository->updateEndedUnattendedSessions($today, $currentTime);
+
+        return [
+            'in_progress' => $inProgressCount,
+            'completed'   => $completedCount,
+            'unattended'  => $unattendedCount,
         ];
     }
 }

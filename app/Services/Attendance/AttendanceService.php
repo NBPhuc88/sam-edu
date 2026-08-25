@@ -7,6 +7,7 @@ use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Attendance\AttendanceRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AttendanceService implements AttendanceServiceInterface
@@ -124,6 +125,22 @@ class AttendanceService implements AttendanceServiceInterface
             if ((int) $assignedTeacherId !== (int) $user->id) {
                 throw new NotFoundHttpException('Không tìm thấy ca học hoặc bạn không có quyền truy cập.');
             }
+        }
+
+        if (in_array($session->status, ['cancelled', 'rescheduled'], true)) {
+            throw ValidationException::withMessages([
+                'session' => 'Không thể điểm danh ca học đã bị hủy hoặc đã đổi lịch.',
+            ]);
+        }
+
+        $today         = now()->toDateString();
+        $currentTime   = now()->toTimeString();
+        $isBeforeStart = $session->session_date > $today || ($session->session_date === $today && $session->start_time > $currentTime);
+
+        if ($isBeforeStart) {
+            throw ValidationException::withMessages([
+                'session' => 'Chưa thể điểm danh trước khi buổi học bắt đầu.',
+            ]);
         }
 
         $markedByTeacherId = ($user instanceof Teacher) ? $user->id : null;

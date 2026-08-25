@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
+import { toISODateString } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
 interface StudentAttendanceItem {
@@ -153,17 +154,44 @@ export default function AttendanceShowPage({
         );
     };
 
-    const getSessionStatusBadge = (status: string) => {
+    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
             case 'completed':
-                return <Badge variant="active">Đã Dạy (Hoàn Thành)</Badge>;
+                return <Badge variant="active">Đã Hoàn Thành</Badge>;
+            case 'in_progress':
+                return (
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                        Đang Diễn Ra
+                    </span>
+                );
+            case 'unattended':
+                return <Badge variant="danger">Chưa Điểm Danh</Badge>;
             case 'cancelled':
                 return <Badge variant="danger">Đã Hủy</Badge>;
             case 'rescheduled':
                 return <Badge variant="expired">Đã Đổi Lịch</Badge>;
             case 'scheduled':
             default:
-                return <Badge variant="pending">Chưa Dạy (Lên Lịch)</Badge>;
+                if (isPast) {
+                    return <Badge variant="danger">Chưa Điểm Danh</Badge>;
+                }
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                Sắp Diễn Ra
+                            </span>
+                        );
+                    }
+                }
+                return <Badge variant="pending">Dự Kiến</Badge>;
         }
     };
 
@@ -172,11 +200,22 @@ export default function AttendanceShowPage({
     const excusedCount = students.filter((s) => s.status === 'excused').length;
     const absentCount = students.filter((s) => s.status === 'absent').length;
 
+    const isAttendanceAllowed = ['in_progress', 'completed', 'unattended'].includes(session.status);
+
     return (
         <AppLayout title={`Điểm Danh: ${subject?.name || 'Môn học'} - ${schoolClass?.name || 'Lớp học'}`}>
             <Head title={`Điểm Danh: ${subject?.name} - ${schoolClass?.name}`} />
 
             <div className="mx-auto max-w-7xl space-y-6">
+                {!isAttendanceAllowed && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-xs flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+                        <div className="text-sm">
+                            <strong className="font-semibold">Buổi học chưa bắt đầu:</strong> Bạn chỉ có thể thực hiện điểm danh khi buổi học đang diễn ra (<span className="font-semibold text-amber-800">Đang diễn ra</span>), đã hoàn thành hoặc chưa điểm danh.
+                        </div>
+                    </div>
+                )}
+
                 {/* Header Top Card (Full-width text & info) */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
                     <div className="flex items-start sm:items-center gap-3.5">
@@ -198,7 +237,7 @@ export default function AttendanceShowPage({
                                 <span className="rounded-md bg-emerald-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
                                     {schoolClass?.name} ({schoolClass?.code})
                                 </span>
-                                {getSessionStatusBadge(session.status)}
+                                {getSessionStatusBadge(session.status, session.session_date, session.start_time)}
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
                                 <span className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-md border border-emerald-200">
@@ -305,6 +344,7 @@ export default function AttendanceShowPage({
                                         size="sm"
                                         icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                                         onClick={handleMarkAllPresent}
+                                        disabled={!isAttendanceAllowed || isSaving || students.length === 0}
                                     >
                                         Tất Cả Có Mặt
                                     </Button>
@@ -314,6 +354,7 @@ export default function AttendanceShowPage({
                                         size="sm"
                                         icon={<Save className="h-4 w-4" />}
                                         isLoading={isSaving}
+                                        disabled={!isAttendanceAllowed || students.length === 0}
                                     >
                                         Lưu Điểm Danh
                                     </Button>

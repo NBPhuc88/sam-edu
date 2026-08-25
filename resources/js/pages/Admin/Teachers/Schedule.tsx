@@ -266,7 +266,7 @@ export default function TeacherSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string, changeType?: string) => {
+    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return (
                 <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
@@ -275,6 +275,9 @@ export default function TeacherSchedulePage({
             );
         }
 
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
             case 'completed':
                 return (
@@ -282,12 +285,16 @@ export default function TeacherSchedulePage({
                         Đã dạy
                     </span>
                 );
-            case 'planned':
-            case 'active':
-            case 'scheduled':
+            case 'in_progress':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
-                        Dự kiến
+                    <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
+                        Đang diễn ra
+                    </span>
+                );
+            case 'unattended':
+                return (
+                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                        Chưa điểm danh
                     </span>
                 );
             case 'cancelled':
@@ -302,16 +309,37 @@ export default function TeacherSchedulePage({
                         Đã đổi lịch
                     </span>
                 );
+            case 'scheduled':
             default:
+                if (isPast) {
+                    return (
+                        <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                            Chưa điểm danh
+                        </span>
+                    );
+                }
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+                                Sắp diễn ra
+                            </span>
+                        );
+                    }
+                }
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 border border-gray-200">
-                        {status}
+                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
+                        Dự kiến
                     </span>
                 );
         }
     };
 
-    const getSessionCardStyle = (status: string, isOldSlot?: boolean, changeType?: string) => {
+    const getSessionCardStyle = (status: string, sessionDate?: string, isOldSlot?: boolean, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return {
                 container: 'border-purple-200 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs',
@@ -330,6 +358,9 @@ export default function TeacherSchedulePage({
             };
         }
 
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
             case 'completed':
                 return {
@@ -338,14 +369,19 @@ export default function TeacherSchedulePage({
                     subjectIcon: 'text-emerald-600',
                     orderText: 'text-emerald-800',
                 };
-            case 'planned':
-            case 'active':
-            case 'scheduled':
+            case 'in_progress':
                 return {
-                    container: 'border-blue-200 bg-blue-50/80 hover:border-blue-400 hover:bg-blue-100/70 shadow-2xs',
-                    subjectText: 'text-blue-900',
-                    subjectIcon: 'text-blue-600',
-                    orderText: 'text-blue-800',
+                    container: 'border-purple-300 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs ring-1 ring-purple-300',
+                    subjectText: 'text-purple-900',
+                    subjectIcon: 'text-purple-600',
+                    orderText: 'text-purple-800',
+                };
+            case 'unattended':
+                return {
+                    container: 'border-rose-200 bg-rose-50/80 hover:border-rose-300 hover:bg-rose-100/70 shadow-2xs',
+                    subjectText: 'text-rose-900',
+                    subjectIcon: 'text-rose-600',
+                    orderText: 'text-rose-800',
                 };
             case 'cancelled':
                 return {
@@ -361,12 +397,21 @@ export default function TeacherSchedulePage({
                     subjectIcon: 'text-amber-600',
                     orderText: 'text-amber-800',
                 };
+            case 'scheduled':
             default:
+                if (isPast) {
+                    return {
+                        container: 'border-rose-200 bg-rose-50/80 hover:border-rose-300 hover:bg-rose-100/70 shadow-2xs',
+                        subjectText: 'text-rose-900',
+                        subjectIcon: 'text-rose-600',
+                        orderText: 'text-rose-800',
+                    };
+                }
                 return {
-                    container: 'border-gray-200 bg-gray-50/80 hover:border-gray-300 hover:bg-gray-100/70 shadow-2xs',
-                    subjectText: 'text-gray-800',
-                    subjectIcon: 'text-gray-500',
-                    orderText: 'text-gray-700',
+                    container: 'border-blue-200 bg-blue-50/80 hover:border-blue-400 hover:bg-blue-100/70 shadow-2xs',
+                    subjectText: 'text-blue-900',
+                    subjectIcon: 'text-blue-600',
+                    orderText: 'text-blue-800',
                 };
         }
     };
@@ -601,7 +646,7 @@ export default function TeacherSchedulePage({
                                                             cellSessions && cellSessions.length > 0 ? (
                                                                 <div className="space-y-2">
                                                                     {cellSessions.map((session) => {
-                                                                        const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot, session.change_type);
+                                                                        const cardStyle = getSessionCardStyle(session.status, session.session_date, session.is_rescheduled_old_slot, session.change_type);
 
                                                                         return (
                                                                             <div
@@ -615,7 +660,7 @@ export default function TeacherSchedulePage({
                                                                                     <div className="font-bold text-gray-900 leading-tight">
                                                                                         {session.class_name}
                                                                                     </div>
-                                                                                    {getSessionStatusBadge(session.status, session.change_type)}
+                                                                                    {getSessionStatusBadge(session.status, session.session_date, session.start_time, session.change_type)}
                                                                                 </div>
 
                                                                                 {/* Subject name below class */}
@@ -759,7 +804,7 @@ export default function TeacherSchedulePage({
                                         Mã lớp: {selectedSession.class_code || 'N/A'}
                                     </span>
                                 </div>
-                                {getSessionStatusBadge(selectedSession.status, selectedSession.change_type)}
+                                {getSessionStatusBadge(selectedSession.status, selectedSession.session_date, selectedSession.start_time, selectedSession.change_type)}
                             </div>
 
                             <div className="mt-3 flex items-center gap-2 border-t border-emerald-200/70 pt-3 text-sm font-semibold text-emerald-900">
@@ -960,15 +1005,29 @@ export default function TeacherSchedulePage({
                                     Đổi Lịch Dạy
                                 </Button>
                             )}
-                            <Button
-                                type="button"
-                                variant="success"
-                                size="md"
-                                icon={<CheckSquare className="h-4 w-4" />}
-                                onClick={() => handleGoToAttendance(selectedSession.id)}
-                            >
-                                Điểm Danh Ca Học
-                            </Button>
+                            {['in_progress', 'completed', 'unattended'].includes(selectedSession.status) ? (
+                                <Button
+                                    type="button"
+                                    variant="success"
+                                    size="md"
+                                    icon={<CheckSquare className="h-4 w-4" />}
+                                    onClick={() => handleGoToAttendance(selectedSession.id)}
+                                >
+                                    Điểm Danh Ca Học
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="md"
+                                    disabled
+                                    title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                    icon={<CheckSquare className="h-4 w-4 text-gray-400" />}
+                                    className="opacity-60 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-400"
+                                >
+                                    Điểm Danh Ca Học
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </Modal>

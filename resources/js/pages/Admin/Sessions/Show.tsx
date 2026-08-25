@@ -224,18 +224,44 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         });
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
-            case 'scheduled':
-                return <Badge variant="pending">Sắp diễn ra</Badge>;
-            case 'in_progress':
-                return <Badge variant="expired">Đang diễn ra</Badge>;
             case 'completed':
                 return <Badge variant="active">Đã hoàn thành</Badge>;
+            case 'in_progress':
+                return (
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                        Đang diễn ra
+                    </span>
+                );
+            case 'unattended':
+                return <Badge variant="danger">Chưa điểm danh</Badge>;
             case 'cancelled':
                 return <Badge variant="danger">Đã hủy</Badge>;
+            case 'rescheduled':
+                return <Badge variant="expired">Đã đổi lịch</Badge>;
+            case 'scheduled':
             default:
-                return <Badge variant="info">{status}</Badge>;
+                if (isPast) {
+                    return <Badge variant="danger">Chưa điểm danh</Badge>;
+                }
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                Sắp diễn ra
+                            </span>
+                        );
+                    }
+                }
+                return <Badge variant="pending">Dự kiến</Badge>;
         }
     };
 
@@ -302,7 +328,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">
                                     Buổi Học: {subject?.name ?? 'Môn Học'}
                                 </h1>
-                                {getStatusBadge(session.status)}
+                                {getStatusBadge(session.status, String(session.session_date), session.start_time)}
                             </div>
                             <p className="mt-0.5 text-sm text-gray-500">
                                 Lớp: <span className="font-semibold text-gray-800">{schoolClass?.name}</span> ({schoolClass?.code}) · {schoolClass?.center?.name}
@@ -329,15 +355,28 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             Đổi Lịch / Phân Công Lại
                         </Button>
 
-                        <Link href={`/attendance/session/${session.id}`}>
+                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                            <Link href={`/attendance/session/${session.id}`}>
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<CheckSquare className="h-4.5 w-4.5" />}
+                                >
+                                    Điểm Danh Buổi Này
+                                </Button>
+                            </Link>
+                        ) : (
                             <Button
-                                variant="success"
+                                variant="secondary"
                                 size="md"
-                                icon={<CheckSquare className="h-4.5 w-4.5" />}
+                                disabled
+                                title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                icon={<CheckSquare className="h-4.5 w-4.5 text-gray-400" />}
+                                className="opacity-60 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-400"
                             >
                                 Điểm Danh Buổi Này
                             </Button>
-                        </Link>
+                        )}
                     </div>
                 </div>
 
@@ -495,15 +534,27 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             </p>
                         </div>
 
-                        <Link href={`/attendance/session/${session.id}`}>
+                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                            <Link href={`/attendance/session/${session.id}`}>
+                                <button
+                                    type="button"
+                                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+                                >
+                                    <CheckSquare className="h-3.5 w-3.5" />
+                                    <span>Chỉnh Sửa Điểm Danh</span>
+                                </button>
+                            </Link>
+                        ) : (
                             <button
                                 type="button"
-                                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
+                                disabled
+                                title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed border border-gray-200"
                             >
                                 <CheckSquare className="h-3.5 w-3.5" />
                                 <span>Chỉnh Sửa Điểm Danh</span>
                             </button>
-                        </Link>
+                        )}
                     </div>
 
                     <div className="overflow-x-auto">
@@ -721,10 +772,12 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 required
                             >
-                                <option value="scheduled">Sắp diễn ra</option>
+                                <option value="scheduled">Dự kiến</option>
                                 <option value="in_progress">Đang diễn ra</option>
                                 <option value="completed">Đã hoàn thành</option>
+                                <option value="unattended">Chưa điểm danh</option>
                                 <option value="cancelled">Đã hủy</option>
+                                <option value="rescheduled">Đã đổi lịch</option>
                             </select>
                             {errors.status && (
                                 <p className="mt-1 text-xs text-red-600">{errors.status}</p>

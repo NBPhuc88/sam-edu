@@ -20,7 +20,7 @@ import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime } from '@/lib/date';
+import { formatDate, formatTime, toISODateString } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -233,18 +233,45 @@ export default function SessionIndex({
         router.get('/sessions', params, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
-            case 'scheduled':
-                return <Badge variant="pending">Sắp diễn ra</Badge>;
-            case 'in_progress':
-                return <Badge variant="expired">Đang diễn ra</Badge>;
             case 'completed':
                 return <Badge variant="active">Đã hoàn thành</Badge>;
+            case 'in_progress':
+                return (
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                        Đang diễn ra
+                    </span>
+                );
+            case 'unattended':
+                return <Badge variant="danger">Chưa điểm danh</Badge>;
             case 'cancelled':
                 return <Badge variant="danger">Đã hủy</Badge>;
+            case 'rescheduled':
+                return <Badge variant="expired">Đã đổi lịch</Badge>;
+            case 'scheduled':
             default:
-                return <Badge variant="info">{status}</Badge>;
+                if (isPast) {
+                    return <Badge variant="danger">Chưa điểm danh</Badge>;
+                }
+                // Check if upcoming within 10 minutes
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                Sắp diễn ra
+                            </span>
+                        );
+                    }
+                }
+                return <Badge variant="pending">Dự kiến</Badge>;
         }
     };
 
@@ -459,10 +486,12 @@ export default function SessionIndex({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="all">-- Tất cả trạng thái --</option>
-                                    <option value="scheduled">Sắp diễn ra</option>
+                                    <option value="scheduled">Dự kiến</option>
                                     <option value="in_progress">Đang diễn ra</option>
                                     <option value="completed">Đã hoàn thành</option>
+                                    <option value="unattended">Chưa điểm danh</option>
                                     <option value="cancelled">Đã hủy</option>
+                                    <option value="rescheduled">Đã đổi lịch</option>
                                 </select>
                             </div>
                         </div>
@@ -625,7 +654,7 @@ export default function SessionIndex({
 
                                                 {/* Status */}
                                                 <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                                                    {getStatusBadge(session.status)}
+                                                    {getStatusBadge(session.status, session.session_date, session.start_time)}
                                                 </td>
 
                                                 {/* Attendance Count */}
@@ -647,16 +676,28 @@ export default function SessionIndex({
                                                 {/* Actions */}
                                                 <td className="px-4 py-3.5 text-right whitespace-nowrap">
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        <Link href={`/attendance/session/${session.id}`}>
+                                                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                                                            <Link href={`/attendance/session/${session.id}`}>
+                                                                <button
+                                                                    type="button"
+                                                                    title="Điểm danh buổi học"
+                                                                    className="flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
+                                                                >
+                                                                    <CheckSquare className="h-3.5 w-3.5" />
+                                                                    <span>Điểm Danh</span>
+                                                                </button>
+                                                            </Link>
+                                                        ) : (
                                                             <button
                                                                 type="button"
-                                                                title="Điểm danh buổi học"
-                                                                className="flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
+                                                                disabled
+                                                                title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                                                className="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-semibold text-gray-400 cursor-not-allowed border border-gray-200"
                                                             >
                                                                 <CheckSquare className="h-3.5 w-3.5" />
                                                                 <span>Điểm Danh</span>
                                                             </button>
-                                                        </Link>
+                                                        )}
 
                                                         {can('sessions.edit') && (
                                                             <Link href={`/sessions/${session.id}`}>

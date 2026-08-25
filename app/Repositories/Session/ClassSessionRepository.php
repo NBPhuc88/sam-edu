@@ -428,4 +428,63 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             ->whereDate('session_date', today())
             ->first();
     }
+
+    /**
+     * Chuyển các ca học trong khung giờ học sang in_progress.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateSessionsToInProgress(string $date, string $currentTime): int
+    {
+        return ClassSession::where('session_date', $date)
+            ->where('start_time', '<=', $currentTime)
+            ->where('end_time', '>=', $currentTime)
+            ->where('status', 'scheduled')
+            ->whereDoesntHave('attendances')
+            ->update(['status' => 'in_progress']);
+    }
+
+    /**
+     * Chuyển các ca học đã kết thúc và đã điểm danh sang completed.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateEndedAttendedSessionsToCompleted(string $date, string $currentTime): int
+    {
+        return ClassSession::whereIn('status', ['scheduled', 'in_progress', 'unattended'])
+            ->where(function ($query) use ($date, $currentTime) {
+                $query->where('session_date', '<', $date)
+                    ->orWhere(function ($q) use ($date, $currentTime) {
+                        $q->where('session_date', '=', $date)
+                            ->where('end_time', '<', $currentTime);
+                    });
+            })
+            ->whereHas('attendances')
+            ->update(['status' => 'completed']);
+    }
+
+    /**
+     * Chuyển các ca học đã kết thúc và chưa điểm danh sang unattended.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateEndedUnattendedSessions(string $date, string $currentTime): int
+    {
+        return ClassSession::whereIn('status', ['scheduled', 'in_progress'])
+            ->where(function ($query) use ($date, $currentTime) {
+                $query->where('session_date', '<', $date)
+                    ->orWhere(function ($q) use ($date, $currentTime) {
+                        $q->where('session_date', '=', $date)
+                            ->where('end_time', '<', $currentTime);
+                    });
+            })
+            ->whereDoesntHave('attendances')
+            ->update(['status' => 'unattended']);
+    }
 }

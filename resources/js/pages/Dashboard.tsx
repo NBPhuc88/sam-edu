@@ -553,15 +553,28 @@ export const Dashboard: React.FC<any> = (props) => {
                                     </Link>
                                 )}
                                 {selectedSession?.session_id && (
-                                    <Link href={`/attendance/session/${selectedSession.session_id}`}>
+                                    (!selectedSession.status || ['in_progress', 'completed', 'unattended'].includes(selectedSession.status)) ? (
+                                        <Link href={`/attendance/session/${selectedSession.session_id}`}>
+                                            <Button
+                                                variant="success"
+                                                size="sm"
+                                                icon={<UserCheck className="w-4 h-4" />}
+                                            >
+                                                Điểm Danh
+                                            </Button>
+                                        </Link>
+                                    ) : (
                                         <Button
-                                            variant="success"
+                                            variant="secondary"
                                             size="sm"
-                                            icon={<UserCheck className="w-4 h-4" />}
+                                            disabled
+                                            title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                            icon={<UserCheck className="w-4 h-4 text-gray-400" />}
+                                            className="opacity-60 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-400"
                                         >
                                             Điểm Danh
                                         </Button>
-                                    </Link>
+                                    )
                                 )}
                             </div>
                         }

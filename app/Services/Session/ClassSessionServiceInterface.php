@@ -63,4 +63,11 @@ interface ClassSessionServiceInterface
      * @return array
      */
     public function getFilterFormData(Admin|Teacher|null $user = null): array;
+
+    /**
+     * Tự động quét và cập nhật trạng thái các ca học theo thời gian thực.
+     *
+     * @return array{in_progress: int, completed: int, unattended: int}
+     */
+    public function autoUpdateSessionStatuses(): array;
 }

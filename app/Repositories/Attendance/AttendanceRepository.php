@@ -72,7 +72,16 @@ class AttendanceRepository implements AttendanceRepositoryInterface
     {
         return DB::transaction(function () use ($sessionId) {
             Attendance::where('session_id', $sessionId)->delete();
-            ClassSession::where('id', $sessionId)->update(['status' => 'scheduled']);
+
+            $session = ClassSession::find($sessionId);
+
+            if ($session) {
+                $today       = now()->toDateString();
+                $currentTime = now()->toTimeString();
+                $isPast      = $session->session_date < $today || ($session->session_date === $today && $session->end_time < $currentTime);
+                $newStatus   = $isPast ? 'unattended' : 'scheduled';
+                $session->update(['status' => $newStatus]);
+            }
 
             return true;
         });

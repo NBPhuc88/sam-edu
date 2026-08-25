@@ -141,4 +141,31 @@ interface ClassSessionRepositoryInterface
      * @return ?ClassSession
      */
     public function getTodaySessionByTeacher(int $teacherId): ?ClassSession;
+
+    /**
+     * Chuyển các ca học trong khung giờ học sang in_progress.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateSessionsToInProgress(string $date, string $currentTime): int;
+
+    /**
+     * Chuyển các ca học đã kết thúc và đã điểm danh sang completed.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateEndedAttendedSessionsToCompleted(string $date, string $currentTime): int;
+
+    /**
+     * Chuyển các ca học đã kết thúc và chưa điểm danh sang unattended.
+     *
+     * @param  string $date
+     * @param  string $currentTime
+     * @return int
+     */
+    public function updateEndedUnattendedSessions(string $date, string $currentTime): int;
 }

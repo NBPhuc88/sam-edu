@@ -28,6 +28,7 @@ import Pagination from '@/components/ui/Pagination';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
+import { toISODateString } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -151,18 +152,44 @@ export default function TeacherShow({
         window.location.href = `/teachers/${teacher.id}/export-sessions?${params.toString()}`;
     };
 
-    const getSessionStatusBadge = (status: string) => {
+    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
             case 'completed':
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'scheduled':
-                return <Badge variant="pending">Đã lên lịch</Badge>;
+            case 'in_progress':
+                return (
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                        Đang diễn ra
+                    </span>
+                );
+            case 'unattended':
+                return <Badge variant="danger">Chưa điểm danh</Badge>;
             case 'cancelled':
                 return <Badge variant="danger">Đã hủy</Badge>;
             case 'rescheduled':
-                return <Badge variant="expired">Dời lịch</Badge>;
+                return <Badge variant="expired">Đã đổi lịch</Badge>;
+            case 'scheduled':
             default:
-                return <Badge variant="info">{status}</Badge>;
+                if (isPast) {
+                    return <Badge variant="danger">Chưa điểm danh</Badge>;
+                }
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                Sắp diễn ra
+                            </span>
+                        );
+                    }
+                }
+                return <Badge variant="pending">Dự kiến</Badge>;
         }
     };
 
@@ -514,7 +541,7 @@ export default function TeacherShow({
                                             {session.topic || <span className="text-gray-400">—</span>}
                                         </td>
                                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                                            {getSessionStatusBadge(session.status)}
+                                            {getSessionStatusBadge(session.status, session.session_date, session.start_time)}
                                         </td>
                                     </tr>
                                 ))}

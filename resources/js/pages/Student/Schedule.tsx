@@ -237,7 +237,7 @@ export default function StudentSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string, changeType?: string) => {
+    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return (
                 <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
@@ -246,6 +246,9 @@ export default function StudentSchedulePage({
             );
         }
 
+        const todayIso = new Date().toISOString().split('T')[0];
+        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+
         switch (status) {
             case 'completed':
                 return (
@@ -253,12 +256,16 @@ export default function StudentSchedulePage({
                         Đã học
                     </span>
                 );
-            case 'planned':
-            case 'active':
-            case 'scheduled':
+            case 'in_progress':
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
-                        Sắp diễn ra
+                    <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
+                        Đang diễn ra
+                    </span>
+                );
+            case 'unattended':
+                return (
+                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                        Chưa điểm danh
                     </span>
                 );
             case 'cancelled':
@@ -273,10 +280,31 @@ export default function StudentSchedulePage({
                         Đã đổi lịch
                     </span>
                 );
+            case 'scheduled':
             default:
+                if (isPast) {
+                    return (
+                        <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                            Chưa điểm danh
+                        </span>
+                    );
+                }
+                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+                    const now = new Date();
+                    const [h, m] = startTime.split(':').map(Number);
+                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMin >= 0 && diffMin <= 10) {
+                        return (
+                            <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+                                Sắp diễn ra
+                            </span>
+                        );
+                    }
+                }
                 return (
-                    <span className="inline-flex items-center rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">
-                        {status}
+                    <span className="inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
+                        Dự kiến
                     </span>
                 );
         }
@@ -483,7 +511,7 @@ export default function StudentSchedulePage({
                                                                             <span className="font-extrabold text-xs text-gray-900 line-clamp-1">
                                                                                 {sess.class_name}
                                                                             </span>
-                                                                            {getSessionStatusBadge(sess.status, sess.change_type)}
+                                                                            {getSessionStatusBadge(sess.status, sess.session_date, sess.start_time, sess.change_type)}
                                                                         </div>
 
                                                                         <div className="text-2xs font-semibold text-emerald-800 line-clamp-1 flex items-center gap-1">
@@ -598,7 +626,7 @@ export default function StudentSchedulePage({
                                         </div>
                                     </div>
                                 </div>
-                                <div>{getSessionStatusBadge(selectedSession.status, selectedSession.change_type)}</div>
+                                <div>{getSessionStatusBadge(selectedSession.status, selectedSession.session_date, selectedSession.start_time, selectedSession.change_type)}</div>
                             </div>
 
                             {/* Reschedule Alert if any */}
