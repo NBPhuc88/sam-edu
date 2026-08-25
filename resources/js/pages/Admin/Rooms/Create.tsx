@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -168,23 +169,17 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                     <label className="mb-2 block text-sm font-semibold text-gray-800">
                                         Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={centerId}
-                                        onChange={(e) => setCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
+                                        onChange={(val) => setCenterId(val)}
+                                        placeholder="-- Chọn Trung tâm --"
                                         disabled={centers.length === 0}
-                                    >
-                                        <option value="">-- Chọn Trung tâm --</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.center_id && (
-                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                    )}
+                                        options={centers.map((c) => ({
+                                            value: String(c.id),
+                                            label: `${c.name} (${c.code})`,
+                                        }))}
+                                        error={errors.center_id}
+                                    />
                                 </div>
                             )}
 
@@ -260,19 +255,16 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Trạng Thái Hoạt Động <span className="text-red-500">*</span>
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as 'active' | 'paused' | 'closed')}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="paused">Tạm dừng</option>
-                                    <option value="closed">Đã đóng</option>
-                                </select>
-                                {errors.status && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>
-                                )}
+                                    onChange={(val) => setStatus(val as 'active' | 'paused' | 'closed')}
+                                    options={[
+                                        { value: 'active', label: 'Đang hoạt động' },
+                                        { value: 'paused', label: 'Tạm dừng' },
+                                        { value: 'closed', label: 'Đã đóng' },
+                                    ]}
+                                    error={errors.status}
+                                />
                             </div>
                         </div>
                     </Card>

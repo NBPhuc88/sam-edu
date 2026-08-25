@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import AppLayout from '@/layouts/AppLayout';
 
 interface Center {
@@ -228,21 +229,16 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                     <label className="mb-2 block text-sm font-semibold text-gray-800">
                                         Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={centerId}
-                                        onChange={(e) => setCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
-                                    >
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.center_id && (
-                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                    )}
+                                        onChange={(val) => setCenterId(val)}
+                                        placeholder="-- Chọn Trung tâm --"
+                                        options={centers.map((c) => ({
+                                            value: String(c.id),
+                                            label: `${c.name} (${c.code})`,
+                                        }))}
+                                        error={errors.center_id}
+                                    />
                                 </div>
                             )}
 
@@ -302,26 +298,21 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
                                     Trạng Thái Hoạt Động <span className="text-red-500">*</span>
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as 'active' | 'paused' | 'closed')}
+                                    onChange={(val) => handleStatusChange(val as 'active' | 'paused' | 'closed')}
                                     disabled={room.status === 'closed' && !isSuperAdmin}
-                                    className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
-                                        room.status === 'closed' && !isSuperAdmin ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
-                                    }`}
-                                    required
-                                >
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="paused">Tạm dừng</option>
-                                    <option value="closed">Đã đóng</option>
-                                </select>
+                                    options={[
+                                        { value: 'active', label: 'Đang hoạt động' },
+                                        { value: 'paused', label: 'Tạm dừng' },
+                                        { value: 'closed', label: 'Đã đóng' },
+                                    ]}
+                                    error={errors.status}
+                                />
                                 {room.status === 'closed' && !isSuperAdmin && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
                                         * Phòng học đã đóng. Chỉ Super Admin mới có quyền mở lại.
                                     </p>
-                                )}
-                                {errors.status && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>
                                 )}
                             </div>
                         </div>

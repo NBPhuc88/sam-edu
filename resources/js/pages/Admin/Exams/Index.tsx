@@ -23,6 +23,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from '../ClassExams/AssignExamModal';
@@ -338,21 +339,21 @@ export default function ExamIndex({
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Trung Tâm
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(e) => {
-                                            setSelectedCenterId(e.target.value);
+                                        onChange={(val) => {
+                                            setSelectedCenterId(val);
                                             setSelectedSubjectId('');
                                         }}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    >
-                                        <option value="">-- Tất cả Trung Tâm --</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        placeholder="-- Tất cả Trung Tâm --"
+                                        options={[
+                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            ...centers.map((c) => ({
+                                                value: String(c.id),
+                                                label: `${c.name} (${c.code})`,
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                             )}
 
@@ -361,18 +362,18 @@ export default function ExamIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Môn Học
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={selectedSubjectId}
-                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="">-- Tất cả Môn Học --</option>
-                                    {filteredSubjects.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name} ({s.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setSelectedSubjectId(val)}
+                                    placeholder="-- Tất cả Môn Học --"
+                                    options={[
+                                        { value: '', label: '-- Tất cả Môn Học --' },
+                                        ...filteredSubjects.map((s) => ({
+                                            value: String(s.id),
+                                            label: `${s.name} (${s.code})`,
+                                        })),
+                                    ]}
+                                />
                             </div>
 
                             {/* Exam Type Filter */}
@@ -380,18 +381,17 @@ export default function ExamIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Loại Đề Thi
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={selectedExamType}
-                                    onChange={(e) => setSelectedExamType(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả loại đề</option>
-                                    {filteredExamTypes.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name} ({t.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setSelectedExamType(val)}
+                                    options={[
+                                        { value: 'all', label: 'Tất cả loại đề' },
+                                        ...filteredExamTypes.map((t) => ({
+                                            value: String(t.id),
+                                            label: `${t.name} (${t.code})`,
+                                        })),
+                                    ]}
+                                />
                             </div>
                         </div>
 

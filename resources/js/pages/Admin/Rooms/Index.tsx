@@ -21,6 +21,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 
@@ -297,18 +298,18 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Trung Tâm Đào Tạo
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    >
-                                        <option value="">-- Tất cả Trung Tâm --</option>
-                                        {centers.map((center) => (
-                                            <option key={center.id} value={center.id}>
-                                                {center.name} ({center.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setSelectedCenterId(val)}
+                                        placeholder="-- Tất cả Trung Tâm --"
+                                        options={[
+                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            ...centers.map((center) => ({
+                                                value: String(center.id),
+                                                label: `${center.name} (${center.code})`,
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                             )}
 
@@ -317,16 +318,16 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Trạng thái
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả trạng thái</option>
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="paused">Tạm dừng</option>
-                                    <option value="closed">Đã đóng</option>
-                                </select>
+                                    onChange={(val) => setSelectedStatus(val)}
+                                    options={[
+                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: 'active', label: 'Đang hoạt động' },
+                                        { value: 'paused', label: 'Tạm dừng' },
+                                        { value: 'closed', label: 'Đã đóng' },
+                                    ]}
+                                />
                             </div>
                         </div>
 

@@ -19,6 +19,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
@@ -219,33 +220,33 @@ return;
 
                             {isSuperAdmin && centers && centers.length > 1 && (
                                 <div>
-                                    <select
+                                    <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    >
-                                        <option value="">Tất cả Trung tâm</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setSelectedCenterId(val)}
+                                        placeholder="Tất cả Trung tâm"
+                                        options={[
+                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            ...centers.map((c) => ({
+                                                value: String(c.id),
+                                                label: `${c.name} (${c.code})`,
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                             )}
 
                             <div>
-                                <select
+                                <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả Trạng thái</option>
-                                    <option value="1">Đang hoạt động</option>
-                                    <option value="0">Tạm dừng</option>
-                                    <option value="2">Đã hoàn thành</option>
-                                    <option value="3">Đã đóng</option>
-                                </select>
+                                    onChange={(val) => setSelectedStatus(val)}
+                                    options={[
+                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: '1', label: 'Đang hoạt động' },
+                                        { value: '0', label: 'Tạm dừng' },
+                                        { value: '2', label: 'Đã hoàn thành' },
+                                        { value: '3', label: 'Đã đóng' },
+                                    ]}
+                                />
                             </div>
                         </div>
 
