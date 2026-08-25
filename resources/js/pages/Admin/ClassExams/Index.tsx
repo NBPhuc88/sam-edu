@@ -23,6 +23,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from './AssignExamModal';
 import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
@@ -299,21 +300,22 @@ export default function ClassExamIndex({
                                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                         Trung Tâm
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(e) => {
-                                            setSelectedCenterId(e.target.value);
+                                        onChange={(val) => {
+                                            setSelectedCenterId(val);
                                             setSelectedClassId('');
                                         }}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    >
-                                        <option value="">-- Tất cả Trung Tâm --</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        options={[
+                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            ...centers.map((c) => ({
+                                                value: String(c.id),
+                                                label: c.name,
+                                            })),
+                                        ]}
+                                        placeholder="-- Tất cả Trung Tâm --"
+                                        searchable={true}
+                                    />
                                 </div>
                             )}
 
@@ -322,18 +324,19 @@ export default function ClassExamIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Lớp Học
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="">-- Tất cả Lớp Học --</option>
-                                    {filteredClasses.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setSelectedClassId(val)}
+                                    options={[
+                                        { value: '', label: '-- Tất cả Lớp Học --' },
+                                        ...filteredClasses.map((c) => ({
+                                            value: String(c.id),
+                                            label: c.name,
+                                        })),
+                                    ]}
+                                    placeholder="-- Tất cả Lớp Học --"
+                                    searchable={true}
+                                />
                             </div>
 
                             {/* Status Filter */}
@@ -341,17 +344,19 @@ export default function ClassExamIndex({
                                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                     Trạng thái
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả trạng thái</option>
-                                    <option value="scheduled">Đã lên lịch</option>
-                                    <option value="ongoing">Đang diễn ra</option>
-                                    <option value="completed">Đã kết thúc</option>
-                                    <option value="cancelled">Đã hủy</option>
-                                </select>
+                                    onChange={(val) => setSelectedStatus(val)}
+                                    options={[
+                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: 'scheduled', label: 'Đã lên lịch' },
+                                        { value: 'ongoing', label: 'Đang diễn ra' },
+                                        { value: 'completed', label: 'Đã kết thúc' },
+                                        { value: 'cancelled', label: 'Đã hủy' },
+                                    ]}
+                                    placeholder="Tất cả trạng thái"
+                                    searchable={false}
+                                />
                             </div>
                         </div>
 

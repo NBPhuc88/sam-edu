@@ -96,7 +96,11 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
     // References to score inputs for fast keyboard navigation
     const inputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
-    // When class changes, reset subject if current is not in available subjects
+    const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>(() => {
+        return classes[0]?.students?.map((s) => s.id) || [];
+    });
+
+    // When class changes, reset subject if current is not in available subjects & update selectedStudentIds
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
         const newClass = classes.find((c) => String(c.id) === newClassId);
@@ -105,6 +109,24 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
         } else {
             setSelectedSubjectId('');
         }
+        setSelectedStudentIds(newClass?.students?.map((s) => s.id) || []);
+    };
+
+    const handleToggleStudent = (studentId: number) => {
+        setSelectedStudentIds((prev) =>
+            prev.includes(studentId)
+                ? prev.filter((id) => id !== studentId)
+                : [...prev, studentId]
+        );
+    };
+
+    const handleSelectAllStudents = () => {
+        if (!selectedClass) return;
+        setSelectedStudentIds(selectedClass.students.map((s) => s.id));
+    };
+
+    const handleDeselectAllStudents = () => {
+        setSelectedStudentIds([]);
     };
 
     const handleScoreChange = (studentId: number, val: string) => {
@@ -159,20 +181,20 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
         }
     };
 
-    // Computed real-time statistics
+    // Computed real-time statistics (only for selected students)
     const stats = useMemo(() => {
         if (!selectedClass) {
             return { total: 0, graded: 0, avg: 0, highest: 0, passed: 0, passRate: 0 };
         }
 
-        const students = selectedClass.students;
-        const total = students.length;
+        const activeStudents = selectedClass.students.filter((s) => selectedStudentIds.includes(s.id));
+        const total = activeStudents.length;
         let graded = 0;
         let sum = 0;
         let highest = 0;
         let passed = 0;
 
-        students.forEach((s) => {
+        activeStudents.forEach((s) => {
             const rawScore = scoresMap[s.id]?.score;
             if (rawScore !== undefined && rawScore !== '') {
                 const num = Number(rawScore);
@@ -189,7 +211,7 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
         const passRate = graded > 0 ? Number(((passed / graded) * 100).toFixed(1)) : 0;
 
         return { total, graded, avg, highest, passed, passRate };
-    }, [selectedClass, scoresMap, passScore]);
+    }, [selectedClass, selectedStudentIds, scoresMap, passScore]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -210,7 +232,16 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
             return;
         }
 
-        const scoresPayload: StudentScoreRecord[] = (selectedClass?.students || []).map((s) => {
+        if (selectedStudentIds.length === 0) {
+            setErrors({ general: 'Vui lòng chọn ít nhất 1 học sinh tham gia kiểm tra.' });
+            return;
+        }
+
+        const selectedStudents = (selectedClass?.students || []).filter((s) =>
+            selectedStudentIds.includes(s.id)
+        );
+
+        const scoresPayload: StudentScoreRecord[] = selectedStudents.map((s) => {
             const entry = scoresMap[s.id];
             return {
                 student_id: s.id,
@@ -294,11 +325,10 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                     onChange={handleClassChange}
                                     options={classes.map((cls) => ({
                                         value: String(cls.id),
-                                        label: `${cls.name} (${cls.code || 'Mã #' + cls.id})${
-                                            cls.center ? ' · ' + cls.center.name : ''
-                                        }`,
+                                        label: cls.name,
                                     }))}
                                     placeholder="-- Chọn lớp học --"
+                                    searchable={true}
                                 />
                                 {errors.class_id && (
                                     <p className="mt-1 text-2xs text-red-600">{errors.class_id}</p>
@@ -315,13 +345,14 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                     onChange={setSelectedSubjectId}
                                     options={availableSubjects.map((sub) => ({
                                         value: String(sub.id),
-                                        label: `${sub.name} (${sub.code || 'Mã #' + sub.id})`,
+                                        label: sub.name,
                                     }))}
                                     placeholder={
                                         availableSubjects.length === 0
                                             ? '-- Lớp chưa có môn học --'
                                             : '-- Chọn môn học --'
                                     }
+                                    searchable={true}
                                 />
                                 {errors.subject_id && (
                                     <p className="mt-1 text-2xs text-red-600">{errors.subject_id}</p>
@@ -483,29 +514,72 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
 
                     {/* Card 2: Student Score Entry Table */}
                     <Card className="border-gray-200 bg-white shadow-2xs overflow-hidden">
-                        <div className="border-b border-gray-100 p-4 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="border-b border-gray-100 p-4 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <Users className="h-4 w-4 text-emerald-600" />
-                                    2. Danh Sách Học Sinh & Nhập Bảng Điểm
+                                    2. Danh Sách Học Sinh Tham Gia Kiểm Tra & Bảng Điểm
                                 </h2>
                                 <p className="text-2xs text-gray-500 mt-0.5">
-                                    💡 <strong>Mẹo nhập nhanh:</strong> Gõ điểm số và bấm phím <strong>Enter</strong> hoặc <strong>Mũi tên xuống</strong> để tự động nhảy sang học sinh kế tiếp
+                                    💡 Tick chọn các học sinh tham gia đợt kiểm tra này (áp dụng cho kiểm tra miệng, kiểm tra bù hoặc cả lớp).
                                 </p>
                             </div>
 
                             {selectedClass && (
-                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-2xs font-bold text-emerald-800 border border-emerald-200">
-                                    Lớp: {selectedClass.name} ({selectedClass.students.length} học sinh)
-                                </span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-2xs font-bold text-emerald-800 border border-emerald-200">
+                                        Đã chọn {selectedStudentIds.length} / {selectedClass.students.length} học sinh
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleSelectAllStudents}
+                                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-2xs font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-2xs"
+                                    >
+                                        Chọn tất cả
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleDeselectAllStudents}
+                                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-2xs font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-2xs"
+                                    >
+                                        Bỏ chọn tất cả
+                                    </button>
+                                </div>
                             )}
                         </div>
+
+                        {errors.general && (
+                            <div className="bg-rose-50 border-b border-rose-100 px-4 py-2 text-xs font-bold text-rose-700">
+                                {errors.general}
+                            </div>
+                        )}
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs text-gray-700">
                                 <thead className="border-b border-gray-200 bg-slate-50 font-bold uppercase tracking-wider text-2xs text-gray-600">
                                     <tr>
-                                        <th className="px-4 py-3 text-center w-12">STT</th>
+                                        <th className="px-3 py-3 text-center w-12">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    Boolean(
+                                                        selectedClass &&
+                                                        selectedClass.students.length > 0 &&
+                                                        selectedStudentIds.length === selectedClass.students.length
+                                                    )
+                                                }
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        handleSelectAllStudents();
+                                                    } else {
+                                                        handleDeselectAllStudents();
+                                                    }
+                                                }}
+                                                className="h-4 w-4 rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                title="Chọn / Bỏ chọn tất cả"
+                                            />
+                                        </th>
+                                        <th className="px-3 py-3 text-center w-12">STT</th>
                                         <th className="px-4 py-3">Học Sinh</th>
                                         <th className="px-4 py-3 w-40 text-center">
                                             Điểm Số (/{maxScore})
@@ -518,7 +592,7 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                 <tbody className="divide-y divide-gray-100">
                                     {!selectedClass || selectedClass.students.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                                            <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
                                                 <HelpCircle className="mx-auto h-8 w-8 text-gray-300 mb-2" />
                                                 <p className="font-semibold text-xs text-gray-600">
                                                     Lớp học chưa có học sinh nào
@@ -530,20 +604,35 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                         </tr>
                                     ) : (
                                         selectedClass.students.map((student, idx) => {
-                                            const scoreVal = scoresMap[student.id]?.score ?? '';
-                                            const commentVal = scoresMap[student.id]?.comment ?? '';
+                                            const isSelected = selectedStudentIds.includes(student.id);
+                                            const scoreVal = isSelected ? (scoresMap[student.id]?.score ?? '') : '';
+                                            const commentVal = isSelected ? (scoresMap[student.id]?.comment ?? '') : '';
                                             const numScore = scoreVal !== '' ? Number(scoreVal) : null;
                                             const isPassed = numScore !== null && numScore >= passScore;
 
                                             return (
                                                 <tr
                                                     key={student.id}
-                                                    className={`hover:bg-slate-50/70 transition-colors ${
-                                                        scoreVal !== '' ? 'bg-emerald-50/20' : ''
+                                                    className={`transition-colors ${
+                                                        !isSelected
+                                                            ? 'bg-gray-50/40 opacity-50'
+                                                            : scoreVal !== ''
+                                                            ? 'bg-emerald-50/20 hover:bg-emerald-50/30'
+                                                            : 'hover:bg-slate-50/70'
                                                     }`}
                                                 >
+                                                    {/* Checkbox select */}
+                                                    <td className="px-3 py-3 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={() => handleToggleStudent(student.id)}
+                                                            className="h-4 w-4 rounded-sm border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                        />
+                                                    </td>
+
                                                     {/* STT */}
-                                                    <td className="px-4 py-3 text-center font-bold text-gray-500">
+                                                    <td className="px-3 py-3 text-center font-bold text-gray-500">
                                                         {idx + 1}
                                                     </td>
 
@@ -582,13 +671,14 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                                                 }}
                                                                 type="text"
                                                                 inputMode="decimal"
+                                                                disabled={!isSelected}
                                                                 value={scoreVal}
                                                                 onChange={(e) =>
                                                                     handleScoreChange(student.id, e.target.value)
                                                                 }
                                                                 onKeyDown={(e) => handleScoreKeyDown(e, idx)}
-                                                                placeholder="—"
-                                                                className={`w-24 text-center rounded-lg border py-1.5 px-2 text-sm font-black transition-all focus:outline-hidden ${
+                                                                placeholder={!isSelected ? '—' : '—'}
+                                                                className={`w-24 text-center rounded-lg border py-1.5 px-2 text-sm font-black transition-all focus:outline-hidden disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 ${
                                                                     scoreVal !== ''
                                                                         ? isPassed
                                                                             ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 focus:ring-2 focus:ring-emerald-500/20'
@@ -623,12 +713,17 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                                     <td className="px-4 py-3">
                                                         <input
                                                             type="text"
+                                                            disabled={!isSelected}
                                                             value={commentVal}
                                                             onChange={(e) =>
                                                                 handleCommentChange(student.id, e.target.value)
                                                             }
-                                                            placeholder="Nhận xét bài làm (tùy chọn)..."
-                                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:border-emerald-500 focus:outline-hidden"
+                                                            placeholder={
+                                                                !isSelected
+                                                                    ? 'Không tham gia kiểm tra'
+                                                                    : 'Nhận xét bài làm (tùy chọn)...'
+                                                            }
+                                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:border-emerald-500 focus:outline-hidden disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200"
                                                         />
                                                     </td>
 
@@ -656,7 +751,7 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                         {/* Footer Form Actions */}
                         <div className="border-t border-gray-100 p-4 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
                             <p className="text-2xs text-gray-500 font-medium">
-                                Đã nhập điểm cho <strong>{stats.graded}</strong> / <strong>{stats.total}</strong> học sinh
+                                Đã chọn <strong>{selectedStudentIds.length}</strong> học sinh kiểm tra · Đã nhập điểm cho <strong>{stats.graded}</strong> / <strong>{stats.total}</strong> học sinh
                             </p>
 
                             <div className="flex items-center gap-2.5">
@@ -672,9 +767,9 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                                     size="md"
                                     isLoading={isSubmitting}
                                     icon={<Save className="h-4 w-4" />}
-                                    disabled={!selectedClass || selectedClass.students.length === 0}
+                                    disabled={!selectedClass || selectedStudentIds.length === 0}
                                 >
-                                    Lưu Bài Thi & Bảng Điểm
+                                    Lưu Bài Thi & Bảng Điểm ({selectedStudentIds.length} HS)
                                 </Button>
                             </div>
                         </div>

@@ -23,6 +23,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
+import ScrollableSelect from '../../../components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import TuitionChartSection, { TuitionChartStatsData } from './components/TuitionChartSection';
@@ -360,37 +361,39 @@ export const Index: React.FC<IndexProps> = ({
 
                             {isSuperAdmin && centers && centers.length > 1 && (
                                 <div>
-                                    <select
+                                    <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(e) => {
-                                            setSelectedCenterId(e.target.value);
+                                        onChange={(val) => {
+                                            setSelectedCenterId(val);
                                             setSelectedClassId('');
                                         }}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    >
-                                        <option value="">Tất cả Trung tâm</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        options={[
+                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            ...centers.map((c) => ({
+                                                value: String(c.id),
+                                                label: c.name,
+                                            })),
+                                        ]}
+                                        placeholder="Tất cả Trung tâm"
+                                        searchable={true}
+                                    />
                                 </div>
                             )}
 
                             <div>
-                                <select
+                                <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="">Tất cả Lớp học</option>
-                                    {filteredClasses.map((cl) => (
-                                        <option key={cl.id} value={cl.id}>
-                                            {cl.name} ({cl.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setSelectedClassId(val)}
+                                    options={[
+                                        { value: '', label: 'Tất cả Lớp học' },
+                                        ...filteredClasses.map((cl) => ({
+                                            value: String(cl.id),
+                                            label: cl.name,
+                                        })),
+                                    ]}
+                                    placeholder="Tất cả Lớp học"
+                                    searchable={true}
+                                />
                             </div>
 
                             <div>
@@ -405,17 +408,19 @@ export const Index: React.FC<IndexProps> = ({
                             </div>
 
                             <div>
-                                <select
+                                <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả Trạng thái</option>
-                                    <option value="pending">Chưa đóng</option>
-                                    <option value="partial">Đang đóng (Còn nợ)</option>
-                                    <option value="completed">Đã hoàn thành</option>
-                                    <option value="overdue">Quá hạn</option>
-                                </select>
+                                    onChange={(val) => setSelectedStatus(val)}
+                                    options={[
+                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: 'pending', label: 'Chưa đóng' },
+                                        { value: 'partial', label: 'Đang đóng (Còn nợ)' },
+                                        { value: 'completed', label: 'Đã hoàn thành' },
+                                        { value: 'overdue', label: 'Quá hạn' },
+                                    ]}
+                                    placeholder="Tất cả Trạng thái"
+                                    searchable={false}
+                                />
                             </div>
                         </div>
 

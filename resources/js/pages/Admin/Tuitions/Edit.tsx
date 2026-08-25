@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
+import ScrollableSelect from '../../../components/ui/ScrollableSelect';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface CenterItem {
@@ -18,6 +19,7 @@ interface ClassItem {
     name: string;
     code: string;
     center_id: number;
+    students?: StudentItem[];
 }
 
 interface StudentItem {
@@ -93,7 +95,27 @@ export const Edit: React.FC<EditProps> = ({
     const isTotalAmountBelowPaid = Number(totalAmount) < paidAmount;
 
     const filteredClasses = classes.filter((c) => String(c.center_id) === String(centerId));
-    const filteredStudents = students.filter((s) => String(s.center_id) === String(centerId));
+    const selectedClass = classes.find((c) => String(c.id) === String(classId));
+    const filteredStudents = classId
+        ? (selectedClass?.students || [])
+        : (centerId ? students.filter((s) => String(s.center_id) === String(centerId)) : students);
+
+    const handleCenterChange = (newCenterId: string) => {
+        setCenterId(newCenterId);
+        setClassId('');
+        setStudentId('');
+    };
+
+    const handleClassChange = (newClassId: string) => {
+        setClassId(newClassId);
+        const newSelectedClass = classes.find((c) => String(c.id) === String(newClassId));
+        if (newSelectedClass && newSelectedClass.students) {
+            const isCurrentStudentInClass = newSelectedClass.students.some((s) => String(s.id) === String(studentId));
+            if (!isCurrentStudentInClass) {
+                setStudentId('');
+            }
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -154,22 +176,16 @@ export const Edit: React.FC<EditProps> = ({
                                     <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Trung Tâm Đào Tạo
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={centerId}
-                                        onChange={(e) => {
-                                            setCenterId(e.target.value);
-                                            setClassId('');
-                                            setStudentId('');
-                                        }}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
-                                    >
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={handleCenterChange}
+                                        options={centers.map((c) => ({
+                                            value: String(c.id),
+                                            label: c.name,
+                                        }))}
+                                        placeholder="-- Chọn Trung tâm --"
+                                        searchable={true}
+                                    />
                                 </div>
                             )}
 
@@ -178,19 +194,16 @@ export const Edit: React.FC<EditProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Lớp Học (*)
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={classId}
-                                    onChange={(e) => setClassId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Lớp học --</option>
-                                    {filteredClasses.map((cl) => (
-                                        <option key={cl.id} value={cl.id}>
-                                            {cl.name} ({cl.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={handleClassChange}
+                                    options={filteredClasses.map((cl) => ({
+                                        value: String(cl.id),
+                                        label: cl.name,
+                                    }))}
+                                    placeholder="-- Chọn Lớp học --"
+                                    searchable={true}
+                                />
                             </div>
 
                             {/* Student */}
@@ -198,19 +211,24 @@ export const Edit: React.FC<EditProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Học Sinh (*)
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={studentId}
-                                    onChange={(e) => setStudentId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Học sinh --</option>
-                                    {filteredStudents.map((st) => (
-                                        <option key={st.id} value={st.id}>
-                                            {st.full_name} ({st.student_code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setStudentId(val)}
+                                    disabled={!classId}
+                                    options={filteredStudents.map((st) => ({
+                                        value: String(st.id),
+                                        label: st.full_name,
+                                        subLabel: st.phone ? `SĐT: ${st.phone}` : undefined,
+                                    }))}
+                                    placeholder={
+                                        !classId
+                                            ? '-- Vui lòng chọn Lớp học trước --'
+                                            : filteredStudents.length === 0
+                                            ? '-- Lớp chưa có học sinh ghi danh --'
+                                            : '-- Chọn Học sinh --'
+                                    }
+                                    searchable={true}
+                                />
                             </div>
 
                             {/* Title */}

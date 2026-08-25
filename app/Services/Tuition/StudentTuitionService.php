@@ -156,7 +156,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $centerId        = $selectedCenterId ?? ($centers->first()?->id ?? null);
         $targetCenterIds = $centerId ? [$centerId] : $allowedCenterIds;
 
-        $classes  = $this->schoolClassRepository->getClassesByCenterIds($targetCenterIds);
+        $classes = $this->schoolClassRepository->getClassesByCenterIds($targetCenterIds);
+        $classes->load(['students:id,full_name,student_code,phone,center_id']);
         $students = $this->studentRepository->getActiveStudents($targetCenterIds, ['id', 'full_name', 'student_code', 'phone', 'center_id']);
 
         return [

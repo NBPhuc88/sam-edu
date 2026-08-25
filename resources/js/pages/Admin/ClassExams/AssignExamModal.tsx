@@ -15,6 +15,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import DatePicker from '@/components/ui/DatePicker';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { Center, ClassExam, Exam, SchoolClass } from './types';
 
 interface Props {
@@ -181,21 +182,22 @@ export default function AssignExamModal({
                         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
                             Trung Tâm Đào Tạo
                         </label>
-                        <select
+                        <ScrollableSelect
                             value={centerId}
-                            onChange={(e) => {
-                                setCenterId(e.target.value);
+                            onChange={(val) => {
+                                setCenterId(val);
                                 setClassId('');
                             }}
-                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                        >
-                            <option value="">-- Tất cả Trung Tâm --</option>
-                            {centers.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name} ({c.code})
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: '', label: '-- Tất cả Trung Tâm --' },
+                                ...centers.map((c) => ({
+                                    value: String(c.id),
+                                    label: c.name,
+                                })),
+                            ]}
+                            placeholder="-- Tất cả Trung Tâm --"
+                            searchable={true}
+                        />
                     </div>
                 )}
 
@@ -206,19 +208,16 @@ export default function AssignExamModal({
                             <Users className="h-3.5 w-3.5 text-emerald-600" />
                             <span>Lớp Học Tổ Chức Thi (*)</span>
                         </label>
-                        <select
+                        <ScrollableSelect
                             value={classId}
-                            onChange={(e) => setClassId(e.target.value)}
-                            required
-                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                        >
-                            <option value="">-- Chọn Lớp Học --</option>
-                            {filteredClasses.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name} ({c.code})
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => setClassId(val)}
+                            options={filteredClasses.map((c) => ({
+                                value: String(c.id),
+                                label: c.name,
+                            }))}
+                            placeholder="-- Chọn Lớp Học --"
+                            searchable={true}
+                        />
                         {errors.class_id && <p className="mt-1 text-2xs text-red-600">{errors.class_id}</p>}
                     </div>
 
@@ -228,19 +227,16 @@ export default function AssignExamModal({
                             <BookOpen className="h-3.5 w-3.5 text-blue-600" />
                             <span>Đề Thi Từ Kho Mẫu (*)</span>
                         </label>
-                        <select
+                        <ScrollableSelect
                             value={examId}
-                            onChange={(e) => handleExamChange(e.target.value)}
-                            required
-                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                        >
-                            <option value="">-- Chọn Đề Thi Trong Kho --</option>
-                            {filteredExams.map((e) => (
-                                <option key={e.id} value={e.id}>
-                                    {e.name} {e.code ? `(${e.code})` : ''} • {e.max_score}đ
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val) => handleExamChange(val)}
+                            options={filteredExams.map((e) => ({
+                                value: String(e.id),
+                                label: `${e.name} · ${e.max_score}đ`,
+                            }))}
+                            placeholder="-- Chọn Đề Thi Trong Kho --"
+                            searchable={true}
+                        />
                         {errors.exam_id && <p className="mt-1 text-2xs text-red-600">{errors.exam_id}</p>}
                     </div>
                 </div>
@@ -373,16 +369,17 @@ export default function AssignExamModal({
                         <label className="mb-1.5 flex h-5 items-center text-xs font-bold uppercase tracking-wider text-gray-700 whitespace-nowrap">
                             Trạng Thái
                         </label>
-                        <select
+                        <ScrollableSelect
                             value={status}
-                            onChange={(e) => setStatus(e.target.value as any)}
-                            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
-                        >
-                            <option value="scheduled">Đã lên lịch</option>
-                            <option value="ongoing">Đang diễn ra</option>
-                            <option value="completed">Đã kết thúc</option>
-                            <option value="cancelled">Đã hủy</option>
-                        </select>
+                            onChange={(val) => setStatus(val as any)}
+                            options={[
+                                { value: 'scheduled', label: 'Đã lên lịch' },
+                                { value: 'ongoing', label: 'Đang diễn ra' },
+                                { value: 'completed', label: 'Đã kết thúc' },
+                                { value: 'cancelled', label: 'Đã hủy' },
+                            ]}
+                            searchable={false}
+                        />
                     </div>
                 </div>
 

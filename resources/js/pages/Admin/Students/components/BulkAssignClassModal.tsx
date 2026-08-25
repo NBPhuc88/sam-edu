@@ -130,7 +130,7 @@ export default function BulkAssignClassModal({
                         >
                             {centers.map((c) => (
                                 <option key={c.id} value={c.id}>
-                                    {c.name} ({c.code})
+                                    {c.name}
                                 </option>
                             ))}
                         </select>

@@ -10,6 +10,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
+import ScrollableSelect from '../../../components/ui/ScrollableSelect';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface CenterItem {
@@ -23,6 +24,7 @@ interface ClassItem {
     name: string;
     code: string;
     center_id: number;
+    students?: StudentItem[];
 }
 
 interface StudentItem {
@@ -85,14 +87,15 @@ export const Create: React.FC<CreateProps> = ({
         Number(totalAmount) > 0 &&
         Number(initialAmount) > Number(totalAmount);
 
-    // Filter classes and students by selected center
+    // Filter classes and students by selected center and selected class
     const filteredClasses = centerId
         ? classes.filter((c) => String(c.center_id) === String(centerId))
         : classes;
 
-    const filteredStudents = centerId
-        ? students.filter((s) => String(s.center_id) === String(centerId))
-        : students;
+    const selectedClass = classes.find((c) => String(c.id) === String(classId));
+    const filteredStudents = classId
+        ? (selectedClass?.students || [])
+        : (centerId ? students.filter((s) => String(s.center_id) === String(centerId)) : students);
 
     // Reset class and student when center changes
     const handleCenterChange = (newCenterId: string) => {
@@ -101,9 +104,10 @@ export const Create: React.FC<CreateProps> = ({
         setStudentId('');
     };
 
-    // Auto update title when class is selected
+    // Auto update title when class is selected & reset student
     const handleClassChange = (newClassId: string) => {
         setClassId(newClassId);
+        setStudentId('');
         const selectedCls = filteredClasses.find((c) => String(c.id) === String(newClassId));
 
         if (selectedCls && !title) {
@@ -180,19 +184,16 @@ export const Create: React.FC<CreateProps> = ({
                                     <label className="mb-2 block text-sm font-semibold text-gray-700">
                                         Trung Tâm Đào Tạo (*)
                                     </label>
-                                    <select
+                                    <ScrollableSelect
                                         value={centerId}
-                                        onChange={(e) => handleCenterChange(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
-                                    >
-                                        <option value="">-- Chọn Trung tâm --</option>
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={handleCenterChange}
+                                        options={centers.map((c) => ({
+                                            value: String(c.id),
+                                            label: c.name,
+                                        }))}
+                                        placeholder="-- Chọn Trung tâm --"
+                                        searchable={true}
+                                    />
                                     {errors.center_id && (
                                         <p className="mt-1.5 text-xs text-red-600">{errors.center_id}</p>
                                     )}
@@ -204,20 +205,17 @@ export const Create: React.FC<CreateProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Lớp Học / Khóa Học (*)
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={classId}
-                                    onChange={(e) => handleClassChange(e.target.value)}
+                                    onChange={handleClassChange}
                                     disabled={!centerId}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
-                                    required
-                                >
-                                    <option value="">-- Chọn Lớp học --</option>
-                                    {filteredClasses.map((cl) => (
-                                        <option key={cl.id} value={cl.id}>
-                                            {cl.name} ({cl.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                    options={filteredClasses.map((cl) => ({
+                                        value: String(cl.id),
+                                        label: cl.name,
+                                    }))}
+                                    placeholder="-- Chọn Lớp học --"
+                                    searchable={true}
+                                />
                                 {errors.class_id && (
                                     <p className="mt-1.5 text-xs text-red-600">{errors.class_id}</p>
                                 )}
@@ -228,20 +226,24 @@ export const Create: React.FC<CreateProps> = ({
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Học Sinh Đóng Học Phí (*)
                                 </label>
-                                <select
+                                <ScrollableSelect
                                     value={studentId}
-                                    onChange={(e) => setStudentId(e.target.value)}
-                                    disabled={!centerId}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-400"
-                                    required
-                                >
-                                    <option value="">-- Chọn Học sinh --</option>
-                                    {filteredStudents.map((st) => (
-                                        <option key={st.id} value={st.id}>
-                                            {st.full_name} ({st.student_code}) {st.phone ? `• ${st.phone}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setStudentId(val)}
+                                    disabled={!classId}
+                                    options={filteredStudents.map((st) => ({
+                                        value: String(st.id),
+                                        label: st.full_name,
+                                        subLabel: st.phone ? `SĐT: ${st.phone}` : undefined,
+                                    }))}
+                                    placeholder={
+                                        !classId
+                                            ? '-- Vui lòng chọn Lớp học trước --'
+                                            : filteredStudents.length === 0
+                                            ? '-- Lớp chưa có học sinh ghi danh --'
+                                            : '-- Chọn Học sinh --'
+                                    }
+                                    searchable={true}
+                                />
                                 {errors.student_id && (
                                     <p className="mt-1.5 text-xs text-red-600">{errors.student_id}</p>
                                 )}

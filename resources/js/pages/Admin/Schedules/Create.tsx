@@ -1063,7 +1063,7 @@ export default function ScheduleCreate({
                                     <option value="">-- Chọn lớp học --</option>
                                     {classes.map((c) => (
                                         <option key={c.id} value={c.id}>
-                                            {c.name} ({c.code}) - {c.center?.name || 'Trung tâm'}
+                                            {c.name}
                                         </option>
                                     ))}
                                 </select>
@@ -1093,7 +1093,7 @@ export default function ScheduleCreate({
                                     </option>
                                     {displaySubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
-                                            {s.name} ({s.code}) - {s.total_sessions ? `${s.total_sessions} buổi` : 'N/A'}
+                                            {s.name}{s.total_sessions ? ` (${s.total_sessions} buổi)` : ''}
                                         </option>
                                     ))}
                                 </select>

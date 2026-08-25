@@ -264,10 +264,11 @@ export default function GradingIndex({
                                         { value: '', label: '-- Tất cả lớp học --' },
                                         ...classes.map((cls) => ({
                                             value: String(cls.id),
-                                            label: `${cls.name} (${cls.code || 'Mã #' + cls.id})`,
+                                            label: cls.name,
                                         })),
                                     ]}
                                     placeholder="Chọn lớp học"
+                                    searchable={true}
                                 />
                             </div>
 
@@ -284,10 +285,11 @@ export default function GradingIndex({
                                         { value: '', label: '-- Tất cả bài thi --' },
                                         ...availableExams.map((e) => ({
                                             value: String(e.id),
-                                            label: `${e.title} (${e.code || 'Mã #' + e.id})`,
+                                            label: e.title,
                                         })),
                                     ]}
                                     placeholder="Chọn bài thi"
+                                    searchable={true}
                                 />
                             </div>
 

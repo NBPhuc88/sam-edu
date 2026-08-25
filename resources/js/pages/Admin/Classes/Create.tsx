@@ -185,7 +185,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         <option value="">-- Chọn Trung tâm --</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
+                                                {c.name}
                                             </option>
                                         ))}
                                     </select>
@@ -352,7 +352,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                             <option value="">-- Chọn Môn Học --</option>
                                             {availableSubjects.map((s) => (
                                                 <option key={s.id} value={s.id}>
-                                                    {s.name} ({s.code})
+                                                    {s.name}
                                                 </option>
                                             ))}
                                         </select>
@@ -379,7 +379,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                             <option value="">-- Chọn Giáo Viên --</option>
                                             {availableTeachers.map((t) => (
                                                 <option key={t.id} value={t.id}>
-                                                    {t.full_name} ({t.teacher_code})
+                                                    {t.full_name}
                                                 </option>
                                             ))}
                                         </select>

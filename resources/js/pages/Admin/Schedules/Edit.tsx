@@ -1092,7 +1092,7 @@ export default function ScheduleEdit({
                                 <input
                                     type="text"
                                     readOnly
-                                    value={`${classSubject?.subject?.name || ''} (${classSubject?.subject?.code || ''})${totalSessions ? ` - ${totalSessions} buổi` : ''}`}
+                                    value={`${classSubject?.subject?.name || ''}${totalSessions ? ` (${totalSessions} buổi)` : ''}`}
                                     className="w-full rounded-lg border border-gray-200 bg-slate-100 px-4 py-3 text-sm font-medium text-gray-600 shadow-xs cursor-not-allowed"
                                 />
                             </div>
@@ -1110,7 +1110,7 @@ export default function ScheduleEdit({
                                     <option value="">-- Chọn Giáo Viên --</option>
                                     {displayTeachers.map((t) => (
                                         <option key={t.id} value={t.id}>
-                                            {t.full_name} ({t.teacher_code})
+                                            {t.full_name}
                                         </option>
                                     ))}
                                 </select>

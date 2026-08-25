@@ -417,9 +417,10 @@ return;
                                         { value: '', label: 'Tất cả Lớp học' },
                                         ...availableClasses.map((cls) => ({
                                             value: String(cls.id),
-                                            label: `${cls.name} (${cls.code})`,
+                                            label: cls.name,
                                         })),
                                     ]}
+                                    searchable={true}
                                 />
                             </div>
 
