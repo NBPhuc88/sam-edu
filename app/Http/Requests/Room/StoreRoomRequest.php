@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Room;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,7 +33,7 @@ class StoreRoomRequest extends FormRequest
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status'   => ['nullable', 'string', 'in:active,paused,closed,inactive'],
+            'status'   => ['nullable', 'string', Rule::in(array_merge(Constant::ROOM_STATUSES, [Constant::STATUS_INACTIVE]))],
 
             'equipments'            => ['nullable', 'array'],
             'equipments.*.name'     => ['required_with:equipments', 'string', 'max:255'],

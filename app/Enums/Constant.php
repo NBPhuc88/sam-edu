@@ -133,6 +133,23 @@ class Constant
     public const string CENTER_STATUS_EXPIRED         = 'expired';
     public const string CENTER_STATUS_LOCKED          = 'locked';
 
+    // Bảng rooms
+    public const string ROOM_STATUS_ACTIVE = 'active';
+    public const string ROOM_STATUS_PAUSED = 'paused';
+    public const string ROOM_STATUS_CLOSED = 'closed';
+
+    public const array ROOM_STATUSES = [
+        self::ROOM_STATUS_ACTIVE,
+        self::ROOM_STATUS_PAUSED,
+        self::ROOM_STATUS_CLOSED,
+    ];
+
+    public const array ROOM_STATUS_LABELS = [
+        self::ROOM_STATUS_ACTIVE => 'Đang hoạt động',
+        self::ROOM_STATUS_PAUSED => 'Tạm dừng',
+        self::ROOM_STATUS_CLOSED => 'Đã đóng',
+    ];
+
     // Bảng room_equipments
     public const string EQUIPMENT_STATUS_GOOD        = 'good';
     public const string EQUIPMENT_STATUS_MAINTENANCE = 'maintenance';

@@ -236,7 +236,7 @@ class RoomRepository implements RoomRepositoryInterface
             'location',
             'status'
         )
-        ->where('status', 'active');
+        ->where('status', Constant::ROOM_STATUS_ACTIVE);
 
         if ($centerIds !== null) {
             $query->whereIn('center_id', $centerIds);
@@ -254,9 +254,9 @@ class RoomRepository implements RoomRepositoryInterface
         }
 
         $total         = (clone $query)->count();
-        $active        = (clone $query)->where('status', 'active')->count();
-        $inactive      = (clone $query)->whereIn('status', ['paused', 'inactive'])->count();
-        $totalCapacity = (int) ((clone $query)->where('status', 'active')->sum('capacity') ?? 0);
+        $active        = (clone $query)->where('status', Constant::ROOM_STATUS_ACTIVE)->count();
+        $inactive      = (clone $query)->whereIn('status', [Constant::ROOM_STATUS_PAUSED, Constant::STATUS_INACTIVE])->count();
+        $totalCapacity = (int) ((clone $query)->where('status', Constant::ROOM_STATUS_ACTIVE)->sum('capacity') ?? 0);
 
         return [
             'total'          => $total,
@@ -281,7 +281,7 @@ class RoomRepository implements RoomRepositoryInterface
     public function countActiveAndPaused(int $centerId, ?int $excludeId = null): int
     {
         $query = Room::where('center_id', $centerId)
-            ->whereIn('status', ['active', 'paused']);
+            ->whereIn('status', [Constant::ROOM_STATUS_ACTIVE, Constant::ROOM_STATUS_PAUSED]);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);

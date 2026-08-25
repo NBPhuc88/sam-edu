@@ -92,10 +92,10 @@ class RoomService implements RoomServiceInterface
             throw new AccessDeniedHttpException('Bạn không có quyền tạo phòng học cho trung tâm này.');
         }
 
-        $status = $data['status'] ?? Constant::STATUS_ACTIVE;
+        $status = $data['status'] ?? Constant::ROOM_STATUS_ACTIVE;
 
         // Kiểm tra giới hạn số phòng học đang hoạt động và tạm dừng không được vượt quá max_classes
-        if (in_array($status, [Constant::STATUS_ACTIVE, 'paused'], true)) {
+        if (in_array($status, [Constant::ROOM_STATUS_ACTIVE, Constant::ROOM_STATUS_PAUSED], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
@@ -141,7 +141,7 @@ class RoomService implements RoomServiceInterface
         }
 
         // Phòng học đã đóng (closed) không thể đổi trạng thái khác (trừ Super Admin)
-        if ($room->status === 'closed' && isset($data['status']) && $data['status'] !== 'closed') {
+        if ($room->status === Constant::ROOM_STATUS_CLOSED && isset($data['status']) && $data['status'] !== Constant::ROOM_STATUS_CLOSED) {
             if (! ($admin && $admin->isSuperAdmin())) {
                 throw new AccessDeniedHttpException('Phòng học đã đóng chỉ có Super Admin mới có quyền mở lại.');
             }
@@ -151,7 +151,7 @@ class RoomService implements RoomServiceInterface
         $newStatus = $data['status'] ?? $room->status;
         $centerId  = (int) ($data['center_id'] ?? $room->center_id);
 
-        if ($room->status === 'closed' && in_array($newStatus, ['active', 'paused'], true)) {
+        if ($room->status === Constant::ROOM_STATUS_CLOSED && in_array($newStatus, [Constant::ROOM_STATUS_ACTIVE, Constant::ROOM_STATUS_PAUSED], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Room;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -37,7 +38,7 @@ class UpdateRoomRequest extends FormRequest
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status'   => ['sometimes', 'required', 'string', 'in:active,paused,closed,inactive'],
+            'status'   => ['sometimes', 'required', 'string', Rule::in(array_merge(Constant::ROOM_STATUSES, [Constant::STATUS_INACTIVE]))],
 
             'equipments'            => ['nullable', 'array'],
             'equipments.*.id'       => ['nullable', 'integer'],
