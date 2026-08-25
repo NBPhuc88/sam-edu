@@ -65,22 +65,30 @@ export const Pagination: React.FC<PaginationProps> = ({
         try {
             const parsed = new URL(url, window.location.origin);
 
-            // Merge search parameters from current URL if not already present
+            // Build the set of keys controlled by currentParams
+            const controlledKeys = new Set(
+                currentParams ? Object.keys(currentParams) : []
+            );
+
+            // Merge search parameters from current URL — only for keys NOT controlled by currentParams
             if (typeof window !== 'undefined' && window.location.search) {
                 const currentSearch = new URLSearchParams(window.location.search);
                 currentSearch.forEach((value, key) => {
-                    if (key !== 'page' && !parsed.searchParams.has(key)) {
+                    if (key !== 'page' && !parsed.searchParams.has(key) && !controlledKeys.has(key)) {
                         parsed.searchParams.set(key, value);
                     }
                 });
             }
 
-            // Merge currentParams if provided
+            // Merge currentParams — these always override (authoritative source of truth)
             if (currentParams && typeof currentParams === 'object') {
                 Object.entries(currentParams).forEach(([key, val]) => {
-                    if (key !== 'page' && val !== undefined && val !== null && val !== '' && val !== 'all') {
-                        if (!parsed.searchParams.has(key)) {
+                    if (key !== 'page') {
+                        if (val !== undefined && val !== null && val !== '' && val !== 'all') {
                             parsed.searchParams.set(key, String(val));
+                        } else {
+                            // Explicitly remove params that currentParams says should not be present
+                            parsed.searchParams.delete(key);
                         }
                     }
                 });
