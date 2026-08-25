@@ -725,11 +725,15 @@ class DashboardService implements DashboardServiceInterface
         $expiringSoon      = $expiresAt ? (! $isExpired && $daysRemaining <= 7) : false;
         $expiring1DayAlert = $expiresAt ? (! $isExpired && $daysRemaining <= 1) : false;
 
+        $currentPlan = $center->currentPlan();
+
         return [
             'id'                => $center->id,
             'code'              => $center->code,
             'name'              => $center->name,
             'subscription_plan' => $center->subscription_plan,
+            'plan_type'         => $center->plan_type,
+            'allowed_features'  => $currentPlan?->allowed_features ?? [],
             'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
             'is_expired'        => $isExpired,
             'expiring_soon'     => $expiringSoon,
