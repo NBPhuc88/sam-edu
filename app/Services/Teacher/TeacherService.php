@@ -587,6 +587,8 @@ class TeacherService implements TeacherServiceInterface
      * @param  ?int                 $filterMonth
      * @param  ?int                 $filterYear
      * @param  ?Admin               $admin
+     * @param  int                  $perPage
+     * @param  int                  $page
      * @return array<string, mixed>
      */
     public function getTeacherDetailData(
@@ -594,7 +596,9 @@ class TeacherService implements TeacherServiceInterface
         ?string $filterType = 'month',
         ?int $filterMonth = null,
         ?int $filterYear = null,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        int $perPage = 20,
+        int $page = 1
     ): array {
         $teacher = $this->findTeacher($teacherId, $admin);
 
@@ -606,9 +610,9 @@ class TeacherService implements TeacherServiceInterface
 
         [$startDate, $endDate, $filterMonth, $filterYear] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
 
-        $sessionData = $this->teacherRepository->getTeacherSessionStats($teacherId, $startDate, $endDate);
+        $sessionData = $this->teacherRepository->getTeacherSessionStats($teacherId, $startDate, $endDate, $perPage, $page);
 
-        $mappedSessions = $sessionData['sessions']->map(function ($s) {
+        $mapper = function ($s) {
             return [
                 'id'           => $s->id,
                 'session_date' => $s->getRawOriginal('session_date') ?? $s->session_date,
@@ -623,7 +627,11 @@ class TeacherService implements TeacherServiceInterface
                 'subject_code' => $s->classSubject?->subject?->code,
                 'room_name'    => $s->room?->name,
             ];
-        });
+        };
+
+        $mappedSessions = $sessionData['sessions'] instanceof LengthAwarePaginator
+            ? $sessionData['sessions']->through($mapper)
+            : $sessionData['sessions']->map($mapper);
 
         return [
             'teacher'  => $teacher,
@@ -635,6 +643,7 @@ class TeacherService implements TeacherServiceInterface
                 'year'       => $filterYear,
                 'start_date' => $startDate,
                 'end_date'   => $endDate,
+                'per_page'   => $perPage,
             ],
         ];
     }

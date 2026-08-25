@@ -487,13 +487,20 @@ class StudentRepository implements StudentRepositoryInterface
     }
 
     /**
-     * @param  int                                                                                                                 $studentId
-     * @param  ?string                                                                                                             $startDate
-     * @param  ?string                                                                                                             $endDate
-     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     * @param  int                                                                                                                                                                       $studentId
+     * @param  ?string                                                                                                                                                                   $startDate
+     * @param  ?string                                                                                                                                                                   $endDate
+     * @param  ?int                                                                                                                                                                      $perPage
+     * @param  int                                                                                                                                                                       $page
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>|\Illuminate\Contracts\Pagination\LengthAwarePaginator, stats: array<string, int>}
      */
-    public function getStudentAttendanceStats(int $studentId, ?string $startDate = null, ?string $endDate = null): array
-    {
+    public function getStudentAttendanceStats(
+        int $studentId,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $perPage = null,
+        int $page = 1
+    ): array {
         $classIds = ClassStudent::where('student_id', $studentId)->pluck('class_id')->toArray();
 
         $query = ClassSession::query()
@@ -506,16 +513,7 @@ class StudentRepository implements StudentRepositoryInterface
                 $q->orWhereHas('attendances', function ($aq) use ($studentId) {
                     $aq->where('student_id', $studentId);
                 });
-            })
-            ->with([
-                'classSubject.schoolClass:id,name,code,center_id',
-                'classSubject.subject:id,name,code',
-                'teacher:id,full_name,teacher_code',
-                'room:id,name',
-                'attendances' => function ($aq) use ($studentId) {
-                    $aq->where('student_id', $studentId);
-                },
-            ]);
+            });
 
         if ($startDate !== null && $endDate !== null) {
             $query->whereBetween('session_date', [$startDate, $endDate]);
@@ -527,38 +525,54 @@ class StudentRepository implements StudentRepositoryInterface
             $query->where('session_date', '<=', now()->format('Y-m-d'));
         }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, ClassSession> $sessions */
-        $sessions = $query->orderBy('session_date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->get();
+        $totalCount = (clone $query)->count();
 
-        $presentCount  = 0;
-        $absentCount   = 0;
-        $lateCount     = 0;
-        $excusedCount  = 0;
-        $unmarkedCount = 0;
+        $attendanceCounts = (clone $query)
+            ->leftJoin('attendances', function ($join) use ($studentId) {
+                $join->on('class_sessions.id', '=', 'attendances.session_id')
+                    ->where('attendances.student_id', '=', $studentId);
+            })
+            ->selectRaw("
+                SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count,
+                SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN attendances.status IN ('excused', 'leave') THEN 1 ELSE 0 END) as excused_count
+            ")
+            ->first();
 
-        foreach ($sessions as $session) {
-            $attendance = $session->attendances->first();
-            $status     = $attendance ? $attendance->status : null;
-
-            match ($status) {
-                'present'          => $presentCount++,
-                'absent'           => $absentCount++,
-                'late'             => $lateCount++,
-                'excused', 'leave' => $excusedCount++,
-                default            => $unmarkedCount++,
-            };
-        }
+        $presentCount  = (int) ($attendanceCounts->present_count ?? 0);
+        $absentCount   = (int) ($attendanceCounts->absent_count ?? 0);
+        $lateCount     = (int) ($attendanceCounts->late_count ?? 0);
+        $excusedCount  = (int) ($attendanceCounts->excused_count ?? 0);
+        $unmarkedCount = max(0, $totalCount - ($presentCount + $absentCount + $lateCount + $excusedCount));
 
         $stats = [
-            'total'    => $sessions->count(),
+            'total'    => $totalCount,
             'present'  => $presentCount,
             'absent'   => $absentCount,
             'late'     => $lateCount,
             'excused'  => $excusedCount,
             'unmarked' => $unmarkedCount,
         ];
+
+        $sessionsQuery = $query
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'teacher:id,full_name,teacher_code',
+                'room:id,name',
+                'attendances' => function ($aq) use ($studentId) {
+                    $aq->where('student_id', $studentId);
+                },
+            ])
+            ->orderBy('session_date', 'desc')
+            ->orderBy('start_time', 'desc');
+
+        if ($perPage !== null) {
+            $sessions = $sessionsQuery->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        } else {
+            $sessions = $sessionsQuery->get();
+        }
 
         return [
             'sessions' => $sessions,

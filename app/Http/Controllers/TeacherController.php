@@ -214,13 +214,17 @@ class TeacherController extends Controller
         $filterType  = $request->query('type', 'month');
         $filterMonth = $request->query('month') ? (int) $request->query('month') : null;
         $filterYear  = $request->query('year') ? (int) $request->query('year') : null;
+        $page        = $request->integer('page', 1);
+        $perPage     = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $detailData = $this->teacherService->getTeacherDetailData(
             $id,
             is_string($filterType) ? $filterType : 'month',
             $filterMonth,
             $filterYear,
-            $admin
+            $admin,
+            $perPage,
+            $page
         );
 
         return Inertia::render('Admin/Teachers/Show', $detailData);

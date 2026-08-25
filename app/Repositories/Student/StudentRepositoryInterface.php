@@ -95,12 +95,20 @@ interface StudentRepositoryInterface
     public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int                                                                                                                 $studentId
-     * @param  ?string                                                                                                             $startDate
-     * @param  ?string                                                                                                             $endDate
-     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     * @param  int                                                                                                                                                                       $studentId
+     * @param  ?string                                                                                                                                                                   $startDate
+     * @param  ?string                                                                                                                                                                   $endDate
+     * @param  ?int                                                                                                                                                                      $perPage
+     * @param  int                                                                                                                                                                       $page
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>|\Illuminate\Contracts\Pagination\LengthAwarePaginator, stats: array<string, int>}
      */
-    public function getStudentAttendanceStats(int $studentId, ?string $startDate = null, ?string $endDate = null): array;
+    public function getStudentAttendanceStats(
+        int $studentId,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $perPage = null,
+        int $page = 1
+    ): array;
 
     /**
      * @param Student              $student

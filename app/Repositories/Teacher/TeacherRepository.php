@@ -387,37 +387,54 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param  int                                                                                                                 $teacherId
-     * @param  ?string                                                                                                             $startDate
-     * @param  ?string                                                                                                             $endDate
-     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     * @param  int                                                                                                                                                                       $teacherId
+     * @param  ?string                                                                                                                                                                   $startDate
+     * @param  ?string                                                                                                                                                                   $endDate
+     * @param  ?int                                                                                                                                                                      $perPage
+     * @param  int                                                                                                                                                                       $page
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>|\Illuminate\Contracts\Pagination\LengthAwarePaginator, stats: array<string, int>}
      */
-    public function getTeacherSessionStats(int $teacherId, ?string $startDate = null, ?string $endDate = null): array
-    {
+    public function getTeacherSessionStats(
+        int $teacherId,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $perPage = null,
+        int $page = 1
+    ): array {
         $query = ClassSession::query()
-            ->where('teacher_id', $teacherId)
-            ->with([
-                'classSubject.schoolClass:id,name,code,center_id',
-                'classSubject.subject:id,name,code',
-                'room:id,name',
-            ]);
+            ->where('teacher_id', $teacherId);
 
         if ($startDate !== null && $endDate !== null) {
             $query->whereBetween('session_date', [$startDate, $endDate]);
         }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, ClassSession> $sessions */
-        $sessions = $query->orderBy('session_date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->get();
+        $statusCounts = (clone $query)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
 
         $stats = [
-            'total'       => $sessions->count(),
-            'completed'   => $sessions->where('status', 'completed')->count(),
-            'scheduled'   => $sessions->where('status', 'scheduled')->count(),
-            'cancelled'   => $sessions->where('status', 'cancelled')->count(),
-            'rescheduled' => $sessions->where('status', 'rescheduled')->count(),
+            'total'       => (int) $statusCounts->sum(),
+            'completed'   => (int) ($statusCounts->get('completed') ?? 0),
+            'scheduled'   => (int) ($statusCounts->get('scheduled') ?? 0),
+            'cancelled'   => (int) ($statusCounts->get('cancelled') ?? 0),
+            'rescheduled' => (int) ($statusCounts->get('rescheduled') ?? 0),
         ];
+
+        $sessionsQuery = $query
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'room:id,name',
+            ])
+            ->orderBy('session_date', 'desc')
+            ->orderBy('start_time', 'desc');
+
+        if ($perPage !== null) {
+            $sessions = $sessionsQuery->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        } else {
+            $sessions = $sessionsQuery->get();
+        }
 
         return [
             'sessions' => $sessions,

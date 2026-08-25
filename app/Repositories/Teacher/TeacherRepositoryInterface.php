@@ -104,10 +104,18 @@ interface TeacherRepositoryInterface
     public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int                                                                                                                 $teacherId
-     * @param  ?string                                                                                                             $startDate
-     * @param  ?string                                                                                                             $endDate
-     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>, stats: array<string, int>}
+     * @param  int                                                                                                                                                                       $teacherId
+     * @param  ?string                                                                                                                                                                   $startDate
+     * @param  ?string                                                                                                                                                                   $endDate
+     * @param  ?int                                                                                                                                                                      $perPage
+     * @param  int                                                                                                                                                                       $page
+     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>|\Illuminate\Contracts\Pagination\LengthAwarePaginator, stats: array<string, int>}
      */
-    public function getTeacherSessionStats(int $teacherId, ?string $startDate = null, ?string $endDate = null): array;
+    public function getTeacherSessionStats(
+        int $teacherId,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $perPage = null,
+        int $page = 1
+    ): array;
 }

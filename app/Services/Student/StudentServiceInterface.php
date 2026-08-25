@@ -107,6 +107,8 @@ interface StudentServiceInterface
      * @param  ?int                 $filterYear
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  int                  $perPage
+     * @param  int                  $page
      * @return array<string, mixed>
      */
     public function getStudentDetailData(
@@ -115,7 +117,9 @@ interface StudentServiceInterface
         ?int $filterMonth = null,
         ?int $filterYear = null,
         ?Admin $admin = null,
-        ?Teacher $teacher = null
+        ?Teacher $teacher = null,
+        int $perPage = 20,
+        int $page = 1
     ): array;
 
     /**

@@ -26,6 +26,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Pagination from '@/components/ui/Pagination';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
@@ -78,6 +79,8 @@ interface FilterData {
     year: number;
     start_date: string | null;
     end_date: string | null;
+    per_page?: number;
+    page?: number;
 }
 
 interface StatsData {
@@ -89,9 +92,24 @@ interface StatsData {
     unmarked: number;
 }
 
+interface PaginatedSessions {
+    data: StudentSessionItem[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+}
+
 interface Props {
     student: Student;
-    sessions: StudentSessionItem[];
+    sessions: PaginatedSessions;
     stats: StatsData;
     filters: FilterData;
     isTeacher?: boolean;
@@ -99,7 +117,7 @@ interface Props {
 
 export default function StudentShow({
     student,
-    sessions = [],
+    sessions,
     stats,
     filters,
     isTeacher = false,
@@ -123,6 +141,7 @@ export default function StudentShow({
                 type,
                 month: type === 'select_month' ? m : undefined,
                 year: type === 'select_month' ? y : undefined,
+                per_page: sessions.per_page !== 20 ? sessions.per_page : undefined,
             },
             {
                 preserveState: true,
@@ -486,7 +505,7 @@ export default function StudentShow({
                     <div className="flex items-center gap-2">
                         <GraduationCap className="h-5 w-5 text-emerald-600" />
                         <h2 className="text-base font-bold text-gray-900">
-                            Danh sách buổi học ({sessions.length})
+                            Danh sách buổi học ({sessions.total})
                         </h2>
                     </div>
                     <span className="text-xs text-gray-500 font-medium">
@@ -494,7 +513,7 @@ export default function StudentShow({
                     </span>
                 </div>
 
-                {sessions.length === 0 ? (
+                {!sessions.data || sessions.data.length === 0 ? (
                     <div className="py-12 text-center text-gray-500">
                         <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-2" />
                         <p className="font-semibold text-gray-700 text-sm">Không có buổi học nào trong khoảng thời gian này</p>
@@ -516,7 +535,7 @@ export default function StudentShow({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-gray-900">
-                                {sessions.map((session, idx) => (
+                                {sessions.data.map((session, idx) => (
                                     <tr key={session.id || idx} className="hover:bg-slate-50/70 transition-colors">
                                         <td className="py-3.5 px-4 font-semibold whitespace-nowrap">
                                             {session.session_date}
@@ -570,6 +589,19 @@ export default function StudentShow({
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {sessions.total > 0 && (
+                    <div className="border-t border-gray-100 px-4 pb-4 bg-white">
+                        <Pagination
+                            links={sessions.links}
+                            from={sessions.from}
+                            to={sessions.to}
+                            total={sessions.total}
+                            perPage={sessions.per_page}
+                            currentParams={filters}
+                        />
                     </div>
                 )}
             </Card>

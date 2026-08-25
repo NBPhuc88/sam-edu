@@ -337,6 +337,8 @@ class StudentController extends Controller
         $filterType        = $request->query('type', 'month');
         $filterMonth       = $request->query('month') ? (int) $request->query('month') : null;
         $filterYear        = $request->query('year') ? (int) $request->query('year') : null;
+        $page              = $request->integer('page', 1);
+        $perPage           = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $detailData = $this->studentService->getStudentDetailData(
             $id,
@@ -344,7 +346,9 @@ class StudentController extends Controller
             $filterMonth,
             $filterYear,
             $admin,
-            $teacher
+            $teacher,
+            $perPage,
+            $page
         );
 
         return Inertia::render('Admin/Students/Show', $detailData);

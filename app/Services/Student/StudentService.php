@@ -781,6 +781,8 @@ class StudentService implements StudentServiceInterface
      * @param  ?int                 $filterYear
      * @param  ?Admin               $admin
      * @param  ?Teacher             $teacher
+     * @param  int                  $perPage
+     * @param  int                  $page
      * @return array<string, mixed>
      */
     public function getStudentDetailData(
@@ -789,7 +791,9 @@ class StudentService implements StudentServiceInterface
         ?int $filterMonth = null,
         ?int $filterYear = null,
         ?Admin $admin = null,
-        ?Teacher $teacher = null
+        ?Teacher $teacher = null,
+        int $perPage = 20,
+        int $page = 1
     ): array {
         $student = $this->findStudent($studentId, $admin, $teacher);
 
@@ -801,9 +805,9 @@ class StudentService implements StudentServiceInterface
 
         [$startDate, $endDate, $filterMonth, $filterYear] = $this->resolveDateRange($filterType, $filterMonth, $filterYear);
 
-        $attendanceData = $this->studentRepository->getStudentAttendanceStats($studentId, $startDate, $endDate);
+        $attendanceData = $this->studentRepository->getStudentAttendanceStats($studentId, $startDate, $endDate, $perPage, $page);
 
-        $mappedSessions = $attendanceData['sessions']->map(function ($s) {
+        $mapper = function ($s) {
             $att = $s->attendances->first();
 
             return [
@@ -821,7 +825,11 @@ class StudentService implements StudentServiceInterface
                 'attendance_note'   => $att?->note,
                 'check_in_at'       => $att?->check_in_at,
             ];
-        });
+        };
+
+        $mappedSessions = $attendanceData['sessions'] instanceof LengthAwarePaginator
+            ? $attendanceData['sessions']->through($mapper)
+            : $attendanceData['sessions']->map($mapper);
 
         return [
             'student'  => $student,
@@ -833,6 +841,7 @@ class StudentService implements StudentServiceInterface
                 'year'       => $filterYear,
                 'start_date' => $startDate,
                 'end_date'   => $endDate,
+                'per_page'   => $perPage,
             ],
             'isTeacher' => (bool) $teacher,
         ];

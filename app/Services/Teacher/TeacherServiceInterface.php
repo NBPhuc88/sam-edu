@@ -76,6 +76,8 @@ interface TeacherServiceInterface
      * @param  ?int                 $filterMonth
      * @param  ?int                 $filterYear
      * @param  ?Admin               $admin
+     * @param  int                  $perPage
+     * @param  int                  $page
      * @return array<string, mixed>
      */
     public function getTeacherDetailData(
@@ -83,7 +85,9 @@ interface TeacherServiceInterface
         ?string $filterType = 'month',
         ?int $filterMonth = null,
         ?int $filterYear = null,
-        ?Admin $admin = null
+        ?Admin $admin = null,
+        int $perPage = 20,
+        int $page = 1
     ): array;
 
     /**
