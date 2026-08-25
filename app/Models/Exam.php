@@ -75,7 +75,7 @@ class Exam extends Model
      */
     public function schoolClass(): BelongsTo
     {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
+        return $this->belongsTo(SchoolClass::class, 'class_id')->withTrashed();
     }
 
     /**
@@ -83,7 +83,7 @@ class Exam extends Model
      */
     public function subject(): BelongsTo
     {
-        return $this->belongsTo(Subject::class, 'subject_id');
+        return $this->belongsTo(Subject::class, 'subject_id')->withTrashed();
     }
 
     /**
@@ -91,7 +91,7 @@ class Exam extends Model
      */
     public function classSubject(): BelongsTo
     {
-        return $this->belongsTo(ClassSubject::class);
+        return $this->belongsTo(ClassSubject::class)->withTrashed();
     }
 
     /**
@@ -99,7 +99,7 @@ class Exam extends Model
      */
     public function createdByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'created_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'created_by_teacher_id')->withTrashed();
     }
 
     /**

@@ -36,7 +36,7 @@ class ClassSubject extends Model
      */
     public function schoolClass(): BelongsTo
     {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
+        return $this->belongsTo(SchoolClass::class, 'class_id')->withTrashed();
     }
 
     /**
@@ -44,7 +44,7 @@ class ClassSubject extends Model
      */
     public function subject(): BelongsTo
     {
-        return $this->belongsTo(Subject::class, 'subject_id');
+        return $this->belongsTo(Subject::class, 'subject_id')->withTrashed();
     }
 
     /**
@@ -52,7 +52,7 @@ class ClassSubject extends Model
      */
     public function teacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(Teacher::class)->withTrashed();
     }
 
     /**

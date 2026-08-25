@@ -5,10 +5,11 @@ namespace App\Repositories\Teacher;
 use App\Enums\Constant;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
-use App\Models\ClassSubject;
-use App\Models\Exam;
 use App\Models\Teacher;
+use Generator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
 class TeacherRepository implements TeacherRepositoryInterface
@@ -31,10 +32,10 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param  ?int                     $centerId
-     * @return \Generator<int, Teacher>
+     * @param  ?int                    $centerId
+     * @return Generator<int, Teacher>
      */
-    public function getTeachersCursor(?int $centerId = null): \Generator
+    public function getTeachersCursor(?int $centerId = null): Generator
     {
         $query = Teacher::query()->orderBy('id', 'asc');
 
@@ -192,16 +193,9 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return DB::transaction(function () use ($id) {
-            $teacher = Teacher::findOrFail($id);
+        $teacher = Teacher::findOrFail($id);
 
-            // Gỡ phân công giảng dạy
-            ClassSubject::where('teacher_id', $id)->delete();
-            ClassSession::where('teacher_id', $id)->update(['teacher_id' => null]);
-            Exam::where('created_by_teacher_id', $id)->update(['created_by_teacher_id' => null]);
-
-            return (bool) $teacher->delete();
-        });
+        return (bool) $teacher->delete();
     }
 
     public function count(): int
@@ -240,12 +234,12 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param  int                                                                     $teacherId
-     * @param  string                                                                  $startDate (Y-m-d)
-     * @param  string                                                                  $endDate   (Y-m-d)
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>
+     * @param  int                           $teacherId
+     * @param  string                        $startDate (Y-m-d)
+     * @param  string                        $endDate   (Y-m-d)
+     * @return Collection<int, ClassSession>
      */
-    public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    public function getTeacherSessionsBetweenDates(int $teacherId, string $startDate, string $endDate): Collection
     {
         return ClassSession::query()
             ->select(
@@ -303,10 +297,10 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param  int                            $teacherId
-     * @return \Illuminate\Support\Collection
+     * @param  int               $teacherId
+     * @return SupportCollection
      */
-    public function getTeacherWeeklySchedules(int $teacherId): \Illuminate\Support\Collection
+    public function getTeacherWeeklySchedules(int $teacherId): SupportCollection
     {
         $schedules = ClassSchedule::query()
             ->whereHas('classSubject', function ($q) use ($teacherId) {
@@ -362,7 +356,7 @@ class TeacherRepository implements TeacherRepositoryInterface
         return $result->sortBy(['weekday', 'start_time'])->values();
     }
 
-    public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection
+    public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): Collection
     {
         $query = Teacher::select($columns)
             ->where('status', 'active')
@@ -387,12 +381,12 @@ class TeacherRepository implements TeacherRepositoryInterface
     }
 
     /**
-     * @param  int                                                                                                                                                                       $teacherId
-     * @param  ?string                                                                                                                                                                   $startDate
-     * @param  ?string                                                                                                                                                                   $endDate
-     * @param  ?int                                                                                                                                                                      $perPage
-     * @param  int                                                                                                                                                                       $page
-     * @return array{sessions: \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClassSession>|\Illuminate\Contracts\Pagination\LengthAwarePaginator, stats: array<string, int>}
+     * @param  int                                                                                            $teacherId
+     * @param  ?string                                                                                        $startDate
+     * @param  ?string                                                                                        $endDate
+     * @param  ?int                                                                                           $perPage
+     * @param  int                                                                                            $page
+     * @return array{sessions: Collection<int, ClassSession>|LengthAwarePaginator, stats: array<string, int>}
      */
     public function getTeacherSessionStats(
         int $teacherId,

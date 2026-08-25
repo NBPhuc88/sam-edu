@@ -3,17 +3,14 @@
 namespace App\Repositories\Class;
 
 use App\Enums\Constant;
-use App\Models\ClassExam;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\ClassStudent;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Student;
-use App\Models\StudentTuition;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class SchoolClassRepository implements SchoolClassRepositoryInterface
 {
@@ -183,30 +180,9 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return DB::transaction(function () use ($id) {
-            $schoolClass = SchoolClass::findOrFail($id);
+        $schoolClass = SchoolClass::findOrFail($id);
 
-            // 1. Ngắt liên kết học sinh
-            ClassStudent::where('class_id', $id)->delete();
-
-            // 2. Xóa các bài thi đã gán cho lớp
-            ClassExam::where('class_id', $id)->delete();
-
-            // 3. Xóa ca học & lịch học của các môn trong lớp
-            ClassSession::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
-            ClassSchedule::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))->delete();
-
-            // 4. Xóa phân công môn học của lớp
-            ClassSubject::where('class_id', $id)->delete();
-
-            // 5. Xóa học phí của lớp
-            StudentTuition::where('class_id', $id)->delete();
-
-            // 6. Xóa tin nhắn nhóm chat
-            DB::table('class_chat_messages')->where('class_id', $id)->delete();
-
-            return (bool) $schoolClass->delete();
-        });
+        return (bool) $schoolClass->delete();
     }
 
     /**

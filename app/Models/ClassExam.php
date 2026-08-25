@@ -13,15 +13,6 @@ class ClassExam extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected static function booted(): void
-    {
-        static::deleting(function (ClassExam $classExam) {
-            foreach ($classExam->submissions()->get() as $submission) {
-                $submission->delete();
-            }
-        });
-    }
-
     protected $fillable = [
         'code',
         'access_code',
@@ -60,7 +51,7 @@ class ClassExam extends Model
      */
     public function schoolClass(): BelongsTo
     {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
+        return $this->belongsTo(SchoolClass::class, 'class_id')->withTrashed();
     }
 
     /**
@@ -68,7 +59,7 @@ class ClassExam extends Model
      */
     public function exam(): BelongsTo
     {
-        return $this->belongsTo(Exam::class, 'exam_id');
+        return $this->belongsTo(Exam::class, 'exam_id')->withTrashed();
     }
 
     /**
@@ -76,7 +67,7 @@ class ClassExam extends Model
      */
     public function createdByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'created_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'created_by_teacher_id')->withTrashed();
     }
 
     /**

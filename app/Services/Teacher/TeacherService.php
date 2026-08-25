@@ -8,6 +8,8 @@ use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
 use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
+use App\Models\ClassSession;
+use App\Models\ClassSubject;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
@@ -17,6 +19,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -318,6 +321,32 @@ class TeacherService implements TeacherServiceInterface
     public function deleteTeacher(int $id, ?Admin $admin = null): bool
     {
         $teacher = $this->findTeacher($id, $admin);
+
+        $today = now()->toDateString();
+
+        // 1. Kiểm tra ca học dự kiến trong tương lai
+        $hasFutureSessions = ClassSession::where('teacher_id', $teacher->id)
+            ->where('session_date', '>=', $today)
+            ->where('status', 'scheduled')
+            ->exists();
+
+        if ($hasFutureSessions) {
+            throw ValidationException::withMessages([
+                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì vẫn còn ca học trong tương lai chưa hoàn thành. Vui lòng đổi giáo viên hoặc điều chỉnh lịch học trước khi xóa.",
+            ]);
+        }
+
+        // 2. Kiểm tra lớp học đang hoạt động do giáo viên phụ trách
+        $hasActiveClasses = ClassSubject::where('teacher_id', $teacher->id)
+            ->where('status', 'active')
+            ->whereHas('schoolClass', fn ($q) => $q->where('status', 1))
+            ->exists();
+
+        if ($hasActiveClasses) {
+            throw ValidationException::withMessages([
+                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì đang phụ trách lớp học đang hoạt động. Vui lòng phân công giáo viên thay thế cho lớp học trước.",
+            ]);
+        }
 
         return $this->teacherRepository->delete($teacher->id);
     }

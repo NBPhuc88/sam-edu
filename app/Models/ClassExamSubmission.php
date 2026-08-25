@@ -92,7 +92,7 @@ class ClassExamSubmission extends Model
      */
     public function classExam(): BelongsTo
     {
-        return $this->belongsTo(ClassExam::class, 'class_exam_id');
+        return $this->belongsTo(ClassExam::class, 'class_exam_id')->withTrashed();
     }
 
     /**
@@ -100,7 +100,7 @@ class ClassExamSubmission extends Model
      */
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id')->withTrashed();
     }
 
     /**
@@ -108,7 +108,7 @@ class ClassExamSubmission extends Model
      */
     public function gradedByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'graded_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'graded_by_teacher_id')->withTrashed();
     }
 
     /**

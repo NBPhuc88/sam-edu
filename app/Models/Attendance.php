@@ -46,7 +46,7 @@ class Attendance extends Model
      */
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class)->withTrashed();
     }
 
     /**
@@ -54,7 +54,7 @@ class Attendance extends Model
      */
     public function markedByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'marked_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'marked_by_teacher_id')->withTrashed();
     }
 
     /**

@@ -39,7 +39,7 @@ class ExamResult extends Model
      */
     public function exam(): BelongsTo
     {
-        return $this->belongsTo(Exam::class);
+        return $this->belongsTo(Exam::class)->withTrashed();
     }
 
     /**
@@ -47,7 +47,7 @@ class ExamResult extends Model
      */
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class)->withTrashed();
     }
 
     /**
@@ -55,7 +55,7 @@ class ExamResult extends Model
      */
     public function enteredByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'entered_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'entered_by_teacher_id')->withTrashed();
     }
 
     /**
@@ -71,7 +71,7 @@ class ExamResult extends Model
      */
     public function updatedByTeacher(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'updated_by_teacher_id');
+        return $this->belongsTo(Teacher::class, 'updated_by_teacher_id')->withTrashed();
     }
 
     /**

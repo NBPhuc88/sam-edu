@@ -51,6 +51,7 @@ interface StudentTuitionItem {
         full_name: string;
         student_code: string;
         phone: string | null;
+        deleted_at?: string | null;
     };
     school_class?: {
         id: number;
@@ -484,11 +485,18 @@ export const Index: React.FC<IndexProps> = ({
                                             >
                                                 <td className="px-6 py-4">
                                                     <div className="max-w-xs">
-                                                        <TruncatedText
-                                                            text={item.student?.full_name ?? 'N/A'}
-                                                            maxLines={1}
-                                                            className="font-bold text-gray-900"
-                                                        />
+                                                        <div className="flex items-center gap-1.5">
+                                                            <TruncatedText
+                                                                text={item.student?.full_name ?? 'N/A'}
+                                                                maxLines={1}
+                                                                className="font-bold text-gray-900"
+                                                            />
+                                                            {item.student?.deleted_at && (
+                                                                <span className="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20 shrink-0">
+                                                                    Đã xóa
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="mt-0.5 font-mono text-xs text-gray-400">
                                                             {item.student?.student_code ?? ''}
                                                             {item.student?.phone && ` • ${item.student.phone}`}

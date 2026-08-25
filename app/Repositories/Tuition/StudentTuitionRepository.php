@@ -45,7 +45,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'created_at'
             )
             ->with([
-                'student:id,full_name,student_code,phone',
+                'student:id,full_name,student_code,phone,deleted_at',
                 'schoolClass:id,name,code',
                 'center:id,name,code',
                 'creator:id,username,full_name',
@@ -142,7 +142,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'created_at'
             )
             ->with([
-                'student:id,full_name,student_code,email,phone',
+                'student:id,full_name,student_code,email,phone,deleted_at',
                 'schoolClass:id,name,code',
                 'center:id,name,code',
                 'creator:id,username,full_name',
@@ -293,7 +293,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         $query = StudentTuition::query()
             ->with([
                 'student' => function ($q) {
-                    $q->select('id', 'full_name', 'student_code', 'phone')
+                    $q->select('id', 'full_name', 'student_code', 'phone', 'deleted_at')
                         ->with('classes:id,name,code');
                 },
                 'schoolClass:id,name,code',

@@ -3,13 +3,11 @@
 namespace App\Repositories\Student;
 
 use App\Enums\Constant;
-use App\Models\ClassExamSubmission;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\ClassStudent;
 use App\Models\SchoolClass;
 use App\Models\Student;
-use App\Models\StudentTuition;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -225,23 +223,9 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return DB::transaction(function () use ($id) {
-            $student = Student::findOrFail($id);
+        $student = Student::findOrFail($id);
 
-            // Gỡ khỏi các lớp
-            ClassStudent::where('student_id', $id)->delete();
-
-            // Xóa điểm danh
-            DB::table('attendances')->where('student_id', $id)->delete();
-
-            // Xóa bài nộp thi (kèm dọn dẹp các tệp ghi âm speaking)
-            ClassExamSubmission::where('student_id', $id)->get()->each->delete();
-
-            // Xóa học phí
-            StudentTuition::where('student_id', $id)->delete();
-
-            return (bool) $student->delete();
-        });
+        return (bool) $student->delete();
     }
 
     public function count(): int

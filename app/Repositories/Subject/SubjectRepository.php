@@ -4,11 +4,9 @@ namespace App\Repositories\Subject;
 
 use App\Enums\Constant;
 use App\Models\ClassSubject;
-use App\Models\Exam;
 use App\Models\Subject;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class SubjectRepository implements SubjectRepositoryInterface
 {
@@ -127,17 +125,9 @@ class SubjectRepository implements SubjectRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return DB::transaction(function () use ($id) {
-            $subject = Subject::findOrFail($id);
+        $subject = Subject::findOrFail($id);
 
-            // Gỡ phân công môn học khỏi các lớp
-            ClassSubject::where('subject_id', $id)->delete();
-
-            // Gỡ liên kết môn học ở các đề thi
-            Exam::where('subject_id', $id)->update(['subject_id' => null]);
-
-            return (bool) $subject->delete();
-        });
+        return (bool) $subject->delete();
     }
 
     public function codeExists(int $centerId, string $code): bool
