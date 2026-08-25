@@ -27,7 +27,7 @@ import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { parseDate, toISODateString } from '@/lib/date';
+import { formatDate, parseDate, toISODateString } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -62,6 +62,8 @@ interface SchoolClass {
     name: string;
     code: string;
     center_id: number;
+    start_date?: string | null;
+    end_date?: string | null;
     center?: Center;
     class_subjects?: ClassSubjectItem[];
     classSubjects?: ClassSubjectItem[];
@@ -341,6 +343,8 @@ export default function ScheduleCreate({
     errors = {},
 }: CreateProps) {
     const initialClass = classes[0];
+    const initialClassStartDate = initialClass?.start_date ? toISODateString(initialClass.start_date) : '';
+    const todayIso = new Date().toISOString().split('T')[0];
 
     const [selectedClassId, setSelectedClassId] = useState<string>(
         initialClass?.id ? String(initialClass.id) : '',
@@ -348,7 +352,9 @@ export default function ScheduleCreate({
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
     const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-    const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState<string>(
+        initialClassStartDate && todayIso < initialClassStartDate ? initialClassStartDate : todayIso
+    );
     const [status] = useState<string>('active');
 
     // Weekly schedules: Map of weekday -> { enabled: boolean, slots: [{start_time, end_time}] }
@@ -391,6 +397,7 @@ export default function ScheduleCreate({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const currentClass = classes.find((c) => String(c.id) === String(selectedClassId));
+    const classStartDate = currentClass?.start_date ? toISODateString(currentClass.start_date) : '';
     const centerId = currentClass ? Number(currentClass.center_id) : null;
 
     const classSubjects = React.useMemo(() => {
@@ -607,6 +614,10 @@ export default function ScheduleCreate({
     const handleClassChange = (newClassId: string) => {
         setSelectedClassId(newClassId);
         const cls = classes.find((c) => String(c.id) === String(newClassId));
+        const clsStart = cls?.start_date ? toISODateString(cls.start_date) : '';
+        if (clsStart && (!startDate || startDate < clsStart)) {
+            setStartDate(clsStart);
+        }
         const csList = (cls?.class_subjects || (cls as any)?.classSubjects || []) as {
             id: number;
             subject?: Subject;
@@ -694,10 +705,13 @@ export default function ScheduleCreate({
 
     // Off days handlers
     const handleAddOffDay = () => {
+        const defaultOffDate = startDate && (!classStartDate || startDate >= classStartDate)
+            ? startDate
+            : (classStartDate || new Date().toISOString().split('T')[0]);
         setOffDays([
             ...offDays,
             {
-                date: new Date().toISOString().split('T')[0],
+                date: defaultOffDate,
                 is_full_day: true,
                 start_time: '18:00',
                 end_time: '20:00',
@@ -722,10 +736,13 @@ export default function ScheduleCreate({
 
     // Extra days handlers
     const handleAddExtraDay = () => {
+        const defaultExtraDate = startDate && (!classStartDate || startDate >= classStartDate)
+            ? startDate
+            : (classStartDate || new Date().toISOString().split('T')[0]);
         setExtraDays([
             ...extraDays,
             {
-                date: new Date().toISOString().split('T')[0],
+                date: defaultExtraDate,
                 start_time: '08:00',
                 end_time: '10:00',
             },
@@ -937,6 +954,26 @@ export default function ScheduleCreate({
             }
         }
 
+        if (classStartDate && startDate < classStartDate) {
+            setFormSubmitError(`Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+            return;
+        }
+
+        if (classStartDate) {
+            for (const off of offDays) {
+                if (off.date && toISODateString(off.date) < classStartDate) {
+                    setFormSubmitError(`Ngày nghỉ (${formatDate(off.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    return;
+                }
+            }
+            for (const extra of extraDays) {
+                if (extra.date && toISODateString(extra.date) < classStartDate) {
+                    setFormSubmitError(`Ngày học bù (${formatDate(extra.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    return;
+                }
+            }
+        }
+
         setIsSubmitting(true);
 
         const weeksPayload: Record<string, [string, string][]> = {};
@@ -1136,6 +1173,7 @@ export default function ScheduleCreate({
                                 <DatePicker
                                     value={startDate}
                                     onChange={(val) => setStartDate(val)}
+                                    min={classStartDate || undefined}
                                     className="w-full !py-3"
                                     required
                                 />
@@ -1467,6 +1505,7 @@ export default function ScheduleCreate({
                                                 onChange={(val) =>
                                                     handleOffDayChange(idx, 'date', val)
                                                 }
+                                                min={classStartDate || undefined}
                                                 className="w-full !py-2"
                                                 required
                                             />
@@ -1574,6 +1613,7 @@ export default function ScheduleCreate({
                                                 onChange={(val) =>
                                                     handleExtraDayChange(idx, 'date', val)
                                                 }
+                                                min={classStartDate || undefined}
                                                 className="w-full !py-2"
                                                 required
                                             />

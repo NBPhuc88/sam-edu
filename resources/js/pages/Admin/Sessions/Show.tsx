@@ -116,6 +116,8 @@ interface ClassSession {
             id: number;
             name: string;
             code: string;
+            start_date?: string | null;
+            end_date?: string | null;
             center?: Center;
             class_students?: {
                 id: number;
@@ -146,6 +148,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
 
     const subject = session.class_subject?.subject;
     const schoolClass = session.class_subject?.school_class;
+    const classStartDate = schoolClass?.start_date ? toISODateString(schoolClass.start_date) : '';
     const currentTeacher = session.teacher;
     const currentRoom = session.room;
 
@@ -688,6 +691,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             <DatePicker
                                 value={data.session_date}
                                 onChange={(val) => setData('session_date', val)}
+                                min={classStartDate || undefined}
                                 className="w-full"
                                 placeholder="dd-mm-yyyy"
                                 required

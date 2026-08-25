@@ -191,6 +191,21 @@ class ClassSessionService implements ClassSessionServiceInterface
             $cleanNewEnd   = substr((string) $newEndTime, 0, 5);
             $formattedDate = Carbon::parse($newDate)->format('d/m/Y');
 
+            $schoolClass = $session->classSubject?->schoolClass;
+
+            if ($schoolClass && $schoolClass->start_date) {
+                $classStartIso = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
+                $newDateIso    = Carbon::parse($newDate)->format('Y-m-d');
+
+                if ($newDateIso < $classStartIso) {
+                    $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
+
+                    throw ValidationException::withMessages([
+                        'session_date' => "Ngày học ({$formattedDate}) không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                    ]);
+                }
+            }
+
             $classId = $session->classSubject?->class_id;
 
             if ($classId) {

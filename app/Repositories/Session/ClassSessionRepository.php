@@ -172,7 +172,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             )
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id',
-                'classSubject.schoolClass:id,center_id,name,code',
+                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date',
                 'classSubject.schoolClass.classStudents:id,class_id,student_id,status',
                 'classSubject.schoolClass.classStudents.student:id,student_code,full_name,email,phone',
                 'classSubject.schoolClass.center:id,name,code',

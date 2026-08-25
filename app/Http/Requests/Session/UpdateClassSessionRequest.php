@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Session;
 
+use App\Models\ClassSession;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateClassSessionRequest extends FormRequest
 {
@@ -66,5 +68,31 @@ class UpdateClassSessionRequest extends FormRequest
             'room_id.exists'           => 'Phòng học được chọn không tồn tại.',
             'status.required'          => 'Vui lòng chọn trạng thái buổi học.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $sessionId = $this->route('session') ?? $this->route('id');
+
+            if (! $sessionId || ! $this->input('session_date')) {
+                return;
+            }
+
+            $session     = ClassSession::with('classSubject.schoolClass')->find($sessionId);
+            $schoolClass = $session?->classSubject?->schoolClass;
+
+            if (! $schoolClass || ! $schoolClass->start_date) {
+                return;
+            }
+
+            $classStartDate      = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
+            $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
+            $sessionDate         = Carbon::parse($this->input('session_date'))->format('Y-m-d');
+
+            if ($sessionDate < $classStartDate) {
+                $validator->errors()->add('session_date', "Ngày học không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).");
+            }
+        });
     }
 }

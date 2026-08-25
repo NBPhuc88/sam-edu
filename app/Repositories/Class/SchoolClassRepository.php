@@ -511,7 +511,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     public function getClassesForScheduleForm(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection
     {
         $query = SchoolClass::query()
-            ->select('id', 'center_id', 'name', 'code')
+            ->select('id', 'center_id', 'name', 'code', 'start_date', 'end_date')
             ->where('status', 1)
             ->with([
                 'classSubjects:id,class_id,subject_id,teacher_id,start_date,end_date,status',

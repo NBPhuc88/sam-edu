@@ -26,7 +26,7 @@ import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { parseDate, toISODateString } from '@/lib/date';
+import { formatDate, parseDate, toISODateString } from '@/lib/date';
 
 interface Center {
     id: number;
@@ -61,6 +61,8 @@ interface SchoolClass {
     name: string;
     code: string;
     center_id: number;
+    start_date?: string | null;
+    end_date?: string | null;
     class_subjects?: ClassSubjectItem[];
     classSubjects?: ClassSubjectItem[];
 }
@@ -389,6 +391,8 @@ export default function ScheduleEdit({
         const found = classes.find((c) => c.id === classSubject?.class_id);
         return found || classSubject?.school_class;
     }, [classes, classSubject]);
+
+    const classStartDate = currentClass?.start_date ? toISODateString(currentClass.start_date) : '';
 
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>(
         String(classSubject?.teacher_id || ''),
@@ -733,10 +737,13 @@ export default function ScheduleEdit({
     };
 
     const handleAddOffDay = () => {
+        const defaultOffDate = startDate && (!classStartDate || startDate >= classStartDate)
+            ? startDate
+            : (classStartDate || new Date().toISOString().split('T')[0]);
         setOffDays([
             ...offDays,
             {
-                date: new Date().toISOString().split('T')[0],
+                date: defaultOffDate,
                 is_full_day: true,
                 start_time: '18:00',
                 end_time: '20:00',
@@ -760,10 +767,13 @@ export default function ScheduleEdit({
     };
 
     const handleAddExtraDay = () => {
+        const defaultExtraDate = startDate && (!classStartDate || startDate >= classStartDate)
+            ? startDate
+            : (classStartDate || new Date().toISOString().split('T')[0]);
         setExtraDays([
             ...extraDays,
             {
-                date: new Date().toISOString().split('T')[0],
+                date: defaultExtraDate,
                 start_time: '08:00',
                 end_time: '10:00',
             },
@@ -974,6 +984,26 @@ export default function ScheduleEdit({
             }
         }
 
+        if (classStartDate && startDate < classStartDate) {
+            setFormSubmitError(`Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+            return;
+        }
+
+        if (classStartDate) {
+            for (const off of offDays) {
+                if (off.date && toISODateString(off.date) < classStartDate) {
+                    setFormSubmitError(`Ngày nghỉ (${formatDate(off.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    return;
+                }
+            }
+            for (const extra of extraDays) {
+                if (extra.date && toISODateString(extra.date) < classStartDate) {
+                    setFormSubmitError(`Ngày học bù (${formatDate(extra.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    return;
+                }
+            }
+        }
+
         setIsSubmitting(true);
 
         const weeksPayload: Record<string, [string, string][]> = {};
@@ -1114,6 +1144,7 @@ export default function ScheduleEdit({
                                 <DatePicker
                                     value={startDate}
                                     onChange={(val) => setStartDate(val)}
+                                    min={classStartDate || undefined}
                                     className="w-full !py-3"
                                     required
                                 />
@@ -1449,6 +1480,7 @@ export default function ScheduleEdit({
                                                 onChange={(val) =>
                                                     handleOffDayChange(idx, 'date', val)
                                                 }
+                                                min={classStartDate || undefined}
                                                 className="w-full !py-2"
                                                 required
                                             />
@@ -1555,6 +1587,7 @@ export default function ScheduleEdit({
                                                 onChange={(val) =>
                                                     handleExtraDayChange(idx, 'date', val)
                                                 }
+                                                min={classStartDate || undefined}
                                                 className="w-full !py-2"
                                                 required
                                             />

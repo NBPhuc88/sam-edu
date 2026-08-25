@@ -739,6 +739,49 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $teacherId = (int) $existingClassSubject->teacher_id;
         }
 
+        if ($schoolClass && $schoolClass->start_date) {
+            $classStartIso       = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
+            $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
+
+            if (! empty($data['start_date'])) {
+                $startIso = Carbon::parse($data['start_date'])->format('Y-m-d');
+
+                if ($startIso < $classStartIso) {
+                    throw ValidationException::withMessages([
+                        'start_date' => "Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                    ]);
+                }
+            }
+
+            if (! empty($data['off_days']) && is_array($data['off_days'])) {
+                foreach ($data['off_days'] as $index => $off) {
+                    if (! empty($off['date'])) {
+                        $offIso = Carbon::parse($off['date'])->format('Y-m-d');
+
+                        if ($offIso < $classStartIso) {
+                            throw ValidationException::withMessages([
+                                "off_days.{$index}.date" => "Ngày nghỉ không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            if (! empty($data['extra_days']) && is_array($data['extra_days'])) {
+                foreach ($data['extra_days'] as $index => $extra) {
+                    if (! empty($extra['date'])) {
+                        $extraIso = Carbon::parse($extra['date'])->format('Y-m-d');
+
+                        if ($extraIso < $classStartIso) {
+                            throw ValidationException::withMessages([
+                                "extra_days.{$index}.date" => "Ngày học bù không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
         return DB::transaction(function () use ($data, $schoolClass, $subject, $subjectId, $teacherId) {
             // 1. Tìm hoặc tạo liên kết ClassSubject
             $classSubject = $this->scheduleRepository->findOrCreateClassSubject(
@@ -861,7 +904,51 @@ class ClassScheduleService implements ClassScheduleServiceInterface
      */
     public function updateSchedule(int $id, array $data, ?Admin $admin = null): ClassSchedule
     {
-        $schedule = $this->findSchedule($id, $admin);
+        $schedule    = $this->findSchedule($id, $admin);
+        $schoolClass = $schedule->classSubject?->schoolClass;
+
+        if ($schoolClass && $schoolClass->start_date) {
+            $classStartIso       = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
+            $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
+
+            if (! empty($data['start_date'])) {
+                $startIso = Carbon::parse($data['start_date'])->format('Y-m-d');
+
+                if ($startIso < $classStartIso) {
+                    throw ValidationException::withMessages([
+                        'start_date' => "Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                    ]);
+                }
+            }
+
+            if (! empty($data['off_days']) && is_array($data['off_days'])) {
+                foreach ($data['off_days'] as $index => $off) {
+                    if (! empty($off['date'])) {
+                        $offIso = Carbon::parse($off['date'])->format('Y-m-d');
+
+                        if ($offIso < $classStartIso) {
+                            throw ValidationException::withMessages([
+                                "off_days.{$index}.date" => "Ngày nghỉ không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            if (! empty($data['extra_days']) && is_array($data['extra_days'])) {
+                foreach ($data['extra_days'] as $index => $extra) {
+                    if (! empty($extra['date'])) {
+                        $extraIso = Carbon::parse($extra['date'])->format('Y-m-d');
+
+                        if ($extraIso < $classStartIso) {
+                            throw ValidationException::withMessages([
+                                "extra_days.{$index}.date" => "Ngày học bù không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
 
         return DB::transaction(function () use ($schedule, $data) {
             $classSubject = $schedule->classSubject;

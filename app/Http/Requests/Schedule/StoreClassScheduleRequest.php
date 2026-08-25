@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Schedule;
 
+use App\Models\SchoolClass;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreClassScheduleRequest extends FormRequest
 {
@@ -52,5 +55,57 @@ class StoreClassScheduleRequest extends FormRequest
             'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
             'weeks.required'          => 'Vui lòng thiết lập ít nhất 1 khung giờ học trong tuần.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $classId = $this->input('class_id');
+
+            if (! $classId) {
+                return;
+            }
+
+            $schoolClass = SchoolClass::find($classId);
+
+            if (! $schoolClass || ! $schoolClass->start_date) {
+                return;
+            }
+
+            $classStartDate      = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
+            $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
+
+            if ($this->input('start_date')) {
+                $startDate = Carbon::parse($this->input('start_date'))->format('Y-m-d');
+
+                if ($startDate < $classStartDate) {
+                    $validator->errors()->add('start_date', "Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).");
+                }
+            }
+
+            if (is_array($this->input('off_days'))) {
+                foreach ($this->input('off_days') as $index => $off) {
+                    if (! empty($off['date'])) {
+                        $offDate = Carbon::parse($off['date'])->format('Y-m-d');
+
+                        if ($offDate < $classStartDate) {
+                            $validator->errors()->add("off_days.{$index}.date", "Ngày nghỉ không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).");
+                        }
+                    }
+                }
+            }
+
+            if (is_array($this->input('extra_days'))) {
+                foreach ($this->input('extra_days') as $index => $extra) {
+                    if (! empty($extra['date'])) {
+                        $extraDate = Carbon::parse($extra['date'])->format('Y-m-d');
+
+                        if ($extraDate < $classStartDate) {
+                            $validator->errors()->add("extra_days.{$index}.date", "Ngày học bù không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).");
+                        }
+                    }
+                }
+            }
+        });
     }
 }

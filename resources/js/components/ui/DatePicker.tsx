@@ -28,6 +28,8 @@ export default function DatePicker({
     const hiddenDateInputRef = useRef<HTMLInputElement>(null);
 
     const isoValue = toISODateString(value);
+    const isoMin = min ? toISODateString(min) : undefined;
+    const isoMax = max ? toISODateString(max) : undefined;
     const displayValue = value ? formatDate(value) : '';
 
     const handleContainerClick = (e: React.MouseEvent) => {
@@ -98,8 +100,8 @@ export default function DatePicker({
                 value={isoValue}
                 onChange={handleNativeDateChange}
                 disabled={disabled}
-                min={min}
-                max={max}
+                min={isoMin}
+                max={isoMax}
                 required={required}
                 className="pointer-events-none absolute bottom-0 left-0 h-0 w-0 opacity-0"
                 tabIndex={-1}
