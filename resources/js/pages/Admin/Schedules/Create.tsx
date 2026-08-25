@@ -81,6 +81,8 @@ interface Teacher {
     full_name: string;
     teacher_code: string;
     center_id: number;
+    class_subjects?: (ClassSubjectItem & { school_class?: { id: number; name: string; code: string }; schoolClass?: { id: number; name: string; code: string } })[];
+    classSubjects?: (ClassSubjectItem & { school_class?: { id: number; name: string; code: string }; schoolClass?: { id: number; name: string; code: string } })[];
 }
 
 interface Room {
@@ -521,6 +523,73 @@ export default function ScheduleCreate({
         return null;
     };
 
+    const currentTeacher = teachers.find((t) => String(t.id) === String(selectedTeacherId));
+
+    // Lịch dạy của giáo viên này ở các lớp khác
+    const existingTeacherSchedules = React.useMemo(() => {
+        if (!currentTeacher) return [];
+        const rawTeacherCs = (currentTeacher.class_subjects || (currentTeacher as any).classSubjects || []) as any[];
+
+        const results: {
+            classId: number;
+            className: string;
+            subjectName: string;
+            startDate?: string;
+            endDate?: string;
+            weeks: Record<string, [string, string][]>;
+        }[] = [];
+
+        for (const cs of rawTeacherCs) {
+            const csClassId = cs.school_class?.id || cs.schoolClass?.id || cs.class_id;
+            const csSubId = cs.subject?.id || cs.subject_id;
+            // Bỏ qua nếu chính là môn & lớp hiện tại đang tạo lịch
+            if (String(csClassId) === String(selectedClassId) && String(csSubId) === String(selectedSubjectId)) {
+                continue;
+            }
+
+            const schedules = cs.class_schedules || cs.classSchedules || [];
+            const sched = Array.isArray(schedules) ? schedules[0] : schedules;
+            if (sched && sched.weeks && typeof sched.weeks === 'object' && Object.keys(sched.weeks).length > 0) {
+                results.push({
+                    classId: csClassId,
+                    className: cs.school_class?.name || cs.schoolClass?.name || `Lớp #${csClassId}`,
+                    subjectName: cs.subject?.name || `Môn #${csSubId}`,
+                    startDate: cs.start_date,
+                    endDate: cs.end_date,
+                    weeks: sched.weeks,
+                });
+            }
+        }
+
+        return results;
+    }, [currentTeacher, selectedClassId, selectedSubjectId]);
+
+    const getTeacherSlotConflict = (dayId: number, startTime: string, endTime: string) => {
+        if (!startTime || !endTime || !currentTeacher) return null;
+        const cleanStart = startTime.slice(0, 5);
+        const cleanEnd = endTime.slice(0, 5);
+
+        for (const other of existingTeacherSchedules) {
+            const slots = other.weeks[String(dayId)];
+            if (Array.isArray(slots)) {
+                for (const oSlot of slots) {
+                    const oStart = Array.isArray(oSlot) ? oSlot[0]?.slice(0, 5) : (oSlot as any)?.start_time?.slice(0, 5);
+                    const oEnd = Array.isArray(oSlot) ? oSlot[1]?.slice(0, 5) : (oSlot as any)?.end_time?.slice(0, 5);
+                    if (oStart && oEnd && cleanStart < oEnd && oStart < cleanEnd) {
+                        return {
+                            teacherName: currentTeacher.full_name,
+                            className: other.className,
+                            subjectName: other.subjectName,
+                            timeRange: `${oStart} - ${oEnd}`,
+                            dateRange: other.startDate && other.endDate ? `(${other.startDate} - ${other.endDate})` : '',
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
     useEffect(() => {
         const initialCsList = (initialClass?.class_subjects || (initialClass as any)?.classSubjects || []) as {
             id: number;
@@ -804,6 +873,14 @@ export default function ScheduleCreate({
             return;
         }
 
+        // Kiểm tra trùng với lịch dạy ở lớp khác của giáo viên
+        const teacherConflict = getTeacherSlotConflict(editingDayId, start, end);
+        if (teacherConflict) {
+            const dayLabel = WEEKDAYS.find((d) => d.id === editingDayId)?.label || `Thứ ${editingDayId}`;
+            setModalSlotError(`Khung giờ ${start} - ${end} (${dayLabel}) bị trùng với lịch dạy lớp ${teacherConflict.className} (môn ${teacherConflict.subjectName}) của Giáo viên ${teacherConflict.teacherName}!`);
+            return;
+        }
+
         setWeeklyTimes((prev) => {
             const currentConf = prev[editingDayId];
             const updatedSlots = [...currentConf.slots];
@@ -839,7 +916,7 @@ export default function ScheduleCreate({
             return;
         }
 
-        // Kiểm tra trùng lịch với môn học khác
+        // Kiểm tra trùng lịch với môn học khác và lịch dạy của giáo viên
         for (const day of WEEKDAYS) {
             const conf = weeklyTimes[day.id];
             if (conf?.enabled) {
@@ -848,6 +925,12 @@ export default function ScheduleCreate({
                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
                     if (otherConflict) {
                         setFormSubmitError(`Trùng lịch học trong lớp: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với môn ${otherConflict.subjectName} (${otherConflict.timeRange})!`);
+                        return;
+                    }
+
+                    const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
+                    if (teacherConflict) {
+                        setFormSubmitError(`Trùng lịch dạy của giáo viên: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với lịch dạy lớp ${teacherConflict.className} (môn ${teacherConflict.subjectName}) của Giáo viên ${teacherConflict.teacherName}!`);
                         return;
                     }
                 }
@@ -1199,9 +1282,11 @@ export default function ScheduleCreate({
                                             >
                                                 {conf.slots.map((slot, sIdx) => {
                                                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
+                                                    const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
+                                                    const isConflicted = !!otherConflict || !!teacherConflict;
 
                                                     return (
-                                                        <div key={sIdx} className={`rounded-lg bg-white p-2.5 shadow-xs border ${otherConflict ? 'border-red-400 bg-red-50/30' : 'border-emerald-200/80'}`}>
+                                                        <div key={sIdx} className={`rounded-lg bg-white p-2.5 shadow-xs border ${isConflicted ? 'border-red-400 bg-red-50/30' : 'border-emerald-200/80'}`}>
                                                             <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
                                                                 <span className="flex items-center gap-1">
                                                                     <span>Ca {sIdx + 1}</span>
@@ -1261,6 +1346,13 @@ export default function ScheduleCreate({
                                                                 <div className="mt-2 flex items-start gap-1 rounded bg-red-100 p-1.5 text-[11px] font-semibold text-red-800">
                                                                     <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 mt-0.5" />
                                                                     <span>Trùng với môn <strong>{otherConflict.subjectName}</strong> ({otherConflict.timeRange})</span>
+                                                                </div>
+                                                            )}
+
+                                                            {teacherConflict && (
+                                                                <div className="mt-2 flex items-start gap-1 rounded bg-amber-100 p-1.5 text-[11px] font-semibold text-amber-900 border border-amber-300">
+                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-700 mt-0.5" />
+                                                                    <span>Trùng lịch dạy GV <strong>{teacherConflict.teacherName}</strong> tại lớp <strong>{teacherConflict.className}</strong> ({teacherConflict.timeRange})</span>
                                                                 </div>
                                                             )}
                                                         </div>

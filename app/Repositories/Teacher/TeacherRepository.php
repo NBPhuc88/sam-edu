@@ -358,7 +358,20 @@ class TeacherRepository implements TeacherRepositoryInterface
 
     public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): \Illuminate\Database\Eloquent\Collection
     {
-        $query = Teacher::select($columns)->where('status', 'active');
+        $query = Teacher::select($columns)
+            ->where('status', 'active')
+            ->with([
+                'classSubjects' => function ($q) {
+                    $q->where('status', 'active')
+                        ->with([
+                            'schoolClass:id,name,code',
+                            'subject:id,name,code',
+                            'classSchedules' => function ($sq) {
+                                $sq->where('status', 'active')->select('id', 'class_subject_id', 'weeks', 'extra_days', 'room_id', 'status');
+                            },
+                        ]);
+                },
+            ]);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);

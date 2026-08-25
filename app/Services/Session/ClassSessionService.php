@@ -185,14 +185,15 @@ class ClassSessionService implements ClassSessionServiceInterface
             || ($oldRoomId !== $newRoomId)
             || ($oldTeacherId !== $newTeacherId);
 
-        // Kiểm tra trùng lịch với các môn học khác trong cùng lớp nếu thay đổi ngày / giờ
+        // Kiểm tra trùng lịch với các môn học khác trong cùng lớp hoặc trùng lịch dạy của giáo viên nếu thay đổi ngày / giờ / giáo viên
         if ($hasScheduleChanged && $newDate && $newStartTime && $newEndTime) {
+            $cleanNewStart = substr((string) $newStartTime, 0, 5);
+            $cleanNewEnd   = substr((string) $newEndTime, 0, 5);
+            $formattedDate = Carbon::parse($newDate)->format('d/m/Y');
+
             $classId = $session->classSubject?->class_id;
 
             if ($classId) {
-                $cleanNewStart = substr((string) $newStartTime, 0, 5);
-                $cleanNewEnd   = substr((string) $newEndTime, 0, 5);
-
                 $conflictSession = ClassSession::query()
                     ->where('id', '!=', $session->id)
                     ->where('session_date', $newDate)
@@ -210,10 +211,40 @@ class ClassSessionService implements ClassSessionServiceInterface
                     $className        = $conflictSession->classSubject?->schoolClass?->name ?? 'Lớp học';
                     $cStart           = substr((string) $conflictSession->start_time, 0, 5);
                     $cEnd             = substr((string) $conflictSession->end_time, 0, 5);
-                    $formattedDate    = Carbon::parse($newDate)->format('d/m/Y');
 
                     throw ValidationException::withMessages([
                         'session_date' => "Trùng lịch học trong {$className}: Khung giờ {$cleanNewStart} - {$cleanNewEnd} ngày {$formattedDate} bị trùng với ca học môn '{$otherSubjectName}' ({$cStart} - {$cEnd}).",
+                    ]);
+                }
+            }
+
+            // Kiểm tra trùng lịch dạy của giáo viên ở các lớp khác
+            $effectiveTeacherId = $newTeacherId ?: $oldTeacherId;
+
+            if ($effectiveTeacherId) {
+                $teacherConflict = ClassSession::query()
+                    ->where('id', '!=', $session->id)
+                    ->where('teacher_id', $effectiveTeacherId)
+                    ->where('session_date', $newDate)
+                    ->where('status', '!=', 'cancelled')
+                    ->where('start_time', '<', $cleanNewEnd)
+                    ->where('end_time', '>', $cleanNewStart)
+                    ->with([
+                        'classSubject.subject:id,name',
+                        'classSubject.schoolClass:id,name',
+                        'teacher:id,full_name,teacher_code',
+                    ])
+                    ->first();
+
+                if ($teacherConflict) {
+                    $teacherName      = $teacherConflict->teacher?->full_name ?? 'Giáo viên';
+                    $otherSubjectName = $teacherConflict->classSubject?->subject?->name ?? 'môn học';
+                    $otherClassName   = $teacherConflict->classSubject?->schoolClass?->name ?? 'lớp khác';
+                    $cStart           = substr((string) $teacherConflict->start_time, 0, 5);
+                    $cEnd             = substr((string) $teacherConflict->end_time, 0, 5);
+
+                    throw ValidationException::withMessages([
+                        'teacher_id' => "Trùng lịch dạy của giáo viên: Giáo viên '{$teacherName}' đã có ca dạy môn '{$otherSubjectName}' tại {$otherClassName} vào ngày {$formattedDate} lúc {$cStart} - {$cEnd}.",
                     ]);
                 }
             }
