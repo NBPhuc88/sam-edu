@@ -168,7 +168,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Mã Giáo Viên
                                 </label>
                                 <Input
-                                    value="Hệ thống tự động sinh mã (VD: GV001)"
+                                    value="Hệ thống tự động sinh mã (VD: GV0000001)"
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 !py-3 !text-sm text-gray-500 italic"
                                 />

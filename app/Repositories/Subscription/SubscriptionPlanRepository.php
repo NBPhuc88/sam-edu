@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Subscription;
 
+use App\Enums\Constant;
 use App\Models\SubscriptionPlan;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -137,7 +138,7 @@ class SubscriptionPlanRepository implements SubscriptionPlanRepositoryInterface
         $nextId = $maxId + 1;
 
         do {
-            $candidate = sprintf('PLAN%09d', $nextId);
+            $candidate = sprintf('PLAN%0' . Constant::CODE_PAD_LENGTH . 'd', $nextId);
             $exists    = SubscriptionPlan::where('code', $candidate)->exists();
 
             if (! $exists) {

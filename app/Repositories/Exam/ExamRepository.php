@@ -294,7 +294,7 @@ class ExamRepository implements ExamRepositoryInterface
             $qCode = trim($qData['code'] ?? '');
 
             if (empty($qCode)) {
-                $qCode = sprintf('Q%09d', ($index + 1));
+                $qCode = sprintf('Q%0' . Constant::CODE_PAD_LENGTH . 'd', ($index + 1));
             }
 
             $payload = [
@@ -388,7 +388,7 @@ class ExamRepository implements ExamRepositoryInterface
                 $qCode = trim($qData['code'] ?? '');
 
                 if (empty($qCode)) {
-                    $qCode = sprintf('Q%09d', $globalQuestionIndex);
+                    $qCode = sprintf('Q%0' . Constant::CODE_PAD_LENGTH . 'd', $globalQuestionIndex);
                 }
 
                 $questionPayload = [

@@ -362,13 +362,13 @@ class GradingService implements GradingServiceInterface
                 ? (float) $data['pass_score']
                 : round($maxScore * 0.5, 2);
 
-            // Auto-generate unique Exam Code EX000000001
+            // Auto-generate unique Exam Code EX0000001
             $nextId   = (int) (Exam::max('id') ?? 0) + 1;
-            $examCode = sprintf('EX%09d', $nextId);
+            $examCode = sprintf('EX%0' . Constant::CODE_PAD_LENGTH . 'd', $nextId);
 
             while (Exam::where('code', $examCode)->exists()) {
                 $nextId++;
-                $examCode = sprintf('EX%09d', $nextId);
+                $examCode = sprintf('EX%0' . Constant::CODE_PAD_LENGTH . 'd', $nextId);
             }
 
             // 1. Tạo Exam

@@ -173,7 +173,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             name="code"
                             value={formData.code}
                             onChange={handleChange}
-                            placeholder="Mã tự động (ví dụ: CTR001)"
+                            placeholder="Mã tự động (ví dụ: CTR0000001)"
                             disabled={mode === 'edit'} // Code is readonly on edit
                             className="!py-3 !text-sm"
                         />

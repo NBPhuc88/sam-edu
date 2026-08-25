@@ -21,7 +21,7 @@ class Constant
     // ==========================================
     // 2. TIỀN TỐ VÀ QUY TẮC SINH MÃ (CODE GENERATION)
     // ==========================================
-    public const int CODE_PAD_LENGTH  = 9;
+    public const int CODE_PAD_LENGTH  = 7;
     public const string CODE_PAD_CHAR = '0';
 
     public const string PREFIX_ROOM              = 'R';

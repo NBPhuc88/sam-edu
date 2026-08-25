@@ -110,6 +110,6 @@ class AdminRepository implements AdminRepositoryInterface
 
     public function getNextAdminCode(): string
     {
-        return Constant::PREFIX_ADMIN . str_pad((string) (Admin::max('id') + 1), 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+        return Constant::PREFIX_ADMIN . str_pad((string) (Admin::max('id') + 1), Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
     }
 }

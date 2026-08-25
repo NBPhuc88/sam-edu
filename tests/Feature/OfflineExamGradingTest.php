@@ -170,10 +170,10 @@ test('super admin can access offline grading create and store offline exam with 
     $storeResponse = $this->actingAs($superAdmin, 'admin')->post(route('grading.offline.store'), $postData);
     $storeResponse->assertRedirect();
 
-    // Verify Exam was created with auto generated code format EX000000001
+    // Verify Exam was created with auto generated code format EX0000001
     $exam = Exam::where('class_id', $class->id)->first();
     expect($exam)->not->toBeNull()
-        ->and($exam->code)->toMatch('/^EX\d{9}$/')
+        ->and($exam->code)->toMatch('/^EX\d{7}$/')
         ->and($exam->name)->toBe('Kiểm tra 15 phút Số 1')
         ->and((float) $exam->max_score)->toBe(10.0);
 

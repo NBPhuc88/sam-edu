@@ -130,11 +130,11 @@ class SubjectService implements SubjectServiceInterface
 
         if (empty($code)) {
             $count = $this->subjectRepository->nextId();
-            $code  = Constant::PREFIX_SUBJECT . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+            $code  = Constant::PREFIX_SUBJECT . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->subjectRepository->codeExists($code)) {
                 $count++;
-                $code = Constant::PREFIX_SUBJECT . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+                $code = Constant::PREFIX_SUBJECT . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 

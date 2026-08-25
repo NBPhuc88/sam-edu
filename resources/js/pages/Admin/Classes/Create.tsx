@@ -218,7 +218,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     Mã Lớp Học
                                 </label>
                                 <Input
-                                    value="Hệ thống tự động sinh mã (VD: LH001)"
+                                    value="Hệ thống tự động sinh mã (VD: C0000001)"
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 !py-3 !text-sm text-gray-500 italic"
                                 />

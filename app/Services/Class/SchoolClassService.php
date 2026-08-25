@@ -235,11 +235,11 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         if (empty($code)) {
             $count = $this->schoolClassRepository->nextId();
-            $code  = Constant::PREFIX_CLASS . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+            $code  = Constant::PREFIX_CLASS . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->schoolClassRepository->codeExists($code)) {
                 $count++;
-                $code = Constant::PREFIX_CLASS . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+                $code = Constant::PREFIX_CLASS . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 

@@ -156,11 +156,11 @@ class TeacherService implements TeacherServiceInterface
 
         if (empty($teacherCode)) {
             $count       = $this->teacherRepository->nextId();
-            $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+            $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->teacherRepository->codeExists($teacherCode)) {
                 $count++;
-                $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, 3, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+                $teacherCode = Constant::PREFIX_TEACHER . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 

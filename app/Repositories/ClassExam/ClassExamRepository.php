@@ -234,7 +234,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
     {
         $maxId = (int) (ClassExam::max('id') ?? 0);
 
-        return sprintf('CE%09d', $maxId + 1);
+        return sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxId + 1);
     }
 
     public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission

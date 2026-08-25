@@ -182,7 +182,7 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
         $maxAttempts = 1000;
 
         for ($i = 1; $i <= $maxAttempts; $i++) {
-            $candidateCode = sprintf('EXT%09d', $i);
+            $candidateCode = sprintf('EXT%0' . Constant::CODE_PAD_LENGTH . 'd', $i);
 
             if (! $this->codeExists($centerId, $candidateCode)) {
                 return $candidateCode;
@@ -191,6 +191,6 @@ class ExamTypeRepository implements ExamTypeRepositoryInterface
 
         $highestId = ExamType::withTrashed()->max('id') ?? 0;
 
-        return sprintf('EXT%09d', $highestId + 1);
+        return sprintf('EXT%0' . Constant::CODE_PAD_LENGTH . 'd', $highestId + 1);
     }
 }

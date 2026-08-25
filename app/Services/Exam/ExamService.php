@@ -175,7 +175,7 @@ class ExamService implements ExamServiceInterface
 
         if (empty($code)) {
             $count = $this->examRepository->nextId();
-            $code  = Constant::PREFIX_EXAM_ALT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+            $code  = Constant::PREFIX_EXAM_ALT . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
         }
 
         if ($this->examRepository->codeExists($code)) {

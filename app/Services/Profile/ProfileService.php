@@ -2,6 +2,7 @@
 
 namespace App\Services\Profile;
 
+use App\Enums\Constant;
 use App\Mail\AccountVerificationOtpMail;
 use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
@@ -27,7 +28,7 @@ class ProfileService implements ProfileServiceInterface
      */
     public function getProfileData(object $user, string $role): array
     {
-        $userCode  = $user->student_code ?? $user->teacher_code ?? $user->admin_code ?? 'ADM' . str_pad((string) $user->id, 9, '0', STR_PAD_LEFT);
+        $userCode  = $user->student_code ?? $user->teacher_code ?? $user->admin_code ?? 'ADM' . str_pad((string) $user->id, Constant::CODE_PAD_LENGTH, '0', STR_PAD_LEFT);
         $roleLabel = match ($role) {
             'admin'   => ($user->role ?? 'admin') === 'super_admin' ? 'Quản trị viên tối cao (Super Admin)' : 'Quản trị viên',
             'teacher' => 'Giáo viên',

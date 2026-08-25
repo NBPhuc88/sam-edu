@@ -214,11 +214,11 @@ class StudentService implements StudentServiceInterface
 
         if (empty($studentCode)) {
             $count       = $this->studentRepository->nextId();
-            $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+            $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
 
             while ($this->studentRepository->codeExists($studentCode)) {
                 $count++;
-                $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
+                $studentCode = Constant::PREFIX_STUDENT . str_pad((string) $count, Constant::CODE_PAD_LENGTH, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
             }
         }
 

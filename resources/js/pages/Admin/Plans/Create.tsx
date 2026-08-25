@@ -177,7 +177,7 @@ setNewFeatureText('');
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="Để trống để tự động sinh mã (VD: PLAN000000001)"
+                                        placeholder="Để trống để tự động sinh mã (VD: PLAN0000001)"
                                         value={code}
                                         onChange={(e) => setCode(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                                         error={errors.code}

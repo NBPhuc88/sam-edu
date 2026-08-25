@@ -134,7 +134,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                                     Mã Môn Học
                                 </label>
                                 <Input
-                                    value="Hệ thống tự động sinh mã (VD: MH001)"
+                                    value="Hệ thống tự động sinh mã (VD: S0000001)"
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 !py-3 !text-sm text-gray-500 italic"
                                 />

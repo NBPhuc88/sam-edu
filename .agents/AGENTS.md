@@ -55,14 +55,15 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > **6. QUY TẮC NHẬP MÃ & TỰ ĐỘNG SINH MÃ (CODE GENERATION RULES)**:
 >
 > - **Cho phép tự nhập hoặc để trống để tự sinh**: Tất cả các trường mã định danh (`code`, `admin_code`, `teacher_code`, `student_code`, v.v.) người dùng có thể tự nhập theo ý muốn hoặc để trống để hệ thống tự động sinh mã.
-> - **Cấu trúc mã tự sinh chuẩn**: `[Tiền tố thực thể (Prefix)][Số thứ tự 9 chữ số padded zeros]`.
->   - **Phòng học (`rooms`)**: `R000000001`, `R000000002`, ... (`sprintf('R%09d', $nextId)`)
->   - **Môn học (`subjects`)**: `S000000001`, `S000000002`, ... (`sprintf('S%09d', $nextId)`)
->   - **Lớp học (`classes`)**: `C000000001` (hoặc `CLS000000001`)
->   - **Trung tâm (`centers`)**: `CTR000000001`
->   - **Giáo viên (`teachers`)**: `GV000000001` (hoặc `T000000001`)
->   - **Học sinh (`students`)**: `HS000000001` (hoặc `STD000000001`)
->   - **Quản trị viên (`admins`)**: `ADM000000001`
+> - **Cấu trúc mã tự sinh chuẩn**: `[Tiền tố thực thể (Prefix)][Số thứ tự 7 chữ số padded zeros]`.
+>   - **Phòng học (`rooms`)**: `R0000001`, `R0000002`, ... (`sprintf('R%07d', $nextId)`)
+>   - **Môn học (`subjects`)**: `S0000001`, `S0000002`, ... (`sprintf('S%07d', $nextId)`)
+>   - **Lớp học (`classes`)**: `C0000001` (hoặc `CLS0000001`)
+>   - **Trung tâm (`centers`)**: `CTR0000001`
+>   - **Giáo viên (`teachers`)**: `GV0000001` (hoặc `T0000001`)
+>   - **Học sinh (`students`)**: `HS0000001` (hoặc `STD0000001`)
+>   - **Quản trị viên (`admins`)**: `ADM0000001`
+>   - **Đề thi (`exams`)**: `EX0000001`
 > - **Xử lý Backend**: Trong Service/Repository, khi trường `code` rỗng hoặc null, tự động tính toán mã kế tiếp duy nhất theo tiền tố quy định và đảm bảo không bị trùng lặp.
 > [!IMPORTANT]
 > **7. QUY TẮC KIỂU DỮ LIỆU CỘT `status` (STATUS DATA TYPES)**:

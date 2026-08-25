@@ -178,7 +178,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     Mã Học Sinh
                                 </label>
                                 <Input
-                                    value="Hệ thống tự động sinh mã (VD: HS0001)"
+                                    value="Hệ thống tự động sinh mã (VD: HS0000001)"
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 !py-3 !text-sm text-gray-500 italic"
                                 />
