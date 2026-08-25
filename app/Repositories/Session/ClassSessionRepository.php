@@ -431,7 +431,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     }
 
     /**
-     * Chuyển các ca học trong khung giờ học sang in_progress.
+     * Chuyển các ca học trong khung giờ học sang in_progress (xử lý từng đợt 500 bản ghi).
      *
      * @param  string $date
      * @param  string $currentTime
@@ -439,16 +439,37 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function updateSessionsToInProgress(string $date, string $currentTime): int
     {
-        return ClassSession::where('session_date', $date)
-            ->where('start_time', '<=', $currentTime)
-            ->where('end_time', '>=', $currentTime)
-            ->where('status', 'scheduled')
-            ->whereDoesntHave('attendances')
-            ->update(['status' => 'in_progress']);
+        $totalUpdated = 0;
+
+        do {
+            $sessionIds = ClassSession::where('session_date', $date)
+                ->where('start_time', '<=', $currentTime)
+                ->where('end_time', '>=', $currentTime)
+                ->where('status', 'scheduled')
+                ->whereDoesntHave('attendances')
+                ->limit(500)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($sessionIds)) {
+                break;
+            }
+
+            $affected = ClassSession::whereIn('id', $sessionIds)
+                ->update(['status' => 'in_progress']);
+
+            $totalUpdated += $affected;
+
+            if (count($sessionIds) < 500) {
+                break;
+            }
+        } while (true);
+
+        return $totalUpdated;
     }
 
     /**
-     * Chuyển các ca học đã kết thúc và đã điểm danh sang completed.
+     * Chuyển các ca học đã kết thúc và đã điểm danh sang completed (xử lý từng đợt 500 bản ghi).
      *
      * @param  string $date
      * @param  string $currentTime
@@ -456,20 +477,41 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function updateEndedAttendedSessionsToCompleted(string $date, string $currentTime): int
     {
-        return ClassSession::whereIn('status', ['scheduled', 'in_progress', 'unattended'])
-            ->where(function ($query) use ($date, $currentTime) {
-                $query->where('session_date', '<', $date)
-                    ->orWhere(function ($q) use ($date, $currentTime) {
-                        $q->where('session_date', '=', $date)
-                            ->where('end_time', '<', $currentTime);
-                    });
-            })
-            ->whereHas('attendances')
-            ->update(['status' => 'completed']);
+        $totalUpdated = 0;
+
+        do {
+            $sessionIds = ClassSession::whereIn('status', ['scheduled', 'in_progress', 'unattended'])
+                ->where(function ($query) use ($date, $currentTime) {
+                    $query->where('session_date', '<', $date)
+                        ->orWhere(function ($q) use ($date, $currentTime) {
+                            $q->where('session_date', '=', $date)
+                                ->where('end_time', '<', $currentTime);
+                        });
+                })
+                ->whereHas('attendances')
+                ->limit(500)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($sessionIds)) {
+                break;
+            }
+
+            $affected = ClassSession::whereIn('id', $sessionIds)
+                ->update(['status' => 'completed']);
+
+            $totalUpdated += $affected;
+
+            if (count($sessionIds) < 500) {
+                break;
+            }
+        } while (true);
+
+        return $totalUpdated;
     }
 
     /**
-     * Chuyển các ca học đã kết thúc và chưa điểm danh sang unattended.
+     * Chuyển các ca học đã kết thúc và chưa điểm danh sang unattended (xử lý từng đợt 500 bản ghi).
      *
      * @param  string $date
      * @param  string $currentTime
@@ -477,15 +519,36 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function updateEndedUnattendedSessions(string $date, string $currentTime): int
     {
-        return ClassSession::whereIn('status', ['scheduled', 'in_progress'])
-            ->where(function ($query) use ($date, $currentTime) {
-                $query->where('session_date', '<', $date)
-                    ->orWhere(function ($q) use ($date, $currentTime) {
-                        $q->where('session_date', '=', $date)
-                            ->where('end_time', '<', $currentTime);
-                    });
-            })
-            ->whereDoesntHave('attendances')
-            ->update(['status' => 'unattended']);
+        $totalUpdated = 0;
+
+        do {
+            $sessionIds = ClassSession::whereIn('status', ['scheduled', 'in_progress'])
+                ->where(function ($query) use ($date, $currentTime) {
+                    $query->where('session_date', '<', $date)
+                        ->orWhere(function ($q) use ($date, $currentTime) {
+                            $q->where('session_date', '=', $date)
+                                ->where('end_time', '<', $currentTime);
+                        });
+                })
+                ->whereDoesntHave('attendances')
+                ->limit(500)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($sessionIds)) {
+                break;
+            }
+
+            $affected = ClassSession::whereIn('id', $sessionIds)
+                ->update(['status' => 'unattended']);
+
+            $totalUpdated += $affected;
+
+            if (count($sessionIds) < 500) {
+                break;
+            }
+        } while (true);
+
+        return $totalUpdated;
     }
 }
