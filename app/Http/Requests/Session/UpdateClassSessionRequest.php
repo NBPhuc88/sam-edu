@@ -86,12 +86,14 @@ class UpdateClassSessionRequest extends FormRequest
                 return;
             }
 
-            $classStartDate      = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
-            $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
-            $sessionDate         = Carbon::parse($this->input('session_date'))->format('Y-m-d');
+            $classStartDate   = ($schoolClass && $schoolClass->start_date) ? Carbon::parse($schoolClass->start_date)->format('Y-m-d') : null;
+            $todayIso         = now()->toDateString();
+            $minDateIso       = ($classStartDate && $classStartDate > $todayIso) ? $classStartDate : $todayIso;
+            $minDateFormatted = Carbon::parse($minDateIso)->format('d-m-Y');
+            $sessionDate      = Carbon::parse($this->input('session_date'))->format('Y-m-d');
 
-            if ($sessionDate < $classStartDate) {
-                $validator->errors()->add('session_date', "Ngày học không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).");
+            if ($sessionDate < $minDateIso) {
+                $validator->errors()->add('session_date', "Ngày học không được nhỏ hơn ngày hiện tại ({$minDateFormatted}).");
             }
         });
     }

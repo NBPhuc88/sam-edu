@@ -191,19 +191,18 @@ class ClassSessionService implements ClassSessionServiceInterface
             $cleanNewEnd   = substr((string) $newEndTime, 0, 5);
             $formattedDate = Carbon::parse($newDate)->format('d/m/Y');
 
-            $schoolClass = $session->classSubject?->schoolClass;
+            $schoolClass   = $session->classSubject?->schoolClass;
+            $classStartIso = ($schoolClass && $schoolClass->start_date) ? Carbon::parse($schoolClass->start_date)->format('Y-m-d') : null;
+            $todayIso      = now()->toDateString();
+            $minDateIso    = ($classStartIso && $classStartIso > $todayIso) ? $classStartIso : $todayIso;
+            $newDateIso    = Carbon::parse($newDate)->format('Y-m-d');
 
-            if ($schoolClass && $schoolClass->start_date) {
-                $classStartIso = Carbon::parse($schoolClass->start_date)->format('Y-m-d');
-                $newDateIso    = Carbon::parse($newDate)->format('Y-m-d');
+            if ($newDateIso < $minDateIso) {
+                $minDateFormatted = Carbon::parse($minDateIso)->format('d/m/Y');
 
-                if ($newDateIso < $classStartIso) {
-                    $classStartFormatted = Carbon::parse($schoolClass->start_date)->format('d-m-Y');
-
-                    throw ValidationException::withMessages([
-                        'session_date' => "Ngày học ({$formattedDate}) không được nhỏ hơn ngày bắt đầu của lớp ({$classStartFormatted}).",
-                    ]);
-                }
+                throw ValidationException::withMessages([
+                    'session_date' => "Ngày học ({$formattedDate}) không được nhỏ hơn ngày hiện tại ({$minDateFormatted}).",
+                ]);
             }
 
             $classId = $session->classSubject?->class_id;

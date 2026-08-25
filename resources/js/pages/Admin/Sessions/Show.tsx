@@ -149,6 +149,8 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
     const subject = session.class_subject?.subject;
     const schoolClass = session.class_subject?.school_class;
     const classStartDate = schoolClass?.start_date ? toISODateString(schoolClass.start_date) : '';
+    const todayIso = new Date().toISOString().split('T')[0];
+    const minRescheduleDate = classStartDate && classStartDate > todayIso ? classStartDate : todayIso;
     const currentTeacher = session.teacher;
     const currentRoom = session.room;
 
@@ -691,7 +693,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             <DatePicker
                                 value={data.session_date}
                                 onChange={(val) => setData('session_date', val)}
-                                min={classStartDate || undefined}
+                                min={minRescheduleDate}
                                 className="w-full"
                                 placeholder="dd-mm-yyyy"
                                 required
