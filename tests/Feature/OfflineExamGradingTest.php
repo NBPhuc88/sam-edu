@@ -30,7 +30,7 @@ beforeEach(function () {
         'code'             => 'basic_test',
         'name'             => 'Gói Cơ Bản Test',
         'plan_type'        => 'basic',
-        'allowed_features' => ['export_csv', 'exams', 'class-exams'], // No 'grading', no 'chat'
+        'allowed_features' => ['export_csv', 'exams', 'class-exams', 'grading'], // Has 'grading', no 'chat', no 'online-exam'
         'status'           => 'active',
     ]);
 
@@ -309,7 +309,7 @@ test('teacher can only create offline exam for assigned class and subject', func
     $successResponse->assertRedirect();
 });
 
-test('user from basic plan center is redirected to UpgradePlan for chat and grading', function () {
+test('user from basic plan center can access offline grading but is redirected to UpgradePlan for chat and online exam', function () {
     $teacherBasic = Teacher::create([
         'center_id'    => $this->basicCenter->id,
         'teacher_code' => 'GV000000084',
@@ -322,13 +322,17 @@ test('user from basic plan center is redirected to UpgradePlan for chat and grad
         'status'       => 'active',
     ]);
 
-    // Accessing /grading/offline/create on basic plan
+    // Accessing /grading/offline/create on basic plan -> Allowed (200 OK)
     $gradingResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('grading.offline.create'));
-    $gradingResponse->assertForbidden();
-    $gradingResponse->assertInertia(fn ($page) => $page->component('UpgradePlan'));
+    $gradingResponse->assertOk();
 
-    // Accessing /chats on basic plan
+    // Accessing /chats on basic plan -> Blocked (403 UpgradePlan)
     $chatResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('chats.index'));
     $chatResponse->assertForbidden();
     $chatResponse->assertInertia(fn ($page) => $page->component('UpgradePlan'));
+
+    // Accessing /exam-room on basic plan -> Blocked (403 UpgradePlan)
+    $onlineExamResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('online-exam.enter'));
+    $onlineExamResponse->assertForbidden();
+    $onlineExamResponse->assertInertia(fn ($page) => $page->component('UpgradePlan'));
 });

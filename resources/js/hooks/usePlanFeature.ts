@@ -80,10 +80,45 @@ export function useCanUseCsv(): boolean {
 }
 
 /**
- * Tiện ích kiểm tra nhanh quyền sử dụng Kho đề thi & Phòng thi (exams).
+ * Tiện ích kiểm tra nhanh quyền sử dụng Kho đề thi (exams).
  */
 export function useCanUseExams(): boolean {
     return usePlanFeature('exams');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Quản lý loại đề thi (exam-types).
+ */
+export function useCanUseExamTypes(): boolean {
+    return usePlanFeature('exam-types');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Quản lý kỳ thi lớp học (class-exams).
+ */
+export function useCanUseClassExams(): boolean {
+    return usePlanFeature('class-exams');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Chấm điểm bài thi (grading).
+ */
+export function useCanGradeExams(): boolean {
+    return usePlanFeature('grading');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Tham gia phòng thi trực tuyến (online-exam).
+ */
+export function useCanTakeOnlineExam(): boolean {
+    return usePlanFeature('online-exam');
+}
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Luyện tập & Thi thử (practice-exams).
+ */
+export function useCanTakePracticeExam(): boolean {
+    return usePlanFeature('practice-exams');
 }
 
 /**

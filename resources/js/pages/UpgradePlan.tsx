@@ -62,8 +62,8 @@ export default function UpgradePlan({
 
     const advancedFeatures = [
         {
-            title: 'Kho đề thi & Phòng thi trực tuyến',
-            desc: '9 dạng câu hỏi (trắc nghiệm, audio, ghép nối, sắp xếp...), tự động tính giờ và chấm điểm.',
+            title: 'Phòng thi trực tuyến & Thi thử',
+            desc: 'Tham gia phòng thi thời gian thực với 9 dạng câu hỏi, đếm ngược thời gian, tự động lưu bài và luyện tập thi thử công khai.',
             icon: GraduationCap,
         },
         {
