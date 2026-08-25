@@ -96,8 +96,8 @@ beforeEach(function () {
         'teacher_id'       => $this->teacher->id,
         'room_id'          => $this->room->id,
         'session_date'     => now()->toDateString(),
-        'start_time'       => '08:00:00',
-        'end_time'         => '09:30:00',
+        'start_time'       => '00:00:00',
+        'end_time'         => '23:59:59',
         'status'           => 'scheduled',
     ]);
 });
@@ -170,4 +170,29 @@ test('assigned teacher can reset attendance of their class session', function ()
     $resetResponse->assertRedirect();
     expect(Attendance::where('session_id', $this->session->id)->count())->toBe(0);
     expect($this->session->fresh()->status)->toBe('scheduled');
+});
+
+test('resetting attendance of past session reverts status to unattended', function () {
+    $pastSession = ClassSession::create([
+        'class_subject_id' => $this->classSubject->id,
+        'teacher_id'       => $this->teacher->id,
+        'room_id'          => $this->room->id,
+        'session_date'     => now()->subDays(2)->toDateString(),
+        'start_time'       => '08:00:00',
+        'end_time'         => '09:30:00',
+        'status'           => 'completed',
+    ]);
+
+    Attendance::create([
+        'session_id' => $pastSession->id,
+        'student_id' => $this->student->id,
+        'status'     => 'present',
+    ]);
+
+    $resetResponse = $this->actingAs($this->superAdmin, 'admin')
+        ->post(route('attendance.reset', ['sessionId' => $pastSession->id]));
+
+    $resetResponse->assertRedirect();
+    expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(0);
+    expect($pastSession->fresh()->status)->toBe('unattended');
 });
