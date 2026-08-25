@@ -10,4 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('sessions:update-status')
     ->everyFiveMinutes()
-    ->withoutOverlapping();
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/sessions-update.log'));
