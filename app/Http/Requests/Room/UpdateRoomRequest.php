@@ -37,7 +37,7 @@ class UpdateRoomRequest extends FormRequest
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status'   => ['sometimes', 'required', 'string', 'in:active,inactive'],
+            'status'   => ['sometimes', 'required', 'string', 'in:active,paused,closed,inactive'],
 
             'equipments'            => ['nullable', 'array'],
             'equipments.*.id'       => ['nullable', 'integer'],

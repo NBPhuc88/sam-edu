@@ -19,7 +19,7 @@ class FilterRoomRequest extends FormRequest
         return [
             'search'    => ['nullable', 'string', 'max:255'],
             'center_id' => ['nullable', 'integer', 'exists:centers,id'],
-            'status'    => ['nullable', 'string', 'in:all,active,inactive'],
+            'status'    => ['nullable', 'string', 'in:all,active,paused,closed,inactive'],
             'page'      => ['nullable', 'integer', 'min:1'],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

@@ -48,7 +48,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'inactive';
+    status: 'active' | 'paused' | 'closed' | 'inactive';
     created_at?: string;
     center?: Center;
     equipments?: RoomEquipment[];

@@ -255,7 +255,7 @@ class RoomRepository implements RoomRepositoryInterface
 
         $total         = (clone $query)->count();
         $active        = (clone $query)->where('status', 'active')->count();
-        $inactive      = (clone $query)->where('status', 'inactive')->count();
+        $inactive      = (clone $query)->whereIn('status', ['paused', 'inactive'])->count();
         $totalCapacity = (int) ((clone $query)->where('status', 'active')->sum('capacity') ?? 0);
 
         return [

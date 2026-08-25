@@ -65,7 +65,8 @@ Tài liệu này tổng hợp và quy định chi tiết tất cả các giá tr
 | **`subjects`** | `enum` | **`active`** | Đang giảng dạy | Môn học đang mở cho các lớp đăng ký |
 | | | **`inactive`** | Tạm ngưng | Môn học tạm đóng |
 | **`rooms`** | `enum` | **`active`** | Đang sử dụng | Phòng học sẵn sàng xếp lịch |
-| | | **`inactive`** | Tạm đóng | Phòng học đang sửa chữa hoặc không dùng |
+| | | **`paused`** | Tạm dừng | Phòng học tạm dừng hoạt động |
+| | | **`closed`** | Đã đóng | Phòng học đóng vĩnh viễn / không sử dụng |
 | **`room_equipments`** | `enum` | **`good`** | Hoạt động tốt | Thiết bị trong phòng hoạt động bình thường |
 | | | **`maintenance`** | Đang bảo trì | Thiết bị đang sửa chữa / bảo trì |
 | | | **`broken`** | Hư hỏng | Thiết bị bị hỏng cần thay mới |
