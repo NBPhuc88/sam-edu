@@ -250,4 +250,38 @@ class ClassExamService implements ClassExamServiceInterface
     {
         return $this->classExamRepository->getStats($admin, $teacher);
     }
+
+    /**
+     * Tự động quét và cập nhật trạng thái các kỳ thi lớp (ClassExam).
+     * - scheduled -> ongoing: nếu now + 5 phút >= valid_from và now < valid_to
+     * - ongoing/scheduled -> completed: nếu now >= valid_to
+     *
+     * @return array{ongoing: int, completed: int}
+     */
+    public function autoUpdateClassExamStatuses(): array
+    {
+        $now        = Carbon::now();
+        $in5Minutes = $now->copy()->addMinutes(5)->format('Y-m-d H:i:s');
+        $nowString  = $now->format('Y-m-d H:i:s');
+
+        // 1. Chuyển các kỳ thi 'scheduled' sang 'ongoing' nếu thời gian hiện tại + 5p >= valid_from và chưa quá valid_to
+        $ongoingCount = ClassExam::where('status', Constant::CLASS_EXAM_STATUS_SCHEDULED)
+            ->whereNotNull('valid_from')
+            ->where('valid_from', '<=', $in5Minutes)
+            ->where(function ($q) use ($nowString) {
+                $q->whereNull('valid_to')->orWhere('valid_to', '>', $nowString);
+            })
+            ->update(['status' => Constant::CLASS_EXAM_STATUS_ONGOING]);
+
+        // 2. Chuyển các kỳ thi 'ongoing' hoặc 'scheduled' sang 'completed' nếu đã quá valid_to
+        $completedCount = ClassExam::whereIn('status', [Constant::CLASS_EXAM_STATUS_SCHEDULED, Constant::CLASS_EXAM_STATUS_ONGOING])
+            ->whereNotNull('valid_to')
+            ->where('valid_to', '<=', $nowString)
+            ->update(['status' => Constant::CLASS_EXAM_STATUS_COMPLETED]);
+
+        return [
+            'ongoing'   => $ongoingCount,
+            'completed' => $completedCount,
+        ];
+    }
 }

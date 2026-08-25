@@ -66,4 +66,11 @@ interface ClassExamServiceInterface
      * @param  ?Teacher                                                        $teacher
      */
     public function getStats(?Admin $admin = null, ?Teacher $teacher = null): array;
+
+    /**
+     * Tự động quét và cập nhật trạng thái các kỳ thi lớp theo thời gian thực.
+     *
+     * @return array{ongoing: int, completed: int}
+     */
+    public function autoUpdateClassExamStatuses(): array;
 }

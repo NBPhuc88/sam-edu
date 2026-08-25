@@ -19,6 +19,17 @@ Schedule::command('sessions:update-status')
     ->withoutOverlapping()
     ->appendOutputTo($sessionsLogDir . '/' . (int) date('j') . '.log');
 
+$classExamsLogDir = storage_path('logs/class-exams-update/' . date('Y-m'));
+
+if (! is_dir($classExamsLogDir)) {
+    @mkdir($classExamsLogDir, 0755, true);
+}
+
+Schedule::command('class-exams:update-status')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo($classExamsLogDir . '/' . (int) date('j') . '.log');
+
 Schedule::command('logs:clean-old')
     ->monthlyOn(1, '00:00')
     ->withoutOverlapping();
