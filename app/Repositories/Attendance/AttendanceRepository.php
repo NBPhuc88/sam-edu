@@ -4,6 +4,7 @@ namespace App\Repositories\Attendance;
 
 use App\Models\Attendance;
 use App\Models\ClassSession;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceRepository implements AttendanceRepositoryInterface
@@ -76,9 +77,9 @@ class AttendanceRepository implements AttendanceRepositoryInterface
             $session = ClassSession::find($sessionId);
 
             if ($session) {
-                $today       = now()->toDateString();
-                $currentTime = now()->toTimeString();
-                $isPast      = $session->session_date < $today || ($session->session_date === $today && $session->end_time < $currentTime);
+                $sessionDate = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date->toDateString());
+                $sessionEnd  = Carbon::parse($sessionDate . ' ' . $session->end_time);
+                $isPast      = $sessionEnd->isPast();
                 $newStatus   = $isPast ? 'unattended' : 'scheduled';
                 $session->update(['status' => $newStatus]);
             }

@@ -7,6 +7,7 @@ use App\Models\ClassSession;
 use App\Models\Teacher;
 use App\Repositories\Attendance\AttendanceRepositoryInterface;
 use App\Repositories\Session\ClassSessionRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -133,9 +134,9 @@ class AttendanceService implements AttendanceServiceInterface
             ]);
         }
 
-        $today         = now()->toDateString();
-        $currentTime   = now()->toTimeString();
-        $isBeforeStart = $session->session_date > $today || ($session->session_date === $today && $session->start_time > $currentTime);
+        $sessionDate   = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date->toDateString());
+        $sessionStart  = Carbon::parse($sessionDate . ' ' . $session->start_time);
+        $isBeforeStart = $sessionStart->isFuture();
 
         if ($isBeforeStart) {
             throw ValidationException::withMessages([
