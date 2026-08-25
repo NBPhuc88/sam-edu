@@ -308,7 +308,7 @@ export default function TakeExam({
             </header>
 
             {/* Main Content Body */}
-            <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 pb-28 sm:pb-32 lg:pb-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Questions Column */}
                 <main className="lg:col-span-8 space-y-6">
                     {sections.map((section, sIdx) => {
