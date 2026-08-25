@@ -172,7 +172,7 @@ class StudentRepository implements StudentRepositoryInterface
             });
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 
     /**

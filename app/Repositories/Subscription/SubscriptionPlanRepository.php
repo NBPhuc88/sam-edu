@@ -68,7 +68,8 @@ class SubscriptionPlanRepository implements SubscriptionPlanRepositoryInterface
 
         return $query->orderBy('price', 'asc')
             ->orderBy('id', 'asc')
-            ->deferredPaginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page)
+            ->withQueryString();
     }
 
     public function findByCode(string $code): ?SubscriptionPlan

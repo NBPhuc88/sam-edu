@@ -98,7 +98,8 @@ class ExamRepository implements ExamRepositoryInterface
         }
 
         return $query->orderByDesc('id')
-            ->deferredPaginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page)
+            ->withQueryString();
     }
 
     /**
@@ -532,6 +533,6 @@ class ExamRepository implements ExamRepositoryInterface
             $query->where('exam_type_id', (int) $filters['exam_type_id']);
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 }

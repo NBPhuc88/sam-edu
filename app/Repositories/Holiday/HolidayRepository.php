@@ -32,7 +32,7 @@ class HolidayRepository implements HolidayRepositoryInterface
             });
         }
 
-        return $query->orderBy('date', 'asc')->deferredPaginate($perPage, ['*'], 'page', $page);
+        return $query->orderBy('date', 'asc')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 
     /**

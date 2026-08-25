@@ -138,7 +138,8 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
 
         return $query->orderBy('session_date', 'asc')
             ->orderBy('start_time', 'asc')
-            ->deferredPaginate($perPage, ['*'], 'page', $page);
+            ->deferredPaginate($perPage, ['*'], 'page', $page)
+            ->withQueryString();
     }
 
     /**

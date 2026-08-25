@@ -65,7 +65,7 @@ class SubjectRepository implements SubjectRepositoryInterface
             });
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page);
+        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 
     /**

@@ -62,7 +62,8 @@ class CenterRepository implements CenterRepositoryInterface
                     ->whereIn('id', $targetIds)
                     ->withCount(['students', 'classes', 'teachers'])
                     ->latest('id')
-                    ->deferredPaginate($perPage);
+                    ->deferredPaginate($perPage)
+                    ->withQueryString();
             }
         }
 
@@ -80,7 +81,8 @@ class CenterRepository implements CenterRepositoryInterface
         )
             ->withCount(['students', 'classes', 'teachers'])
             ->latest('id')
-            ->deferredPaginate($perPage);
+            ->deferredPaginate($perPage)
+            ->withQueryString();
     }
 
     /**
