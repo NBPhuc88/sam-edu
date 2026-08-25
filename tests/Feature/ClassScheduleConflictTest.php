@@ -177,8 +177,7 @@ test('allows updating own schedule without triggering self-conflict', function (
     $scheduleMath = $this->csMath->fresh()->classSchedules->first();
 
     // 2. Update Math schedule
-    $response = $this->actingAs($this->admin, 'admin')->put('/schedules/' . $scheduleMath->id, [
-        'teacher_id'    => $this->teacher1->id,
+    $response = $this->actingAs($this->admin, 'admin')->patch('/schedules/' . $scheduleMath->id, [
         'start_date'    => '2026-09-01',
         'auto_holidays' => false,
         'weeks'         => [
@@ -192,7 +191,7 @@ test('allows updating own schedule without triggering self-conflict', function (
 });
 
 test('blocks rescheduling a session when it conflicts with another subject session in the same class', function () {
-    // 1. Setup Math session on 2026-09-07 (Thứ 2) from 18:00 - 20:00
+    // 1. Math session on 2026-09-07 (Thứ 2) from 18:00 - 20:00
     $sessionMath = ClassSession::create([
         'class_id'         => $this->class->id,
         'class_subject_id' => $this->csMath->id,
@@ -203,7 +202,7 @@ test('blocks rescheduling a session when it conflicts with another subject sessi
         'status'           => 'scheduled',
     ]);
 
-    // 2. Setup Physics session on 2026-09-08 (Thứ 3) from 18:00 - 20:00
+    // 2. Physics session on 2026-09-08 (Thứ 3) from 18:00 - 20:00
     $sessionPhysics = ClassSession::create([
         'class_id'         => $this->class->id,
         'class_subject_id' => $this->csPhysics->id,
@@ -218,7 +217,7 @@ test('blocks rescheduling a session when it conflicts with another subject sessi
     $service = app(ClassSessionServiceInterface::class);
 
     expect(function () use ($service, $sessionPhysics) {
-        $service->updateOrRescheduleSession($sessionPhysics, [
+        $service->updateOrRescheduleSession($sessionPhysics->id, [
             'session_date' => '2026-09-07',
             'start_time'   => '19:00',
             'end_time'     => '21:00',

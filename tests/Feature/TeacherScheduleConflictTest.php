@@ -173,7 +173,7 @@ test('allows updating own schedule without triggering teacher self-conflict', fu
     $scheduleA = $this->csClassAMath->fresh()->classSchedules->first();
 
     // 2. Update Class A schedule
-    $response = $this->actingAs($this->admin, 'admin')->put('/schedules/' . $scheduleA->id, [
+    $response = $this->actingAs($this->admin, 'admin')->patch('/schedules/' . $scheduleA->id, [
         'teacher_id'    => $this->teacher->id,
         'start_date'    => '2026-09-01',
         'auto_holidays' => false,
@@ -214,7 +214,7 @@ test('blocks rescheduling a session when teacher already has another session at 
     $service = app(ClassSessionServiceInterface::class);
 
     expect(function () use ($service, $sessionClassB) {
-        $service->updateOrRescheduleSession($sessionClassB, [
+        $service->updateOrRescheduleSession($sessionClassB->id, [
             'session_date' => '2026-09-07',
             'start_time'   => '19:00',
             'end_time'     => '21:00',
