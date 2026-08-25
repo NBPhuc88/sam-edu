@@ -303,6 +303,202 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     }
 
     /**
+     * Kiểm tra và không cho phép trùng lịch giữa các môn học trong cùng một lớp học
+     *
+     * @param  int                                                                   $classId
+     * @param  int                                                                   $excludeClassSubjectId ID của ClassSubject hiện tại để loại trừ khi cập nhật
+     * @param  array<string, array<int, array{0: string, 1: string}>>                $newWeeks
+     * @param  array<int, array{date: string, start_time: string, end_time: string}> $newExtraDays
+     * @param  string                                                                $newStartDate
+     * @param  ?string                                                               $newEndDate
+     * @param  ?string                                                               $currentSubjectName
+     * @throws ValidationException
+     */
+    protected function validateClassOtherSubjectsConflict(
+        int $classId,
+        int $excludeClassSubjectId,
+        array $newWeeks,
+        array $newExtraDays,
+        string $newStartDate,
+        ?string $newEndDate,
+        ?string $currentSubjectName = null
+    ): void {
+        $weekdayNames = [
+            '1' => 'Thứ 2',
+            '2' => 'Thứ 3',
+            '3' => 'Thứ 4',
+            '4' => 'Thứ 5',
+            '5' => 'Thứ 6',
+            '6' => 'Thứ 7',
+            '7' => 'Chủ Nhật',
+        ];
+
+        // Lấy tất cả các môn học khác của cùng lớp đã có cấu hình lịch hoạt động
+        $otherClassSubjects = ClassSubject::query()
+            ->where('class_id', $classId)
+            ->where('id', '!=', $excludeClassSubjectId)
+            ->where('status', 'active')
+            ->with([
+                'subject:id,name,code',
+                'schoolClass:id,name,code',
+                'classSchedules' => function ($q) {
+                    $q->where('status', 'active');
+                },
+            ])
+            ->get();
+
+        if ($otherClassSubjects->isEmpty()) {
+            return;
+        }
+
+        $className = $otherClassSubjects->first()?->schoolClass?->name ?? "Lớp #{$classId}";
+
+        foreach ($otherClassSubjects as $otherCs) {
+            $otherSchedule = $otherCs->classSchedules->first();
+
+            if (! $otherSchedule) {
+                continue;
+            }
+
+            $otherSubjectName = $otherCs->subject?->name ?? "Môn #{$otherCs->subject_id}";
+            $otherStartDate   = $otherCs->start_date?->format('Y-m-d');
+            $otherEndDate     = $otherCs->end_date?->format('Y-m-d');
+
+            // 1. Kiểm tra xem khoảng thời gian của 2 môn có giao nhau không
+            $hasDateOverlap = true;
+
+            if ($newEndDate && $otherStartDate && $newEndDate < $otherStartDate) {
+                $hasDateOverlap = false;
+            }
+
+            if ($otherEndDate && $newStartDate && $otherEndDate < $newStartDate) {
+                $hasDateOverlap = false;
+            }
+
+            if (! $hasDateOverlap) {
+                continue;
+            }
+
+            // 2. Kiểm tra trùng lịch cố định tuần (weeks)
+            $otherWeeks = $otherSchedule->weeks ?? [];
+
+            if (is_array($otherWeeks) && ! empty($otherWeeks) && ! empty($newWeeks)) {
+                foreach ($newWeeks as $dayKey => $slots) {
+                    $dayKeyStr = (string) $dayKey;
+
+                    if (! isset($otherWeeks[$dayKeyStr]) || ! is_array($otherWeeks[$dayKeyStr])) {
+                        continue;
+                    }
+
+                    $otherSlots = $otherWeeks[$dayKeyStr];
+                    $dayLabel   = $weekdayNames[$dayKeyStr] ?? "Thứ {$dayKeyStr}";
+
+                    foreach ($slots as $nSlot) {
+                        $nStart = substr((string) ($nSlot[0] ?? ''), 0, 5);
+                        $nEnd   = substr((string) ($nSlot[1] ?? ''), 0, 5);
+
+                        if (empty($nStart) || empty($nEnd)) {
+                            continue;
+                        }
+
+                        foreach ($otherSlots as $oSlot) {
+                            $oStart = substr((string) ($oSlot[0] ?? ''), 0, 5);
+                            $oEnd   = substr((string) ($oSlot[1] ?? ''), 0, 5);
+
+                            if (empty($oStart) || empty($oEnd)) {
+                                continue;
+                            }
+
+                            // Kiểm tra chồng lấn thời gian
+                            if ($nStart < $oEnd && $oStart < $nEnd) {
+                                $dateContext = '';
+
+                                if ($otherStartDate || $otherEndDate) {
+                                    $s           = $otherStartDate ? Carbon::parse($otherStartDate)->format('d/m/Y') : '...';
+                                    $e           = $otherEndDate ? Carbon::parse($otherEndDate)->format('d/m/Y') : '...';
+                                    $dateContext = " (thời gian học: {$s} - {$e})";
+                                }
+
+                                $thisSubj = $currentSubjectName ? "môn '{$currentSubjectName}'" : 'môn học này';
+
+                                throw ValidationException::withMessages([
+                                    'weeks' => "Trùng lịch học trong {$className}: Khung giờ {$dayLabel} ({$nStart} - {$nEnd}) của {$thisSubj} bị trùng với môn '{$otherSubjectName}' (đã xếp lịch {$dayLabel} lúc {$oStart} - {$oEnd}{$dateContext}).",
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Kiểm tra ngày học bù / bổ sung (extra_days)
+            if (! empty($newExtraDays)) {
+                $otherExtraDays = $otherSchedule->extra_days ?? [];
+
+                foreach ($newExtraDays as $newExtra) {
+                    $eDate  = $newExtra['date'] ?? null;
+                    $eStart = substr((string) ($newExtra['start_time'] ?? ''), 0, 5);
+                    $eEnd   = substr((string) ($newExtra['end_time'] ?? ''), 0, 5);
+
+                    if (! $eDate || empty($eStart) || empty($eEnd)) {
+                        continue;
+                    }
+
+                    // 3.1. So với extra_days của môn kia
+                    if (is_array($otherExtraDays)) {
+                        foreach ($otherExtraDays as $otherExtra) {
+                            $oeDate  = $otherExtra['date'] ?? null;
+                            $oeStart = substr((string) ($otherExtra['start_time'] ?? ''), 0, 5);
+                            $oeEnd   = substr((string) ($otherExtra['end_time'] ?? ''), 0, 5);
+
+                            if ($oeDate === $eDate && ! empty($oeStart) && ! empty($oeEnd)) {
+                                if ($eStart < $oeEnd && $oeStart < $eEnd) {
+                                    $formattedDate = Carbon::parse($eDate)->format('d/m/Y');
+
+                                    throw ValidationException::withMessages([
+                                        'extra_days' => "Trùng lịch học trong {$className}: Ca học bù ngày {$formattedDate} ({$eStart} - {$eEnd}) bị trùng với buổi học bù môn '{$otherSubjectName}' ({$oeStart} - {$oeEnd}).",
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+
+                    // 3.2. So với lịch tuần của môn kia nếu ngày này nằm trong khoảng thời gian môn kia
+                    $isWithinOtherDates = true;
+
+                    if ($otherStartDate && $eDate < $otherStartDate) {
+                        $isWithinOtherDates = false;
+                    }
+
+                    if ($otherEndDate && $eDate > $otherEndDate) {
+                        $isWithinOtherDates = false;
+                    }
+
+                    if ($isWithinOtherDates && is_array($otherWeeks) && ! empty($otherWeeks)) {
+                        $extraCarbon = Carbon::parse($eDate);
+                        $eDayKey     = (string) $extraCarbon->dayOfWeekIso;
+
+                        if (isset($otherWeeks[$eDayKey]) && is_array($otherWeeks[$eDayKey])) {
+                            foreach ($otherWeeks[$eDayKey] as $oSlot) {
+                                $oStart = substr((string) ($oSlot[0] ?? ''), 0, 5);
+                                $oEnd   = substr((string) ($oSlot[1] ?? ''), 0, 5);
+
+                                if (! empty($oStart) && ! empty($oEnd) && $eStart < $oEnd && $oStart < $eEnd) {
+                                    $formattedDate = Carbon::parse($eDate)->format('d/m/Y');
+                                    $dayLabel      = $weekdayNames[$eDayKey] ?? "Thứ {$eDayKey}";
+
+                                    throw ValidationException::withMessages([
+                                        'extra_days' => "Trùng lịch học trong {$className}: Ca học bù ngày {$formattedDate} ({$eStart} - {$eEnd}) bị trùng với lịch cố định ({$dayLabel} {$oStart} - {$oEnd}) của môn '{$otherSubjectName}'.",
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * @param  array<string, mixed> $data
      * @param  ?Admin               $admin
      * @return ClassSchedule
@@ -359,6 +555,17 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $normalizedExtraDays = $this->normalizeExtraDays($data['extra_days'] ?? $data['specific_sessions'] ?? []);
             $autoHolidays        = isset($data['auto_holidays']) ? (bool) $data['auto_holidays'] : true;
             $excludedHolidayIds  = ! empty($data['excluded_holiday_ids']) ? array_map('intval', (array) $data['excluded_holiday_ids']) : [];
+
+            // Kiểm tra trùng lịch với các môn học khác trong cùng lớp học
+            $this->validateClassOtherSubjectsConflict(
+                $schoolClass->id,
+                $classSubject->id,
+                $normalizedWeeks,
+                $normalizedExtraDays,
+                $data['start_date'],
+                $data['end_date'] ?? null,
+                $subject?->name
+            );
 
             // Lấy danh sách ngày lễ trong khoảng thời gian, loại bỏ các ngày lễ bị loại trừ
             $holidays = [];
@@ -520,6 +727,20 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $excludedHolidayIds  = array_key_exists('excluded_holiday_ids', $data)
                 ? array_map('intval', (array) $data['excluded_holiday_ids'])
                 : (is_array($schedule->excluded_holiday_ids) ? $schedule->excluded_holiday_ids : []);
+
+            $schoolClass = $classSubject->schoolClass;
+            $classId     = $schoolClass ? $schoolClass->id : (int) $classSubject->class_id;
+
+            // Kiểm tra trùng lịch với các môn học khác trong cùng lớp học
+            $this->validateClassOtherSubjectsConflict(
+                $classId,
+                $classSubject->id,
+                $normalizedWeeks,
+                $normalizedExtraDays,
+                $startDate,
+                $data['end_date'] ?? $classSubject->end_date?->format('Y-m-d'),
+                $subject?->name
+            );
 
             $holidays = [];
 

@@ -512,9 +512,11 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ->select('id', 'center_id', 'name', 'code')
             ->where('status', 1)
             ->with([
-                'classSubjects:id,class_id,subject_id,teacher_id,status',
+                'classSubjects:id,class_id,subject_id,teacher_id,start_date,end_date,status',
                 'classSubjects.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubjects.teacher:id,full_name,teacher_code',
+                'classSubjects.classSchedules:id,class_subject_id,weeks,room_id,status,off_days,extra_days',
+                'classSubjects.classSchedules.room:id,name',
             ]);
 
         if ($allowedCenterIds !== null) {

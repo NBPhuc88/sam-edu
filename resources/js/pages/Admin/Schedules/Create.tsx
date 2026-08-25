@@ -35,17 +35,36 @@ interface Center {
     code: string;
 }
 
+interface ClassSubjectSchedule {
+    id: number;
+    weeks?: Record<string, [string, string][]>;
+    room_id?: number | null;
+    room?: { id: number; name: string };
+    status?: string;
+    off_days?: any[];
+    extra_days?: any[];
+}
+
+interface ClassSubjectItem {
+    id: number;
+    subject_id?: number;
+    subject?: { id: number; name: string; code: string; total_sessions?: number | null; duration_minutes?: number | null };
+    teacher?: { id: number; full_name: string; teacher_code: string };
+    start_date?: string;
+    end_date?: string;
+    status?: string;
+    class_schedules?: ClassSubjectSchedule[];
+    classSchedules?: ClassSubjectSchedule[];
+}
+
 interface SchoolClass {
     id: number;
     name: string;
     code: string;
     center_id: number;
     center?: Center;
-    class_subjects?: {
-        id: number;
-        subject?: { id: number; name: string; code: string };
-        teacher?: { id: number; full_name: string; teacher_code: string };
-    }[];
+    class_subjects?: ClassSubjectItem[];
+    classSubjects?: ClassSubjectItem[];
 }
 
 interface Subject {
@@ -441,6 +460,67 @@ export default function ScheduleCreate({
         );
     }, [startDate, weeklyTimes, totalSessions, offDays, extraDays, activeHolidayDates]);
 
+    // Các môn học khác của lớp này đã có cấu hình lịch
+    const existingOtherSubjectSchedules = React.useMemo(() => {
+        if (!currentClass) return [];
+        const rawClassSubjects = (currentClass.class_subjects || (currentClass as any).classSubjects || []) as any[];
+
+        const results: {
+            subjectId: number;
+            subjectName: string;
+            teacherName: string;
+            startDate?: string;
+            endDate?: string;
+            weeks: Record<string, [string, string][]>;
+            roomName?: string;
+        }[] = [];
+
+        for (const cs of rawClassSubjects) {
+            const csSubId = cs.subject?.id || cs.subject_id;
+            if (String(csSubId) === String(selectedSubjectId)) continue;
+
+            const schedules = cs.class_schedules || cs.classSchedules || [];
+            const sched = Array.isArray(schedules) ? schedules[0] : schedules;
+            if (sched && sched.weeks && typeof sched.weeks === 'object' && Object.keys(sched.weeks).length > 0) {
+                results.push({
+                    subjectId: csSubId,
+                    subjectName: cs.subject?.name || `Môn #${csSubId}`,
+                    teacherName: cs.teacher?.full_name || '',
+                    startDate: cs.start_date,
+                    endDate: cs.end_date,
+                    weeks: sched.weeks,
+                    roomName: sched.room?.name,
+                });
+            }
+        }
+
+        return results;
+    }, [currentClass, selectedSubjectId]);
+
+    const getSlotConflict = (dayId: number, startTime: string, endTime: string) => {
+        if (!startTime || !endTime) return null;
+        const cleanStart = startTime.slice(0, 5);
+        const cleanEnd = endTime.slice(0, 5);
+
+        for (const other of existingOtherSubjectSchedules) {
+            const slots = other.weeks[String(dayId)];
+            if (Array.isArray(slots)) {
+                for (const oSlot of slots) {
+                    const oStart = Array.isArray(oSlot) ? oSlot[0]?.slice(0, 5) : (oSlot as any)?.start_time?.slice(0, 5);
+                    const oEnd = Array.isArray(oSlot) ? oSlot[1]?.slice(0, 5) : (oSlot as any)?.end_time?.slice(0, 5);
+                    if (oStart && oEnd && cleanStart < oEnd && oStart < cleanEnd) {
+                        return {
+                            subjectName: other.subjectName,
+                            timeRange: `${oStart} - ${oEnd}`,
+                            dateRange: other.startDate && other.endDate ? `(${other.startDate} - ${other.endDate})` : '',
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
     useEffect(() => {
         const initialCsList = (initialClass?.class_subjects || (initialClass as any)?.classSubjects || []) as {
             id: number;
@@ -716,6 +796,14 @@ export default function ScheduleCreate({
             }
         }
 
+        // Kiểm tra trùng với môn học khác của cùng lớp
+        const otherConflict = getSlotConflict(editingDayId, start, end);
+        if (otherConflict) {
+            const dayLabel = WEEKDAYS.find((d) => d.id === editingDayId)?.label || `Thứ ${editingDayId}`;
+            setModalSlotError(`Khung giờ ${start} - ${end} (${dayLabel}) bị trùng với môn ${otherConflict.subjectName} (${otherConflict.timeRange}) của lớp này!`);
+            return;
+        }
+
         setWeeklyTimes((prev) => {
             const currentConf = prev[editingDayId];
             const updatedSlots = [...currentConf.slots];
@@ -749,6 +837,21 @@ export default function ScheduleCreate({
         if (slotErrors.length > 0) {
             setFormSubmitError(`Không thể lưu lịch học: ${slotErrors[0].message}`);
             return;
+        }
+
+        // Kiểm tra trùng lịch với môn học khác
+        for (const day of WEEKDAYS) {
+            const conf = weeklyTimes[day.id];
+            if (conf?.enabled) {
+                for (let i = 0; i < conf.slots.length; i++) {
+                    const slot = conf.slots[i];
+                    const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
+                    if (otherConflict) {
+                        setFormSubmitError(`Trùng lịch học trong lớp: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với môn ${otherConflict.subjectName} (${otherConflict.timeRange})!`);
+                        return;
+                    }
+                }
+            }
         }
 
         setIsSubmitting(true);
@@ -982,6 +1085,61 @@ export default function ScheduleCreate({
                         </div>
                     </Card>
 
+                    {/* Thời khóa biểu các môn đã xếp lịch của lớp */}
+                    {selectedClassId && currentClass && (
+                        <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
+                            <div className="flex items-center justify-between mb-3">
+                                <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
+                                    <BookOpen className="h-5 w-5 text-indigo-600" />
+                                    Lịch Học Hiện Có Của Lớp ({currentClass.name})
+                                </h2>
+                                <span className="text-xs font-semibold text-gray-500">
+                                    {existingOtherSubjectSchedules.length} môn đã xếp lịch
+                                </span>
+                            </div>
+
+                            {existingOtherSubjectSchedules.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-gray-300 bg-slate-50 p-4 text-center text-sm text-gray-500">
+                                    Lớp này chưa có môn học nào khác được xếp lịch. Bạn có thể tự do xếp lịch vào bất kỳ khung giờ nào.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <p className="text-xs text-gray-600">
+                                        Dưới đây là các khung giờ đã được xếp cho các môn học khác trong lớp. Hệ thống sẽ tự động ngăn chặn việc tạo lịch trùng vào các khung giờ này:
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {existingOtherSubjectSchedules.map((other) => (
+                                            <div key={other.subjectId} className="rounded-lg border border-indigo-100 bg-indigo-50/40 p-3.5 shadow-xs">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-sm font-bold text-indigo-950">{other.subjectName}</span>
+                                                    {other.roomName && (
+                                                        <span className="text-[10px] font-semibold bg-white text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
+                                                            {other.roomName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {other.teacherName && (
+                                                    <p className="text-xs text-gray-600 mb-2">GV: {other.teacherName}</p>
+                                                )}
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {Object.entries(other.weeks).map(([dKey, sList]) => {
+                                                        const dLabel = WEEKDAYS.find((w) => String(w.id) === String(dKey))?.label || `T${dKey}`;
+                                                        return sList.map(([st, en], idx) => (
+                                                            <span key={`${dKey}-${idx}`} className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs font-mono font-bold text-indigo-900 border border-indigo-200">
+                                                                <span className="text-indigo-600 font-sans">{dLabel}:</span>
+                                                                <span>{st.slice(0, 5)} - {en.slice(0, 5)}</span>
+                                                            </span>
+                                                        ));
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    )}
+
                     {/* Section 2: Lịch Học Định Kỳ Hàng Tuần (T2 .. CN) */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-2 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
@@ -1039,64 +1197,75 @@ export default function ScheduleCreate({
                                                 className="mt-3.5 space-y-3"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                {conf.slots.map((slot, sIdx) => (
-                                                    <div key={sIdx} className="rounded-lg bg-white p-2.5 shadow-xs border border-emerald-200/80">
-                                                        <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
-                                                            <span className="flex items-center gap-1">
-                                                                <span>Ca {sIdx + 1}</span>
-                                                                <span className="font-mono text-gray-500">({slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)})</span>
-                                                            </span>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                    className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-0.5"
-                                                                    title="Chỉnh sửa giờ trong popup có nút Lưu"
-                                                                >
-                                                                    <Edit3 className="h-3 w-3" />
-                                                                    Sửa
-                                                                </button>
-                                                                {conf.slots.length > 1 && (
+                                                {conf.slots.map((slot, sIdx) => {
+                                                    const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
+
+                                                    return (
+                                                        <div key={sIdx} className={`rounded-lg bg-white p-2.5 shadow-xs border ${otherConflict ? 'border-red-400 bg-red-50/30' : 'border-emerald-200/80'}`}>
+                                                            <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
+                                                                <span className="flex items-center gap-1">
+                                                                    <span>Ca {sIdx + 1}</span>
+                                                                    <span className="font-mono text-gray-500">({slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)})</span>
+                                                                </span>
+                                                                <div className="flex items-center gap-1.5">
                                                                     <button
                                                                         type="button"
-                                                                        onClick={(e) => handleRemoveSlot(day.id, sIdx, e)}
-                                                                        className="text-red-500 hover:text-red-700 text-xs"
-                                                                        title="Xóa ca này"
+                                                                        onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-0.5"
+                                                                        title="Chỉnh sửa giờ trong popup có nút Lưu"
                                                                     >
-                                                                        Xóa
+                                                                        <Edit3 className="h-3 w-3" />
+                                                                        Sửa
                                                                     </button>
-                                                                )}
+                                                                    {conf.slots.length > 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => handleRemoveSlot(day.id, sIdx, e)}
+                                                                            className="text-red-500 hover:text-red-700 text-xs"
+                                                                            title="Xóa ca này"
+                                                                        >
+                                                                            Xóa
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        </div>
 
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <div>
-                                                                <label className="mb-1 block text-[10px] text-gray-500 font-medium">Bắt đầu</label>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
-                                                                    title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
-                                                                >
-                                                                    <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                    <span>{slot.start_time?.slice(0, 5) || '18:00'}</span>
-                                                                </button>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Bắt đầu</label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
+                                                                    >
+                                                                        <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                                                        <span>{slot.start_time?.slice(0, 5) || '18:00'}</span>
+                                                                    </button>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Kết thúc</label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => openSlotModal(day.id, sIdx, e)}
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
+                                                                    >
+                                                                        <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                                                        <span>{slot.end_time?.slice(0, 5) || '20:00'}</span>
+                                                                    </button>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <label className="mb-1 block text-[10px] text-gray-500 font-medium">Kết thúc</label>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
-                                                                    title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
-                                                                >
-                                                                    <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                    <span>{slot.end_time?.slice(0, 5) || '20:00'}</span>
-                                                                </button>
-                                                            </div>
+
+                                                            {otherConflict && (
+                                                                <div className="mt-2 flex items-start gap-1 rounded bg-red-100 p-1.5 text-[11px] font-semibold text-red-800">
+                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 mt-0.5" />
+                                                                    <span>Trùng với môn <strong>{otherConflict.subjectName}</strong> ({otherConflict.timeRange})</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
 
                                                 {hasError && (
                                                     <div className="space-y-1">

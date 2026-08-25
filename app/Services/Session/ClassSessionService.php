@@ -13,6 +13,7 @@ use App\Repositories\Subject\SubjectRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClassSessionService implements ClassSessionServiceInterface
@@ -183,6 +184,40 @@ class ClassSessionService implements ClassSessionServiceInterface
             || ($oldEndTime !== $newEndTime)
             || ($oldRoomId !== $newRoomId)
             || ($oldTeacherId !== $newTeacherId);
+
+        // Kiểm tra trùng lịch với các môn học khác trong cùng lớp nếu thay đổi ngày / giờ
+        if ($hasScheduleChanged && $newDate && $newStartTime && $newEndTime) {
+            $classId = $session->classSubject?->class_id;
+
+            if ($classId) {
+                $cleanNewStart = substr((string) $newStartTime, 0, 5);
+                $cleanNewEnd   = substr((string) $newEndTime, 0, 5);
+
+                $conflictSession = ClassSession::query()
+                    ->where('id', '!=', $session->id)
+                    ->where('session_date', $newDate)
+                    ->where('status', '!=', 'cancelled')
+                    ->whereHas('classSubject', function ($q) use ($classId) {
+                        $q->where('class_id', $classId);
+                    })
+                    ->where('start_time', '<', $cleanNewEnd)
+                    ->where('end_time', '>', $cleanNewStart)
+                    ->with(['classSubject.subject:id,name', 'classSubject.schoolClass:id,name'])
+                    ->first();
+
+                if ($conflictSession) {
+                    $otherSubjectName = $conflictSession->classSubject?->subject?->name ?? 'môn học khác';
+                    $className        = $conflictSession->classSubject?->schoolClass?->name ?? 'Lớp học';
+                    $cStart           = substr((string) $conflictSession->start_time, 0, 5);
+                    $cEnd             = substr((string) $conflictSession->end_time, 0, 5);
+                    $formattedDate    = Carbon::parse($newDate)->format('d/m/Y');
+
+                    throw ValidationException::withMessages([
+                        'session_date' => "Trùng lịch học trong {$className}: Khung giờ {$cleanNewStart} - {$cleanNewEnd} ngày {$formattedDate} bị trùng với ca học môn '{$otherSubjectName}' ({$cStart} - {$cEnd}).",
+                    ]);
+                }
+            }
+        }
 
         // If schedule or teacher/room changed, record a reschedule log
         if ($hasScheduleChanged) {
