@@ -302,8 +302,8 @@ export default function ExamEdit({
                             {/* Center Selection (Super Admin only) */}
                             {isSuperAdmin && (
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                    <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
+                                        Trung Tâm Đào Tạo <span className="text-red-500 ml-1">*</span>
                                     </label>
                                     <select
                                         value={centerId}
@@ -330,7 +330,7 @@ export default function ExamEdit({
 
                             {/* Subject Selection */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
                                     Môn Học (Tùy chọn)
                                 </label>
                                 <select
@@ -352,8 +352,8 @@ export default function ExamEdit({
 
                             {/* Exam Type */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Loại Đề Thi <span className="text-red-500">*</span>
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
+                                    Loại Đề Thi <span className="text-red-500 ml-1">*</span>
                                 </label>
                                 <select
                                     value={examTypeId}
@@ -377,8 +377,8 @@ export default function ExamEdit({
 
                             {/* Exam Name */}
                             <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Tên Đề Thi <span className="text-red-500">*</span>
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
+                                    Tên Đề Thi <span className="text-red-500 ml-1">*</span>
                                 </label>
                                 <Input
                                     value={name}
@@ -394,7 +394,7 @@ export default function ExamEdit({
 
                             {/* Exam Code */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
                                     Mã Đề Thi
                                 </label>
                                 <Input
@@ -410,8 +410,8 @@ export default function ExamEdit({
 
                             {/* Duration Minutes */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Thời Gian Làm Bài (Phút) <span className="text-red-500">*</span>
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
+                                    Thời Gian Làm Bài (Phút) <span className="text-red-500 ml-1">*</span>
                                 </label>
                                 <Input
                                     type="number"
@@ -431,25 +431,25 @@ export default function ExamEdit({
 
                             {/* Auto-calculated Max Score */}
                             <div>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="mb-2 flex h-6 items-center justify-between">
                                     <label className="text-sm font-semibold text-gray-800">
-                                        Điểm Tối Đa <span className="text-red-500">*</span>
+                                        Điểm Tối Đa <span className="text-red-500 ml-1">*</span>
                                     </label>
                                     <span className="inline-flex items-center gap-1 text-3xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                         <Calculator className="h-3 w-3" />
                                         Tự động tính
                                     </span>
                                 </div>
-                                <div className="relative">
+                                <div className="relative flex items-center w-full">
                                     <input
                                         type="number"
                                         value={calculatedMaxScore}
                                         readOnly
                                         disabled
-                                        className="w-full rounded-lg border border-gray-300 bg-slate-100 px-3.5 py-2.5 text-sm font-extrabold text-gray-900 shadow-xs cursor-not-allowed font-mono"
+                                        className="ui-input !py-2.5 !text-sm !bg-slate-100 font-extrabold !text-gray-900 !cursor-not-allowed font-mono !pr-14"
                                         title="Tổng điểm tự động tính toán từ tổng điểm các câu hỏi trong đề"
                                     />
-                                    <span className="absolute right-3 top-2.5 text-xs text-gray-400 font-bold">
+                                    <span className="absolute right-3 text-xs text-gray-400 font-bold pointer-events-none">
                                         điểm
                                     </span>
                                 </div>
@@ -457,7 +457,7 @@ export default function ExamEdit({
 
                             {/* Pass Score */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
                                     Điểm Đạt (Pass Score)
                                 </label>
                                 <Input
@@ -473,7 +473,7 @@ export default function ExamEdit({
 
                             {/* Max Attempts */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
                                     Số Lần Làm Bài Tối Đa
                                 </label>
                                 <Input
@@ -489,8 +489,8 @@ export default function ExamEdit({
 
                             {/* Status */}
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Trạng Thái Đề Thi <span className="text-red-500">*</span>
+                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
+                                    Trạng Thái Đề Thi <span className="text-red-500 ml-1">*</span>
                                 </label>
                                 <select
                                     value={status}
