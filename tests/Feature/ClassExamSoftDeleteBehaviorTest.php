@@ -4,10 +4,12 @@ use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
+use App\Models\ClassSubject;
 use App\Models\Exam;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\Teacher;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -71,14 +73,35 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'status'    => 1,
     ]);
 
+    $teacher = Teacher::create([
+        'username'     => 'teacher_hoa_test',
+        'first_name'   => 'Giáo Viên',
+        'last_name'    => 'Hóa',
+        'full_name'    => 'Hóa Giáo Viên',
+        'email'        => 'teacher_hoa@test.com',
+        'password'     => 'password123',
+        'teacher_code' => 'GV000000008',
+        'center_id'    => $center->id,
+        'status'       => 'active',
+    ]);
+
+    $classSubject = ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => 'active',
+    ]);
+
     $exam = Exam::create([
+        'class_subject_id' => $classSubject->id,
         'center_id'        => $center->id,
         'subject_id'       => $subject->id,
-        'title'            => 'Thi trắc nghiệm Hóa 10',
+        'name'             => 'Thi trắc nghiệm Hóa 10',
         'code'             => 'EX_HOA_01',
+        'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'active',
+        'status'           => 'published',
     ]);
 
     $classExam = ClassExam::create([
@@ -87,9 +110,10 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'title'            => 'Kỳ thi Hóa Giữa Kỳ',
         'code'             => 'CE_HOA_01',
         'access_code'      => 'HOA123',
+        'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'active',
+        'status'           => 'scheduled',
         'valid_from'       => now()->subDays(1),
         'valid_to'         => now()->addDays(5),
     ]);
@@ -120,8 +144,13 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
     expect((float) $submissionA->score)->toBe(8.5);
 
     // 3. Học sinh B cố gắng vào phòng thi của bài thi đã xóa -> Bị chặn
-    $lobbyResponse = $this->actingAs($studentB, 'student')
-        ->get(route('exam.lobby', ['code' => 'HOA123']));
+    $joinResponse = $this->actingAs($studentB, 'student')
+        ->post(route('online-exam.join'), ['code' => 'HOA123']);
 
-    $lobbyResponse->assertSessionHasErrors('code');
+    $joinResponse->assertSessionHasErrors('code');
+
+    $lobbyResponse = $this->actingAs($studentB, 'student')
+        ->get(route('online-exam.lobby', ['id' => $classExam->id]));
+
+    $lobbyResponse->assertStatus(404);
 });

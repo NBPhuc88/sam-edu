@@ -86,11 +86,12 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'class_id'         => $class->id,
         'class_subject_id' => $classSubject->id,
         'subject_id'       => $subject->id,
-        'title'            => 'Thi giữa kỳ Lý',
+        'name'             => 'Thi giữa kỳ Lý',
         'code'             => 'EX_LY_01',
+        'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'active',
+        'status'           => 'published',
     ]);
 
     $examResult = ExamResult::create([
@@ -132,7 +133,7 @@ test('soft deleting school class retains exam results and past sessions but bloc
 
     // 4. Nhóm chat của lớp bị xóa -> Không thể truy cập
     $chatResponse = $this->actingAs($student, 'student')
-        ->get("/chat/{$class->id}/messages");
+        ->get(route('classes.chat.messages', ['classId' => $class->id]));
 
     $chatResponse->assertStatus(404);
 });

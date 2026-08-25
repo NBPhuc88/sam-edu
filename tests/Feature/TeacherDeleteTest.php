@@ -82,14 +82,15 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'status'           => 'active',
     ]);
 
+    // Ca học trong quá khứ đã hoàn thành
     $classSession = ClassSession::create([
         'class_subject_id' => $classSubject->id,
         'teacher_id'       => $teacher->id,
         'room_id'          => $room->id,
-        'session_date'     => '2026-09-01',
+        'session_date'     => now()->subDays(3)->toDateString(),
         'start_time'       => '08:00',
         'end_time'         => '10:00',
-        'status'           => 'scheduled',
+        'status'           => 'completed',
     ]);
 
     $exam = Exam::create([
@@ -97,13 +98,16 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'class_subject_id'      => $classSubject->id,
         'subject_id'            => $subject->id,
         'created_by_teacher_id' => $teacher->id,
-        'title'                 => 'Kiểm tra 1 tiết',
+        'name'                  => 'Kiểm tra 1 tiết',
         'code'                  => 'EX001',
+        'exam_date'             => now()->toDateString(),
         'duration_minutes'      => 45,
         'max_score'             => 10,
-        'type'                  => 'offline',
-        'status'                => 'active',
+        'status'                => 'published',
     ]);
+
+    // Gỡ phân công lớp đang hoạt động để cho phép xóa giáo viên
+    $classSubject->update(['status' => 'inactive']);
 
     $response = $this->actingAs($superAdmin, 'admin')
         ->delete(route('teachers.destroy', $teacher->id));
@@ -114,11 +118,12 @@ test('admin can delete a teacher who has class sessions and assignments without 
     expect(Teacher::find($teacher->id))->toBeNull();
     expect(Teacher::withTrashed()->find($teacher->id))->not->toBeNull();
 
-    // Verify class sessions and class subjects are cleaned up
-    expect(ClassSession::where('teacher_id', $teacher->id)->count())->toBe(0);
-    expect(ClassSubject::where('teacher_id', $teacher->id)->count())->toBe(0);
+    // Verify past class sessions and assignments preserve teacher_id for history
+    expect(ClassSession::where('teacher_id', $teacher->id)->count())->toBe(1);
 
-    // Verify exam created_by_teacher_id is null
+    // Verify exam preserves created_by_teacher_id for history
     $exam->refresh();
-    expect($exam->created_by_teacher_id)->toBeNull();
+    expect($exam->created_by_teacher_id)->toBe($teacher->id);
+    expect($exam->createdByTeacher)->not->toBeNull();
+    expect($exam->createdByTeacher->full_name)->toBe('Trần Giáo Viên');
 });
