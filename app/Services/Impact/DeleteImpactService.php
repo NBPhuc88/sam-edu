@@ -104,7 +104,7 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 $tuitionCount = DB::table('student_tuitions')->where('center_id', $id)->whereNull('deleted_at')->count();
 
                 if ($classCount > 0) {
-                    $impacts[] = "Ẩn (soft delete) {$classCount} lớp học thuộc trung tâm";
+                    $impacts[] = "Ẩn {$classCount} lớp học thuộc trung tâm";
                 }
 
                 if ($teacherCount > 0) {
@@ -224,7 +224,7 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 $classExamCount = DB::table('class_exams')->where('exam_id', $id)->whereNull('deleted_at')->count();
 
                 if ($sectionCount > 0) {
-                    $impacts[] = "Xóa {$sectionCount} phần thi (sections) của đề";
+                    $impacts[] = "Xóa {$sectionCount} phần thi của đề";
                 }
 
                 if ($questionCount > 0) {

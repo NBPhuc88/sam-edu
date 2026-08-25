@@ -794,7 +794,7 @@ return;
                         </p>
                     </div>
                     <p className="text-sm text-gray-500">
-                        Tài khoản và hồ sơ học tập của học sinh sẽ được ẩn khỏi hệ thống (soft delete) và có thể phục hồi khi cần thiết.
+                        Tài khoản và hồ sơ học tập của học sinh sẽ được ẩn khỏi hệ thống và có thể phục hồi khi cần thiết.
                     </p>
                 </div>
             </Modal>

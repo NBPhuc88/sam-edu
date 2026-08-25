@@ -432,7 +432,7 @@ return;
                         </p>
                     </div>
                     <p className="text-sm text-gray-500">
-                        Môn học sẽ được ẩn khỏi hệ thống (soft delete) và có thể khôi phục khi cần thiết.
+                        Môn học sẽ được ẩn khỏi hệ thống và có thể khôi phục khi cần thiết.
                     </p>
                 </div>
             </Modal>

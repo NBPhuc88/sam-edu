@@ -284,7 +284,7 @@ export default function ExamIndex({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        Bản Nháp (Draft)
+                                        Bản Nháp
                                     </p>
                                     <p className="mt-1.5 text-2xl font-extrabold text-amber-600">
                                         {stats.draft}

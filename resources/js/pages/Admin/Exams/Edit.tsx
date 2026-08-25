@@ -498,10 +498,10 @@ export default function ExamEdit({
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="draft">Bản nháp (Draft - Chưa công bố)</option>
-                                    <option value="published">Đã công bố (Published - Sẵn sàng sử dụng)</option>
-                                    <option value="completed">Đã kết thúc (Completed)</option>
-                                    <option value="cancelled">Đã hủy (Cancelled)</option>
+                                    <option value="draft">Bản nháp</option>
+                                    <option value="published">Đã công bố</option>
+                                    <option value="completed">Đã kết thúc</option>
+                                    <option value="cancelled">Đã hủy</option>
                                 </select>
                             </div>
 

@@ -499,7 +499,7 @@ export default function AttendanceShowPage({
                     onClose={() => setIsResetConfirmOpen(false)}
                     onConfirm={handleResetAttendance}
                     title="Xác Nhận Đặt Lại Điểm Danh"
-                    message="Bạn có chắc chắn muốn xóa toàn bộ kết quả điểm danh của buổi học này và đặt lại trạng thái ca học thành 'Chưa dạy' (scheduled)? Thao tác này phù hợp khi điểm danh nhầm buổi."
+                    message="Bạn có chắc chắn muốn xóa toàn bộ kết quả điểm danh của buổi học này và đặt lại trạng thái ca học thành 'Chưa dạy'? Thao tác này phù hợp khi điểm danh nhầm buổi."
                     confirmText="Đặt Lại Điểm Danh"
                     cancelText="Hủy"
                     variant="danger"

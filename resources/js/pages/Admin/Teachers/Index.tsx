@@ -623,7 +623,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                         </p>
                     </div>
                     <p className="text-sm text-gray-500">
-                        Tài khoản và thông tin giảng dạy của giáo viên sẽ được ẩn khỏi hệ thống (soft delete) và có thể phục hồi khi cần thiết.
+                        Tài khoản và thông tin giảng dạy của giáo viên sẽ được ẩn khỏi hệ thống và có thể phục hồi khi cần thiết.
                     </p>
                 </div>
             </Modal>

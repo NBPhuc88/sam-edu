@@ -299,16 +299,16 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             <option value="active">
-                                Đang hoạt động (Active)
+                                Đang hoạt động
                             </option>
                             <option value="inactive">
-                                Tạm dừng (Inactive)
+                                Tạm dừng
                             </option>
                             <option value="expired">
-                                Đã hết hạn (Expired)
+                                Đã hết hạn
                             </option>
                             <option value="suspended">
-                                Tạm khóa (Suspended)
+                                Tạm khóa
                             </option>
                         </select>
                     </div>
