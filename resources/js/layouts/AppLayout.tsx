@@ -27,7 +27,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     title = 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục',
     headerExtra,
 }) => {
-    const { auth, center, subscription_plans, flash } = usePage().props as any;
+    const { auth, center, subscription_plans, flash, errors } = usePage().props as any;
 
     const user = auth?.user ?? null;
     const role = auth?.role ?? null;
@@ -63,8 +63,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 message: flash.info,
                 type: 'info',
             });
+        } else if (errors && Object.keys(errors).length > 0) {
+            const firstError = Object.values(errors)[0];
+            if (typeof firstError === 'string') {
+                setToast({
+                    isOpen: true,
+                    message: firstError,
+                    type: 'error',
+                });
+            }
         }
-    }, [flash]);
+    }, [flash, errors]);
 
     /** Handle ZaloPay renewal */
     const handleZaloPayRenew = async (planCode: string): Promise<void> => {

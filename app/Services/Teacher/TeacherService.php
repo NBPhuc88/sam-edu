@@ -332,7 +332,7 @@ class TeacherService implements TeacherServiceInterface
 
         if ($hasFutureSessions) {
             throw ValidationException::withMessages([
-                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì vẫn còn ca học trong tương lai chưa hoàn thành. Vui lòng đổi giáo viên hoặc điều chỉnh lịch học trước khi xóa.",
+                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì vẫn còn ca học chưa hoàn thành. Vui lòng đổi giáo viên hoặc điều chỉnh lịch dạy của giáo viên trước khi xóa.",
             ]);
         }
 

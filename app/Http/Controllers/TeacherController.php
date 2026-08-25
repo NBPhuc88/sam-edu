@@ -12,6 +12,7 @@ use App\Services\Teacher\TeacherServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -107,7 +108,16 @@ class TeacherController extends Controller
     public function destroy(int $id): RedirectResponse
     {
         $admin = $this->getAuthAdmin();
-        $this->teacherService->deleteTeacher($id, $admin);
+
+        try {
+            $this->teacherService->deleteTeacher($id, $admin);
+        } catch (ValidationException $e) {
+            $errorMessage = collect($e->errors())->flatten()->first() ?? 'Không thể xóa giáo viên.';
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->with('error', $errorMessage);
+        }
 
         return redirect()->route('teachers.index')
             ->with('success', 'Xóa giáo viên thành công!');

@@ -162,16 +162,40 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 }
                 $title = "Giáo viên: {$teacher->full_name} ({$teacher->username})";
 
-                $classCount   = DB::table('class_subjects')->where('teacher_id', $id)->count();
-                $sessionCount = DB::table('class_sessions')->where('teacher_id', $id)->whereNull('deleted_at')->count();
-                $examCount    = DB::table('exams')->where('created_by_teacher_id', $id)->whereNull('deleted_at')->count();
+                $today              = now()->toDateString();
+                $futureSessionCount = DB::table('class_sessions')
+                    ->where('teacher_id', $id)
+                    ->where('session_date', '>=', $today)
+                    ->where('status', 'scheduled')
+                    ->whereNull('deleted_at')
+                    ->count();
 
-                if ($classCount > 0) {
-                    $impacts[] = "Gỡ phân công phụ trách tại {$classCount} lớp học";
+                $activeClassCount = DB::table('class_subjects')
+                    ->join('classes', 'class_subjects.class_id', '=', 'classes.id')
+                    ->where('class_subjects.teacher_id', $id)
+                    ->where('class_subjects.status', 'active')
+                    ->where('classes.status', 1)
+                    ->whereNull('classes.deleted_at')
+                    ->count();
+
+                $completedSessionCount = DB::table('class_sessions')
+                    ->where('teacher_id', $id)
+                    ->where('status', 'completed')
+                    ->whereNull('deleted_at')
+                    ->count();
+
+                $examCount = DB::table('exams')->where('created_by_teacher_id', $id)->whereNull('deleted_at')->count();
+
+                if ($futureSessionCount > 0) {
+                    $impacts[] = "⚠️ Còn {$futureSessionCount} ca học chưa hoàn thành (cần điều chỉnh lịch dạy của giáo viên trước khi xóa)";
                 }
 
-                if ($sessionCount > 0) {
-                    $impacts[] = "Gỡ giáo viên phụ trách khỏi {$sessionCount} buổi học đã lên lịch";
+                if ($activeClassCount > 0) {
+                    $impacts[] = "⚠️ Đang phụ trách {$activeClassCount} lớp học đang hoạt động (cần phân công giáo viên thay thế trước khi xóa)";
+                }
+
+                if ($completedSessionCount > 0) {
+                    $impacts[] = "Bảo toàn dữ liệu {$completedSessionCount} ca học đã hoàn thành";
                 }
 
                 if ($examCount > 0) {

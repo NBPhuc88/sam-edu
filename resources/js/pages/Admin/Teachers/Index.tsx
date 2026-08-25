@@ -8,12 +8,12 @@ import {
     Edit2,
     Trash2,
     GraduationCap,
-    AlertCircle,
     Filter,
     Calendar,
     Eye,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -589,44 +589,18 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <DeleteConfirmModal
                 isOpen={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                title="Xác Nhận Xóa Giáo Viên"
-                footer={
-                    <>
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            onClick={() => setDeleteModalOpen(false)}
-                            disabled={isDeleting}
-                        >
-                            Hủy Bỏ
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="md"
-                            onClick={confirmDelete}
-                            isLoading={isDeleting}
-                            icon={<Trash2 className="h-5 w-5" />}
-                        >
-                            Xác Nhận Xóa
-                        </Button>
-                    </>
-                }
-            >
-                <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-red-600">
-                        <AlertCircle className="h-6 w-6 shrink-0" />
-                        <p className="text-base font-semibold">
-                            Bạn có chắc chắn muốn xóa giáo viên "{deletingTeacher?.full_name}" (Mã: {deletingTeacher?.teacher_code})?
-                        </p>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        Tài khoản và thông tin giảng dạy của giáo viên sẽ được ẩn khỏi hệ thống và có thể phục hồi khi cần thiết.
-                    </p>
-                </div>
-            </Modal>
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setDeletingTeacher(null);
+                }}
+                onConfirm={confirmDelete}
+                entity="teachers"
+                entityId={deletingTeacher?.id || null}
+                entityName={`giáo viên "${deletingTeacher?.full_name}" (${deletingTeacher?.teacher_code})`}
+                isDeleting={isDeleting}
+            />
         </AppLayout>
     );
 }
