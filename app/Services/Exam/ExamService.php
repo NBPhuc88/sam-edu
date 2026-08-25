@@ -124,6 +124,7 @@ class ExamService implements ExamServiceInterface
                 'classes'    => $this->schoolClassRepository->getClassesByCenterIds([$centerId]),
                 'subjects'   => $subjects,
                 'exam_types' => $examTypes,
+                'exams'      => $this->examRepository->getPublishedExamsForDropdown([$centerId]),
             ];
         }
 
@@ -135,6 +136,7 @@ class ExamService implements ExamServiceInterface
             'classes'    => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
             'subjects'   => $subjects,
             'exam_types' => $examTypes,
+            'exams'      => $this->examRepository->getPublishedExamsForDropdown($allowedCenterIds),
         ];
     }
 

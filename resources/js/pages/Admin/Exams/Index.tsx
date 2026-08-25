@@ -43,6 +43,7 @@ interface Props {
     classes: SchoolClass[];
     subjects: Subject[];
     exam_types?: ExamTypeOption[];
+    all_exams?: Exam[];
     stats?: {
         total: number;
         published: number;
@@ -66,6 +67,7 @@ export default function ExamIndex({
     classes = [],
     subjects = [],
     exam_types = [],
+    all_exams = [],
     stats,
     filters,
 }: Props) {
@@ -102,6 +104,17 @@ export default function ExamIndex({
     // Assign Exam to Class Modal State
     const [assignModalOpen, setAssignModalOpen] = useState(false);
     const [assigningExamId, setAssigningExamId] = useState<number | null>(null);
+
+    const availableExamsForModal = React.useMemo(() => {
+        const combined = [...all_exams, ...(exams?.data || [])];
+        const map = new Map<number, Exam>();
+        for (const item of combined) {
+            if (item && item.id && !map.has(item.id)) {
+                map.set(item.id, item);
+            }
+        }
+        return Array.from(map.values());
+    }, [all_exams, exams]);
 
     // Filter classes and subjects by selected center
     const filteredClasses = selectedCenterId
@@ -429,7 +442,7 @@ export default function ExamIndex({
                                     <th className="w-36">Thời Lượng & Số Câu</th>
                                     <th className="w-28">Điểm Tối Đa</th>
                                     <th className="w-28 text-center">Trạng Thái</th>
-                                    {(can('exams.edit') || can('exams.delete')) && (
+                                    {(can('exams.edit') || can('exams.delete') || can('class-exams.create')) && (
                                         <th className="text-right">Thao Tác</th>
                                     )}
                                 </tr>
@@ -437,7 +450,7 @@ export default function ExamIndex({
                             <tbody>
                                 {exams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={can('exams.edit') || can('exams.delete') ? 8 : 7} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('exams.edit') || can('exams.delete') || can('class-exams.create') ? 8 : 7} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -554,7 +567,7 @@ export default function ExamIndex({
                                                     {getStatusBadge(exam.status)}
                                                 </div>
                                             </td>
-                                            {(can('exams.edit') || can('exams.delete')) && (
+                                            {(can('exams.edit') || can('exams.delete') || can('class-exams.create')) && (
                                                 <td className="text-right">
                                                     <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                                                         <Link href={`/exams/${exam.id}/practice`}>
@@ -569,19 +582,21 @@ export default function ExamIndex({
                                                                 Thi Thử
                                                             </Button>
                                                         </Link>
-                                                        <Button
-                                                            type="button"
-                                                            variant="success"
-                                                            size="sm"
-                                                            icon={<Users className="h-3.5 w-3.5" />}
-                                                            onClick={() => {
-                                                                setAssigningExamId(exam.id);
-                                                                setAssignModalOpen(true);
-                                                            }}
-                                                            title="Gán đề thi này cho một lớp học"
-                                                        >
-                                                            Gán Lớp
-                                                        </Button>
+                                                        {can('class-exams.create') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="success"
+                                                                size="sm"
+                                                                icon={<Users className="h-3.5 w-3.5" />}
+                                                                onClick={() => {
+                                                                    setAssigningExamId(exam.id);
+                                                                    setAssignModalOpen(true);
+                                                                }}
+                                                                title="Gán đề thi này cho một lớp học"
+                                                            >
+                                                                Gán Lớp
+                                                            </Button>
+                                                        )}
                                                         {can('exams.edit') && (
                                                             <Link href={`/exams/${exam.id}/edit`}>
                                                                 <Button
@@ -719,6 +734,19 @@ export default function ExamIndex({
                     </div>
                 </div>
             </Modal>
+
+            {/* Assign Exam to Class Modal */}
+            <AssignExamModal
+                isOpen={assignModalOpen}
+                onClose={() => {
+                    setAssignModalOpen(false);
+                    setAssigningExamId(null);
+                }}
+                centers={centers}
+                classes={classes}
+                exams={availableExamsForModal}
+                initialExamId={assigningExamId}
+            />
 
             {/* Delete Confirmation Modal */}
             <DeleteConfirmModal

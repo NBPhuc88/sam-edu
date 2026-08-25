@@ -67,6 +67,7 @@ class ExamController extends Controller
             'classes'    => $formData['classes'],
             'subjects'   => $formData['subjects'],
             'exam_types' => $formData['exam_types'],
+            'all_exams'  => $formData['exams'] ?? [],
             'stats'      => $stats,
             'filters'    => [
                 'search'       => $search ?? '',
