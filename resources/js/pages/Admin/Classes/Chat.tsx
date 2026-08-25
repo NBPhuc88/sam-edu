@@ -753,6 +753,14 @@ export default function ClassChatPage({
                                                             emoji
                                                         )
                                                     }
+                                                    onReply={() =>
+                                                        setReplyingTo(msg)
+                                                    }
+                                                    onTogglePin={() =>
+                                                        handleTogglePin(msg.id)
+                                                    }
+                                                    isPinned={msg.is_pinned}
+                                                    canPin={currentUser.can_pin}
                                                 />
                                             )}
 
@@ -865,59 +873,6 @@ export default function ClassChatPage({
                                                         >
                                                             {msg.time_formatted}
                                                         </span>
-                                                    </div>
-
-                                                    {/* Action Buttons on Hover (Reply & Pin) */}
-                                                    <div
-                                                        className={`absolute -top-3 ${
-                                                            isSelf
-                                                                ? '-left-14'
-                                                                : '-right-14'
-                                                        } flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10`}
-                                                    >
-                                                        {/* Reply Button */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setReplyingTo(
-                                                                    msg
-                                                                )
-                                                            }
-                                                            title="Trả lời tin nhắn này"
-                                                            className="rounded-full bg-white p-1.5 text-gray-500 shadow-md hover:bg-emerald-50 hover:text-emerald-700 transition-all active:scale-95 cursor-pointer"
-                                                        >
-                                                            <Reply className="h-3.5 w-3.5" />
-                                                        </button>
-
-                                                        {/* Pin Button */}
-                                                        {currentUser.can_pin && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleTogglePin(
-                                                                        msg.id
-                                                                    )
-                                                                }
-                                                                title={
-                                                                    msg.is_pinned
-                                                                        ? 'Bỏ ghim'
-                                                                        : 'Ghim tin nhắn'
-                                                                }
-                                                                className={`rounded-full bg-white p-1.5 shadow-md transition-all active:scale-95 cursor-pointer ${
-                                                                    msg.is_pinned
-                                                                        ? 'text-amber-600'
-                                                                        : 'text-gray-500 hover:bg-amber-50 hover:text-amber-600'
-                                                                }`}
-                                                            >
-                                                                <Pin
-                                                                    className={`h-3.5 w-3.5 ${
-                                                                        msg.is_pinned
-                                                                            ? 'fill-amber-500'
-                                                                            : ''
-                                                                    }`}
-                                                                />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
                                             )}
