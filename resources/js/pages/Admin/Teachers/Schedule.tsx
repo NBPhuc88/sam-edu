@@ -57,12 +57,17 @@ interface RoomInfo {
 }
 
 interface RescheduleInfo {
+    change_type?: string;
     new_date?: string;
     new_start_time?: string;
     new_end_time?: string;
     old_date?: string;
     old_start_time?: string;
     old_end_time?: string;
+    new_teacher?: string | null;
+    old_teacher?: string | null;
+    new_room?: string | null;
+    old_room?: string | null;
     reason?: string | null;
 }
 
@@ -76,6 +81,7 @@ interface TeacherSession {
     start_time: string;
     end_time: string;
     status: string;
+    change_type?: string;
     topic: string | null;
     note: string | null;
     session_order?: number;
@@ -231,7 +237,15 @@ export default function TeacherSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string) => {
+    const getSessionStatusBadge = (status: string, changeType?: string) => {
+        if (changeType === 'teacher_only') {
+            return (
+                <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
+                    Đã đổi GV
+                </span>
+            );
+        }
+
         switch (status) {
             case 'completed':
                 return (
@@ -268,7 +282,16 @@ export default function TeacherSchedulePage({
         }
     };
 
-    const getSessionCardStyle = (status: string, isOldSlot?: boolean) => {
+    const getSessionCardStyle = (status: string, isOldSlot?: boolean, changeType?: string) => {
+        if (changeType === 'teacher_only') {
+            return {
+                container: 'border-purple-200 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs',
+                subjectText: 'text-purple-900',
+                subjectIcon: 'text-purple-600',
+                orderText: 'text-purple-800',
+            };
+        }
+
         if (isOldSlot) {
             return {
                 container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
@@ -549,7 +572,7 @@ export default function TeacherSchedulePage({
                                                             cellSessions && cellSessions.length > 0 ? (
                                                                 <div className="space-y-2">
                                                                     {cellSessions.map((session) => {
-                                                                        const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot);
+                                                                        const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot, session.change_type);
 
                                                                         return (
                                                                             <div
@@ -567,7 +590,7 @@ export default function TeacherSchedulePage({
                                                                                     <div className="font-bold text-gray-900 leading-tight">
                                                                                         {session.class_name}
                                                                                     </div>
-                                                                                    {getSessionStatusBadge(session.status)}
+                                                                                    {getSessionStatusBadge(session.status, session.change_type)}
                                                                                 </div>
 
                                                                                 {/* Subject name below class */}
@@ -598,14 +621,26 @@ export default function TeacherSchedulePage({
                                                                                     )}
 
                                                                                     {session.is_rescheduled_old_slot && session.reschedule_info && (
-                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
-                                                                                            ↗ Dời sang: {session.reschedule_info.new_date} ({formatTime(session.reschedule_info.new_start_time || '')})
+                                                                                        <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold border ${session.reschedule_info.change_type === 'teacher_only'
+                                                                                            ? 'bg-purple-100/90 text-purple-900 border-purple-200'
+                                                                                            : 'bg-amber-100/90 text-amber-900 border-amber-200'
+                                                                                            }`}>
+                                                                                            {session.reschedule_info.change_type === 'teacher_only'
+                                                                                                ? `↗ Chuyển giao cho GV: ${session.reschedule_info.new_teacher || 'GV mới'}`
+                                                                                                : `↗ Dời sang: ${session.reschedule_info.new_date} (${formatTime(session.reschedule_info.new_start_time || '')})`
+                                                                                            }
                                                                                         </div>
                                                                                     )}
 
                                                                                     {session.reschedule_from_info && (
-                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
-                                                                                            ↩ Dời từ: {session.reschedule_from_info.old_date} ({formatTime(session.reschedule_from_info.old_start_time || '')})
+                                                                                        <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold border ${session.reschedule_from_info.change_type === 'teacher_only'
+                                                                                            ? 'bg-purple-100/90 text-purple-900 border-purple-200'
+                                                                                            : 'bg-amber-100/90 text-amber-900 border-amber-200'
+                                                                                            }`}>
+                                                                                            {session.reschedule_from_info.change_type === 'teacher_only'
+                                                                                                ? `↩ Nhận bàn giao từ GV: ${session.reschedule_from_info.old_teacher || 'GV cũ'}`
+                                                                                                : `↩ Dời từ: ${session.reschedule_from_info.old_date} (${formatTime(session.reschedule_from_info.old_start_time || '')})`
+                                                                                            }
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
@@ -699,7 +734,7 @@ export default function TeacherSchedulePage({
                                         Mã lớp: {selectedSession.class_code || 'N/A'}
                                     </span>
                                 </div>
-                                {getSessionStatusBadge(selectedSession.status)}
+                                {getSessionStatusBadge(selectedSession.status, selectedSession.change_type)}
                             </div>
 
                             <div className="mt-3 flex items-center gap-2 border-t border-emerald-200/70 pt-3 text-sm font-semibold text-emerald-900">

@@ -264,6 +264,10 @@ class TeacherRepository implements TeacherRepositoryInterface
                 $q->where('teacher_id', $teacherId)
                     ->orWhereHas('classSubject', function ($csq) use ($teacherId) {
                         $csq->where('teacher_id', $teacherId);
+                    })
+                    ->orWhereHas('reschedules', function ($rq) use ($teacherId) {
+                        $rq->where('old_teacher_id', $teacherId)
+                            ->orWhere('new_teacher_id', $teacherId);
                     });
             })
             ->with([
@@ -284,6 +288,8 @@ class TeacherRepository implements TeacherRepositoryInterface
                 },
                 'reschedules.oldRoom:id,name',
                 'reschedules.newRoom:id,name',
+                'reschedules.oldTeacher:id,full_name,teacher_code,phone',
+                'reschedules.newTeacher:id,full_name,teacher_code,phone',
             ])
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('session_date', [$startDate, $endDate])

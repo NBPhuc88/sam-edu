@@ -88,12 +88,17 @@ interface TimeSlot {
 }
 
 interface RescheduleInfo {
+    change_type?: string;
     new_date?: string;
     new_start_time?: string;
     new_end_time?: string;
     old_date?: string;
     old_start_time?: string;
     old_end_time?: string;
+    new_teacher?: string | null;
+    old_teacher?: string | null;
+    new_room?: string | null;
+    old_room?: string | null;
     reason?: string | null;
 }
 
@@ -107,6 +112,7 @@ interface ClassSession {
     start_time: string;
     end_time: string;
     status: string;
+    change_type?: string;
     topic: string | null;
     note: string | null;
     is_rescheduled_old_slot?: boolean;
@@ -197,7 +203,15 @@ export default function ClassSchedulePage({
         }
     };
 
-    const getSessionStatusBadge = (status: string) => {
+    const getSessionStatusBadge = (status: string, changeType?: string) => {
+        if (changeType === 'teacher_only') {
+            return (
+                <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
+                    Đã đổi GV
+                </span>
+            );
+        }
+
         switch (status) {
             case 'completed':
                 return (
@@ -234,7 +248,15 @@ export default function ClassSchedulePage({
         }
     };
 
-    const getSessionCardStyle = (status: string, isOldSlot?: boolean) => {
+    const getSessionCardStyle = (status: string, isOldSlot?: boolean, changeType?: string) => {
+        if (changeType === 'teacher_only') {
+            return {
+                container: 'border-purple-200 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs',
+                teacherText: 'text-purple-900',
+                teacherIcon: 'text-purple-600',
+            };
+        }
+
         if (isOldSlot) {
             return {
                 container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
@@ -566,62 +588,68 @@ export default function ClassSchedulePage({
                                                             cellSessions && cellSessions.length > 0 ? (
                                                                 <div className="space-y-2">
                                                                     {cellSessions.map((session) => {
-                                                                        const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot);
+                                                                         const cardStyle = getSessionCardStyle(session.status, session.is_rescheduled_old_slot, session.change_type);
 
-                                                                        return (
-                                                                            <div
-                                                                                key={session.id}
-                                                                                className={`group relative rounded-lg border p-2.5 transition-all ${cardStyle.container}`}
-                                                                            >
-                                                                                <div className="flex items-start justify-between gap-1">
-                                                                                    <div className="font-bold text-gray-900 leading-tight">
-                                                                                        {session.class_subject?.subject?.name || 'Môn học'}
-                                                                                    </div>
-                                                                                    {getSessionStatusBadge(session.status)}
-                                                                                </div>
+                                                                         return (
+                                                                             <div
+                                                                                 key={session.id}
+                                                                                 className={`group relative rounded-lg border p-2.5 transition-all ${cardStyle.container}`}
+                                                                             >
+                                                                                 <div className="flex items-start justify-between gap-1">
+                                                                                     <div className="font-bold text-gray-900 leading-tight">
+                                                                                         {session.class_subject?.subject?.name || 'Môn học'}
+                                                                                     </div>
+                                                                                     {getSessionStatusBadge(session.status, session.change_type)}
+                                                                                 </div>
 
-                                                                                {session.class_subject?.subject?.code && (
-                                                                                    <div className="mt-0.5 font-mono text-[10px] text-gray-400">
-                                                                                        Mã: {session.class_subject.subject.code}
-                                                                                    </div>
-                                                                                )}
+                                                                                 {session.class_subject?.subject?.code && (
+                                                                                     <div className="mt-0.5 font-mono text-[10px] text-gray-400">
+                                                                                         Mã: {session.class_subject.subject.code}
+                                                                                     </div>
+                                                                                 )}
 
-                                                                                <div className="mt-2 space-y-1 text-xs text-gray-700">
-                                                                                    <div className={`flex items-center gap-1.5 font-medium ${cardStyle.teacherText}`}>
-                                                                                        <UserCheck className={`h-3.5 w-3.5 shrink-0 ${cardStyle.teacherIcon}`} />
-                                                                                        <span className="truncate">
-                                                                                            GV: {session.teacher?.full_name || session.class_subject?.teacher?.full_name || 'Chưa gán'}
-                                                                                        </span>
-                                                                                    </div>
+                                                                                 <div className="mt-2 space-y-1 text-xs text-gray-700">
+                                                                                     <div className={`flex items-center gap-1.5 font-medium ${cardStyle.teacherText}`}>
+                                                                                         <UserCheck className={`h-3.5 w-3.5 shrink-0 ${cardStyle.teacherIcon}`} />
+                                                                                         <span className="truncate">
+                                                                                             GV: {session.teacher?.full_name || session.class_subject?.teacher?.full_name || 'Chưa gán'}
+                                                                                         </span>
+                                                                                     </div>
 
-                                                                                    {session.room && (
-                                                                                        <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-                                                                                            <DoorOpen className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                                                                                            <span>{session.room.name}</span>
-                                                                                        </div>
-                                                                                    )}
+                                                                                     {session.room && (
+                                                                                         <div className="flex items-center gap-1.5 text-gray-600 font-medium">
+                                                                                             <DoorOpen className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                                                                                             <span>{session.room.name}</span>
+                                                                                         </div>
+                                                                                     )}
 
-                                                                                    {session.is_rescheduled_old_slot && session.reschedule_info && (
-                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
-                                                                                            ↗ Dời sang: {session.reschedule_info.new_date} ({formatTime(session.reschedule_info.new_start_time || '')})
-                                                                                        </div>
-                                                                                    )}
+                                                                                     {session.is_rescheduled_old_slot && session.reschedule_info && (
+                                                                                         <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
+                                                                                             ↗ Dời sang: {session.reschedule_info.new_date} ({formatTime(session.reschedule_info.new_start_time || '')})
+                                                                                         </div>
+                                                                                     )}
 
-                                                                                    {session.reschedule_from_info && (
-                                                                                        <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200">
-                                                                                            ↩ Dời từ: {session.reschedule_from_info.old_date} ({formatTime(session.reschedule_from_info.old_start_time || '')})
-                                                                                        </div>
-                                                                                    )}
+                                                                                     {session.reschedule_from_info && (
+                                                                                         <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold border ${session.reschedule_from_info.change_type === 'teacher_only'
+                                                                                             ? 'bg-purple-100/90 text-purple-900 border-purple-200'
+                                                                                             : 'bg-amber-100/90 text-amber-900 border-amber-200'
+                                                                                             }`}>
+                                                                                             {session.reschedule_from_info.change_type === 'teacher_only'
+                                                                                                 ? `↩ Đổi GV từ: ${session.reschedule_from_info.old_teacher || 'GV cũ'}`
+                                                                                                 : `↩ Dời từ: ${session.reschedule_from_info.old_date} (${formatTime(session.reschedule_from_info.old_start_time || '')})`
+                                                                                             }
+                                                                                         </div>
+                                                                                     )}
 
-                                                                                    {session.topic && (
-                                                                                        <div className="mt-1 rounded-sm bg-white/80 px-1.5 py-0.5 text-[11px] text-gray-600 italic border border-gray-100">
-                                                                                            Bài: {session.topic}
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
+                                                                                     {session.topic && (
+                                                                                         <div className="mt-1 rounded-sm bg-white/80 px-1.5 py-0.5 text-[11px] text-gray-600 italic border border-gray-100">
+                                                                                             Bài: {session.topic}
+                                                                                         </div>
+                                                                                     )}
+                                                                                 </div>
+                                                                             </div>
+                                                                         );
+                                                                     })}
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex h-full min-h-[70px] items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50/50 p-2 text-center text-xs text-gray-300">

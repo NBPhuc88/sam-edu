@@ -49,12 +49,17 @@ interface RoomInfo {
 }
 
 interface RescheduleInfo {
+    change_type?: string;
     new_date?: string;
     new_start_time?: string;
     new_end_time?: string;
     old_date?: string;
     old_start_time?: string;
     old_end_time?: string;
+    new_teacher?: string | null;
+    old_teacher?: string | null;
+    new_room?: string | null;
+    old_room?: string | null;
     reason?: string | null;
 }
 
@@ -68,6 +73,7 @@ interface StudentSession {
     start_time: string;
     end_time: string;
     status: string;
+    change_type?: string;
     topic?: string | null;
     note?: string | null;
     session_order?: number;
@@ -231,7 +237,15 @@ export default function StudentSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string) => {
+    const getSessionStatusBadge = (status: string, changeType?: string) => {
+        if (changeType === 'teacher_only') {
+            return (
+                <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
+                    Đã đổi GV
+                </span>
+            );
+        }
+
         switch (status) {
             case 'completed':
                 return (
@@ -256,7 +270,7 @@ export default function StudentSchedulePage({
             case 'rescheduled':
                 return (
                     <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
-                        Đổi lịch
+                        Đã đổi lịch
                     </span>
                 );
             default:
@@ -450,20 +464,26 @@ export default function StudentSchedulePage({
                                                         <div className="space-y-1.5">
                                                             {cellSessions.map((sess) => {
                                                                 const isOldRescheduled = sess.is_rescheduled_old_slot;
+                                                                const isTeacherOnly = sess.change_type === 'teacher_only';
+
+                                                                let cardBg = 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-50';
+                                                                if (isTeacherOnly) {
+                                                                    cardBg = 'bg-purple-50/70 border-purple-200 text-purple-950 hover:border-purple-300';
+                                                                } else if (isOldRescheduled) {
+                                                                    cardBg = 'bg-amber-50/70 border-amber-200 text-amber-900 hover:border-amber-300';
+                                                                }
+
                                                                 return (
                                                                     <div
                                                                         key={sess.id}
                                                                         onClick={() => handleOpenDetailModal(sess)}
-                                                                        className={`group cursor-pointer rounded-xl p-2.5 border transition-all duration-150 hover:shadow-md ${isOldRescheduled
-                                                                            ? 'bg-amber-50/70 border-amber-200 text-amber-900 hover:border-amber-300'
-                                                                            : 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-50'
-                                                                            }`}
+                                                                        className={`group cursor-pointer rounded-xl p-2.5 border transition-all duration-150 hover:shadow-md ${cardBg}`}
                                                                     >
                                                                         <div className="flex items-start justify-between gap-1 mb-1">
                                                                             <span className="font-extrabold text-xs text-gray-900 line-clamp-1">
                                                                                 {sess.class_name}
                                                                             </span>
-                                                                            {getSessionStatusBadge(sess.status)}
+                                                                            {getSessionStatusBadge(sess.status, sess.change_type)}
                                                                         </div>
 
                                                                         <div className="text-2xs font-semibold text-emerald-800 line-clamp-1 flex items-center gap-1">
@@ -482,6 +502,24 @@ export default function StudentSchedulePage({
                                                                             <div className="text-2xs text-gray-500 line-clamp-1 flex items-center gap-1 mt-0.5">
                                                                                 <DoorOpen className="h-3 w-3 shrink-0 text-amber-600" />
                                                                                 <span>P: {sess.room_info.name}</span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {sess.is_rescheduled_old_slot && sess.reschedule_info && (
+                                                                            <div className="mt-1.5 rounded-sm bg-amber-100/90 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200">
+                                                                                ↗ Dời sang: {sess.reschedule_info.new_date} ({sess.reschedule_info.new_start_time})
+                                                                            </div>
+                                                                        )}
+
+                                                                        {sess.reschedule_from_info && (
+                                                                            <div className={`mt-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold border ${sess.reschedule_from_info.change_type === 'teacher_only'
+                                                                                ? 'bg-purple-100/90 text-purple-900 border-purple-200'
+                                                                                : 'bg-amber-100/90 text-amber-900 border-amber-200'
+                                                                                }`}>
+                                                                                {sess.reschedule_from_info.change_type === 'teacher_only'
+                                                                                    ? `↩ Đổi GV từ: ${sess.reschedule_from_info.old_teacher || 'GV cũ'}`
+                                                                                    : `↩ Dời từ: ${sess.reschedule_from_info.old_date} (${sess.reschedule_from_info.old_start_time})`
+                                                                                }
                                                                             </div>
                                                                         )}
 
@@ -560,10 +598,27 @@ export default function StudentSchedulePage({
                                         </div>
                                     </div>
                                 </div>
-                                <div>{getSessionStatusBadge(selectedSession.status)}</div>
+                                <div>{getSessionStatusBadge(selectedSession.status, selectedSession.change_type)}</div>
                             </div>
 
                             {/* Reschedule Alert if any */}
+                            {selectedSession.change_type === 'teacher_only' && selectedSession.reschedule_from_info && (
+                                <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs text-purple-900 space-y-1">
+                                    <div className="font-bold flex items-center gap-1">
+                                        <Info className="w-4 h-4 text-purple-600" />
+                                        <span>Ca học này đã được đổi giáo viên phụ trách:</span>
+                                    </div>
+                                    <p>
+                                        Giáo viên: <strong className="line-through text-red-600 font-semibold">{selectedSession.reschedule_from_info.old_teacher || 'GV cũ'}</strong>
+                                        {' ➔ '}
+                                        <strong className="text-emerald-700 font-bold">{selectedSession.reschedule_from_info.new_teacher || selectedSession.teacher?.full_name || 'GV mới'}</strong>
+                                    </p>
+                                    {selectedSession.reschedule_from_info.reason && (
+                                        <p>Lý do: <em>{selectedSession.reschedule_from_info.reason}</em></p>
+                                    )}
+                                </div>
+                            )}
+
                             {selectedSession.is_rescheduled_old_slot && selectedSession.reschedule_info && (
                                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
                                     <div className="font-bold flex items-center gap-1">
@@ -573,8 +628,29 @@ export default function StudentSchedulePage({
                                     <p>
                                         Ngày mới: <strong className="font-mono">{selectedSession.reschedule_info.new_date}</strong> ({selectedSession.reschedule_info.new_start_time} - {selectedSession.reschedule_info.new_end_time})
                                     </p>
+                                    {selectedSession.reschedule_info.new_teacher && selectedSession.reschedule_info.new_teacher !== selectedSession.reschedule_info.old_teacher && (
+                                        <p>Giáo viên mới: <strong>{selectedSession.reschedule_info.new_teacher}</strong></p>
+                                    )}
                                     {selectedSession.reschedule_info.reason && (
                                         <p>Lý do: <em>{selectedSession.reschedule_info.reason}</em></p>
+                                    )}
+                                </div>
+                            )}
+
+                            {(!selectedSession.is_rescheduled_old_slot) && selectedSession.reschedule_from_info && selectedSession.reschedule_from_info.change_type !== 'teacher_only' && (
+                                <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-900 space-y-1">
+                                    <div className="font-bold flex items-center gap-1">
+                                        <Info className="w-4 h-4 text-blue-600" />
+                                        <span>Ca học này được dời lịch từ ngày cũ sang:</span>
+                                    </div>
+                                    <p>
+                                        Ngày cũ: <strong className="font-mono">{selectedSession.reschedule_from_info.old_date}</strong> ({selectedSession.reschedule_from_info.old_start_time} - {selectedSession.reschedule_from_info.old_end_time})
+                                    </p>
+                                    {selectedSession.reschedule_from_info.old_teacher && selectedSession.reschedule_from_info.old_teacher !== selectedSession.teacher?.full_name && (
+                                        <p>Giáo viên trước đó: <strong>{selectedSession.reschedule_from_info.old_teacher}</strong></p>
+                                    )}
+                                    {selectedSession.reschedule_from_info.reason && (
+                                        <p>Lý do: <em>{selectedSession.reschedule_from_info.reason}</em></p>
                                     )}
                                 </div>
                             )}

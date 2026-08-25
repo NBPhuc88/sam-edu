@@ -420,6 +420,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 },
                 'reschedules.oldRoom:id,name',
                 'reschedules.newRoom:id,name',
+                'reschedules.oldTeacher:id,full_name,teacher_code',
+                'reschedules.newTeacher:id,full_name,teacher_code',
             ])
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('session_date', [$startDate, $endDate])

@@ -171,7 +171,7 @@ class ClassSessionService implements ClassSessionServiceInterface
         $oldStartTime = $session->start_time;
         $oldEndTime   = $session->end_time;
         $oldRoomId    = $session->room_id;
-        $oldTeacherId = $session->teacher_id;
+        $oldTeacherId = $session->teacher_id ?: $session->classSubject?->teacher_id;
 
         $newDate      = $data['session_date'] ?? $oldDate;
         $newStartTime = $data['start_time'] ?? $oldStartTime;
@@ -260,10 +260,12 @@ class ClassSessionService implements ClassSessionServiceInterface
                 'old_start_time'        => $oldStartTime,
                 'old_end_time'          => $oldEndTime,
                 'old_room_id'           => $oldRoomId,
+                'old_teacher_id'        => $oldTeacherId,
                 'new_date'              => $newDate,
                 'new_start_time'        => $newStartTime,
                 'new_end_time'          => $newEndTime,
                 'new_room_id'           => $newRoomId,
+                'new_teacher_id'        => $newTeacherId,
                 'reason'                => $reason,
                 'changed_by_admin_id'   => ($user instanceof Admin) ? $user->id : null,
                 'changed_by_teacher_id' => ($user instanceof Teacher) ? $user->id : null,

@@ -160,7 +160,7 @@ export default function AttendanceShowPage({
             case 'cancelled':
                 return <Badge variant="danger">Đã Hủy</Badge>;
             case 'rescheduled':
-                return <Badge variant="expired">Đổi Lịch</Badge>;
+                return <Badge variant="expired">Đã Đổi Lịch</Badge>;
             case 'scheduled':
             default:
                 return <Badge variant="pending">Chưa Dạy (Lên Lịch)</Badge>;

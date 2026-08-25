@@ -595,50 +595,83 @@ class StudentService implements StudentServiceInterface
         foreach ($rawSessions as $session) {
             $sessionDateStr = $session->session_date ? Carbon::parse($session->session_date)->format('Y-m-d') : '';
 
-            // 1. Slot cũ đã dời đi
-            if ($session->reschedules && $session->reschedules->isNotEmpty()) {
-                foreach ($session->reschedules as $reschedule) {
-                    $oldDateStr = $reschedule->old_date ? Carbon::parse($reschedule->old_date)->format('Y-m-d') : '';
-                    $newDateStr = $reschedule->new_date ? Carbon::parse($reschedule->new_date)->format('Y-m-d') : '';
+            $latestReschedule = ($session->reschedules && $session->reschedules->isNotEmpty())
+                ? $session->reschedules->sortByDesc('changed_at')->first()
+                : null;
 
-                    if ($oldDateStr >= $startDateStr && $oldDateStr <= $endDateStr) {
-                        $oldStartTime = substr((string) $reschedule->old_start_time, 0, 5);
-                        $oldEndTime   = substr((string) $reschedule->old_end_time, 0, 5);
-                        $newStartTime = substr((string) $reschedule->new_start_time, 0, 5);
-                        $newEndTime   = substr((string) $reschedule->new_end_time, 0, 5);
+            $isDateOrTimeChanged = false;
+            $isTeacherOnlyChange = false;
+            $oldDateStr          = '';
+            $newDateStr          = '';
+            $oldStartTime        = '';
+            $oldEndTime          = '';
+            $newStartTime        = '';
+            $newEndTime          = '';
 
-                        $enrichedSessions[] = [
-                            'id'                      => "rescheduled-old-{$session->id}-{$reschedule->id}",
-                            'original_session_id'     => $session->id,
-                            'class_subject_id'        => $session->class_subject_id,
-                            'teacher_id'              => $session->teacher_id,
-                            'room_id'                 => $reschedule->old_room_id ?? $session->room_id,
-                            'session_date'            => $oldDateStr,
-                            'start_time'              => $oldStartTime,
-                            'end_time'                => $oldEndTime,
-                            'status'                  => 'rescheduled',
-                            'topic'                   => $session->topic,
-                            'note'                    => $session->note,
-                            'is_rescheduled_old_slot' => true,
-                            'reschedule_info'         => [
-                                'new_date'       => Carbon::parse($newDateStr)->format('d-m-Y'),
-                                'new_start_time' => $newStartTime,
-                                'new_end_time'   => $newEndTime,
-                                'reason'         => $reschedule->reason,
-                            ],
-                            'class_subject' => $session->classSubject,
-                            'teacher'       => $session->teacher,
-                            'room'          => $reschedule->oldRoom ?? $session->room,
-                            'class_name'    => $session->classSubject?->schoolClass?->name ?? 'Lớp học',
-                            'class_code'    => $session->classSubject?->schoolClass?->code ?? '',
-                            'subject_name'  => $session->classSubject?->subject?->name ?? 'Môn học',
-                            'subject_code'  => $session->classSubject?->subject?->code ?? '',
-                        ];
-                    }
+            if ($latestReschedule) {
+                $oldDateStr   = $latestReschedule->old_date ? Carbon::parse($latestReschedule->old_date)->format('Y-m-d') : '';
+                $newDateStr   = $latestReschedule->new_date ? Carbon::parse($latestReschedule->new_date)->format('Y-m-d') : '';
+                $oldStartTime = substr((string) $latestReschedule->old_start_time, 0, 5);
+                $oldEndTime   = substr((string) $latestReschedule->old_end_time, 0, 5);
+                $newStartTime = substr((string) $latestReschedule->new_start_time, 0, 5);
+                $newEndTime   = substr((string) $latestReschedule->new_end_time, 0, 5);
+
+                $oldTeacherId = $latestReschedule->old_teacher_id ?? $session->teacher_id;
+                $newTeacherId = $latestReschedule->new_teacher_id ?? $session->teacher_id;
+
+                $isDateOrTimeChanged = ($oldDateStr !== $newDateStr)
+                    || ($oldStartTime !== $newStartTime)
+                    || ($oldEndTime !== $newEndTime);
+
+                $isTeacherOnlyChange = (! $isDateOrTimeChanged) && ($oldTeacherId !== $newTeacherId);
+
+                // 1. Chỉ tạo slot cũ trên lịch học sinh nếu ngày hoặc giờ THỰC SỰ THAY ĐỔI
+                if ($isDateOrTimeChanged && $oldDateStr >= $startDateStr && $oldDateStr <= $endDateStr) {
+                    $oldTeacher = $latestReschedule->oldTeacher ?? $session->teacher ?? $session->classSubject?->teacher;
+                    $oldRoom    = $latestReschedule->oldRoom ?? $session->room;
+                    $oldRoomId  = $latestReschedule->old_room_id ?? $session->room_id;
+
+                    $newTeacher = $latestReschedule->newTeacher ?? $session->teacher ?? $session->classSubject?->teacher;
+                    $newRoom    = $latestReschedule->newRoom ?? $session->room;
+
+                    $enrichedSessions[] = [
+                        'id'                      => "rescheduled-old-{$session->id}-{$latestReschedule->id}",
+                        'original_session_id'     => $session->id,
+                        'class_subject_id'        => $session->class_subject_id,
+                        'teacher_id'              => $oldTeacherId,
+                        'room_id'                 => $oldRoomId,
+                        'session_date'            => $oldDateStr,
+                        'start_time'              => $oldStartTime,
+                        'end_time'                => $oldEndTime,
+                        'status'                  => 'rescheduled',
+                        'change_type'             => 'schedule',
+                        'topic'                   => $session->topic,
+                        'note'                    => $session->note,
+                        'is_rescheduled_old_slot' => true,
+                        'reschedule_info'         => [
+                            'change_type'    => 'schedule',
+                            'new_date'       => Carbon::parse($newDateStr)->format('d-m-Y'),
+                            'new_start_time' => $newStartTime,
+                            'new_end_time'   => $newEndTime,
+                            'new_room'       => $newRoom?->name,
+                            'new_teacher'    => $newTeacher?->full_name,
+                            'old_room'       => $oldRoom?->name,
+                            'old_teacher'    => $oldTeacher?->full_name,
+                            'reason'         => $latestReschedule->reason,
+                        ],
+                        'class_subject' => $session->classSubject,
+                        'teacher'       => $oldTeacher,
+                        'room'          => $oldRoom,
+                        'room_info'     => $oldRoom,
+                        'class_name'    => $session->classSubject?->schoolClass?->name ?? 'Lớp học',
+                        'class_code'    => $session->classSubject?->schoolClass?->code ?? '',
+                        'subject_name'  => $session->classSubject?->subject?->name ?? 'Môn học',
+                        'subject_code'  => $session->classSubject?->subject?->code ?? '',
+                    ];
                 }
             }
 
-            // 2. Ca học ở new_date (nếu nằm trong tuần)
+            // 2. Ca học ở new_date (lần mới nhất nếu nằm trong tuần)
             if ($sessionDateStr >= $startDateStr && $sessionDateStr <= $endDateStr) {
                 $sessionArr = $session->toArray();
 
@@ -650,22 +683,26 @@ class StudentService implements StudentServiceInterface
                 $sessionArr['subject_name']   = $session->classSubject?->subject?->name ?? 'Môn học';
                 $sessionArr['subject_code']   = $session->classSubject?->subject?->code ?? '';
 
-                if ($session->reschedules && $session->reschedules->isNotEmpty()) {
-                    $latestReschedule = $session->reschedules->first();
-                    $oldDateStr       = $latestReschedule->old_date ? Carbon::parse($latestReschedule->old_date)->format('Y-m-d') : '';
-                    $oldStartTime     = substr((string) $latestReschedule->old_start_time, 0, 5);
-                    $oldEndTime       = substr((string) $latestReschedule->old_end_time, 0, 5);
+                if ($latestReschedule) {
+                    $changeType                = $isDateOrTimeChanged ? 'schedule' : ($isTeacherOnlyChange ? 'teacher_only' : 'info_only');
+                    $sessionArr['change_type'] = $changeType;
 
-                    $sessionArr['is_rescheduled_new_slot'] = true;
+                    if ($isDateOrTimeChanged) {
+                        $sessionArr['is_rescheduled_new_slot'] = true;
 
-                    if ($sessionArr['status'] === 'rescheduled') {
-                        $sessionArr['status'] = 'scheduled';
+                        if ($sessionArr['status'] === 'rescheduled') {
+                            $sessionArr['status'] = 'scheduled';
+                        }
                     }
 
                     $sessionArr['reschedule_from_info'] = [
+                        'change_type'    => $changeType,
                         'old_date'       => Carbon::parse($oldDateStr)->format('d-m-Y'),
                         'old_start_time' => $oldStartTime,
                         'old_end_time'   => $oldEndTime,
+                        'old_teacher'    => $latestReschedule->oldTeacher?->full_name,
+                        'new_teacher'    => $latestReschedule->newTeacher?->full_name ?? $session->teacher?->full_name,
+                        'old_room'       => $latestReschedule->oldRoom?->name,
                         'reason'         => $latestReschedule->reason,
                     ];
                 }

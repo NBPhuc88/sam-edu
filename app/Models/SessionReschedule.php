@@ -16,10 +16,12 @@ class SessionReschedule extends Model
         'old_start_time',
         'old_end_time',
         'old_room_id',
+        'old_teacher_id',
         'new_date',
         'new_start_time',
         'new_end_time',
         'new_room_id',
+        'new_teacher_id',
         'reason',
         'changed_by_admin_id',
         'changed_by_teacher_id',
@@ -59,6 +61,22 @@ class SessionReschedule extends Model
     public function newRoom(): BelongsTo
     {
         return $this->belongsTo(Room::class, 'new_room_id');
+    }
+
+    /**
+     * @return BelongsTo<Teacher, $this>
+     */
+    public function oldTeacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'old_teacher_id');
+    }
+
+    /**
+     * @return BelongsTo<Teacher, $this>
+     */
+    public function newTeacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'new_teacher_id');
     }
 
     /**

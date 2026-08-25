@@ -74,14 +74,18 @@ interface RescheduleLog {
     old_start_time: string | null;
     old_end_time: string | null;
     old_room_id: number | null;
+    old_teacher_id: number | null;
     new_date: string | null;
     new_start_time: string | null;
     new_end_time: string | null;
     new_room_id: number | null;
+    new_teacher_id: number | null;
     reason: string | null;
     changed_at: string;
     old_room?: Room;
     new_room?: Room;
+    old_teacher?: Teacher;
+    new_teacher?: Teacher;
     changed_by_admin?: {
         id: number;
         full_name: string;
@@ -641,6 +645,15 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                                                 <span className="line-through text-red-600">{log.old_room?.name ?? 'Chưa gán'}</span>{' '}
                                                                 <ArrowRight className="inline-block mx-1 h-3.5 w-3.5 text-gray-400 align-middle" />{' '}
                                                                 <span className="font-bold text-emerald-700">{log.new_room?.name ?? 'Chưa gán'}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {log.old_teacher_id !== log.new_teacher_id && (
+                                                            <div>
+                                                                <span className="text-gray-400">Giáo viên:</span>{' '}
+                                                                <span className="line-through text-red-600">{log.old_teacher?.full_name ?? 'Chưa gán'}</span>{' '}
+                                                                <ArrowRight className="inline-block mx-1 h-3.5 w-3.5 text-gray-400 align-middle" />{' '}
+                                                                <span className="font-bold text-emerald-700">{log.new_teacher?.full_name ?? 'Chưa gán'}</span>
                                                             </div>
                                                         )}
                                                     </div>

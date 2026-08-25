@@ -185,6 +185,8 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
                 'attendances.student:id,student_code,full_name,email,phone',
                 'reschedules.oldRoom:id,name',
                 'reschedules.newRoom:id,name',
+                'reschedules.oldTeacher:id,full_name,teacher_code',
+                'reschedules.newTeacher:id,full_name,teacher_code',
                 'reschedules.changedByAdmin:id,full_name,username',
                 'reschedules.changedByTeacher:id,full_name,teacher_code',
             ])->find($id);
