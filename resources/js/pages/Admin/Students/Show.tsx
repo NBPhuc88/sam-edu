@@ -600,7 +600,15 @@ export default function StudentShow({
                             to={sessions.to}
                             total={sessions.total}
                             perPage={sessions.per_page}
-                            currentParams={filters}
+                            currentParams={{
+                                type: filters.type,
+                                ...(filters.type === 'select_month'
+                                    ? { month: filters.month, year: filters.year }
+                                    : {}),
+                                ...(sessions.per_page !== 20
+                                    ? { per_page: sessions.per_page }
+                                    : {}),
+                            }}
                         />
                     </div>
                 )}
