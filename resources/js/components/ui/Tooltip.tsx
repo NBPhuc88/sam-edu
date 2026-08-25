@@ -194,6 +194,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 export interface TruncatedTextProps {
     text?: string | number | null;
     maxLines?: number;
+    maxLength?: number;
     maxWidth?: string;
     position?: TooltipPosition;
     className?: string;
@@ -204,6 +205,7 @@ export interface TruncatedTextProps {
 export const TruncatedText: React.FC<TruncatedTextProps> = ({
     text,
     maxLines = 1,
+    maxLength = 75,
     maxWidth = 'max-w-full',
     position = 'top',
     className = '',
@@ -215,6 +217,10 @@ export const TruncatedText: React.FC<TruncatedTextProps> = ({
     }
 
     const stringText = String(text);
+    const displayText =
+        maxLength && stringText.length > maxLength
+            ? `${stringText.slice(0, maxLength)}...`
+            : stringText;
 
     const lineClampClass =
         maxLines === 1
@@ -230,7 +236,7 @@ export const TruncatedText: React.FC<TruncatedTextProps> = ({
     return (
         <Tooltip content={stringText} position={position} maxWidth={tooltipMaxWidth}>
             <Tag className={clsx(lineClampClass, maxWidth, className)} title={undefined}>
-                {stringText}
+                {displayText}
             </Tag>
         </Tooltip>
     );
