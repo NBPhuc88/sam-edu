@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Student;
 
-use App\Models\Student;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -55,11 +54,7 @@ class UpdateStudentRequest extends FormRequest
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('students', 'student_code')
-                    ->where(function ($query) use ($studentId) {
-                        $centerId = $this->input('center_id') ?? Student::where('id', $studentId)->value('center_id');
-
-                        return $query->where('center_id', $centerId);
-                    })
+                    ->whereNull('deleted_at')
                     ->ignore($studentId),
             ],
             'date_of_birth'       => ['nullable', 'date', 'before:today'],

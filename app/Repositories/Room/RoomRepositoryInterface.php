@@ -57,7 +57,9 @@ interface RoomRepositoryInterface
      * @param  ?int   $ignoreId
      * @return bool
      */
-    public function codeExists(int $centerId, string $code, ?int $ignoreId = null): bool;
+    public function codeExists(string $code, ?int $ignoreId = null): bool;
+
+    public function nextId(): int;
 
     /**
      * @param  ?array<int, int>      $centerIds

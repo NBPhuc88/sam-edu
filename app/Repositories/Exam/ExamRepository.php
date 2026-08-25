@@ -261,17 +261,20 @@ class ExamRepository implements ExamRepositoryInterface
      * @param  int|null $excludeId
      * @return bool
      */
-    public function codeExists(int $centerId, string $code, ?int $excludeId = null): bool
+    public function codeExists(string $code, ?int $excludeId = null): bool
     {
-        $query = Exam::query()
-            ->where('center_id', $centerId)
-            ->where('code', $code);
+        $query = Exam::query()->where('code', $code);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);
         }
 
         return $query->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (Exam::query()->max('id') ?? 0) + 1;
     }
 
     /**

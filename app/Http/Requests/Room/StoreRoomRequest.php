@@ -26,10 +26,7 @@ class StoreRoomRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('rooms', 'code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'))
-                        ->whereNull('deleted_at');
-                }),
+                Rule::unique('rooms', 'code')->whereNull('deleted_at'),
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],

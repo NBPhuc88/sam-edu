@@ -28,9 +28,7 @@ class UpdateSchoolClassRequest extends FormRequest
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('classes', 'code')
-                    ->where(function ($query) {
-                        return $query->where('center_id', $this->input('center_id'));
-                    })
+                    ->whereNull('deleted_at')
                     ->ignore($classId),
             ],
             'description'           => ['nullable', 'string', 'max:1000'],

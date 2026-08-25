@@ -25,9 +25,7 @@ class StoreSubjectRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('subjects', 'code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'));
-                }),
+                Rule::unique('subjects', 'code'),
             ],
             'description'      => ['nullable', 'string', 'max:1000'],
             'total_sessions'   => ['nullable', 'integer', 'min:1', 'max:365'],

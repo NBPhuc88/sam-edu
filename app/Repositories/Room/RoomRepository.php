@@ -209,16 +209,20 @@ class RoomRepository implements RoomRepositoryInterface
         return (bool) $room->delete();
     }
 
-    public function codeExists(int $centerId, string $code, ?int $ignoreId = null): bool
+    public function codeExists(string $code, ?int $ignoreId = null): bool
     {
-        $query = Room::where('center_id', $centerId)
-            ->where('code', $code);
+        $query = Room::withTrashed()->where('code', $code);
 
         if ($ignoreId !== null) {
             $query->where('id', '!=', $ignoreId);
         }
 
         return $query->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (Room::withTrashed()->max('id') ?? 0) + 1;
     }
 
     /**

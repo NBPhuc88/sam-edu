@@ -130,9 +130,14 @@ class SubjectRepository implements SubjectRepositoryInterface
         return (bool) $subject->delete();
     }
 
-    public function codeExists(int $centerId, string $code): bool
+    public function codeExists(string $code): bool
     {
-        return Subject::where('center_id', $centerId)->where('code', $code)->exists();
+        return Subject::where('code', $code)->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (Subject::max('id') ?? 0) + 1;
     }
 
     /**

@@ -46,13 +46,7 @@ class UpdateExamRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:50',
-                Rule::unique('exams', 'code')->where(function ($query) use ($centerId) {
-                    if ($centerId) {
-                        $query->where('center_id', $centerId);
-                    }
-
-                    return $query->whereNull('deleted_at');
-                })->ignore($examId),
+                Rule::unique('exams', 'code')->whereNull('deleted_at')->ignore($examId),
             ],
             'exam_type_id'      => ['sometimes', 'required', 'integer', 'exists:exam_types,id'],
             'duration_minutes'  => ['nullable', 'integer', 'min:1', 'max:600'],

@@ -29,12 +29,7 @@ class UpdateRoomRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('rooms', 'code')->where(function ($query) {
-                    $centerId = $this->input('center_id') ?? $this->route('room')?->center_id;
-
-                    return $query->where('center_id', $centerId)
-                        ->whereNull('deleted_at');
-                })->ignore($roomId),
+                Rule::unique('rooms', 'code')->whereNull('deleted_at')->ignore($roomId),
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],

@@ -241,9 +241,14 @@ class StudentRepository implements StudentRepositoryInterface
         return Student::whereIn('center_id', $centerIds)->count();
     }
 
-    public function codeExists(int $centerId, string $code): bool
+    public function codeExists(string $code): bool
     {
-        return Student::where('center_id', $centerId)->where('student_code', $code)->exists();
+        return Student::withTrashed()->where('student_code', $code)->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (Student::withTrashed()->max('id') ?? 0) + 1;
     }
 
     /**

@@ -28,9 +28,6 @@ class UpdateSubjectRequest extends FormRequest
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('subjects', 'code')
-                    ->where(function ($query) {
-                        return $query->where('center_id', $this->input('center_id'));
-                    })
                     ->ignore($subjectId),
             ],
             'description'      => ['nullable', 'string', 'max:1000'],

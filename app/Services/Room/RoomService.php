@@ -108,19 +108,18 @@ class RoomService implements RoomServiceInterface
         }
 
         if (empty($data['code'])) {
-            $data['code'] = $this->generateRoomCode($centerId);
+            $data['code'] = $this->generateRoomCode();
         }
 
         return $this->roomRepository->create($data);
     }
 
-    protected function generateRoomCode(int $centerId): string
+    protected function generateRoomCode(): string
     {
-        $count   = $this->roomRepository->countByCenterId($centerId);
-        $nextNum = $count + 1;
+        $nextNum = $this->roomRepository->nextId();
         $code    = sprintf(Constant::PREFIX_ROOM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
 
-        while ($this->roomRepository->codeExists($centerId, $code)) {
+        while ($this->roomRepository->codeExists($code)) {
             $nextNum++;
             $code = sprintf(Constant::PREFIX_ROOM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
         }

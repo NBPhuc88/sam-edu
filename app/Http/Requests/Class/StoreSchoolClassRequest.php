@@ -25,9 +25,7 @@ class StoreSchoolClassRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('classes', 'code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'));
-                }),
+                Rule::unique('classes', 'code')->whereNull('deleted_at'),
             ],
             'description'           => ['nullable', 'string', 'max:1000'],
             'max_students'          => ['nullable', 'integer', 'min:1', 'max:500'],

@@ -172,12 +172,12 @@ class ExamService implements ExamServiceInterface
         $code = trim($data['code'] ?? '');
 
         if (empty($code)) {
-            $count = $this->examRepository->countByCenterIds([$centerId]) + 1;
+            $count = $this->examRepository->nextId();
             $code  = Constant::PREFIX_EXAM_ALT . str_pad((string) $count, 4, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
         }
 
-        if ($this->examRepository->codeExists($centerId, $code)) {
-            throw new AccessDeniedHttpException("Mã đề thi '{$code}' đã tồn tại trong trung tâm.");
+        if ($this->examRepository->codeExists($code)) {
+            throw new AccessDeniedHttpException("Mã đề thi '{$code}' đã tồn tại.");
         }
 
         $payload = [
@@ -235,8 +235,8 @@ class ExamService implements ExamServiceInterface
 
         $code = ! empty($data['code']) ? trim($data['code']) : $exam->code;
 
-        if ($code !== $exam->code && $this->examRepository->codeExists((int) ($data['center_id'] ?? $exam->center_id), $code, $exam->id)) {
-            throw new AccessDeniedHttpException("Mã đề thi '{$code}' đã tồn tại trong trung tâm.");
+        if ($code !== $exam->code && $this->examRepository->codeExists($code, $exam->id)) {
+            throw new AccessDeniedHttpException("Mã đề thi '{$code}' đã tồn tại.");
         }
 
         $payload = [

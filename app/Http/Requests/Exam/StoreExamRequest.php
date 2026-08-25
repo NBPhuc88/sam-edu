@@ -37,10 +37,7 @@ class StoreExamRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:50',
-                Rule::unique('exams', 'code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'))
-                        ->whereNull('deleted_at');
-                }),
+                Rule::unique('exams', 'code')->whereNull('deleted_at'),
             ],
             'exam_type_id'      => ['required', 'integer', 'exists:exam_types,id'],
             'duration_minutes'  => ['nullable', 'integer', 'min:1', 'max:600'],

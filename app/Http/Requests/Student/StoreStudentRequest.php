@@ -47,9 +47,7 @@ class StoreStudentRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('students', 'student_code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'));
-                }),
+                Rule::unique('students', 'student_code')->whereNull('deleted_at'),
             ],
             'date_of_birth'       => ['nullable', 'date', 'before:today'],
             'gender'              => ['nullable', 'string', 'in:male,female,other'],

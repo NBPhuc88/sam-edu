@@ -50,7 +50,9 @@ interface SubjectRepositoryInterface
      */
     public function delete(int $id): bool;
 
-    public function codeExists(int $centerId, string $code): bool;
+    public function codeExists(string $code): bool;
+
+    public function nextId(): int;
 
     /**
      * @param  ?array<int, int>                                       $centerIds

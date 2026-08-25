@@ -295,9 +295,14 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         return SchoolClass::whereIn('center_id', $centerIds)->count();
     }
 
-    public function codeExists(int $centerId, string $code): bool
+    public function codeExists(string $code): bool
     {
-        return SchoolClass::where('center_id', $centerId)->where('code', $code)->exists();
+        return SchoolClass::withTrashed()->where('code', $code)->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (SchoolClass::withTrashed()->max('id') ?? 0) + 1;
     }
 
     /**

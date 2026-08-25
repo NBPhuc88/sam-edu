@@ -31,7 +31,9 @@ class StoreTeacherRequest extends FormRequest
                 'max:20',
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('teachers', 'teacher_code')->where(function ($query) {
-                    return $query->where('center_id', $this->input('center_id'));
+                    return $query
+                        ->where('center_id', $this->input('center_id'))
+                        ->whereNull('deleted_at');
                 }),
             ],
             'date_of_birth'  => ['nullable', 'date', 'before:today'],

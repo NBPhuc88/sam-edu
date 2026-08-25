@@ -211,9 +211,14 @@ class TeacherRepository implements TeacherRepositoryInterface
         return Teacher::whereIn('center_id', $centerIds)->count();
     }
 
-    public function codeExists(int $centerId, string $code): bool
+    public function codeExists(string $code): bool
     {
-        return Teacher::where('center_id', $centerId)->where('teacher_code', $code)->exists();
+        return Teacher::withTrashed()->where('teacher_code', $code)->exists();
+    }
+
+    public function nextId(): int
+    {
+        return (int) (Teacher::withTrashed()->max('id') ?? 0) + 1;
     }
 
     /**

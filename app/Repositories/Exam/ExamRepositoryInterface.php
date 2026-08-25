@@ -68,7 +68,9 @@ interface ExamRepositoryInterface
      * @param  int|null $excludeId
      * @return bool
      */
-    public function codeExists(int $centerId, string $code, ?int $excludeId = null): bool;
+    public function codeExists(string $code, ?int $excludeId = null): bool;
+
+    public function nextId(): int;
 
     /**
      * @param  Exam              $exam
