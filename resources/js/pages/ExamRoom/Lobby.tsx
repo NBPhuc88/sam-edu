@@ -47,7 +47,8 @@ export default function Lobby({
     const cls = classExam.schoolClass || classExam.school_class;
     const ex = classExam.exam;
 
-    const hasSubmitted = submission && in_array(submission.status, ['submitted', 'timeout_submitted', 'missed']);
+    const hasSubmitted = submission && in_array(submission.status, ['submitted', 'timeout_submitted']);
+    const isMissed = submission && submission.status === 'missed';
     const isInProgress = submission && submission.status === 'in_progress';
 
     function in_array(val: any, arr: any[]) {
@@ -126,6 +127,20 @@ export default function Lobby({
                     </div>
                 )}
 
+                {isMissed && (
+                    <div className="flex items-center justify-between p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="h-6 w-6 text-amber-600 shrink-0" />
+                            <div>
+                                <p className="font-bold text-sm">Bạn đã bỏ lỡ bài thi này</p>
+                                <p className="text-2xs text-amber-700 mt-0.5">
+                                    Đã quá thời hạn hiệu lực làm bài thi trực tuyến.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {hasSubmitted && (
                     <div className="flex items-center justify-between p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
                         <div className="flex items-center gap-3">
@@ -198,7 +213,7 @@ export default function Lobby({
                             </Button>
                         </Link>
 
-                        {isStudent && !hasSubmitted && (
+                        {isStudent && !hasSubmitted && !isMissed && (
                             <div>
                                 {isInProgress ? (
                                     <Link href={`/class-exams/${classExam.id}/take/${submission?.id}`}>

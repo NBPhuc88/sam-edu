@@ -53,10 +53,25 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         $this->authorizeAccess($classExam, $student, $teacher, $admin);
 
+        // Kiểm tra hiệu lực thời gian bài thi
+        $now       = Carbon::now();
+        $validFrom = $classExam->valid_from ? Carbon::parse($classExam->valid_from) : null;
+        $validTo   = $classExam->valid_to ? Carbon::parse($classExam->valid_to) : null;
+
+        $isBeforeStart = $validFrom && $now->lt($validFrom);
+        $isAfterEnd    = $validTo && $now->gt($validTo);
+        $isValidTime   = ! $isBeforeStart && ! $isAfterEnd;
+
         $submission = null;
 
         if ($student) {
             $submission = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
+
+            // Nếu kỳ thi chưa kết thúc (! $isAfterEnd) mà submission có trạng thái missed, tự động xóa bản ghi lỗi
+            if ($submission && $submission->status === 'missed' && ! $isAfterEnd) {
+                $submission->delete();
+                $submission = null;
+            }
 
             // Phục hồi draft answers từ Redis Cache nếu đang làm bài
             if ($submission && $submission->status === 'in_progress') {
@@ -67,33 +82,6 @@ class OnlineExamService implements OnlineExamServiceInterface
                     $submission->answers = $cachedAnswers;
                 }
             }
-        }
-
-        // Kiểm tra hiệu lực thời gian bài thi
-        $now       = Carbon::now();
-        $validFrom = $classExam->valid_from ? Carbon::parse($classExam->valid_from) : null;
-        $validTo   = $classExam->valid_to ? Carbon::parse($classExam->valid_to) : null;
-
-        $isBeforeStart = $validFrom && $now->lt($validFrom);
-        $isAfterEnd    = $validTo && $now->gt($validTo);
-        $isValidTime   = ! $isBeforeStart && ! $isAfterEnd;
-
-        // Nếu quá hạn mà chưa có submission -> Tạo submission với trạng thái missed (0 điểm)
-        if ($isAfterEnd && $student && ! $submission) {
-            $submission = $this->classExamRepository->createSubmission([
-                'class_exam_id'         => $classExam->id,
-                'student_id'            => $student->id,
-                'attempt_number'        => 1,
-                'started_at'            => $validTo,
-                'submitted_at'          => $validTo,
-                'duration_seconds_used' => 0,
-                'score'                 => 0,
-                'total_correct'         => 0,
-                'total_questions'       => $this->countTotalQuestions($classExam),
-                'status'                => 'missed',
-                'answers'               => [],
-                'grading_details'       => [],
-            ]);
         }
 
         return [
@@ -129,6 +117,11 @@ class OnlineExamService implements OnlineExamServiceInterface
         // Kiểm tra nếu đã có bài thi đang làm
         $existing = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
 
+        if ($existing && $existing->status === 'missed') {
+            $existing->delete();
+            $existing = null;
+        }
+
         if ($existing && $existing->status === 'in_progress') {
             // Nạp draft từ Redis Cache nếu có
             $cacheKey      = "exam_draft:submission:{$existing->id}";
@@ -141,7 +134,7 @@ class OnlineExamService implements OnlineExamServiceInterface
             return $existing;
         }
 
-        if ($existing && in_array($existing->status, ['submitted', 'timeout_submitted', 'missed'], true)) {
+        if ($existing && in_array($existing->status, ['submitted', 'timeout_submitted'], true)) {
             return $existing;
         }
 

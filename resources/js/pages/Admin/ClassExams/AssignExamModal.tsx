@@ -83,10 +83,14 @@ export default function AssignExamModal({
             setCenterId(prefillCenterId);
             setClassId(initialClassId ? String(initialClassId) : '');
             setExamId(initialExamId ? String(initialExamId) : '');
+            const now = new Date();
+            const currentHour = String(now.getHours()).padStart(2, '0');
+            const currentMin = String(now.getMinutes()).padStart(2, '0');
+
             setTitle(defExam ? `Bài kiểm tra - ${defExam.name}` : '');
-            setExamDate(new Date().toISOString().split('T')[0]);
-            setStartTime('08:00');
-            setEndTime('09:00');
+            setExamDate(now.toISOString().split('T')[0]);
+            setStartTime(`${currentHour}:${currentMin}`);
+            setEndTime('23:59');
             setDurationMinutes(defExam?.duration_minutes || 45);
             setMaxScore(defExam?.max_score || 10);
             setPassScore(defExam?.pass_score || 5);
