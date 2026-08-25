@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calendar,
@@ -20,6 +20,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Modal from '@/components/ui/Modal';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString, formatTime } from '@/lib/date';
 
@@ -170,6 +171,12 @@ export default function TeacherSchedulePage({
     sessions = [],
     recurringSchedules = [],
 }: Props) {
+    const { auth } = usePage().props as any;
+    const { can } = usePermission();
+    const role = auth?.role;
+    const isAdmin = role === 'admin' || !role;
+    const canReschedule = isAdmin || can('sessions.edit') || can('schedules.edit');
+
     const [viewMode, setViewMode] = useState<'sessions' | 'recurring'>('sessions');
     const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -202,8 +209,30 @@ export default function TeacherSchedulePage({
         setSelectedSession(null);
     };
 
+    const getRealSessionId = (sessionId: number | string): number => {
+        if (typeof sessionId === 'number') {
+            return sessionId;
+        }
+        const match = String(sessionId).match(/rescheduled-old-(\d+)/);
+        if (match) {
+            return parseInt(match[1], 10);
+        }
+
+        return parseInt(String(sessionId), 10) || 0;
+    };
+
     const handleGoToAttendance = (sessionId: number | string) => {
-        router.get(`/attendance/session/${sessionId}`);
+        const realId = getRealSessionId(sessionId);
+        if (realId > 0) {
+            router.get(`/attendance/session/${realId}`);
+        }
+    };
+
+    const handleGoToReschedule = (sessionId: number | string) => {
+        const realId = getRealSessionId(sessionId);
+        if (realId > 0) {
+            router.get(`/sessions/${realId}?action=reschedule`);
+        }
     };
 
     const formatTime = (t: string) => {
@@ -577,13 +606,9 @@ export default function TeacherSchedulePage({
                                                                         return (
                                                                             <div
                                                                                 key={session.id}
-                                                                                onClick={() => {
-                                                                                    if (!session.is_rescheduled_old_slot) {
-                                                                                        handleOpenDetailModal(session);
-                                                                                    }
-                                                                                }}
+                                                                                onClick={() => handleOpenDetailModal(session)}
                                                                                 className={`group relative cursor-pointer rounded-lg border p-2.5 transition-all ${cardStyle.container}`}
-                                                                                title="Click để xem thông tin lớp, phòng học và điểm danh"
+                                                                                title="Click để xem thông tin lớp, đổi lịch hoặc điểm danh"
                                                                             >
                                                                                 {/* CLASS NAME AS PRIMARY HEADER */}
                                                                                 <div className="flex items-start justify-between gap-1">
@@ -849,6 +874,45 @@ export default function TeacherSchedulePage({
                             )}
                         </div>
 
+                        {/* Reschedule Info Alerts if applicable */}
+                        {selectedSession.is_rescheduled_old_slot && selectedSession.reschedule_info && (
+                            <div className="rounded-lg border border-amber-300 bg-amber-50/90 p-3.5 text-xs text-amber-900 space-y-1">
+                                <div className="font-bold flex items-center gap-1.5">
+                                    <span>⚠️ Ca học này đã được dời sang lịch khác:</span>
+                                </div>
+                                <div>
+                                    {selectedSession.reschedule_info.change_type === 'teacher_only'
+                                        ? `Chuyển giao cho GV: ${selectedSession.reschedule_info.new_teacher || 'GV mới'}`
+                                        : `Đã dời sang ngày: ${selectedSession.reschedule_info.new_date} (${formatTime(selectedSession.reschedule_info.new_start_time || '')} - ${formatTime(selectedSession.reschedule_info.new_end_time || '')})`
+                                    }
+                                </div>
+                                {selectedSession.reschedule_info.reason && (
+                                    <div className="text-amber-800">
+                                        <em>Lý do:</em> {selectedSession.reschedule_info.reason}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {selectedSession.reschedule_from_info && (
+                            <div className="rounded-lg border border-purple-200 bg-purple-50/90 p-3.5 text-xs text-purple-900 space-y-1">
+                                <div className="font-bold flex items-center gap-1.5">
+                                    <span>ℹ️ Thông tin tiếp nhận ca học:</span>
+                                </div>
+                                <div>
+                                    {selectedSession.reschedule_from_info.change_type === 'teacher_only'
+                                        ? `Nhận bàn giao từ GV: ${selectedSession.reschedule_from_info.old_teacher || 'GV cũ'}`
+                                        : `Dời từ ngày cũ: ${selectedSession.reschedule_from_info.old_date} (${formatTime(selectedSession.reschedule_from_info.old_start_time || '')} - ${formatTime(selectedSession.reschedule_from_info.old_end_time || '')})`
+                                    }
+                                </div>
+                                {selectedSession.reschedule_from_info.reason && (
+                                    <div className="text-purple-800">
+                                        <em>Lý do:</em> {selectedSession.reschedule_from_info.reason}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Session Time & Notes */}
                         <div className="rounded-lg border border-gray-200 bg-slate-50 p-4 text-xs text-gray-700 space-y-2">
                             <div className="flex items-center gap-2">
@@ -876,7 +940,7 @@ export default function TeacherSchedulePage({
                         </div>
 
                         {/* Modal Actions */}
-                        <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
+                        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-200 pt-4">
                             <Button
                                 type="button"
                                 variant="secondary"
@@ -885,6 +949,17 @@ export default function TeacherSchedulePage({
                             >
                                 Đóng
                             </Button>
+                            {canReschedule && (
+                                <Button
+                                    type="button"
+                                    variant="edit"
+                                    size="md"
+                                    icon={<Calendar className="h-4 w-4" />}
+                                    onClick={() => handleGoToReschedule(selectedSession.id)}
+                                >
+                                    Đổi Lịch Dạy
+                                </Button>
+                            )}
                             <Button
                                 type="button"
                                 variant="success"

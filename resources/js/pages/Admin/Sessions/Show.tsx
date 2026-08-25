@@ -17,7 +17,7 @@ import {
     AlertTriangle,
     Save,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -195,6 +195,13 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
             },
         });
     };
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'reschedule') {
+            openRescheduleModal();
+        }
+    }, []);
 
     // Topic & Note content form state
     const {
