@@ -388,11 +388,21 @@ class GradingService implements GradingServiceInterface
             ]);
 
             // 2. Tạo ClassExam
+            $examDate       = Carbon::parse($data['exam_date'])->format('Y-m-d');
+            $maxClassExamId = (int) (ClassExam::withTrashed()->max('id') ?? 0);
+            $classExamCode  = sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxClassExamId + 1);
+            $accessCode     = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
             $classExam = ClassExam::create([
+                'code'                  => $classExamCode,
+                'access_code'           => $accessCode,
                 'class_id'              => $class->id,
                 'exam_id'               => $exam->id,
                 'title'                 => trim($data['title']),
-                'exam_date'             => $data['exam_date'],
+                'exam_date'             => $examDate,
+                'valid_from'            => "{$examDate} 00:00:00",
+                'valid_to'              => "{$examDate} 23:59:59",
+                'duration_minutes'      => (int) ($data['duration_minutes'] ?? Constant::DEFAULT_EXAM_DURATION_MINUTES),
                 'max_score'             => $maxScore,
                 'pass_score'            => $passScore,
                 'status'                => 'completed',

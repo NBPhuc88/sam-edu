@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,20 @@ class ClassExam extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (ClassExam $classExam) {
+            if (empty($classExam->code)) {
+                $maxId           = (int) (static::withTrashed()->max('id') ?? 0);
+                $classExam->code = sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxId + 1);
+            }
+
+            if (empty($classExam->access_code)) {
+                $classExam->access_code = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     protected $fillable = [
         'code',
