@@ -20,7 +20,6 @@ class Exam extends Model
         'class_subject_id',
         'code',
         'name',
-        'exam_type_id',
         'duration_minutes',
         'max_score',
         'pass_score',
@@ -41,7 +40,6 @@ class Exam extends Model
     {
         return [
             'exam_date'         => 'date:d-m-Y',
-            'exam_type_id'      => 'integer',
             'max_score'         => 'decimal:2',
             'pass_score'        => 'decimal:2',
             'duration_minutes'  => 'integer',
@@ -60,14 +58,6 @@ class Exam extends Model
     public function center(): BelongsTo
     {
         return $this->belongsTo(Center::class);
-    }
-
-    /**
-     * @return BelongsTo<ExamType, $this>
-     */
-    public function examType(): BelongsTo
-    {
-        return $this->belongsTo(ExamType::class, 'exam_type_id');
     }
 
     /**

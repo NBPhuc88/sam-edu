@@ -33,13 +33,10 @@ interface Props {
     exams: PaginatedData<Exam>;
     centers: Center[];
     subjects: Subject[];
-    exam_types?: ExamTypeOption[];
     filters: {
         search?: string;
         center_id?: number | null;
         subject_id?: number | null;
-        exam_type_id?: number | string | null;
-        exam_type?: string;
     };
 }
 
@@ -47,7 +44,6 @@ export default function PracticeList({
     exams,
     centers = [],
     subjects = [],
-    exam_types = [],
     filters,
 }: Props) {
     const { auth } = usePage<any>().props;
@@ -60,9 +56,6 @@ export default function PracticeList({
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
         filters.subject_id ? String(filters.subject_id) : '',
     );
-    const [selectedExamType, setSelectedExamType] = useState<string>(
-        filters.exam_type_id ? String(filters.exam_type_id) : (filters.exam_type || 'all'),
-    );
 
     // Confirm Start Modal
     const [startModalOpen, setStartModalOpen] = useState(false);
@@ -72,10 +65,6 @@ export default function PracticeList({
         ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
         : subjects;
 
-    const filteredExamTypes = selectedCenterId
-        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(selectedCenterId))
-        : exam_types;
-
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
@@ -84,7 +73,6 @@ export default function PracticeList({
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
                 subject_id: selectedSubjectId || undefined,
-                exam_type_id: selectedExamType !== 'all' ? selectedExamType : undefined,
             },
             { preserveState: true },
         );
@@ -94,31 +82,12 @@ export default function PracticeList({
         setSearch('');
         setSelectedCenterId('');
         setSelectedSubjectId('');
-        setSelectedExamType('all');
         router.get('/practice-exams', {}, { preserveState: true });
     };
 
     const openStartModal = (exam: Exam) => {
         setSelectedExam(exam);
         setStartModalOpen(true);
-    };
-
-    const getExamTypeBadge = (exam: Exam) => {
-        const typeName = exam.examType?.name || (typeof exam.exam_type === 'object' ? (exam.exam_type as any)?.name : exam.exam_type) || 'Đề thi';
-        const typeCode = (exam.examType?.code || (typeof exam.exam_type === 'object' ? (exam.exam_type as any)?.code : exam.exam_type) || '').toLowerCase();
-
-        switch (typeCode) {
-            case 'ielts':
-                return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200">{typeName}</span>;
-            case 'hsk':
-                return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-2xs font-bold text-red-700 border border-red-200">{typeName}</span>;
-            case 'toeic':
-                return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-2xs font-bold text-purple-700 border border-purple-200">{typeName}</span>;
-            case 'custom':
-                return <span className="inline-flex items-center rounded-md bg-teal-50 px-2 py-0.5 text-2xs font-bold text-teal-700 border border-teal-200">{typeName}</span>;
-            default:
-                return <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-2xs font-bold text-emerald-700 border border-emerald-200">{typeName}</span>;
-        }
     };
 
     return (
@@ -204,25 +173,6 @@ export default function PracticeList({
                                     ))}
                                 </select>
                             </div>
-
-                            {/* Exam Type Filter */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
-                                    Loại Kỳ Thi
-                                </label>
-                                <select
-                                    value={selectedExamType}
-                                    onChange={(e) => setSelectedExamType(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="all">Tất cả định dạng</option>
-                                    {filteredExamTypes.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name} ({t.code})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
                         </div>
 
                         <div className="flex items-center justify-end gap-2.5 border-t border-gray-100 pt-3">
@@ -249,20 +199,16 @@ export default function PracticeList({
                 {/* Exam Cards Grid */}
                 {exams.data.length === 0 ? (
                     <Card className="border-gray-200 bg-white p-12 text-center shadow-2xs">
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-4">
-                                <Award className="h-8 w-8" />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900">
-                                Chưa Có Đề Thi Thử Phù Hợp
-                            </h3>
-                            <p className="mt-1 text-sm text-gray-500 max-w-md">
-                                Hiện tại chưa có bài thi nào được đánh dấu là đề thi thử hoặc không có kết quả phù hợp với bộ lọc tìm kiếm của bạn.
-                            </p>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                            <BookOpen className="h-8 w-8" />
                         </div>
+                        <h3 className="mt-4 text-base font-bold text-gray-900">Không tìm thấy đề thi thử nào</h3>
+                        <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+                            Hiện chưa có đề thi thử nào phù hợp với bộ lọc của bạn. Thử thay đổi từ khóa hoặc bộ lọc môn học.
+                        </p>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         {exams.data.map((exam) => {
                             const totalQuestions = exam.questions_count ?? (exam.questions ? exam.questions.length : 0);
                             const totalSections = exam.sections_count ?? (exam.sections ? exam.sections.length : 0);
@@ -278,7 +224,6 @@ export default function PracticeList({
                                             <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
                                                 {exam.code}
                                             </span>
-                                            {getExamTypeBadge(exam)}
                                         </div>
 
                                         <div>

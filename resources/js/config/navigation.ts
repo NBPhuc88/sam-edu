@@ -70,12 +70,11 @@ export const masterNavigation: NavItem[] = [
         ],
     },
     {
-        label: 'Cấu Hình Đề Thi',
+        label: 'Kho Đề Thi',
         icon: Sliders,
-        children: [
-            { label: 'Loại Đề Thi', path: '/exam-types', permission: 'exam-types.index', planFeature: 'exam-types' },
-            { label: 'Kho Đề Thi', path: '/exams', permission: 'exams.index', planFeature: 'exams' },
-        ],
+        path: '/exams',
+        permission: 'exams.index',
+        planFeature: 'exams',
     },
     {
         label: 'Thi & Chấm Thi',

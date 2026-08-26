@@ -7,7 +7,6 @@ use App\Models\Center;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\ExamSection;
-use App\Models\ExamType;
 use App\Models\Holiday;
 use App\Models\Room;
 use App\Models\SchoolClass;
@@ -348,9 +347,6 @@ class TestCenterSeeder extends Seeder
             'updated_at'    => $this->now,
         ]);
 
-        // D. Tạo ExamTypes cho Trung tâm
-        $examTypes = $this->createExamTypesForCenter($center);
-
         // E. Tạo Phòng học & Thiết bị
         $rooms = $this->createRoomsForCenter($center, $config['rooms']);
 
@@ -381,48 +377,8 @@ class TestCenterSeeder extends Seeder
             $teachers,
             $classes,
             $students,
-            $examTypes,
             $subAdmin
         );
-
-        // K. Tạo Khoản thu học phí & Lịch sử đóng tiền
-        $this->createTuitionsAndPayments($center, $classes, $students, $subAdmin);
-
-        // L. Ghi chú, Tài liệu học tập
-        $this->createStudentNotesAndDocs($center, $teachers, $students, $subAdmin);
-
-        return $center;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXAM TYPES CHO TRUNG TÂM
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * @return array<string, ExamType>
-     * @param  Center                  $center
-     */
-    private function createExamTypesForCenter(Center $center): array
-    {
-        $templates = ExamTypeSeeder::getDefaultExamTypes();
-        $results   = [];
-
-        foreach ($templates as $t) {
-            $examType = ExamType::updateOrCreate(
-                [
-                    'center_id' => $center->id,
-                    'code'      => $t['code'],
-                ],
-                [
-                    'name'        => $t['name'],
-                    'description' => $t['description'],
-                    'status'      => $t['status'],
-                ]
-            );
-            $results[$t['code']] = $examType;
-        }
-
-        return $results;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -817,19 +773,14 @@ class TestCenterSeeder extends Seeder
         array $teachers,
         array $classes,
         array $students,
-        array $examTypes,
         Admin $subAdmin
     ): void {
-        $generalType = $examTypes['general'] ?? ExamType::first();
-        $ieltsType   = $examTypes['ielts'] ?? $generalType;
-
         // 1. Tạo Đề Thi Thử Mẫu (Practice Exam 4 Kỹ Năng)
         $practiceExam = Exam::updateOrCreate(
             ['code' => sprintf('EX%09d', ($center->id * 100) + 1)],
             [
                 'center_id'         => $center->id,
                 'subject_id'        => $subjects[0]->id,
-                'exam_type_id'      => $ieltsType->id,
                 'name'              => "Đề Thi Thử Chuẩn Hóa Quốc Tế Test 01 - {$center->name}",
                 'duration_minutes'  => 60,
                 'max_score'         => 30,
@@ -851,7 +802,6 @@ class TestCenterSeeder extends Seeder
             [
                 'center_id'         => $center->id,
                 'subject_id'        => $subjects[0]->id,
-                'exam_type_id'      => $examTypes['midterm']->id ?? $generalType->id,
                 'name'              => "Bài Kiểm Tra Giữa Kỳ - {$classes[0]->name}",
                 'duration_minutes'  => 45,
                 'max_score'         => 10,
@@ -1409,7 +1359,6 @@ class TestCenterSeeder extends Seeder
         $this->command->info(' - Lớp học (SchoolClasses): ' . SchoolClass::count());
         $this->command->info(' - Ca học (ClassSessions): ' . DB::table('class_sessions')->count());
         $this->command->info(' - Lượt điểm danh (Attendances): ' . DB::table('attendances')->count());
-        $this->command->info(' - Loại đề thi (ExamTypes): ' . ExamType::count());
         $this->command->info(' - Đề thi (Exams): ' . Exam::count());
         $this->command->info(' - Câu hỏi đề thi (ExamQuestions): ' . ExamQuestion::count());
         $this->command->info(' - Khoản học phí (StudentTuitions): ' . DB::table('student_tuitions')->count());

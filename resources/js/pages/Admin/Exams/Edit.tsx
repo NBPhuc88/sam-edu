@@ -30,7 +30,6 @@ interface Props {
     exam: Exam;
     centers: Center[];
     subjects: Subject[];
-    exam_types?: ExamTypeItem[];
     errors?: Record<string, string>;
 }
 
@@ -38,7 +37,6 @@ export default function ExamEdit({
     exam,
     centers = [],
     subjects = [],
-    exam_types = [],
     errors = {},
 }: Props) {
     const { auth } = usePage<any>().props;
@@ -49,9 +47,6 @@ export default function ExamEdit({
     const [subjectId, setSubjectId] = useState<string>(exam.subject_id ? String(exam.subject_id) : '');
     const [name, setName] = useState(exam.name || '');
     const [code, setCode] = useState(exam.code || '');
-    const [examTypeId, setExamTypeId] = useState<string>(
-        exam.exam_type_id ? String(exam.exam_type_id) : (exam_types[0]?.id ? String(exam_types[0].id) : '')
-    );
     const [durationMinutes, setDurationMinutes] = useState<number | string>(exam.duration_minutes || 45);
     const [passScore, setPassScore] = useState<number | string>(exam.pass_score || '');
     const [shuffleQuestions, setShuffleQuestions] = useState(Boolean(exam.shuffle_questions));
@@ -96,10 +91,6 @@ export default function ExamEdit({
         ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
-    const filteredExamTypes = centerId
-        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(centerId))
-        : exam_types;
-
     // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
     const totalScore = sections.reduce(
@@ -129,7 +120,6 @@ export default function ExamEdit({
                 subject_id: subjectId ? Number(subjectId) : null,
                 name: name.trim(),
                 code: code.trim() || null,
-                exam_type_id: examTypeId ? Number(examTypeId) : null,
                 duration_minutes: durationMinutes ? Number(durationMinutes) : null,
                 max_score: calculatedMaxScore,
                 pass_score: passScore ? Number(passScore) : null,
@@ -223,9 +213,6 @@ export default function ExamEdit({
             return `${fieldLabel} của phần ${secNum} không hợp lệ.`;
         }
 
-        if (key === 'exam_type') {
-            return 'Loại bài kiểm tra đã chọn không hợp lệ.';
-        }
         if (key === 'center_id') {
             return 'Vui lòng chọn Trung tâm đào tạo.';
         }
@@ -338,7 +325,7 @@ export default function ExamEdit({
                                     onChange={(e) => setSubjectId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Dành cho toàn bộ môn học --</option>
+                                    <option value="">-- Chọn Môn Học (Tùy chọn) --</option>
                                     {filteredSubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.code})
@@ -347,31 +334,6 @@ export default function ExamEdit({
                                 </select>
                                 {errors.subject_id && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.subject_id}</p>
-                                )}
-                            </div>
-
-                            {/* Exam Type */}
-                            <div>
-                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
-                                    Loại Đề Thi <span className="text-red-500 ml-1">*</span>
-                                </label>
-                                <select
-                                    value={examTypeId}
-                                    onChange={(e) => setExamTypeId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Loại Đề Thi --</option>
-                                    {filteredExamTypes.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name} ({t.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {(errors.exam_type_id || errors.exam_type) && (
-                                    <p className="mt-1.5 text-sm text-red-600">
-                                        {errors.exam_type_id || errors.exam_type}
-                                    </p>
                                 )}
                             </div>
 

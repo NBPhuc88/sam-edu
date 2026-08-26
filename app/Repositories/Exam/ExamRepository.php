@@ -43,7 +43,6 @@ class ExamRepository implements ExamRepositoryInterface
                 'code',
                 'name',
                 'description',
-                'exam_type_id',
                 'duration_minutes',
                 'max_score',
                 'pass_score',
@@ -54,7 +53,6 @@ class ExamRepository implements ExamRepositoryInterface
                 'center:id,name,code',
                 'schoolClass:id,name,code',
                 'subject:id,name,code',
-                'examType:id,name,code',
             ])
             ->withCount(['questions', 'sections', 'examResults']);
 
@@ -72,16 +70,6 @@ class ExamRepository implements ExamRepositoryInterface
 
         if ($subjectId !== null) {
             $query->where('subject_id', $subjectId);
-        }
-
-        if ($examType !== null && $examType !== 'all') {
-            if (is_numeric($examType)) {
-                $query->where('exam_type_id', (int) $examType);
-            } else {
-                $query->whereHas('examType', function ($q) use ($examType) {
-                    $q->where('code', $examType);
-                });
-            }
         }
 
         if ($status !== null && $status !== 'all') {
@@ -118,7 +106,6 @@ class ExamRepository implements ExamRepositoryInterface
                 'code',
                 'name',
                 'description',
-                'exam_type_id',
                 'duration_minutes',
                 'max_score',
                 'pass_score',
@@ -129,7 +116,6 @@ class ExamRepository implements ExamRepositoryInterface
                 'center:id,name,code',
                 'schoolClass:id,name,code',
                 'subject:id,name,code',
-                'examType:id,name,code',
                 'sections' => function ($sq) {
                     $sq->select(
                         'id',
@@ -474,11 +460,10 @@ class ExamRepository implements ExamRepositoryInterface
     public function getPublishedExamsForDropdown(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection
     {
         $query = Exam::query()
-            ->select('id', 'center_id', 'subject_id', 'name', 'code', 'exam_type_id', 'duration_minutes', 'max_score')
+            ->select('id', 'center_id', 'subject_id', 'name', 'code', 'duration_minutes', 'max_score')
             ->where('status', 'published')
             ->with([
                 'subject:id,name,code',
-                'examType:id,name,code',
                 'sections:id,exam_id,title,description,skill,order_index',
             ]);
 
@@ -504,7 +489,6 @@ class ExamRepository implements ExamRepositoryInterface
             ->with([
                 'center:id,name,code',
                 'subject:id,name,code',
-                'examType:id,name,code',
             ])
             ->withCount(['sections', 'questions']);
 
@@ -530,10 +514,6 @@ class ExamRepository implements ExamRepositoryInterface
 
         if (! empty($filters['subject_id'])) {
             $query->where('subject_id', (int) $filters['subject_id']);
-        }
-
-        if (! empty($filters['exam_type_id'])) {
-            $query->where('exam_type_id', (int) $filters['exam_type_id']);
         }
 
         return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();

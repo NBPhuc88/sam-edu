@@ -30,14 +30,12 @@ interface ExamTypeItem {
 interface Props {
     centers: Center[];
     subjects: Subject[];
-    exam_types?: ExamTypeItem[];
     errors?: Record<string, string>;
 }
 
 export default function ExamCreate({
     centers = [],
     subjects = [],
-    exam_types = [],
     errors = {},
 }: Props) {
     const { auth } = usePage<any>().props;
@@ -52,7 +50,6 @@ export default function ExamCreate({
     const [subjectId, setSubjectId] = useState<string>('');
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
-    const [examTypeId, setExamTypeId] = useState<string>(exam_types[0]?.id ? String(exam_types[0].id) : '');
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
     const [passScore, setPassScore] = useState<number | string>('');
     const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -81,23 +78,12 @@ export default function ExamCreate({
         ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
-    const filteredExamTypes = centerId
-        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(centerId))
-        : exam_types;
-
     // Auto-select subject if only 1 exists
     React.useEffect(() => {
         if (!subjectId && filteredSubjects.length === 1) {
             setSubjectId(String(filteredSubjects[0].id));
         }
     }, [filteredSubjects, subjectId]);
-
-    // Auto-select exam type if empty
-    React.useEffect(() => {
-        if (!examTypeId && filteredExamTypes.length > 0) {
-            setExamTypeId(String(filteredExamTypes[0].id));
-        }
-    }, [filteredExamTypes, examTypeId]);
 
     // Total questions & total score across sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
@@ -128,7 +114,6 @@ export default function ExamCreate({
                 subject_id: subjectId ? Number(subjectId) : null,
                 name: name.trim(),
                 code: code.trim() || null,
-                exam_type_id: examTypeId ? Number(examTypeId) : null,
                 duration_minutes: durationMinutes ? Number(durationMinutes) : null,
                 max_score: calculatedMaxScore,
                 pass_score: passScore ? Number(passScore) : null,
@@ -215,9 +200,6 @@ export default function ExamCreate({
             return `${fieldLabel} của phần ${secNum} không hợp lệ.`;
         }
 
-        if (key === 'exam_type') {
-            return 'Loại bài kiểm tra đã chọn không hợp lệ.';
-        }
         if (key === 'center_id') {
             return 'Vui lòng chọn Trung tâm đào tạo.';
         }
@@ -329,30 +311,6 @@ export default function ExamCreate({
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-
-                            <div>
-                                <label className="mb-2 flex h-6 items-center text-sm font-semibold text-gray-800">
-                                    Loại Đề Thi <span className="text-red-500 ml-1">*</span>
-                                </label>
-                                <select
-                                    value={examTypeId}
-                                    onChange={(e) => setExamTypeId(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required
-                                >
-                                    <option value="">-- Chọn Loại Đề Thi --</option>
-                                    {filteredExamTypes.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name} ({t.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {(errors.exam_type_id || errors.exam_type) && (
-                                    <p className="mt-1.5 text-sm text-red-600">
-                                        {errors.exam_type_id || errors.exam_type}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Exam Name */}

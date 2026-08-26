@@ -8,7 +8,7 @@ export interface DeleteConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: () => void;
-    entity: 'classes' | 'centers' | 'subjects' | 'teachers' | 'students' | 'exams' | 'rooms' | 'exam-types' | string;
+    entity: 'classes' | 'centers' | 'subjects' | 'teachers' | 'students' | 'exams' | 'rooms' | string;
     entityId: number | null;
     entityName: string;
     isDeleting?: boolean;

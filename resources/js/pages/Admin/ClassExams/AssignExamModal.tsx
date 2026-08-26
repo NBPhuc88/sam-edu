@@ -248,13 +248,6 @@ export default function AssignExamModal({
                             <FileCheck className="h-4 w-4 text-blue-600" />
                             <div>
                                 <span className="font-bold text-blue-900">{selectedExamObj.name}</span>
-                                {selectedExamObj.examType?.name ? (
-                                    <span className="text-blue-700 ml-2">({selectedExamObj.examType.name})</span>
-                                ) : selectedExamObj.exam_type ? (
-                                    <span className="text-blue-700 ml-2">
-                                        ({(typeof selectedExamObj.exam_type === 'object' ? (selectedExamObj.exam_type as any)?.name : selectedExamObj.exam_type)?.toUpperCase()})
-                                    </span>
-                                ) : null}
                             </div>
                         </div>
                         <div className="flex items-center gap-3 font-semibold text-blue-800">

@@ -87,13 +87,6 @@ export function useCanUseExams(): boolean {
 }
 
 /**
- * Tiện ích kiểm tra nhanh quyền Quản lý loại đề thi (exam-types).
- */
-export function useCanUseExamTypes(): boolean {
-    return usePlanFeature('exam-types');
-}
-
-/**
  * Tiện ích kiểm tra nhanh quyền Quản lý kỳ thi lớp học (class-exams).
  */
 export function useCanUseClassExams(): boolean {

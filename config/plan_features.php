@@ -23,11 +23,6 @@ return [
             'description'    => 'Quản lý và soạn thảo kho đề thi',
             'route_prefixes' => ['exams.'],
         ],
-        'exam-types' => [
-            'name'           => 'Loại đề thi',
-            'description'    => 'Quản lý danh mục loại đề thi',
-            'route_prefixes' => ['exam-types.'],
-        ],
         'class-exams' => [
             'name'           => 'Kỳ thi lớp học',
             'description'    => 'Giao bài thi và tổ chức thi cho lớp học',
