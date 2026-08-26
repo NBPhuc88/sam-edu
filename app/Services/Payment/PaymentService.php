@@ -42,12 +42,12 @@ class PaymentService implements PaymentServiceInterface
 
         // Create pending payment transaction
         $transaction = $this->paymentTransactionRepository->create([
-            'center_id'        => $center->id,
-            'transaction_code' => $appTransId,
-            'payment_method'   => 'zalopay',
-            'amount'           => $amount,
-            'status'           => 'pending',
-            'metadata'         => [
+            'center_id'      => $center->id,
+            'app_trans_id'   => $appTransId,
+            'payment_method' => 'zalopay',
+            'amount'         => $amount,
+            'status'         => 'pending',
+            'metadata'       => [
                 'app_trans_id' => $appTransId,
                 'plan_code'    => $validated['plan_code'],
             ],

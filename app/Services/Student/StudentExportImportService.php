@@ -55,7 +55,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 (string) $student->parent_name,
                 (string) $student->parent_phone,
                 (string) $student->parent_relationship,
-                (string) $student->status,
+                (string) (is_object($student->status) ? $student->status->value : $student->status),
             ];
         }
     }

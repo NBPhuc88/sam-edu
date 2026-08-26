@@ -16,7 +16,7 @@ return new class () extends Migration {
         });
 
         // Backfill: Any past session without attendance that was 'scheduled' is marked 'unattended'
-        $today = now()->toDateString();
+        $today       = now()->toDateString();
         $currentTime = now()->toTimeString();
 
         DB::table('class_sessions')

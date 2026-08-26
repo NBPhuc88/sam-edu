@@ -9,7 +9,7 @@ class PaymentTransactionRepository implements PaymentTransactionRepositoryInterf
     public function findByTransactionCode(string $appTransId): ?PaymentTransaction
     {
         /** @var PaymentTransaction|null $transaction */
-        $transaction = PaymentTransaction::where('transaction_code', $appTransId)->first();
+        $transaction = PaymentTransaction::where('app_trans_id', $appTransId)->first();
 
         return $transaction;
     }
