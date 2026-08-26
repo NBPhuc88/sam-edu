@@ -107,10 +107,10 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
         $classExamsQuery = ClassExam::query()
             ->where('class_id', $classId)
             ->where('status', '!=', 'cancelled')
-            ->whereDoesntHave('exam.examType', function ($q) {
-                $q->where('code', 'trial')->orWhere('code', 'practice');
+            ->whereDoesntHave('exam', function ($q) {
+                $q->where('is_practice', true);
             })
-            ->with(['exam.subject:id,name,code', 'exam.examType:id,name,code'])
+            ->with(['exam.subject:id,name,code'])
             ->orderBy('exam_date', 'desc')
             ->orderBy('id', 'desc');
 
@@ -256,8 +256,8 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
             $classExamsQuery = ClassExam::query()
                 ->where('class_id', $classId)
                 ->where('status', '!=', 'cancelled')
-                ->whereDoesntHave('exam.examType', function ($q) {
-                    $q->where('code', 'trial')->orWhere('code', 'practice');
+                ->whereDoesntHave('exam', function ($q) {
+                    $q->where('is_practice', true);
                 });
 
             if ($classExamId !== null && $classExamId > 0) {

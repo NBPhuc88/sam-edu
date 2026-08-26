@@ -69,7 +69,6 @@ class PracticeExamService implements PracticeExamServiceInterface
         $exam = Exam::with([
             'center:id,name,code',
             'subject:id,name,code',
-            'examType:id,name,code',
             'sections' => function ($q) {
                 $q->orderBy('order_index');
             },
@@ -132,8 +131,6 @@ class PracticeExamService implements PracticeExamServiceInterface
                 'id'               => $exam->id,
                 'code'             => $exam->code,
                 'name'             => $exam->name,
-                'exam_type_id'     => $exam->exam_type_id,
-                'exam_type'        => $exam->examType?->name ?? $exam->examType?->code ?? 'general',
                 'duration_minutes' => $exam->duration_minutes ?? 45,
                 'max_score'        => (float) $exam->max_score,
                 'pass_score'       => (float) ($exam->pass_score ?? 0),
@@ -399,8 +396,6 @@ class PracticeExamService implements PracticeExamServiceInterface
                 'id'               => $exam->id,
                 'code'             => $exam->code,
                 'name'             => $exam->name,
-                'exam_type_id'     => $exam->exam_type_id,
-                'exam_type'        => $exam->examType?->name ?? $exam->examType?->code ?? 'general',
                 'duration_minutes' => $exam->duration_minutes,
                 'max_score'        => $totalMaxScore,
                 'pass_score'       => (float) ($exam->pass_score ?? ($totalMaxScore * 0.5)),

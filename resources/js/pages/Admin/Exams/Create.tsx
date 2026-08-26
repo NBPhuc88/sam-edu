@@ -20,13 +20,6 @@ import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, ExamSectionData, Subject } from './types';
 
-interface ExamTypeItem {
-    id: number;
-    center_id?: number | null;
-    code: string;
-    name: string;
-}
-
 interface Props {
     centers: Center[];
     subjects: Subject[];
