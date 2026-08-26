@@ -5,15 +5,11 @@ import {
     Search,
     Edit2,
     Trash2,
-    AlertCircle,
-    Filter,
     Clock,
-    Calendar,
     Award,
     Eye,
     HelpCircle,
     CheckCircle2,
-    FileText,
     Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -587,13 +583,12 @@ export default function ExamIndex({
                                         key={idx}
                                         href={link.url || '#'}
                                         preserveState
-                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                            link.active
-                                                ? 'bg-emerald-600 text-white'
-                                                : link.url
+                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${link.active
+                                            ? 'bg-emerald-600 text-white'
+                                            : link.url
                                                 ? 'text-gray-700 hover:bg-gray-100'
                                                 : 'text-gray-300 cursor-not-allowed'
-                                        }`}
+                                            }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
                                 ))}
@@ -637,22 +632,21 @@ export default function ExamIndex({
                                                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-600 font-mono text-2xs font-bold text-white">
                                                     {idx + 1}
                                                 </span>
-                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${
-                                                    q.skill === 'listening'
-                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                        : q.skill === 'writing'
-                                                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                          : q.skill === 'speaking'
+                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${q.skill === 'listening'
+                                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                    : q.skill === 'writing'
+                                                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                        : q.skill === 'speaking'
                                                             ? 'bg-pink-50 text-pink-700 border border-pink-200'
                                                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                                }`}>
+                                                    }`}>
                                                     {q.skill === 'listening'
                                                         ? '🎧 Nghe'
                                                         : q.skill === 'writing'
-                                                          ? '✍️ Viết'
-                                                          : q.skill === 'speaking'
-                                                            ? '🗣️ Nói'
-                                                            : '📖 Đọc'}
+                                                            ? '✍️ Viết'
+                                                            : q.skill === 'speaking'
+                                                                ? '🗣️ Nói'
+                                                                : '📖 Đọc'}
                                                 </span>
                                                 <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold border ${typeMeta.badgeColor}`}>
                                                     {typeMeta.label}
