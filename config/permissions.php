@@ -179,17 +179,6 @@ return [
             ],
         ],
         [
-            'key'          => 'exam-types',
-            'name'         => 'Loại Đề Thi',
-            'module_order' => 15,
-            'actions'      => [
-                ['code' => 'exam-types.index', 'action' => 'index', 'name' => 'Xem danh sách loại đề', 'description' => 'Xem danh mục loại đề thi'],
-                ['code' => 'exam-types.create', 'action' => 'create', 'name' => 'Thêm loại đề thi', 'description' => 'Tạo mới loại đề thi'],
-                ['code' => 'exam-types.edit', 'action' => 'edit', 'name' => 'Chỉnh sửa loại đề thi', 'description' => 'Cập nhật loại đề thi'],
-                ['code' => 'exam-types.delete', 'action' => 'delete', 'name' => 'Xóa loại đề thi', 'description' => 'Xóa loại đề thi'],
-            ],
-        ],
-        [
             'key'          => 'class-exams',
             'name'         => 'Kỳ Thi Lớp & Chấm Điểm',
             'module_order' => 16,

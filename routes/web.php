@@ -14,7 +14,6 @@ use App\Http\Controllers\ClassSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeleteImpactController;
 use App\Http\Controllers\ExamController;
-use App\Http\Controllers\ExamTypeController;
 use App\Http\Controllers\GradingController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
@@ -319,16 +318,6 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::get('/{id}/edit', [ExamController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [ExamController::class, 'update'])->name('update');
         Route::delete('/{id}', [ExamController::class, 'destroy'])->name('destroy');
-    });
-
-    // Exam Types Management Routes (CRUD)
-    Route::prefix('exam-types')->name('exam-types.')->group(function () {
-        Route::get('/', [ExamTypeController::class, 'index'])->name('index');
-        Route::get('/create', [ExamTypeController::class, 'create'])->name('create');
-        Route::post('/', [ExamTypeController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [ExamTypeController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [ExamTypeController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ExamTypeController::class, 'destroy'])->name('destroy');
     });
 
     // Class Exam Management Routes (Assign Exam to Class)

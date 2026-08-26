@@ -13,7 +13,7 @@ beforeEach(function () {
     Artisan::call('db:seed', ['--class' => 'PermissionSeeder']);
 });
 
-test('basic plan center can access exams, exam types, class exams, and grading', function () {
+test('basic plan center can access exams, class exams, and grading', function () {
     $center = Center::create([
         'code'              => 'CTR-TEST-BASIC-EXAM',
         'name'              => 'Trung tâm Test Basic Exam',
@@ -37,10 +37,6 @@ test('basic plan center can access exams, exam types, class exams, and grading',
     // Truy cập kho đề thi -> Cho phép (200 OK)
     $examsResponse = $this->actingAs($admin, 'admin')->get(route('exams.index'));
     $examsResponse->assertOk();
-
-    // Truy cập loại đề thi -> Cho phép (200 OK)
-    $examTypesResponse = $this->actingAs($admin, 'admin')->get(route('exam-types.index'));
-    $examTypesResponse->assertOk();
 
     // Truy cập kỳ thi lớp học -> Cho phép (200 OK)
     $classExamsResponse = $this->actingAs($admin, 'admin')->get(route('class-exams.index'));

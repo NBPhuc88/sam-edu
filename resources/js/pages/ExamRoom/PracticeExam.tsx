@@ -60,7 +60,6 @@ interface PracticeExamData {
     id: number;
     code: string;
     name: string;
-    exam_type: string;
     duration_minutes: number;
     max_score: number;
     pass_score: number;

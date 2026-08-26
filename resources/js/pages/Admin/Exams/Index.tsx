@@ -30,19 +30,12 @@ import AssignExamModal from '../ClassExams/AssignExamModal';
 import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
-interface ExamTypeOption {
-    id: number;
-    name: string;
-    code: string;
-    center_id?: number | null;
-}
 
 interface Props {
     exams: PaginatedData<Exam>;
     centers: Center[];
     classes: SchoolClass[];
     subjects: Subject[];
-    exam_types?: ExamTypeOption[];
     all_exams?: Exam[];
     stats?: {
         total: number;
@@ -55,8 +48,6 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         subject_id?: number | null;
-        exam_type_id?: number | string | null;
-        exam_type?: string;
         status?: string;
     };
 }
@@ -66,7 +57,6 @@ export default function ExamIndex({
     centers = [],
     classes = [],
     subjects = [],
-    exam_types = [],
     all_exams = [],
     stats,
     filters,
@@ -84,9 +74,6 @@ export default function ExamIndex({
     );
     const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
         filters.subject_id ? String(filters.subject_id) : '',
-    );
-    const [selectedExamType, setSelectedExamType] = useState<string>(
-        filters.exam_type_id ? String(filters.exam_type_id) : (filters.exam_type || 'all'),
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
@@ -125,10 +112,6 @@ export default function ExamIndex({
         ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
         : subjects;
 
-    const filteredExamTypes = selectedCenterId
-        ? exam_types.filter((t) => !t.center_id || String(t.center_id) === String(selectedCenterId))
-        : exam_types;
-
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
@@ -138,7 +121,6 @@ export default function ExamIndex({
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
                 subject_id: selectedSubjectId || undefined,
-                exam_type_id: selectedExamType !== 'all' ? selectedExamType : undefined,
                 status: selectedStatus !== 'all' ? selectedStatus : undefined,
             },
             { preserveState: true },
@@ -150,7 +132,6 @@ export default function ExamIndex({
         setSelectedCenterId('');
         setSelectedClassId('');
         setSelectedSubjectId('');
-        setSelectedExamType('all');
         setSelectedStatus('all');
         router.get('/exams');
     };
@@ -160,15 +141,21 @@ export default function ExamIndex({
         setDeleteModalOpen(true);
     };
 
-    const confirmDelete = () => {
-        if (!deletingExam) return;
+    const closeDeleteModal = () => {
+        setDeletingExam(null);
+        setDeleteModalOpen(false);
+    };
 
+    const confirmDeleteExam = () => {
+        if (!deletingExam) return;
         setIsDeleting(true);
         router.delete(`/exams/${deletingExam.id}`, {
-            onFinish: () => {
+            onSuccess: () => {
+                closeDeleteModal();
                 setIsDeleting(false);
-                setDeleteModalOpen(false);
-                setDeletingExam(null);
+            },
+            onError: () => {
+                setIsDeleting(false);
             },
         });
     };
@@ -186,7 +173,7 @@ export default function ExamIndex({
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'published':
-                return <Badge variant="active" className="whitespace-nowrap">Đã xuất bản</Badge>;
+                return <Badge variant="active" className="whitespace-nowrap">Đã công bố</Badge>;
             case 'draft':
                 return <Badge variant="pending" className="whitespace-nowrap">Bản nháp</Badge>;
             case 'completed':
@@ -196,25 +183,6 @@ export default function ExamIndex({
             default:
                 return <Badge variant="info" className="whitespace-nowrap">{status}</Badge>;
         }
-    };
-
-    const getExamTypeBadge = (exam: Exam) => {
-        const typeName = exam.examType?.name || (typeof exam.exam_type === 'object' ? exam.exam_type?.name : exam.exam_type) || 'Chung';
-        const typeCode = (exam.examType?.code || (typeof exam.exam_type === 'object' ? exam.exam_type?.code : exam.exam_type) || '').toLowerCase();
-
-        let badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
-        if (typeCode === 'ielts') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-        else if (typeCode === 'hsk') badgeClass = 'bg-red-50 text-red-700 border-red-200';
-        else if (typeCode === 'toeic') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
-        else if (typeCode === 'custom') badgeClass = 'bg-teal-50 text-teal-700 border-teal-200';
-
-        return (
-            <Tooltip content={typeName}>
-                <span className={`inline-block max-w-[150px] truncate rounded-md px-2.5 py-1 text-2xs font-bold border align-middle ${badgeClass}`}>
-                    {typeName}
-                </span>
-            </Tooltip>
-        );
     };
 
     return (
@@ -388,24 +356,6 @@ export default function ExamIndex({
                                     ]}
                                 />
                             </div>
-
-                            {/* Exam Type Filter */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                    Loại Đề Thi
-                                </label>
-                                <ScrollableSelect
-                                    value={selectedExamType}
-                                    onChange={(val) => setSelectedExamType(val)}
-                                    options={[
-                                        { value: 'all', label: 'Tất cả loại đề' },
-                                        ...filteredExamTypes.map((t) => ({
-                                            value: String(t.id),
-                                            label: `${t.name} (${t.code})`,
-                                        })),
-                                    ]}
-                                />
-                            </div>
                         </div>
 
                         <div className="flex items-center justify-end gap-2.5 border-t border-gray-100 pt-4">
@@ -438,7 +388,6 @@ export default function ExamIndex({
                                     <th className="w-12 text-center">STT</th>
                                     <th className="w-32">Mã Đề</th>
                                     <th>Tên Đề Thi & Môn Học</th>
-                                    <th className="w-36 text-center">Loại Đề Thi</th>
                                     <th className="w-36">Thời Lượng & Số Câu</th>
                                     <th className="w-28">Điểm Tối Đa</th>
                                     <th className="w-28 text-center">Trạng Thái</th>
@@ -450,7 +399,7 @@ export default function ExamIndex({
                             <tbody>
                                 {exams.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={can('exams.edit') || can('exams.delete') || can('class-exams.create') ? 8 : 7} className="py-12 text-center text-gray-500">
+                                        <td colSpan={can('exams.edit') || can('exams.delete') || can('class-exams.create') ? 7 : 6} className="py-12 text-center text-gray-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileCheck className="h-10 w-10 text-gray-300" />
                                                 <p className="mt-3 font-semibold text-gray-700">
@@ -525,11 +474,6 @@ export default function ExamIndex({
                                                             className="text-2xs text-gray-400"
                                                         />
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="text-center">
-                                                <div className="inline-flex justify-center">
-                                                    {getExamTypeBadge(exam)}
                                                 </div>
                                             </td>
                                             <td>
@@ -752,7 +696,7 @@ export default function ExamIndex({
             <DeleteConfirmModal
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
-                onConfirm={confirmDelete}
+                onConfirm={confirmDeleteExam}
                 entity="exams"
                 entityId={deletingExam?.id || null}
                 entityName={`đề thi "${deletingExam?.name}" (${deletingExam?.code})`}

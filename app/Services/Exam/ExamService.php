@@ -10,7 +10,6 @@ use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
-use App\Repositories\ExamType\ExamTypeRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
 use App\Services\Media\MediaUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -25,7 +24,6 @@ class ExamService implements ExamServiceInterface
         protected CenterRepositoryInterface $centerRepository,
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected SubjectRepositoryInterface $subjectRepository,
-        protected ExamTypeRepositoryInterface $examTypeRepository,
         protected MediaUploadServiceInterface $mediaUploadService
     ) {
     }
@@ -116,27 +114,23 @@ class ExamService implements ExamServiceInterface
             $centerId = (int) $user->center_id;
 
             // Giáo viên chỉ chọn được các môn học mình đang dạy thuộc trung tâm
-            $subjects  = $this->subjectRepository->getTaughtSubjectsByTeacher($user->id, $centerId);
-            $examTypes = $this->examTypeRepository->getByCenterOnly($centerId);
+            $subjects = $this->subjectRepository->getTaughtSubjectsByTeacher($user->id, $centerId);
 
             return [
-                'centers'    => $this->centerRepository->getByIds([$centerId], ['id', 'name', 'code']),
-                'classes'    => $this->schoolClassRepository->getClassesByCenterIds([$centerId]),
-                'subjects'   => $subjects,
-                'exam_types' => $examTypes,
-                'exams'      => $this->examRepository->getPublishedExamsForDropdown([$centerId]),
+                'centers'  => $this->centerRepository->getByIds([$centerId], ['id', 'name', 'code']),
+                'classes'  => $this->schoolClassRepository->getClassesByCenterIds([$centerId]),
+                'subjects' => $subjects,
+                'exams'    => $this->examRepository->getPublishedExamsForDropdown([$centerId]),
             ];
         }
 
-        $subjects  = $this->subjectRepository->getByCenterIds($allowedCenterIds);
-        $examTypes = $this->examTypeRepository->getAllActive($allowedCenterIds);
+        $subjects = $this->subjectRepository->getByCenterIds($allowedCenterIds);
 
         return [
-            'centers'    => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
-            'classes'    => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
-            'subjects'   => $subjects,
-            'exam_types' => $examTypes,
-            'exams'      => $this->examRepository->getPublishedExamsForDropdown($allowedCenterIds),
+            'centers'  => $allowedCenterIds !== null ? $this->centerRepository->getByIds($allowedCenterIds, ['id', 'name', 'code']) : $this->centerRepository->getActiveCenters(),
+            'classes'  => $this->schoolClassRepository->getClassesByCenterIds($allowedCenterIds),
+            'subjects' => $subjects,
+            'exams'    => $this->examRepository->getPublishedExamsForDropdown($allowedCenterIds),
         ];
     }
 
@@ -188,7 +182,6 @@ class ExamService implements ExamServiceInterface
             'class_id'              => ! empty($data['class_id']) ? (int) $data['class_id'] : null,
             'name'                  => trim($data['name']),
             'code'                  => $code,
-            'exam_type_id'          => ! empty($data['exam_type_id']) ? (int) $data['exam_type_id'] : null,
             'description'           => $data['description'] ?? null,
             'duration_minutes'      => (int) ($data['duration_minutes'] ?? Constant::DEFAULT_EXAM_DURATION_MINUTES),
             'max_score'             => (float) ($data['max_score'] ?? Constant::DEFAULT_EXAM_MAX_SCORE),
@@ -212,7 +205,7 @@ class ExamService implements ExamServiceInterface
                 $this->examRepository->syncQuestions($exam, $data['questions']);
             }
 
-            return $exam->fresh(['subject', 'examType', 'sections.questions']);
+            return $exam->fresh(['subject', 'sections.questions']);
         });
     }
 
@@ -247,7 +240,6 @@ class ExamService implements ExamServiceInterface
             'class_id'          => array_key_exists('class_id', $data) ? ($data['class_id'] ? (int) $data['class_id'] : null) : $exam->class_id,
             'name'              => isset($data['name']) ? trim($data['name']) : $exam->name,
             'code'              => $code,
-            'exam_type_id'      => isset($data['exam_type_id']) ? (int) $data['exam_type_id'] : $exam->exam_type_id,
             'description'       => array_key_exists('description', $data) ? $data['description'] : $exam->description,
             'duration_minutes'  => isset($data['duration_minutes']) ? (int) $data['duration_minutes'] : $exam->duration_minutes,
             'max_score'         => isset($data['max_score']) ? (float) $data['max_score'] : $exam->max_score,
@@ -269,7 +261,7 @@ class ExamService implements ExamServiceInterface
                 $this->examRepository->syncQuestions($updated, $data['questions']);
             }
 
-            return $updated->fresh(['subject', 'examType', 'sections.questions']);
+            return $updated->fresh(['subject', 'sections.questions']);
         });
     }
 

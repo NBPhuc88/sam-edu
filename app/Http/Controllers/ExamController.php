@@ -37,22 +37,21 @@ class ExamController extends Controller
 
     public function index(FilterExamRequest $request): InertiaResponse
     {
-        $user       = $this->getAuthUser();
-        $search     = $request->input('search');
-        $centerId   = $request->input('center_id') ? (int) $request->input('center_id') : null;
-        $classId    = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $subjectId  = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
-        $examTypeId = $request->input('exam_type_id') ?? $request->input('exam_type');
-        $status     = $request->input('status');
-        $page       = $request->integer('page', 1);
-        $perPage    = $request->integer('per_page', config('app.pagination_per_page', 15));
+        $user      = $this->getAuthUser();
+        $search    = $request->input('search');
+        $centerId  = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        $classId   = $request->input('class_id') ? (int) $request->input('class_id') : null;
+        $subjectId = $request->input('subject_id') ? (int) $request->input('subject_id') : null;
+        $status    = $request->input('status');
+        $page      = $request->integer('page', 1);
+        $perPage   = $request->integer('per_page', config('app.pagination_per_page', 15));
 
         $exams = $this->examService->getPaginatedExams(
             is_string($search) ? $search : null,
             $centerId,
             $classId,
             $subjectId,
-            $examTypeId,
+            null,
             is_string($status) ? $status : null,
             $perPage,
             $page,
@@ -62,22 +61,19 @@ class ExamController extends Controller
         $stats    = $this->examService->getStats($user);
 
         return Inertia::render('Admin/Exams/Index', [
-            'exams'      => $exams,
-            'centers'    => $formData['centers'],
-            'classes'    => $formData['classes'],
-            'subjects'   => $formData['subjects'],
-            'exam_types' => $formData['exam_types'],
-            'all_exams'  => $formData['exams'] ?? [],
-            'stats'      => $stats,
-            'filters'    => [
-                'search'       => $search ?? '',
-                'center_id'    => $centerId,
-                'class_id'     => $classId,
-                'subject_id'   => $subjectId,
-                'exam_type_id' => $examTypeId ?? 'all',
-                'exam_type'    => $examTypeId ?? 'all',
-                'status'       => $status ?? 'all',
-                'per_page'     => $perPage,
+            'exams'     => $exams,
+            'centers'   => $formData['centers'],
+            'classes'   => $formData['classes'],
+            'subjects'  => $formData['subjects'],
+            'all_exams' => $formData['exams'] ?? [],
+            'stats'     => $stats,
+            'filters'   => [
+                'search'     => $search ?? '',
+                'center_id'  => $centerId,
+                'class_id'   => $classId,
+                'subject_id' => $subjectId,
+                'status'     => $status ?? 'all',
+                'per_page'   => $perPage,
             ],
         ]);
     }
@@ -88,10 +84,9 @@ class ExamController extends Controller
         $formData = $this->examService->getFormData($user);
 
         return Inertia::render('Admin/Exams/Create', [
-            'centers'    => $formData['centers'],
-            'classes'    => $formData['classes'],
-            'subjects'   => $formData['subjects'],
-            'exam_types' => $formData['exam_types'],
+            'centers'  => $formData['centers'],
+            'classes'  => $formData['classes'],
+            'subjects' => $formData['subjects'],
         ]);
     }
 
@@ -111,11 +106,10 @@ class ExamController extends Controller
         $formData = $this->examService->getFormData($user);
 
         return Inertia::render('Admin/Exams/Edit', [
-            'exam'       => $exam,
-            'centers'    => $formData['centers'],
-            'classes'    => $formData['classes'],
-            'subjects'   => $formData['subjects'],
-            'exam_types' => $formData['exam_types'],
+            'exam'     => $exam,
+            'centers'  => $formData['centers'],
+            'classes'  => $formData['classes'],
+            'subjects' => $formData['subjects'],
         ]);
     }
 

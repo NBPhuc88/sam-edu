@@ -34,7 +34,6 @@ class PermissionSeeder extends Seeder
                 'schedules.index', 'schedules.create', 'schedules.edit', 'schedules.delete',
                 'sessions.index', 'sessions.edit', 'attendance.index', 'attendance.save',
                 'exams.index', 'exams.create', 'exams.edit', 'exams.delete',
-                'exam-types.index', 'exam-types.create', 'exam-types.edit', 'exam-types.delete',
                 'class-exams.index', 'class-exams.create', 'class-exams.edit', 'class-exams.delete',
                 'grading.index', 'grading.create', 'grading.grade',
                 'online-exam.enter', 'practice-exams.index',

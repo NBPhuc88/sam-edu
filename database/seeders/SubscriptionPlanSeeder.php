@@ -25,7 +25,6 @@ class SubscriptionPlanSeeder extends Seeder
             'rooms',
             'tuitions',
             'exams',
-            'exam-types',
             'class-exams',
             'grading',
         ];

@@ -5,7 +5,6 @@ use App\Models\Center;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\ExamSection;
-use App\Models\ExamType;
 use App\Models\Subject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -39,17 +38,9 @@ test('admin can update exam basic info and sections', function () {
         'status'           => 'active',
     ]);
 
-    $examType = ExamType::create([
-        'center_id' => $center->id,
-        'code'      => 'general',
-        'name'      => 'Đề Thi Chung',
-        'status'    => 'active',
-    ]);
-
     $exam = Exam::create([
         'center_id'        => $center->id,
         'subject_id'       => $subject->id,
-        'exam_type_id'     => $examType->id,
         'code'             => 'EX000000088',
         'name'             => 'Đề Thi Gốc',
         'duration_minutes' => 45,
@@ -77,7 +68,6 @@ test('admin can update exam basic info and sections', function () {
         'code'             => 'EX000000088',
         'center_id'        => $center->id,
         'subject_id'       => $subject->id,
-        'exam_type_id'     => $examType->id,
         'duration_minutes' => 60,
         'max_score'        => 10,
         'pass_score'       => 5,

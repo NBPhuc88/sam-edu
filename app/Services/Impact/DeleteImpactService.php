@@ -5,7 +5,6 @@ namespace App\Services\Impact;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
-use App\Repositories\ExamType\ExamTypeRepositoryInterface;
 use App\Repositories\Room\RoomRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Subject\SubjectRepositoryInterface;
@@ -23,7 +22,6 @@ class DeleteImpactService implements DeleteImpactServiceInterface
         protected StudentRepositoryInterface $studentRepository,
         protected ExamRepositoryInterface $examRepository,
         protected RoomRepositoryInterface $roomRepository,
-        protected ExamTypeRepositoryInterface $examTypeRepository,
         protected StudentTuitionRepositoryInterface $studentTuitionRepository
     ) {
     }
@@ -279,22 +277,6 @@ class DeleteImpactService implements DeleteImpactServiceInterface
 
                 if ($sessionCount > 0) {
                     $impacts[] = "Gỡ phòng học khỏi {$sessionCount} ca học đã xếp lịch";
-                }
-
-                break;
-
-            case 'exam-types':
-                $examType = $this->examTypeRepository->find($id);
-
-                if (! $examType) {
-                    return ['error' => 'Loại đề thi không tồn tại', 'status' => 404];
-                }
-                $title = "Loại đề thi: {$examType->name} ({$examType->code})";
-
-                $examCount = DB::table('exams')->where('exam_type_id', $id)->whereNull('deleted_at')->count();
-
-                if ($examCount > 0) {
-                    $impacts[] = "Hủy liên kết loại đề thi ở {$examCount} bài kiểm tra";
                 }
 
                 break;

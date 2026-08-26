@@ -19,7 +19,6 @@ use App\Models\ExamQuestion;
 use App\Models\ExamResult;
 use App\Models\ExamResultHistory;
 use App\Models\ExamSection;
-use App\Models\ExamType;
 use App\Models\Holiday;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
@@ -383,9 +382,6 @@ class ComprehensiveSampleDataSeeder extends Seeder
             ]
         );
 
-        // D. Tạo ExamTypes cho Trung tâm
-        $examTypes = $this->createExamTypesForCenter($center);
-
         // E. Tạo Phòng học & Thiết bị
         $rooms = $this->createRoomsForCenter($center, $config['rooms']);
 
@@ -442,7 +438,6 @@ class ComprehensiveSampleDataSeeder extends Seeder
             $teachers,
             $classes,
             $students,
-            $examTypes,
             $subAdmin
         );
 
@@ -453,37 +448,6 @@ class ComprehensiveSampleDataSeeder extends Seeder
         $this->createStudentNotesAndDocs($center, $teachers, $students, $subAdmin);
 
         return $center;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXAM TYPES CHO TRUNG TÂM
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * @return array<string, ExamType>
-     * @param  Center                  $center
-     */
-    private function createExamTypesForCenter(Center $center): array
-    {
-        $templates = ExamTypeSeeder::getDefaultExamTypes();
-        $results   = [];
-
-        foreach ($templates as $t) {
-            $examType = ExamType::updateOrCreate(
-                [
-                    'center_id' => $center->id,
-                    'code'      => $t['code'],
-                ],
-                [
-                    'name'        => $t['name'],
-                    'description' => $t['description'],
-                    'status'      => $t['status'],
-                ]
-            );
-            $results[$t['code']] = $examType;
-        }
-
-        return $results;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1310,19 +1274,14 @@ class ComprehensiveSampleDataSeeder extends Seeder
         array $teachers,
         array $classes,
         array $students,
-        array $examTypes,
         Admin $subAdmin
     ): void {
-        $generalType = $examTypes['general'] ?? ExamType::first();
-        $ieltsType   = $examTypes['ielts'] ?? $generalType;
-
         // 1. Tạo Đề Thi Thử Mẫu (Practice Exam 4 Kỹ Năng)
         $practiceExam = Exam::updateOrCreate(
             ['code' => sprintf('EX%09d', ($center->id * 100) + 1)],
             [
                 'center_id'         => $center->id,
                 'subject_id'        => $subjects[0]->id,
-                'exam_type_id'      => $ieltsType->id,
                 'name'              => "Đề Thi Thử Chuẩn Hóa Quốc Tế Test 01 - {$center->name}",
                 'duration_minutes'  => 60,
                 'max_score'         => 30,
@@ -1344,7 +1303,6 @@ class ComprehensiveSampleDataSeeder extends Seeder
             [
                 'center_id'         => $center->id,
                 'subject_id'        => $subjects[0]->id,
-                'exam_type_id'      => $examTypes['midterm']->id ?? $generalType->id,
                 'name'              => "Bài Kiểm Tra Giữa Kỳ - {$classes[0]->name}",
                 'duration_minutes'  => 45,
                 'max_score'         => 10,
@@ -1866,7 +1824,6 @@ class ComprehensiveSampleDataSeeder extends Seeder
         $this->command->info(' - Lượt điểm danh (Attendances): ' . DB::table('attendances')->count());
         $this->command->info(' - Tin nhắn chat (ClassChatMessages): ' . ClassChatMessage::count());
         $this->command->info(' - Cảm xúc chat (ClassChatMessageReactions): ' . ClassChatMessageReaction::count());
-        $this->command->info(' - Loại đề thi (ExamTypes): ' . ExamType::count());
         $this->command->info(' - Ngân hàng đề thi (Exams): ' . Exam::count());
         $this->command->info(' - Phần thi & Câu hỏi (ExamQuestions): ' . ExamQuestion::count());
         $this->command->info(' - Kỳ thi lớp học (ClassExams): ' . ClassExam::count());

@@ -71,7 +71,6 @@ export interface Exam {
     id: number;
     name: string;
     code: string;
-    exam_type: string;
     duration_minutes: number;
     max_score: number;
     pass_score?: number | null;

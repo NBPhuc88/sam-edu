@@ -111,7 +111,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Media\MediaUploadServiceInterface::class, \App\Services\Media\MediaUploadService::class);
         $this->app->bind(\App\Services\Holiday\HolidayServiceInterface::class, \App\Services\Holiday\HolidayService::class);
         $this->app->bind(\App\Services\Grading\GradingServiceInterface::class, \App\Services\Grading\GradingService::class);
-        $this->app->bind(\App\Services\ExamType\ExamTypeServiceInterface::class, \App\Services\ExamType\ExamTypeService::class);
         $this->app->bind(\App\Services\Permission\PermissionServiceInterface::class, \App\Services\Permission\PermissionService::class);
         $this->app->bind(\App\Services\Profile\ProfileServiceInterface::class, \App\Services\Profile\ProfileService::class);
         $this->app->bind(\App\Services\Impact\DeleteImpactServiceInterface::class, \App\Services\Impact\DeleteImpactService::class);
@@ -145,7 +144,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\ClassExam\ClassExamRepositoryInterface::class, \App\Repositories\ClassExam\ClassExamRepository::class);
         $this->app->bind(\App\Repositories\Holiday\HolidayRepositoryInterface::class, \App\Repositories\Holiday\HolidayRepository::class);
         $this->app->bind(\App\Repositories\Grading\GradingRepositoryInterface::class, \App\Repositories\Grading\GradingRepository::class);
-        $this->app->bind(\App\Repositories\ExamType\ExamTypeRepositoryInterface::class, \App\Repositories\ExamType\ExamTypeRepository::class);
         $this->app->bind(\App\Repositories\Permission\PermissionRepositoryInterface::class, \App\Repositories\Permission\PermissionRepository::class);
     }
 
