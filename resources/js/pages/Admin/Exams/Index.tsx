@@ -431,20 +431,18 @@ export default function ExamIndex({
                                             </td>
                                             <td>
                                                 <div className="space-y-1 py-1 max-w-sm">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <TruncatedText
-                                                            text={exam.name}
-                                                            maxLines={2}
-                                                            className="font-bold text-gray-900 text-sm leading-snug"
-                                                        />
+                                                    <TruncatedText
+                                                        text={exam.name}
+                                                        maxLines={2}
+                                                        className="font-bold text-gray-900 text-sm leading-snug"
+                                                    />
+                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-600 flex-wrap">
                                                         {exam.is_practice && (
                                                             <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-2xs font-bold text-blue-700 border border-blue-200 shrink-0">
                                                                 <Award className="h-3 w-3 text-blue-600" />
                                                                 Thi Thử
                                                             </span>
                                                         )}
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-2xs text-gray-600 flex-wrap">
                                                         {exam.subject && (
                                                             <Tooltip content={`Môn: ${exam.subject.name}`}>
                                                                 <span className="rounded-md bg-purple-50 px-2 py-0.5 text-purple-700 font-semibold border border-purple-200/60 inline-block max-w-[200px] truncate align-middle">
