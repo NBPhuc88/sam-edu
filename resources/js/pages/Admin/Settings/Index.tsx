@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Building2,
     Globe,
@@ -20,6 +20,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { MediaUploader } from '@/components/ui/MediaUploader';
 import AppLayout from '@/layouts/AppLayout';
+import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 
 interface SeoItem {
     id?: number;
@@ -63,6 +64,8 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
     const { flash } = usePage<any>().props;
     const [activeTab, setActiveTab] = useState<'company' | 'homepage' | 'seo'>('company');
     const [selectedSeoRoute, setSelectedSeoRoute] = useState<string>('home');
+    const [isSaving, setIsSaving] = useState(false);
+    const [uploadProgressText, setUploadProgressText] = useState<string | null>(null);
 
     // Khởi tạo map SEO theo route_name để dễ quản lý state
     const initialSeoMap: Record<string, SeoItem> = {};
@@ -108,11 +111,39 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/settings', {
-            preserveScroll: true,
-        });
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) {
+            e.preventDefault();
+        }
+        if (isSaving || processing) return;
+
+        setIsSaving(true);
+        setUploadProgressText(null);
+
+        try {
+            const cleanData = await uploadPendingMediaInObject(
+                data,
+                (completed, total) => {
+                    setUploadProgressText(`Đang tải ảnh lên (${completed}/${total})...`);
+                }
+            );
+            setUploadProgressText(null);
+
+            router.post('/settings', cleanData as any, {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsSaving(false);
+                    setUploadProgressText(null);
+                },
+                onError: () => {
+                    setIsSaving(false);
+                    setUploadProgressText(null);
+                },
+            });
+        } catch (err) {
+            setIsSaving(false);
+            setUploadProgressText(null);
+        }
     };
 
     const activeSeoItem = data.seo[selectedSeoRoute] || {
@@ -123,6 +154,8 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         og_image: '',
         canonical_url: '',
     };
+
+    const isBusy = isSaving || processing;
 
     return (
         <AppLayout>
@@ -146,12 +179,12 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         <Button
                             type="button"
                             variant="success"
-                            onClick={handleSubmit}
-                            disabled={processing}
+                            onClick={() => handleSubmit()}
+                            disabled={isBusy}
                             className="flex items-center gap-2 shadow-sm"
                         >
                             <Save className="h-4 w-4" />
-                            {processing ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                            {uploadProgressText || (isBusy ? 'Đang lưu...' : 'Lưu Thay Đổi')}
                         </Button>
                     }
                 />
@@ -495,6 +528,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                         objectType="seo"
                                         objectId={selectedSeoRoute}
                                         folder="seo/og_images"
+                                        saveHint="khi lưu cài đặt"
                                         placeholder="Chọn tải ảnh lên từ máy hoặc dán link URL..."
                                     />
 
@@ -515,11 +549,11 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         <Button
                             type="submit"
                             variant="success"
-                            disabled={processing}
+                            disabled={isBusy}
                             className="flex items-center gap-2 shadow-sm px-6 py-2.5"
                         >
                             <Save className="h-4 w-4" />
-                            {processing ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt'}
+                            {uploadProgressText || (isBusy ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt')}
                         </Button>
                     </div>
                 </form>

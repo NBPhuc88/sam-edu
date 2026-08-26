@@ -13,6 +13,7 @@ interface MediaUploaderProps {
     accept?: string;
     label?: string;
     placeholder?: string;
+    saveHint?: string;
     className?: string;
     compact?: boolean;
 }
@@ -27,6 +28,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
     accept = 'image/*',
     label = 'Hình ảnh minh họa',
     placeholder = 'Dán đường dẫn URL file hoặc chọn tải lên từ máy...',
+    saveHint = 'khi bấm Lưu',
     className = '',
     compact = false,
 }) => {
@@ -238,7 +240,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                         : 'Nhấp để chọn file hoặc kéo thả ảnh vào đây'}
                                 </p>
                                 <p className="text-2xs text-gray-400">
-                                    File sẽ được tự động tải lên máy chủ khi bạn bấm Lưu đề thi
+                                    File sẽ được tự động tải lên máy chủ {saveHint}
                                 </p>
                             </div>
                         </div>
@@ -291,7 +293,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                             </div>
                             <span className="text-2xs text-gray-500 truncate block max-w-sm font-mono mt-0.5" title={displayUrl}>
                                 {isBlob
-                                    ? (isAudio ? 'Audio sẽ được tải lên khi lưu đề thi' : 'Ảnh sẽ được tải lên khi lưu đề thi')
+                                    ? (isAudio ? `Audio sẽ được tải lên ${saveHint}` : `Ảnh sẽ được tải lên ${saveHint}`)
                                     : displayUrl}
                             </span>
                             {isAudio && (
