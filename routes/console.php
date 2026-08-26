@@ -33,3 +33,14 @@ Schedule::command('class-exams:update-status')
 Schedule::command('logs:clean-old')
     ->monthlyOn(1, '00:00')
     ->withoutOverlapping();
+
+$centersExpiredLogDir = storage_path('logs/centers-expired/' . date('Y-m'));
+
+if (! is_dir($centersExpiredLogDir)) {
+    @mkdir($centersExpiredLogDir, 0755, true);
+}
+
+Schedule::command('centers:deactivate-expired')
+    ->dailyAt('23:00')
+    ->withoutOverlapping()
+    ->appendOutputTo($centersExpiredLogDir . '/' . (int) date('j') . '.log');

@@ -120,4 +120,15 @@ class CenterService implements CenterServiceInterface
     {
         return $this->subscriptionPlanRepository->getAllOrderedByPrice();
     }
+
+    public function deactivateExpiredCenters(): int
+    {
+        $count = $this->centerRepository->markExpiredCenters();
+
+        if ($count > 0) {
+            Log::info("Đã chuyển {$count} trung tâm hết hạn sang trạng thái expired.");
+        }
+
+        return $count;
+    }
 }

@@ -306,4 +306,12 @@ class CenterRepository implements CenterRepositoryInterface
             ->whereMonth('created_at', $month)
             ->count();
     }
+
+    public function markExpiredCenters(): int
+    {
+        return Center::whereIn('status', [Constant::CENTER_STATUS_ACTIVE, Constant::CENTER_STATUS_TRIAL])
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', now())
+            ->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+    }
 }

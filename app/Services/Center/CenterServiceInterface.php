@@ -46,4 +46,11 @@ interface CenterServiceInterface
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getSubscriptionPlans(): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * Tự động chuyển trạng thái các trung tâm hết hạn sang expired.
+     *
+     * @return int Số trung tâm đã cập nhật
+     */
+    public function deactivateExpiredCenters(): int;
 }

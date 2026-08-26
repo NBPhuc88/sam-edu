@@ -97,4 +97,11 @@ interface CenterRepositoryInterface
     public function getByIdsCollection(array $ids): \Illuminate\Database\Eloquent\Collection;
 
     public function countInYearMonth(int $year, int $month): int;
+
+    /**
+     * Chuyển trạng thái tất cả trung tâm đã hết hạn (expires_at <= now) mà vẫn đang active/trial sang expired.
+     *
+     * @return int Số trung tâm đã cập nhật
+     */
+    public function markExpiredCenters(): int;
 }
