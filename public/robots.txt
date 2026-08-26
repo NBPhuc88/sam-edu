@@ -3,11 +3,26 @@ Allow: /
 Allow: /services
 Allow: /about
 Allow: /contact
+Allow: /register-center
 
 Disallow: /admin/
 Disallow: /center/
 Disallow: /teacher/
 Disallow: /student/
+Disallow: /dashboard
+Disallow: /statistics
 Disallow: /api/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /force-change-password
 
-Sitemap: https://sam-edu.test/sitemap.xml
+User-agent: Googlebot
+Allow: /
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.webp$
+Allow: /*.svg$
+
+Sitemap: https://www.samedu.io.vn/sitemap.xml

@@ -27,6 +27,7 @@ use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\SchoolClassExamResultController;
 use App\Http\Controllers\SchoolClassStudentController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentTranscriptController;
@@ -44,6 +45,7 @@ use Inertia\Inertia;
 */
 
 // ─── Public Marketing Website Routes ─────────────────────────────────────────
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/services', [HomeController::class, 'services'])->name('services');
 Route::get('/about', [HomeController::class, 'about'])->name('about');

@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     LayoutDashboard,
@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import AppLogo from '../components/common/AppLogo';
+import SeoHead from '../components/common/SeoHead';
 import Button from '../components/ui/Button';
 import ScrollToTop from '../components/ui/ScrollToTop';
+import { generateOrganizationSchema, generateWebSiteSchema } from '../utils/schemaGenerator';
 
 interface PublicLayoutProps {
     children: React.ReactNode;
@@ -20,6 +22,7 @@ interface PublicLayoutProps {
     description?: string;
     keywords?: string;
     canonicalUrl?: string;
+    schemaJson?: object | object[];
 }
 
 export const PublicLayout: React.FC<PublicLayoutProps> = ({
@@ -28,6 +31,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     description,
     keywords,
     canonicalUrl,
+    schemaJson,
 }) => {
     const { auth, seo, contactInfo } = usePage().props as any;
     const user = auth?.user;
@@ -46,54 +50,23 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
         keywords ||
         'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, SAM Digital';
     const pageCanonical =
-        seo?.canonical_url || canonicalUrl || 'https://sam-edu.test';
+        seo?.canonical_url || canonicalUrl || 'https://sam-edu.vn';
 
-    // JSON-LD Structured Data for Google Search Engine Optimization
-    const schemaData = {
-        '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        name: 'SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục',
-        applicationCategory: 'EducationalApplication',
-        operatingSystem: 'Web',
-        description: pageDescription,
-        offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'VND',
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'Công ty Cổ phần SAM Digital',
-            url: pageCanonical,
-        },
-    };
+    const defaultSchemas = [
+        generateOrganizationSchema(),
+        generateWebSiteSchema('https://sam-edu.vn'),
+        ...(Array.isArray(schemaJson) ? schemaJson : schemaJson ? [schemaJson] : []),
+    ];
 
     return (
         <div className="flex min-h-screen flex-col bg-white font-sans text-gray-900">
-            <Head>
-                <title>{pageTitle}</title>
-                <meta name="description" content={pageDescription} />
-                <meta name="keywords" content={pageKeywords} />
-                <meta name="robots" content="index, follow" />
-                <link rel="canonical" href={pageCanonical} />
-
-                {/* Open Graph Tags */}
-                <meta property="og:title" content={pageTitle} />
-                <meta property="og:description" content={pageDescription} />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={pageCanonical} />
-                <meta property="og:site_name" content="SAM Digital" />
-
-                {/* Twitter Cards */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={pageTitle} />
-                <meta name="twitter:description" content={pageDescription} />
-
-                {/* Structured Data JSON-LD */}
-                <script type="application/ld+json">
-                    {JSON.stringify(schemaData)}
-                </script>
-            </Head>
+            <SeoHead
+                title={pageTitle}
+                description={pageDescription}
+                keywords={pageKeywords}
+                canonical={pageCanonical}
+                schemaJson={defaultSchemas}
+            />
 
             {/* Top Navigation Bar */}
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-xs shadow-2xs">
