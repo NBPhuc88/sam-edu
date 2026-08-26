@@ -28,7 +28,7 @@ export interface SchemaBreadcrumbItem {
  * Sinh Schema JSON-LD cho Doanh nghiệp / Tổ chức (Organization)
  */
 export function generateOrganizationSchema(params: SchemaOrganizationParams = {}) {
-    const baseUrl = params.url || 'https://sam-edu.vn';
+    const baseUrl = params.url || 'https://www.samedu.io.vn';
     return {
         '@context': 'https://schema.org',
         '@type': 'EducationalOrganization',
@@ -53,7 +53,7 @@ export function generateOrganizationSchema(params: SchemaOrganizationParams = {}
 /**
  * Sinh Schema JSON-LD cho Website (WebSite Search)
  */
-export function generateWebSiteSchema(baseUrl: string = 'https://sam-edu.vn') {
+export function generateWebSiteSchema(baseUrl: string = 'https://www.samedu.io.vn') {
     return {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
@@ -71,7 +71,7 @@ export function generateWebSiteSchema(baseUrl: string = 'https://sam-edu.vn') {
  * Sinh Schema JSON-LD cho Khóa học / Chương trình đào tạo (Course)
  */
 export function generateCourseSchema(params: SchemaCourseParams) {
-    const baseUrl = params.providerUrl || 'https://sam-edu.vn';
+    const baseUrl = params.providerUrl || 'https://www.samedu.io.vn';
     return {
         '@context': 'https://schema.org',
         '@type': 'Course',

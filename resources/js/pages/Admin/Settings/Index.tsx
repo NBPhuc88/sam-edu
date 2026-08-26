@@ -18,6 +18,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import { MediaUploader } from '@/components/ui/MediaUploader';
 import AppLayout from '@/layouts/AppLayout';
 
 interface SeoItem {
@@ -487,12 +488,14 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                         icon={<Search className="h-4 w-4 text-gray-400" />}
                                     />
 
-                                    <Input
-                                        label="Ảnh Đại Diện Chia Sẻ Mạng Xã Hội (OG Image URL)"
-                                        id={`seo_${selectedSeoRoute}_og_image`}
+                                    <MediaUploader
+                                        label="Ảnh Đại Diện Chia Sẻ Mạng Xã Hội (OG Image - Khuyên dùng 1200x630px)"
                                         value={activeSeoItem.og_image ?? ''}
-                                        onChange={(e) => handleSeoChange(selectedSeoRoute, 'og_image', e.target.value)}
-                                        placeholder="VD: https://sam-edu.vn/images/og-home-banner.jpg"
+                                        onChange={(url) => handleSeoChange(selectedSeoRoute, 'og_image', url)}
+                                        objectType="seo"
+                                        objectId={selectedSeoRoute}
+                                        folder="seo/og_images"
+                                        placeholder="Chọn tải ảnh lên từ máy hoặc dán link URL..."
                                     />
 
                                     <Input

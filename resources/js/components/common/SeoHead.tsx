@@ -17,12 +17,12 @@ export const SeoHead: React.FC<SeoHeadProps> = ({
     description = 'SAM EDU - Phần mềm Quản lý Đa Trung Tâm Giáo Dục chuyên nghiệp, quản lý học sinh, lớp học, điểm danh và học phí tối ưu.',
     keywords = 'quản lý trung tâm giáo dục, phần mềm quản lý trung tâm tiếng anh, phần mềm điểm danh học sinh, quản lý học phí',
     canonical,
-    ogImage = 'https://sam-edu.vn/logo.png',
+    ogImage = 'https://www.samedu.io.vn/og-banner.png',
     ogType = 'website',
     noindex = false,
     schemaJson,
 }) => {
-    const siteUrl = 'https://sam-edu.vn';
+    const siteUrl = 'https://www.samedu.io.vn';
     const canonicalUrl = canonical || (typeof window !== 'undefined' ? window.location.href : siteUrl);
     const fullTitle = title.includes('SAM EDU') ? title : `${title} | SAM EDU - Quản Lý Giáo Dục`;
 

@@ -50,11 +50,13 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
         keywords ||
         'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, SAM Digital';
     const pageCanonical =
-        seo?.canonical_url || canonicalUrl || 'https://sam-edu.vn';
+        seo?.canonical_url || canonicalUrl || 'https://www.samedu.io.vn';
+    const pageOgImage =
+        seo?.og_image || 'https://www.samedu.io.vn/og-banner.png';
 
     const defaultSchemas = [
-        generateOrganizationSchema(),
-        generateWebSiteSchema('https://sam-edu.vn'),
+        generateOrganizationSchema({ url: 'https://www.samedu.io.vn' }),
+        generateWebSiteSchema('https://www.samedu.io.vn'),
         ...(Array.isArray(schemaJson) ? schemaJson : schemaJson ? [schemaJson] : []),
     ];
 
@@ -65,6 +67,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                 description={pageDescription}
                 keywords={pageKeywords}
                 canonical={pageCanonical}
+                ogImage={pageOgImage}
                 schemaJson={defaultSchemas}
             />
 
