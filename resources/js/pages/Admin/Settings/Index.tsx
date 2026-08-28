@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Building2,
     Globe,
@@ -20,6 +20,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { MediaUploader } from '@/components/ui/MediaUploader';
 import AppLayout from '@/layouts/AppLayout';
+import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 
 interface SeoItem {
     id?: number;
@@ -108,11 +109,27 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        post('/settings', {
-            preserveScroll: true,
-        });
+        setIsUploadingMedia(true);
+        try {
+            const cleanSeo = await uploadPendingMediaInObject(data.seo);
+            router.post(
+                '/settings',
+                {
+                    settings: data.settings,
+                    seo: cleanSeo,
+                } as any,
+                {
+                    preserveScroll: true,
+                    onFinish: () => setIsUploadingMedia(false),
+                }
+            );
+        } catch (err) {
+            setIsUploadingMedia(false);
+        }
     };
 
     const activeSeoItem = data.seo[selectedSeoRoute] || {
@@ -515,11 +532,11 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         <Button
                             type="submit"
                             variant="success"
-                            disabled={processing}
+                            disabled={processing || isUploadingMedia}
                             className="flex items-center gap-2 shadow-sm px-6 py-2.5"
                         >
                             <Save className="h-4 w-4" />
-                            {processing ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt'}
+                            {processing || isUploadingMedia ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt'}
                         </Button>
                     </div>
                 </form>

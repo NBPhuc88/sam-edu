@@ -5,7 +5,8 @@
             $seoData = $page['props']['seo'] ?? null;
             $seoTitle = !empty($seoData['title']) ? $seoData['title'] : 'SAM EDU - Hệ Thống Quản Lý Trung Tâm Giáo Dục';
             $seoDescription = !empty($seoData['description']) ? $seoData['description'] : 'Giải Pháp Quản Lý Trung Tâm Giáo Dục đột phá: Tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, khảo thí 9 dạng câu hỏi và quản lý học phí.';
-            $seoOgImage = !empty($seoData['og_image']) ? $seoData['og_image'] : asset('og-banner.png');
+            $rawOgImage = $seoData['og_image'] ?? null;
+            $seoOgImage = (!empty($rawOgImage) && !str_starts_with($rawOgImage, 'blob:')) ? $rawOgImage : asset('og-banner.png');
             $seoCanonical = !empty($seoData['canonical_url']) ? $seoData['canonical_url'] : url()->current();
         @endphp
 
