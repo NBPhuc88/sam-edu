@@ -53,7 +53,7 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
-        $plan = $this->subscriptionPlanRepository->findByCode((string) $data['plan_code']);
+        $plan = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
 
         if (! $plan) {
             return [
@@ -105,7 +105,7 @@ class PaymentService implements PaymentServiceInterface
             'status'         => Constant::PAYMENT_STATUS_PENDING,
             'metadata'       => [
                 'app_trans_id'    => $appTransId,
-                'plan_code'       => $plan->code,
+                'plan_id'         => $plan->id,
                 'plan_name'       => $plan->name,
                 'duration_type'   => $durationType,
                 'duration_days'   => $durationDays,
@@ -184,20 +184,20 @@ class PaymentService implements PaymentServiceInterface
             'status'         => Constant::PAYMENT_STATUS_PENDING,
             'metadata'       => [
                 'app_trans_id' => $appTransId,
-                'plan_code'    => $validated['plan_code'],
+                'plan_id'      => (int) $validated['plan_id'],
             ],
         ]);
 
         $embedData = [
             'redirecturl'   => $validated['redirect_url'] ?? config('app.url'),
             'center_id'     => $center->id,
-            'plan_code'     => $validated['plan_code'],
+            'plan_id'       => (int) $validated['plan_id'],
             'duration_days' => $durationDays,
         ];
 
         $items = [
             [
-                'itemid'       => $validated['plan_code'],
+                'itemid'       => (string) $validated['plan_id'],
                 'itemname'     => $validated['plan_name'],
                 'itemprice'    => $amount,
                 'itemquantity' => 1,
@@ -282,9 +282,9 @@ class PaymentService implements PaymentServiceInterface
         /** @var array<string, mixed> $embedData */
         $embedData    = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
         $durationDays = (int) ($embedData['duration_days'] ?? (($embedData['duration_months'] ?? 1) * 30));
-        $planCode     = (string) ($embedData['plan_code'] ?? 'standard');
+        $planId       = (int) ($embedData['plan_id'] ?? 1);
 
-        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planCode) {
+        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planId) {
             $this->paymentTransactionRepository->update($transaction->id, [
                 'status'   => 'success',
                 'paid_at'  => now(),
@@ -304,15 +304,17 @@ class PaymentService implements PaymentServiceInterface
 
             $endsAt = $startsAt->copy()->addDays($durationDays);
 
+            $planObj = $this->subscriptionPlanRepository->findById($planId);
+
             $subscription = $this->centerSubscriptionRepository->create([
                 'center_id'     => $center->id,
-                'plan_code'     => $planCode,
-                'plan_name'     => "Goi subscription {$planCode}",
+                'plan_id'       => $planObj ? $planObj->id : 1,
+                'plan_name'     => $planObj ? $planObj->name : "Gói dịch vụ #{$planId}",
                 'price'         => $transaction->amount,
                 'duration_days' => $durationDays,
                 'starts_at'     => $startsAt,
                 'ends_at'       => $endsAt,
-                'status'        => 'active',
+                'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
             ]);
 
             $this->paymentTransactionRepository->update($transaction->id, [
@@ -323,9 +325,10 @@ class PaymentService implements PaymentServiceInterface
 
             // Extend center expiration
             $this->centerRepository->update($center->id, [
-                'status'            => 'active',
-                'subscription_plan' => $planCode,
-                'expires_at'        => $endsAt,
+                'status'               => Constant::CENTER_STATUS_ACTIVE,
+                'subscription_plan_id' => $planObj ? $planObj->id : 1,
+                'plan_type'            => $planObj?->plan_type ?? Constant::PLAN_TYPE_STANDARD,
+                'expires_at'           => $endsAt,
             ]);
         });
 

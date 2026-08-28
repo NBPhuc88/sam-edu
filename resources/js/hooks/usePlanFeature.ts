@@ -5,7 +5,7 @@ interface CenterSharedData {
     id: number;
     code: string;
     name: string;
-    subscription_plan?: number | null;
+    subscription_plan_id?: number | null;
     plan_type?: number | null;
     allowed_features?: string[];
     max_classes?: number | null;
@@ -53,7 +53,7 @@ export function usePlanFeature(featureCode: string): boolean {
     }
 
     // Gói Dùng Thử mở khóa tất cả tính năng
-    if (center.plan_type === PLAN_TYPE_FREE || center.subscription_plan === PLAN_TYPE_FREE) {
+    if (center.plan_type === PLAN_TYPE_FREE) {
         return true;
     }
 

@@ -124,7 +124,7 @@ class HandleInertiaRequests extends Middleware
                     'id'                    => $centerModel->id,
                     'code'                  => $centerModel->code,
                     'name'                  => $centerModel->name,
-                    'subscription_plan'     => (int) $centerModel->subscription_plan,
+                    'subscription_plan_id'  => (int) $centerModel->subscription_plan_id,
                     'plan_type'             => (int) $centerModel->plan_type,
                     'allowed_features'      => $currentPlan?->allowed_features ?? [],
                     'max_classes'           => $centerModel->max_classes,

@@ -58,18 +58,19 @@ class CenterService implements CenterServiceInterface
         }
 
         // Tự động đồng bộ plan_type, max_classes, max_students từ gói được chọn
-        if (! empty($data['subscription_plan'])) {
-            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
+        if (! empty($data['subscription_plan_id'])) {
+            $plan = $this->subscriptionPlanRepository->findById((int) $data['subscription_plan_id']);
 
             if ($plan) {
-                $data['plan_type']    = $plan->plan_type;
-                $data['max_classes']  = $data['max_classes'] ?? $plan->max_classes;
-                $data['max_students'] = $data['max_students'] ?? $plan->max_students;
+                $data['subscription_plan_id'] = (int) $plan->id;
+                $data['plan_type']            = $plan->plan_type;
+                $data['max_classes']          = $data['max_classes'] ?? $plan->max_classes;
+                $data['max_students']         = $data['max_students'] ?? $plan->max_students;
             }
         }
 
         // Set default trial expiration if creating new trial plan
-        if (($data['subscription_plan'] ?? '') === Constant::CENTER_STATUS_TRIAL && empty($data['expires_at'])) {
+        if (isset($plan) && $plan->plan_type === Constant::PLAN_TYPE_FREE && empty($data['expires_at'])) {
             $data['expires_at']    = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
             $data['trial_ends_at'] = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
         }
@@ -86,13 +87,14 @@ class CenterService implements CenterServiceInterface
     public function updateCenter(int $id, array $data): Center
     {
         // Khi Super Admin cập nhật/nâng cấp gói dịch vụ của Trung tâm
-        if (! empty($data['subscription_plan'])) {
-            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
+        if (! empty($data['subscription_plan_id'])) {
+            $plan = $this->subscriptionPlanRepository->findById((int) $data['subscription_plan_id']);
 
             if ($plan) {
-                $data['plan_type']    = $plan->plan_type;
-                $data['max_classes']  = $plan->max_classes;
-                $data['max_students'] = $plan->max_students;
+                $data['subscription_plan_id'] = (int) $plan->id;
+                $data['plan_type']            = $plan->plan_type;
+                $data['max_classes']          = $plan->max_classes;
+                $data['max_students']         = $plan->max_students;
             }
         }
 
@@ -128,9 +130,8 @@ class CenterService implements CenterServiceInterface
     }
 
     /**
-     * Renew or change subscription for a center.
+     * Super Admin thực hiện gia hạn hoặc thay đổi gói cước dịch vụ SaaS cho Trung tâm.
      *
-     * @param  int                  $centerId
      * @param  array<string, mixed> $data
      * @return CenterSubscription
      */
@@ -138,13 +139,13 @@ class CenterService implements CenterServiceInterface
     {
         return DB::transaction(function () use ($centerId, $data) {
             $center = $this->centerRepository->find($centerId);
-            $plan   = $this->subscriptionPlanRepository->findByCode($data['plan_code']);
+            $plan   = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
 
             if (! $plan) {
-                throw new \InvalidArgumentException("Gói cước không tồn tại: {$data['plan_code']}");
+                throw new \InvalidArgumentException("Gói cước không tồn tại: {$data['plan_id']}");
             }
 
-            $isSamePlan = ($center->subscription_plan === $plan->code);
+            $isSamePlan = ((int) $center->subscription_plan_id === (int) $plan->id);
             $actionType = $isSamePlan ? 'renew' : 'change';
 
             $startsAt     = Carbon::parse($data['starts_at']);
@@ -155,7 +156,7 @@ class CenterService implements CenterServiceInterface
             // 1. Tạo bản ghi lịch sử gói cước center_subscriptions
             $subscription = $this->centerSubscriptionRepository->create([
                 'center_id'     => $center->id,
-                'plan_code'     => $plan->code,
+                'plan_id'       => $plan->id,
                 'plan_name'     => $plan->name,
                 'price'         => $price,
                 'duration_days' => $durationDays,
@@ -166,12 +167,12 @@ class CenterService implements CenterServiceInterface
 
             // 2. Cập nhật Trung tâm (Gói cước, hạn mức, ngày hết hạn và kích hoạt lại nếu hết hạn)
             $updateCenterData = [
-                'subscription_plan' => $plan->code,
-                'plan_type'         => $plan->plan_type,
-                'max_students'      => $plan->max_students,
-                'max_classes'       => $plan->max_classes,
-                'expires_at'        => $endsAt,
-                'status'            => Constant::CENTER_STATUS_ACTIVE,
+                'subscription_plan_id' => $plan->id,
+                'plan_type'            => $plan->plan_type,
+                'max_students'         => $plan->max_students,
+                'max_classes'          => $plan->max_classes,
+                'expires_at'           => $endsAt,
+                'status'               => Constant::CENTER_STATUS_ACTIVE,
             ];
 
             $updatedCenter = $this->centerRepository->update($center->id, $updateCenterData);

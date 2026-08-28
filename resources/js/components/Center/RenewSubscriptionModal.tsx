@@ -22,7 +22,7 @@ interface CenterInfo {
     id: number;
     code: string;
     name: string;
-    subscription_plan: number;
+    subscription_plan_id: number;
     expires_at: string | null;
     status: number;
 }
@@ -67,7 +67,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
     useEffect(() => {
         if (!isOpen || !center) return;
 
-        const matched = subscriptionPlans.find((p) => p.id === center.subscription_plan || p.code === String(center.subscription_plan));
+        const matched = subscriptionPlans.find((p) => p.id === center.subscription_plan_id);
         const initialPlanCode = matched?.code || subscriptionPlans[0]?.code || 'basic_5';
         setSelectedPlanCode(initialPlanCode);
         setCycle('monthly');
@@ -82,7 +82,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         if (center.expires_at) {
             const expISO = toISODateString(center.expires_at);
 
-            if (expISO && expISO > today && (matched?.code === initialPlanCode || matched?.id === center.subscription_plan)) {
+            if (expISO && expISO > today && (matched?.code === initialPlanCode || matched?.id === center.subscription_plan_id)) {
                 initialStart = expISO;
             }
         }
@@ -107,7 +107,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         // Gia hạn gói cước cũ -> tính từ ngày hết hạn cũ (nếu còn hạn)
         let newStart = today;
 
-        if (center?.expires_at && (selectedPlan?.id === center.subscription_plan || selectedPlan?.code === String(center.subscription_plan))) {
+        if (center?.expires_at && selectedPlan?.id === center.subscription_plan_id) {
             const expISO = toISODateString(center.expires_at);
 
             if (expISO && expISO > today) {
@@ -116,48 +116,75 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         }
 
         setStartsAt(newStart);
-        recalculateCycle(cycle, newCode, newStart);
+
+        // Recompute price and end date based on current cycle
+        let multiplier = 1;
+        let days = 30;
+
+        if (cycle === 'monthly') {
+            multiplier = 1;
+            days = 30;
+        } else if (cycle === 'quarterly') {
+            multiplier = 3;
+            days = 90;
+        } else if (cycle === 'semi_annual') {
+            multiplier = 6;
+            days = 180;
+        } else if (cycle === 'yearly') {
+            multiplier = 12;
+            days = 365;
+        } else {
+            // custom keeps current durationDays
+            days = durationDays;
+        }
+
+        setDurationDays(days);
+        setEndsAt(computeEndDate(newStart, days));
+
+        if (selectedPlan) {
+            if (cycle === 'yearly' && selectedPlan.yearly_price) {
+                setPrice(selectedPlan.yearly_price);
+            } else {
+                setPrice((selectedPlan.price || 0) * multiplier);
+            }
+        }
     };
 
-    // Handle Cycle Change
+    // Handle Cycle Selection Change
     const handleCycleChange = (newCycle: CycleType) => {
         setCycle(newCycle);
-        recalculateCycle(newCycle, selectedPlanCode, startsAt);
-    };
+        const selectedPlan = subscriptionPlans.find((p) => p.code === selectedPlanCode);
 
-    // Recalculate duration, price, and end date based on plan & cycle
-    const recalculateCycle = (cType: CycleType, pCode: string, startStr: string) => {
-        const plan = subscriptionPlans.find((p) => p.code === pCode);
         let days = 30;
-        let pAmount = plan?.price ?? 0;
+        let finalPrice = selectedPlan?.price ?? 0;
 
-        switch (cType) {
+        switch (newCycle) {
             case 'monthly':
                 days = 30;
-                pAmount = plan?.price ?? 0;
+                finalPrice = (selectedPlan?.price ?? 0) * 1;
                 break;
             case 'quarterly':
                 days = 90;
-                pAmount = (plan?.price ?? 0) * 3;
+                finalPrice = (selectedPlan?.price ?? 0) * 3;
                 break;
             case 'semi_annual':
                 days = 180;
-                pAmount = (plan?.price ?? 0) * 6;
+                finalPrice = (selectedPlan?.price ?? 0) * 6;
                 break;
             case 'yearly':
                 days = 365;
-                pAmount = plan?.yearly_price ? Number(plan.yearly_price) : (plan?.price ?? 0) * 12;
+                finalPrice = selectedPlan?.yearly_price ?? (selectedPlan?.price ?? 0) * 12;
                 break;
             case 'custom':
                 days = durationDays;
-                pAmount = price;
+                finalPrice = price;
                 break;
         }
 
-        if (cType !== 'custom') {
+        if (newCycle !== 'custom') {
             setDurationDays(days);
-            setPrice(pAmount);
-            setEndsAt(computeEndDate(startStr, days));
+            setPrice(finalPrice);
+            setEndsAt(computeEndDate(startsAt, days));
         }
     };
 
@@ -181,10 +208,12 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         setIsSubmitting(true);
         setErrors({});
 
+        const selectedPlan = subscriptionPlans.find((p) => p.code === selectedPlanCode);
+
         router.post(
             `/centers/${center.id}/renew-subscription`,
             {
-                plan_code: selectedPlanCode,
+                plan_id: selectedPlan?.id,
                 duration_days: durationDays,
                 starts_at: startsAt,
                 ends_at: endsAt,
@@ -207,12 +236,12 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
     if (!isOpen || !center) return null;
 
     const currentPlanObj = subscriptionPlans.find(
-        (p) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+        (p) => p.id === center.subscription_plan_id
     );
     const selectedPlanObj = subscriptionPlans.find((p) => p.code === selectedPlanCode);
     const isSamePlan = currentPlanObj
         ? currentPlanObj.code === selectedPlanCode
-        : String(center.subscription_plan) === selectedPlanCode;
+        : false;
 
     return (
         <Modal
@@ -259,7 +288,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
                             <div className="mt-1 text-xs text-gray-600 flex items-center gap-3">
                                 <span>Mã TT: <strong>{center.code}</strong></span>
                                 <span>•</span>
-                                <span>Gói hiện tại: <strong className="text-emerald-700">{currentPlanObj?.name || center.subscription_plan}</strong></span>
+                                <span>Gói hiện tại: <strong className="text-emerald-700">{currentPlanObj?.name || `Gói #${center.subscription_plan_id}`}</strong></span>
                             </div>
                         </div>
                         <div className="text-right">

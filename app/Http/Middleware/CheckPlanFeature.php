@@ -54,7 +54,7 @@ class CheckPlanFeature
                 'reason'       => 'expired',
                 'title'        => 'Gói Dịch Vụ Đã Hết Hạn',
                 'message'      => 'Gói dịch vụ của trung tâm đã hết hạn sử dụng. Vui lòng liên hệ Quản trị viên hệ thống để gia hạn và tiếp tục sử dụng.',
-                'currentPlan'  => $center->subscription_plan,
+                'currentPlan'  => $center->subscription_plan_id,
                 'planType'     => $center->plan_type,
                 'requiredPlan' => 'basic',
             ])->toResponse($request)->setStatusCode(Response::HTTP_FORBIDDEN);
@@ -87,7 +87,7 @@ class CheckPlanFeature
                 'feature'      => $blockedFeature['key'],
                 'featureName'  => $blockedFeature['name'],
                 'message'      => "Tính năng '{$blockedFeature['name']}' ({$blockedFeature['description']}) chỉ có trong Gói Nâng Cao. Vui lòng liên hệ Quản trị viên hệ thống để nâng cấp gói cho trung tâm của bạn.",
-                'currentPlan'  => $center->subscription_plan,
+                'currentPlan'  => $center->subscription_plan_id,
                 'planType'     => $center->plan_type,
                 'requiredPlan' => 'advanced',
             ])->toResponse($request)->setStatusCode(Response::HTTP_FORBIDDEN);

@@ -81,13 +81,13 @@ export const Dashboard: React.FC<any> = (props) => {
             {
                 header: 'Gói Dịch Vụ',
                 cell: (row) => {
-                    const planType = row.plan_type ?? row.subscription_plan;
+                    const planType = row.plan_type;
                     const isAdvanced = planType === PLAN_TYPE_PREMIUM;
                     const isTrial = planType === PLAN_TYPE_FREE;
 
                     return (
                         <Badge variant={isAdvanced ? 'active' : isTrial ? 'info' : 'pending'}>
-                            {PLAN_TYPE_LABELS[planType] || (row.subscription_plan ? `Gói #${row.subscription_plan}` : 'Cơ Bản')}
+                            {PLAN_TYPE_LABELS[planType] || (row.subscription_plan_id ? `Gói #${row.subscription_plan_id}` : 'Cơ Bản')}
                         </Badge>
                     );
                 },

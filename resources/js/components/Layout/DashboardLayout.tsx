@@ -43,7 +43,7 @@ interface CenterData {
     id: number;
     code: string;
     name: string;
-    subscription_plan?: number | null;
+    subscription_plan_id?: number | null;
     expires_at?: string | null;
     is_expired?: boolean;
     expiring_soon?: boolean;
@@ -90,14 +90,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
     const [selectedPlanCode, setSelectedPlanCode] = useState<string>(
         () => {
-            const found = paidPlans.find((p) => p.id === center?.subscription_plan || p.code === String(center?.subscription_plan));
+            const found = paidPlans.find((p) => p.id === center?.subscription_plan_id);
             return found?.code || paidPlans[0]?.code || 'basic_5';
         },
     );
 
     useEffect(() => {
         if (paidPlans.length > 0 && !paidPlans.some((p) => p.code === selectedPlanCode)) {
-            const matched = paidPlans.find((p) => p.id === center?.subscription_plan || p.code === String(center?.subscription_plan));
+            const matched = paidPlans.find((p) => p.id === center?.subscription_plan_id);
             const defaultCode = matched ? matched.code : paidPlans[0].code;
             setSelectedPlanCode(defaultCode);
         }

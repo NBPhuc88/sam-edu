@@ -34,9 +34,10 @@ class CenterRegisterService implements CenterRegisterServiceInterface
      */
     public function registerStep1(array $data): array
     {
-        $planCode      = (string) ($data['subscription_plan'] ?? 'trial');
+        $planId        = (int) ($data['subscription_plan_id'] ?? 1);
         $paymentMethod = (string) ($data['payment_method'] ?? 'zalopay');
-        $plan          = $this->subscriptionPlanRepository->findByCode($planCode);
+        $plan          = $this->subscriptionPlanRepository->findById($planId);
+        $planCode      = $plan?->code ?? 'trial';
 
         $code = 'CENTER-' . strtoupper(Str::random(5));
         while ($this->centerRepository->codeExists($code)) {
@@ -47,18 +48,18 @@ class CenterRegisterService implements CenterRegisterServiceInterface
 
         if (! $isOnlinePaymentEnabled) {
             $center = $this->centerRepository->create([
-                'code'              => $code,
-                'name'              => $data['name'],
-                'phone'             => $data['phone'],
-                'email'             => $data['email'],
-                'address'           => $data['address'] ?? null,
-                'status'            => $planCode === 'trial' ? 'active' : 'pending_payment',
-                'subscription_plan' => $planCode,
-                'plan_type'         => $plan->plan_type ?? ($planCode === 'trial' ? 'trial' : 'basic'),
-                'expires_at'        => $planCode === 'trial' ? now()->addDays(30) : null,
-                'trial_ends_at'     => $planCode === 'trial' ? now()->addDays(30) : null,
-                'max_students'      => $plan->max_students ?? ($planCode === 'trial' ? 600 : 150),
-                'max_classes'       => $plan->max_classes ?? ($planCode === 'trial' ? 20 : 5),
+                'code'                 => $code,
+                'name'                 => $data['name'],
+                'phone'                => $data['phone'],
+                'email'                => $data['email'],
+                'address'              => $data['address'] ?? null,
+                'status'               => $planCode === 'trial' ? 'active' : 'pending_payment',
+                'subscription_plan_id' => $plan ? $plan->id : 1,
+                'plan_type'            => $plan->plan_type ?? ($planCode === 'trial' ? 'trial' : 'basic'),
+                'expires_at'           => $planCode === 'trial' ? now()->addDays(30) : null,
+                'trial_ends_at'        => $planCode === 'trial' ? now()->addDays(30) : null,
+                'max_students'         => $plan->max_students ?? ($planCode === 'trial' ? 600 : 150),
+                'max_classes'          => $plan->max_classes ?? ($planCode === 'trial' ? 20 : 5),
             ]);
 
             $this->sendAdminNotificationMail($center);
@@ -70,25 +71,25 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_id' => $center->id,
                 'code'      => $center->code,
                 'name'      => $center->name,
-                'plan'      => $center->subscription_plan,
+                'plan'      => $center->subscription_plan_id,
                 'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị SAM Digital sẽ liên hệ hỗ trợ kích hoạt trong thời gian sớm nhất.',
             ];
         }
 
         if ($planCode === 'trial') {
             $center = $this->centerRepository->create([
-                'code'              => $code,
-                'name'              => $data['name'],
-                'phone'             => $data['phone'],
-                'email'             => $data['email'],
-                'address'           => $data['address'] ?? null,
-                'status'            => 'active',
-                'subscription_plan' => 'trial',
-                'plan_type'         => 'trial',
-                'expires_at'        => now()->addDays(30),
-                'trial_ends_at'     => now()->addDays(30),
-                'max_students'      => $plan->max_students ?? 600,
-                'max_classes'       => $plan->max_classes ?? 20,
+                'code'                 => $code,
+                'name'                 => $data['name'],
+                'phone'                => $data['phone'],
+                'email'                => $data['email'],
+                'address'              => $data['address'] ?? null,
+                'status'               => 'active',
+                'subscription_plan_id' => $plan ? $plan->id : 1,
+                'plan_type'            => 'trial',
+                'expires_at'           => now()->addDays(30),
+                'trial_ends_at'        => now()->addDays(30),
+                'max_students'         => $plan->max_students ?? 600,
+                'max_classes'          => $plan->max_classes ?? 20,
             ]);
 
             $this->sendAdminNotificationMail($center);
@@ -100,7 +101,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_id' => $center->id,
                 'code'      => $center->code,
                 'name'      => $center->name,
-                'plan'      => $center->subscription_plan,
+                'plan'      => $center->subscription_plan_id,
                 'message'   => 'Đăng ký dùng thử 30 ngày thành công! Ban quản trị SAM Digital đã ghi nhận thông tin trung tâm.',
             ];
         }
@@ -109,24 +110,23 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         $durationDays = $plan ? $plan->duration_days : 30;
 
         $center = $this->centerRepository->create([
-            'code'              => $code,
-            'name'              => $data['name'],
-            'phone'             => $data['phone'],
-            'email'             => $data['email'],
-            'address'           => $data['address'] ?? null,
-            'status'            => 'pending_payment',
-            'subscription_plan' => $planCode,
-            'plan_type'         => $plan->plan_type ?? 'basic',
-            'expires_at'        => null,
-            'max_students'      => $plan->max_students ?? null,
-            'max_classes'       => $plan->max_classes ?? null,
+            'code'                 => $code,
+            'name'                 => $data['name'],
+            'phone'                => $data['phone'],
+            'email'                => $data['email'],
+            'address'              => $data['address'] ?? null,
+            'status'               => 'pending_payment',
+            'subscription_plan_id' => $plan ? $plan->id : 1,
+            'plan_type'            => $plan->plan_type ?? 'basic',
+            'expires_at'           => null,
+            'max_students'         => $plan->max_students ?? null,
+            'max_classes'          => $plan->max_classes ?? null,
         ]);
 
         $this->sendAdminNotificationMail($center);
         $this->createAdminNotification($center, $planCode);
 
-        $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
-
+        $appTransId    = date('ymd') . '_' . $center->id . '_' . Str::random(6);
         $gateway       = PaymentGatewayFactory::make($paymentMethod);
         $gatewayResult = $gateway->createOrder([
             'amount'       => $amount,
@@ -192,7 +192,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_id' => $transaction->center_id,
                 'code'      => $center?->code,
                 'name'      => $center?->name,
-                'plan'      => $center?->subscription_plan,
+                'plan'      => $center?->subscription_plan_id,
             ];
         }
 
@@ -212,12 +212,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 $planObj      = $this->subscriptionPlanRepository->findByCode($paidPlanCode);
 
                 $this->centerRepository->update($center->id, [
-                    'status'            => 'active',
-                    'subscription_plan' => $paidPlanCode,
-                    'plan_type'         => $planObj->plan_type ?? 'basic',
-                    'max_students'      => $planObj->max_students ?? $center->max_students,
-                    'max_classes'       => $planObj->max_classes ?? $center->max_classes,
-                    'expires_at'        => now()->addDays($durationDays),
+                    'status'               => 'active',
+                    'subscription_plan_id' => $planObj ? $planObj->id : 1,
+                    'plan_type'            => $planObj->plan_type ?? 'basic',
+                    'max_students'         => $planObj->max_students ?? $center->max_students,
+                    'max_classes'          => $planObj->max_classes ?? $center->max_classes,
+                    'expires_at'           => now()->addDays($durationDays),
                 ]);
             }
 
@@ -227,7 +227,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_id' => $transaction->center_id,
                 'code'      => $center?->code,
                 'name'      => $center?->name,
-                'plan'      => $center?->subscription_plan,
+                'plan'      => $center?->subscription_plan_id,
             ];
         }
 

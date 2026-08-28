@@ -43,7 +43,7 @@ class RequestSubscriptionRenewalRequest extends FormRequest
     {
         return [
             'center_id'     => ['required', 'integer', 'exists:centers,id'],
-            'plan_code'     => ['required', 'string', 'exists:subscription_plans,code'],
+            'plan_id'       => ['required', 'integer', 'exists:subscription_plans,id'],
             'duration_type' => ['nullable', 'string', 'in:monthly,yearly'],
             'note'          => ['nullable', 'string', 'max:1000'],
         ];

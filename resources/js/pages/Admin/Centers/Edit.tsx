@@ -19,7 +19,7 @@ import AppLayout from '../../../layouts/AppLayout';
 
 interface SubscriptionRecord {
     id: number;
-    plan_code: string;
+    plan_id: number;
     plan_name: string;
     price: number;
     duration_days: number;
@@ -48,29 +48,35 @@ export const Edit: React.FC<EditProps> = ({
     const [toast, setToast] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' }>({
         isOpen: false,
         message: '',
-        type: 'info',
+        type: 'success',
     });
 
-    const handleUpdate = (changedPayload: any) => {
-        if (Object.keys(changedPayload).length === 0) {
-            setToast({
-                isOpen: true,
-                message: 'Không có trường thông tin nào thay đổi.',
-                type: 'warning',
-            });
-
-            return;
-        }
-
+    const handleUpdate = (formData: any) => {
         setIsLoading(true);
-        router.patch(`/centers/${center.id}`, changedPayload, {
-            onFinish: () => setIsLoading(false),
+        router.put(`/centers/${center.id}`, formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsLoading(false);
+                setToast({
+                    isOpen: true,
+                    message: 'Cập nhật thông tin trung tâm thành công!',
+                    type: 'success',
+                });
+            },
+            onError: () => {
+                setIsLoading(false);
+                setToast({
+                    isOpen: true,
+                    message: 'Có lỗi xảy ra khi cập nhật. Vui lòng kiểm tra lại.',
+                    type: 'error',
+                });
+            },
         });
     };
 
     return (
         <AppLayout title={`Chỉnh sửa Trung Tâm: ${center.name} - SAM Digital`}>
-            <Head title={`Sửa Trung Tâm: ${center.name}`} />
+            <Head title={`Chỉnh sửa Trung Tâm - ${center.name}`} />
 
             <Toast
                 isOpen={toast.isOpen}
@@ -92,10 +98,10 @@ export const Edit: React.FC<EditProps> = ({
                                 <p className="mt-1 text-xs text-gray-600">
                                     {(() => {
                                         const matchedPlan = subscriptionPlans?.find(
-                                            (p: any) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+                                            (p: any) => p.id === center.subscription_plan_id
                                         );
-                                        const planType = center.plan_type ?? matchedPlan?.plan_type ?? center.subscription_plan;
-                                        const planName = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || (center.subscription_plan ? `Gói #${center.subscription_plan}` : 'N/A');
+                                        const planType = center.plan_type ?? matchedPlan?.plan_type;
+                                        const planName = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || `Gói #${center.subscription_plan_id}`;
                                         return (
                                             <>
                                                 Gói hiện tại: <strong className="text-emerald-700">{planName}</strong> • Hạn dùng: <strong>{center.expires_at ? formatDate(center.expires_at) : 'Vô thời hạn'}</strong>
@@ -138,7 +144,7 @@ export const Edit: React.FC<EditProps> = ({
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="border-b border-gray-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3">Mã Gói</th>
+                                    <th className="px-4 py-3">ID Gói</th>
                                     <th className="px-4 py-3">Tên Gói Cước</th>
                                     <th className="px-4 py-3">Giá Tiền</th>
                                     <th className="px-4 py-3">Thời Hạn</th>
@@ -152,7 +158,7 @@ export const Edit: React.FC<EditProps> = ({
                                     subscriptions.map((sub) => (
                                         <tr key={sub.id} className="hover:bg-slate-50">
                                             <td className="px-4 py-3 font-mono text-xs font-bold text-gray-800">
-                                                {sub.plan_code}
+                                                #{sub.plan_id}
                                             </td>
                                             <td className="px-4 py-3 font-semibold text-gray-900">
                                                 {sub.plan_name}

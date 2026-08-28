@@ -35,9 +35,11 @@ Tài liệu này tổng hợp và quy định chi tiết tất cả các giá tr
 | Tên Bảng | Tên Cột | Kiểu Cột | Giá Trị Số | Hằng Số `Constant.php` | Tên Hiển Thị / Ý Nghĩa |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **`centers`** | `status` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`**<br>**`4`**<br>**`0`** | `CENTER_STATUS_ACTIVE`<br>`CENTER_STATUS_TRIAL`<br>`CENTER_STATUS_PENDING_PAYMENT`<br>`CENTER_STATUS_EXPIRED`<br>`CENTER_STATUS_LOCKED` | Đang hoạt động<br>Dùng thử<br>Chờ thanh toán<br>Hết hạn<br>Bị khóa / Tạm dừng |
-| | `subscription_plan`<br>`plan_type` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `PLAN_TYPE_FREE`<br>`PLAN_TYPE_STANDARD`<br>`PLAN_TYPE_PREMIUM` | Gói Dùng thử / Miễn phí<br>Gói Tiêu chuẩn<br>Gói Nâng cao |
+| | `subscription_plan_id` | `BIGINT UNSIGNED` | `id` | Khóa ngoại | Tham chiếu `subscription_plans.id` (ID của gói dịch vụ) |
+| | `plan_type` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `PLAN_TYPE_FREE`<br>`PLAN_TYPE_STANDARD`<br>`PLAN_TYPE_PREMIUM` | Gói Dùng thử / Miễn phí<br>Gói Tiêu chuẩn<br>Gói Nâng cao |
 | **`subscription_plans`** | `plan_type` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `PLAN_TYPE_FREE`<br>`PLAN_TYPE_STANDARD`<br>`PLAN_TYPE_PREMIUM` | Gói Dùng thử 30 ngày<br>Gói Tiêu chuẩn<br>Gói Nâng cao |
-| **`center_subscriptions`** | `status` | `TINYINT UNSIGNED` | **`0`**<br>**`1`**<br>**`2`**<br>**`3`** | `SUBSCRIPTION_STATUS_PENDING`<br>`SUBSCRIPTION_STATUS_ACTIVE`<br>`SUBSCRIPTION_STATUS_EXPIRED`<br>`SUBSCRIPTION_STATUS_CANCELLED` | Chờ kích hoạt<br>Đang hiệu lực<br>Đã hết hạn<br>Đã hủy |
+| **`center_subscriptions`** | `plan_id` | `BIGINT UNSIGNED` | `id` | Khóa ngoại | Tham chiếu `subscription_plans.id` |
+| | `status` | `TINYINT UNSIGNED` | **`0`**<br>**`1`**<br>**`2`**<br>**`3`** | `SUBSCRIPTION_STATUS_PENDING`<br>`SUBSCRIPTION_STATUS_ACTIVE`<br>`SUBSCRIPTION_STATUS_EXPIRED`<br>`SUBSCRIPTION_STATUS_CANCELLED` | Chờ kích hoạt<br>Đang hiệu lực<br>Đã hết hạn<br>Đã hủy |
 
 ---
 

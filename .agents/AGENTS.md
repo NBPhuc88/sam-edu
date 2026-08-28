@@ -74,6 +74,17 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > - **Khi viết truy vấn Backend**: Bắt buộc so sánh bằng số nguyên: `->where('status', 1)` hoặc `->whereIn('status', [1, 2])`. **Tuyệt đối không so sánh bằng chuỗi** `where('status', 'active')` để tránh lỗi so sánh kiểu MySQL làm mất dữ liệu.
 > - Chi tiết toàn bộ các bảng xem tại: [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/web/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
 
+> [!IMPORTANT]
+> **8. QUY TẮC NHẤT QUÁN TÊN TRƯỜNG & KHÔNG DÙNG ALIAS / DUAL-FIELD FALLBACK (SINGLE SOURCE OF TRUTH FIELD NAMES)**:
+>
+> - **Chỉ sử dụng 1 tên trường duy nhất**: Mỗi thực thể / quan hệ chỉ được phép sử dụng duy nhất một tên trường chuẩn xuyên suốt toàn bộ hệ thống (Database, Migration, Model, FormRequest, Service, Repository, Inertia Shared Props, Typescript Interfaces, Form components).
+> - **Nghiêm cấm viết code fallback hoặc alias 2 trường song song**:
+>   - Tuyệt đối **KHÔNG** khai báo kiểu `subscription_plan_id?: number; subscription_plan?: number;` trong TypeScript interface.
+>   - Tuyệt đối **KHÔNG** viết logic gộp/kiểm tra fallback kiểu `if ($this->has('plan_id') && ! $this->has('plan_code'))` hay `$data['plan_id'] ?? $data['plan_code']`.
+> - **Quy định cụ thể cho gói dịch vụ SaaS**:
+>   - Bảng `centers`: Bắt buộc chỉ dùng `subscription_plan_id` (`BIGINT UNSIGNED` khóa ngoại tham chiếu `subscription_plans.id`). Không dùng `subscription_plan`.
+>   - Bảng `center_subscriptions`: Bắt buộc chỉ dùng `plan_id` (`BIGINT UNSIGNED` khóa ngoại tham chiếu `subscription_plans.id`). Không dùng `plan_code`.
+
 ---
 
 ## 3. Quy tắc Phân lớp Backend (Controller - Service - Repository)

@@ -55,7 +55,7 @@ class CenterRepository implements CenterRepositoryInterface
                         'phone',
                         'address',
                         'status',
-                        'subscription_plan',
+                        'subscription_plan_id',
                         'expires_at',
                         'created_at'
                     )
@@ -75,7 +75,7 @@ class CenterRepository implements CenterRepositoryInterface
             'phone',
             'address',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'expires_at',
             'created_at'
         )
@@ -250,7 +250,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type',
             'created_at'
         )
@@ -272,7 +272,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type',
             'expires_at'
         )
@@ -293,7 +293,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type'
         )
         ->whereIn('id', $ids)

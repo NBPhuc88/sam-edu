@@ -1,14 +1,15 @@
 import {
-Building,
-CheckCircle2,
-Clock,
-Mail,
-MapPin,
-Phone,
-RefreshCw,
-Send,
+    Building,
+    CheckCircle2,
+    Clock,
+    Mail,
+    MapPin,
+    Phone,
+    RefreshCw,
+    Send,
 } from 'lucide-react';
-import React,{ useEffect,useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -31,6 +32,8 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
     contactInfo,
     enableOnlinePayment = false,
 }) => {
+    const { subscription_plans = [] } = usePage<any>().props;
+
     // Current Onboarding Wizard Step: 1 | 2 | 3 (1: Form, 2: Payment, 3: Success Confirmation)
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [loading, setLoading] = useState(false);
@@ -96,13 +99,16 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
         setLoading(true);
 
+        const matchedPlan = subscription_plans.find((p: any) => p.code === selectedPlan);
+        const planId = matchedPlan ? matchedPlan.id : 1;
+
         try {
             const res = await apiClient.post('/register-center/step1', {
                 name: centerName,
                 phone: phone,
                 email: email,
                 address: address,
-                subscription_plan: selectedPlan,
+                subscription_plan_id: planId,
                 payment_method: paymentMethod,
             });
 

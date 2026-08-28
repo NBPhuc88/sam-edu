@@ -159,9 +159,9 @@ class DashboardService implements DashboardServiceInterface
 
         $allCenters = $newCenters->concat($renewedCenters)->unique('id');
 
-        $trialCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'trial' || $c->subscription_plan === 'trial')->count();
-        $basicCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'basic' || str_starts_with($c->subscription_plan ?? '', 'basic'))->count();
-        $advancedCount = $allCenters->filter(fn ($c) => $c->plan_type === 'advanced' || str_starts_with($c->subscription_plan ?? '', 'advanced'))->count();
+        $trialCount    = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_FREE)->count();
+        $basicCount    = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_STANDARD)->count();
+        $advancedCount = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_PREMIUM)->count();
 
         // Mặc định cho hiển thị nếu chưa có dữ liệu thực tế
         if ($trialCount === 0 && $basicCount === 0 && $advancedCount === 0) {
@@ -739,7 +739,7 @@ class DashboardService implements DashboardServiceInterface
             'id'                => $center->id,
             'code'              => $center->code,
             'name'              => $center->name,
-            'subscription_plan' => $center->subscription_plan,
+            'subscription_plan_id' => $center->subscription_plan_id,
             'plan_type'         => $center->plan_type,
             'allowed_features'  => $currentPlan?->allowed_features ?? [],
             'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,

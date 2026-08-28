@@ -32,7 +32,7 @@ interface Center {
     email: string | null;
     address: string | null;
     status: number;
-    subscription_plan: number;
+    subscription_plan_id: number;
     plan_type?: number;
     expires_at: string | null;
     students_count?: number;
@@ -201,12 +201,12 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                             <td className="px-6 py-4">
                                                 {(() => {
                                                     const matchedPlan = subscriptionPlans?.find(
-                                                        (p: any) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+                                                        (p: any) => p.id === center.subscription_plan_id
                                                     );
-                                                    const planType = center.plan_type ?? matchedPlan?.plan_type ?? center.subscription_plan;
+                                                    const planType = center.plan_type ?? matchedPlan?.plan_type;
                                                     const isAdv = planType === PLAN_TYPE_PREMIUM;
                                                     const isTr = planType === PLAN_TYPE_FREE;
-                                                    const displayLabel = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || (center.subscription_plan ? `Gói #${center.subscription_plan}` : 'N/A');
+                                                    const displayLabel = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || `Gói #${center.subscription_plan_id}`;
 
                                                     return (
                                                         <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${

@@ -64,12 +64,24 @@ return new class () extends Migration {
             $this->dropOldAndRename('centers', 'status', $intCol);
         }
 
-        if ($this->shouldConvert('centers', 'subscription_plan')) {
-            $intCol = $this->createIntColumnIfNotExists('centers', 'subscription_plan', 2);
-            DB::table('centers')->whereIn('subscription_plan', ['trial', 'free', '1'])->update([$intCol => 1]);
-            DB::table('centers')->whereIn('subscription_plan', ['basic', 'standard', 'basic_5', 'basic_20', '2'])->update([$intCol => 2]);
-            DB::table('centers')->whereIn('subscription_plan', ['advanced', 'premium', 'pro', 'advanced_5', 'advanced_20', '3'])->update([$intCol => 3]);
-            $this->dropOldAndRename('centers', 'subscription_plan', $intCol);
+        if (Schema::hasColumn('centers', 'subscription_plan') && ! Schema::hasColumn('centers', 'subscription_plan_id')) {
+            Schema::table('centers', function (Blueprint $table) {
+                $table->unsignedBigInteger('subscription_plan_id')->nullable()->after('status');
+            });
+
+            if (Schema::hasTable('subscription_plans')) {
+                $plans = DB::table('subscription_plans')->get();
+                foreach ($plans as $p) {
+                    DB::table('centers')->where('subscription_plan', $p->code)->orWhere('subscription_plan', (string) $p->id)->update(['subscription_plan_id' => $p->id]);
+                }
+            }
+
+            $firstPlanId = DB::table('subscription_plans')->orderBy('id', 'asc')->value('id') ?? 1;
+            DB::table('centers')->whereNull('subscription_plan_id')->update(['subscription_plan_id' => $firstPlanId]);
+
+            Schema::table('centers', function (Blueprint $table) {
+                $table->dropColumn('subscription_plan');
+            });
         }
 
         if ($this->shouldConvert('centers', 'plan_type')) {
@@ -89,7 +101,27 @@ return new class () extends Migration {
             $this->dropOldAndRename('subscription_plans', 'plan_type', $intCol);
         }
 
-        // 6. Center Subscriptions (status)
+        // 6. Center Subscriptions (plan_id, status)
+        if (Schema::hasColumn('center_subscriptions', 'plan_code') && ! Schema::hasColumn('center_subscriptions', 'plan_id')) {
+            Schema::table('center_subscriptions', function (Blueprint $table) {
+                $table->unsignedBigInteger('plan_id')->nullable()->after('center_id');
+            });
+
+            if (Schema::hasTable('subscription_plans')) {
+                $plans = DB::table('subscription_plans')->get();
+                foreach ($plans as $p) {
+                    DB::table('center_subscriptions')->where('plan_code', $p->code)->orWhere('plan_code', (string) $p->id)->update(['plan_id' => $p->id]);
+                }
+            }
+
+            $firstPlanId = DB::table('subscription_plans')->orderBy('id', 'asc')->value('id') ?? 1;
+            DB::table('center_subscriptions')->whereNull('plan_id')->update(['plan_id' => $firstPlanId]);
+
+            Schema::table('center_subscriptions', function (Blueprint $table) {
+                $table->dropColumn('plan_code');
+            });
+        }
+
         if ($this->shouldConvert('center_subscriptions', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('center_subscriptions', 'status', 0);
             DB::table('center_subscriptions')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
