@@ -2,8 +2,11 @@
 
 namespace App\Services\Payment;
 
+use App\Events\CenterSubscriptionRenewalRequestedEvent;
 use App\Mail\CenterSubscriptionRenewalRequestedMail;
 use App\Models\Admin;
+use App\Models\Notification;
+use App\Models\NotificationRecipient;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
 use App\Repositories\Setting\SystemSettingRepositoryInterface;
@@ -109,6 +112,48 @@ class PaymentService implements PaymentServiceInterface
                 'requested_by_id' => $requestingUser?->id,
             ],
         ]);
+
+        // Create in-app Notification record & dispatch real-time WebSocket event
+        $notifTitle    = "Yêu cầu gia hạn gói dịch vụ từ Trung tâm '{$center->name}'";
+        $durationLabel = $durationType === 'yearly' ? '1 Năm' : '1 Tháng';
+        $formattedAmt  = number_format($amount, 0, ',', '.') . 'đ';
+        $notifContent  = "Trung tâm {$center->name} ({$center->code}) vừa gửi yêu cầu gia hạn gói {$plan->name} ({$durationLabel} - {$formattedAmt}).";
+
+        $notification = Notification::create([
+            'center_id'           => $center->id,
+            'title'               => $notifTitle,
+            'content'             => $notifContent,
+            'type'                => 'subscription_renewal',
+            'created_by_admin_id' => $requestingUser?->id,
+        ]);
+
+        $superAdminIds = Admin::where('role', 'super_admin')->pluck('id')->toArray();
+
+        foreach ($superAdminIds as $sAdminId) {
+            NotificationRecipient::create([
+                'notification_id' => $notification->id,
+                'recipient_type'  => 'admin',
+                'recipient_id'    => $sAdminId,
+                'read_at'         => null,
+            ]);
+        }
+
+        try {
+            event(new CenterSubscriptionRenewalRequestedEvent([
+                'id'              => $notification->id,
+                'notification_id' => $notification->id,
+                'center_id'       => $center->id,
+                'center_name'     => $center->name,
+                'title'           => $notifTitle,
+                'content'         => $notifContent,
+                'type'            => 'subscription_renewal',
+                'duration_type'   => $durationType,
+                'amount'          => $amount,
+                'created_at'      => now()->diffForHumans(),
+            ]));
+        } catch (\Throwable $e) {
+            Log::error("Lỗi khi broadcast WebSocket sự kiện gia hạn trung tâm {$center->id}: " . $e->getMessage());
+        }
 
         return [
             'success' => true,

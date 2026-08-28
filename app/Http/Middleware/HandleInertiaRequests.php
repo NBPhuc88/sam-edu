@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Center;
+use App\Models\NotificationRecipient;
 use App\Models\SeoMetadata;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
@@ -134,6 +135,39 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        $userNotifications        = [];
+        $unreadNotificationsCount = 0;
+
+        if ($user && $role) {
+            $recipients = NotificationRecipient::where('recipient_type', $role)
+                ->where('recipient_id', $user->id)
+                ->with(['notification.center'])
+                ->latest('id')
+                ->limit(10)
+                ->get();
+
+            $unreadNotificationsCount = NotificationRecipient::where('recipient_type', $role)
+                ->where('recipient_id', $user->id)
+                ->whereNull('read_at')
+                ->count();
+
+            $userNotifications = $recipients->map(function (NotificationRecipient $recipient) {
+                $notif = $recipient->notification;
+
+                return [
+                    'id'              => $recipient->id,
+                    'notification_id' => $recipient->notification_id,
+                    'title'           => $notif?->title ?? 'Thông báo',
+                    'content'         => $notif?->content ?? '',
+                    'type'            => $notif?->type ?? 'general',
+                    'center_name'     => $notif?->center?->name ?? null,
+                    'is_read'         => $recipient->read_at !== null,
+                    'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
+                    'created_at'      => $notif?->created_at ? $notif->created_at->diffForHumans() : $recipient->created_at->diffForHumans(),
+                ];
+            })->toArray();
+        }
+
         $routeName = $request->route()?->getName();
 
         if (! $routeName || ! in_array($routeName, ['home', 'services', 'about', 'contact'], true)) {
@@ -155,9 +189,11 @@ class HandleInertiaRequests extends Middleware
             'subscription_plans' => SubscriptionPlan::orderBy('price', 'asc')->get(),
             'center'             => $centerData,
             'auth'               => [
-                'user'        => $userData,
-                'role'        => $role,
-                'permissions' => $permissions,
+                'user'                       => $userData,
+                'role'                       => $role,
+                'permissions'                => $permissions,
+                'notifications'              => $userNotifications,
+                'unread_notifications_count' => $unreadNotificationsCount,
             ],
             'contactInfo' => [
                 'company_name' => SystemSetting::getByKey('company_name', 'Công ty Cổ phần SAM Digital'),

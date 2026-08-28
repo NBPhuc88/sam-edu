@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,13 @@ Route::middleware(['web', 'throttle:60,1'])->group(function () {
     Route::prefix('payments/zalopay')->group(function () {
         Route::post('/create', [PaymentController::class, 'createZaloPayOrder']);
         Route::get('/status/{appTransId}', [PaymentController::class, 'checkOrderStatus']);
+    });
+
+    // Web Notifications Routes
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 });
 

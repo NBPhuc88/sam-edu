@@ -1,8 +1,10 @@
-import { Link, router } from '@inertiajs/react';
-import { Building2, CreditCard, LogOut, Menu, User as UserIcon, X } from 'lucide-react';
-import React from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, Building2, CreditCard, LogOut, Menu, User as UserIcon, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import AppLogo from '@/components/common/AppLogo';
 import Button from '../ui/Button';
+import apiClient from '@/lib/axios';
+import getEcho from '@/lib/echo';
 
 interface AuthUser {
     id: number;
@@ -26,6 +28,18 @@ interface CenterData {
     days_remaining?: number;
 }
 
+interface NotificationItem {
+    id: number;
+    notification_id: number;
+    title: string;
+    content: string;
+    type?: string | null;
+    center_name?: string | null;
+    is_read: boolean;
+    read_at?: string | null;
+    created_at: string;
+}
+
 interface HeaderProps {
     user: AuthUser | null;
     role?: string | null;
@@ -47,6 +61,84 @@ export const Header: React.FC<HeaderProps> = ({
     centerExpired,
     headerExtra,
 }) => {
+    const pageProps = usePage<any>().props;
+    const initialNotifs: NotificationItem[] = pageProps.auth?.notifications ?? [];
+    const initialUnreadCount: number = pageProps.auth?.unread_notifications_count ?? 0;
+
+    const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifs);
+    const [unreadCount, setUnreadCount] = useState<number>(initialUnreadCount);
+    const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+
+    useEffect(() => {
+        setNotifications(pageProps.auth?.notifications ?? []);
+        setUnreadCount(pageProps.auth?.unread_notifications_count ?? 0);
+    }, [pageProps.auth?.notifications, pageProps.auth?.unread_notifications_count]);
+
+    // WebSocket Real-time Notification Listener (Reverb/Pusher)
+    useEffect(() => {
+        if (typeof window === 'undefined' || !user) {
+            return;
+        }
+
+        if (user.admin_role === 'super_admin') {
+            const echo = getEcho();
+            const channel = echo.channel('super-admin-notifications');
+
+            channel.listen('.subscription.renewal_requested', (e: any) => {
+                const newNotif: NotificationItem = {
+                    id: e.id || Date.now(),
+                    notification_id: e.notification_id || e.id,
+                    title: e.title || 'Yêu cầu gia hạn mới',
+                    content: e.content || '',
+                    type: e.type || 'subscription_renewal',
+                    center_name: e.center_name || null,
+                    is_read: false,
+                    read_at: null,
+                    created_at: e.created_at || 'Vừa xong',
+                };
+
+                setNotifications((prev) => [newNotif, ...prev]);
+                setUnreadCount((prev) => prev + 1);
+            });
+
+            return () => {
+                echo.leaveChannel('super-admin-notifications');
+            };
+        }
+    }, [user]);
+
+    const handleMarkAsRead = async (id: number) => {
+        try {
+            const res = await apiClient.patch(`/api/notifications/${id}/read`);
+            if (res.data?.success) {
+                setNotifications((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+                );
+                setUnreadCount((prev) => Math.max(0, prev - 1));
+            }
+        } catch {
+            setNotifications((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+            );
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
+    };
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            await apiClient.post('/api/notifications/mark-all-read');
+            setNotifications((prev) =>
+                prev.map((n) => ({ ...n, is_read: true })),
+            );
+            setUnreadCount(0);
+        } catch {
+            setNotifications((prev) =>
+                prev.map((n) => ({ ...n, is_read: true })),
+            );
+            setUnreadCount(0);
+        }
+    };
+
     const handleLogout = () => {
         router.post('/logout');
     };
@@ -115,6 +207,87 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                         <span className="hidden sm:inline">Gia hạn dịch vụ</span>
                     </Button>
+                )}
+
+                {/* Bell Notification Icon */}
+                {user && (
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setIsPopoverOpen((prev) => !prev)}
+                            className="relative rounded-full p-2 text-gray-600 hover:bg-slate-100 hover:text-gray-900 transition-colors focus:outline-none"
+                            title="Thông báo hệ thống"
+                        >
+                            <Bell className="h-5 w-5" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-pulse">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Dropdown Popover */}
+                        {isPopoverOpen && (
+                            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 px-1">
+                                    <div className="flex items-center gap-2">
+                                        <Bell className="h-4 w-4 text-emerald-600" />
+                                        <span className="text-xs font-bold text-gray-900">Thông báo</span>
+                                        {unreadCount > 0 && (
+                                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                                {unreadCount} chưa đọc
+                                            </span>
+                                        )}
+                                    </div>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={handleMarkAllAsRead}
+                                            className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                        >
+                                            Đã đọc tất cả
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="mt-2 max-h-80 overflow-y-auto space-y-1.5 pr-0.5">
+                                    {notifications.length === 0 ? (
+                                        <div className="py-8 text-center text-xs text-gray-400">
+                                            Chưa có thông báo nào
+                                        </div>
+                                    ) : (
+                                        notifications.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => !item.is_read && handleMarkAsRead(item.id)}
+                                                className={`cursor-pointer rounded-xl p-2.5 transition-all text-left ${
+                                                    item.is_read
+                                                        ? 'bg-white hover:bg-slate-50 text-gray-600'
+                                                        : 'bg-emerald-50/70 border border-emerald-100 hover:bg-emerald-50 text-gray-900 font-medium'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <span className="text-xs font-bold text-gray-900 leading-snug">
+                                                        {item.title}
+                                                    </span>
+                                                    {!item.is_read && (
+                                                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
+                                                    )}
+                                                </div>
+                                                <p className="mt-1 text-[11px] text-gray-600 leading-relaxed">
+                                                    {item.content}
+                                                </p>
+                                                <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
+                                                    <span>{item.center_name ?? 'Hệ thống'}</span>
+                                                    <span>{item.created_at}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* User info link to Profile */}
