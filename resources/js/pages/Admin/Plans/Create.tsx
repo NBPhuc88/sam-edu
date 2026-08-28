@@ -26,7 +26,7 @@ const DEFAULT_FEATURE_SUGGESTIONS = [
     'Quản lý 1 trung tâm đào tạo',
     'Điểm danh & Quản lý lớp học thông minh',
     'Biểu đồ thống kê Recharts nâng cao',
-    'Cổng thanh toán ZaloPay QR Code v2',
+    'Thông báo gia hạn qua Email tự động',
     'Nhập xuất dữ liệu Excel/CSV',
     'Hỗ trợ kỹ thuật 24/7 qua Hotline/Email',
 ];

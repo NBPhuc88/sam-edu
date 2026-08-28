@@ -87,7 +87,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             PermissionSeeder::class,
         ]);
 
-        $this->command->info('📦 [2/10] Khởi tạo dữ liệu liên kết đa trung tâm...');
+        $this->command->info('📦 [2/10] Khởi tạo dữ liệu liên kết trung tâm...');
 
         DB::transaction(function () {
             // 2. Lấy Super Admin

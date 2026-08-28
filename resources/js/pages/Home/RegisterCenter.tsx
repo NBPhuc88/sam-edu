@@ -536,7 +536,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                             }`}
                                                         >
                                                             <div className="text-xs font-bold text-gray-900">
-                                                                ZaloPay QR
+                                                                Chuyển Khoản / Hỗ Trợ
                                                             </div>
                                                         </div>
 

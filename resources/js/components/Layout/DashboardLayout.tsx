@@ -161,7 +161,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             onClick={() => setIsPaymentModalOpen(true)}
                             className="shrink-0 border-none bg-white text-emerald-800 shadow-xs hover:bg-emerald-50"
                         >
-                            Gia hạn ZaloPay
+                            Gia hạn dịch vụ
                         </Button>
                     </div>
                 )}
@@ -194,7 +194,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <Modal
                     isOpen={isPaymentModalOpen}
                     onClose={() => setIsPaymentModalOpen(false)}
-                    title="Gia hạn gói dịch vụ qua ZaloPay"
+                    title="Gia hạn gói dịch vụ"
                     footer={
                         <>
                             <Button
@@ -209,7 +209,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 icon={<CreditCard className="h-4 w-4" />}
                                 onClick={handleZaloPayRenew}
                             >
-                                Thanh toán ZaloPay (
+                                Yêu cầu gia hạn (
                                 {(
                                     paidPlans.find(
                                         (p) => p.code === selectedPlanCode,
@@ -223,8 +223,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600">
                             Chọn gói gia hạn cho trung tâm{' '}
-                            <strong>{center?.name}</strong>. Hệ thống sẽ mở cổng
-                            ZaloPay QR Code v2 sau khi xác nhận.
+                            <strong>{center?.name}</strong>. Vui lòng gửi yêu cầu hoặc liên hệ Quản trị viên hệ thống để hoàn tất gia hạn.
                         </p>
 
                         {center?.subscription_plan === 'monthly' && (
@@ -288,12 +287,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                         <div className="space-y-1 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800">
                             <div className="font-semibold text-emerald-900">
-                                Chi tiết thanh toán ZaloPay:
+                                Thông tin gia hạn dịch vụ:
                             </div>
-                            <div>• Cổng thanh toán: ZaloPay QR Code v2</div>
+                            <div>• Hình thức: Liên hệ Quản trị viên hệ thống để thực hiện gia hạn.</div>
                             <div>
-                                • Tự động kích hoạt &amp; gia hạn ngay sau khi
-                                thanh toán thành công.
+                                • Hệ thống sẽ tự động gửi Email thông báo trước 7 ngày khi gói dịch vụ sắp hết hạn.
                             </div>
                         </div>
                     </div>

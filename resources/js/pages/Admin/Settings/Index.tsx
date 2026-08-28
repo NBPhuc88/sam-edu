@@ -456,7 +456,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                         id={`seo_${selectedSeoRoute}_title`}
                                         value={activeSeoItem.title ?? ''}
                                         onChange={(e) => handleSeoChange(selectedSeoRoute, 'title', e.target.value)}
-                                        placeholder="VD: Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital"
+                                        placeholder="VD: Giải Pháp Quản Lý Trung Tâm Giáo Dục - SAM Digital"
                                         icon={<Globe className="h-4 w-4 text-gray-400" />}
                                     />
 

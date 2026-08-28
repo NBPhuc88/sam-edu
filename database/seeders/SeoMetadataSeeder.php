@@ -17,8 +17,8 @@ class SeoMetadataSeeder extends Seeder
         $seoEntries = [
             [
                 'route_name'    => 'home',
-                'title'         => 'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital',
-                'description'   => 'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh.',
+                'title'         => 'Giải Pháp Quản Lý Trung Tâm Giáo Dục - SAM Digital',
+                'description'   => 'Giải Pháp Quản Lý Trung Tâm Giáo Dục đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh.',
                 'keywords'      => 'Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, SAM Digital, quản lý đào tạo 2026',
                 'og_image'      => "{$appUrl}/images/og-home-banner.jpg",
                 'canonical_url' => $appUrl,
@@ -42,7 +42,7 @@ class SeoMetadataSeeder extends Seeder
             [
                 'route_name'    => 'contact',
                 'title'         => 'Liên Hệ Tư Vấn & Đăng Ký Dùng Thử Miễn Phí - SAM Digital',
-                'description'   => 'Đăng ký nhận tư vấn trực tiếp và trải nghiệm giải pháp quản lý giáo dục đa trung tâm miễn phí 30 ngày. Đội ngũ chuyên gia SAM Digital hỗ trợ 24/7.',
+                'description'   => 'Đăng ký nhận tư vấn trực tiếp và trải nghiệm giải pháp quản lý trung tâm giáo dục miễn phí 30 ngày. Đội ngũ chuyên gia SAM Digital hỗ trợ 24/7.',
                 'keywords'      => 'liên hệ SAM Digital, tư vấn phần mềm quản lý trung tâm, đăng ký dùng thử 30 ngày, hotline hỗ trợ SAM Digital',
                 'og_image'      => "{$appUrl}/images/og-contact-banner.jpg",
                 'canonical_url' => "{$appUrl}/contact",

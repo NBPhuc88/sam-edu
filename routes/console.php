@@ -33,3 +33,7 @@ Schedule::command('class-exams:update-status')
 Schedule::command('logs:clean-old')
     ->monthlyOn(1, '00:00')
     ->withoutOverlapping();
+
+Schedule::command('centers:notify-expiring-subscription')
+    ->dailyAt('08:00')
+    ->withoutOverlapping();

@@ -3,8 +3,8 @@
     <head>
         @php
             $seoData = $page['props']['seo'] ?? null;
-            $seoTitle = !empty($seoData['title']) ? $seoData['title'] : 'SAM EDU - Hệ Thống Quản Lý Giáo Dục Đa Trung Tâm';
-            $seoDescription = !empty($seoData['description']) ? $seoData['description'] : 'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá: Tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, khảo thí 9 dạng câu hỏi và quản lý học phí.';
+            $seoTitle = !empty($seoData['title']) ? $seoData['title'] : 'SAM EDU - Hệ Thống Quản Lý Trung Tâm Giáo Dục';
+            $seoDescription = !empty($seoData['description']) ? $seoData['description'] : 'Giải Pháp Quản Lý Trung Tâm Giáo Dục đột phá: Tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, khảo thí 9 dạng câu hỏi và quản lý học phí.';
             $seoOgImage = !empty($seoData['og_image']) ? $seoData['og_image'] : asset('og-banner.png');
             $seoCanonical = !empty($seoData['canonical_url']) ? $seoData['canonical_url'] : url()->current();
         @endphp

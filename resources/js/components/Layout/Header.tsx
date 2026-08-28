@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                         icon={<CreditCard className="h-3.5 w-3.5" />}
                         onClick={onOpenPayment}
                     >
-                        <span className="hidden sm:inline">Gia hạn ZaloPay</span>
+                        <span className="hidden sm:inline">Gia hạn dịch vụ</span>
                     </Button>
                 )}
 
