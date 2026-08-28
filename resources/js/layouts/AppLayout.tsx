@@ -75,33 +75,40 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         }
     }, [flash, errors]);
 
-    /** Handle ZaloPay renewal */
+    /** Handle subscription renewal email request */
     const handleZaloPayRenew = async (planCode: string): Promise<void> => {
         const plans: any[] = subscription_plans ?? [];
         const targetPlan = plans.find((p: any) => p.code === planCode) ?? plans[0];
 
         try {
-            const response = await apiClient.post('/api/payments/zalopay/create', {
-                center_id: center?.id ?? 1,
+            const response = await apiClient.post('/api/payments/request-renewal', {
+                center_id: center?.id,
                 plan_code: targetPlan?.code ?? 'yearly',
-                plan_name: targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
-                amount: targetPlan?.price ?? 4800000,
-                duration_days: targetPlan?.duration_days ?? 365,
             });
 
-            if (response.data?.order_url) {
-                window.location.assign(response.data.order_url);
+            if (response.data?.success) {
+                setToast({
+                    isOpen: true,
+                    message:
+                        response.data.message ||
+                        'Đã gửi yêu cầu gia hạn tới Quản trị viên hệ thống thành công!',
+                    type: 'success',
+                });
             } else {
                 setToast({
                     isOpen: true,
-                    message: 'Tạo đơn hàng ZaloPay thất bại. Vui lòng thử lại!',
+                    message:
+                        response.data?.message ||
+                        'Không thể gửi yêu cầu gia hạn. Vui lòng thử lại!',
                     type: 'error',
                 });
             }
-        } catch {
+        } catch (err: any) {
             setToast({
                 isOpen: true,
-                message: 'Có lỗi xảy ra khi tạo đơn hàng ZaloPay.',
+                message:
+                    err?.response?.data?.message ||
+                    'Có lỗi xảy ra khi gửi yêu cầu gia hạn.',
                 type: 'error',
             });
         }
@@ -121,7 +128,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 role={role}
                 center={center ?? null}
                 subscriptionPlans={subscription_plans ?? []}
-                onZaloPayRenew={center ? handleZaloPayRenew : undefined}
+                onZaloPayRenew={
+                    role === 'admin' && center ? handleZaloPayRenew : undefined
+                }
                 headerExtra={headerExtra}
             >
                 {children}

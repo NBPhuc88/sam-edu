@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Models\Admin;
 use Illuminate\Database\Eloquent\Collection;
 
 interface PaymentServiceInterface
@@ -10,6 +11,15 @@ interface PaymentServiceInterface
      * @return Collection
      */
     public function getSubscriptionPlans(): Collection;
+
+    /**
+     * Send email request to system admin for center subscription renewal.
+     *
+     * @param  array<string, mixed> $data
+     * @param  Admin|null           $requestingUser
+     * @return array<string, mixed>
+     */
+    public function requestRenewal(array $data, ?Admin $requestingUser = null): array;
 
     /**
      * @param  array<string, mixed> $validated

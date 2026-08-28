@@ -98,6 +98,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
     const paidPlans = subscriptionPlans.filter((p) => p.price > 0);
     const showBanner =
+        role === 'admin' &&
         center &&
         (center.is_expired || center.expiring_soon || center.expiring_1day);
 
@@ -110,6 +111,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         try {
             await onZaloPayRenew(selectedPlanCode);
+            setIsPaymentModalOpen(false);
         } finally {
             setIsLoadingPayment(false);
         }
@@ -174,11 +176,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     sidebarOpen={sidebarOpen}
                     onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
                     onOpenPayment={
-                        showBanner
+                        showBanner && role === 'admin'
                             ? () => setIsPaymentModalOpen(true)
                             : undefined
                     }
-                    centerExpired={center?.is_expired}
+                    centerExpired={role === 'admin' && center?.is_expired}
                     headerExtra={headerExtra}
                 />
 
@@ -189,12 +191,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <Footer />
             </div>
 
-            {/* ── ZaloPay Renewal Modal ─────────────────────────────────── */}
-            {onZaloPayRenew && (
+            {/* ── Renewal Request Modal ─────────────────────────────────── */}
+            {onZaloPayRenew && role === 'admin' && (
                 <Modal
                     isOpen={isPaymentModalOpen}
                     onClose={() => setIsPaymentModalOpen(false)}
-                    title="Gia hạn gói dịch vụ"
+                    title="Gửi Yêu Cầu Gia Hạn Gói Dịch Vụ"
                     footer={
                         <>
                             <Button
@@ -209,7 +211,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 icon={<CreditCard className="h-4 w-4" />}
                                 onClick={handleZaloPayRenew}
                             >
-                                Yêu cầu gia hạn (
+                                Gửi yêu cầu gia hạn (
                                 {(
                                     paidPlans.find(
                                         (p) => p.code === selectedPlanCode,
@@ -223,7 +225,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600">
                             Chọn gói gia hạn cho trung tâm{' '}
-                            <strong>{center?.name}</strong>. Vui lòng gửi yêu cầu hoặc liên hệ Quản trị viên hệ thống để hoàn tất gia hạn.
+                            <strong>{center?.name}</strong>. Hệ thống sẽ tự động gửi Email thông báo yêu cầu gia hạn tới Quản trị viên hệ thống.
                         </p>
 
                         {center?.subscription_plan === 'monthly' && (
@@ -287,11 +289,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                         <div className="space-y-1 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800">
                             <div className="font-semibold text-emerald-900">
-                                Thông tin gia hạn dịch vụ:
+                                Thông tin gửi yêu cầu gia hạn:
                             </div>
-                            <div>• Hình thức: Liên hệ Quản trị viên hệ thống để thực hiện gia hạn.</div>
                             <div>
-                                • Hệ thống sẽ tự động gửi Email thông báo trước 7 ngày khi gói dịch vụ sắp hết hạn.
+                                • Cổng thanh toán ZaloPay đang bảo trì. Khi bấm "Gửi yêu cầu gia hạn", hệ thống sẽ tự động gửi Email thông báo tới Quản trị viên hệ thống.
+                            </div>
+                            <div>
+                                • Quản trị viên hệ thống sẽ nhận được thông tin gói cước bạn chọn và chủ động liên hệ để hỗ trợ gia hạn cho bạn.
                             </div>
                         </div>
                     </div>

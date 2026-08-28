@@ -2,14 +2,19 @@
 
 namespace App\Services\Payment;
 
+use App\Mail\CenterSubscriptionRenewalRequestedMail;
+use App\Models\Admin;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
+use App\Repositories\Setting\SystemSettingRepositoryInterface;
 use App\Repositories\Subscription\CenterSubscriptionRepositoryInterface;
 use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentService implements PaymentServiceInterface
 {
@@ -18,13 +23,81 @@ class PaymentService implements PaymentServiceInterface
         protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository,
         protected CenterRepositoryInterface $centerRepository,
         protected PaymentTransactionRepositoryInterface $paymentTransactionRepository,
-        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository
+        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository,
+        protected SystemSettingRepositoryInterface $systemSettingRepository
     ) {
     }
 
     public function getSubscriptionPlans(): Collection
     {
         return $this->subscriptionPlanRepository->getAllOrderedByPrice();
+    }
+
+    /**
+     * @param  array<string, mixed> $data
+     * @param  Admin|null           $requestingUser
+     * @return array<string, mixed>
+     */
+    public function requestRenewal(array $data, ?Admin $requestingUser = null): array
+    {
+        $center = $this->centerRepository->find((int) $data['center_id']);
+
+        if (! $center) {
+            return [
+                'success' => false,
+                'message' => 'Không tìm thấy thông tin trung tâm.',
+            ];
+        }
+
+        $plan = $this->subscriptionPlanRepository->findByCode((string) $data['plan_code']);
+
+        if (! $plan) {
+            return [
+                'success' => false,
+                'message' => 'Gói dịch vụ không hợp lệ.',
+            ];
+        }
+
+        $note = isset($data['note']) ? (string) $data['note'] : null;
+
+        $contactEmail = $this->systemSettingRepository->getByKey(
+            'contact_email',
+            (string) config('mail.from.address', 'phucstt01@gmail.com')
+        );
+
+        $superAdminEmails = Admin::where('role', 'super_admin')->pluck('email')->filter()->toArray();
+        $recipientEmails  = array_unique(array_filter(array_merge([$contactEmail], $superAdminEmails)));
+
+        foreach ($recipientEmails as $email) {
+            try {
+                Mail::to($email)->queue(
+                    new CenterSubscriptionRenewalRequestedMail($center, $plan, $note, $requestingUser)
+                );
+            } catch (\Throwable $e) {
+                Log::error("Lỗi khi gửi email yêu cầu gia hạn trung tâm {$center->id} tới {$email}: " . $e->getMessage());
+            }
+        }
+
+        $appTransId = date('ymd') . '_REQ_' . time() . rand(100, 999);
+        $this->paymentTransactionRepository->create([
+            'center_id'      => $center->id,
+            'app_trans_id'   => $appTransId,
+            'payment_method' => 'other',
+            'amount'         => $plan->price,
+            'status'         => 'pending',
+            'metadata'       => [
+                'app_trans_id'    => $appTransId,
+                'plan_code'       => $plan->code,
+                'plan_name'       => $plan->name,
+                'note'            => $note,
+                'requested_by_id' => $requestingUser?->id,
+            ],
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Yêu cầu gia hạn gói dịch vụ đã được gửi thành công đến Quản trị viên hệ thống. Bộ phận hỗ trợ sẽ liên hệ xử lý cho bạn trong thời gian sớm nhất!',
+        ];
     }
 
     /**
