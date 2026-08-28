@@ -141,7 +141,7 @@ export default function StudentTuitionIndex({
             case 'bank_transfer':
                 return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">Chuyển khoản</span>;
             case 'zalopay':
-                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">ZaloPay QR</span>;
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">QR ZaloPay</span>;
             case 'cash':
             default:
                 return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Tiền mặt</span>;
