@@ -69,14 +69,21 @@ return new class () extends Migration {
                 $table->unsignedBigInteger('subscription_plan_id')->nullable()->after('status');
             });
 
-            if (Schema::hasTable('subscription_plans')) {
-                $plans = DB::table('subscription_plans')->get();
-                foreach ($plans as $p) {
-                    DB::table('centers')->where('subscription_plan', $p->code)->orWhere('subscription_plan', (string) $p->id)->update(['subscription_plan_id' => $p->id]);
-                }
+            $plans = Schema::hasTable('subscription_plans') ? DB::table('subscription_plans')->get() : collect();
+            $planMap = [];
+            foreach ($plans as $p) {
+                $planMap[(string) $p->code] = (int) $p->id;
+                $planMap[(string) $p->id]   = (int) $p->id;
+            }
+            $firstPlanId = (int) ($plans->first()?->id ?? 1);
+
+            $centers = DB::table('centers')->get(['id', 'subscription_plan']);
+            foreach ($centers as $c) {
+                $planVal = isset($c->subscription_plan) ? (string) $c->subscription_plan : '';
+                $planId  = $planMap[$planVal] ?? $firstPlanId;
+                DB::table('centers')->where('id', $c->id)->update(['subscription_plan_id' => $planId]);
             }
 
-            $firstPlanId = DB::table('subscription_plans')->orderBy('id', 'asc')->value('id') ?? 1;
             DB::table('centers')->whereNull('subscription_plan_id')->update(['subscription_plan_id' => $firstPlanId]);
 
             Schema::table('centers', function (Blueprint $table) {
@@ -107,14 +114,21 @@ return new class () extends Migration {
                 $table->unsignedBigInteger('plan_id')->nullable()->after('center_id');
             });
 
-            if (Schema::hasTable('subscription_plans')) {
-                $plans = DB::table('subscription_plans')->get();
-                foreach ($plans as $p) {
-                    DB::table('center_subscriptions')->where('plan_code', $p->code)->orWhere('plan_code', (string) $p->id)->update(['plan_id' => $p->id]);
-                }
+            $plans = Schema::hasTable('subscription_plans') ? DB::table('subscription_plans')->get() : collect();
+            $planMap = [];
+            foreach ($plans as $p) {
+                $planMap[(string) $p->code] = (int) $p->id;
+                $planMap[(string) $p->id]   = (int) $p->id;
+            }
+            $firstPlanId = (int) ($plans->first()?->id ?? 1);
+
+            $subs = DB::table('center_subscriptions')->get(['id', 'plan_code']);
+            foreach ($subs as $sub) {
+                $planVal = isset($sub->plan_code) ? (string) $sub->plan_code : '';
+                $planId  = $planMap[$planVal] ?? $firstPlanId;
+                DB::table('center_subscriptions')->where('id', $sub->id)->update(['plan_id' => $planId]);
             }
 
-            $firstPlanId = DB::table('subscription_plans')->orderBy('id', 'asc')->value('id') ?? 1;
             DB::table('center_subscriptions')->whereNull('plan_id')->update(['plan_id' => $firstPlanId]);
 
             Schema::table('center_subscriptions', function (Blueprint $table) {
