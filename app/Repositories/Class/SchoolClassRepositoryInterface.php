@@ -81,6 +81,11 @@ interface SchoolClassRepositoryInterface
      */
     public function countByCenterIds(array $centerIds): int;
 
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countActiveByCenterIds(array $centerIds): int;
+
     public function codeExists(string $code): bool;
 
     public function nextId(): int;

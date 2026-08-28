@@ -79,3 +79,43 @@ test('student can access dashboard with monthly schedule', function () {
         ->has('exam_results')
     );
 });
+
+test('center admin can access dashboard with today sessions, alert stats, tuition bar chart, and class status pie chart', function () {
+    $center = Center::create([
+        'code'              => 'CTR-TEST-03',
+        'name'              => 'Trung tâm Gamma',
+        'status'            => 'active',
+        'subscription_plan' => 'trial',
+        'plan_type'         => 'trial',
+        'expires_at'        => Carbon::now()->addDays(14),
+    ]);
+
+    $centerAdmin = Admin::create([
+        'admin_code' => 'ADM-CTR-03',
+        'username'   => 'center_admin_test',
+        'email'      => 'centeradmin@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Center Admin Test',
+        'role'       => 'admin',
+        'status'     => 'active',
+    ]);
+    $centerAdmin->centers()->attach($center->id);
+
+    $response = $this->actingAs($centerAdmin, 'admin')->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+        ->component('Dashboard')
+        ->where('role', 'admin')
+        ->has('today_sessions')
+        ->has('alert_stats')
+        ->has('tuition_bar_chart')
+        ->has('class_status_pie')
+        ->has('teachers_bar_chart')
+        ->has('students_bar_chart')
+        ->has('classes_bar_chart')
+        ->has('stats')
+        ->where('stats.active_classes', 0)
+    );
+});

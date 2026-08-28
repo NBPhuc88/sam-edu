@@ -295,6 +295,16 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         return SchoolClass::whereIn('center_id', $centerIds)->count();
     }
 
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countActiveByCenterIds(array $centerIds): int
+    {
+        return SchoolClass::whereIn('center_id', $centerIds)
+            ->where('status', 1)
+            ->count();
+    }
+
     public function codeExists(string $code): bool
     {
         return SchoolClass::withTrashed()->where('code', $code)->exists();

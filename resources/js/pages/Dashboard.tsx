@@ -1,19 +1,24 @@
 import {
-    Building2,
-    Users,
-    GraduationCap,
+    AlertCircle,
+    AlertTriangle,
+    ArrowRight,
     BookOpen,
-    Search,
+    Building2,
     Calendar,
-    DollarSign,
-    Wallet,
-    Clock,
+    CalendarCheck,
     ChevronLeft,
     ChevronRight,
+    Clock,
+    DollarSign,
     DoorOpen,
-    UserCheck,
+    GraduationCap,
     Printer,
+    Search,
     User,
+    UserCheck,
+    UserPlus,
+    Users,
+    Wallet,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
@@ -203,79 +208,324 @@ export const Dashboard: React.FC<any> = (props) => {
     if (role === 'admin') {
         const teachersBar = props.teachers_bar_chart || [];
         const studentsBar = props.students_bar_chart || [];
-        const classesBar = props.classes_bar_chart || [];
+        const tuitionBar = props.tuition_bar_chart || [];
+        const classStatusPie = props.class_status_pie || [];
+        const todaySessions = props.today_sessions || [];
+        const alertStats = props.alert_stats || {
+            unattended_today_count: 0,
+            upcoming_classes_count: 0,
+            overdue_tuitions_count: 0,
+            overdue_tuitions_amount: 0,
+        };
 
         return (
-            <AppLayout title="Bảng Điều Khiển - Admin Quản Lý">
+            <AppLayout title="Bảng Điều Khiển - Quản Trị Trung Tâm">
                 <div className="space-y-8">
+                    {/* Top Header Card */}
                     <Card className="border-gray-200 bg-white p-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Thống Kê Trung Tâm Được Quản Lý</h2>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Theo dõi tăng trưởng Giáo viên, Học sinh, Lớp học và doanh thu thu học phí hàng tháng.
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Tổng Quan Hoạt Động Trung Tâm</h2>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Theo dõi ca học hôm nay, tình hình giảng dạy, tăng trưởng học sinh và tình hình thu học phí.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Hôm nay: {new Date().toLocaleDateString('vi-VN')}
+                                </span>
+                            </div>
+                        </div>
                     </Card>
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-gray-400">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Trung Tâm Phụ Trách</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.centers ?? 0}</h4>
-                        </Card>
-                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-blue-500">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Học Sinh</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.students ?? 0}</h4>
-                        </Card>
-                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-purple-500">
-                            <p className="text-xs font-semibold uppercase text-gray-500">Tổng Giáo Viên</p>
-                            <h4 className="text-2xl font-bold text-gray-900 mt-1.5">{stats.teachers ?? 0}</h4>
-                        </Card>
-                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-indigo-500">
+                    {/* Row 1 — 6 Metric Stat Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-blue-500">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase text-indigo-700">
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-gray-500">Tổng Học Sinh</p>
+                                    <h4 className="text-xl font-black text-gray-900 mt-1">{stats.students ?? 0}</h4>
+                                </div>
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                    <GraduationCap className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-teal-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-teal-700">HS Mới Tháng Này</p>
+                                    <h4 className="text-xl font-black text-teal-800 mt-1">{stats.new_students_this_month ?? 0}</h4>
+                                </div>
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                                    <UserPlus className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-purple-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-gray-500">Tổng Giáo Viên</p>
+                                    <h4 className="text-xl font-black text-gray-900 mt-1">{stats.teachers ?? 0}</h4>
+                                </div>
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                                    <Users className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-emerald-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-gray-500">Lớp Hoạt Động</p>
+                                    <h4 className="text-xl font-black text-gray-900 mt-1">{stats.active_classes ?? 0}</h4>
+                                </div>
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                    <BookOpen className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-indigo-500">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-indigo-700">
                                         {stats?.last_month_name ? `Thu ${stats.last_month_name}` : 'Thu Tháng Trước'}
                                     </p>
-                                    <h4 className="text-xl font-extrabold text-indigo-700 mt-1.5">
+                                    <h4 className="text-base font-extrabold text-indigo-700 mt-1 truncate" title={formatCurrency(stats?.last_month_paid_amount || 0)}>
                                         {formatCurrency(stats?.last_month_paid_amount || 0)}
                                     </h4>
                                 </div>
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                                     <DollarSign className="h-5 w-5" />
                                 </div>
                             </div>
                         </Card>
-                        <Card className="bg-white p-5 shadow-xs border-l-4 border-l-emerald-500">
+
+                        <Card className="bg-white p-4 shadow-xs border-l-4 border-l-emerald-600">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase text-emerald-700">
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-emerald-700">
                                         {stats?.this_month_name ? `Thu ${stats.this_month_name}` : 'Thu Tháng Này'}
                                     </p>
-                                    <h4 className="text-xl font-extrabold text-emerald-700 mt-1.5">
+                                    <h4 className="text-base font-extrabold text-emerald-700 mt-1 truncate" title={formatCurrency(stats?.this_month_paid_amount || 0)}>
                                         {formatCurrency(stats?.this_month_paid_amount || 0)}
                                     </h4>
                                 </div>
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                                     <Wallet className="h-5 w-5" />
                                 </div>
                             </div>
                         </Card>
                     </div>
 
+                    {/* Row 2 — Ca Học Hôm Nay & Cảnh Báo Nhanh */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Ca Học Hôm Nay (2 Cols) */}
+                        <Card
+                            title={`Lịch Học Hôm Nay (${todaySessions.length} ca)`}
+                            className="lg:col-span-2 flex flex-col justify-between"
+                        >
+                            {todaySessions.length === 0 ? (
+                                <div className="py-12 text-center text-sm text-gray-400 italic">
+                                    Hôm nay trung tâm không có ca học nào được xếp lịch.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-100 text-2xs font-bold uppercase text-gray-500 bg-slate-50/70">
+                                                <th className="py-2.5 px-3">Giờ Học</th>
+                                                <th className="py-2.5 px-3">Lớp & Môn Học</th>
+                                                <th className="py-2.5 px-3">Giáo Viên & Phòng</th>
+                                                <th className="py-2.5 px-3">Trạng Thái</th>
+                                                <th className="py-2.5 px-3 text-right">Thao Tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+                                            {todaySessions.map((session: any) => (
+                                                <tr key={session.id} className="hover:bg-slate-50/80 transition-colors">
+                                                    <td className="py-3 px-3 font-mono font-bold text-gray-900 whitespace-nowrap">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                                                            <span>{session.time}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-3">
+                                                        <div className="font-bold text-gray-900">{session.class_name}</div>
+                                                        <div className="text-2xs text-gray-500">{session.subject_name}</div>
+                                                    </td>
+                                                    <td className="py-3 px-3">
+                                                        <div className="font-medium text-gray-900">{session.teacher_name}</div>
+                                                        <div className="text-2xs text-gray-500">{session.room_name}</div>
+                                                    </td>
+                                                    <td className="py-3 px-3 whitespace-nowrap">
+                                                        {session.is_attended ? (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold bg-emerald-100 text-emerald-800">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                                                Đã điểm danh ({session.attendance_count} HS)
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold bg-rose-100 text-rose-800">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                                                                Chưa điểm danh
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                                                        <Link href={`/attendance/session/${session.session_id}`}>
+                                                            <Button
+                                                                variant={session.is_attended ? 'secondary' : 'success'}
+                                                                size="sm"
+                                                                icon={<UserCheck className="w-3.5 h-3.5" />}
+                                                            >
+                                                                {session.is_attended ? 'Xem Lại' : 'Điểm Danh'}
+                                                            </Button>
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </Card>
 
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <Card title="Số Lượng Giáo Viên Mới Đăng Ký (6 Tháng)">
+                        {/* Cảnh Báo & Nhắc Nhở Nhanh (1 Col) */}
+                        <Card title="Cảnh Báo & Nhắc Nhở" className="lg:col-span-1 space-y-3">
+                            {/* Alert 1: Điểm danh */}
+                            <div className={`p-3.5 rounded-xl border transition-all ${
+                                alertStats.unattended_today_count > 0
+                                    ? 'bg-rose-50/80 border-rose-200 text-rose-900'
+                                    : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                            }`}>
+                                <div className="flex items-start gap-3">
+                                    <div className={`p-2 rounded-lg shrink-0 ${
+                                        alertStats.unattended_today_count > 0
+                                            ? 'bg-rose-600 text-white'
+                                            : 'bg-emerald-600 text-white'
+                                    }`}>
+                                        <AlertCircle className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-xs font-bold">
+                                            {alertStats.unattended_today_count > 0
+                                                ? `Có ${alertStats.unattended_today_count} ca học chưa điểm danh`
+                                                : 'Điểm danh hôm nay đầy đủ'}
+                                        </div>
+                                        <p className="mt-0.5 text-2xs opacity-80 leading-relaxed">
+                                            {alertStats.unattended_today_count > 0
+                                                ? 'Hãy nhắc nhở giáo viên phụ trách hoàn tất điểm danh trước cuối ngày.'
+                                                : 'Tất cả các ca học đã diễn ra hôm nay đều đã hoàn tất điểm danh.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alert 2: Lớp sắp khai giảng */}
+                            <div className="p-3.5 rounded-xl border bg-blue-50/80 border-blue-200 text-blue-900">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 rounded-lg bg-blue-600 text-white shrink-0">
+                                        <CalendarCheck className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-xs font-bold">
+                                            {alertStats.upcoming_classes_count > 0
+                                                ? `${alertStats.upcoming_classes_count} lớp sắp khai giảng (7 ngày)`
+                                                : 'Không có lớp khai giảng sắp tới'}
+                                        </div>
+                                        <p className="mt-0.5 text-2xs opacity-80 leading-relaxed">
+                                            {alertStats.upcoming_classes_count > 0
+                                                ? 'Kiểm tra danh sách học sinh và phân công giáo viên trước ngày học đầu tiên.'
+                                                : 'Hiện không có lớp học mới dự kiến mở trong tuần tới.'}
+                                        </p>
+                                        {alertStats.upcoming_classes_count > 0 && (
+                                            <Link
+                                                href="/classes"
+                                                className="mt-1.5 inline-flex items-center gap-1 text-2xs font-bold text-blue-700 hover:underline"
+                                            >
+                                                Xem danh sách lớp <ArrowRight className="w-3 h-3" />
+                                            </Link>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alert 3: Học phí quá hạn */}
+                            <div className={`p-3.5 rounded-xl border transition-all ${
+                                alertStats.overdue_tuitions_count > 0
+                                    ? 'bg-amber-50/80 border-amber-200 text-amber-900'
+                                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                            }`}>
+                                <div className="flex items-start gap-3">
+                                    <div className={`p-2 rounded-lg shrink-0 ${
+                                        alertStats.overdue_tuitions_count > 0
+                                            ? 'bg-amber-600 text-white'
+                                            : 'bg-slate-400 text-white'
+                                    }`}>
+                                        <AlertTriangle className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-xs font-bold">
+                                            {alertStats.overdue_tuitions_count > 0
+                                                ? `${alertStats.overdue_tuitions_count} khoản học phí quá hạn`
+                                                : 'Không có học phí quá hạn'}
+                                        </div>
+                                        {alertStats.overdue_tuitions_count > 0 ? (
+                                            <>
+                                                <p className="mt-0.5 text-2xs opacity-80 leading-relaxed">
+                                                    Tổng tiền còn nợ: <strong className="font-bold">{formatCurrency(alertStats.overdue_tuitions_amount || 0)}</strong>
+                                                </p>
+                                                <Link
+                                                    href="/tuitions"
+                                                    className="mt-1.5 inline-flex items-center gap-1 text-2xs font-bold text-amber-800 hover:underline"
+                                                >
+                                                    Xem chi tiết học phí <ArrowRight className="w-3 h-3" />
+                                                </Link>
+                                            </>
+                                        ) : (
+                                            <p className="mt-0.5 text-2xs opacity-80 leading-relaxed">
+                                                Tất cả học viên đã thanh toán học phí đúng hạn.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Row 3 — Biểu Đồ Doanh Thu Thu Học Phí & Trạng Thái Lớp Học */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Biểu đồ cột: Doanh thu thu học phí 6 tháng */}
+                        <Card title="Doanh Thu Thu Học Phí (6 Tháng Gần Nhất)" className="lg:col-span-2">
                             <div className="h-72 w-full pt-2">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={teachersBar}>
+                                    <BarChart data={tuitionBar}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
-                                        <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
-                                        <Tooltip />
-                                        <Bar dataKey="teachers" name="Giáo viên mới" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                        <YAxis
+                                            tick={{ fontSize: 11, fill: '#4b5563' }}
+                                            tickFormatter={(value) => new Intl.NumberFormat('vi-VN', { notation: 'compact', compactDisplay: 'short' }).format(Number(value))}
+                                        />
+                                        <Tooltip
+                                            formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Số tiền thu']}
+                                        />
+                                        <Bar dataKey="amount" name="Thu học phí" fill="#059669" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         </Card>
 
+                        {/* Biểu đồ tròn: Trạng thái lớp học */}
+                        <Card title="Phân Bố Trạng Thái Lớp Học" className="lg:col-span-1">
+                            <CustomPieChart data={classStatusPie} height={280} />
+                        </Card>
+                    </div>
+
+                    {/* Row 4 — Biểu Đồ Tăng Trưởng Học Sinh & Giáo Viên Mới */}
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <Card title="Số Lượng Học Sinh Mới Đăng Ký (6 Tháng)">
                             <div className="h-72 w-full pt-2">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -289,21 +539,21 @@ export const Dashboard: React.FC<any> = (props) => {
                                 </ResponsiveContainer>
                             </div>
                         </Card>
-                    </div>
 
-                    <Card title="Số Lượng Lớp Học Thêm Mới (6 Tháng)">
-                        <div className="h-72 w-full pt-2">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={classesBar}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
-                                    <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
-                                    <Tooltip />
-                                    <Bar dataKey="classes" name="Lớp mới" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </Card>
+                        <Card title="Số Lượng Giáo Viên Mới Đăng Ký (6 Tháng)">
+                            <div className="h-72 w-full pt-2">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={teachersBar}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#4b5563', fontWeight: 600 }} />
+                                        <YAxis tick={{ fontSize: 13, fill: '#4b5563' }} />
+                                        <Tooltip />
+                                        <Bar dataKey="teachers" name="Giáo viên mới" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Card>
+                    </div>
                 </div>
             </AppLayout>
         );
