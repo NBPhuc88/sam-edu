@@ -209,8 +209,8 @@ export const Header: React.FC<HeaderProps> = ({
                     </Button>
                 )}
 
-                {/* Bell Notification Icon */}
-                {user && (
+                {/* Bell Notification Icon — Chỉ hiển thị cho Super Admin */}
+                {user && role === 'admin' && user.admin_role === 'super_admin' && (
                     <div className="relative">
                         <button
                             type="button"
