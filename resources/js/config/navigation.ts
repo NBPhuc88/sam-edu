@@ -120,6 +120,11 @@ export const masterNavigation: NavItem[] = [
             { label: 'Cài Đặt Hệ Thống', path: '/settings', permission: 'settings.index' },
         ],
     },
+    {
+        label: 'Trang Cá Nhân',
+        path: '/profile',
+        icon: User,
+    },
 ];
 
 /**
