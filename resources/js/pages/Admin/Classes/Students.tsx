@@ -40,7 +40,7 @@ interface Student {
     full_name: string;
     email: string;
     phone: string | null;
-    status: number | string;
+    status: number;
     parent_name: string | null;
     parent_phone: string | null;
     pivot?: {

@@ -35,10 +35,10 @@ interface StudentTuitionItem {
     student_id: number;
     class_id: number;
     title: string | null;
-    total_amount: number | string;
-    paid_amount: number | string;
-    remaining_amount: number | string;
-    status: 'pending' | 'partial' | 'completed' | 'overdue';
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
     due_date: string | null;
     note: string | null;
     payments_count: number;
@@ -136,11 +136,11 @@ export const Index: React.FC<IndexProps> = ({
     const [deletingTuition, setDeletingTuition] = useState<StudentTuitionItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -198,18 +198,17 @@ export const Index: React.FC<IndexProps> = ({
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'partial':
-                return <Badge variant="pending">Còn nợ</Badge>;
-            case 'overdue':
-                return <Badge variant="danger">Quá hạn</Badge>;
-            case 'pending':
-            default:
-                return <Badge variant="expired">Chưa đóng</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
+            return <Badge variant="active">Đã hoàn thành</Badge>;
         }
+        if (status === 2) {
+            return <Badge variant="pending">Còn nợ</Badge>;
+        }
+        if (status === 3) {
+            return <Badge variant="danger">Quá hạn</Badge>;
+        }
+        return <Badge variant="expired">Chưa đóng</Badge>;
     };
 
     return (
@@ -413,10 +412,10 @@ export const Index: React.FC<IndexProps> = ({
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'pending', label: 'Chưa đóng' },
-                                        { value: 'partial', label: 'Đang đóng (Còn nợ)' },
-                                        { value: 'completed', label: 'Đã hoàn thành' },
-                                        { value: 'overdue', label: 'Quá hạn' },
+                                        { value: '0', label: 'Chưa đóng' },
+                                        { value: '2', label: 'Đang đóng (Còn nợ)' },
+                                        { value: '1', label: 'Đã hoàn thành' },
+                                        { value: '3', label: 'Quá hạn' },
                                     ]}
                                     placeholder="Tất cả Trạng thái"
                                     searchable={false}

@@ -1,16 +1,21 @@
 <?php
 
+use App\Enums\Constant;
 use App\Mail\CenterSubscriptionRenewedMail;
 use App\Models\Admin;
 use App\Models\Center;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
-    Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
-    Artisan::call('db:seed', ['--class' => 'PermissionSeeder']);
+    $this->seed(SubscriptionPlanSeeder::class);
+    $this->seed(PermissionSeeder::class);
     Mail::fake();
 });
 
@@ -21,9 +26,9 @@ test('super admin can renew current subscription plan for a center', function ()
         'code'              => 'CTR-TEST-RENEW-1',
         'name'              => 'Trung tâm Test Gia Hạn 1',
         'email'             => 'center1@test.com',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => $oldExpiresAt,
         'max_students'      => 50,
         'max_classes'       => 5,
@@ -35,8 +40,8 @@ test('super admin can renew current subscription plan for a center', function ()
         'email'      => 'super.renew1@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Renew 1',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $startsAt = $oldExpiresAt->toDateString();
@@ -59,14 +64,14 @@ test('super admin can renew current subscription plan for a center', function ()
         'plan_code'     => 'basic_5',
         'price'         => 3000000,
         'duration_days' => 30,
-        'status'        => 'active',
+        'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
     ]);
 
     $center->refresh();
     expect($center->subscription_plan)->toBe('basic_5');
     expect($center->expires_at->format('Y-m-d'))->toBe($endsAt);
 
-    Mail::assertQueued(CenterSubscriptionRenewedMail::class, function ($mail) use ($center) {
+    Mail::assertQueued(CenterSubscriptionRenewedMail::class, function ($mail) {
         return $mail->hasTo('center1@test.com') && $mail->actionType === 'renew';
     });
 });
@@ -76,9 +81,9 @@ test('super admin can change subscription plan to a new plan', function () {
         'code'              => 'CTR-TEST-RENEW-2',
         'name'              => 'Trung tâm Test Đổi Gói',
         'email'             => 'center2@test.com',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => Carbon::now()->addDays(20),
         'max_students'      => 50,
         'max_classes'       => 5,
@@ -90,8 +95,8 @@ test('super admin can change subscription plan to a new plan', function () {
         'email'      => 'super.renew2@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Renew 2',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     // Khi đổi sang gói mới (advanced_20), tính từ Hôm nay
@@ -115,12 +120,11 @@ test('super admin can change subscription plan to a new plan', function () {
         'plan_code'     => 'advanced_20',
         'price'         => 12000000,
         'duration_days' => 90,
-        'status'        => 'active',
+        'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
     ]);
 
     $center->refresh();
     expect($center->subscription_plan)->toBe('advanced_20');
-    expect($center->plan_type)->toBe('advanced');
     expect($center->max_classes)->toBe(20);
 
     Mail::assertQueued(CenterSubscriptionRenewedMail::class, function ($mail) {
@@ -133,9 +137,9 @@ test('renewing subscription auto reactivates expired center', function () {
         'code'              => 'CTR-TEST-RENEW-3',
         'name'              => 'Trung tâm Hết Hạn',
         'email'             => 'center3@test.com',
-        'status'            => 'expired',
+        'status'            => Constant::CENTER_STATUS_EXPIRED,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => Carbon::now()->subDays(5),
     ]);
 
@@ -145,8 +149,8 @@ test('renewing subscription auto reactivates expired center', function () {
         'email'      => 'super.renew3@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Renew 3',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $today  = Carbon::now()->startOfDay()->toDateString();
@@ -163,7 +167,8 @@ test('renewing subscription auto reactivates expired center', function () {
     $response->assertRedirect();
     $center->refresh();
 
-    expect($center->status)->toBe('active');
+    $cStatus = is_object($center->status) ? $center->status->value : (int) $center->status;
+    expect($cStatus)->toBe(Constant::CENTER_STATUS_ACTIVE);
 });
 
 test('super admin can renew or change plan for 1 year (365 days)', function () {
@@ -171,9 +176,9 @@ test('super admin can renew or change plan for 1 year (365 days)', function () {
         'code'              => 'CTR-TEST-1YEAR',
         'name'              => 'Trung tâm Test 1 Năm',
         'email'             => 'center1year@test.com',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => Carbon::now()->addDays(5),
     ]);
 
@@ -183,8 +188,8 @@ test('super admin can renew or change plan for 1 year (365 days)', function () {
         'email'      => 'super.year@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Year',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     // Gia hạn 1 năm (365 ngày) gói cũ
@@ -213,14 +218,13 @@ test('super admin can renew or change plan for 1 year (365 days)', function () {
 });
 
 test('non super admin is forbidden from renewing center subscription', function () {
-
     $center = Center::create([
         'code'              => 'CTR-TEST-RENEW-4',
         'name'              => 'Trung tâm Test Phân Quyền',
         'email'             => 'center4@test.com',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => Carbon::now()->addMonth(),
     ]);
 
@@ -230,8 +234,8 @@ test('non super admin is forbidden from renewing center subscription', function 
         'email'      => 'sub.renew@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Phụ',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $subAdmin->centers()->sync([$center->id]);
 

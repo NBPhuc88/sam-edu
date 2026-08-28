@@ -21,10 +21,10 @@ interface Teacher {
     email: string | null;
     phone: string | null;
     specialization: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     hire_date: string | null;
-    status: string;
+    status: number;
     note: string | null;
     center_id: number;
     center?: Center;
@@ -43,18 +43,19 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
     const [centerId, setCenterId] = useState<string>(String(teacher.center_id));
     const [fullName, setFullName] = useState<string>(teacher.full_name || '');
     const [username, setUsername] = useState<string>(teacher.username || '');
-    const [email, setEmail] = useState<string>(teacher.email || '');
     const [password, setPassword] = useState<string>('');
-    const teacherCode = teacher.teacher_code || '';
+    const [email, setEmail] = useState<string>(teacher.email || '');
     const [phone, setPhone] = useState<string>(teacher.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(teacher.date_of_birth || '');
-    const [gender, setGender] = useState<string>(teacher.gender || 'male');
+    const [gender, setGender] = useState<number>(Number(teacher.gender) === 2 ? 2 : (Number(teacher.gender) === 3 ? 3 : 1));
     const [hireDate, setHireDate] = useState<string>(teacher.hire_date || '');
     const [specialization, setSpecialization] = useState<string>(teacher.specialization || '');
-    const [status, setStatus] = useState<string>(teacher.status || 'active');
+    const [status, setStatus] = useState<number>(Number(teacher.status) === 0 ? 0 : (Number(teacher.status) === 2 ? 2 : 1));
     const [note, setNote] = useState<string>(teacher.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const teacherCode = teacher.teacher_code || '';
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -293,12 +294,12 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 </label>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
+                                    onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
+                                    <option value={1}>Nam</option>
+                                    <option value={2}>Nữ</option>
+                                    <option value={3}>Khác</option>
                                 </select>
                             </div>
 
@@ -321,12 +322,12 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="inactive">Tạm dừng giảng dạy</option>
-                                    <option value="locked">Khóa tài khoản</option>
+                                    <option value={1}>Đang hoạt động</option>
+                                    <option value={0}>Tạm dừng giảng dạy</option>
+                                    <option value={2}>Khóa tài khoản</option>
                                 </select>
                             </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\Constant;
 use App\Http\Controllers\Controller;
 use App\Models\NotificationRecipient;
 use Illuminate\Http\JsonResponse;
@@ -18,13 +19,13 @@ class NotificationController extends Controller
         $recipientId   = null;
 
         if (Auth::guard('admin')->check()) {
-            $recipientType = 'admin';
+            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
             $recipientId   = Auth::guard('admin')->id();
         } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = 'teacher';
+            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
             $recipientId   = Auth::guard('teacher')->id();
         } elseif (Auth::guard('student')->check()) {
-            $recipientType = 'student';
+            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
             $recipientId   = Auth::guard('student')->id();
         }
 
@@ -82,13 +83,13 @@ class NotificationController extends Controller
         $recipientId   = null;
 
         if (Auth::guard('admin')->check()) {
-            $recipientType = 'admin';
+            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
             $recipientId   = Auth::guard('admin')->id();
         } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = 'teacher';
+            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
             $recipientId   = Auth::guard('teacher')->id();
         } elseif (Auth::guard('student')->check()) {
-            $recipientType = 'student';
+            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
             $recipientId   = Auth::guard('student')->id();
         }
 
@@ -125,13 +126,13 @@ class NotificationController extends Controller
         $recipientId   = null;
 
         if (Auth::guard('admin')->check()) {
-            $recipientType = 'admin';
+            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
             $recipientId   = Auth::guard('admin')->id();
         } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = 'teacher';
+            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
             $recipientId   = Auth::guard('teacher')->id();
         } elseif (Auth::guard('student')->check()) {
-            $recipientType = 'student';
+            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
             $recipientId   = Auth::guard('student')->id();
         }
 

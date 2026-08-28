@@ -30,7 +30,7 @@ interface RoomEquipment {
     id?: number;
     room_id?: number;
     name: string;
-    quantity: number | string;
+    quantity: number;
     unit?: string | null;
     status: 'good' | 'maintenance' | 'broken';
     note?: string | null;
@@ -49,7 +49,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'paused' | 'closed' | 'inactive';
+    status: number;
     equipments?: RoomEquipment[];
     is_in_use?: boolean;
     schedules_count?: number;
@@ -78,10 +78,8 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
     const [name, setName] = useState(room.name || '');
     const [capacity, setCapacity] = useState(room.capacity ? String(room.capacity) : '');
     const [location, setLocation] = useState(room.location || '');
-    const [status, setStatus] = useState<'active' | 'paused' | 'closed'>(
-        room.status === 'closed' ? 'closed' : (room.status === 'paused' || room.status === 'inactive' ? 'paused' : 'active')
-    );
-    const [pendingStatus, setPendingStatus] = useState<'active' | 'paused' | 'closed' | null>(null);
+    const [status, setStatus] = useState<number>(room.status === 2 ? 2 : room.status === 0 ? 0 : 1);
+    const [pendingStatus, setPendingStatus] = useState<number | null>(null);
     const [showInUseWarningModal, setShowInUseWarningModal] = useState(false);
 
     // Equipment state
@@ -98,8 +96,8 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleStatusChange = (newStatus: 'active' | 'paused' | 'closed') => {
-        if (newStatus !== room.status && room.is_in_use) {
+    const handleStatusChange = (newStatus: number) => {
+        if (newStatus !== Number(room.status) && room.is_in_use) {
             setPendingStatus(newStatus);
             setShowInUseWarningModal(true);
         } else {
@@ -300,16 +298,16 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 </label>
                                 <ScrollableSelect
                                     value={status}
-                                    onChange={(val) => handleStatusChange(val as 'active' | 'paused' | 'closed')}
-                                    disabled={room.status === 'closed' && !isSuperAdmin}
+                                    onChange={(val) => handleStatusChange(Number(val))}
+                                    disabled={room.status === 2 && !isSuperAdmin}
                                     options={[
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'paused', label: 'Tạm dừng' },
-                                        { value: 'closed', label: 'Đã đóng' },
+                                        { value: 1, label: 'Đang hoạt động' },
+                                        { value: 0, label: 'Tạm dừng' },
+                                        { value: 2, label: 'Đã đóng' },
                                     ]}
                                     error={errors.status}
                                 />
-                                {room.status === 'closed' && !isSuperAdmin && (
+                                {room.status === 2 && !isSuperAdmin && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
                                         * Phòng học đã đóng. Chỉ Super Admin mới có quyền mở lại.
                                     </p>
@@ -547,7 +545,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 <p className="mt-1 text-xs text-amber-800">
                                     Việc chuyển trạng thái sang{' '}
                                     <span className="font-bold underline">
-                                        {pendingStatus === 'closed' ? 'Đã đóng' : (pendingStatus === 'paused' ? 'Tạm dừng' : 'Đang hoạt động')}
+                                        {pendingStatus === 2 ? 'Đã đóng' : (pendingStatus === 0 ? 'Tạm dừng' : 'Đang hoạt động')}
                                     </span>{' '}
                                     có thể ảnh hưởng đến các lớp học và ca học đã được phân công cho phòng học này.
                                 </p>

@@ -27,12 +27,29 @@ class ClassChatMessage extends Model
     protected function casts(): array
     {
         return [
+            'sender_type' => 'integer',
             'reply_to_id' => 'integer',
             'is_pinned'   => 'boolean',
             'pinned_at'   => 'datetime',
             'created_at'  => 'datetime',
             'updated_at'  => 'datetime',
         ];
+    }
+
+    public function setSenderTypeAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['sender_type'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['sender_type'] = match ($value) {
+                'admin'   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
+                'teacher' => \App\Enums\Constant::ACCOUNT_TYPE_TEACHER,
+                'student' => \App\Enums\Constant::ACCOUNT_TYPE_STUDENT,
+                default   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
+            };
+        } else {
+            $this->attributes['sender_type'] = (int) $value;
+        }
     }
 
     /**

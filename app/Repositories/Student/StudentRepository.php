@@ -404,7 +404,7 @@ class StudentRepository implements StudentRepositoryInterface
                 'classSubject.schoolClass' => function ($cq) {
                     $cq->select('id', 'center_id', 'name', 'code')->withCount([
                         'students' => function ($q) {
-                            $q->where('class_students.status', 'active');
+                            $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
                         },
                     ]);
                 },
@@ -412,7 +412,7 @@ class StudentRepository implements StudentRepositoryInterface
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name,code,capacity,location',
             ])
-            ->where('status', 'active')
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->get();
 
         $result = collect();

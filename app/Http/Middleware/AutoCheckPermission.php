@@ -173,7 +173,7 @@ class AutoCheckPermission
         if (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
 
-            return ($admin && $admin->role === 'super_admin') ? 'super_admin' : 'admin';
+            return ($admin && $admin->isSuperAdmin()) ? 'super_admin' : 'admin';
         }
 
         if (Auth::guard('teacher')->check()) {

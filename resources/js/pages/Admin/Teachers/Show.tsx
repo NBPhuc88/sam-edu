@@ -44,10 +44,10 @@ interface Teacher {
     email: string | null;
     phone: string | null;
     specialization: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     hire_date: string | null;
-    status: string;
+    status: number;
     note: string | null;
     center_id: number;
     center?: Center;
@@ -193,11 +193,12 @@ export default function TeacherShow({
         }
     };
 
-    const formatGender = (gender: string | null) => {
+    const formatGender = (gender: number | null) => {
         if (!gender) return '—';
-        if (gender === 'male') return 'Nam';
-        if (gender === 'female') return 'Nữ';
-        return 'Khác';
+        if (gender === 1) return 'Nam';
+        if (gender === 2) return 'Nữ';
+        if (gender === 3) return 'Khác';
+        return '—';
     };
 
     const yearOptions = [];

@@ -26,7 +26,7 @@ interface ClassStat {
     student_count: number;
     max_capacity: number;
     occupancy_rate: number;
-    status: string | number;
+    status: number;
 }
 
 interface CenterStat {

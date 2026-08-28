@@ -26,12 +26,27 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
+            'status'               => 'integer',
             'auto_holidays'        => 'boolean',
             'excluded_holiday_ids' => 'array',
             'holidays'             => 'array',
             'off_days'             => 'array',
             'extra_days'           => 'array',
         ];
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['status'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['status'] = match ($value) {
+                'inactive', 'paused', 'stopped' => \App\Enums\Constant::SCHEDULE_STATUS_INACTIVE,
+                default                         => \App\Enums\Constant::SCHEDULE_STATUS_ACTIVE,
+            };
+        } else {
+            $this->attributes['status'] = (int) $value;
+        }
     }
 
     /**

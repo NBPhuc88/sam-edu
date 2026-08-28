@@ -2,6 +2,7 @@
 
 namespace App\Services\Attendance;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassSession;
 use App\Models\Teacher;
@@ -91,17 +92,17 @@ class AttendanceService implements AttendanceServiceInterface
             'totalSessions' => $session->classSubject?->subject?->total_sessions,
             'students'      => $studentAttendanceList,
             'totalStudents' => $students->count(),
-            'presentCount'  => $studentAttendanceList->where('status', 'present')->count(),
-            'absentCount'   => $studentAttendanceList->where('status', 'absent')->count(),
-            'lateCount'     => $studentAttendanceList->where('status', 'late')->count(),
-            'excusedCount'  => $studentAttendanceList->where('status', 'excused')->count(),
+            'presentCount'  => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_PRESENT)->count(),
+            'absentCount'   => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_ABSENT)->count(),
+            'lateCount'     => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_LATE)->count(),
+            'excusedCount'  => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_EXCUSED)->count(),
         ];
     }
 
     /**
-     * @param  int                                                                $sessionId
-     * @param  array<int, array{student_id: int, status: string, note?: ?string}> $attendances
-     * @param  Admin|Teacher|null                                                 $user
+     * @param  int                                                                    $sessionId
+     * @param  array<int, array{student_id: int, status: int|string, note?: ?string}> $attendances
+     * @param  Admin|Teacher|null                                                     $user
      * @return bool
      */
     public function saveAttendance(int $sessionId, array $attendances, Admin|Teacher|null $user = null): bool
@@ -128,9 +129,9 @@ class AttendanceService implements AttendanceServiceInterface
             }
         }
 
-        if (in_array($session->status, ['cancelled', 'rescheduled'], true)) {
+        if ((int) $session->status === 4) {
             throw ValidationException::withMessages([
-                'session' => 'Không thể điểm danh ca học đã bị hủy hoặc đã đổi lịch.',
+                'session' => 'Không thể điểm danh ca học đã đổi lịch.',
             ]);
         }
 
@@ -155,8 +156,8 @@ class AttendanceService implements AttendanceServiceInterface
         );
 
         // Update session status to completed if not already
-        if ($session->status !== 'completed') {
-            $session->update(['status' => 'completed']);
+        if ((int) $session->status !== Constant::SESSION_STATUS_COMPLETED) {
+            $session->update(['status' => Constant::SESSION_STATUS_COMPLETED]);
         }
 
         return $result;

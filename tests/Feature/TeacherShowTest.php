@@ -30,7 +30,8 @@ test('super admin can access teacher show page', function () {
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_teacher@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000091',
     ]);
 
@@ -120,7 +121,8 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'full_name'  => 'Admin Chi Nhánh A',
         'email'      => 'admin_a@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => \App\Enums\Constant::ROLE_ADMIN,
+        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000092',
     ]);
     $admin->centers()->attach($centerA->id);
@@ -134,7 +136,7 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'password'     => 'password123',
         'teacher_code' => 'GV000000011',
         'center_id'    => $centerA->id,
-        'status'       => 'active',
+        'status'       => \App\Enums\Constant::STATUS_ACTIVE,
     ]);
 
     $teacherB = Teacher::create([
@@ -146,7 +148,7 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'password'     => 'password123',
         'teacher_code' => 'GV000000012',
         'center_id'    => $centerB->id,
-        'status'       => 'active',
+        'status'       => \App\Enums\Constant::STATUS_ACTIVE,
     ]);
 
     // Truy cập giáo viên thuộc trung tâm mình -> OK
@@ -171,7 +173,8 @@ test('teacher sessions export csv returns streamed csv', function () {
         'full_name'  => 'Super Admin Export',
         'email'      => 'superadmin_exp@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000093',
     ]);
 

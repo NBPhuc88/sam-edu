@@ -186,7 +186,7 @@ function filterNavItemsByPermissionsAndPlan(
  */
 export function getNavigationItems(
     role: string | null,
-    adminRole?: string | null,
+    adminRole?: string | number | null,
     permissions: string[] = [],
     allowedFeatures: string[] = [],
     planType?: string | null,
@@ -195,19 +195,21 @@ export function getNavigationItems(
         return [];
     }
 
-    const isSuperAdmin = role === 'admin' && adminRole === 'super_admin';
+    const isSuperAdmin = role === 'admin' && (adminRole === 'super_admin' || adminRole === 1 || adminRole === '1');
     const isTrial = planType === 'trial';
 
     return filterNavItemsByPermissionsAndPlan(masterNavigation, permissions, isSuperAdmin, allowedFeatures, isTrial);
 }
 
-export function getAccountLabel(role: string | null, adminRole?: string | null): string {
+export function getAccountLabel(role: string | null, adminRole?: string | number | null): string {
     if (!role) {
         return 'Khách';
     }
 
+    const isSuper = adminRole === 'super_admin' || adminRole === 1 || adminRole === '1';
+
     const labels: Record<string, string> = {
-        admin: adminRole === 'super_admin' ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',
+        admin: isSuper ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',
         super_admin: 'Super Admin',
         teacher: 'Giáo Viên',
         student: 'Học Sinh',

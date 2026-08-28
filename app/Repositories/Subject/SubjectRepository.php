@@ -49,7 +49,11 @@ class SubjectRepository implements SubjectRepositoryInterface
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'active'   => Constant::SUBJECT_STATUS_ACTIVE,
+                'inactive' => Constant::SUBJECT_STATUS_INACTIVE,
+                default    => $status,
+            });
         }
 
         if ($search !== null && trim($search) !== '') {
@@ -156,7 +160,7 @@ class SubjectRepository implements SubjectRepositoryInterface
             'duration_minutes',
             'tuition_fee',
             'status'
-        )->where('status', 'active');
+        )->where('status', Constant::SUBJECT_STATUS_ACTIVE);
 
         if ($centerIds !== null) {
             $query->whereIn('center_id', $centerIds);
@@ -167,7 +171,6 @@ class SubjectRepository implements SubjectRepositoryInterface
 
     /**
      * Lấy danh sách môn học mà giáo viên được phân công giảng dạy tại trung tâm.
-    /**
      * @param  int                      $teacherId
      * @param  int                      $centerId
      * @return Collection<int, Subject>
@@ -191,7 +194,7 @@ class SubjectRepository implements SubjectRepositoryInterface
             'status'
         )
             ->where('center_id', $centerId)
-            ->where('status', 'active');
+            ->where('status', Constant::SUBJECT_STATUS_ACTIVE);
 
         if (! empty($taughtSubjectIds)) {
             $query->whereIn('id', $taughtSubjectIds);

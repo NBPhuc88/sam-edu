@@ -43,7 +43,7 @@ interface SchoolClass {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: number | string;
+    status: number;
     class_subjects?: ClassSubject[];
 }
 
@@ -78,7 +78,7 @@ export default function ClassEdit({
     );
     const [startDate, setStartDate] = useState<string>(schoolClass.start_date || '');
     const [endDate, setEndDate] = useState<string>(schoolClass.end_date || '');
-    const [status, setStatus] = useState<string>(String(schoolClass.status ?? 1));
+    const [status, setStatus] = useState<number>(Number(schoolClass.status ?? 1));
     const [description, setDescription] = useState<string>(schoolClass.description || '');
 
     // Pre-populate dynamic list of subjects & assigned teachers
@@ -360,16 +360,16 @@ export default function ClassEdit({
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     disabled={!canEditStatus}
                                     className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
                                         !canEditStatus ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
                                     }`}
                                 >
-                                    <option value="1">Đang hoạt động</option>
-                                    <option value="0">Tạm dừng</option>
-                                    <option value="2">Đã hoàn thành</option>
-                                    <option value="3">Đã đóng</option>
+                                    <option value={1}>Đang hoạt động</option>
+                                    <option value={0}>Tạm dừng</option>
+                                    <option value={2}>Đã hoàn thành</option>
+                                    <option value={3}>Đã đóng</option>
                                 </select>
                                 {!canEditStatus && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">

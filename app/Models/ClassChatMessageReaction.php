@@ -22,12 +22,29 @@ class ClassChatMessageReaction extends Model
     protected function casts(): array
     {
         return [
-            'message_id' => 'integer',
-            'class_id'   => 'integer',
-            'sender_id'  => 'integer',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
+            'sender_type' => 'integer',
+            'message_id'  => 'integer',
+            'class_id'    => 'integer',
+            'sender_id'   => 'integer',
+            'created_at'  => 'datetime',
+            'updated_at'  => 'datetime',
         ];
+    }
+
+    public function setSenderTypeAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['sender_type'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['sender_type'] = match ($value) {
+                'admin'   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
+                'teacher' => \App\Enums\Constant::ACCOUNT_TYPE_TEACHER,
+                'student' => \App\Enums\Constant::ACCOUNT_TYPE_STUDENT,
+                default   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
+            };
+        } else {
+            $this->attributes['sender_type'] = (int) $value;
+        }
     }
 
     /**

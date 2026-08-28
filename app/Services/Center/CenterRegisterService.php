@@ -2,6 +2,7 @@
 
 namespace App\Services\Center;
 
+use App\Enums\Constant;
 use App\Events\CenterRegisteredEvent;
 use App\Mail\NewCenterRegisteredMail;
 use App\Models\Admin;
@@ -274,12 +275,12 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'created_by_admin_id' => null,
         ]);
 
-        $superAdminIds = Admin::where('role', 'super_admin')->pluck('id')->toArray();
+        $superAdminIds = Admin::where('role', Constant::ADMIN_ROLE_SUPER_ADMIN)->pluck('id')->toArray();
 
         foreach ($superAdminIds as $sAdminId) {
             NotificationRecipient::create([
                 'notification_id' => $notification->id,
-                'recipient_type'  => 'admin',
+                'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
                 'recipient_id'    => $sAdminId,
                 'read_at'         => null,
             ]);

@@ -30,8 +30,8 @@ interface AdminItem {
     full_name: string;
     email: string | null;
     phone: string | null;
-    role: 'super_admin' | 'admin';
-    status: string;
+    role: number;
+    status: number;
     admin_code: string;
     created_at: string;
     centers: Center[];
@@ -70,7 +70,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         email: '',
         phone: '',
         password: '',
-        role: 'admin' as 'super_admin' | 'admin',
+        role: 2 as number | string,
         center_id: '' as string | number,
     });
 
@@ -114,13 +114,14 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
 
     const handleOpenEditModal = (admin: AdminItem) => {
         setEditingAdmin(admin);
+        const roleVal = admin.role === 1 ? 1 : 2;
         form.setData({
             username: admin.username,
             full_name: admin.full_name,
             email: admin.email ?? '',
             phone: admin.phone ?? '',
             password: '',
-            role: admin.role,
+            role: roleVal,
             center_id: admin.centers[0]?.id ?? '',
         });
         setIsCreateModalOpen(true);
@@ -264,8 +265,7 @@ return;
                                                 <div className="flex items-center gap-3">
                                                     <div
                                                         className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
-                                                            admin.role ===
-                                                            'super_admin'
+                                                            admin.role === 1
                                                                 ? 'bg-emerald-100 text-emerald-700'
                                                                 : 'bg-slate-100 text-slate-700'
                                                         }`}
@@ -289,8 +289,7 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                {admin.role ===
-                                                'super_admin' ? (
+                                                {admin.role === 1 ? (
                                                     <Badge variant="active">
                                                         Super Admin
                                                     </Badge>
@@ -311,7 +310,7 @@ return;
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                {admin.role === 'super_admin' ? (
+                                                {admin.role === 1 ? (
                                                     <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
                                                         <UserCheck className="h-4 w-4" />
                                                         Tất cả Trung tâm
@@ -349,7 +348,7 @@ return;
                                                             </Button>
                                                         )}
                                                         {can('admins.delete') && (
-                                                            admin.role === 'super_admin' ? (
+                                                            admin.role === 1 ? (
                                                                 <span
                                                                     className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-400 cursor-not-allowed select-none"
                                                                     title="Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa"
@@ -489,43 +488,43 @@ return;
                                         <input
                                             type="radio"
                                             name="role"
-                                            value="admin"
-                                            checked={form.data.role === 'admin'}
-                                            disabled={editingAdmin?.role === 'super_admin'}
+                                            value={2}
+                                            checked={form.data.role === 2}
+                                            disabled={editingAdmin?.role === 1}
                                             onChange={() =>
-                                                form.setData('role', 'admin')
+                                                form.setData('role', 2)
                                             }
                                             className="text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
                                         />
                                         Admin (Phân công theo Trung tâm)
                                     </label>
                                     <label className={`flex items-center gap-2 text-sm font-semibold cursor-pointer ${
-                                        (hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin'
+                                        (hasSuperAdmin || admins.data.some(a => a.role === 1)) && editingAdmin?.role !== 1
                                             ? 'text-gray-400 cursor-not-allowed'
                                             : 'text-gray-800'
                                     }`}>
                                         <input
                                             type="radio"
                                             name="role"
-                                            value="super_admin"
+                                            value={1}
                                             checked={
-                                                form.data.role === 'super_admin'
+                                                form.data.role === 1
                                             }
-                                            disabled={(hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin'}
+                                            disabled={(hasSuperAdmin || admins.data.some(a => a.role === 1)) && editingAdmin?.role !== 1}
                                             onChange={() =>
-                                                form.setData('role', 'super_admin')
+                                                form.setData('role', 1)
                                             }
                                             className="text-emerald-600 focus:ring-emerald-500 disabled:opacity-50"
                                         />
                                         Super Admin (Toàn hệ thống)
                                     </label>
                                 </div>
-                                {((hasSuperAdmin || admins.data.some(a => a.role === 'super_admin')) && editingAdmin?.role !== 'super_admin') && (
+                                {((hasSuperAdmin || admins.data.some(a => a.role === 1)) && editingAdmin?.role !== 1) && (
                                     <p className="text-xs text-amber-600 italic">
                                         * Hệ thống đã có 1 Super Admin. Chỉ duy nhất 1 Super Admin được tồn tại.
                                     </p>
                                 )}
-                                {editingAdmin?.role === 'super_admin' && (
+                                {editingAdmin?.role === 1 && (
                                     <p className="text-xs text-emerald-600 italic">
                                         * Tài khoản Quản trị viên tối cao (Super Admin) không thể bị hạ cấp hoặc xóa.
                                     </p>
@@ -534,7 +533,7 @@ return;
                         </div>
 
                         {/* Phân công Trung tâm (Chỉ chọn 1 Trung tâm duy nhất khi role = admin) */}
-                        {form.data.role === 'admin' && (
+                        {(form.data.role === 2 || form.data.role === 'admin') && (
                             <div className="space-y-2 pt-2">
                                 <label className="block text-sm font-bold text-gray-700">
                                     Trung tâm quản lý (*)
@@ -543,7 +542,7 @@ return;
                                     value={form.data.center_id}
                                     onChange={(e) => form.setData('center_id', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                    required={form.data.role === 'admin'}
+                                    required={form.data.role === 2 || form.data.role === 'admin'}
                                 >
                                     <option value="">-- Chọn 1 Trung tâm quản lý --</option>
                                     {centers.map((center) => (

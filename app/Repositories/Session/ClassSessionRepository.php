@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Session;
 
+use App\Enums\Constant;
 use App\Models\ClassSession;
 use App\Models\SessionReschedule;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -63,7 +64,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             ->withCount([
                 'attendances',
                 'attendances as present_attendances_count' => function ($q) {
-                    $q->where('status', 'present');
+                    $q->where('status', Constant::ATTENDANCE_STATUS_PRESENT);
                 },
             ]);
 
@@ -110,7 +111,13 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'scheduled'               => Constant::SESSION_STATUS_SCHEDULED,
+                'in_progress'             => Constant::SESSION_STATUS_IN_PROGRESS,
+                'completed'               => Constant::SESSION_STATUS_COMPLETED,
+                'cancelled', 'unattended' => Constant::SESSION_STATUS_CANCELLED,
+                default                   => $status,
+            });
         }
 
         if ($search !== null && trim($search) !== '') {
@@ -262,7 +269,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where(function ($q) use ($fromDate) {
                 $q->where('session_date', '<', $fromDate)
-                    ->orWhere('status', '!=', 'scheduled')
+                    ->orWhere('status', '!=', Constant::SESSION_STATUS_SCHEDULED)
                     ->orWhereHas('attendances');
             })
             ->select(['id', 'session_date', 'start_time', 'end_time', 'status'])
@@ -282,7 +289,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where('session_date', '>=', $fromDate)
-            ->where('status', 'scheduled')
+            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
             ->whereDoesntHave('attendances')
             ->select([
                 'id',
@@ -313,7 +320,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where(function ($q) use ($fromDate) {
                 $q->where('session_date', '<', $fromDate)
-                    ->orWhere('status', '!=', 'scheduled')
+                    ->orWhere('status', '!=', Constant::SESSION_STATUS_SCHEDULED)
                     ->orWhereHas('attendances');
             })
             ->count();
@@ -403,7 +410,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where('session_date', '>=', $fromDate)
-            ->where('status', 'scheduled')
+            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
             ->whereDoesntHave('attendances')
             ->delete();
     }
@@ -412,7 +419,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     {
         return ClassSession::where('class_schedule_id', $classScheduleId)
             ->where('session_date', '>=', $fromDate)
-            ->where('status', 'scheduled')
+            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
             ->whereDoesntHave('attendances')
             ->delete();
     }
@@ -445,7 +452,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             $sessionIds = ClassSession::where('session_date', $date)
                 ->where('start_time', '<=', $currentTime)
                 ->where('end_time', '>=', $currentTime)
-                ->where('status', 'scheduled')
+                ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                 ->whereDoesntHave('attendances')
                 ->limit(500)
                 ->pluck('id')
@@ -456,7 +463,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             }
 
             $affected = ClassSession::whereIn('id', $sessionIds)
-                ->update(['status' => 'in_progress']);
+                ->update(['status' => Constant::SESSION_STATUS_IN_PROGRESS]);
 
             $totalUpdated += $affected;
 
@@ -480,7 +487,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         $totalUpdated = 0;
 
         do {
-            $sessionIds = ClassSession::whereIn('status', ['scheduled', 'in_progress', 'unattended'])
+            $sessionIds = ClassSession::whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_IN_PROGRESS, Constant::SESSION_STATUS_CANCELLED])
                 ->where(function ($query) use ($date, $currentTime) {
                     $query->where('session_date', '<', $date)
                         ->orWhere(function ($q) use ($date, $currentTime) {
@@ -498,7 +505,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             }
 
             $affected = ClassSession::whereIn('id', $sessionIds)
-                ->update(['status' => 'completed']);
+                ->update(['status' => Constant::SESSION_STATUS_COMPLETED]);
 
             $totalUpdated += $affected;
 
@@ -522,7 +529,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         $totalUpdated = 0;
 
         do {
-            $sessionIds = ClassSession::whereIn('status', ['scheduled', 'in_progress'])
+            $sessionIds = ClassSession::whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_IN_PROGRESS])
                 ->where(function ($query) use ($date, $currentTime) {
                     $query->where('session_date', '<', $date)
                         ->orWhere(function ($q) use ($date, $currentTime) {
@@ -540,7 +547,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             }
 
             $affected = ClassSession::whereIn('id', $sessionIds)
-                ->update(['status' => 'unattended']);
+                ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
 
             $totalUpdated += $affected;
 

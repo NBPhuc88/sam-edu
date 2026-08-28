@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Room;
@@ -7,8 +8,14 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+
     // Tạo trung tâm có giới hạn 2 lớp, 5 học sinh
     $this->center = Center::create([
         'code'              => 'CTR000000999',
@@ -17,10 +24,10 @@ beforeEach(function () {
         'email'             => 'testcenter@gmail.com',
         'address'           => '123 Test Street, TP.HCM',
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'max_classes'       => 2,
         'max_students'      => 5,
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
     ]);
 
     // Super Admin
@@ -31,8 +38,8 @@ beforeEach(function () {
         'email'      => 'super_test@gmail.com',
         'phone'      => '0901111222',
         'password'   => bcrypt('password123'),
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     // Admin phụ quản lý trung tâm
@@ -43,8 +50,8 @@ beforeEach(function () {
         'email'      => 'sub_test@gmail.com',
         'phone'      => '0902222333',
         'password'   => bcrypt('password123'),
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $this->subAdmin->centers()->attach($this->center->id);
 
@@ -59,7 +66,7 @@ beforeEach(function () {
         'email'        => 'gv_test@gmail.com',
         'phone'        => '0903333444',
         'password'     => bcrypt('password123'),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     // Môn học
@@ -68,7 +75,7 @@ beforeEach(function () {
         'code'        => 'MH000000099',
         'name'        => 'Môn Toán Test',
         'tuition_fee' => 1000000,
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
     ]);
 
     \Illuminate\Support\Facades\Auth::guard('admin')->setUser($this->superAdmin);
@@ -83,8 +90,8 @@ test('room creation is limited by center max_classes for active and paused rooms
         'name'      => 'Phòng 101',
         'code'      => 'R000000101',
         'capacity'  => 30,
-        'status'    => 'active',
-    ]);
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
+    ], $this->superAdmin);
     expect($room1)->toBeInstanceOf(Room::class);
 
     // Tạo phòng 2 (paused) -> OK (2/2)
@@ -93,8 +100,8 @@ test('room creation is limited by center max_classes for active and paused rooms
         'name'      => 'Phòng 102',
         'code'      => 'R000000102',
         'capacity'  => 30,
-        'status'    => 'paused',
-    ]);
+        'status'    => Constant::ROOM_STATUS_PAUSED,
+    ], $this->superAdmin);
     expect($room2)->toBeInstanceOf(Room::class);
 
     // Tạo phòng 3 khi đã đạt hạn mức 2 -> Ném ngoại lệ InvalidArgumentException
@@ -103,11 +110,11 @@ test('room creation is limited by center max_classes for active and paused rooms
         'name'      => 'Phòng 103',
         'code'      => 'R000000103',
         'capacity'  => 30,
-        'status'    => 'active',
-    ]))->toThrow(\InvalidArgumentException::class);
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
+    ], $this->superAdmin))->toThrow(\InvalidArgumentException::class);
 
     // Đổi phòng 2 sang 'closed' -> Phòng closed không tính vào hạn mức -> Số phòng active/paused còn 1/2
-    $room2->update(['status' => 'closed']);
+    $room2->update(['status' => Constant::ROOM_STATUS_CLOSED]);
 
     // Giờ tạo thêm phòng mới thành công
     $room3 = $roomService->createRoom([
@@ -115,8 +122,8 @@ test('room creation is limited by center max_classes for active and paused rooms
         'name'      => 'Phòng 103',
         'code'      => 'R000000103',
         'capacity'  => 30,
-        'status'    => 'active',
-    ]);
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
+    ], $this->superAdmin);
     expect($room3)->toBeInstanceOf(Room::class);
 });
 
@@ -129,7 +136,7 @@ test('class creation is limited by max_classes for active and paused classes', f
         'name'      => 'Lớp Toán 1',
         'code'      => 'CLS000000001',
         'status'    => 1,
-    ]);
+    ], $this->superAdmin);
     expect($class1)->toBeInstanceOf(SchoolClass::class);
 
     // Tạo lớp 2 (paused: status = 0) -> OK (2/2)
@@ -138,7 +145,7 @@ test('class creation is limited by max_classes for active and paused classes', f
         'name'      => 'Lớp Toán 2',
         'code'      => 'CLS000000002',
         'status'    => 0,
-    ]);
+    ], $this->superAdmin);
     expect($class2)->toBeInstanceOf(SchoolClass::class);
 
     // Tạo lớp 3 vượt hạn mức -> Ném ngoại lệ
@@ -147,7 +154,7 @@ test('class creation is limited by max_classes for active and paused classes', f
         'name'      => 'Lớp Toán 3',
         'code'      => 'CLS000000003',
         'status'    => 1,
-    ]))->toThrow(\InvalidArgumentException::class);
+    ], $this->superAdmin))->toThrow(\InvalidArgumentException::class);
 
     // Chuyển lớp 2 sang completed (status = 2) -> Không tính vào hạn mức
     $class2->update(['status' => 2]);
@@ -158,7 +165,7 @@ test('class creation is limited by max_classes for active and paused classes', f
         'name'      => 'Lớp Toán 3',
         'code'      => 'CLS000000003',
         'status'    => 1,
-    ]);
+    ], $this->superAdmin);
     expect($class3)->toBeInstanceOf(SchoolClass::class);
 });
 
@@ -170,14 +177,14 @@ test('class status change to paused cascades only isolated students to paused', 
         'name'      => 'Lớp A',
         'code'      => 'CLS000000010',
         'status'    => 1,
-    ]);
+    ], $this->superAdmin);
 
     $classB = $classService->createClass([
         'center_id' => $this->center->id,
         'name'      => 'Lớp B',
         'code'      => 'CLS000000020',
         'status'    => 1,
-    ]);
+    ], $this->superAdmin);
 
     // Học sinh 1: Chỉ học Lớp A
     $student1 = Student::create([
@@ -191,7 +198,7 @@ test('class status change to paused cascades only isolated students to paused', 
         'password'     => bcrypt('password123'),
         'status'       => 1,
     ]);
-    $classA->students()->attach($student1->id, ['status' => 'active', 'enrolled_at' => now()]);
+    $classA->students()->attach($student1->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
     // Học sinh 2: Học cả Lớp A và Lớp B
     $student2 = Student::create([
@@ -205,8 +212,8 @@ test('class status change to paused cascades only isolated students to paused', 
         'password'     => bcrypt('password123'),
         'status'       => 1,
     ]);
-    $classA->students()->attach($student2->id, ['status' => 'active', 'enrolled_at' => now()]);
-    $classB->students()->attach($student2->id, ['status' => 'active', 'enrolled_at' => now()]);
+    $classA->students()->attach($student2->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
+    $classB->students()->attach($student2->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
     // Đổi trạng thái Lớp A sang Tạm dừng (status = 0)
     $classService->updateClass($classA->id, [
@@ -214,13 +221,15 @@ test('class status change to paused cascades only isolated students to paused', 
         'name'      => 'Lớp A',
         'code'      => 'CLS000000010',
         'status'    => 0,
-    ]);
+    ], $this->superAdmin);
 
     // Kiểm tra: $student1 (chỉ học lớp A) phải bị chuyển sang status = 0
-    expect($student1->fresh()->status->value)->toBe(0);
+    $s1Status = is_object($student1->fresh()->status) ? $student1->fresh()->status->value : (int) $student1->fresh()->status;
+    expect($s1Status)->toBe(0);
 
     // Kiểm tra: $student2 (vẫn đang học lớp B active) phải giữ nguyên status = 1
-    expect($student2->fresh()->status->value)->toBe(1);
+    $s2Status = is_object($student2->fresh()->status) ? $student2->fresh()->status->value : (int) $student2->fresh()->status;
+    expect($s2Status)->toBe(1);
 });
 
 test('class status change to completed cascades isolated students to graduated', function () {
@@ -231,7 +240,7 @@ test('class status change to completed cascades isolated students to graduated',
         'name'      => 'Lớp Hoàn Thành',
         'code'      => 'CLS000000030',
         'status'    => 1,
-    ]);
+    ], $this->superAdmin);
 
     $student = Student::create([
         'center_id'    => $this->center->id,
@@ -244,7 +253,7 @@ test('class status change to completed cascades isolated students to graduated',
         'password'     => bcrypt('password123'),
         'status'       => 1,
     ]);
-    $classA->students()->attach($student->id, ['status' => 'active', 'enrolled_at' => now()]);
+    $classA->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
     // Đổi Lớp A sang Hoàn thành (status = 2)
     $classService->updateClass($classA->id, [
@@ -252,10 +261,11 @@ test('class status change to completed cascades isolated students to graduated',
         'name'      => 'Lớp Hoàn Thành',
         'code'      => 'CLS000000030',
         'status'    => 2,
-    ]);
+    ], $this->superAdmin);
 
     // Học sinh chuyển sang Tốt nghiệp (status = 2)
-    expect($student->fresh()->status->value)->toBe(2);
+    $sStatus = is_object($student->fresh()->status) ? $student->fresh()->status->value : (int) $student->fresh()->status;
+    expect($sStatus)->toBe(2);
 });
 
 test('secondary admin cannot reopen completed or closed classes', function () {
@@ -263,7 +273,7 @@ test('secondary admin cannot reopen completed or closed classes', function () {
         'center_id' => $this->center->id,
         'name'      => 'Lớp Đã Đóng',
         'code'      => 'CLS000000040',
-        'status'    => 3, // Closed
+        'status'    => 2, // Completed/Closed
     ]);
 
     $response = $this->actingAs($this->subAdmin, 'admin')

@@ -2,6 +2,7 @@
 
 namespace App\Services\OnlineExam;
 
+use App\Enums\Constant;
 use App\Jobs\ProcessImageUploadJob;
 use App\Models\Admin;
 use App\Models\ClassExam;
@@ -68,13 +69,13 @@ class OnlineExamService implements OnlineExamServiceInterface
             $submission = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
 
             // Nếu kỳ thi chưa kết thúc (! $isAfterEnd) mà submission có trạng thái missed, tự động xóa bản ghi lỗi
-            if ($submission && $submission->status === 'missed' && ! $isAfterEnd) {
+            if ($submission && (int) $submission->status === Constant::SUBMISSION_STATUS_MISSED && ! $isAfterEnd) {
                 $submission->delete();
                 $submission = null;
             }
 
             // Phục hồi draft answers từ Redis Cache nếu đang làm bài
-            if ($submission && $submission->status === 'in_progress') {
+            if ($submission && (int) $submission->status === Constant::SUBMISSION_STATUS_IN_PROGRESS) {
                 $cacheKey      = "exam_draft:submission:{$submission->id}";
                 $cachedAnswers = Cache::get($cacheKey);
 
@@ -117,12 +118,12 @@ class OnlineExamService implements OnlineExamServiceInterface
         // Kiểm tra nếu đã có bài thi đang làm
         $existing = $this->classExamRepository->getStudentSubmission($classExamId, $student->id);
 
-        if ($existing && $existing->status === 'missed') {
+        if ($existing && (int) $existing->status === Constant::SUBMISSION_STATUS_MISSED) {
             $existing->delete();
             $existing = null;
         }
 
-        if ($existing && $existing->status === 'in_progress') {
+        if ($existing && (int) $existing->status === Constant::SUBMISSION_STATUS_IN_PROGRESS) {
             // Nạp draft từ Redis Cache nếu có
             $cacheKey      = "exam_draft:submission:{$existing->id}";
             $cachedAnswers = Cache::get($cacheKey);
@@ -134,7 +135,7 @@ class OnlineExamService implements OnlineExamServiceInterface
             return $existing;
         }
 
-        if ($existing && in_array($existing->status, ['submitted', 'timeout_submitted'], true)) {
+        if ($existing && in_array((int) $existing->status, [Constant::SUBMISSION_STATUS_SUBMITTED, Constant::SUBMISSION_STATUS_TIMEOUT_SUBMITTED], true)) {
             return $existing;
         }
 
@@ -150,7 +151,7 @@ class OnlineExamService implements OnlineExamServiceInterface
             'score'                 => 0,
             'total_correct'         => 0,
             'total_questions'       => $totalQuestions,
-            'status'                => 'in_progress',
+            'status'                => Constant::SUBMISSION_STATUS_IN_PROGRESS,
             'answers'               => [],
             'grading_details'       => [],
         ]);
@@ -169,7 +170,7 @@ class OnlineExamService implements OnlineExamServiceInterface
         }
 
         // Chỉ cho phép autosave khi bài thi đang làm
-        if ($submission->status !== 'in_progress') {
+        if ((int) $submission->status !== Constant::SUBMISSION_STATUS_IN_PROGRESS) {
             return false;
         }
 
@@ -196,7 +197,7 @@ class OnlineExamService implements OnlineExamServiceInterface
             throw ValidationException::withMessages(['unauthorized' => 'Bạn không có quyền nộp bài thi này.']);
         }
 
-        if (in_array($submission->status, ['submitted', 'timeout_submitted', 'missed'], true)) {
+        if (in_array((int) $submission->status, [Constant::SUBMISSION_STATUS_SUBMITTED, Constant::SUBMISSION_STATUS_TIMEOUT_SUBMITTED, Constant::SUBMISSION_STATUS_MISSED], true)) {
             return $submission;
         }
 
@@ -231,7 +232,7 @@ class OnlineExamService implements OnlineExamServiceInterface
                 'score'                   => $gradingResult['total_score'],
                 'total_correct'           => $gradingResult['total_correct'],
                 'total_questions'         => $gradingResult['total_questions'],
-                'status'                  => $isTimeout ? 'timeout_submitted' : 'submitted',
+                'status'                  => $isTimeout ? Constant::SUBMISSION_STATUS_TIMEOUT_SUBMITTED : Constant::SUBMISSION_STATUS_SUBMITTED,
                 'is_graded'               => $isGraded,
                 'requires_manual_grading' => $requiresManual,
                 'graded_at'               => $isGraded ? $now : null,
@@ -366,10 +367,10 @@ class OnlineExamService implements OnlineExamServiceInterface
                 $isCorrect   = false;
                 $scoreEarned = 0.0;
 
-                switch ($question->question_type) {
-                    case 'single_choice':
-                    case 'true_false_not_given':
-                    case 'find_mistake':
+                switch ((int) $question->question_type) {
+                    case Constant::QUESTION_TYPE_SINGLE_CHOICE:
+                    case Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
+                    case Constant::QUESTION_TYPE_FIND_MISTAKE:
                         $cleanU = is_scalar($userAns) ? trim((string) $userAns) : '';
                         $cleanC = is_scalar($correctAns) ? trim((string) $correctAns) : '';
 
@@ -380,7 +381,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'multiple_choice':
+                    case Constant::QUESTION_TYPE_MULTIPLE_CHOICE:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $uSorted = array_values(array_map('strval', array_filter($userAns, 'is_scalar')));
                             $cSorted = array_values(array_map('strval', array_filter($correctAns, 'is_scalar')));
@@ -395,7 +396,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'fill_in_blank':
+                    case Constant::QUESTION_TYPE_FILL_IN_BLANK:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $allBlanksCorrect = true;
 
@@ -440,10 +441,10 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'matching':
-                    case 'matching_image':
-                    case 'matching_sentences':
-                    case 'drag_drop_cloze':
+                    case Constant::QUESTION_TYPE_MATCHING:
+                    case Constant::QUESTION_TYPE_MATCHING_IMAGE:
+                    case Constant::QUESTION_TYPE_MATCHING_SENTENCES:
+                    case Constant::QUESTION_TYPE_DRAG_DROP_CLOZE:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $allPairsCorrect = true;
 
@@ -463,7 +464,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'ordering':
+                    case Constant::QUESTION_TYPE_ORDERING:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $uOrder = array_values(array_map('strval', array_filter($userAns, 'is_scalar')));
                             $cOrder = array_values(array_map('strval', array_filter($correctAns, 'is_scalar')));
@@ -476,7 +477,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'diagram_labelling':
+                    case Constant::QUESTION_TYPE_DIAGRAM_LABELLING:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $allLocsCorrect = true;
 
@@ -494,12 +495,23 @@ class OnlineExamService implements OnlineExamServiceInterface
 
                         break;
 
-                    case 'essay':
-                    case 'audio_record':
+                    case Constant::QUESTION_TYPE_ESSAY:
+                    case Constant::QUESTION_TYPE_AUDIO_RECORD:
+                    case Constant::QUESTION_TYPE_SHORT_ANSWER:
+                    case Constant::QUESTION_TYPE_ORAL:
                         // Tự luận và Ghi âm nói tạm thời lưu lại bài làm, giáo viên chấm điểm sau
                         $requiresManualGrading = true;
                         $isCorrect             = false;
                         $scoreEarned           = 0.0;
+
+                        break;
+
+                    default:
+                        // Fallback cho string legacy hoặc loại câu hỏi khác
+                        if (is_scalar($userAns) && is_scalar($correctAns) && (string) $userAns === (string) $correctAns) {
+                            $isCorrect   = true;
+                            $scoreEarned = $qScore;
+                        }
 
                         break;
                 }
@@ -577,7 +589,7 @@ class OnlineExamService implements OnlineExamServiceInterface
 
         if ($student) {
             $cls        = $classExam->schoolClass;
-            $isEnrolled = $cls && $cls->classStudents()->where('student_id', $student->id)->where('status', 'active')->exists();
+            $isEnrolled = $cls && $cls->classStudents()->where('student_id', $student->id)->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)->exists();
 
             if ($isEnrolled) {
                 return;

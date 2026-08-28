@@ -19,15 +19,34 @@ class PermissionRepository implements PermissionRepositoryInterface
             ->get();
     }
 
+    protected function normalizeRole(string|int $role): int
+    {
+        if (is_numeric($role)) {
+            return (int) $role;
+        }
+
+        return match ($role) {
+            'super_admin' => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+            'teacher'     => \App\Enums\Constant::ROLE_TEACHER,
+            'student'     => \App\Enums\Constant::ROLE_STUDENT,
+            default       => \App\Enums\Constant::ROLE_ADMIN,
+        };
+    }
+
     /**
      * @return array<int, string>
      * @param  string             $role
      */
     public function getGrantedPermissionCodesByRole(string $role): array
     {
+        $numericRole = $this->normalizeRole($role);
+
         return DB::table('role_permissions')
             ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.id')
-            ->where('role_permissions.role', $role)
+            ->where(function ($q) use ($numericRole, $role) {
+                $q->where('role_permissions.role', $numericRole)
+                    ->orWhere('role_permissions.role', $role);
+            })
             ->pluck('permissions.code')
             ->toArray();
     }
@@ -38,7 +57,10 @@ class PermissionRepository implements PermissionRepositoryInterface
      */
     public function getGrantedPermissionIdsByRole(string $role): array
     {
-        return RolePermission::where('role', $role)
+        $numericRole = $this->normalizeRole($role);
+
+        return RolePermission::where('role', $numericRole)
+            ->orWhere('role', $role)
             ->pluck('permission_id')
             ->toArray();
     }
@@ -49,15 +71,17 @@ class PermissionRepository implements PermissionRepositoryInterface
      */
     public function syncRolePermissions(string $role, array $permissionIds): void
     {
-        DB::transaction(function () use ($role, $permissionIds) {
-            RolePermission::where('role', $role)->delete();
+        $numericRole = $this->normalizeRole($role);
+
+        DB::transaction(function () use ($numericRole, $role, $permissionIds) {
+            RolePermission::where('role', $numericRole)->orWhere('role', $role)->delete();
 
             $records = [];
             $now     = now();
 
             foreach ($permissionIds as $permId) {
                 $records[] = [
-                    'role'          => $role,
+                    'role'          => $numericRole,
                     'permission_id' => $permId,
                     'created_at'    => $now,
                     'updated_at'    => $now,

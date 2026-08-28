@@ -1,16 +1,22 @@
 <?php
 
+use App\Enums\Constant;
 use App\Mail\CenterSubscriptionRenewalRequestedMail;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
 use App\Models\Teacher;
-use Illuminate\Support\Facades\Artisan;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
-    Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
+    $this->seed(SubscriptionPlanSeeder::class);
+    $this->seed(PermissionSeeder::class);
     Mail::fake();
 });
 
@@ -20,9 +26,9 @@ test('admin can request subscription renewal and queue email to super admin', fu
         'name'              => 'Trung Tâm Test Yêu Cầu Gia Hạn',
         'email'             => 'center.req@test.com',
         'phone'             => '0901234567',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => now()->addDays(5),
     ]);
 
@@ -32,8 +38,8 @@ test('admin can request subscription renewal and queue email to super admin', fu
         'email'      => 'superadmin.target@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Target',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $centerAdmin = Admin::create([
@@ -42,8 +48,8 @@ test('admin can request subscription renewal and queue email to super admin', fu
         'email'      => 'center.admin.req@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Center Admin Req',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $centerAdmin->centers()->attach($center->id);
 
@@ -65,8 +71,8 @@ test('admin can request subscription renewal and queue email to super admin', fu
     $this->assertDatabaseHas('payment_transactions', [
         'center_id'      => $center->id,
         'amount'         => 2400000,
-        'payment_method' => 'other',
-        'status'         => 'pending',
+        'payment_method' => Constant::PAYMENT_METHOD_OTHER,
+        'status'         => Constant::PAYMENT_STATUS_PENDING,
     ]);
 });
 
@@ -74,7 +80,7 @@ test('super_admin cannot request subscription renewal', function () {
     $center = Center::create([
         'code'              => 'CTR-REQ-004',
         'name'              => 'Trung Tâm Test Super Admin Reject',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
         'expires_at'        => now()->addDays(5),
     ]);
@@ -85,8 +91,8 @@ test('super_admin cannot request subscription renewal', function () {
         'email'      => 'superadmin.reject@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Reject',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')
@@ -102,12 +108,12 @@ test('center admin cannot request renewal for unassigned center', function () {
     $center1 = Center::create([
         'code'   => 'CTR-REQ-005',
         'name'   => 'Trung Tâm 1',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $center2 = Center::create([
         'code'   => 'CTR-REQ-006',
         'name'   => 'Trung Tâm 2',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $centerAdmin = Admin::create([
@@ -116,8 +122,8 @@ test('center admin cannot request renewal for unassigned center', function () {
         'email'      => 'center.admin.unassigned@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Center Admin Unassigned',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $centerAdmin->centers()->attach($center1->id);
 
@@ -134,7 +140,7 @@ test('center admin can request renewal with monthly duration and calculate month
     $center = Center::create([
         'code'              => 'CTR-REQ-007',
         'name'              => 'Trung Tâm Monthly Renewal',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
         'expires_at'        => now()->addDays(5),
     ]);
@@ -145,8 +151,8 @@ test('center admin can request renewal with monthly duration and calculate month
         'email'      => 'center.admin.monthly@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Center Admin Monthly',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $centerAdmin->centers()->attach($center->id);
 
@@ -164,8 +170,8 @@ test('center admin can request renewal with monthly duration and calculate month
     $this->assertDatabaseHas('payment_transactions', [
         'center_id'      => $center->id,
         'amount'         => 250000,
-        'payment_method' => 'other',
-        'status'         => 'pending',
+        'payment_method' => Constant::PAYMENT_METHOD_OTHER,
+        'status'         => Constant::PAYMENT_STATUS_PENDING,
     ]);
 });
 
@@ -173,7 +179,7 @@ test('teacher cannot request subscription renewal', function () {
     $center = Center::create([
         'code'              => 'CTR-REQ-002',
         'name'              => 'Trung Tâm Test Teacher',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
         'expires_at'        => now()->addDays(5),
     ]);
@@ -187,7 +193,7 @@ test('teacher cannot request subscription renewal', function () {
         'email'        => 'teacher@test.com',
         'password'     => Hash::make('password'),
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($teacher, 'teacher')
@@ -203,7 +209,7 @@ test('student cannot request subscription renewal', function () {
     $center = Center::create([
         'code'              => 'CTR-REQ-003',
         'name'              => 'Trung Tâm Test Student',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
         'expires_at'        => now()->addDays(5),
     ]);

@@ -31,8 +31,8 @@ class UpdateAdminRequest extends FormRequest
             'email'        => ['nullable', 'email', 'max:100', Rule::unique('admins', 'email')->ignore($id)],
             'phone'        => ['nullable', new VietnamesePhoneNumber()],
             'password'     => ['nullable', 'string', 'min:5', 'max:20'],
-            'role'         => ['required', Rule::in(['super_admin', 'admin'])],
-            'center_id'    => ['nullable', 'required_if:role,admin', 'exists:centers,id'],
+            'role'         => ['required', Rule::in(['super_admin', 'admin', 1, 2, '1', '2'])],
+            'center_id'    => ['nullable', 'required_if:role,admin,2', 'exists:centers,id'],
             'center_ids'   => ['nullable', 'array'],
             'center_ids.*' => ['exists:centers,id'],
         ];

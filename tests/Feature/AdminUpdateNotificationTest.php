@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Mail\EmailChangedMail;
 use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
@@ -19,7 +20,7 @@ test('updating admin email or username or password triggers correct queued mail'
     $center = Center::create([
         'name'        => 'Trung tâm Test',
         'code'        => 'CTR000000001',
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
         'email'       => 'center@sam-edu.vn',
         'phone'       => '0901234567',
         'address'     => '123 Test St',
@@ -31,7 +32,8 @@ test('updating admin email or username or password triggers correct queued mail'
         'full_name'  => 'Super Admin Test',
         'email'      => 'super_admin@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000001',
     ]);
 
@@ -40,7 +42,8 @@ test('updating admin email or username or password triggers correct queued mail'
         'full_name'  => 'Sub Admin Old',
         'email'      => 'sub_admin_old@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000002',
     ]);
 
@@ -49,7 +52,7 @@ test('updating admin email or username or password triggers correct queued mail'
         'full_name' => 'Sub Admin Old',
         'username'  => 'sub_admin_new',
         'email'     => 'sub_admin_old@sam-edu.vn',
-        'role'      => 'admin',
+        'role'      => Constant::ROLE_ADMIN,
         'center_id' => $center->id,
     ]);
 
@@ -65,7 +68,7 @@ test('updating admin email or username or password triggers correct queued mail'
         'full_name' => 'Sub Admin Old',
         'username'  => 'sub_admin_new',
         'email'     => 'sub_admin_new@sam-edu.vn',
-        'role'      => 'admin',
+        'role'      => Constant::ROLE_ADMIN,
         'center_id' => $center->id,
     ]);
 

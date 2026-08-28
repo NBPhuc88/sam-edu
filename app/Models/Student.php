@@ -46,7 +46,8 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
-            'status'         => \App\Enums\EntityStatus::class,
+            'status'         => 'integer',
+            'gender'         => 'integer',
             'last_login_at'  => 'datetime:d-m-Y H:i',
             'date_of_birth'  => 'date:d-m-Y',
             'admission_date' => 'date:d-m-Y',
@@ -54,6 +55,36 @@ class Student extends Authenticatable
             'created_at'     => 'datetime:d-m-Y H:i',
             'updated_at'     => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['status'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['status'] = match ($value) {
+                'inactive', 'paused', 'locked', 'suspended' => \App\Enums\Constant::STUDENT_STATUS_INACTIVE,
+                'graduated'                                 => \App\Enums\Constant::STUDENT_STATUS_GRADUATED,
+                default                                     => \App\Enums\Constant::STUDENT_STATUS_ACTIVE,
+            };
+        } else {
+            $this->attributes['status'] = (int) $value;
+        }
+    }
+
+    public function setGenderAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['gender'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['gender'] = match ($value) {
+                'male'   => \App\Enums\Constant::GENDER_MALE,
+                'female' => \App\Enums\Constant::GENDER_FEMALE,
+                default  => \App\Enums\Constant::GENDER_OTHER,
+            };
+        } else {
+            $this->attributes['gender'] = (int) $value;
+        }
     }
 
     /**

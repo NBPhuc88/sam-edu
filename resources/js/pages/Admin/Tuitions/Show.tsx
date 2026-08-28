@@ -21,7 +21,7 @@ import { usePermission } from '@/hooks/usePermission';
 interface TuitionPaymentItem {
     id: number;
     student_tuition_id: number;
-    amount: number | string;
+    amount: number;
     payment_date: string;
     payment_method: string;
     transaction_code: string | null;
@@ -42,10 +42,10 @@ interface ShowProps {
         student_id: number;
         class_id: number;
         title: string | null;
-        total_amount: number | string;
-        paid_amount: number | string;
-        remaining_amount: number | string;
-        status: 'pending' | 'partial' | 'completed' | 'overdue';
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
+        status: number;
         due_date: string | null;
         note: string | null;
         created_at: string;
@@ -106,11 +106,11 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const [deletingPayment, setDeletingPayment] = useState<TuitionPaymentItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const getPaymentMethodLabel = (method: string) => {
@@ -131,18 +131,17 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'partial':
-                return <Badge variant="pending">Còn nợ</Badge>;
-            case 'overdue':
-                return <Badge variant="danger">Quá hạn</Badge>;
-            case 'pending':
-            default:
-                return <Badge variant="expired">Chưa đóng</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
+            return <Badge variant="active">Đã hoàn thành</Badge>;
         }
+        if (status === 2) {
+            return <Badge variant="pending">Còn nợ</Badge>;
+        }
+        if (status === 3) {
+            return <Badge variant="danger">Quá hạn</Badge>;
+        }
+        return <Badge variant="expired">Chưa đóng</Badge>;
     };
 
     const total = Number(tuition.total_amount) || 0;
@@ -562,7 +561,7 @@ return;
                             />
                             {isAddAmountExceeded ? (
                                 <p className="mt-1 text-xs font-semibold text-red-600">
-                                    Số tiền đóng ({formatCurrency(addAmount)}) không được vượt quá số tiền còn nợ ({formatCurrency(remaining)}).
+                                    Số tiền đóng ({formatCurrency(Number(addAmount))}) không được vượt quá số tiền còn nợ ({formatCurrency(remaining)}).
                                 </p>
                             ) : (
                                 <p className="mt-1 text-xs text-gray-500">
@@ -676,7 +675,7 @@ return;
                         />
                         {isEditAmountExceeded ? (
                             <p className="mt-1 text-xs font-semibold text-red-600">
-                                Số tiền đóng ({formatCurrency(editAmount)}) vượt quá số tiền tối đa cho phép ({formatCurrency(maxEditAllowed)}).
+                                Số tiền đóng ({formatCurrency(Number(editAmount))}) vượt quá số tiền tối đa cho phép ({formatCurrency(maxEditAllowed)}).
                             </p>
                         ) : (
                             <p className="mt-1 text-xs text-gray-500">

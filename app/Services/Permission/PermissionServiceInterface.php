@@ -42,7 +42,7 @@ interface PermissionServiceInterface
      * @param  string             $role
      * @param  ?string            $adminRole
      */
-    public function getPermissionsForUser(string $role, ?string $adminRole = null): array;
+    public function getPermissionsForUser(string $role, int|string|null $adminRole = null): array;
 
     /**
      * Kiểm tra một effective role có quyền cụ thể hay không.

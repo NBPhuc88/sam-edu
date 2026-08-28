@@ -68,16 +68,22 @@ class PermissionSeeder extends Seeder
 
         foreach ($rolesToSeed as $role => $codes) {
             $permissionIds = $allPermissions->whereIn('code', $codes)->pluck('id');
+            $numericRole   = match ($role) {
+                'super_admin' => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+                'teacher'     => \App\Enums\Constant::ROLE_TEACHER,
+                'student'     => \App\Enums\Constant::ROLE_STUDENT,
+                default       => \App\Enums\Constant::ROLE_ADMIN,
+            };
 
             // Xóa quyền cũ của role và gán lại quyền chuẩn
-            RolePermission::where('role', $role)->delete();
+            RolePermission::where('role', $numericRole)->orWhere('role', $role)->delete();
 
             $records = [];
             $now     = now();
 
             foreach ($permissionIds as $permId) {
                 $records[] = [
-                    'role'          => $role,
+                    'role'          => $numericRole,
                     'permission_id' => $permId,
                     'created_at'    => $now,
                     'updated_at'    => $now,

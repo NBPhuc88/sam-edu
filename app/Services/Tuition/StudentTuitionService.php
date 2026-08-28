@@ -558,18 +558,19 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $statusLabel = match ($item->status) {
-                'completed' => 'Đã hoàn thành',
-                'partial'   => 'Còn nợ (Đóng dở)',
-                'overdue'   => 'Quá hạn',
-                default     => 'Chưa đóng',
+            $st          = is_object($item->status) ? $item->status->value : $item->status;
+            $statusLabel = match ($st) {
+                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'Quá hạn',
+                default                                            => 'Chưa đóng',
             };
 
-            $statusClass = match ($item->status) {
-                'completed' => 'status-completed',
-                'partial'   => 'status-partial',
-                'overdue'   => 'status-overdue',
-                default     => 'status-pending',
+            $statusClass = match ($st) {
+                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'status-completed',
+                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'status-partial',
+                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'status-overdue',
+                default                                            => 'status-pending',
             };
 
             // Lấy danh sách lớp học của học sinh (nối bằng dấu phẩy)
@@ -729,11 +730,12 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $statusLabel = match ($item->status) {
-                'completed' => 'Đã hoàn thành',
-                'partial'   => 'Còn nợ (Đóng dở)',
-                'overdue'   => 'Quá hạn',
-                default     => 'Chưa đóng',
+            $st          = is_object($item->status) ? $item->status->value : $item->status;
+            $statusLabel = match ($st) {
+                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'Quá hạn',
+                default                                            => 'Chưa đóng',
             };
 
             $classNames = '';

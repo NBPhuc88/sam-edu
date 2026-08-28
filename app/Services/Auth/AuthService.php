@@ -54,7 +54,7 @@ class AuthService implements AuthServiceInterface
             ];
         }
 
-        if (isset($account->status) && in_array($account->status, ['inactive', 'locked', 'suspended', 'expired'])) {
+        if (isset($account->status) && ((int) $account->status === \App\Enums\Constant::STATUS_INACTIVE || in_array($account->status, ['inactive', 'locked', 'suspended', 'expired', 0, '0'], true))) {
             return [
                 'success' => false,
                 'account' => null,

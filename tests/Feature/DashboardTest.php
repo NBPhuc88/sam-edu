@@ -1,14 +1,20 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\Student;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
-    Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
-    Artisan::call('db:seed', ['--class' => 'PermissionSeeder']);
+    $this->seed(SubscriptionPlanSeeder::class);
+    $this->seed(PermissionSeeder::class);
 });
 
 test('super admin can access dashboard without errors', function () {
@@ -18,16 +24,16 @@ test('super admin can access dashboard without errors', function () {
         'email'      => 'superadmin@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Test',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     Center::create([
         'code'              => 'CTR-TEST-01',
         'name'              => 'Trung tâm Alpha',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
+        'plan_type'         => Constant::PLAN_TYPE_FREE,
         'expires_at'        => Carbon::now()->addDays(14),
     ]);
 
@@ -48,13 +54,13 @@ test('student can access dashboard with monthly schedule', function () {
     $center = Center::create([
         'code'              => 'CTR-TEST-02',
         'name'              => 'Trung tâm Beta',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
+        'plan_type'         => Constant::PLAN_TYPE_FREE,
         'expires_at'        => Carbon::now()->addDays(14),
     ]);
 
-    $student = \App\Models\Student::create([
+    $student = Student::create([
         'center_id'    => $center->id,
         'student_code' => 'STD-TEST-01',
         'username'     => 'student_test',
@@ -84,9 +90,9 @@ test('center admin can access dashboard with today sessions, alert stats, tuitio
     $center = Center::create([
         'code'              => 'CTR-TEST-03',
         'name'              => 'Trung tâm Gamma',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
+        'plan_type'         => Constant::PLAN_TYPE_FREE,
         'expires_at'        => Carbon::now()->addDays(14),
     ]);
 
@@ -96,8 +102,8 @@ test('center admin can access dashboard with today sessions, alert stats, tuitio
         'email'      => 'centeradmin@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Center Admin Test',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $centerAdmin->centers()->attach($center->id);
 

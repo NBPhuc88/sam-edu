@@ -49,7 +49,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'paused' | 'closed' | 'inactive';
+    status: number;
     created_at?: string;
     center?: Center;
     equipments?: RoomEquipment[];
@@ -148,18 +148,17 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang hoạt động</Badge>;
-            case 'paused':
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            case 'closed':
-                return <Badge variant="danger">Đã đóng</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
+            return <Badge variant="active">Đang hoạt động</Badge>;
         }
+        if (status === 0) {
+            return <Badge variant="expired">Tạm dừng</Badge>;
+        }
+        if (status === 2) {
+            return <Badge variant="danger">Đã đóng</Badge>;
+        }
+        return <Badge variant="info">Chưa rõ</Badge>;
     };
 
     const getEquipmentStatusBadge = (status: string) => {
@@ -323,9 +322,9 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'paused', label: 'Tạm dừng' },
-                                        { value: 'closed', label: 'Đã đóng' },
+                                        { value: '1', label: 'Đang hoạt động' },
+                                        { value: '0', label: 'Tạm dừng' },
+                                        { value: '2', label: 'Đã đóng' },
                                     ]}
                                 />
                             </div>

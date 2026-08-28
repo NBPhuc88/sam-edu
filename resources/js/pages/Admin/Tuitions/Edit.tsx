@@ -37,9 +37,9 @@ interface EditProps {
         student_id: number;
         class_id: number;
         title: string | null;
-        total_amount: number | string;
-        paid_amount: number | string;
-        remaining_amount: number | string;
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
         due_date: string | null;
         note: string | null;
         student?: {
@@ -84,11 +84,11 @@ export const Edit: React.FC<EditProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const paidAmount = Number(tuition.paid_amount) || 0;
@@ -260,7 +260,7 @@ export const Edit: React.FC<EditProps> = ({
                                 />
                                 {isTotalAmountBelowPaid ? (
                                     <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                        Tổng học phí ({formatCurrency(totalAmount)}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
+                                        Tổng học phí ({formatCurrency(Number(totalAmount))}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
                                     </p>
                                 ) : paidAmount > 0 ? (
                                     <p className="mt-1.5 text-xs text-gray-500">

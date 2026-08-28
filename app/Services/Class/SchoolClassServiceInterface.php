@@ -120,5 +120,5 @@ interface SchoolClassServiceInterface
      * @param  ?Teacher $teacher
      * @return bool
      */
-    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null, ?Admin $admin = null, ?Teacher $teacher = null): bool;
+    public function updateClassStudentStatus(int $classId, int $studentId, int|string $status, ?string $note = null, ?Admin $admin = null, ?Teacher $teacher = null): bool;
 }

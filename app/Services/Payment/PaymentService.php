@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Enums\Constant;
 use App\Events\CenterSubscriptionRenewalRequestedEvent;
 use App\Mail\CenterSubscriptionRenewalRequestedMail;
 use App\Models\Admin;
@@ -82,7 +83,7 @@ class PaymentService implements PaymentServiceInterface
             (string) config('mail.from.address', 'phucstt01@gmail.com')
         );
 
-        $superAdminEmails = Admin::where('role', 'super_admin')->pluck('email')->filter()->toArray();
+        $superAdminEmails = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->orWhere('role', 'super_admin')->pluck('email')->filter()->toArray();
         $recipientEmails  = array_unique(array_filter(array_merge([$contactEmail], $superAdminEmails)));
 
         foreach ($recipientEmails as $email) {
@@ -123,16 +124,16 @@ class PaymentService implements PaymentServiceInterface
             'center_id'           => $center->id,
             'title'               => $notifTitle,
             'content'             => $notifContent,
-            'type'                => 'subscription_renewal',
+            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
             'created_by_admin_id' => $requestingUser?->id,
         ]);
 
-        $superAdminIds = Admin::where('role', 'super_admin')->pluck('id')->toArray();
+        $superAdminIds = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->orWhere('role', 'super_admin')->pluck('id')->toArray();
 
         foreach ($superAdminIds as $sAdminId) {
             NotificationRecipient::create([
                 'notification_id' => $notification->id,
-                'recipient_type'  => 'admin',
+                'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
                 'recipient_id'    => $sAdminId,
                 'read_at'         => null,
             ]);

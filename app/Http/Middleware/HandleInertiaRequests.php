@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\NotificationRecipient;
 use App\Models\SeoMetadata;
@@ -58,7 +59,8 @@ class HandleInertiaRequests extends Middleware
             $role = 'student';
         }
 
-        $userData = null;
+        $userData     = null;
+        $adminRoleStr = null;
 
         if ($user && $role) {
             $username = match ($role) {
@@ -73,14 +75,19 @@ class HandleInertiaRequests extends Middleware
                 'student' => $user->full_name,
             };
 
+            if ($role === 'admin') {
+                $adminRoleStr = ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()))
+                    ? 'super_admin'
+                    : 'admin';
+            }
+
             $userData = [
-                'id'        => $user->id,
-                'username'  => $username,
-                'email'     => $user->email ?? null,
-                'full_name' => $fullName,
-                'role'      => $role,
-                // admin_role chỉ tồn tại khi role = 'admin': 'super_admin' | 'admin'
-                'admin_role' => $role === 'admin' ? ($user->role ?? 'admin') : null,
+                'id'         => $user->id,
+                'username'   => $username,
+                'email'      => $user->email ?? null,
+                'full_name'  => $fullName,
+                'role'       => $role,
+                'admin_role' => $adminRoleStr,
                 'center_id'  => ($role === 'admin' && method_exists($user, 'assignedCenterId')) ? $user->assignedCenterId() : null,
             ];
         }
@@ -90,13 +97,12 @@ class HandleInertiaRequests extends Middleware
 
         if ($user && $role) {
             $permissionService = app(PermissionServiceInterface::class);
-            $adminRole         = $role === 'admin' ? ($user->role ?? 'admin') : null;
-            $permissions       = $permissionService->getPermissionsForUser($role, $adminRole);
+            $permissions       = $permissionService->getPermissionsForUser($role, $adminRoleStr);
 
             $centerModel = null;
 
             if ($role === 'admin') {
-                if ($adminRole !== 'super_admin' && method_exists($user, 'centers')) {
+                if ($adminRoleStr !== 'super_admin' && method_exists($user, 'centers')) {
                     $centerModel = $user->centers()->first();
                 }
             } elseif ($role === 'teacher' || $role === 'student') {
@@ -139,14 +145,21 @@ class HandleInertiaRequests extends Middleware
         $unreadNotificationsCount = 0;
 
         if ($user && $role) {
-            $recipients = NotificationRecipient::where('recipient_type', $role)
+            $numericRecipientType = match ($role) {
+                'admin'   => Constant::RECIPIENT_TYPE_ADMIN,
+                'teacher' => Constant::RECIPIENT_TYPE_TEACHER,
+                'student' => Constant::RECIPIENT_TYPE_STUDENT,
+                default   => 1,
+            };
+
+            $recipients = NotificationRecipient::where('recipient_type', $numericRecipientType)
                 ->where('recipient_id', $user->id)
                 ->with(['notification.center'])
                 ->latest('id')
                 ->limit(10)
                 ->get();
 
-            $unreadNotificationsCount = NotificationRecipient::where('recipient_type', $role)
+            $unreadNotificationsCount = NotificationRecipient::where('recipient_type', $numericRecipientType)
                 ->where('recipient_id', $user->id)
                 ->whereNull('read_at')
                 ->count();

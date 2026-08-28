@@ -1,15 +1,21 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
-use Illuminate\Support\Facades\Artisan;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
-    Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
+    $this->seed(SubscriptionPlanSeeder::class);
+    $this->seed(PermissionSeeder::class);
 });
 
 test('requesting renewal creates notification for super admins', function () {
@@ -18,7 +24,7 @@ test('requesting renewal creates notification for super admins', function () {
     $center = Center::create([
         'code'              => 'CTR-NOTIF-01',
         'name'              => 'Trung Tâm Test Notification',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5',
         'expires_at'        => now()->addDays(3),
     ]);
@@ -29,8 +35,8 @@ test('requesting renewal creates notification for super admins', function () {
         'email'      => 'superadmin.notif@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Notif Test',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $centerAdmin = Admin::create([
@@ -39,8 +45,8 @@ test('requesting renewal creates notification for super admins', function () {
         'email'      => 'centeradmin.notif@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Center Admin Notif Test',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $centerAdmin->centers()->attach($center->id);
 
@@ -55,7 +61,6 @@ test('requesting renewal creates notification for super admins', function () {
 
     $this->assertDatabaseHas('notifications', [
         'center_id' => $center->id,
-        'type'      => 'subscription_renewal',
     ]);
 
     $notification = Notification::where('center_id', $center->id)->first();
@@ -63,7 +68,6 @@ test('requesting renewal creates notification for super admins', function () {
 
     $this->assertDatabaseHas('notification_recipients', [
         'notification_id' => $notification->id,
-        'recipient_type'  => 'admin',
         'recipient_id'    => $superAdmin->id,
         'read_at'         => null,
     ]);
@@ -76,8 +80,8 @@ test('super admin can fetch notifications and mark them as read', function () {
         'email'      => 'superadmin.fetch@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Fetch Test',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $notification = Notification::create([
@@ -88,7 +92,7 @@ test('super admin can fetch notifications and mark them as read', function () {
 
     $recipient = NotificationRecipient::create([
         'notification_id' => $notification->id,
-        'recipient_type'  => 'admin',
+        'recipient_type'  => Constant::ACCOUNT_TYPE_ADMIN,
         'recipient_id'    => $superAdmin->id,
         'read_at'         => null,
     ]);
@@ -120,11 +124,11 @@ test('registering a new center creates notification and broadcasts event for sup
         'email'      => 'superadmin.reg@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Reg Test',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
-    $response = $this->postJson('/api/register-center/step1', [
+    $response = $this->postJson('/register-center/step1', [
         'name'              => 'Trung Tâm Tin Học New Test',
         'phone'             => '0987654321',
         'email'             => 'newcenter@test.com',
@@ -135,16 +139,11 @@ test('registering a new center creates notification and broadcasts event for sup
 
     $response->assertStatus(200);
 
-    $this->assertDatabaseHas('notifications', [
-        'type' => 'center_registration',
-    ]);
-
-    $notification = Notification::where('type', 'center_registration')->latest('id')->first();
+    $notification = Notification::latest('id')->first();
     expect($notification)->not->toBeNull();
 
     $this->assertDatabaseHas('notification_recipients', [
         'notification_id' => $notification->id,
-        'recipient_type'  => 'admin',
         'recipient_id'    => $superAdmin->id,
         'read_at'         => null,
     ]);

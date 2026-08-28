@@ -49,7 +49,7 @@ export default function AssignExamModal({
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
     const [maxScore, setMaxScore] = useState<number | string>(10);
     const [passScore, setPassScore] = useState<number | string>(5);
-    const [status, setStatus] = useState<'scheduled' | 'ongoing' | 'completed' | 'cancelled'>('scheduled');
+    const [status, setStatus] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,7 +69,8 @@ export default function AssignExamModal({
             setDurationMinutes(editingClassExam.duration_minutes || 45);
             setMaxScore(editingClassExam.max_score || 10);
             setPassScore(editingClassExam.pass_score || '');
-            setStatus(editingClassExam.status || 'scheduled');
+            const rawStatus = editingClassExam.status;
+            setStatus(rawStatus === 2 ? 2 : rawStatus === 3 ? 3 : rawStatus === 0 ? 0 : 1);
         } else {
             // New creation
             const defExam = initialExamId ? exams.find((e) => e.id === initialExamId) : null;
@@ -95,7 +96,7 @@ export default function AssignExamModal({
             setDurationMinutes(defExam?.duration_minutes || 45);
             setMaxScore(defExam?.max_score || 10);
             setPassScore(defExam?.pass_score || 5);
-            setStatus('scheduled');
+            setStatus(1);
         }
         setErrors({});
     }, [isOpen, editingClassExam, initialExamId, initialClassId]);
@@ -364,12 +365,12 @@ export default function AssignExamModal({
                         </label>
                         <ScrollableSelect
                             value={status}
-                            onChange={(val) => setStatus(val as any)}
+                            onChange={(val) => setStatus(Number(val))}
                             options={[
-                                { value: 'scheduled', label: 'Đã lên lịch' },
-                                { value: 'ongoing', label: 'Đang diễn ra' },
-                                { value: 'completed', label: 'Đã kết thúc' },
-                                { value: 'cancelled', label: 'Đã hủy' },
+                                { value: 1, label: 'Đã lên lịch' },
+                                { value: 2, label: 'Đang diễn ra' },
+                                { value: 3, label: 'Đã kết thúc' },
+                                { value: 0, label: 'Đã hủy' },
                             ]}
                             placement="top"
                             searchable={false}

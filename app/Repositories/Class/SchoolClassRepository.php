@@ -53,7 +53,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ])
             ->withCount([
                 'students' => function ($q) {
-                    $q->where('class_students.status', 'active')
+                    $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
                         ->whereNull('class_students.left_at');
                 },
             ]);
@@ -142,7 +142,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ])
             ->withCount([
                 'students' => function ($q) {
-                    $q->where('class_students.status', 'active')
+                    $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
                         ->whereNull('class_students.left_at');
                 },
             ]);
@@ -233,7 +233,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 ],
                 [
                     'teacher_id' => $teacherId,
-                    'status'     => 'active',
+                    'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
                 ]
             );
         }
@@ -247,7 +247,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     {
         $classStudents = ClassStudent::with('student')
             ->where('class_id', $classId)
-            ->where('status', 'active')
+            ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
             ->orderBy('id', 'asc');
 
         foreach ($classStudents->cursor() as $classStudent) {
@@ -266,7 +266,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'student_id' => $studentId,
             ],
             [
-                'status'      => Constant::STATUS_ACTIVE,
+                'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
                 'enrolled_at' => now(),
                 'note'        => $note,
             ]
@@ -360,7 +360,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ->with(['center:id,name,code'])
         ->withCount([
             'students' => function ($q) {
-                $q->where('class_students.status', 'active')
+                $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
                     ->whereNull('class_students.left_at');
             },
         ]);
@@ -396,7 +396,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ->with(['center:id,name,code'])
         ->withCount([
             'students' => function ($q) {
-                $q->where('class_students.status', 'active')
+                $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
                     ->whereNull('class_students.left_at');
             },
         ]);
@@ -493,7 +493,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name',
             ])
-            ->where('status', 'active')
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->get();
 
         $result = collect();
@@ -550,7 +550,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         ->with('center:id,name,code')
         ->withCount([
             'students' => function ($q) {
-                $q->where('class_students.status', 'active')
+                $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
                     ->whereNull('class_students.left_at');
             },
         ])
@@ -584,13 +584,20 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ->delete();
     }
 
-    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null): bool
+    public function updateClassStudentStatus(int $classId, int $studentId, int|string $status, ?string $note = null): bool
     {
+        $numericStatus = is_numeric($status) ? (int) $status : match ((string) $status) {
+            'completed'   => Constant::CLASS_STUDENT_STATUS_COMPLETED,
+            'transferred' => Constant::CLASS_STUDENT_STATUS_TRANSFERRED,
+            'left'        => Constant::CLASS_STUDENT_STATUS_LEFT,
+            default       => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+        };
+
         $updateData = [
-            'status' => $status,
+            'status' => $numericStatus,
         ];
 
-        if (in_array($status, ['left', 'transferred', 'completed'], true)) {
+        if (in_array($numericStatus, [Constant::CLASS_STUDENT_STATUS_LEFT, Constant::CLASS_STUDENT_STATUS_TRANSFERRED, Constant::CLASS_STUDENT_STATUS_COMPLETED], true)) {
             $updateData['left_at'] = now();
         } else {
             $updateData['left_at'] = null;
@@ -616,7 +623,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                     'student_id' => $studentId,
                 ],
                 [
-                    'status'      => 'active',
+                    'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
                     'enrolled_at' => now(),
                 ]
             );

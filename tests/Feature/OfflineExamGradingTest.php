@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassExam;
@@ -12,26 +13,29 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubscriptionPlan;
 use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+
     // Seed essential plans
     $this->planAdvanced = SubscriptionPlan::create([
         'code'             => 'advanced_test',
         'name'             => 'Gói Nâng Cao Test',
-        'plan_type'        => 'advanced',
+        'plan_type'        => Constant::PLAN_TYPE_PREMIUM,
         'allowed_features' => ['grading', 'chat', 'export_csv', 'exams', 'class-exams'],
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->planBasic = SubscriptionPlan::create([
         'code'             => 'basic_test',
         'name'             => 'Gói Cơ Bản Test',
-        'plan_type'        => 'basic',
+        'plan_type'        => Constant::PLAN_TYPE_STANDARD,
         'allowed_features' => ['export_csv', 'exams', 'class-exams', 'grading'], // Has 'grading', no 'chat', no 'online-exam'
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->center = Center::create([
@@ -40,9 +44,9 @@ beforeEach(function () {
         'email'             => 'center_adv@test.com',
         'phone'             => '0901111222',
         'subscription_plan' => 'advanced_test',
-        'plan_type'         => 'advanced',
+        'plan_type'         => Constant::PLAN_TYPE_PREMIUM,
         'expires_at'        => now()->addYear(),
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
     ]);
 
     $this->basicCenter = Center::create([
@@ -51,9 +55,9 @@ beforeEach(function () {
         'email'             => 'center_basic@test.com',
         'phone'             => '0902222333',
         'subscription_plan' => 'basic_test',
-        'plan_type'         => 'basic',
+        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
         'expires_at'        => now()->addYear(),
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -69,8 +73,8 @@ test('super admin can access offline grading create and store offline exam with 
         'full_name'  => 'Super Admin',
         'email'      => 'superadmin@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -80,7 +84,7 @@ test('super admin can access offline grading create and store offline exam with 
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -100,14 +104,14 @@ test('super admin can access offline grading create and store offline exam with 
         'full_name'    => 'Nguyễn Teacher',
         'email'        => 'teachersa@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $student1 = Student::create([
@@ -135,8 +139,8 @@ test('super admin can access offline grading create and store offline exam with 
     ]);
 
     $class->students()->attach([
-        $student1->id => ['enrolled_at' => now(), 'status' => 'active'],
-        $student2->id => ['enrolled_at' => now(), 'status' => 'active'],
+        $student1->id => ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE],
+        $student2->id => ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE],
     ]);
 
     // Super Admin visits create page
@@ -180,20 +184,20 @@ test('super admin can access offline grading create and store offline exam with 
     // Verify ClassExam
     $classExam = ClassExam::where('exam_id', $exam->id)->first();
     expect($classExam)->not->toBeNull()
-        ->and($classExam->status)->toBe('completed');
+        ->and($classExam->status)->toBe(Constant::CLASS_EXAM_STATUS_COMPLETED);
 
     // Verify Submissions
     $sub1 = ClassExamSubmission::where('class_exam_id', $classExam->id)->where('student_id', $student1->id)->first();
     expect($sub1)->not->toBeNull()
         ->and((float) $sub1->score)->toBe(8.5)
-        ->and($sub1->status)->toBe('submitted')
+        ->and($sub1->status)->toBe(Constant::SUBMISSION_STATUS_SUBMITTED)
         ->and($sub1->is_graded)->toBeTrue()
         ->and($sub1->teacher_feedback)->toBe('Làm bài rất tốt!');
 
     $sub2 = ClassExamSubmission::where('class_exam_id', $classExam->id)->where('student_id', $student2->id)->first();
     expect($sub2)->not->toBeNull()
         ->and((float) $sub2->score)->toBe(4.0)
-        ->and($sub2->status)->toBe('submitted')
+        ->and($sub2->status)->toBe(Constant::SUBMISSION_STATUS_SUBMITTED)
         ->and($sub2->is_graded)->toBeTrue()
         ->and($sub2->teacher_feedback)->toBe('Cần ôn lại phần hàm số.');
 
@@ -214,7 +218,7 @@ test('teacher can only create offline exam for assigned class and subject', func
         'full_name'    => 'Lê Dung',
         'email'        => 'dung@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject1 = Subject::create([
@@ -224,7 +228,7 @@ test('teacher can only create offline exam for assigned class and subject', func
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $subject2 = Subject::create([
@@ -234,7 +238,7 @@ test('teacher can only create offline exam for assigned class and subject', func
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -250,7 +254,7 @@ test('teacher can only create offline exam for assigned class and subject', func
         'class_id'   => $class->id,
         'subject_id' => $subject1->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -266,7 +270,7 @@ test('teacher can only create offline exam for assigned class and subject', func
     ]);
 
     $class->students()->attach([
-        $student->id => ['enrolled_at' => now(), 'status' => 'active'],
+        $student->id => ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE],
     ]);
 
     // Teacher tries to create offline exam for unassigned subject2 -> forbidden 403
@@ -319,7 +323,7 @@ test('user from basic plan center can access offline grading but is redirected t
         'full_name'    => 'Đỗ Giang',
         'email'        => 'giang@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     // Accessing /grading/offline/create on basic plan -> Allowed (200 OK)

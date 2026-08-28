@@ -74,11 +74,11 @@ export const Create: React.FC<CreateProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const isInitialAmountExceeded =
@@ -364,7 +364,7 @@ export const Create: React.FC<CreateProps> = ({
                                     />
                                     {isInitialAmountExceeded && (
                                         <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                            Số tiền đóng đợt 1 ({formatCurrency(initialAmount)}) không được vượt quá tổng học phí ({formatCurrency(totalAmount)}).
+                                            Số tiền đóng đợt 1 ({formatCurrency(Number(initialAmount))}) không được vượt quá tổng học phí ({formatCurrency(Number(totalAmount))}).
                                         </p>
                                     )}
                                     {errors.initial_payment_amount && (

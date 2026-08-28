@@ -243,19 +243,22 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <Badge
-                                                    variant={
-                                                        center.status ===
-                                                        'active'
-                                                            ? 'active'
-                                                            : center.status ===
-                                                                  'expired'
-                                                              ? 'danger'
-                                                              : 'info'
+                                                {(() => {
+                                                    const val = String(center.status);
+                                                    if (val === '1' || val === 'active') {
+                                                        return <Badge variant="active">Đang hoạt động</Badge>;
                                                     }
-                                                >
-                                                    {center.status.toUpperCase()}
-                                                </Badge>
+                                                    if (val === '2' || val === 'trial') {
+                                                        return <Badge variant="info">Dùng thử</Badge>;
+                                                    }
+                                                    if (val === '3' || val === 'pending') {
+                                                        return <Badge variant="pending">Chờ thanh toán</Badge>;
+                                                    }
+                                                    if (val === '4' || val === 'expired') {
+                                                        return <Badge variant="danger">Hết hạn</Badge>;
+                                                    }
+                                                    return <Badge variant="expired">Tạm dừng</Badge>;
+                                                })()}
                                             </td>
                                             {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (
                                                 <td className="px-6 py-4 text-right">

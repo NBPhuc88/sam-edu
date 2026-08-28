@@ -61,7 +61,7 @@ interface SchoolClass {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: number | string;
+    status: number;
     students_count?: number;
     center?: Center;
     class_subjects?: ClassSubject[];
@@ -154,22 +154,20 @@ return;
 
     const canUseChat = useCanUseChat();
 
-    const getStatusBadge = (status: number | string) => {
-        const num = Number(status);
-
-        if (num === 1 || status === 'active') {
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
             return <Badge variant="active">Đang hoạt động</Badge>;
         }
 
-        if (num === 2 || status === 'completed') {
+        if (status === 2) {
             return <Badge variant="pending">Đã hoàn thành</Badge>;
         }
 
-        if (num === 3 || status === 'closed') {
+        if (status === 3) {
             return <Badge variant="danger">Đã đóng</Badge>;
         }
 
-        return <Badge variant="expired">Tạm dừng</Badge>;
+        return <Badge variant="expired">Tạm ngưng</Badge>;
     };
 
     return (

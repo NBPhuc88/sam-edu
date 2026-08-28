@@ -115,11 +115,10 @@ class PermissionService implements PermissionServiceInterface
      * @param  string             $role
      * @param  ?string            $adminRole
      */
-    public function getPermissionsForUser(string $role, ?string $adminRole = null): array
+    public function getPermissionsForUser(string $role, int|string|null $adminRole = null): array
     {
-        $effectiveRole = ($role === 'admin' && $adminRole === 'super_admin')
-            ? 'super_admin'
-            : $role;
+        $isSuperAdmin  = ($role === 'admin' && ($adminRole === 'super_admin' || (int) $adminRole === \App\Enums\Constant::ROLE_SUPER_ADMIN));
+        $effectiveRole = $isSuperAdmin ? 'super_admin' : $role;
 
         // Super Admin có tất cả quyền
         if ($effectiveRole === 'super_admin') {

@@ -36,7 +36,7 @@ interface EnrolledClass {
     code: string;
     start_date?: string | null;
     end_date?: string | null;
-    status: number | string;
+    status: number;
 }
 
 interface Props {
@@ -47,9 +47,9 @@ interface Props {
         date_of_birth?: string | null;
         email?: string | null;
         phone?: string | null;
-        gender?: string | null;
+        gender?: number | null;
         address?: string | null;
-        status: number | string;
+        status: number;
     };
     center: {
         name: string;

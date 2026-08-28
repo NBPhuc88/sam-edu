@@ -12,7 +12,7 @@ interface AuthUser {
     username: string;
     email: string | null;
     role: string;
-    admin_role?: string | null;
+    admin_role?: 'super_admin' | 'admin' | null;
     avatar?: string | null;
 }
 
@@ -81,7 +81,10 @@ export const Header: React.FC<HeaderProps> = ({
             return;
         }
 
-        if (user.admin_role === 'super_admin') {
+        const isSuper = (role === 'admin' || user.role === 'admin') &&
+            user.admin_role === 'super_admin';
+
+        if (isSuper) {
             const echo = getEcho();
             const channel = echo.channel('super-admin-notifications');
 
@@ -183,7 +186,9 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     // Hiển thị logo và tên Trung tâm ở chính giữa header cho: Admin phụ, Giáo viên, Học sinh
-    const isSubAdmin = role === 'admin' && user?.admin_role !== 'super_admin';
+    const isSuperAdmin = (role === 'admin' || user?.role === 'admin') &&
+        user?.admin_role === 'super_admin';
+    const isSubAdmin = role === 'admin' && !isSuperAdmin;
     const isTeacher = role === 'teacher';
     const isStudent = role === 'student';
     const showCenterBrand = (isSubAdmin || isTeacher || isStudent) && !!center?.name;
@@ -249,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
 
                 {/* Bell Notification Icon — Chỉ hiển thị cho Super Admin */}
-                {user && role === 'admin' && user.admin_role === 'super_admin' && (
+                {user && isSuperAdmin && (
                     <div className="relative">
                         <button
                             type="button"
@@ -345,7 +350,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {user.full_name ?? user.username}
                             </span>
                             <span className="text-2xs text-gray-400 capitalize">
-                                {role === 'admin' ? (user.admin_role === 'super_admin' ? 'Super Admin' : 'Admin') : role === 'teacher' ? 'Giáo viên' : 'Học sinh'}
+                                {role === 'admin' ? (isSuperAdmin ? 'Super Admin' : 'Admin') : role === 'teacher' ? 'Giáo viên' : 'Học sinh'}
                             </span>
                         </div>
                     </Link>

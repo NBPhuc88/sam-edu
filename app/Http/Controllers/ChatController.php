@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Http\Requests\Chat\FilterChatGroupRequest;
 use App\Http\Requests\Chat\ReactClassChatMessageRequest;
 use App\Http\Requests\Chat\SendClassChatMessageRequest;
@@ -144,7 +145,7 @@ class ChatController extends Controller
 
         if ($admin) {
             return [
-                'sender_type'   => 'admin',
+                'sender_type'   => Constant::SENDER_TYPE_ADMIN,
                 'sender_id'     => $admin->id,
                 'sender_name'   => $admin->full_name ?? $admin->name ?? 'Admin',
                 'sender_avatar' => $admin->avatar ?? null,
@@ -157,7 +158,7 @@ class ChatController extends Controller
 
         if ($teacher) {
             return [
-                'sender_type'   => 'teacher',
+                'sender_type'   => Constant::SENDER_TYPE_TEACHER,
                 'sender_id'     => $teacher->id,
                 'sender_name'   => $teacher->full_name ?? 'Giáo viên',
                 'sender_avatar' => $teacher->avatar ?? null,
@@ -170,7 +171,7 @@ class ChatController extends Controller
 
         if ($student) {
             return [
-                'sender_type'   => 'student',
+                'sender_type'   => Constant::SENDER_TYPE_STUDENT,
                 'sender_id'     => $student->id,
                 'sender_name'   => $student->full_name ?? 'Học sinh',
                 'sender_avatar' => $student->avatar ?? null,
@@ -179,7 +180,7 @@ class ChatController extends Controller
         }
 
         return [
-            'sender_type'   => 'admin',
+            'sender_type'   => Constant::SENDER_TYPE_ADMIN,
             'sender_id'     => 1,
             'sender_name'   => 'Quản trị viên Trung tâm',
             'sender_avatar' => null,

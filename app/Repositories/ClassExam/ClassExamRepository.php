@@ -74,7 +74,13 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         }
 
         if ($status && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'scheduled' => Constant::CLASS_EXAM_STATUS_SCHEDULED,
+                'ongoing'   => Constant::CLASS_EXAM_STATUS_ONGOING,
+                'completed' => Constant::CLASS_EXAM_STATUS_COMPLETED,
+                'cancelled' => Constant::CLASS_EXAM_STATUS_CANCELLED,
+                default     => $status,
+            });
         }
 
         if ($search) {
@@ -176,9 +182,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         }
 
         $total     = (clone $query)->count();
-        $scheduled = (clone $query)->where('status', 'scheduled')->count();
-        $ongoing   = (clone $query)->where('status', 'ongoing')->count();
-        $completed = (clone $query)->where('status', 'completed')->count();
+        $scheduled = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_SCHEDULED)->count();
+        $ongoing   = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_ONGOING)->count();
+        $completed = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_COMPLETED)->count();
 
         return [
             'total'     => $total,

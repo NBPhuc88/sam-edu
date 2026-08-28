@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Services\Admin\AdminService;
@@ -11,7 +12,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test AdminService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -21,7 +22,7 @@ test('createAdmin creates admin and syncs center when role is admin', function (
         'full_name' => 'Nguyen Van Admin',
         'email'     => 'admin_c1@example.com',
         'password'  => 'password123',
-        'role'      => 'admin',
+        'role'      => Constant::ROLE_ADMIN,
         'center_id' => $this->center->id,
     ];
 
@@ -29,7 +30,7 @@ test('createAdmin creates admin and syncs center when role is admin', function (
 
     expect($admin)->toBeInstanceOf(Admin::class)
         ->and($admin->username)->toBe('admin_center1')
-        ->and($admin->role)->toBe('admin');
+        ->and($admin->role)->toBe(Constant::ROLE_ADMIN);
 
     $this->assertDatabaseHas('admin_centers', [
         'admin_id'  => $admin->id,
@@ -42,7 +43,7 @@ test('createAdmin throws exception when trying to create a second super_admin', 
         'username'   => 'existing_super_admin',
         'full_name'  => 'Super Admin 1',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -50,7 +51,7 @@ test('createAdmin throws exception when trying to create a second super_admin', 
         'username'  => 'super_2',
         'full_name' => 'Super Admin 2',
         'password'  => 'password123',
-        'role'      => 'super_admin',
+        'role'      => Constant::ROLE_SUPER_ADMIN,
     ];
 
     expect(fn () => $this->service->createAdmin($data))
@@ -62,13 +63,13 @@ test('updateAdmin throws exception when trying to demote super_admin', function 
         'username'   => 'super_demote_test',
         'full_name'  => 'Super Demote',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
     $data = [
         'full_name' => 'Super Admin Updated',
-        'role'      => 'admin',
+        'role'      => Constant::ROLE_ADMIN,
     ];
 
     expect(fn () => $this->service->updateAdmin($superAdmin->id, $data))
@@ -80,7 +81,7 @@ test('deleteAdmin throws exception when trying to delete super_admin', function 
         'username'   => 'super_del_test',
         'full_name'  => 'Super Del',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -88,7 +89,7 @@ test('deleteAdmin throws exception when trying to delete super_admin', function 
         'username'   => 'other_admin_test',
         'full_name'  => 'Other Admin',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -101,7 +102,7 @@ test('deleteAdmin throws exception when admin tries to delete themselves', funct
         'username'   => 'self_del_admin',
         'full_name'  => 'Self Del Admin',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -114,14 +115,14 @@ test('deleteAdmin deletes regular admin successfully', function () {
         'username'   => 'admin_to_del',
         'full_name'  => 'Admin To Del',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
     $currentAdmin = Admin::create([
         'username'   => 'curr_admin',
         'full_name'  => 'Curr Admin',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 

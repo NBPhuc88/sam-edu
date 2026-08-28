@@ -71,6 +71,7 @@ class ClassExamSubmission extends Model
     protected function casts(): array
     {
         return [
+            'status'                  => 'integer',
             'started_at'              => 'datetime:d-m-Y H:i',
             'submitted_at'            => 'datetime:d-m-Y H:i',
             'graded_at'               => 'datetime:d-m-Y H:i',
@@ -85,6 +86,22 @@ class ClassExamSubmission extends Model
             'created_at'              => 'datetime:d-m-Y H:i',
             'updated_at'              => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['status'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['status'] = match ($value) {
+                'submitted'         => \App\Enums\Constant::SUBMISSION_STATUS_SUBMITTED,
+                'timeout_submitted' => \App\Enums\Constant::SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+                'missed'            => \App\Enums\Constant::SUBMISSION_STATUS_MISSED,
+                default             => \App\Enums\Constant::SUBMISSION_STATUS_IN_PROGRESS,
+            };
+        } else {
+            $this->attributes['status'] = (int) $value;
+        }
     }
 
     /**

@@ -7,7 +7,7 @@ interface AuthProp {
         email?: string | null;
         full_name: string;
         role: string;
-        admin_role?: string | null;
+        admin_role?: 'super_admin' | 'admin' | null;
         center_id?: number | null;
     } | null;
     role: string | null;
@@ -18,7 +18,7 @@ export function usePermission() {
     const { auth } = usePage<{ auth?: AuthProp }>().props;
 
     const user = auth?.user;
-    const isSuperAdmin = auth?.role === 'admin' && user?.admin_role === 'super_admin';
+    const isSuperAdmin = (auth?.role === 'admin' || user?.role === 'admin') && user?.admin_role === 'super_admin';
     const permissions: string[] = auth?.permissions || [];
 
     const can = (permissionCode: string): boolean => {

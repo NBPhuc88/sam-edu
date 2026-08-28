@@ -137,35 +137,33 @@ export default function ClassExamIndex({
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'scheduled':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
-                        <Calendar className="h-3 w-3" /> Đã lên lịch
-                    </span>
-                );
-            case 'ongoing':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
-                        <PlayCircle className="h-3 w-3" /> Đang diễn ra
-                    </span>
-                );
-            case 'completed':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
-                        <CheckCircle2 className="h-3 w-3" /> Đã kết thúc
-                    </span>
-                );
-            case 'cancelled':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
-                        <AlertCircle className="h-3 w-3" /> Đã hủy
-                    </span>
-                );
-            default:
-                return <Badge>{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 2) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
+                    <PlayCircle className="h-3 w-3" /> Đang diễn ra
+                </span>
+            );
         }
+        if (status === 3) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
+                    <CheckCircle2 className="h-3 w-3" /> Đã kết thúc
+                </span>
+            );
+        }
+        if (status === 0) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
+                    <AlertCircle className="h-3 w-3" /> Đã hủy
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+                <Calendar className="h-3 w-3" /> Đã lên lịch
+            </span>
+        );
     };
 
     return (
@@ -349,10 +347,10 @@ export default function ClassExamIndex({
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: 'scheduled', label: 'Đã lên lịch' },
-                                        { value: 'ongoing', label: 'Đang diễn ra' },
-                                        { value: 'completed', label: 'Đã kết thúc' },
-                                        { value: 'cancelled', label: 'Đã hủy' },
+                                        { value: '1', label: 'Đã lên lịch' },
+                                        { value: '2', label: 'Đang diễn ra' },
+                                        { value: '3', label: 'Đã kết thúc' },
+                                        { value: '0', label: 'Đã hủy' },
                                     ]}
                                     placeholder="Tất cả trạng thái"
                                     searchable={false}

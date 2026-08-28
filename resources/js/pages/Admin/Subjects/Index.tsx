@@ -34,8 +34,8 @@ interface Subject {
     description: string | null;
     total_sessions: number | null;
     duration_minutes: number | null;
-    tuition_fee: number | string | null;
-    status: string;
+    tuition_fee: number | null;
+    status: number;
     center?: Center;
 }
 
@@ -106,18 +106,17 @@ return 'Chưa thiết lập';
         router.get('/subjects', {}, { preserveState: true });
     };
 
-    const openDeleteModal = (subject: Subject) => {
+    const handleDelete = (subject: Subject) => {
         setDeletingSubject(subject);
         setDeleteModalOpen(true);
     };
 
     const confirmDelete = () => {
-        if (!deletingSubject) {
-return;
-}
+        if (!deletingSubject) return;
 
         setIsDeleting(true);
         router.delete(`/subjects/${deletingSubject.id}`, {
+            preserveScroll: true,
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteModalOpen(false);
@@ -126,15 +125,11 @@ return;
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang mở dạy</Badge>;
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
+            return <Badge variant="active">Đang mở dạy</Badge>;
         }
+        return <Badge variant="expired">Tạm dừng</Badge>;
     };
 
     return (
@@ -204,8 +199,8 @@ return;
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'active', label: 'Đang mở dạy' },
-                                        { value: 'inactive', label: 'Tạm dừng' },
+                                        { value: '1', label: 'Đang mở dạy' },
+                                        { value: '0', label: 'Tạm dừng' },
                                     ]}
                                 />
                             </div>
@@ -337,7 +332,7 @@ return;
                                                                 variant="danger"
                                                                 size="sm"
                                                                 icon={<Trash2 className="h-4 w-4" />}
-                                                                onClick={() => openDeleteModal(sub)}
+                                                                onClick={() => handleDelete(sub)}
                                                                 title="Xóa môn học"
                                                             >
                                                                 Xóa

@@ -50,8 +50,7 @@ class StoreExamRequest extends FormRequest
             'description'       => ['nullable', 'string'],
             'exam_date'         => ['nullable', 'date'],
             'start_time'        => ['nullable', 'date_format:H:i,H:i:s'],
-            'end_time'          => ['nullable', 'date_format:H:i,H:i:s'],
-            'status'            => ['nullable', 'string', 'in:draft,published,completed,cancelled'],
+            'status'            => ['nullable'],
 
             // Danh sách các Phần thi (Dynamic Sections)
             'sections'                              => ['nullable', 'array'],

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassExam;
@@ -17,13 +18,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test OnlineExam',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_online_exam_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin OnlineExam',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
     $this->schoolClass = SchoolClass::create([
@@ -45,7 +47,7 @@ beforeEach(function () {
 
     $this->schoolClass->students()->attach($this->student->id, [
         'enrolled_at' => now(),
-        'status'      => 'active',
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
     ]);
 
     $this->exam = Exam::create([
@@ -82,7 +84,7 @@ beforeEach(function () {
 test('startExamAttempt creates in_progress submission for student', function () {
     $submission = $this->service->startExamAttempt($this->classExam->id, $this->student);
 
-    expect($submission->status)->toBe('in_progress')
+    expect($submission->status)->toBe(Constant::SUBMISSION_STATUS_IN_PROGRESS)
         ->and($submission->student_id)->toBe($this->student->id)
         ->and($submission->class_exam_id)->toBe($this->classExam->id);
 });
@@ -103,7 +105,7 @@ test('submitExamAttempt grades exam and sets status to submitted', function () {
     $answers   = [$this->q1->id => 'A'];
     $submitted = $this->service->submitExamAttempt($submission->id, $answers, $this->student);
 
-    expect($submitted->status)->toBe('submitted')
+    expect($submitted->status)->toBe(Constant::SUBMISSION_STATUS_SUBMITTED)
         ->and((float) $submitted->score)->toBe(10.0)
         ->and($submitted->total_correct)->toBe(1);
 });

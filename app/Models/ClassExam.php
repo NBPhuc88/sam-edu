@@ -50,6 +50,7 @@ class ClassExam extends Model
     protected function casts(): array
     {
         return [
+            'status'           => 'integer',
             'exam_date'        => 'date:d-m-Y',
             'valid_from'       => 'datetime:d-m-Y H:i',
             'valid_to'         => 'datetime:d-m-Y H:i',
@@ -59,6 +60,22 @@ class ClassExam extends Model
             'created_at'       => 'datetime:d-m-Y H:i',
             'updated_at'       => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['status'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['status'] = match ($value) {
+                'ongoing', 'active' => Constant::CLASS_EXAM_STATUS_ONGOING,
+                'completed'         => Constant::CLASS_EXAM_STATUS_COMPLETED,
+                'cancelled'         => Constant::CLASS_EXAM_STATUS_CANCELLED,
+                default             => Constant::CLASS_EXAM_STATUS_SCHEDULED,
+            };
+        } else {
+            $this->attributes['status'] = (int) $value;
+        }
     }
 
     /**

@@ -92,7 +92,7 @@ class PracticeExamService implements PracticeExamServiceInterface
                 }
 
                 // Xáo trộn đáp án nếu đề thi bật shuffle_options
-                if ($exam->shuffle_options && is_array($options) && in_array($question->question_type, ['single_choice', 'multiple_choice'])) {
+                if ($exam->shuffle_options && is_array($options) && in_array((int) $question->question_type, [\App\Enums\Constant::QUESTION_TYPE_SINGLE_CHOICE, \App\Enums\Constant::QUESTION_TYPE_MULTIPLE_CHOICE], true)) {
                     shuffle($options);
                 }
 
@@ -199,10 +199,10 @@ class PracticeExamService implements PracticeExamServiceInterface
             $earnedScore = 0.00;
 
             if (! $isSkipped) {
-                switch ($question->question_type) {
-                    case 'single_choice':
-                    case 'true_false_not_given':
-                    case 'find_mistake':
+                switch ((int) $question->question_type) {
+                    case \App\Enums\Constant::QUESTION_TYPE_SINGLE_CHOICE:
+                    case \App\Enums\Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
+                    case \App\Enums\Constant::QUESTION_TYPE_FIND_MISTAKE:
                         $cleanUser    = is_scalar($userAns) ? trim(strtoupper((string) $userAns)) : '';
                         $cleanCorrect = is_scalar($correctAns) ? trim(strtoupper((string) $correctAns)) : '';
 
@@ -213,7 +213,7 @@ class PracticeExamService implements PracticeExamServiceInterface
 
                         break;
 
-                    case 'multiple_choice':
+                    case \App\Enums\Constant::QUESTION_TYPE_MULTIPLE_CHOICE:
                         $userArr = [];
 
                         if (is_array($userAns)) {
@@ -248,7 +248,7 @@ class PracticeExamService implements PracticeExamServiceInterface
 
                         break;
 
-                    case 'fill_in_blank':
+                    case \App\Enums\Constant::QUESTION_TYPE_FILL_IN_BLANK:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $totalBlanks   = count($correctAns);
                             $correctBlanks = 0;
@@ -296,11 +296,11 @@ class PracticeExamService implements PracticeExamServiceInterface
 
                         break;
 
-                    case 'matching':
-                    case 'matching_image':
-                    case 'matching_sentences':
-                    case 'diagram_labelling':
-                    case 'drag_drop_cloze':
+                    case \App\Enums\Constant::QUESTION_TYPE_MATCHING:
+                    case \App\Enums\Constant::QUESTION_TYPE_MATCHING_IMAGE:
+                    case \App\Enums\Constant::QUESTION_TYPE_MATCHING_SENTENCES:
+                    case \App\Enums\Constant::QUESTION_TYPE_DIAGRAM_LABELLING:
+                    case \App\Enums\Constant::QUESTION_TYPE_DRAG_DROP_CLOZE:
                         if (is_array($userAns) && is_array($correctAns)) {
                             $totalPairs   = count($correctAns);
                             $correctPairs = 0;
@@ -323,7 +323,7 @@ class PracticeExamService implements PracticeExamServiceInterface
 
                         break;
 
-                    case 'ordering':
+                    case \App\Enums\Constant::QUESTION_TYPE_ORDERING:
                         $userOrder = [];
 
                         if (is_array($userAns)) {
@@ -350,11 +350,21 @@ class PracticeExamService implements PracticeExamServiceInterface
 
                         break;
 
-                    case 'essay':
-                    case 'audio_record':
+                    case \App\Enums\Constant::QUESTION_TYPE_ESSAY:
+                    case \App\Enums\Constant::QUESTION_TYPE_AUDIO_RECORD:
+                    case \App\Enums\Constant::QUESTION_TYPE_SHORT_ANSWER:
+                    case \App\Enums\Constant::QUESTION_TYPE_ORAL:
                         // Tự luận & Ghi âm: Ghi nhận bài nộp
                         $isCorrect   = false;
                         $earnedScore = 0.00;
+
+                        break;
+
+                    default:
+                        if (is_scalar($userAns) && is_scalar($correctAns) && trim((string) $userAns) === trim((string) $correctAns)) {
+                            $isCorrect   = true;
+                            $earnedScore = $qScore;
+                        }
 
                         break;
                 }

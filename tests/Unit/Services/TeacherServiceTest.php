@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -19,13 +20,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test TeacherService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_tch_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Tch',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 });
@@ -55,7 +57,7 @@ test('updateTeacher updates teacher details and specialization', function () {
         'full_name'    => 'Old Teacher Name',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $updated = $this->service->updateTeacher($teacher->id, [
@@ -78,7 +80,7 @@ test('deleteTeacher prevents deleting teacher who has scheduled future sessions'
         'full_name'    => 'Teacher Future Session',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -104,7 +106,7 @@ test('deleteTeacher prevents deleting teacher who has scheduled future sessions'
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     ClassSession::create([
@@ -114,7 +116,7 @@ test('deleteTeacher prevents deleting teacher who has scheduled future sessions'
         'session_date'     => now()->addDays(2)->toDateString(),
         'start_time'       => '08:00:00',
         'end_time'         => '10:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     expect(fn () => $this->service->deleteTeacher($teacher->id, $this->superAdmin))
@@ -130,7 +132,7 @@ test('deleteTeacher soft deletes teacher successfully when no future active sess
         'full_name'    => 'Teacher Del Soft',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $result = $this->service->deleteTeacher($teacher->id, $this->superAdmin);

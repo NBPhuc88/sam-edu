@@ -369,7 +369,7 @@ export default function ProfileIndex({ profile, errors = {} }: ProfileProps) {
                                 <div>
                                     <dt className="text-gray-500">Giới tính</dt>
                                     <dd className="mt-1 font-medium text-gray-900">
-                                        {profile.gender === 'male' ? 'Nam' : profile.gender === 'female' ? 'Nữ' : profile.gender ? 'Khác' : '(Chưa cập nhật)'}
+                                        {String(profile.gender) === '1' || profile.gender === 'male' ? 'Nam' : String(profile.gender) === '2' || profile.gender === 'female' ? 'Nữ' : profile.gender ? 'Khác' : '(Chưa cập nhật)'}
                                     </dd>
                                 </div>
                                 <div>

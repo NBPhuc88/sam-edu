@@ -41,7 +41,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     const [password, setPassword] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
-    const [gender, setGender] = useState<string>('male');
+    const [gender, setGender] = useState<number>(1);
     const [address, setAddress] = useState<string>('');
     const [parentName, setParentName] = useState<string>('');
     const [parentPhone, setParentPhone] = useState<string>('');
@@ -273,12 +273,12 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 </label>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
+                                    onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
+                                    <option value={1}>Nam</option>
+                                    <option value={2}>Nữ</option>
+                                    <option value={3}>Khác</option>
                                 </select>
                             </div>
 

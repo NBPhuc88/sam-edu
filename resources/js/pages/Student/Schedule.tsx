@@ -35,8 +35,8 @@ interface Student {
     student_code: string;
     phone?: string | null;
     email?: string | null;
-    gender?: string | null;
-    status?: string | number;
+    gender?: number | null;
+    status?: number;
     center?: Center;
 }
 

@@ -37,7 +37,7 @@ interface Teacher {
     phone?: string | null;
     email?: string | null;
     specialization?: string | null;
-    status?: string | number;
+    status?: number;
     center?: Center;
 }
 

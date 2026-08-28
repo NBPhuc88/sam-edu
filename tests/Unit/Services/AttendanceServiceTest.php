@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\ClassSession;
 use App\Models\ClassSubject;
@@ -16,7 +17,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test AttendanceService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->schoolClass = SchoolClass::create([
         'center_id' => $this->center->id,
@@ -37,7 +38,7 @@ beforeEach(function () {
         'full_name'    => 'Teacher Att Test',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
     $this->student = Student::create([
         'center_id'    => $this->center->id,
@@ -56,7 +57,7 @@ beforeEach(function () {
         'class_id'   => $this->schoolClass->id,
         'subject_id' => $this->subject->id,
         'teacher_id' => $this->teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->session = ClassSession::create([
@@ -65,7 +66,7 @@ beforeEach(function () {
         'session_date'     => now()->subDays(1)->toDateString(),
         'start_time'       => '08:00:00',
         'end_time'         => '10:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 });
 
@@ -73,7 +74,7 @@ test('saveAttendance saves attendance status and marks session completed', funct
     $attendances = [
         [
             'student_id' => $this->student->id,
-            'status'     => 'present',
+            'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
             'note'       => 'Di hoc dung gio',
         ],
     ];
@@ -81,11 +82,11 @@ test('saveAttendance saves attendance status and marks session completed', funct
     $result = $this->service->saveAttendance($this->session->id, $attendances, $this->teacher);
 
     expect($result)->toBeTrue();
-    expect($this->session->fresh()->status)->toBe('completed');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
     $this->assertDatabaseHas('attendances', [
         'session_id' => $this->session->id,
         'student_id' => $this->student->id,
-        'status'     => 'present',
+        'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
     ]);
 });
 
@@ -96,7 +97,7 @@ test('saveAttendance throws validation exception when marking attendance before 
         'session_date'     => now()->addDays(5)->toDateString(),
         'start_time'       => '08:00:00',
         'end_time'         => '10:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     expect(fn () => $this->service->saveAttendance($futureSession->id, [], $this->teacher))
@@ -105,7 +106,7 @@ test('saveAttendance throws validation exception when marking attendance before 
 
 test('resetAttendance resets all student attendance records for session', function () {
     $this->service->saveAttendance($this->session->id, [
-        ['student_id' => $this->student->id, 'status' => 'present'],
+        ['student_id' => $this->student->id, 'status' => Constant::ATTENDANCE_STATUS_PRESENT],
     ], $this->teacher);
 
     $resetResult = $this->service->resetAttendance($this->session->id, $this->teacher);

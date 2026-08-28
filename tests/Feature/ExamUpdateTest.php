@@ -1,14 +1,21 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\ExamSection;
 use App\Models\Subject;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+});
 
 test('admin can update exam basic info and sections', function () {
     $center = Center::create([
@@ -16,7 +23,7 @@ test('admin can update exam basic info and sections', function () {
         'name'   => 'Trung Tâm Test Update',
         'email'  => 'center88@test.com',
         'phone'  => '0901234588',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -24,7 +31,8 @@ test('admin can update exam basic info and sections', function () {
         'full_name'  => 'Super Admin 88',
         'email'      => 'admin88@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000088',
     ]);
 
@@ -35,7 +43,7 @@ test('admin can update exam basic info and sections', function () {
         'total_sessions'   => 20,
         'duration_minutes' => 60,
         'tuition_fee'      => 2000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -45,7 +53,7 @@ test('admin can update exam basic info and sections', function () {
         'name'             => 'Đề Thi Gốc',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'draft',
+        'status'           => Constant::EXAM_STATUS_DRAFT,
     ]);
 
     $section = ExamSection::create([
@@ -71,7 +79,7 @@ test('admin can update exam basic info and sections', function () {
         'duration_minutes' => 60,
         'max_score'        => 10,
         'pass_score'       => 5,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
         'sections'         => [
             [
                 'id'          => $section->id,
@@ -104,20 +112,20 @@ test('admin can update exam basic info and sections', function () {
     $exam->refresh();
     expect($exam->name)->toBe('Đề Thi Đã Cập Nhật')
         ->and($exam->duration_minutes)->toBe(60)
-        ->and($exam->status)->toBe('published')
+        ->and($exam->status)->toBe(Constant::EXAM_STATUS_PUBLISHED)
         ->and($exam->questions()->count())->toBe(2);
 });
 
 test('deleting an exam deletes all related media and directory on storage', function () {
-    \Illuminate\Support\Facades\Storage::fake('sam');
-    \Illuminate\Support\Facades\Storage::fake('public');
+    Storage::fake('sam');
+    Storage::fake('public');
 
     $center = Center::create([
         'code'   => 'CTR000000089',
         'name'   => 'Trung Tâm Test Delete Media',
         'email'  => 'center89@test.com',
         'phone'  => '0901234589',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -125,7 +133,8 @@ test('deleting an exam deletes all related media and directory on storage', func
         'full_name'  => 'Super Admin 89',
         'email'      => 'admin89@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000089',
     ]);
 
@@ -136,7 +145,7 @@ test('deleting an exam deletes all related media and directory on storage', func
         'total_sessions'   => 20,
         'duration_minutes' => 60,
         'tuition_fee'      => 2000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -146,7 +155,7 @@ test('deleting an exam deletes all related media and directory on storage', func
         'name'             => 'Đề Thi Có Ảnh',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $section = ExamSection::create([
@@ -156,9 +165,9 @@ test('deleting an exam deletes all related media and directory on storage', func
     ]);
 
     // Tạo file mẫu trên storage disk 'sam' và 'public'
-    \Illuminate\Support\Facades\Storage::disk('sam')->put("exams/{$exam->id}/q1_image.png", 'fake image content');
-    \Illuminate\Support\Facades\Storage::disk('sam')->put("exams/{$exam->id}/q2_audio.mp3", 'fake audio content');
-    \Illuminate\Support\Facades\Storage::disk('sam')->put('media/custom_question_image.png', 'fake image content');
+    Storage::disk('sam')->put("exams/{$exam->id}/q1_image.png", 'fake image content');
+    Storage::disk('sam')->put("exams/{$exam->id}/q2_audio.mp3", 'fake audio content');
+    Storage::disk('sam')->put('media/custom_question_image.png', 'fake image content');
 
     $q1 = ExamQuestion::create([
         'exam_id'       => $exam->id,
@@ -175,8 +184,8 @@ test('deleting an exam deletes all related media and directory on storage', func
     ]);
 
     // Kiểm tra file tồn tại trước khi xóa
-    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists("exams/{$exam->id}/q1_image.png"))->toBeTrue()
-        ->and(\Illuminate\Support\Facades\Storage::disk('sam')->exists('media/custom_question_image.png'))->toBeTrue();
+    expect(Storage::disk('sam')->exists("exams/{$exam->id}/q1_image.png"))->toBeTrue()
+        ->and(Storage::disk('sam')->exists('media/custom_question_image.png'))->toBeTrue();
 
     // Thực hiện xóa đề thi
     $response = $this->actingAs($admin, 'admin')->delete(route('exams.destroy', $exam->id));
@@ -187,8 +196,8 @@ test('deleting an exam deletes all related media and directory on storage', func
         ->and(Exam::withTrashed()->find($exam->id)->trashed())->toBeTrue();
 
     // Kiểm tra Storage: File & thư mục đã bị xóa sạch
-    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists("exams/{$exam->id}/q1_image.png"))->toBeFalse()
-        ->and(\Illuminate\Support\Facades\Storage::disk('sam')->exists("exams/{$exam->id}/q2_audio.mp3"))->toBeFalse()
-        ->and(\Illuminate\Support\Facades\Storage::disk('sam')->exists('media/custom_question_image.png'))->toBeFalse()
-        ->and(\Illuminate\Support\Facades\Storage::disk('sam')->exists("exams/{$exam->id}"))->toBeFalse();
+    expect(Storage::disk('sam')->exists("exams/{$exam->id}/q1_image.png"))->toBeFalse()
+        ->and(Storage::disk('sam')->exists("exams/{$exam->id}/q2_audio.mp3"))->toBeFalse()
+        ->and(Storage::disk('sam')->exists('media/custom_question_image.png'))->toBeFalse()
+        ->and(Storage::disk('sam')->exists("exams/{$exam->id}"))->toBeFalse();
 });

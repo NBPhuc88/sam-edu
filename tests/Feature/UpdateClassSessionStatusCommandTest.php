@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Attendance;
 use App\Models\Center;
@@ -18,7 +19,7 @@ beforeEach(function () {
     $this->center = Center::create([
         'name'       => 'Trung Tâm Test Status',
         'code'       => 'CTR_STATUS_01',
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
         'expires_at' => now()->addYear(),
     ]);
 
@@ -27,7 +28,8 @@ beforeEach(function () {
         'full_name'  => 'Super Admin Command',
         'email'      => 'admin_cmd@example.com',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM_CMD_001',
     ]);
 
@@ -40,7 +42,7 @@ beforeEach(function () {
         'email'        => 'teacher_cmd@example.com',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'T_CMD_001',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->student = Student::create([
@@ -62,7 +64,7 @@ beforeEach(function () {
         'total_sessions'   => 10,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->room = Room::create([
@@ -101,21 +103,21 @@ test('command sessions:update-status updates running sessions to in_progress and
         'session_date'     => '2026-08-25',
         'start_time'       => '09:30:00',
         'end_time'         => '11:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
-    // 2. Session ended earlier today (07:30 - 09:00) without attendance -> should become unattended
+    // 2. Session ended in the past today without attendance (08:00 - 09:30) -> should become unattended (0)
     $pastUnattendedSession = ClassSession::create([
         'class_subject_id' => $this->classSubject->id,
         'teacher_id'       => $this->teacher->id,
         'room_id'          => $this->room->id,
         'session_date'     => '2026-08-25',
-        'start_time'       => '07:30:00',
-        'end_time'         => '09:00:00',
-        'status'           => 'scheduled',
+        'start_time'       => '08:00:00',
+        'end_time'         => '09:30:00',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
-    // 3. Session ended earlier today (07:30 - 09:00) WITH attendance -> should become completed
+    // 3. Session ended in the past today with attendance -> should become completed
     $pastAttendedSession = ClassSession::create([
         'class_subject_id' => $this->classSubject->id,
         'teacher_id'       => $this->teacher->id,
@@ -123,12 +125,12 @@ test('command sessions:update-status updates running sessions to in_progress and
         'session_date'     => '2026-08-25',
         'start_time'       => '07:30:00',
         'end_time'         => '09:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
     Attendance::create([
         'session_id' => $pastAttendedSession->id,
         'student_id' => $this->student->id,
-        'status'     => 'present',
+        'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
         'marked_at'  => now(),
     ]);
 
@@ -140,17 +142,17 @@ test('command sessions:update-status updates running sessions to in_progress and
         'session_date'     => '2026-08-25',
         'start_time'       => '14:00:00',
         'end_time'         => '15:30:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // Run artisan command
     $this->artisan('sessions:update-status')->assertSuccessful();
 
     // Verify statuses
-    expect($ongoingSession->fresh()->status)->toBe('in_progress');
-    expect($pastUnattendedSession->fresh()->status)->toBe('unattended');
-    expect($pastAttendedSession->fresh()->status)->toBe('completed');
-    expect($futureSession->fresh()->status)->toBe('scheduled');
+    expect($ongoingSession->fresh()->status)->toBe(Constant::SESSION_STATUS_IN_PROGRESS);
+    expect($pastUnattendedSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+    expect($pastAttendedSession->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
+    expect($futureSession->fresh()->status)->toBe(Constant::SESSION_STATUS_SCHEDULED);
 
     Carbon::setTestNow(); // Reset mocked time
 });
@@ -165,7 +167,7 @@ test('saving attendance on unattended session changes status to completed, and r
         'session_date'     => '2026-08-25',
         'start_time'       => '08:00:00',
         'end_time'         => '09:30:00',
-        'status'           => 'unattended',
+        'status'           => Constant::SESSION_STATUS_CANCELLED,
     ]);
 
     $attendanceService = app(AttendanceServiceInterface::class);
@@ -174,18 +176,18 @@ test('saving attendance on unattended session changes status to completed, and r
     $attendanceService->saveAttendance(
         $pastSession->id,
         [
-            ['student_id' => $this->student->id, 'status' => 'present', 'note' => 'Có mặt'],
+            ['student_id' => $this->student->id, 'status' => Constant::ATTENDANCE_STATUS_PRESENT, 'note' => 'Có mặt'],
         ],
         $this->superAdmin
     );
 
-    expect($pastSession->fresh()->status)->toBe('completed');
+    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
     expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(1);
 
     // Reset attendance
     $attendanceService->resetAttendance($pastSession->id, $this->superAdmin);
 
-    expect($pastSession->fresh()->status)->toBe('unattended');
+    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
     expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(0);
 
     Carbon::setTestNow();
@@ -201,7 +203,7 @@ test('saving attendance before session start throws ValidationException', functi
         'session_date'     => '2026-08-25',
         'start_time'       => '14:00:00',
         'end_time'         => '15:30:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     $attendanceService = app(AttendanceServiceInterface::class);
@@ -210,7 +212,7 @@ test('saving attendance before session start throws ValidationException', functi
         $attendanceService->saveAttendance(
             $futureSession->id,
             [
-                ['student_id' => $this->student->id, 'status' => 'present', 'note' => 'Có mặt'],
+                ['student_id' => $this->student->id, 'status' => Constant::ATTENDANCE_STATUS_PRESENT, 'note' => 'Có mặt'],
             ],
             $this->superAdmin
         );

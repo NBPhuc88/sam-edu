@@ -24,11 +24,27 @@ class ClassSubject extends Model
     protected function casts(): array
     {
         return [
+            'status'     => 'integer',
             'start_date' => 'date:d-m-Y',
             'end_date'   => 'date:d-m-Y',
             'created_at' => 'datetime:d-m-Y H:i',
             'updated_at' => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['status'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['status'] = match ($value) {
+                'inactive', 'paused' => \App\Enums\Constant::CLASS_SUBJECT_STATUS_INACTIVE,
+                'completed'          => \App\Enums\Constant::CLASS_SUBJECT_STATUS_COMPLETED,
+                default              => \App\Enums\Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+            };
+        } else {
+            $this->attributes['status'] = (int) $value;
+        }
     }
 
     /**

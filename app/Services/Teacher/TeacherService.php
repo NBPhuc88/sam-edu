@@ -328,7 +328,7 @@ class TeacherService implements TeacherServiceInterface
         // 1. Kiểm tra ca học dự kiến trong tương lai
         $hasFutureSessions = ClassSession::where('teacher_id', $teacher->id)
             ->where('session_date', '>=', $today)
-            ->where('status', 'scheduled')
+            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
             ->exists();
 
         if ($hasFutureSessions) {
@@ -339,8 +339,8 @@ class TeacherService implements TeacherServiceInterface
 
         // 2. Kiểm tra lớp học đang hoạt động do giáo viên phụ trách
         $hasActiveClasses = ClassSubject::where('teacher_id', $teacher->id)
-            ->where('status', 'active')
-            ->whereHas('schoolClass', fn ($q) => $q->where('status', 1))
+            ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+            ->whereHas('schoolClass', fn ($q) => $q->where('status', Constant::CLASS_STATUS_ACTIVE))
             ->exists();
 
         if ($hasActiveClasses) {

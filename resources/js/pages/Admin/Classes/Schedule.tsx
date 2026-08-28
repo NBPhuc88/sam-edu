@@ -68,7 +68,7 @@ interface SchoolClass {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: string | number;
+    status: number;
     center?: Center;
     class_subjects?: ClassSubject[];
 }
@@ -185,21 +185,18 @@ export default function ClassSchedulePage({
         window.print();
     };
 
-    const getStatusBadge = (status: string | number) => {
-        const s = String(status);
-
-        switch (s) {
-            case '1':
-            case 'active':
-            case 'completed':
+    const getStatusBadge = (status: number) => {
+        switch (status) {
+            case 1:
                 return <Badge variant="active">Đang mở lớp</Badge>;
-            case '2':
+            case 2:
                 return <Badge variant="pending">Đã hoàn thành</Badge>;
-            case '0':
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng / Đóng</Badge>;
+            case 3:
+                return <Badge variant="danger">Đã đóng</Badge>;
+            case 0:
+                return <Badge variant="expired">Tạm dừng</Badge>;
             default:
-                return <Badge variant="info">{s}</Badge>;
+                return <Badge variant="info">Chưa rõ</Badge>;
         }
     };
 

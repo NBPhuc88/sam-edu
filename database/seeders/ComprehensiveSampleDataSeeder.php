@@ -1768,7 +1768,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
         // 1. Password Reset OTP
         DB::table('password_reset_otps')->insert([
             'email'        => 'admin.caugiay@sam-edu.vn',
-            'account_type' => 'admin',
+            'account_type' => 1,
             'otp_hash'     => Hash::make('123456'),
             'expires_at'   => Carbon::now()->addMinutes(15),
             'created_at'   => $this->now,
@@ -1779,7 +1779,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             'user_type'  => 'admin',
             'user_id'    => 1,
             'email'      => 'admin.caugiay@sam-edu.vn',
-            'action'     => 'verify_email',
+            'action'     => Constant::OTP_ACTION_CHANGE_PASSWORD,
             'otp_hash'   => Hash::make('654321'),
             'payload'    => json_encode(['source' => 'system_seeder']),
             'expires_at' => Carbon::now()->addHours(24),

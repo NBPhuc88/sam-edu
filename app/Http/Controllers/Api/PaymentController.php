@@ -27,7 +27,7 @@ class PaymentController extends Controller
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
 
-        if (! $admin || $admin->role !== 'admin') {
+        if (! $admin || ((int) $admin->role !== \App\Enums\Constant::ROLE_ADMIN && $admin->role !== 'admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Chỉ Quản trị viên trung tâm mới có quyền gửi yêu cầu gia hạn dịch vụ.',

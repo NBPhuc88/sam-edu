@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
@@ -60,8 +61,8 @@ class PracticeExamController extends Controller
         // Danh sách Trung tâm (chỉ Super Admin được chọn, Admin/Teacher/Student đã bị scope)
         $centers = [];
 
-        if ($admin && $admin->role === 'super_admin') {
-            $centers = Center::select(['id', 'name', 'code'])->where('status', 'active')->orderBy('name')->get();
+        if ($admin && $admin->isSuperAdmin()) {
+            $centers = Center::select(['id', 'name', 'code'])->where('status', Constant::CENTER_STATUS_ACTIVE)->orderBy('name')->get();
         }
 
         // Danh sách Môn học cho bộ lọc

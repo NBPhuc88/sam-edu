@@ -13,7 +13,7 @@ export interface ClassExam {
     duration_minutes?: number | null;
     max_score: number;
     pass_score?: number | null;
-    status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+    status: number;
     created_by_teacher_id?: number | null;
     created_by_admin_id?: number | null;
     created_at?: string;
@@ -30,16 +30,16 @@ export interface ClassExam {
 
 export interface ClassExamFormData {
     id?: number;
-    class_id: number | string;
-    exam_id: number | string;
+    class_id: number;
+    exam_id: number;
     title: string;
     exam_date: string;
     start_time?: string;
     end_time?: string;
-    duration_minutes?: number | string;
-    max_score?: number | string;
-    pass_score?: number | string;
-    status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+    duration_minutes?: number | null;
+    max_score?: number;
+    pass_score?: number | null;
+    status?: number;
 }
 
 export type { Center, Exam, PaginatedData, SchoolClass, Subject };

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassChatMessage;
@@ -28,7 +29,7 @@ test('super admin can view chat groups of all centers and filter by center and c
     $centerA = Center::create([
         'code'              => 'CTR000000001',
         'name'              => 'Trung Tâm A',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -37,7 +38,7 @@ test('super admin can view chat groups of all centers and filter by center and c
     $centerB = Center::create([
         'code'              => 'CTR000000002',
         'name'              => 'Trung Tâm B',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -48,9 +49,9 @@ test('super admin can view chat groups of all centers and filter by center and c
         'full_name'  => 'Super Admin Chats',
         'email'      => 'super_chats@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000001',
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $classA = SchoolClass::create([
@@ -107,7 +108,7 @@ test('sub-admin only sees chat groups in their assigned center', function () {
     $centerA = Center::create([
         'code'              => 'CTR000000003',
         'name'              => 'Trung Tâm Alpha',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -116,7 +117,7 @@ test('sub-admin only sees chat groups in their assigned center', function () {
     $centerB = Center::create([
         'code'              => 'CTR000000004',
         'name'              => 'Trung Tâm Beta',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -127,9 +128,9 @@ test('sub-admin only sees chat groups in their assigned center', function () {
         'full_name'  => 'Admin Alpha',
         'email'      => 'admin_alpha@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM000000003',
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $adminA->centers()->attach($centerA->id);
 
@@ -162,7 +163,7 @@ test('teacher only sees chat groups of classes they teach', function () {
     $center = Center::create([
         'code'              => 'CTR000000005',
         'name'              => 'Trung Tâm Delta',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -177,7 +178,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'full_name'    => 'Giáo Viên Một',
         'email'        => 'teacher_one@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $teacher2 = Teacher::create([
@@ -189,7 +190,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'full_name'    => 'Giáo Viên Hai',
         'email'        => 'teacher_two@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -207,7 +208,7 @@ test('teacher only sees chat groups of classes they teach', function () {
     $class1->classSubjects()->create([
         'subject_id' => $subject->id,
         'teacher_id' => $teacher1->id,
-        'status'     => 1,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class2 = SchoolClass::create([
@@ -219,7 +220,7 @@ test('teacher only sees chat groups of classes they teach', function () {
     $class2->classSubjects()->create([
         'subject_id' => $subject->id,
         'teacher_id' => $teacher2->id,
-        'status'     => 1,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($teacher1, 'teacher')->get(route('chats.index'));
@@ -236,7 +237,7 @@ test('student only sees chat groups of classes they are enrolled in', function (
     $center = Center::create([
         'code'              => 'CTR000000006',
         'name'              => 'Trung Tâm Omega',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'trial',
         'plan_type'         => 'trial',
         'expires_at'        => Carbon::now()->addMonth(),
@@ -260,7 +261,7 @@ test('student only sees chat groups of classes they are enrolled in', function (
         'name'      => 'Lớp Học Sinh Tham Gia',
         'status'    => 1,
     ]);
-    $classEnrolled->students()->attach($student->id, ['status' => 'active', 'enrolled_at' => now()]);
+    $classEnrolled->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
     $classNotEnrolled = SchoolClass::create([
         'center_id' => $center->id,
@@ -283,7 +284,7 @@ test('center without chat plan feature is redirected to UpgradePlan page with 40
     $centerBasic = Center::create([
         'code'              => 'CTR000000007',
         'name'              => 'Trung Tâm Gói Cơ Bản',
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
         'subscription_plan' => 'basic_5', // basic plan without 'chat' in allowed_features
         'plan_type'         => 'basic',
         'expires_at'        => Carbon::now()->addMonths(6),
@@ -294,9 +295,9 @@ test('center without chat plan feature is redirected to UpgradePlan page with 40
         'full_name'  => 'Admin Basic Plan',
         'email'      => 'admin_basic@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM000000007',
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
     $adminBasic->centers()->attach($centerBasic->id);
 

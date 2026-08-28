@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\EntityStatus;
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -16,7 +16,7 @@ beforeEach(function () {
         'name'   => 'Trung Tâm Test Giáo Viên',
         'email'  => 'teacher_center@test.com',
         'phone'  => '0901234567',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $this->admin = Admin::create([
@@ -24,7 +24,8 @@ beforeEach(function () {
         'full_name'  => 'Admin Teacher Conf',
         'email'      => 'admin_tconf@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM_TCONF_001',
     ]);
 
@@ -37,23 +38,23 @@ beforeEach(function () {
         'full_name'    => 'Hoàng Văn Nam',
         'email'        => 'hoangvannam@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->classA = SchoolClass::create([
         'center_id'    => $this->center->id,
         'code'         => 'CLS_TA_001',
         'name'         => 'Lớp 10A1',
-        'max_students' => 30,
-        'status'       => EntityStatus::ACTIVE,
+        'max_capacity' => 30,
+        'status'       => 1,
     ]);
 
     $this->classB = SchoolClass::create([
         'center_id'    => $this->center->id,
         'code'         => 'CLS_TB_001',
         'name'         => 'Lớp 10A2',
-        'max_students' => 30,
-        'status'       => EntityStatus::ACTIVE,
+        'max_capacity' => 30,
+        'status'       => 1,
     ]);
 
     $this->subjectMath = Subject::create([
@@ -63,7 +64,7 @@ beforeEach(function () {
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->subjectPhysics = Subject::create([
@@ -73,7 +74,7 @@ beforeEach(function () {
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     // Assign teacher to Class A (Math) and Class B (Physics)
@@ -83,7 +84,7 @@ beforeEach(function () {
         'teacher_id' => $this->teacher->id,
         'start_date' => '2026-09-01',
         'end_date'   => '2026-11-30',
-        'status'     => 'active',
+        'status'     => 1,
     ]);
 
     $this->csClassBPhysics = ClassSubject::create([
@@ -92,7 +93,7 @@ beforeEach(function () {
         'teacher_id' => $this->teacher->id,
         'start_date' => '2026-09-01',
         'end_date'   => '2026-11-30',
-        'status'     => 'active',
+        'status'     => 1,
     ]);
 });
 
@@ -196,7 +197,7 @@ test('blocks rescheduling a session when teacher already has another session at 
         'session_date'     => '2026-09-07',
         'start_time'       => '18:00',
         'end_time'         => '20:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // 2. Teacher teaches Class B session on 2026-09-08 (Thứ 3) from 18:00 - 20:00
@@ -207,7 +208,7 @@ test('blocks rescheduling a session when teacher already has another session at 
         'session_date'     => '2026-09-08',
         'start_time'       => '18:00',
         'end_time'         => '20:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // 3. Try to reschedule Class B session to 2026-09-07 from 19:00 - 21:00 (overlapping teacher's Class A session)

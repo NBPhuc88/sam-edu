@@ -93,7 +93,7 @@ class SendClassExamRoomCodeCommand extends Command
             $chatMessage = ClassChatMessage::create([
                 'class_id'      => $exam->class_id,
                 'reply_to_id'   => null,
-                'sender_type'   => 'system',
+                'sender_type'   => Constant::SENDER_TYPE_ADMIN,
                 'sender_id'     => 0,
                 'sender_name'   => 'Hệ thống',
                 'sender_avatar' => null,
@@ -107,7 +107,7 @@ class SendClassExamRoomCodeCommand extends Command
                 'reply_to_id'    => null,
                 'reply_to'       => null,
                 'reactions'      => [],
-                'sender_type'    => 'system',
+                'sender_type'    => Constant::SENDER_TYPE_ADMIN,
                 'sender_id'      => 0,
                 'sender_name'    => 'Hệ thống',
                 'sender_avatar'  => null,

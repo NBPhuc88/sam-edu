@@ -74,7 +74,7 @@ interface SchoolClassChatGroup {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: number | string;
+    status: number;
     students_count?: number;
     chat_messages_count?: number;
     center?: Center;
@@ -158,9 +158,8 @@ export default function ChatGroupIndex({
         );
     };
 
-    const renderStatusBadge = (status: number | string) => {
-        const numStatus = Number(status);
-        switch (numStatus) {
+    const renderStatusBadge = (status: number) => {
+        switch (status) {
             case 1:
                 return <Badge variant="active">Đang học</Badge>;
             case 0:

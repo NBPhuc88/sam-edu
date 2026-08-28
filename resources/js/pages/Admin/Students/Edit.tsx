@@ -34,14 +34,14 @@ interface Student {
     full_name: string;
     email: string | null;
     phone: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     address: string | null;
     parent_name: string | null;
     parent_phone: string | null;
     parent_relationship: string | null;
     admission_date: string | null;
-    status: number | string;
+    status: number;
     note: string | null;
     center_id: number;
     center?: Center;
@@ -67,7 +67,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     const studentCode = student.student_code || '';
     const [phone, setPhone] = useState<string>(student.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(student.date_of_birth || '');
-    const [gender, setGender] = useState<string>(student.gender || 'male');
+    const [gender, setGender] = useState<number>(student.gender === 2 ? 2 : student.gender === 3 ? 3 : 1);
     const [address, setAddress] = useState<string>(student.address || '');
     const [parentName, setParentName] = useState<string>(student.parent_name || '');
     const [parentPhone, setParentPhone] = useState<string>(student.parent_phone || '');
@@ -306,12 +306,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 </label>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
+                                    onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
+                                    <option value={1}>Nam</option>
+                                    <option value={2}>Nữ</option>
+                                    <option value={3}>Khác</option>
                                 </select>
                             </div>
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -12,14 +13,15 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'        => 'CTR' . random_int(1000000, 9999999),
         'name'        => 'Center Test SchoolClassService',
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
         'max_classes' => 5,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_cls_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Cls',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 });
@@ -46,7 +48,7 @@ test('createClass throws exception when max_classes limit is reached', function 
     $limitedCenter = Center::create([
         'code'        => 'CTR' . random_int(1000000, 9999999),
         'name'        => 'Limited Center Class',
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
         'max_classes' => 1,
     ]);
 
@@ -86,7 +88,7 @@ test('updateClass cascades status changes to isolated students in the class', fu
         'status'       => 1,
     ]);
 
-    $schoolClass->students()->attach($student->id, ['enrolled_at' => now()]);
+    $schoolClass->students()->attach($student->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
 
     // Pause class -> should set isolated student to inactive (status 0)
     $this->service->updateClass($schoolClass->id, ['status' => 0], $this->superAdmin);

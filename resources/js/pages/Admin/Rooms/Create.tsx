@@ -25,7 +25,7 @@ interface Center {
 
 interface EquipmentRow {
     name: string;
-    quantity: number | string;
+    quantity: number;
     unit: string;
     status: 'good' | 'maintenance' | 'broken';
     note: string;
@@ -54,10 +54,8 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
     const [capacity, setCapacity] = useState('');
-    const [location, setLocation] = useState('');
-    const [status, setStatus] = useState<'active' | 'paused' | 'closed'>('active');
-
-    // Equipment state
+    const [location, setLocation] = useState<string>('');
+    const [status, setStatus] = useState<number>(1);
     const [equipments, setEquipments] = useState<EquipmentRow[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -257,11 +255,11 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                 </label>
                                 <ScrollableSelect
                                     value={status}
-                                    onChange={(val) => setStatus(val as 'active' | 'paused' | 'closed')}
+                                    onChange={(val) => setStatus(Number(val))}
                                     options={[
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'paused', label: 'Tạm dừng' },
-                                        { value: 'closed', label: 'Đã đóng' },
+                                        { value: 1, label: 'Đang hoạt động' },
+                                        { value: 0, label: 'Tạm dừng' },
+                                        { value: 2, label: 'Đã đóng' },
                                     ]}
                                     error={errors.status}
                                 />

@@ -202,3 +202,26 @@ test('role without classes.exam-results permission cannot access class exam resu
 
     $response->assertStatus(404);
 });
+
+test('super admin receives full permissions and admin_role string super_admin in inertia props', function () {
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_inertia_check',
+        'full_name'  => 'Super Admin Inertia Check',
+        'email'      => 'superadmin_inertia@test.com',
+        'password'   => 'password123',
+        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+        'admin_code' => 'ADM000000081',
+    ]);
+
+    $allPermissionsCount = Permission::count();
+
+    $response = $this->actingAs($superAdmin, 'admin')->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->where('auth.user.admin_role', 'super_admin')
+            ->where('auth.role', 'admin')
+            ->has('auth.permissions', $allPermissionsCount)
+    );
+});

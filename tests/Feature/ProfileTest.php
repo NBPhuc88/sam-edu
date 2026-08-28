@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +21,8 @@ test('user can view profile page', function () {
         'full_name'  => 'Test Admin Profile',
         'email'      => 'admin_profile@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000099',
     ]);
 
@@ -41,7 +43,8 @@ test('user can send password change otp with 5 minutes expiry', function () {
         'full_name'  => 'Test Admin Otp',
         'email'      => 'admin_otp@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000098',
     ]);
 
@@ -51,7 +54,7 @@ test('user can send password change otp with 5 minutes expiry', function () {
 
     $otpRecord = DB::table('account_verification_otps')
         ->where('email', 'admin_otp@sam-edu.vn')
-        ->where('action', 'change_password')
+        ->where('action', Constant::OTP_ACTION_CHANGE_PASSWORD)
         ->first();
 
     expect($otpRecord)->not->toBeNull();
@@ -64,7 +67,8 @@ test('user can update password with valid otp and is rejected with expired otp',
         'full_name'  => 'Test Admin Pass',
         'email'      => 'admin_pass@sam-edu.vn',
         'password'   => 'old_password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000097',
     ]);
 
@@ -73,7 +77,7 @@ test('user can update password with valid otp and is rejected with expired otp',
         'user_type'  => 'admin',
         'user_id'    => $admin->id,
         'email'      => 'admin_pass@sam-edu.vn',
-        'action'     => 'change_password',
+        'action'     => Constant::OTP_ACTION_CHANGE_PASSWORD,
         'otp_hash'   => Hash::make('123456'),
         'expires_at' => now()->subMinute(),
         'created_at' => now()->subMinutes(6),
@@ -97,7 +101,7 @@ test('user can update password with valid otp and is rejected with expired otp',
         'user_type'  => 'admin',
         'user_id'    => $admin->id,
         'email'      => 'admin_pass@sam-edu.vn',
-        'action'     => 'change_password',
+        'action'     => Constant::OTP_ACTION_CHANGE_PASSWORD,
         'otp_hash'   => Hash::make('654321'),
         'expires_at' => now()->addMinutes(5),
         'created_at' => now(),
@@ -122,7 +126,8 @@ test('user can complete 2-step email change verification', function () {
         'full_name'  => 'Test Admin Email',
         'email'      => 'old_email@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000096',
     ]);
 

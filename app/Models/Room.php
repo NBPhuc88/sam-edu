@@ -25,6 +25,7 @@ class Room extends Model
     protected function casts(): array
     {
         return [
+            'status'   => 'integer',
             'capacity' => 'integer',
         ];
     }

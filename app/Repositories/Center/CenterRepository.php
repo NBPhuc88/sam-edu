@@ -165,7 +165,7 @@ class CenterRepository implements CenterRepositoryInterface
             'phone',
             'status'
         )
-        ->where('status', 'active');
+        ->where('status', Constant::CENTER_STATUS_ACTIVE);
 
         if ($centerIds !== null) {
             $query->whereIn('id', $centerIds);

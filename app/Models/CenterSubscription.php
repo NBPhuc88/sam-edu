@@ -27,6 +27,7 @@ class CenterSubscription extends Model
     protected function casts(): array
     {
         return [
+            'status'        => 'integer',
             'price'         => 'decimal:2',
             'duration_days' => 'integer',
             'starts_at'     => 'datetime:d-m-Y H:i',

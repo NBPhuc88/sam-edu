@@ -28,7 +28,7 @@ class CheckPlanFeature
         }
 
         // Super Admin có toàn quyền truy cập tất cả tính năng
-        if ($user instanceof Admin && $user->role === 'super_admin') {
+        if ($user instanceof Admin && $user->isSuperAdmin()) {
             return $next($request);
         }
 

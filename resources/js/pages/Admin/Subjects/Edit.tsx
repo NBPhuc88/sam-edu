@@ -20,8 +20,8 @@ interface Subject {
     description: string | null;
     total_sessions: number | null;
     duration_minutes: number | null;
-    tuition_fee: number | string | null;
-    status: string;
+    tuition_fee: number | null;
+    status: number;
     center?: Center;
 }
 
@@ -47,7 +47,7 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
     const [tuitionFee, setTuitionFee] = useState<string>(
         subject.tuition_fee !== null && subject.tuition_fee !== undefined ? String(subject.tuition_fee) : '',
     );
-    const [status, setStatus] = useState<string>(subject.status || 'active');
+    const [status, setStatus] = useState<number>(Number(subject.status) === 0 ? 0 : 1);
     const [description, setDescription] = useState<string>(subject.description || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -211,11 +211,11 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="active">Đang mở dạy</option>
-                                    <option value="inactive">Tạm dừng</option>
+                                    <option value={1}>Đang mở dạy</option>
+                                    <option value={0}>Tạm dừng</option>
                                 </select>
                             </div>
 

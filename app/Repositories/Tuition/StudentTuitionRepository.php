@@ -83,7 +83,13 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'completed', 'paid' => Constant::TUITION_STATUS_PAID,
+                'pending', 'unpaid' => Constant::TUITION_STATUS_PENDING,
+                'partial'           => Constant::TUITION_STATUS_PARTIAL,
+                'overdue'           => Constant::TUITION_STATUS_OVERDUE,
+                default             => $status,
+            });
         }
 
         if ($month !== null && $month !== '' && $month !== 'all') {
@@ -241,9 +247,9 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         $paidAmount      = (float) (clone $query)->sum('paid_amount');
         $remainingAmount = (float) (clone $query)->sum('remaining_amount');
         $totalTuitions   = (int) (clone $query)->count();
-        $completedCount  = (int) (clone $query)->where('status', 'completed')->count();
-        $partialCount    = (int) (clone $query)->where('status', 'partial')->count();
-        $pendingCount    = (int) (clone $query)->where('status', 'pending')->count();
+        $completedCount  = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PAID)->count();
+        $partialCount    = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PARTIAL)->count();
+        $pendingCount    = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PENDING)->count();
 
         return [
             'total_amount'     => $totalAmount,
@@ -269,9 +275,9 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             'paid_amount'      => (float) $tuitions->sum('paid_amount'),
             'remaining_amount' => (float) $tuitions->sum('remaining_amount'),
             'total_records'    => $tuitions->count(),
-            'completed_count'  => $tuitions->where('status', 'paid')->count(),
-            'partial_count'    => $tuitions->where('status', 'partial')->count(),
-            'unpaid_count'     => $tuitions->whereIn('status', ['unpaid', 'overdue'])->count(),
+            'completed_count'  => $tuitions->where('status', Constant::TUITION_STATUS_PAID)->count(),
+            'partial_count'    => $tuitions->where('status', Constant::TUITION_STATUS_PARTIAL)->count(),
+            'unpaid_count'     => $tuitions->whereIn('status', [Constant::TUITION_STATUS_PENDING, Constant::TUITION_STATUS_OVERDUE])->count(),
         ];
     }
 
@@ -331,7 +337,13 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'completed', 'paid' => Constant::TUITION_STATUS_PAID,
+                'pending', 'unpaid' => Constant::TUITION_STATUS_PENDING,
+                'partial'           => Constant::TUITION_STATUS_PARTIAL,
+                'overdue'           => Constant::TUITION_STATUS_OVERDUE,
+                default             => $status,
+            });
         }
 
         if ($month !== null && $month !== '' && $month !== 'all') {
@@ -401,16 +413,16 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         // 1. Status distribution for Pie Chart
-        $completedCount = (int) (clone $query)->where('status', 'completed')->count();
-        $partialCount   = (int) (clone $query)->where('status', 'partial')->count();
-        $pendingCount   = (int) (clone $query)->where('status', 'pending')->count();
-        $overdueCount   = (int) (clone $query)->where('status', 'overdue')->count();
+        $completedCount = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PAID)->count();
+        $partialCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PARTIAL)->count();
+        $pendingCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PENDING)->count();
+        $overdueCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_OVERDUE)->count();
 
         $statusPie = [
-            ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'status' => 'completed', 'color' => '#10b981'],
-            ['name' => 'Còn nợ (Đóng dở)', 'value' => $partialCount, 'status' => 'partial', 'color' => '#f59e0b'],
-            ['name' => 'Chưa đóng', 'value' => $pendingCount, 'status' => 'pending', 'color' => '#6b7280'],
-            ['name' => 'Quá hạn', 'value' => $overdueCount, 'status' => 'overdue', 'color' => '#ef4444'],
+            ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'status' => Constant::TUITION_STATUS_PAID, 'color' => '#10b981'],
+            ['name' => 'Còn nợ (Đóng dở)', 'value' => $partialCount, 'status' => Constant::TUITION_STATUS_PARTIAL, 'color' => '#f59e0b'],
+            ['name' => 'Chưa đóng', 'value' => $pendingCount, 'status' => Constant::TUITION_STATUS_PENDING, 'color' => '#6b7280'],
+            ['name' => 'Quá hạn', 'value' => $overdueCount, 'status' => Constant::TUITION_STATUS_OVERDUE, 'color' => '#ef4444'],
         ];
 
         // Filter out items with 0 value if total records exist, or keep original

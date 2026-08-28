@@ -50,6 +50,8 @@ class Center extends Model
     protected function casts(): array
     {
         return [
+            'status'        => 'integer',
+            'plan_type'     => 'integer',
             'expires_at'    => 'datetime:d-m-Y H:i',
             'trial_ends_at' => 'datetime:d-m-Y H:i',
             'max_students'  => 'integer',
@@ -59,14 +61,35 @@ class Center extends Model
         ];
     }
 
+    public function setPlanTypeAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['plan_type'] = (int) $value;
+        } elseif (is_string($value)) {
+            $this->attributes['plan_type'] = match ($value) {
+                'trial', 'free'              => \App\Enums\Constant::PLAN_TYPE_FREE,
+                'standard', 'basic'          => \App\Enums\Constant::PLAN_TYPE_STANDARD,
+                'premium', 'advanced', 'pro' => \App\Enums\Constant::PLAN_TYPE_PREMIUM,
+                default                      => \App\Enums\Constant::PLAN_TYPE_FREE,
+            };
+        } else {
+            $this->attributes['plan_type'] = (int) $value;
+        }
+    }
+
     public function currentPlan(): ?SubscriptionPlan
     {
+        if (is_numeric($this->subscription_plan)) {
+            return SubscriptionPlan::find((int) $this->subscription_plan)
+                ?? SubscriptionPlan::where('code', (string) $this->subscription_plan)->first();
+        }
+
         return SubscriptionPlan::where('code', $this->subscription_plan)->first();
     }
 
     public function hasFeature(string $featureCode): bool
     {
-        if ($this->plan_type === 'trial' || $this->subscription_plan === 'trial') {
+        if ($this->plan_type === 'trial' || $this->subscription_plan === 'trial' || (int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

@@ -14,11 +14,11 @@ export interface CenterFormData {
     phone: string;
     email: string;
     address: string;
-    status: 'active' | 'inactive' | 'expired' | 'suspended';
+    status: number;
     subscription_plan: string;
     expires_at: string;
-    max_students: number | string;
-    max_classes: number | string;
+    max_students: number;
+    max_classes: number;
 }
 
 interface CenterFormProps {
@@ -68,13 +68,16 @@ export const CenterForm: React.FC<CenterFormProps> = ({
               ? calculateExpirationDate(defaultPlan)
               : '';
 
+        const rawStatus = initialValues?.status;
+        const normalizedStatus = rawStatus === 0 ? 0 : rawStatus === 2 ? 2 : rawStatus === 3 ? 3 : rawStatus === 4 ? 4 : 1;
+
         return {
             code: initialValues?.code || '',
             name: initialValues?.name || '',
             phone: initialValues?.phone || '',
             email: initialValues?.email || '',
             address: initialValues?.address || '',
-            status: initialValues?.status || 'active',
+            status: normalizedStatus,
             subscription_plan: defaultPlan,
             expires_at: defaultExpires,
             max_students: initialValues?.max_students ?? 200,
@@ -314,21 +317,24 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <select
                             name="status"
                             value={formData.status}
-                            onChange={handleChange}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, status: Number(e.target.value) }))}
                             disabled={!isSuperAdmin}
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="active">
+                            <option value={1}>
                                 Đang hoạt động
                             </option>
-                            <option value="inactive">
-                                Tạm dừng
+                            <option value={0}>
+                                Tạm dừng / Khóa
                             </option>
-                            <option value="expired">
+                            <option value={2}>
+                                Dùng thử
+                            </option>
+                            <option value={3}>
+                                Chờ thanh toán
+                            </option>
+                            <option value={4}>
                                 Đã hết hạn
-                            </option>
-                            <option value="suspended">
-                                Tạm khóa
                             </option>
                         </select>
                     </div>

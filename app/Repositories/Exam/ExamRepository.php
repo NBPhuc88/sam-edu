@@ -72,8 +72,14 @@ class ExamRepository implements ExamRepositoryInterface
             $query->where('subject_id', $subjectId);
         }
 
-        if ($status !== null && $status !== 'all') {
-            $query->where('status', $status);
+        if ($status !== null && $status !== 'all' && $status !== '') {
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'published' => Constant::EXAM_STATUS_PUBLISHED,
+                'draft'     => Constant::EXAM_STATUS_DRAFT,
+                'completed' => Constant::EXAM_STATUS_COMPLETED,
+                'cancelled' => Constant::EXAM_STATUS_CANCELLED,
+                default     => $status,
+            });
         }
 
         if (! empty($search)) {
@@ -283,13 +289,41 @@ class ExamRepository implements ExamRepositoryInterface
                 $qCode = sprintf('Q%0' . Constant::CODE_PAD_LENGTH . 'd', ($index + 1));
             }
 
+            $rawQType = $qData['question_type'] ?? Constant::QUESTION_TYPE_SINGLE_CHOICE;
+            $qType    = is_numeric($rawQType) ? (int) $rawQType : match ($rawQType) {
+                'single_choice'        => Constant::QUESTION_TYPE_SINGLE_CHOICE,
+                'multiple_choice'      => Constant::QUESTION_TYPE_MULTIPLE_CHOICE,
+                'true_false_not_given' => Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+                'fill_in_blank'        => Constant::QUESTION_TYPE_FILL_IN_BLANK,
+                'drag_drop_cloze'      => Constant::QUESTION_TYPE_DRAG_DROP_CLOZE,
+                'matching'             => Constant::QUESTION_TYPE_MATCHING,
+                'matching_image'       => Constant::QUESTION_TYPE_MATCHING_IMAGE,
+                'matching_sentences'   => Constant::QUESTION_TYPE_MATCHING_SENTENCES,
+                'ordering'             => Constant::QUESTION_TYPE_ORDERING,
+                'diagram_labelling'    => Constant::QUESTION_TYPE_DIAGRAM_LABELLING,
+                'find_mistake'         => Constant::QUESTION_TYPE_FIND_MISTAKE,
+                'essay'                => Constant::QUESTION_TYPE_ESSAY,
+                'audio_record'         => Constant::QUESTION_TYPE_AUDIO_RECORD,
+                'short_answer'         => Constant::QUESTION_TYPE_SHORT_ANSWER,
+                default                => Constant::QUESTION_TYPE_SINGLE_CHOICE,
+            };
+
+            $rawSkill = $qData['skill'] ?? Constant::EXAM_SKILL_READING;
+            $skill    = is_numeric($rawSkill) ? (int) $rawSkill : match ($rawSkill) {
+                'listening' => Constant::EXAM_SKILL_LISTENING,
+                'reading'   => Constant::EXAM_SKILL_READING,
+                'writing'   => Constant::EXAM_SKILL_WRITING,
+                'speaking'  => Constant::EXAM_SKILL_SPEAKING,
+                default     => Constant::EXAM_SKILL_READING,
+            };
+
             $payload = [
                 'exam_id'        => $exam->id,
                 'section_id'     => ! empty($qData['section_id']) ? (int) $qData['section_id'] : null,
                 'code'           => $qCode,
                 'title'          => ! empty($qData['title']) ? trim($qData['title']) : null,
-                'question_type'  => $qData['question_type'] ?? 'single_choice',
-                'skill'          => ! empty($qData['skill']) ? $qData['skill'] : 'reading',
+                'question_type'  => $qType,
+                'skill'          => $skill,
                 'content'        => $qData['content'] ?? '',
                 'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
                 'audio_url'      => ! empty($qData['audio_url']) ? $qData['audio_url'] : null,
@@ -342,11 +376,20 @@ class ExamRepository implements ExamRepositoryInterface
         foreach ($sections as $sectionIndex => $secData) {
             $secId = ! empty($secData['id']) ? (int) $secData['id'] : null;
 
+            $rawSecSkill = $secData['skill'] ?? Constant::EXAM_SKILL_READING;
+            $secSkill    = is_numeric($rawSecSkill) ? (int) $rawSecSkill : match ($rawSecSkill) {
+                'listening' => Constant::EXAM_SKILL_LISTENING,
+                'reading'   => Constant::EXAM_SKILL_READING,
+                'writing'   => Constant::EXAM_SKILL_WRITING,
+                'speaking'  => Constant::EXAM_SKILL_SPEAKING,
+                default     => Constant::EXAM_SKILL_READING,
+            };
+
             $sectionPayload = [
                 'exam_id'     => $exam->id,
                 'title'       => trim($secData['title'] ?? ('Phần ' . ($sectionIndex + 1))),
                 'description' => ! empty($secData['description']) ? trim($secData['description']) : null,
-                'skill'       => ! empty($secData['skill']) ? $secData['skill'] : 'reading',
+                'skill'       => $secSkill,
                 'order_index' => isset($secData['order_index']) ? (int) $secData['order_index'] : $sectionIndex,
             ];
 
@@ -377,12 +420,31 @@ class ExamRepository implements ExamRepositoryInterface
                     $qCode = sprintf('Q%0' . Constant::CODE_PAD_LENGTH . 'd', $globalQuestionIndex);
                 }
 
+                $rawQType = $qData['question_type'] ?? Constant::QUESTION_TYPE_SINGLE_CHOICE;
+                $qType    = is_numeric($rawQType) ? (int) $rawQType : match ($rawQType) {
+                    'single_choice'        => Constant::QUESTION_TYPE_SINGLE_CHOICE,
+                    'multiple_choice'      => Constant::QUESTION_TYPE_MULTIPLE_CHOICE,
+                    'true_false_not_given' => Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+                    'fill_in_blank'        => Constant::QUESTION_TYPE_FILL_IN_BLANK,
+                    'drag_drop_cloze'      => Constant::QUESTION_TYPE_DRAG_DROP_CLOZE,
+                    'matching'             => Constant::QUESTION_TYPE_MATCHING,
+                    'matching_image'       => Constant::QUESTION_TYPE_MATCHING_IMAGE,
+                    'matching_sentences'   => Constant::QUESTION_TYPE_MATCHING_SENTENCES,
+                    'ordering'             => Constant::QUESTION_TYPE_ORDERING,
+                    'diagram_labelling'    => Constant::QUESTION_TYPE_DIAGRAM_LABELLING,
+                    'find_mistake'         => Constant::QUESTION_TYPE_FIND_MISTAKE,
+                    'essay'                => Constant::QUESTION_TYPE_ESSAY,
+                    'audio_record'         => Constant::QUESTION_TYPE_AUDIO_RECORD,
+                    'short_answer'         => Constant::QUESTION_TYPE_SHORT_ANSWER,
+                    default                => Constant::QUESTION_TYPE_SINGLE_CHOICE,
+                };
+
                 $questionPayload = [
                     'exam_id'        => $exam->id,
                     'section_id'     => $section->id,
                     'code'           => $qCode,
                     'title'          => ! empty($qData['title']) ? trim($qData['title']) : null,
-                    'question_type'  => $qData['question_type'] ?? 'single_choice',
+                    'question_type'  => $qType,
                     'skill'          => $section->skill,
                     'content'        => $qData['content'] ?? '',
                     'image_url'      => ! empty($qData['image_url']) ? $qData['image_url'] : null,
@@ -437,8 +499,8 @@ class ExamRepository implements ExamRepositoryInterface
         }
 
         $total     = (clone $examQuery)->count();
-        $published = (clone $examQuery)->where('status', 'published')->count();
-        $draft     = (clone $examQuery)->where('status', 'draft')->count();
+        $published = (clone $examQuery)->where('status', Constant::EXAM_STATUS_PUBLISHED)->count();
+        $draft     = (clone $examQuery)->where('status', Constant::EXAM_STATUS_DRAFT)->count();
 
         $questionQuery = ExamQuestion::query();
 
@@ -461,7 +523,7 @@ class ExamRepository implements ExamRepositoryInterface
     {
         $query = Exam::query()
             ->select('id', 'center_id', 'subject_id', 'name', 'code', 'duration_minutes', 'max_score')
-            ->where('status', 'published')
+            ->where('status', Constant::EXAM_STATUS_PUBLISHED)
             ->with([
                 'subject:id,name,code',
                 'sections:id,exam_id,title,description,skill,order_index',
@@ -485,7 +547,7 @@ class ExamRepository implements ExamRepositoryInterface
     {
         $query = Exam::query()
             ->where('is_practice', true)
-            ->where('status', 'published')
+            ->where('status', Constant::EXAM_STATUS_PUBLISHED)
             ->with([
                 'center:id,name,code',
                 'subject:id,name,code',

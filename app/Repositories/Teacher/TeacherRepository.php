@@ -112,7 +112,12 @@ class TeacherRepository implements TeacherRepositoryInterface
         }
 
         if ($status !== null && $status !== '' && $status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'active'                => Constant::TEACHER_STATUS_ACTIVE,
+                'inactive', 'suspended' => Constant::TEACHER_STATUS_INACTIVE,
+                'locked'                => Constant::TEACHER_STATUS_LOCKED,
+                default                 => $status,
+            });
         }
 
         if ($search !== null && trim($search) !== '') {
@@ -325,7 +330,7 @@ class TeacherRepository implements TeacherRepositoryInterface
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name',
             ])
-            ->where('status', 'active')
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->get();
 
         $result = collect();
@@ -364,15 +369,15 @@ class TeacherRepository implements TeacherRepositoryInterface
     public function getActiveTeachers(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'teacher_code', 'center_id']): Collection
     {
         $query = Teacher::select($columns)
-            ->where('status', 'active')
+            ->where('status', Constant::TEACHER_STATUS_ACTIVE)
             ->with([
                 'classSubjects' => function ($q) {
-                    $q->where('status', 'active')
+                    $q->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
                         ->with([
                             'schoolClass:id,name,code',
                             'subject:id,name,code',
                             'classSchedules' => function ($sq) {
-                                $sq->where('status', 'active')->select('id', 'class_subject_id', 'weeks', 'extra_days', 'room_id', 'status');
+                                $sq->where('status', Constant::SCHEDULE_STATUS_ACTIVE)->select('id', 'class_subject_id', 'weeks', 'extra_days', 'room_id', 'status');
                             },
                         ]);
                 },
@@ -414,10 +419,10 @@ class TeacherRepository implements TeacherRepositoryInterface
 
         $stats = [
             'total'       => (int) $statusCounts->sum(),
-            'completed'   => (int) ($statusCounts->get('completed') ?? 0),
-            'scheduled'   => (int) ($statusCounts->get('scheduled') ?? 0),
-            'cancelled'   => (int) ($statusCounts->get('cancelled') ?? 0),
-            'rescheduled' => (int) ($statusCounts->get('rescheduled') ?? 0),
+            'completed'   => (int) ($statusCounts->get(Constant::SESSION_STATUS_COMPLETED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_COMPLETED) ?? $statusCounts->get('completed') ?? 0),
+            'scheduled'   => (int) ($statusCounts->get(Constant::SESSION_STATUS_SCHEDULED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_SCHEDULED) ?? $statusCounts->get('scheduled') ?? 0),
+            'cancelled'   => (int) ($statusCounts->get(Constant::SESSION_STATUS_CANCELLED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_CANCELLED) ?? $statusCounts->get('cancelled') ?? 0),
+            'in_progress' => (int) ($statusCounts->get(Constant::SESSION_STATUS_IN_PROGRESS) ?? $statusCounts->get((string) Constant::SESSION_STATUS_IN_PROGRESS) ?? $statusCounts->get('in_progress') ?? 0),
         ];
 
         $sessionsQuery = $query

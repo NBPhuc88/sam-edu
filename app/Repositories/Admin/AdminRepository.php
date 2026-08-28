@@ -54,7 +54,8 @@ class AdminRepository implements AdminRepositoryInterface
                 });
             })
             ->when($role, function ($query, $role) {
-                $query->where('role', $role);
+                $roleVal = ($role === 'super_admin' || $role === 1 || $role === '1') ? Constant::ROLE_SUPER_ADMIN : (($role === 'admin' || $role === 2 || $role === '2') ? Constant::ROLE_ADMIN : $role);
+                $query->where('role', $roleVal);
             })
             ->latest()
             ->deferredPaginate($perPage)

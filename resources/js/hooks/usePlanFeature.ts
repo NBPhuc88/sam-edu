@@ -21,7 +21,7 @@ interface PageProps {
         user?: {
             id: number;
             role: string;
-            admin_role?: string | null;
+            admin_role?: 'super_admin' | 'admin' | null;
         } | null;
         role?: string | null;
     };
@@ -38,8 +38,11 @@ interface PageProps {
 export function usePlanFeature(featureCode: string): boolean {
     const { auth, center } = usePage().props as unknown as PageProps;
 
+    const isSuper = (auth?.role === 'admin' || auth?.user?.role === 'admin') &&
+        auth?.user?.admin_role === 'super_admin';
+
     // Super Admin có toàn quyền truy cập
-    if (auth?.role === 'admin' && auth?.user?.admin_role === 'super_admin') {
+    if (isSuper) {
         return true;
     }
 

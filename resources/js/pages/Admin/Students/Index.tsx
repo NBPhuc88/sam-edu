@@ -56,13 +56,13 @@ interface Student {
     full_name: string;
     email: string | null;
     phone: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     parent_name: string | null;
     parent_phone: string | null;
     parent_relationship: string | null;
     admission_date: string | null;
-    status: number | string;
+    status: number;
     center_id: number;
     center?: Center;
     classes?: StudentClassTag[];
@@ -269,31 +269,29 @@ return;
         });
     };
 
-    const getStatusBadge = (status: number | string) => {
-        const num = Number(status);
-
-        if (num === 1 || status === 'active') {
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
             return <Badge variant="active">Đang học</Badge>;
         }
 
-        if (num === 2 || status === 'graduated') {
+        if (status === 2) {
             return <Badge variant="pending">Đã tốt nghiệp</Badge>;
         }
 
         return <Badge variant="expired">Nghỉ học</Badge>;
     };
 
-    const getGenderLabel = (gender: string | null) => {
-        switch (gender) {
-            case 'male':
-                return 'Nam';
-            case 'female':
-                return 'Nữ';
-            case 'other':
-                return 'Khác';
-            default:
-                return '-';
+    const getGenderLabel = (gender: number | null) => {
+        if (gender === 1) {
+            return 'Nam';
         }
+        if (gender === 2) {
+            return 'Nữ';
+        }
+        if (gender === 3) {
+            return 'Khác';
+        }
+        return 'Chưa rõ';
     };
 
     return (

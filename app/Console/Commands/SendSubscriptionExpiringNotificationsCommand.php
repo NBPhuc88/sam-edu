@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\Constant;
 use App\Mail\CenterSubscriptionExpiringMail;
 use App\Models\Center;
 use Illuminate\Console\Command;
@@ -33,7 +34,7 @@ class SendSubscriptionExpiringNotificationsCommand extends Command
         $targetDate = now()->addDays($days);
 
         $centers = Center::query()
-            ->where('status', 'active')
+            ->where('status', Constant::CENTER_STATUS_ACTIVE)
             ->where(function ($query) use ($targetDate) {
                 $query->whereBetween('expires_at', [
                     $targetDate->copy()->startOfDay(),

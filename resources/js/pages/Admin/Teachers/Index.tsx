@@ -40,10 +40,10 @@ interface Teacher {
     email: string | null;
     phone: string | null;
     specialization: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     hire_date: string | null;
-    status: string;
+    status: number;
     center_id: number;
     center?: Center;
 }
@@ -183,30 +183,24 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang hoạt động</Badge>;
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            case 'locked':
-                return <Badge variant="danger">Bị khóa</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === 1) {
+            return <Badge variant="active">Đang hoạt động</Badge>;
         }
+        if (status === 0) {
+            return <Badge variant="expired">Tạm dừng</Badge>;
+        }
+        if (status === 2) {
+            return <Badge variant="danger">Bị khóa</Badge>;
+        }
+        return <Badge variant="info">Chưa rõ</Badge>;
     };
 
-    const getGenderLabel = (gender: string | null) => {
-        switch (gender) {
-            case 'male':
-                return 'Nam';
-            case 'female':
-                return 'Nữ';
-            case 'other':
-                return 'Khác';
-            default:
-                return '-';
-        }
+    const getGenderLabel = (gender: number | null) => {
+        if (gender === 1) return 'Nam';
+        if (gender === 2) return 'Nữ';
+        if (gender === 3) return 'Khác';
+        return '-';
     };
 
     return (
@@ -324,9 +318,9 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'inactive', label: 'Tạm dừng' },
-                                        { value: 'locked', label: 'Bị khóa' },
+                                        { value: '1', label: 'Đang hoạt động' },
+                                        { value: '0', label: 'Tạm dừng' },
+                                        { value: '2', label: 'Bị khóa' },
                                     ]}
                                 />
                             </div>

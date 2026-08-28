@@ -23,7 +23,7 @@ interface AuthUser {
     username: string;
     email: string | null;
     role: string;
-    admin_role?: string | null;
+    admin_role?: 'super_admin' | 'admin' | null;
     avatar?: string | null;
 }
 

@@ -21,7 +21,7 @@ class RequestSubscriptionRenewalRequest extends FormRequest
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
 
-        if (! $admin || $admin->role !== 'admin') {
+        if (! $admin || ((int) $admin->role !== \App\Enums\Constant::ROLE_ADMIN && $admin->role !== 'admin')) {
             return false;
         }
 

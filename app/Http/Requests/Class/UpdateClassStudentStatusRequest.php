@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Class;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class UpdateClassStudentStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', Rule::in(['active', 'completed', 'transferred', 'left'])],
+            'status' => ['required', Rule::in([Constant::CLASS_STUDENT_STATUS_ACTIVE, Constant::CLASS_STUDENT_STATUS_COMPLETED, Constant::CLASS_STUDENT_STATUS_TRANSFERRED, Constant::CLASS_STUDENT_STATUS_LEFT, 'active', 'completed', 'transferred', 'left', '0', '1', '2', '3'])],
             'note'   => ['nullable', 'string', 'max:500'],
         ];
     }

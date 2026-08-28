@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -14,14 +15,15 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'         => 'CTR' . random_int(1000000, 9999999),
         'name'         => 'Center Test StudentService',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
         'max_students' => 100,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_std_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Std',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 });
@@ -46,7 +48,7 @@ test('createStudent throws exception when max_students limit reached for active 
     $limitedCenter = Center::create([
         'code'         => 'CTR' . random_int(1000000, 9999999),
         'name'         => 'Limited Center Student',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
         'max_students' => 1,
     ]);
 
@@ -144,7 +146,7 @@ test('removeStudentFromClass detaches student from class', function () {
         'password'     => Hash::make('password123'),
         'status'       => 1,
     ]);
-    $class->students()->attach($student->id, ['enrolled_at' => now()]);
+    $class->students()->attach($student->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
 
     expect($class->students()->count())->toBe(1);
 

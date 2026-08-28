@@ -52,7 +52,7 @@ class StatisticService implements StatisticServiceInterface
         $isSuperAdmin     = false;
 
         if ($role === 'admin' && $user instanceof Admin) {
-            $isSuperAdmin = $user->role === 'super_admin';
+            $isSuperAdmin = $user->isSuperAdmin();
 
             if ($isSuperAdmin) {
                 $allowedCenterIds = $this->centerRepository->getCenterListForDropdown()->pluck('id')->toArray();
