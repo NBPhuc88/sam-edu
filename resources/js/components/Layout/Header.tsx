@@ -34,6 +34,7 @@ interface NotificationItem {
     title: string;
     content: string;
     type?: string | null;
+    center_id?: number | null;
     center_name?: string | null;
     is_read: boolean;
     read_at?: string | null;
@@ -84,6 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
             const echo = getEcho();
             const channel = echo.channel('super-admin-notifications');
 
+            // 1. Nhận thông báo yêu cầu gia hạn dịch vụ từ Admin trung tâm
             channel.listen('.subscription.renewal_requested', (e: any) => {
                 const newNotif: NotificationItem = {
                     id: e.id || Date.now(),
@@ -91,6 +93,26 @@ export const Header: React.FC<HeaderProps> = ({
                     title: e.title || 'Yêu cầu gia hạn mới',
                     content: e.content || '',
                     type: e.type || 'subscription_renewal',
+                    center_id: e.center_id || null,
+                    center_name: e.center_name || null,
+                    is_read: false,
+                    read_at: null,
+                    created_at: e.created_at || 'Vừa xong',
+                };
+
+                setNotifications((prev) => [newNotif, ...prev]);
+                setUnreadCount((prev) => prev + 1);
+            });
+
+            // 2. Nhận thông báo trung tâm mới đăng ký
+            channel.listen('.center.registered', (e: any) => {
+                const newNotif: NotificationItem = {
+                    id: e.id || Date.now(),
+                    notification_id: e.notification_id || e.id,
+                    title: e.title || 'Trung tâm mới đăng ký',
+                    content: e.content || '',
+                    type: e.type || 'center_registration',
+                    center_id: e.center_id || null,
                     center_name: e.center_name || null,
                     is_read: false,
                     read_at: null,
@@ -121,6 +143,23 @@ export const Header: React.FC<HeaderProps> = ({
                 prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
             );
             setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
+    };
+
+    const handleNotificationClick = async (item: NotificationItem) => {
+        if (!item.is_read) {
+            await handleMarkAsRead(item.id);
+        }
+        setIsPopoverOpen(false);
+
+        if (item.type === 'center_registration') {
+            if (item.center_id) {
+                router.visit(`/admins?action=create&center_id=${item.center_id}`);
+            } else {
+                router.visit('/admins?action=create');
+            }
+        } else if (item.center_id) {
+            router.visit(`/centers/${item.center_id}/edit`);
         }
     };
 
@@ -259,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         notifications.map((item) => (
                                             <div
                                                 key={item.id}
-                                                onClick={() => !item.is_read && handleMarkAsRead(item.id)}
+                                                onClick={() => handleNotificationClick(item)}
                                                 className={`cursor-pointer rounded-xl p-2.5 transition-all text-left ${
                                                     item.is_read
                                                         ? 'bg-white hover:bg-slate-50 text-gray-600'

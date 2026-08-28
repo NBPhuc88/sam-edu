@@ -110,3 +110,44 @@ test('super admin can fetch notifications and mark them as read', function () {
         'read_at' => now(),
     ]);
 });
+
+test('registering a new center creates notification and broadcasts event for super admins', function () {
+    Event::fake();
+
+    $superAdmin = Admin::create([
+        'admin_code' => 'ADM-SUP-99',
+        'username'   => 'super_admin_reg_notif_test',
+        'email'      => 'superadmin.reg@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Super Admin Reg Test',
+        'role'       => 'super_admin',
+        'status'     => 'active',
+    ]);
+
+    $response = $this->postJson('/api/register-center/step1', [
+        'name'              => 'Trung Tâm Tin Học New Test',
+        'phone'             => '0987654321',
+        'email'             => 'newcenter@test.com',
+        'address'           => '123 Đường Test, Hà Nội',
+        'subscription_plan' => 'trial',
+        'payment_method'    => 'zalopay',
+    ]);
+
+    $response->assertStatus(200);
+
+    $this->assertDatabaseHas('notifications', [
+        'type' => 'center_registration',
+    ]);
+
+    $notification = Notification::where('type', 'center_registration')->latest('id')->first();
+    expect($notification)->not->toBeNull();
+
+    $this->assertDatabaseHas('notification_recipients', [
+        'notification_id' => $notification->id,
+        'recipient_type'  => 'admin',
+        'recipient_id'    => $superAdmin->id,
+        'read_at'         => null,
+    ]);
+
+    Event::assertDispatched(\App\Events\CenterRegisteredEvent::class);
+});

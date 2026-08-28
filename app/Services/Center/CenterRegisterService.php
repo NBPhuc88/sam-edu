@@ -2,13 +2,18 @@
 
 namespace App\Services\Center;
 
+use App\Events\CenterRegisteredEvent;
 use App\Mail\NewCenterRegisteredMail;
+use App\Models\Admin;
 use App\Models\Center;
+use App\Models\Notification;
+use App\Models\NotificationRecipient;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
 use App\Repositories\Setting\SystemSettingRepositoryInterface;
 use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use App\Services\Payment\PaymentGatewayFactory;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -56,6 +61,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             ]);
 
             $this->sendAdminNotificationMail($center);
+            $this->createAdminNotification($center, $planCode);
 
             return [
                 'success'   => true,
@@ -85,6 +91,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             ]);
 
             $this->sendAdminNotificationMail($center);
+            $this->createAdminNotification($center, $planCode);
 
             return [
                 'success'   => true,
@@ -115,6 +122,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         ]);
 
         $this->sendAdminNotificationMail($center);
+        $this->createAdminNotification($center, $planCode);
 
         $appTransId = date('ymd') . '_' . time() . '_' . $center->id;
 
@@ -249,6 +257,47 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             Mail::to($adminEmail)->queue(new NewCenterRegisteredMail($center));
         } catch (\Throwable $e) {
             // Ignore mail queue error if mailer is not configured locally
+        }
+    }
+
+    protected function createAdminNotification(Center $center, string $planCode): void
+    {
+        $notifTitle   = "Trung tâm mới đăng ký: '{$center->name}'";
+        $planLabel    = $planCode === 'trial' ? 'Gói dùng thử' : "Gói {$planCode}";
+        $notifContent = "Trung tâm {$center->name} ({$center->code}) vừa đăng ký {$planLabel}. Email: {$center->email}, SĐT: {$center->phone}.";
+
+        $notification = Notification::create([
+            'center_id'           => $center->id,
+            'title'               => $notifTitle,
+            'content'             => $notifContent,
+            'type'                => 'center_registration',
+            'created_by_admin_id' => null,
+        ]);
+
+        $superAdminIds = Admin::where('role', 'super_admin')->pluck('id')->toArray();
+
+        foreach ($superAdminIds as $sAdminId) {
+            NotificationRecipient::create([
+                'notification_id' => $notification->id,
+                'recipient_type'  => 'admin',
+                'recipient_id'    => $sAdminId,
+                'read_at'         => null,
+            ]);
+        }
+
+        try {
+            event(new CenterRegisteredEvent([
+                'id'              => $notification->id,
+                'notification_id' => $notification->id,
+                'center_id'       => $center->id,
+                'center_name'     => $center->name,
+                'title'           => $notifTitle,
+                'content'         => $notifContent,
+                'type'            => 'center_registration',
+                'created_at'      => now()->diffForHumans(),
+            ]));
+        } catch (\Throwable $e) {
+            Log::error("Lỗi khi broadcast WebSocket sự kiện đăng ký trung tâm {$center->id}: " . $e->getMessage());
         }
     }
 }

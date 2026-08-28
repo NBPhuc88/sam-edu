@@ -8,7 +8,7 @@ import {
     UserCheck,
     AlertCircle,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
@@ -73,6 +73,29 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         role: 'admin' as 'super_admin' | 'admin',
         center_id: '' as string | number,
     });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
+            const centerId = params.get('center_id');
+
+            if (action === 'create' || centerId) {
+                form.reset();
+                setEditingAdmin(null);
+                form.setData({
+                    username: '',
+                    full_name: '',
+                    email: '',
+                    phone: '',
+                    password: '',
+                    role: 'admin',
+                    center_id: centerId ? Number(centerId) : '',
+                });
+                setIsCreateModalOpen(true);
+            }
+        }
+    }, []);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

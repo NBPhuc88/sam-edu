@@ -57,6 +57,7 @@ class NotificationController extends Controller
                 'title'           => $notif?->title ?? 'Thông báo',
                 'content'         => $notif?->content ?? '',
                 'type'            => $notif?->type ?? 'general',
+                'center_id'       => $notif?->center_id ?? null,
                 'center_name'     => $notif?->center?->name ?? null,
                 'is_read'         => $recipient->read_at !== null,
                 'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
