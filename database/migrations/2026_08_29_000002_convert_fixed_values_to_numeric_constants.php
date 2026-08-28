@@ -448,7 +448,7 @@ return new class () extends Migration {
     }
 
     /**
-     * Xóa cột cũ và đổi tên cột _int về tên cột gốc an toàn
+     * Xóa cột cũ và đổi tên cột _int về tên cột gốc an toàn, đồng thời tái tạo lại các index
      * @param string $table
      * @param string $column
      * @param string $intColumn
@@ -456,11 +456,18 @@ return new class () extends Migration {
     protected function dropOldAndRename(string $table, string $column, string $intColumn): void
     {
         if (Schema::hasColumn($table, $column) && Schema::hasColumn($table, $intColumn)) {
+            $droppedIndexes = [];
+
             try {
                 $indexes = Schema::getIndexes($table);
 
                 foreach ($indexes as $idx) {
+                    if (! empty($idx['primary'])) {
+                        continue;
+                    }
+
                     if (in_array($column, $idx['columns'] ?? [], true)) {
+                        $droppedIndexes[] = $idx;
                         Schema::table($table, function (Blueprint $t) use ($idx) {
                             $t->dropIndex($idx['name']);
                         });
@@ -476,6 +483,29 @@ return new class () extends Migration {
             Schema::table($table, function (Blueprint $t) use ($intColumn, $column) {
                 $t->renameColumn($intColumn, $column);
             });
+
+            // Tái tạo lại các index đã bị xóa sau khi rename cột về tên gốc
+            if (! empty($droppedIndexes)) {
+                foreach ($droppedIndexes as $idx) {
+                    try {
+                        $cols     = $idx['columns'] ?? [];
+                        $idxName  = $idx['name'] ?? null;
+                        $isUnique = ! empty($idx['unique']);
+
+                        if (! empty($cols)) {
+                            Schema::table($table, function (Blueprint $t) use ($cols, $idxName, $isUnique) {
+                                if ($isUnique) {
+                                    $t->unique($cols, $idxName);
+                                } else {
+                                    $t->index($cols, $idxName);
+                                }
+                            });
+                        }
+                    } catch (\Throwable $e) {
+                        // Bỏ qua lỗi nếu index không tạo lại được hoặc đã tồn tại
+                    }
+                }
+            }
         }
     }
 };
