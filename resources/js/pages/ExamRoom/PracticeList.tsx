@@ -22,13 +22,6 @@ import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { Center, Exam, PaginatedData, Subject } from '../Admin/Exams/types';
 
-interface ExamTypeOption {
-    id: number;
-    name: string;
-    code: string;
-    center_id?: number | null;
-}
-
 interface Props {
     exams: PaginatedData<Exam>;
     centers: Center[];

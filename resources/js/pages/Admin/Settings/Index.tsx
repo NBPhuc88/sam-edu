@@ -64,6 +64,8 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
     const { flash } = usePage<any>().props;
     const [activeTab, setActiveTab] = useState<'company' | 'homepage' | 'seo'>('company');
     const [selectedSeoRoute, setSelectedSeoRoute] = useState<string>('home');
+    const [isSaving, setIsSaving] = useState(false);
+    const [uploadProgressText, setUploadProgressText] = useState<string | null>(null);
 
     // Khởi tạo map SEO theo route_name để dễ quản lý state
     const initialSeoMap: Record<string, SeoItem> = {};
@@ -109,26 +111,38 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         });
     };
 
-    const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) {
+            e.preventDefault();
+        }
+        if (isSaving || processing) return;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsUploadingMedia(true);
+        setIsSaving(true);
+        setUploadProgressText(null);
+
         try {
-            const cleanSeo = await uploadPendingMediaInObject(data.seo);
-            router.post(
-                '/settings',
-                {
-                    settings: data.settings,
-                    seo: cleanSeo,
-                } as any,
-                {
-                    preserveScroll: true,
-                    onFinish: () => setIsUploadingMedia(false),
+            const cleanData = await uploadPendingMediaInObject(
+                data,
+                (completed, total) => {
+                    setUploadProgressText(`Đang tải ảnh lên (${completed}/${total})...`);
                 }
             );
+            setUploadProgressText(null);
+
+            router.post('/settings', cleanData as any, {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsSaving(false);
+                    setUploadProgressText(null);
+                },
+                onError: () => {
+                    setIsSaving(false);
+                    setUploadProgressText(null);
+                },
+            });
         } catch (err) {
-            setIsUploadingMedia(false);
+            setIsSaving(false);
+            setUploadProgressText(null);
         }
     };
 
@@ -140,6 +154,8 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         og_image: '',
         canonical_url: '',
     };
+
+    const isBusy = isSaving || processing;
 
     return (
         <AppLayout>
@@ -163,12 +179,12 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         <Button
                             type="button"
                             variant="success"
-                            onClick={handleSubmit}
-                            disabled={processing}
+                            onClick={() => handleSubmit()}
+                            disabled={isBusy}
                             className="flex items-center gap-2 shadow-sm"
                         >
                             <Save className="h-4 w-4" />
-                            {processing ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                            {uploadProgressText || (isBusy ? 'Đang lưu...' : 'Lưu Thay Đổi')}
                         </Button>
                     }
                 />
@@ -512,6 +528,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                         objectType="seo"
                                         objectId={selectedSeoRoute}
                                         folder="seo/og_images"
+                                        saveHint="khi lưu cài đặt"
                                         placeholder="Chọn tải ảnh lên từ máy hoặc dán link URL..."
                                     />
 
@@ -532,11 +549,11 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         <Button
                             type="submit"
                             variant="success"
-                            disabled={processing || isUploadingMedia}
+                            disabled={isBusy}
                             className="flex items-center gap-2 shadow-sm px-6 py-2.5"
                         >
                             <Save className="h-4 w-4" />
-                            {processing || isUploadingMedia ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt'}
+                            {uploadProgressText || (isBusy ? 'Đang lưu cài đặt...' : 'Lưu Toàn Bộ Cài Đặt')}
                         </Button>
                     </div>
                 </form>

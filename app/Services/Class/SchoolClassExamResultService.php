@@ -115,7 +115,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
             ->whereDoesntHave('exam.examType', function ($q) {
                 $q->where('code', 'trial')->orWhere('code', 'practice');
             })
-            ->with(['exam.subject:id,name,code', 'exam.examType:id,name,code'])
+            ->with(['exam.subject:id,name,code'])
             ->orderBy('exam_date', 'desc')
             ->orderBy('id', 'desc');
 

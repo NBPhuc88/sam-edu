@@ -65,4 +65,11 @@ interface CenterServiceInterface
      * @return Collection
      */
     public function getCenterSubscriptions(int $centerId): Collection;
+
+    /**
+     * Tự động chuyển trạng thái các trung tâm hết hạn sang expired.
+     *
+     * @return int Số trung tâm đã cập nhật
+     */
+    public function deactivateExpiredCenters(): int;
 }
