@@ -143,7 +143,8 @@ class AdminService implements AdminServiceInterface
                     roleLabel: $roleLabel,
                     centerName: $centerName,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: url('/admins')
+                    loginUrl: url('/admins'),
+                    newPassword: $data['password']
                 )
             );
         }

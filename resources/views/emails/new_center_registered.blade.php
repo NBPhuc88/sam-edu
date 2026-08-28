@@ -6,7 +6,6 @@ Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** vừa nhận đư
 <x-mail::table>
 | Thông tin | Chi tiết |
 | :--- | :--- |
-| **Mã trung tâm** | `{{ $center->code }}` |
 | **Tên trung tâm** | **{{ $center->name }}** |
 | **Số điện thoại** | {{ $center->phone ?? 'N/A' }} |
 | **Email liên hệ** | {{ $center->email ?? 'N/A' }} |

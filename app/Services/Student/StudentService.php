@@ -417,7 +417,8 @@ class StudentService implements StudentServiceInterface
                     roleLabel: 'Học sinh',
                     centerName: $center?->name,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: url('/login')
+                    loginUrl: url('/login'),
+                    newPassword: $data['password']
                 )
             );
         }

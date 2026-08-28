@@ -145,8 +145,19 @@ class ClassExamService implements ClassExamServiceInterface
                     }
                 }
 
-                // 2. Gửi cho tất cả giáo viên phụ trách môn/lớp
-                $teachers = $schoolClass->classSubjects
+                // 2. Gửi cho giáo viên phụ trách môn học tương ứng của lớp
+                $subjectId     = $exam->subject_id;
+                $classSubjects = $schoolClass->classSubjects;
+
+                if ($subjectId) {
+                    $filteredSubjects = $classSubjects->where('subject_id', $subjectId);
+
+                    if ($filteredSubjects->isNotEmpty()) {
+                        $classSubjects = $filteredSubjects;
+                    }
+                }
+
+                $teachers = $classSubjects
                     ->pluck('teacher')
                     ->filter()
                     ->unique('id');

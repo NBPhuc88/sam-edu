@@ -187,7 +187,8 @@ class ProfileService implements ProfileServiceInterface
                     roleLabel: $roleLabel,
                     centerName: null,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: $loginUrl
+                    loginUrl: $loginUrl,
+                    newPassword: $newPassword
                 )
             );
         } catch (\Throwable $e) {

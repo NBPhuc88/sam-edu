@@ -142,7 +142,8 @@ class PasswordResetService implements PasswordResetServiceInterface
                         roleLabel: $roleLabel,
                         centerName: $user->center?->name ?? null,
                         changedAt: date('d/m/Y H:i:s'),
-                        loginUrl: $loginUrl
+                        loginUrl: $loginUrl,
+                        newPassword: $newPassword
                     )
                 );
             } catch (\Throwable $e) {

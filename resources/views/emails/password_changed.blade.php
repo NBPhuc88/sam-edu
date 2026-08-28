@@ -1,9 +1,9 @@
 <x-mail::message>
-# 🔐 Cảnh Báo Bảo Mật: Mật Khẩu Vừa Được Thay Đổi
+# 🔐 Thông Báo: Mật Khẩu Vừa Được Thay Đổi
 
 Kính gửi **{{ $fullName }}**,
 
-Mật khẩu cho tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục đã được thay đổi thành công.
+Mật khẩu cho tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của bạn trên hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** đã được cập nhật thành công.
 
 <x-mail::table>
 | Thông tin | Chi tiết |
@@ -13,17 +13,21 @@ Mật khẩu cho tài khoản **{{ $roleLabel }}** (`{{ $username }}`) của b�
 @if(!empty($centerName))
 | **Trung tâm** | **{{ $centerName }}** |
 @endif
+@if(!empty($newPassword))
+| **Mật khẩu mới** | **`{{ $newPassword }}`** |
+@endif
 | **Thời gian cập nhật** | **{{ $changedAt }}** |
-| **Trạng thái** | ✅ Đã áp dụng mật khẩu mới |
+| **Trạng thái** | ✅ Đã cập nhật mật khẩu |
 </x-mail::table>
 
 <x-mail::button :url="$loginUrl">
-👉 Đăng Nhập Vào Hệ Thống
+👉 Đăng Nhập Vào Hệ Thống Ngay
 </x-mail::button>
 
 <x-mail::panel>
-⚠️ **Bạn không thực hiện thao tác này?**
-Nếu bạn không yêu cầu hoặc không trực tiếp đổi mật khẩu, rất có thể tài khoản của bạn đã bị xâm nhập. Vui lòng **liên hệ ngay với Quản trị viên hệ thống** hoặc sử dụng chức năng Quên Mật Khẩu để khôi phục tài khoản khẩn cấp.
+🔒 **Lưu ý bảo mật quan trọng:**
+- Để đảm bảo an toàn tuyệt đối cho tài khoản, quý khách vui lòng chủ động đăng nhập vào hệ thống và **thực hiện đổi lại mật khẩu cá nhân mới**.
+- Tuyệt đối không chia sẻ thông tin đăng nhập hoặc mật khẩu này cho bất kỳ ai khác.
 </x-mail::panel>
 
 Trân trọng,<br>

@@ -8,7 +8,6 @@ Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** xin thông báo: 
 <x-mail::table>
 | Thông tin Trung tâm | Chi tiết mới nhất |
 | :--- | :--- |
-| **Mã trung tâm** | `{{ $center->code }}` |
 | **Tên trung tâm** | **{{ $center->name }}** |
 | **Email nhận thông báo** | {{ $center->email ?? 'Chưa cập nhật' }} |
 | **Số điện thoại** | {{ $center->phone ?? 'Chưa cập nhật' }} |

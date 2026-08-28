@@ -276,7 +276,8 @@ class TeacherService implements TeacherServiceInterface
                     roleLabel: 'Giáo viên',
                     centerName: $center?->name,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: url('/teachers')
+                    loginUrl: url('/teachers'),
+                    newPassword: $data['password']
                 )
             );
         }

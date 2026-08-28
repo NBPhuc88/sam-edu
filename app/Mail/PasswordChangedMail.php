@@ -21,6 +21,7 @@ class PasswordChangedMail extends Mailable implements ShouldQueue
      * @param string|null $centerName
      * @param string      $changedAt
      * @param string      $loginUrl
+     * @param string|null $newPassword
      */
     public function __construct(
         public string $fullName,
@@ -28,7 +29,8 @@ class PasswordChangedMail extends Mailable implements ShouldQueue
         public string $roleLabel = 'Tài khoản',
         public ?string $centerName = null,
         public string $changedAt = '',
-        public string $loginUrl = ''
+        public string $loginUrl = '',
+        public ?string $newPassword = null
     ) {
         if (empty($this->changedAt)) {
             $this->changedAt = date('d/m/Y H:i:s');
@@ -45,7 +47,7 @@ class PasswordChangedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SAM Digital] Cảnh báo bảo mật: Mật khẩu {$this->roleLabel} vừa được thay đổi",
+            subject: "[SAM Digital] Thông báo: Mật khẩu {$this->roleLabel} vừa được thay đổi",
         );
     }
 
@@ -57,12 +59,13 @@ class PasswordChangedMail extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'emails.password_changed',
             with: [
-                'fullName'   => $this->fullName,
-                'username'   => $this->username,
-                'roleLabel'  => $this->roleLabel,
-                'centerName' => $this->centerName,
-                'changedAt'  => $this->changedAt,
-                'loginUrl'   => $this->loginUrl,
+                'fullName'    => $this->fullName,
+                'username'    => $this->username,
+                'roleLabel'   => $this->roleLabel,
+                'centerName'  => $this->centerName,
+                'changedAt'   => $this->changedAt,
+                'loginUrl'    => $this->loginUrl,
+                'newPassword' => $this->newPassword,
             ],
         );
     }
