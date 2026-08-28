@@ -19,8 +19,8 @@ export interface SeoHeadProps {
 
 export const SeoHead: React.FC<SeoHeadProps> = ({
     title,
-    description = 'SAM EDU - Phần mềm Quản lý Đa Trung Tâm Giáo Dục chuyên nghiệp, quản lý học sinh, lớp học, điểm danh và học phí tối ưu.',
-    keywords = 'quản lý trung tâm giáo dục, phần mềm quản lý trung tâm tiếng anh, phần mềm điểm danh học sinh, quản lý học phí',
+    description = 'SAM EDU - Phần mềm Quản lý Trung Tâm Giáo Dục chuyên nghiệp, quản lý học sinh, lớp học, điểm danh và học phí tối ưu.',
+    keywords = 'quản lý trung tâm giáo dục, phần mềm quản lý trung tâm, phần mềm điểm danh học sinh, quản lý học phí',
     canonical,
     ogImage = 'https://www.samedu.io.vn/og-banner.png',
     ogImageWidth = 1200,
