@@ -7,21 +7,21 @@
  * 100% Tiếng Việt
  */
 
-import {
-    BarChart3,
-    Bell,
-    BookOpen,
-    DollarSign,
-    FileCheck,
-    LayoutDashboard,
-    Lock,
-    MessageSquare,
-    Settings,
-    Sliders,
-    User,
-    Zap,
-} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+BarChart3,
+Bell,
+BookOpen,
+DollarSign,
+FileCheck,
+LayoutDashboard,
+Lock,
+MessageSquare,
+Settings,
+Sliders,
+User,
+Zap,
+} from 'lucide-react';
 
 export interface NavItem {
     label: string;

@@ -1,5 +1,5 @@
-import { usePage } from '@inertiajs/react';
 import { PLAN_TYPE_FREE } from '@/constants/enums';
+import { usePage } from '@inertiajs/react';
 
 interface CenterSharedData {
     id: number;

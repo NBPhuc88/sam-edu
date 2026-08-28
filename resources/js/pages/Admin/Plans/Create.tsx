@@ -1,22 +1,22 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    Plus,
-    Trash2,
-    DollarSign,
-    CheckCircle2,
-    Layers,
-    Users,
-    Eye,
-    Shield,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+CheckCircle2,
+DollarSign,
+Eye,
+Layers,
+Plus,
+Save,
+Shield,
+Trash2,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Props {
     errors?: Record<string, string>;

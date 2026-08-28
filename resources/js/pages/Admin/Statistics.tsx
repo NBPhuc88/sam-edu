@@ -1,20 +1,20 @@
 import { router } from '@inertiajs/react';
-import { Building2, BookOpen, GraduationCap, Filter } from 'lucide-react';
+import { BookOpen,Building2,Filter,GraduationCap } from 'lucide-react';
 import React from 'react';
 import {
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
+Bar,
+BarChart,
+CartesianGrid,
+ResponsiveContainer,
+Tooltip,
+XAxis,
+YAxis,
 } from 'recharts';
 import Badge from '../../components/ui/Badge';
 import Card from '../../components/ui/Card';
 import type { Column } from '../../components/ui/DataTable';
 import DataTable from '../../components/ui/DataTable';
-import Pagination, { PaginationLink } from '../../components/ui/Pagination';
+import Pagination,{ PaginationLink } from '../../components/ui/Pagination';
 import AppLayout from '../../layouts/AppLayout';
 
 interface ClassStat {

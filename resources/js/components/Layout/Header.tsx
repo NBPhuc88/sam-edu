@@ -1,10 +1,10 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, Building2, CreditCard, LogOut, Menu, User as UserIcon, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import AppLogo from '@/components/common/AppLogo';
-import Button from '../ui/Button';
 import apiClient from '@/lib/axios';
 import getEcho from '@/lib/echo';
+import { Link,router,usePage } from '@inertiajs/react';
+import { Bell,Building2,CreditCard,LogOut,Menu,X } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
+import Button from '../ui/Button';
 
 interface AuthUser {
     id: number;

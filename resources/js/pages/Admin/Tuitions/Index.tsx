@@ -1,32 +1,29 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    DollarSign,
-    Plus,
-    Search,
-    Eye,
-    Edit2,
-    Trash2,
-    CreditCard,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Filter,
-    Calendar,
-    Wallet,
-    Download,
-    BarChart3,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Calendar,
+CheckCircle2,
+Clock,
+CreditCard,
+DollarSign,
+Download,
+Edit2,
+Eye,
+Filter,
+Plus,
+Search,
+Trash2,
+Wallet
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
-import Modal from '../../../components/ui/Modal';
 import ScrollableSelect from '../../../components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
+import { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
-import TuitionChartSection, { TuitionChartStatsData } from './components/TuitionChartSection';
+import TuitionChartSection,{ TuitionChartStatsData } from './components/TuitionChartSection';
 
 import { usePermission } from '@/hooks/usePermission';
 interface StudentTuitionItem {

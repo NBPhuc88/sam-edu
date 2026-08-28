@@ -1,27 +1,25 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import {
-    Calendar,
-    Plus,
-    Search,
-    Edit3,
-    Trash2,
-    Sparkles,
-    CalendarDays,
-    Info,
-    Moon,
-    Sun,
-    RefreshCw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
-import Pagination, { PaginationLink } from '@/components/ui/Pagination';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Pagination,{ PaginationLink } from '@/components/ui/Pagination';
+import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { parseDate, toISODateString, WEEKDAY_NAMES } from '@/lib/date';
+import { parseDate,toISODateString,WEEKDAY_NAMES } from '@/lib/date';
+import { Head,router,useForm } from '@inertiajs/react';
+import {
+Calendar,
+CalendarDays,
+Edit3,
+Moon,
+Plus,
+Search,
+Sparkles,
+Sun,
+Trash2
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Holiday {

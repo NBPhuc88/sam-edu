@@ -1,5 +1,5 @@
+import { Check,X } from 'lucide-react';
 import React from 'react';
-import { Check, X } from 'lucide-react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {

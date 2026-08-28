@@ -1,33 +1,32 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    AlertCircle,
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    FileText,
-    PenTool,
-    RotateCcw,
-    Save,
-    Sparkles,
-    XCircle,
-} from 'lucide-react';
-import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import AppLayout from '@/layouts/AppLayout';
-import QuestionReviewDetail, { QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
-import ExamSectionPagination from '@/pages/ExamRoom/components/shared/ExamSectionPagination';
-import ExamSectionTabs, { ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
 import {
-    SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
-    SKILL_LISTENING,
-    SKILL_READING,
-    SKILL_WRITING,
-    SKILL_SPEAKING,
-    QUESTION_TYPE_ESSAY,
-    QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_ESSAY,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
+SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import QuestionReviewDetail,{ QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
+import ExamSectionPagination from '@/pages/ExamRoom/components/shared/ExamSectionPagination';
+import ExamSectionTabs,{ ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+CheckCircle2,
+Clock,
+FileText,
+PenTool,
+RotateCcw,
+Save,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ExamQuestion {
     id: number;

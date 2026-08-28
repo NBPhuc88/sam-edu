@@ -1,25 +1,3 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Calendar,
-    CalendarDays,
-    CheckCircle,
-    Clock,
-    Download,
-    Edit2,
-    GraduationCap,
-    Mail,
-    MapPin,
-    Phone,
-    User,
-    Users,
-    XCircle,
-    BookOpen,
-    DoorOpen,
-    HelpCircle,
-    AlertCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import PageHeader from '@/components/common/PageHeader';
 import StatMetricCard from '@/components/common/StatMetricCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -27,19 +5,38 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
+import {
+ATTENDANCE_STATUS_ABSENT,
+ATTENDANCE_STATUS_EXCUSED,
+ATTENDANCE_STATUS_LATE,
+ATTENDANCE_STATUS_PRESENT,
+GENDER_LABELS
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
 import {
-    ATTENDANCE_STATUS_PRESENT,
-    ATTENDANCE_STATUS_ABSENT,
-    ATTENDANCE_STATUS_LATE,
-    ATTENDANCE_STATUS_EXCUSED,
-    GENDER_MALE,
-    GENDER_FEMALE,
-    GENDER_OTHER,
-    GENDER_LABELS,
-} from '@/constants/enums';
+AlertCircle,
+ArrowLeft,
+BookOpen,
+Calendar,
+CalendarDays,
+CheckCircle,
+Clock,
+DoorOpen,
+Download,
+Edit2,
+GraduationCap,
+HelpCircle,
+Mail,
+MapPin,
+Phone,
+User,
+Users,
+XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;

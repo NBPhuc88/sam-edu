@@ -1,5 +1,5 @@
-import React, { useId } from 'react';
 import { HelpCircle } from 'lucide-react';
+import { useId } from 'react';
 
 interface Props {
     correctAnswer: string | null;

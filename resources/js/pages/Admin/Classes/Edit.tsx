@@ -1,12 +1,12 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, GraduationCap, BookOpen, Plus, Trash2, Calendar, AlertTriangle } from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import { AlertTriangle,ArrowLeft,BookOpen,Calendar,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;

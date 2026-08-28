@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
-import { Award, CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle,Award,CheckCircle2,Clock,XCircle } from 'lucide-react';
+import { ReactNode } from 'react';
 
 export interface ExamResultSummaryData {
     earned_score: number;

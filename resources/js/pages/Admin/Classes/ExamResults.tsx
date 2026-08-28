@@ -1,26 +1,22 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    Award,
-    ArrowLeft,
-    Download,
-    Search,
-    BookOpen,
-    GraduationCap,
-    Users,
-    CheckCircle2,
-    Calendar,
-    Filter,
-    BarChart3,
-    FileSpreadsheet,
-    FileCheck,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+Award,
+BarChart3,
+CheckCircle2,
+FileCheck,
+FileSpreadsheet,
+GraduationCap,
+Search,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface SchoolClass {
     id: number;

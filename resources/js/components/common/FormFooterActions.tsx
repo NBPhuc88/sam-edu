@@ -1,7 +1,7 @@
-import React, { ReactNode } from 'react';
 import Button from '@/components/ui/Button';
-import { Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import { ArrowLeft,Loader2,Save } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface Props {
     cancelHref?: string;

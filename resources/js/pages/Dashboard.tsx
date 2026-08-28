@@ -1,54 +1,49 @@
 import {
-    AlertCircle,
-    AlertTriangle,
-    ArrowRight,
-    BookOpen,
-    Building2,
-    Calendar,
-    CalendarCheck,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    DollarSign,
-    DoorOpen,
-    GraduationCap,
-    Printer,
-    Search,
-    User,
-    UserCheck,
-    UserPlus,
-    Users,
-    Wallet,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import { Link, router } from '@inertiajs/react';
+CENTER_STATUS_ACTIVE,
+CENTER_STATUS_LABELS,
+PLAN_TYPE_FREE,
+PLAN_TYPE_LABELS,
+PLAN_TYPE_PREMIUM
+} from '@/constants/enums';
+import { Link,router } from '@inertiajs/react';
 import {
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
+AlertCircle,
+AlertTriangle,
+ArrowRight,
+BookOpen,
+Building2,
+Calendar,
+CalendarCheck,
+ChevronLeft,
+ChevronRight,
+Clock,
+DollarSign,
+DoorOpen,
+GraduationCap,
+Printer,
+Search,
+User,
+UserCheck,
+UserPlus,
+Users,
+Wallet,
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import {
+Bar,
+BarChart,
+CartesianGrid,
+ResponsiveContainer,
+Tooltip,
+XAxis,
+YAxis,
 } from 'recharts';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import CustomPieChart from '../components/ui/CustomPieChart';
-import DataTable, { Column } from '../components/ui/DataTable';
+import DataTable,{ Column } from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
-import {
-    CENTER_STATUS_ACTIVE,
-    CENTER_STATUS_TRIAL,
-    CENTER_STATUS_PENDING_PAYMENT,
-    CENTER_STATUS_EXPIRED,
-    CENTER_STATUS_LOCKED,
-    CENTER_STATUS_LABELS,
-    PLAN_TYPE_FREE,
-    PLAN_TYPE_STANDARD,
-    PLAN_TYPE_PREMIUM,
-    PLAN_TYPE_LABELS,
-} from '@/constants/enums';
 import AppLayout from '../layouts/AppLayout';
 
 export const Dashboard: React.FC<any> = (props) => {

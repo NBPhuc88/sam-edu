@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, PenTool, Award } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { Award,PenTool,Plus,Trash2 } from 'lucide-react';
 
 interface RubricCriteria {
     criteria: string;

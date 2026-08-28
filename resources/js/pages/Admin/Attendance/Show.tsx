@@ -1,32 +1,21 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    DoorOpen,
-    Save,
-    Users,
-    RotateCcw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
-import { usePermission } from '@/hooks/usePermission';
+import { Head,router } from '@inertiajs/react';
 import {
-    SESSION_STATUS_CANCELLED,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_IN_PROGRESS,
-    SESSION_STATUS_COMPLETED,
-    ATTENDANCE_STATUS_PRESENT,
-    ATTENDANCE_STATUS_ABSENT,
-    ATTENDANCE_STATUS_LATE,
-    ATTENDANCE_STATUS_EXCUSED,
-    ATTENDANCE_STATUS_LABELS,
-} from '@/constants/enums';
+ArrowLeft,
+CheckCircle2,
+Clock,
+DoorOpen,
+RotateCcw,
+Save,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface StudentAttendanceItem {
     id: number;

@@ -1,32 +1,26 @@
-import { Head, Link } from '@inertiajs/react';
-import {
-    Award,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    FileCheck,
-    FileText,
-    ArrowLeft,
-    HelpCircle,
-    Volume2,
-    BookOpen,
-    AlertCircle,
-    Info,
-    RotateCcw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import AppLayout from '@/layouts/AppLayout';
-import QuestionReviewDetail from './components/QuestionReviewDetail';
-import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData } from './types';
 import {
-    SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
-    QUESTION_TYPE_ESSAY,
-    QUESTION_TYPE_AUDIO_RECORD,
-    QUESTION_TYPE_FILL_IN_BLANK,
-    QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+CheckCircle2,
+FileCheck,
+FileText,
+Volume2,
+XCircle,
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import QuestionReviewDetail from './components/QuestionReviewDetail';
+import { ClassExam,ClassExamSubmission,ExamSectionData } from './types';
 
 interface Props {
     submission: ClassExamSubmission;

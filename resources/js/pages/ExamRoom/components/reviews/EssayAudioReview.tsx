@@ -1,14 +1,13 @@
-import React from 'react';
-import { Volume2, FileText, CheckCircle2 } from 'lucide-react';
-import { QuestionReviewItem } from '../QuestionReviewDetail';
 import { QUESTION_TYPE_AUDIO_RECORD } from '@/constants/enums';
+import { CheckCircle2,FileText,Volume2 } from 'lucide-react';
+import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
     question: QuestionReviewItem;
 }
 
 export default function EssayAudioReview({ question }: Props) {
-    const { question_type, correct_answer, user_answer, teacher_comment } = question;
+    const { question_type, correct_answer, user_answer } = question;
 
     if (question_type === QUESTION_TYPE_AUDIO_RECORD) {
         const audioSrc = typeof user_answer === 'string' && user_answer

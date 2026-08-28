@@ -1,7 +1,7 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import React from 'react';
 
 export interface ModalProps {
     isOpen: boolean;

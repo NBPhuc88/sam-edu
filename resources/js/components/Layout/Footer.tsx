@@ -1,6 +1,6 @@
+import { Link,usePage } from '@inertiajs/react';
+import { ExternalLink,Headphones } from 'lucide-react';
 import React from 'react';
-import { Link, usePage } from '@inertiajs/react';
-import { Headphones, ExternalLink } from 'lucide-react';
 
 export const Footer: React.FC = () => {
     const { contactInfo } = usePage().props as any;

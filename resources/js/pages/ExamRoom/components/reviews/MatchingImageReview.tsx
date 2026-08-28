@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Image as ImageIcon, Check, X } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {

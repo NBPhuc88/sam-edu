@@ -1,17 +1,17 @@
+import Card from '@/components/ui/Card';
+import CustomPieChart,{ PieChartItem } from '@/components/ui/CustomPieChart';
+import { BarChart3,PieChart as PieChartIcon,TrendingUp } from 'lucide-react';
 import React from 'react';
 import {
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
-    Legend,
+Bar,
+BarChart,
+CartesianGrid,
+Legend,
+ResponsiveContainer,
+Tooltip,
+XAxis,
+YAxis,
 } from 'recharts';
-import Card from '@/components/ui/Card';
-import CustomPieChart, { PieChartItem } from '@/components/ui/CustomPieChart';
-import { PieChart as PieChartIcon, BarChart3, TrendingUp } from 'lucide-react';
 
 export interface TuitionChartStatsData {
     status_pie: PieChartItem[];

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ShieldAlert, ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft,Home,ShieldAlert } from 'lucide-react';
 import React from 'react';
 import Button from '../components/ui/Button';
 

@@ -7,15 +7,15 @@
  * Xem: .agents/AGENTS.md - Mục 6.1 DashboardLayout Component
  */
 
+import { formatDate } from '@/lib/date';
 import { router } from '@inertiajs/react';
-import { AlertTriangle, CreditCard } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { AlertTriangle,CreditCard } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import Footer from './Footer';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import Footer from './Footer';
-import { formatDate } from '@/lib/date';
 
 interface AuthUser {
     id: number;

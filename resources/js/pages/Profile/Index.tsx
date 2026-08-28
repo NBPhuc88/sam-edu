@@ -1,26 +1,22 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    Building2,
-    Calendar,
-    CheckCircle2,
-    Clock,
-    Eye,
-    EyeOff,
-    KeyRound,
-    Mail,
-    Phone,
-    Send,
-    Shield,
-    ShieldAlert,
-    ShieldCheck,
-    User,
-    UserCheck,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,router } from '@inertiajs/react';
+import {
+Building2,
+CheckCircle2,
+Clock,
+Eye,
+EyeOff,
+KeyRound,
+Mail,
+Send,
+ShieldCheck,
+User,
+UserCheck
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface ProfileData {
     id: number;

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
-import { Search, UserPlus, AlertCircle, Check, Loader2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import { router } from '@inertiajs/react';
+import { AlertCircle,Check,Loader2,Search } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface AvailableStudent {
     id: number;

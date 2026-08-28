@@ -1,33 +1,31 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    Clock,
-    GraduationCap,
-    Plus,
-    Trash2,
-    CheckSquare,
-    Square,
-    Coffee,
-    CalendarPlus,
-    CalendarDays,
-    Sparkles,
-    Calendar,
-    Check,
-    AlertCircle,
-    Edit3,
-    BookOpen,
-} from 'lucide-react';
-import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import DatePicker from '@/components/ui/DatePicker';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import AppLayout from '@/layouts/AppLayout';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
+import DatePicker from '@/components/ui/DatePicker';
+import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { formatDate, parseDate, toISODateString } from '@/lib/date';
+import AppLayout from '@/layouts/AppLayout';
+import { formatDate,parseDate,toISODateString } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+BookOpen,
+CalendarDays,
+CalendarPlus,
+Check,
+CheckSquare,
+Clock,
+Coffee,
+Edit3,
+GraduationCap,
+Plus,
+Save,
+Sparkles,
+Square,
+Trash2
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface Center {
     id: number;
@@ -658,32 +656,6 @@ export default function ScheduleCreate({
                 enabled: !prev[day].enabled,
             },
         }));
-    };
-
-    const handleSlotChange = (day: number, slotIdx: number, field: 'start_time' | 'end_time', val: string) => {
-        setWeeklyTimes((prev) => {
-            const dayConf = prev[day];
-            const updatedSlots = [...dayConf.slots];
-            updatedSlots[slotIdx] = { ...updatedSlots[slotIdx], [field]: val };
-            return {
-                ...prev,
-                [day]: { ...dayConf, slots: updatedSlots },
-            };
-        });
-    };
-
-    const handleAddSlot = (day: number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setWeeklyTimes((prev) => {
-            const dayConf = prev[day];
-            return {
-                ...prev,
-                [day]: {
-                    ...dayConf,
-                    slots: [...dayConf.slots, { start_time: '08:00', end_time: '10:00' }],
-                },
-            };
-        });
     };
 
     const handleRemoveSlot = (day: number, slotIdx: number, e: React.MouseEvent) => {

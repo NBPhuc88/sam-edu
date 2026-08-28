@@ -1,13 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link,router,usePage } from '@inertiajs/react';
 import {
-    Lock,
-    User,
-    ShieldCheck,
-    GraduationCap,
-    Users,
+GraduationCap,
+Lock,
+ShieldCheck,
+User,
+Users,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import AppLogo from '../../components/common/AppLogo';

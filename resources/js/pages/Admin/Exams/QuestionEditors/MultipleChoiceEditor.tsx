@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, CheckSquare } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { CheckSquare,Plus,Trash2 } from 'lucide-react';
 
 interface Option {
     id: string;

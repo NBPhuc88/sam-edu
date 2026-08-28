@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link,router } from '@inertiajs/react';
 import React from 'react';
 
 export interface PaginationLink {

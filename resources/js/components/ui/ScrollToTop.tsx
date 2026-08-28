@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronUp } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ChevronUp } from 'lucide-react';
+import React,{ useCallback,useEffect,useState } from 'react';
 
 export interface ScrollToTopProps {
     /**

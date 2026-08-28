@@ -1,20 +1,19 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    FileSpreadsheet,
-    GraduationCap,
-    Lock,
-    MessageSquare,
-    PhoneCall,
-    ShieldAlert,
-    Sparkles,
-    Zap,
-} from 'lucide-react';
-import React from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { Head,Link,usePage } from '@inertiajs/react';
+import {
+ArrowLeft,
+CheckCircle2,
+Clock,
+FileSpreadsheet,
+GraduationCap,
+Lock,
+MessageSquare,
+PhoneCall,
+ShieldAlert,
+Sparkles,
+Zap,
+} from 'lucide-react';
 
 interface UpgradePlanProps {
     status?: number;

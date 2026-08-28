@@ -1,25 +1,24 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    MessageSquare,
-    Search,
-    Users,
-    ArrowRight,
-    Sparkles,
-    Calendar,
-    GraduationCap,
-    BookOpen,
-    Filter,
-    Clock,
-    Building2,
-    Smile,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowRight,
+BookOpen,
+Building2,
+Clock,
+Filter,
+GraduationCap,
+MessageSquare,
+Search,
+Smile,
+Sparkles,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;

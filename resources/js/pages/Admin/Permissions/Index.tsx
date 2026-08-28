@@ -1,30 +1,29 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import {
-    Check,
-    CheckSquare,
-    ChevronDown,
-    ChevronRight,
-    Info,
-    Lock,
-    RefreshCw,
-    RotateCcw,
-    Save,
-    Search,
-    Shield,
-    ShieldAlert,
-    ShieldCheck,
-    Square,
-    Undo2,
-    User,
-    UserCheck,
-    Users,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, router } from '@inertiajs/react';
+import {
+CheckSquare,
+ChevronDown,
+ChevronRight,
+Info,
+Lock,
+RefreshCw,
+RotateCcw,
+Save,
+Search,
+Shield,
+ShieldAlert,
+ShieldCheck,
+Square,
+Undo2,
+User,
+UserCheck,
+Users
+} from 'lucide-react';
+import React,{ useEffect,useMemo,useState } from 'react';
 
 interface PermissionAction {
     id: number;
@@ -70,8 +69,6 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function PermissionIndex({ modules = [], roleGrants = {}, roles = [] }: Props) {
-    const { flash } = usePage<any>().props;
-
     const [selectedRole, setSelectedRole] = useState<string>('admin');
     const [search, setSearch] = useState<string>('');
     const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() => {

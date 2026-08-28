@@ -1,39 +1,37 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Clock,
-    Award,
-    FileCheck,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Filter,
-    Users,
-    BookOpen,
-    PlayCircle,
-    CheckCircle2,
-    AlertCircle,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import AppLayout from '@/layouts/AppLayout';
-import AssignExamModal from './AssignExamModal';
-import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import {
-    CLASS_EXAM_STATUS_CANCELLED,
-    CLASS_EXAM_STATUS_SCHEDULED,
-    CLASS_EXAM_STATUS_ONGOING,
-    CLASS_EXAM_STATUS_COMPLETED,
-    CLASS_EXAM_STATUS_LABELS,
+CLASS_EXAM_STATUS_CANCELLED,
+CLASS_EXAM_STATUS_COMPLETED,
+CLASS_EXAM_STATUS_LABELS,
+CLASS_EXAM_STATUS_ONGOING,
+CLASS_EXAM_STATUS_SCHEDULED,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Award,
+BookOpen,
+Calendar,
+CheckCircle2,
+Clock,
+Edit2,
+FileCheck,
+Filter,
+PlayCircle,
+Plus,
+Search,
+Trash2,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import AssignExamModal from './AssignExamModal';
+import { Center,ClassExam,Exam,PaginatedData,SchoolClass } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Props {

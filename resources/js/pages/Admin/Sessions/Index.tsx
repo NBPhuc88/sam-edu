@@ -1,35 +1,34 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Search,
-    Filter,
-    DoorOpen,
-    Eye,
-    CheckSquare,
-    UserCheck,
-    Clock,
-    BookOpen,
-    GraduationCap,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime, toISODateString } from '@/lib/date';
-
-import { usePermission } from '@/hooks/usePermission';
+import { formatDate,formatTime,toISODateString } from '@/lib/date';
+import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
-    SESSION_STATUS_CANCELLED,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_IN_PROGRESS,
-    SESSION_STATUS_COMPLETED,
-    SESSION_STATUS_LABELS,
+BookOpen,
+Calendar,
+CheckSquare,
+Clock,
+DoorOpen,
+Eye,
+Filter,
+GraduationCap,
+Search,
+UserCheck,
+} from 'lucide-react';
+import React,{ useState } from 'react';
+
+import {
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 
 interface Center {
     id: number;

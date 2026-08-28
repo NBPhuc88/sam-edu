@@ -1,4 +1,4 @@
-import { Center, Exam, PaginatedData, SchoolClass, Subject } from '../Exams/types';
+import { Center,Exam,PaginatedData,SchoolClass,Subject } from '../Exams/types';
 
 export interface ClassExam {
     id: number;
@@ -42,4 +42,4 @@ export interface ClassExamFormData {
     status?: number;
 }
 
-export type { Center, Exam, PaginatedData, SchoolClass, Subject };
+export type { Center,Exam,PaginatedData,SchoolClass,Subject };

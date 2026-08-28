@@ -1,15 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, usePage } from '@inertiajs/react';
+import { router,usePage } from '@inertiajs/react';
 import {
-    Building,
-    CheckCircle2,
-    Mail,
-    MapPin,
-    Phone,
-    Send,
-    User,
+Building,
+CheckCircle2,
+Mail,
+MapPin,
+Phone,
+Send,
+User,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import Button from '../../components/ui/Button';

@@ -1,14 +1,14 @@
 import {
-    Building,
-    CheckCircle2,
-    Clock,
-    Mail,
-    MapPin,
-    Phone,
-    RefreshCw,
-    Send,
+Building,
+CheckCircle2,
+Clock,
+Mail,
+MapPin,
+Phone,
+RefreshCw,
+Send,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React,{ useEffect,useState } from 'react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';

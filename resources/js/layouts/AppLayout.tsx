@@ -9,11 +9,11 @@
  * Xem: .agents/AGENTS.md - Mục 6.1
  */
 
-import { Head, usePage } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import { Head,usePage } from '@inertiajs/react';
+import React,{ useEffect,useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
-import Toast from '../components/ui/Toast';
 import ScrollToTop from '../components/ui/ScrollToTop';
+import Toast from '../components/ui/Toast';
 import apiClient from '../lib/axios';
 
 interface AppLayoutProps {

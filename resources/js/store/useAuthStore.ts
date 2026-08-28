@@ -7,8 +7,8 @@
  * Xem: .agents/AGENTS.md - Mục 6.1 Auth Store (Zustand)
  */
 
+import type { Account,AuthState } from '@/types/auth';
 import { create } from 'zustand';
-import type { Account, AuthState } from '@/types/auth';
 
 export const useAuthStore = create<AuthState>((set) => ({
     account: null,

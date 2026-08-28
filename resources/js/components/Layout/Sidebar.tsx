@@ -1,9 +1,9 @@
-import { Link, usePage } from '@inertiajs/react';
-import { ChevronDown } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
 import AppLogo from '@/components/common/AppLogo';
-import { getNavigationItems } from '../../config/navigation';
+import { Link,usePage } from '@inertiajs/react';
+import { ChevronDown } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 import type { NavItem } from '../../config/navigation';
+import { getNavigationItems } from '../../config/navigation';
 
 interface SidebarProps {
     role: string | null;

@@ -1,29 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import {
+CLASS_EXAM_STATUS_CANCELLED,
+CLASS_EXAM_STATUS_COMPLETED,
+CLASS_EXAM_STATUS_LABELS,
+CLASS_EXAM_STATUS_ONGOING,
+CLASS_EXAM_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import { router } from '@inertiajs/react';
 import {
-    Calendar,
-    Clock,
-    Award,
-    FileCheck,
-    Save,
-    X,
-    BookOpen,
-    Users,
-    Sparkles,
+BookOpen,
+Calendar,
+Clock,
+FileCheck,
+Save,
+Users
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import DatePicker from '@/components/ui/DatePicker';
-import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { Center, ClassExam, Exam, SchoolClass } from './types';
-import {
-    CLASS_EXAM_STATUS_CANCELLED,
-    CLASS_EXAM_STATUS_SCHEDULED,
-    CLASS_EXAM_STATUS_ONGOING,
-    CLASS_EXAM_STATUS_COMPLETED,
-    CLASS_EXAM_STATUS_LABELS,
-} from '@/constants/enums';
+import React,{ useEffect,useState } from 'react';
+import { Center,ClassExam,Exam,SchoolClass } from './types';
 
 interface Props {
     isOpen: boolean;

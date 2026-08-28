@@ -1,14 +1,14 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head,Link,router } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    Plus,
-    Edit2,
-    Trash2,
-    Receipt,
-    CheckCircle2,
-    AlertCircle,
+AlertCircle,
+ArrowLeft,
+CheckCircle2,
+Edit2,
+Plus,
+Receipt,
+Trash2,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
@@ -17,21 +17,12 @@ import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
 
-import { usePermission } from '@/hooks/usePermission';
 import {
-    PAYMENT_METHOD_BANK_TRANSFER,
-    PAYMENT_METHOD_CASH,
-    PAYMENT_METHOD_MOMO,
-    PAYMENT_METHOD_ZALOPAY,
-    PAYMENT_METHOD_CREDIT_CARD,
-    PAYMENT_METHOD_OTHER,
-    PAYMENT_METHOD_OPTIONS,
-    PAYMENT_METHOD_LABELS,
-    TUITION_STATUS_PAID,
-    TUITION_STATUS_PENDING,
-    TUITION_STATUS_PARTIAL,
-    TUITION_STATUS_OVERDUE,
+PAYMENT_METHOD_BANK_TRANSFER,
+PAYMENT_METHOD_LABELS,
+PAYMENT_METHOD_OPTIONS
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 
 interface TuitionPaymentItem {
     id: number;

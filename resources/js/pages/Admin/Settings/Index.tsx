@@ -1,18 +1,3 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import {
-    Building2,
-    Globe,
-    Info,
-    LayoutTemplate,
-    Mail,
-    MapPin,
-    Megaphone,
-    Phone,
-    Save,
-    Search,
-    Sparkles,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import PageHeader from '@/components/common/PageHeader';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -21,6 +6,21 @@ import Input from '@/components/ui/Input';
 import { MediaUploader } from '@/components/ui/MediaUploader';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
+import { Head, router, useForm } from '@inertiajs/react';
+import {
+Building2,
+Globe,
+Info,
+LayoutTemplate,
+Mail,
+MapPin,
+Megaphone,
+Phone,
+Save,
+Search,
+Sparkles,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface SeoItem {
     id?: number;
@@ -61,7 +61,6 @@ const SEO_PAGES: { route: string; name: string; description: string }[] = [
 ];
 
 export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
-    const { flash } = usePage<any>().props;
     const [activeTab, setActiveTab] = useState<'company' | 'homepage' | 'seo'>('company');
     const [selectedSeoRoute, setSelectedSeoRoute] = useState<string>('home');
     const [isSaving, setIsSaving] = useState(false);
@@ -81,7 +80,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         };
     });
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         settings: {
             company_name: settings.company_name ?? '',
             contact_address: settings.contact_address ?? '',

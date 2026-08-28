@@ -1,5 +1,5 @@
+import { Pin,Reply } from 'lucide-react';
 import React from 'react';
-import { Reply, Pin } from 'lucide-react';
 
 interface Props {
     onReact: (emoji: string) => void;

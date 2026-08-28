@@ -1,33 +1,30 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    CalendarDays,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    DoorOpen,
-    GraduationCap,
-    Info,
-    Printer,
-    Users,
-    BookOpen,
-    Layers,
-    UserCheck,
-    MessageSquare,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Modal from '@/components/ui/Modal';
-import AppLayout from '@/layouts/AppLayout';
-import { toISODateString, formatTime } from '@/lib/date';
 import {
-    SESSION_STATUS_CANCELLED,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_IN_PROGRESS,
-    SESSION_STATUS_COMPLETED,
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { toISODateString } from '@/lib/date';
+import { Head,router,usePage } from '@inertiajs/react';
+import {
+BookOpen,
+Calendar,
+CalendarDays,
+ChevronLeft,
+ChevronRight,
+Clock,
+DoorOpen,
+GraduationCap,
+Info,
+Layers,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -201,10 +198,6 @@ export default function StudentSchedulePage({
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     const handleOpenDetailModal = (session: StudentSession) => {
         setSelectedSession(session);
         setIsDetailModalOpen(true);
@@ -357,16 +350,6 @@ export default function StudentSchedulePage({
                                 <span>Lịch Học Cố Định</span>
                             </button>
                         </div>
-
-                        {/* <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Printer className="h-4 w-4 text-gray-600" />}
-                            onClick={handlePrint}
-                            className="hidden sm:inline-flex"
-                        >
-                            In Lịch Học
-                        </Button> */}
                     </div>
                 </div>
 

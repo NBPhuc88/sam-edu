@@ -1,13 +1,12 @@
-import React from 'react';
-import ChoiceRunner from './runners/ChoiceRunner';
-import FillInBlankRunner from './runners/FillInBlankRunner';
+import AudioRecorder from './AudioRecorder';
+import DiagramLabellingQuestion from './DiagramLabellingQuestion';
 import DragDropClozeQuestion from './DragDropClozeQuestion';
+import FindMistakeQuestion from './FindMistakeQuestion';
 import MatchingAnswerForm from './MatchingAnswerForm';
 import MatchingImageAnswerForm from './MatchingImageAnswerForm';
-import DiagramLabellingQuestion from './DiagramLabellingQuestion';
+import ChoiceRunner from './runners/ChoiceRunner';
+import FillInBlankRunner from './runners/FillInBlankRunner';
 import SortableOrderingList from './SortableOrderingList';
-import FindMistakeQuestion from './FindMistakeQuestion';
-import AudioRecorder from './AudioRecorder';
 
 interface Props {
     question: any;

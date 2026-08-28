@@ -1,6 +1,6 @@
-import React, { useId } from 'react';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { AlertTriangle,Plus,Trash2 } from 'lucide-react';
+import { useId } from 'react';
 
 interface SentenceSegment {
     id: string;

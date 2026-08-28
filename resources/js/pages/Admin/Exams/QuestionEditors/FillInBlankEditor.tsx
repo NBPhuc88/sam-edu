@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, Tag, Info } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { Info,Plus,Tag,Trash2 } from 'lucide-react';
 
 interface BlankConfig {
     accepted_answers: string[];
@@ -34,17 +33,6 @@ export default function FillInBlankEditor({
     // Also include any keys in correctAnswer
     const allBlankKeys = Array.from(new Set([...blankKeysFromContent, ...Object.keys(correctAnswer || {})]));
     const displayKeys = allBlankKeys.length > 0 ? allBlankKeys : ['blank_1'];
-
-    const handleAddBlankConfig = (blankKey: string) => {
-        const current = { ...(correctAnswer || {}) };
-        if (!current[blankKey]) {
-            current[blankKey] = {
-                accepted_answers: [''],
-                case_sensitive: false,
-            };
-            onChangeCorrectAnswer(current);
-        }
-    };
 
     const handleAnswersTextChange = (blankKey: string, text: string) => {
         const current = { ...(correctAnswer || {}) };

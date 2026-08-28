@@ -1,29 +1,27 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Download,
-    Upload,
-    Search,
-    FileSpreadsheet,
-    Users,
-    Plus,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    GraduationCap,
-    CheckSquare,
-    Square,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Download,
+Edit2,
+Eye,
+FileSpreadsheet,
+Filter,
+GraduationCap,
+Plus,
+Search,
+Trash2,
+Upload,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import AssignClassModal from './components/AssignClassModal';
 import BulkAssignClassModal from './components/BulkAssignClassModal';
 
@@ -117,19 +115,6 @@ export default function StudentIndex({
     const availableClasses = selectedCenterId
         ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
         : classes;
-
-    const handleCenterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCenterId = e.target.value;
-        setSelectedCenterId(newCenterId);
-
-        if (newCenterId && selectedClassId) {
-            const cls = classes.find((c) => String(c.id) === selectedClassId);
-
-            if (cls && String(cls.center_id) !== newCenterId) {
-                setSelectedClassId('');
-            }
-        }
-    };
 
     // Selection & Bulk Actions state
     const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);

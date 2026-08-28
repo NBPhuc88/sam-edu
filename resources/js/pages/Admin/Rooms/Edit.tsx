@@ -1,34 +1,34 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    DoorOpen,
-    Plus,
-    Trash2,
-    Armchair,
-    Monitor,
-    Tv,
-    Wind,
-    AlertCircle,
-    Building2,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import AppLayout from '@/layouts/AppLayout';
 import {
-    ROOM_STATUS_ACTIVE,
-    ROOM_STATUS_PAUSED,
-    ROOM_STATUS_CLOSED,
-    ROOM_STATUS_LABELS,
-    EQUIPMENT_STATUS_GOOD,
-    EQUIPMENT_STATUS_MAINTENANCE,
-    EQUIPMENT_STATUS_BROKEN,
-    EQUIPMENT_STATUS_LABELS,
+EQUIPMENT_STATUS_BROKEN,
+EQUIPMENT_STATUS_GOOD,
+EQUIPMENT_STATUS_LABELS,
+EQUIPMENT_STATUS_MAINTENANCE,
+ROOM_STATUS_ACTIVE,
+ROOM_STATUS_CLOSED,
+ROOM_STATUS_LABELS,
+ROOM_STATUS_PAUSED,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Armchair,
+ArrowLeft,
+Building2,
+DoorOpen,
+Monitor,
+Plus,
+Save,
+Trash2,
+Tv,
+Wind,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;

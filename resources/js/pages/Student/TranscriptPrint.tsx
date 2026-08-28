@@ -1,22 +1,15 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Award,
-    BookOpen,
-    Calendar,
-    CheckCircle2,
-    Download,
-    GraduationCap,
-    Mail,
-    MapPin,
-    Phone,
-    Printer,
-    School,
-    User,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+Award,
+BookOpen,
+Mail,
+MapPin,
+Phone,
+Printer
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ExamResultItem {
     id: number;

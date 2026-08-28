@@ -1,20 +1,20 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
-    LayoutDashboard,
-    Mail,
-    MapPin,
-    Menu,
-    Phone,
-    Sparkles,
-    X,
+ArrowRight,
+LayoutDashboard,
+Mail,
+MapPin,
+Menu,
+Phone,
+Sparkles,
+X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import AppLogo from '../components/common/AppLogo';
 import SeoHead from '../components/common/SeoHead';
 import Button from '../components/ui/Button';
 import ScrollToTop from '../components/ui/ScrollToTop';
-import { generateOrganizationSchema, generateWebSiteSchema } from '../utils/schemaGenerator';
+import { generateOrganizationSchema,generateWebSiteSchema } from '../utils/schemaGenerator';
 
 interface PublicLayoutProps {
     children: React.ReactNode;

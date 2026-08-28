@@ -1,32 +1,32 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    DoorOpen,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Calendar,
+DoorOpen,
+Edit2,
+Eye,
+Filter,
+Plus,
+Search,
+Trash2,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
+import {
+SCHEDULE_STATUS_ACTIVE,
+SCHEDULE_STATUS_INACTIVE,
+SCHEDULE_STATUS_LABELS,
+SESSION_STATUS_LABELS,
+SESSION_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
-import {
-    SCHEDULE_STATUS_ACTIVE,
-    SCHEDULE_STATUS_INACTIVE,
-    SCHEDULE_STATUS_LABELS,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_LABELS,
-} from '@/constants/enums';
 
 interface Center {
     id: number;

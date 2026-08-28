@@ -1,15 +1,15 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import AppLayout from '@/layouts/AppLayout';
 import {
-    SUBJECT_STATUS_ACTIVE,
-    SUBJECT_STATUS_INACTIVE,
-    SUBJECT_STATUS_LABELS,
+SUBJECT_STATUS_ACTIVE,
+SUBJECT_STATUS_INACTIVE,
+SUBJECT_STATUS_LABELS,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import { ArrowLeft,Save } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;

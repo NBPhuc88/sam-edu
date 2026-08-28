@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { router } from '@inertiajs/react';
-import { Search, GraduationCap, Users, AlertCircle, Check } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import { router } from '@inertiajs/react';
+import { AlertCircle,Check,Search,Users } from 'lucide-react';
+import React,{ useMemo,useState } from 'react';
 
 interface SchoolClassOption {
     id: number;

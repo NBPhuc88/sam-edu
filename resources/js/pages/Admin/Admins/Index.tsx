@@ -1,22 +1,22 @@
-import { router, useForm } from '@inertiajs/react';
+import { usePermission } from '@/hooks/usePermission';
+import { router,useForm } from '@inertiajs/react';
 import {
-    Edit,
-    Plus,
-    Search,
-    Shield,
-    Trash2,
-    UserCheck,
-    AlertCircle,
+AlertCircle,
+Edit,
+Plus,
+Search,
+Shield,
+Trash2,
+UserCheck,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React,{ useEffect,useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
-import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
-import { usePermission } from '@/hooks/usePermission';
 
 interface Center {
     id: number;

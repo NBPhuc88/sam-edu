@@ -1,15 +1,3 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    BookOpen,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    Calendar,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -17,12 +5,24 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { TruncatedText } from '@/components/ui/Tooltip';
-import AppLayout from '@/layouts/AppLayout';
 import {
-    SUBJECT_STATUS_ACTIVE,
-    SUBJECT_STATUS_INACTIVE,
-    SUBJECT_STATUS_LABELS,
+SUBJECT_STATUS_ACTIVE,
+SUBJECT_STATUS_INACTIVE,
+SUBJECT_STATUS_LABELS,
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+BookOpen,
+Calendar,
+Edit2,
+Filter,
+Plus,
+Search,
+Trash2,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {

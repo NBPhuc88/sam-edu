@@ -1,7 +1,6 @@
-import React from 'react';
-import { Plus, Trash2, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import MediaUploader from '@/components/ui/MediaUploader';
+import { ArrowRight,Image as ImageIcon,Plus,Trash2 } from 'lucide-react';
 
 interface LeftItem {
     id: string;

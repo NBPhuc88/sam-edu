@@ -1,22 +1,22 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
-    Award,
-    Calendar,
-    CheckCircle2,
-    FileCheck2,
-    Heart,
-    Layers,
-    Lock,
-    MessageSquare,
-    ShieldCheck,
-    Sliders,
-    Sparkles,
-    Target,
-    XCircle,
-    Zap,
+ArrowRight,
+Award,
+Calendar,
+CheckCircle2,
+FileCheck2,
+Heart,
+Layers,
+Lock,
+MessageSquare,
+ShieldCheck,
+Sliders,
+Sparkles,
+Target,
+XCircle,
+Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import PublicLayout from '../../layouts/PublicLayout';

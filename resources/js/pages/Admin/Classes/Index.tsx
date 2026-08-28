@@ -1,28 +1,26 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    GraduationCap,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Users,
-    MessageSquare,
-    AlertCircle,
-    Filter,
-    Calendar,
-    Award,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Award,
+Calendar,
+Edit2,
+Filter,
+GraduationCap,
+MessageSquare,
+Plus,
+Search,
+Trash2,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 import { useCanUseChat } from '@/hooks/usePlanFeature';

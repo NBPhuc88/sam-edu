@@ -1,11 +1,11 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    Save,
-    DollarSign,
-    Receipt,
+ArrowLeft,
+DollarSign,
+Receipt,
+Save,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import DatePicker from '../../../components/ui/DatePicker';

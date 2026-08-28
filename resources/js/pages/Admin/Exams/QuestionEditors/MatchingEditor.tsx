@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, ArrowRight, GitMerge } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { ArrowRight,GitMerge,Plus,Trash2 } from 'lucide-react';
 
 interface Item {
     id: string;

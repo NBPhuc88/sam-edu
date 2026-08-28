@@ -1,24 +1,24 @@
-import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
-import {
-    Pin,
-    PinOff,
-    Send,
-    ArrowLeft,
-    Smile,
-    Palette,
-    Check,
-    X,
-    Reply,
-} from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import { SENDER_TYPE_ADMIN,SENDER_TYPE_TEACHER } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
-import { SENDER_TYPE_ADMIN, SENDER_TYPE_TEACHER, SENDER_TYPE_STUDENT } from '@/constants/enums';
+import { Head,Link } from '@inertiajs/react';
+import axios from 'axios';
+import {
+ArrowLeft,
+Check,
+Palette,
+Pin,
+PinOff,
+Reply,
+Send,
+Smile,
+X,
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 import ChatEmojiPicker from './components/ChatEmojiPicker';
 import MessageReactionBar from './components/MessageReactionBar';
-import MessageReactionsDisplay, {
-    ReactionItem,
+import MessageReactionsDisplay,{
+ReactionItem,
 } from './components/MessageReactionsDisplay';
 
 interface SchoolClass {

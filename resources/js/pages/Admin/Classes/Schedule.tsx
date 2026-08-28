@@ -1,36 +1,33 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    Calendar,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    DoorOpen,
-    GraduationCap,
-    ArrowLeft,
-    Users,
-    MessageSquare,
-    Printer,
-    Plus,
-    UserCheck,
-    AlertCircle,
-    Info,
-    CalendarDays,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
-import AppLayout from '@/layouts/AppLayout';
-import { toISODateString, formatTime } from '@/lib/date';
 import {
-    SESSION_STATUS_CANCELLED,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_IN_PROGRESS,
-    SESSION_STATUS_COMPLETED,
-    SCHEDULE_STATUS_ACTIVE,
-    SCHEDULE_STATUS_INACTIVE,
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { toISODateString } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+Calendar,
+CalendarDays,
+ChevronLeft,
+ChevronRight,
+Clock,
+DoorOpen,
+GraduationCap,
+Info,
+MessageSquare,
+Plus,
+UserCheck,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -187,10 +184,6 @@ export default function ClassSchedulePage({
         if (dateStr) {
             handleNavigateWeek(dateStr);
         }
-    };
-
-    const handlePrint = () => {
-        window.print();
     };
 
     const getStatusBadge = (status: number) => {
@@ -427,15 +420,6 @@ export default function ClassSchedulePage({
                                 </Button>
                             </Link>
                         )}
-                        {/* <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Printer className="h-4 w-4" />}
-                            onClick={handlePrint}
-                            title="In thời khóa biểu"
-                        >
-                            In Lịch
-                        </Button> */}
                     </div>
                 </div>
 

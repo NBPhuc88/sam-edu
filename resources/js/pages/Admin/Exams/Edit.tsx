@@ -1,32 +1,32 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    FileCheck,
-    Clock,
-    Shuffle,
-    RotateCcw,
-    Calculator,
-    Award,
-    AlertCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import {
+EXAM_SKILL_LABELS,
+EXAM_STATUS_CANCELLED,
+EXAM_STATUS_COMPLETED,
+EXAM_STATUS_DRAFT,
+EXAM_STATUS_LABELS,
+EXAM_STATUS_PUBLISHED,
+SKILL_READING,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
-import QuestionBuilder from './QuestionBuilder';
-import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './types';
+import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
-    EXAM_STATUS_DRAFT,
-    EXAM_STATUS_PUBLISHED,
-    EXAM_STATUS_COMPLETED,
-    EXAM_STATUS_CANCELLED,
-    EXAM_STATUS_LABELS,
-    SKILL_READING,
-    EXAM_SKILL_LABELS,
-} from '@/constants/enums';
+AlertCircle,
+ArrowLeft,
+Award,
+Calculator,
+Clock,
+FileCheck,
+RotateCcw,
+Save,
+Shuffle,
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import QuestionBuilder from './QuestionBuilder';
+import { Center,Exam,ExamQuestionData,ExamSectionData,Subject } from './types';
 
 interface Props {
     exam: Exam;
@@ -93,8 +93,7 @@ export default function ExamEdit({
         ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
-    // Total questions & total score across sections
-    const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
+    // Total score across sections
     const totalScore = sections.reduce(
         (sum, sec) => sum + (sec.questions || []).reduce((qSum, q) => qSum + (Number(q.score) || 0), 0),
         0,

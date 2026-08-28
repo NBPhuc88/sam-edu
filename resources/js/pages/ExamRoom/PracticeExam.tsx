@@ -1,54 +1,53 @@
-import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
-import {
-    AlertCircle,
-    ArrowLeft,
-    Award,
-    CheckCircle2,
-    Clock,
-    FileText,
-    Flag,
-    HelpCircle,
-    Home,
-    Layers,
-    Pause,
-    Play,
-    RotateCcw,
-    Send,
-    Volume2,
-    XCircle,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { ExamSkill, QuestionType } from '../Admin/Exams/types';
 import {
-    QUESTION_TYPE_SINGLE_CHOICE,
-    QUESTION_TYPE_MULTIPLE_CHOICE,
-    QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
-    QUESTION_TYPE_FILL_IN_BLANK,
-    QUESTION_TYPE_DRAG_DROP_CLOZE,
-    QUESTION_TYPE_MATCHING,
-    QUESTION_TYPE_MATCHING_SENTENCES,
-    QUESTION_TYPE_MATCHING_IMAGE,
-    QUESTION_TYPE_ORDERING,
-    QUESTION_TYPE_DIAGRAM_LABELLING,
-    QUESTION_TYPE_FIND_MISTAKE,
-    QUESTION_TYPE_ESSAY,
-    QUESTION_TYPE_AUDIO_RECORD,
-    SKILL_LISTENING,
-    SKILL_READING,
-    SKILL_WRITING,
-    SKILL_SPEAKING,
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
 } from '@/constants/enums';
-import SortableOrderingList from './components/SortableOrderingList';
+import { Head,Link } from '@inertiajs/react';
+import axios from 'axios';
+import {
+AlertCircle,
+ArrowLeft,
+Award,
+CheckCircle2,
+Clock,
+FileText,
+Flag,
+Home,
+Layers,
+Pause,
+Play,
+RotateCcw,
+Send,
+Volume2,
+XCircle
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { ExamSkill,QuestionType } from '../Admin/Exams/types';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
-import MatchingAnswerForm from './components/MatchingAnswerForm';
-import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
+import MatchingAnswerForm from './components/MatchingAnswerForm';
+import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import QuestionReviewDetail from './components/QuestionReviewDetail';
+import SortableOrderingList from './components/SortableOrderingList';
 
 interface QuestionItem {
     id: number;
@@ -178,47 +177,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    };
-
-    const extractFillInBlankSlots = (content: string, options?: any, correctAnswer?: any) => {
-        const bracketRegex = /\[([^\]]+)\]/g;
-        const matches = Array.from((content || '').matchAll(bracketRegex));
-
-        if (matches.length > 0) {
-            return matches.map((m, idx) => {
-                const raw = m[1].trim();
-                const isBlankNumber = /^blank_(\d+)$/i.exec(raw);
-                const tagKey = isBlankNumber ? `blank_${isBlankNumber[1]}` : `blank_${idx + 1}`;
-                return {
-                    index: idx + 1,
-                    tagKey,
-                    fallbackKey: String(idx),
-                    label: `Vị trí (${idx + 1})`,
-                    originalWord: raw,
-                };
-            });
-        }
-
-        if (correctAnswer && typeof correctAnswer === 'object') {
-            const keys = Object.keys(correctAnswer);
-            if (keys.length > 0) {
-                return keys.map((k, idx) => ({
-                    index: idx + 1,
-                    tagKey: k,
-                    fallbackKey: String(idx),
-                    label: `Vị trí (${idx + 1})`,
-                }));
-            }
-        }
-
-        return [
-            {
-                index: 1,
-                tagKey: 'blank_1',
-                fallbackKey: '0',
-                label: 'Vị trí (1)',
-            },
-        ];
     };
 
     const renderFillInBlankContent = (content: string) => {

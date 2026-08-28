@@ -1,26 +1,24 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Award,
-    BookOpen,
-    CheckCircle2,
-    Clock,
-    FileCheck,
-    Filter,
-    HelpCircle,
-    Play,
-    RotateCcw,
-    Search,
-    Sparkles,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { Center, Exam, PaginatedData, Subject } from '../Admin/Exams/types';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Award,
+BookOpen,
+CheckCircle2,
+Clock,
+Filter,
+HelpCircle,
+Play,
+RotateCcw,
+Search,
+Sparkles
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import { Center,Exam,PaginatedData,Subject } from '../Admin/Exams/types';
 
 interface Props {
     exams: PaginatedData<Exam>;

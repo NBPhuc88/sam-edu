@@ -1,11 +1,11 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    Check,
-    HelpCircle,
-    ShieldCheck,
-    Sparkles,
-    Tag,
-    Zap,
+Check,
+HelpCircle,
+ShieldCheck,
+Sparkles,
+Tag,
+Zap,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';

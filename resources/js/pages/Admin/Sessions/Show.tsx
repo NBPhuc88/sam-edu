@@ -1,45 +1,40 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Clock,
-    User,
-    DoorOpen,
-    ArrowLeft,
-    ArrowRight,
-    CheckSquare,
-    AlertCircle,
-    History,
-    Edit3,
-    BookOpen,
-    FileText,
-    CheckCircle2,
-    XCircle,
-    UserCheck,
-    RotateCcw,
-    X,
-    Building2,
-    Save,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
-import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime, formatDateTime, toISODateString } from '@/lib/date';
 import {
-    SESSION_STATUS_CANCELLED,
-    SESSION_STATUS_SCHEDULED,
-    SESSION_STATUS_IN_PROGRESS,
-    SESSION_STATUS_COMPLETED,
-    ATTENDANCE_STATUS_PRESENT,
-    ATTENDANCE_STATUS_ABSENT,
-    ATTENDANCE_STATUS_LATE,
-    ATTENDANCE_STATUS_EXCUSED,
-    ATTENDANCE_STATUS_LABELS,
+ATTENDANCE_STATUS_ABSENT,
+ATTENDANCE_STATUS_EXCUSED,
+ATTENDANCE_STATUS_LATE,
+ATTENDANCE_STATUS_PRESENT,
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { formatDate,formatDateTime,formatTime,toISODateString } from '@/lib/date';
+import { Head,Link,useForm } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+ArrowRight,
+BookOpen,
+Calendar,
+CheckCircle2,
+CheckSquare,
+Clock,
+DoorOpen,
+Edit3,
+History,
+Save,
+User,
+UserCheck,
+XCircle
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface Center {
     id: number;

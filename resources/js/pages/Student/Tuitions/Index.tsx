@@ -1,39 +1,33 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    DollarSign,
-    Search,
-    CreditCard,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Receipt,
-    Calendar,
-    Eye,
-    BookOpen,
-    Wallet,
-    ArrowUpRight,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
+import {
+PAYMENT_METHOD_BANK_TRANSFER,
+PAYMENT_METHOD_CASH,
+PAYMENT_METHOD_CREDIT_CARD,
+PAYMENT_METHOD_LABELS,
+PAYMENT_METHOD_MOMO,
+PAYMENT_METHOD_ZALOPAY,
+TUITION_STATUS_OVERDUE,
+TUITION_STATUS_PAID,
+TUITION_STATUS_PARTIAL,
+TUITION_STATUS_PENDING
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head,router } from '@inertiajs/react';
 import {
-    PAYMENT_METHOD_BANK_TRANSFER,
-    PAYMENT_METHOD_CASH,
-    PAYMENT_METHOD_ZALOPAY,
-    PAYMENT_METHOD_MOMO,
-    PAYMENT_METHOD_CREDIT_CARD,
-    PAYMENT_METHOD_OTHER,
-    PAYMENT_METHOD_LABELS,
-    TUITION_STATUS_PAID,
-    TUITION_STATUS_PENDING,
-    TUITION_STATUS_PARTIAL,
-    TUITION_STATUS_OVERDUE,
-} from '@/constants/enums';
+BookOpen,
+CheckCircle2,
+Clock,
+Eye,
+Receipt,
+Search,
+Wallet
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface TuitionPayment {
     id: number;

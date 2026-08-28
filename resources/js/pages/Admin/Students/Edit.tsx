@@ -1,12 +1,12 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User, HeartHandshake, Calendar, GraduationCap, Check } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft,Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
+import React,{ useMemo,useState } from 'react';
 
 interface Center {
     id: number;
@@ -56,9 +56,6 @@ interface EditProps {
 }
 
 export default function StudentEdit({ student, centers = [], classes = [], errors = {} }: EditProps) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
-
     const [centerId, setCenterId] = useState<string>(String(student.center_id));
     const [fullName, setFullName] = useState<string>(student.full_name || '');
     const [username, setUsername] = useState<string>(student.username || '');

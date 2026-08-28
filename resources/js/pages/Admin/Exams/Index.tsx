@@ -1,18 +1,3 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    FileCheck,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Clock,
-    Award,
-    Eye,
-    HelpCircle,
-    CheckCircle2,
-    Users,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -20,21 +5,35 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
-import AppLayout from '@/layouts/AppLayout';
-import AssignExamModal from '../ClassExams/AssignExamModal';
-import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import {
-    EXAM_STATUS_DRAFT,
-    EXAM_STATUS_PUBLISHED,
-    EXAM_STATUS_COMPLETED,
-    EXAM_STATUS_CANCELLED,
-    EXAM_STATUS_LABELS,
-    SKILL_LISTENING,
-    SKILL_WRITING,
-    SKILL_SPEAKING,
-    SKILL_READING,
+EXAM_STATUS_CANCELLED,
+EXAM_STATUS_COMPLETED,
+EXAM_STATUS_DRAFT,
+EXAM_STATUS_LABELS,
+EXAM_STATUS_PUBLISHED,
+SKILL_LISTENING,
+SKILL_SPEAKING,
+SKILL_WRITING
 } from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Award,
+CheckCircle2,
+Clock,
+Edit2,
+Eye,
+FileCheck,
+HelpCircle,
+Plus,
+Search,
+Trash2,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import AssignExamModal from '../ClassExams/AssignExamModal';
+import { Center,Exam,PaginatedData,QUESTION_TYPES,SchoolClass,Subject } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
 
@@ -110,11 +109,7 @@ export default function ExamIndex({
         return Array.from(map.values());
     }, [all_exams, exams]);
 
-    // Filter classes and subjects by selected center
-    const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
-        : classes;
-
+    // Filter subjects by selected center
     const filteredSubjects = selectedCenterId
         ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
         : subjects;
@@ -538,10 +533,7 @@ export default function ExamIndex({
                                                                 variant="success"
                                                                 size="sm"
                                                                 icon={<Users className="h-3.5 w-3.5" />}
-                                                                onClick={() => {
-                                                                    setAssigningExamId(exam.id);
-                                                                    setAssignModalOpen(true);
-                                                                }}
+                                                                onClick={() => openAssignModal(exam.id)}
                                                                 title="Gán đề thi này cho một lớp học"
                                                             >
                                                                 Gán Lớp

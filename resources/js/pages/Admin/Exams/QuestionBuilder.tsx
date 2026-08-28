@@ -1,74 +1,73 @@
-import React, { useState } from 'react';
-import {
-    Plus,
-    Trash2,
-    Copy,
-    ChevronUp,
-    ChevronDown,
-    CheckCircle2,
-    ListChecks,
-    HelpCircle,
-    FileText,
-    GitMerge,
-    ArrowUpDown,
-    MapPin,
-    AlertTriangle,
-    PenTool,
-    Mic,
-    Sparkles,
-    Image as ImageIcon,
-    Volume2,
-    Headphones,
-    BookOpen,
-    Layers,
-    Edit3,
-    AlignLeft,
-    ChevronRight,
-} from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Modal from '@/components/ui/Modal';
-import MediaUploader from '@/components/ui/MediaUploader';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
-import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
-import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
-import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
+import MediaUploader from '@/components/ui/MediaUploader';
+import Modal from '@/components/ui/Modal';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
+} from '@/constants/enums';
+import {
+AlertTriangle,
+AlignLeft,
+ArrowUpDown,
+BookOpen,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+ChevronUp,
+Copy,
+Edit3,
+FileText,
+GitMerge,
+Headphones,
+HelpCircle,
+Image as ImageIcon,
+Layers,
+ListChecks,
+MapPin,
+Mic,
+PenTool,
+Plus,
+Sparkles,
+Trash2
+} from 'lucide-react';
+import React,{ useState } from 'react';
+import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
+import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
 import DragDropClozeEditor from './QuestionEditors/DragDropClozeEditor';
+import EssayEditor from './QuestionEditors/EssayEditor';
+import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
+import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
 import MatchingEditor from './QuestionEditors/MatchingEditor';
 import MatchingImageEditor from './QuestionEditors/MatchingImageEditor';
+import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
 import OrderingEditor from './QuestionEditors/OrderingEditor';
-import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
-import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
-import EssayEditor from './QuestionEditors/EssayEditor';
-import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
+import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
+import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
 import {
-    ExamQuestionData,
-    ExamSectionData,
-    ExamSkill,
-    EXAM_SKILLS,
-    QuestionType,
-    QUESTION_TYPES,
+EXAM_SKILLS,
+ExamQuestionData,
+ExamSectionData,
+ExamSkill,
+QUESTION_TYPES,
+QuestionType,
 } from './types';
-import {
-    SKILL_LISTENING,
-    SKILL_READING,
-    SKILL_WRITING,
-    SKILL_SPEAKING,
-    QUESTION_TYPE_SINGLE_CHOICE,
-    QUESTION_TYPE_MULTIPLE_CHOICE,
-    QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
-    QUESTION_TYPE_FILL_IN_BLANK,
-    QUESTION_TYPE_DRAG_DROP_CLOZE,
-    QUESTION_TYPE_MATCHING,
-    QUESTION_TYPE_MATCHING_IMAGE,
-    QUESTION_TYPE_MATCHING_SENTENCES,
-    QUESTION_TYPE_ORDERING,
-    QUESTION_TYPE_DIAGRAM_LABELLING,
-    QUESTION_TYPE_FIND_MISTAKE,
-    QUESTION_TYPE_ESSAY,
-    QUESTION_TYPE_AUDIO_RECORD,
-} from '@/constants/enums';
 
 interface Props {
     sections: ExamSectionData[];

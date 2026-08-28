@@ -1,10 +1,9 @@
-import React from 'react';
-import { Check, X } from 'lucide-react';
-import { QuestionReviewItem } from '../QuestionReviewDetail';
 import {
-    QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
-    QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
 } from '@/constants/enums';
+import { Check,X } from 'lucide-react';
+import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
     question: QuestionReviewItem;

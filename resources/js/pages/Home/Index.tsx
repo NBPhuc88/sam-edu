@@ -1,16 +1,16 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    Sparkles,
-    Building2,
-    GraduationCap,
-    CreditCard,
-    BarChart3,
-    Check,
-    ArrowRight,
-    Tag,
-    MessageSquare,
-    Search,
-    LayoutDashboard,
+ArrowRight,
+BarChart3,
+Building2,
+Check,
+CreditCard,
+GraduationCap,
+LayoutDashboard,
+MessageSquare,
+Search,
+Sparkles,
+Tag,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';

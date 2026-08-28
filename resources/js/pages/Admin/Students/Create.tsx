@@ -1,12 +1,12 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User, HeartHandshake, Calendar, GraduationCap, Check } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import { ArrowLeft,Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
+import React,{ useMemo,useState } from 'react';
 
 interface Center {
     id: number;
