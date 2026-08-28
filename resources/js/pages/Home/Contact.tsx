@@ -27,7 +27,7 @@ const contactSchema = z.object({
     phone: z
         .string()
         .min(1, 'Vui lòng nhập số điện thoại')
-        .regex(VIETNAMESE_PHONE_REGEX, 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678)'),
+        .regex(VIETNAMESE_PHONE_REGEX, 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678 hoặc 02863337777)'),
     email: z
         .string()
         .email('Email không đúng định dạng')

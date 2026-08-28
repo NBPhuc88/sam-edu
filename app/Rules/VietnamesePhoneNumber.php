@@ -20,11 +20,11 @@ class VietnamesePhoneNumber implements ValidationRule
             return;
         }
 
-        // Standard VN phone: 10 digits starting with 03, 05, 07, 08, 09 or +84 / 84
-        $pattern = '/^(0|\+84|84)(3|5|7|8|9)[0-9]{8}$/';
+        // Standard VN phone: 10-11 digits (mobile: 03x, 05x, 07x, 08x, 09x or landline: 02x) with optional +84 / 84
+        $pattern = '/^(0|\+84|84)(2[0-9]{9}|(3|5|7|8|9)[0-9]{8})$/';
 
         if (! preg_match($pattern, trim($value))) {
-            $fail('Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678 hoặc +84912345678).');
+            $fail('Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678, 02863337777 hoặc +84912345678).');
         }
     }
 }
