@@ -52,8 +52,17 @@ export const Edit: React.FC<EditProps> = ({
     });
 
     const handleUpdate = (formData: any) => {
+        if (!formData || Object.keys(formData).length === 0) {
+            setToast({
+                isOpen: true,
+                message: 'Không có thông tin nào thay đổi để cập nhật.',
+                type: 'info',
+            });
+            return;
+        }
+
         setIsLoading(true);
-        router.put(`/centers/${center.id}`, formData, {
+        router.patch(`/centers/${center.id}`, formData, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsLoading(false);

@@ -137,6 +137,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
     });
 
     // SaaS Subscription Plans Configuration Routes (Super Admin)
+    // Subscription Plans Management (Super Admin)
     Route::prefix('plans')->name('plans.')->group(function () {
         Route::get('/', [SubscriptionPlanController::class, 'index'])->name('index');
         Route::get('/create', [SubscriptionPlanController::class, 'create'])->name('create');

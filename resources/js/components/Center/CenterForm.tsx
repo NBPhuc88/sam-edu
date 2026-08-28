@@ -164,30 +164,47 @@ export const CenterForm: React.FC<CenterFormProps> = ({
             // Send full form payload on creation
             onSubmit(formData);
         } else {
-            // Mode EDIT: Send ONLY changed / dirty fields
+            // Mode EDIT: Send ONLY genuinely changed / dirty fields
             const changedPayload: Partial<CenterFormData> = {};
 
-            Object.keys(formData).forEach((key) => {
-                const k = key as keyof CenterFormData;
+            const numberFields: (keyof CenterFormData)[] = [
+                'status',
+                'subscription_plan_id',
+                'max_students',
+                'max_classes',
+            ];
+
+            (Object.keys(formData) as (keyof CenterFormData)[]).forEach((k) => {
+                if (k === 'id') return;
+
                 const currentValue = formData[k];
                 const originalValue = initialValues?.[k];
 
-                // Normalize date string for fair comparison if key is expires_at
                 if (k === 'expires_at') {
-                    const origDateStr = originalValue ? toISODateString(originalValue as string) : '';
+                    const currDate = currentValue ? toISODateString(currentValue as string) : '';
+                    const origDate = originalValue ? toISODateString(originalValue as string) : '';
 
-                    if (currentValue !== origDateStr) {
-                        changedPayload[k] = currentValue as any;
+                    if (currDate !== origDate) {
+                        changedPayload[k] = currDate as any;
                     }
-                } else if (
-                    currentValue !== originalValue &&
-                    currentValue !== (originalValue ?? '')
-                ) {
-                    changedPayload[k] = currentValue as any;
+                } else if (numberFields.includes(k)) {
+                    const currNum = Number(currentValue);
+                    const origNum = originalValue !== undefined && originalValue !== null ? Number(originalValue) : null;
+
+                    if (origNum === null || currNum !== origNum) {
+                        changedPayload[k] = currNum as any;
+                    }
+                } else {
+                    const currStr = String(currentValue ?? '').trim();
+                    const origStr = String(originalValue ?? '').trim();
+
+                    if (currStr !== origStr) {
+                        changedPayload[k] = (currentValue ?? '') as any;
+                    }
                 }
             });
 
-            // Always pass at least empty or dirty payload
+            // If nothing changed, pass empty object
             onSubmit(changedPayload);
         }
     };
