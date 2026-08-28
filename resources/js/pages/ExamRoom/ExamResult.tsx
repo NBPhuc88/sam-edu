@@ -20,6 +20,13 @@ import Card from '@/components/ui/Card';
 import AppLayout from '@/layouts/AppLayout';
 import QuestionReviewDetail from './components/QuestionReviewDetail';
 import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData } from './types';
+import {
+    SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+    QUESTION_TYPE_ESSAY,
+    QUESTION_TYPE_AUDIO_RECORD,
+    QUESTION_TYPE_FILL_IN_BLANK,
+    QUESTION_TYPE_DRAG_DROP_CLOZE,
+} from '@/constants/enums';
 
 interface Props {
     submission: ClassExamSubmission;
@@ -153,7 +160,7 @@ export default function ExamResult({
                                 Thí sinh: <strong>{submission.student?.full_name}</strong> ({submission.student?.student_code || submission.student?.username})
                             </span>
                             <span>
-                                Trạng thái: {submission.status === 'timeout_submitted' ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
+                                Trạng thái: {submission.status === SUBMISSION_STATUS_TIMEOUT_SUBMITTED ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
                             </span>
                         </div>
                     </div>
@@ -318,7 +325,7 @@ export default function ExamResult({
                     {(activeSection?.questions || []).map((q, qIdx) => {
                         const grade = gradingDetails[q.id!] || {};
                         const isCorrect = grade.is_correct === true;
-                        const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
+                        const isManual = q.question_type === QUESTION_TYPE_ESSAY || q.question_type === QUESTION_TYPE_AUDIO_RECORD;
                         const userAns = grade.user_answer;
                         const correctAns = grade.correct_answer;
 
@@ -375,7 +382,7 @@ export default function ExamResult({
                                 </div>
 
                                 {/* Question Content */}
-                                {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
+                                {q.question_type !== QUESTION_TYPE_FILL_IN_BLANK && q.question_type !== QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                     <p className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
                                         {q.content}
                                     </p>

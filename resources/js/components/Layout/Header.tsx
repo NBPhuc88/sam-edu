@@ -20,7 +20,7 @@ interface CenterData {
     id: number;
     code: string;
     name: string;
-    subscription_plan?: string | null;
+    subscription_plan?: number | null;
     expires_at?: string | null;
     is_expired?: boolean;
     expiring_soon?: boolean;

@@ -4,7 +4,7 @@ export interface ReactionItem {
     emoji: string;
     count: number;
     users: Array<{
-        sender_type: string;
+        sender_type: number;
         sender_id: number;
         sender_name: string;
     }>;
@@ -13,7 +13,7 @@ export interface ReactionItem {
 interface Props {
     reactions: ReactionItem[];
     currentUserId: number;
-    currentUserType: string;
+    currentUserType: number;
     onToggleReaction: (emoji: string) => void;
     isSelf: boolean;
 }

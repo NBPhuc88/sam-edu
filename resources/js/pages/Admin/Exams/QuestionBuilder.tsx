@@ -50,6 +50,25 @@ import {
     QuestionType,
     QUESTION_TYPES,
 } from './types';
+import {
+    SKILL_LISTENING,
+    SKILL_READING,
+    SKILL_WRITING,
+    SKILL_SPEAKING,
+    QUESTION_TYPE_SINGLE_CHOICE,
+    QUESTION_TYPE_MULTIPLE_CHOICE,
+    QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+    QUESTION_TYPE_FILL_IN_BLANK,
+    QUESTION_TYPE_DRAG_DROP_CLOZE,
+    QUESTION_TYPE_MATCHING,
+    QUESTION_TYPE_MATCHING_IMAGE,
+    QUESTION_TYPE_MATCHING_SENTENCES,
+    QUESTION_TYPE_ORDERING,
+    QUESTION_TYPE_DIAGRAM_LABELLING,
+    QUESTION_TYPE_FIND_MISTAKE,
+    QUESTION_TYPE_ESSAY,
+    QUESTION_TYPE_AUDIO_RECORD,
+} from '@/constants/enums';
 
 interface Props {
     sections: ExamSectionData[];
@@ -64,7 +83,7 @@ export default function QuestionBuilder({
 }: Props) {
     // Modal states
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
-    const [newSectionSkill, setNewSectionSkill] = useState<ExamSkill>('reading');
+    const [newSectionSkill, setNewSectionSkill] = useState<ExamSkill>(SKILL_READING);
     const [newSectionTitle, setNewSectionTitle] = useState('');
     const [newSectionDescription, setNewSectionDescription] = useState('');
 
@@ -101,7 +120,7 @@ export default function QuestionBuilder({
     // --- Section Management ---
     const handleOpenAddSectionModal = () => {
         const nextNum = sections.length + 1;
-        setNewSectionSkill('reading');
+        setNewSectionSkill(SKILL_READING);
         setNewSectionTitle(`Phần ${nextNum}: Đọc hiểu (Reading)`);
         setNewSectionDescription('');
         setIsAddSectionModalOpen(true);
@@ -236,7 +255,7 @@ export default function QuestionBuilder({
             content: '',
             score: 1.00,
             image_url: null,
-            audio_url: section.skill === 'listening' ? '' : null,
+            audio_url: section.skill === SKILL_LISTENING ? '' : null,
             options: getDefaultOptions(type),
             correct_answer: getDefaultCorrectAnswer(type),
             explanation: '',
@@ -328,14 +347,14 @@ export default function QuestionBuilder({
     // --- Defaults & Helpers ---
     const getDefaultOptions = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
+            case QUESTION_TYPE_SINGLE_CHOICE:
                 return [
                     { id: 'A', text: '' },
                     { id: 'B', text: '' },
                     { id: 'C', text: '' },
                     { id: 'D', text: '' },
                 ];
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return [
                     { id: 'A', text: '' },
                     { id: 'B', text: '' },
@@ -343,13 +362,13 @@ export default function QuestionBuilder({
                     { id: 'D', text: '' },
                     { id: 'E', text: '' },
                 ];
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return [
                     { id: 'TRUE', label: 'TRUE' },
                     { id: 'FALSE', label: 'FALSE' },
                     { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
                 ];
-            case 'drag_drop_cloze':
+            case QUESTION_TYPE_DRAG_DROP_CLOZE:
                 return {
                     words: [
                         { id: 'w1', text: 'destination' },
@@ -357,7 +376,7 @@ export default function QuestionBuilder({
                         { id: 'w3', text: 'mountain' },
                     ],
                 };
-            case 'matching':
+            case QUESTION_TYPE_MATCHING:
                 return {
                     left_items: [
                         { id: 'L1', label: 'Paragraph A' },
@@ -370,7 +389,7 @@ export default function QuestionBuilder({
                         { id: 'R3', text: 'iii. Tiêu đề mục 3' },
                     ],
                 };
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return {
                     sentences: [
                         { id: 'S1', text: 'The cat is sleeping under the tree.' },
@@ -384,7 +403,7 @@ export default function QuestionBuilder({
                         { id: 'IMG_D', image_url: '', label: 'Hình D (tùy chọn thừa)' },
                     ],
                 };
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return {
                     left_items: [
                         { id: 'L1', label: '1. Although it was raining heavily,' },
@@ -398,13 +417,13 @@ export default function QuestionBuilder({
                         { id: 'R4', text: 'D. she didn\'t attend the meeting.' },
                     ],
                 };
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return [
                     { id: 't1', text: 'Cụm từ 1' },
                     { id: 't2', text: 'Cụm từ 2' },
                     { id: 't3', text: 'Cụm từ 3' },
                 ];
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return {
                     labels: [
                         { id: 'loc_1', text: 'Vị trí 1' },
@@ -412,7 +431,7 @@ export default function QuestionBuilder({
                     ],
                     map_pins: ['A', 'B', 'C', 'D'],
                 };
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return {
                     sentence_segments: [
                         { id: 's1', text: 'Đoạn đầu câu ', underlined: false },
@@ -429,31 +448,31 @@ export default function QuestionBuilder({
 
     const getDefaultCorrectAnswer = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
+            case QUESTION_TYPE_SINGLE_CHOICE:
                 return 'A';
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return ['A', 'B'];
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return 'TRUE';
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return {
                     blank_1: { accepted_answers: [''], case_sensitive: false },
                 };
-            case 'drag_drop_cloze':
+            case QUESTION_TYPE_DRAG_DROP_CLOZE:
                 return {
                     blank_1: 'w1',
                 };
-            case 'matching':
+            case QUESTION_TYPE_MATCHING:
                 return { L1: 'R1', L2: 'R2', L3: 'R3' };
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return { S1: 'IMG_A', S2: 'IMG_B', S3: 'IMG_C' };
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return { L1: 'R1', L2: 'R2', L3: 'R3' };
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return ['t1', 't2', 't3'];
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return { loc_1: 'A', loc_2: 'B' };
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return 'A';
             default:
                 return null;
@@ -462,13 +481,13 @@ export default function QuestionBuilder({
 
     const getDefaultMetadata = (type: QuestionType) => {
         switch (type) {
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return { max_select: 2 };
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return { variant: 'T_F_NG' };
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return { word_limit: '', word_bank: [] };
-            case 'essay':
+            case QUESTION_TYPE_ESSAY:
                 return {
                     min_words: 250,
                     rubrics: [
@@ -478,7 +497,7 @@ export default function QuestionBuilder({
                         { criteria: 'Grammatical Range', max_score: 2.5 },
                     ],
                 };
-            case 'audio_record':
+            case QUESTION_TYPE_AUDIO_RECORD:
                 return { prep_time_seconds: 60, max_record_duration_seconds: 120 };
             default:
                 return {};
@@ -487,29 +506,29 @@ export default function QuestionBuilder({
 
     const getTypeIcon = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
+            case QUESTION_TYPE_SINGLE_CHOICE:
                 return <CheckCircle2 className="h-4 w-4 text-blue-600" />;
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return <ListChecks className="h-4 w-4 text-indigo-600" />;
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return <HelpCircle className="h-4 w-4 text-emerald-600" />;
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return <FileText className="h-4 w-4 text-amber-600" />;
-            case 'matching':
+            case QUESTION_TYPE_MATCHING:
                 return <GitMerge className="h-4 w-4 text-purple-600" />;
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return <ImageIcon className="h-4 w-4 text-teal-600" />;
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return <GitMerge className="h-4 w-4 text-violet-600" />;
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return <ArrowUpDown className="h-4 w-4 text-cyan-600" />;
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return <MapPin className="h-4 w-4 text-teal-600" />;
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return <AlertTriangle className="h-4 w-4 text-rose-600" />;
-            case 'essay':
+            case QUESTION_TYPE_ESSAY:
                 return <PenTool className="h-4 w-4 text-orange-600" />;
-            case 'audio_record':
+            case QUESTION_TYPE_AUDIO_RECORD:
                 return <Mic className="h-4 w-4 text-pink-600" />;
             default:
                 return <HelpCircle className="h-4 w-4 text-gray-500" />;
@@ -518,7 +537,7 @@ export default function QuestionBuilder({
 
     const getSkillConfig = (skill: ExamSkill) => {
         switch (skill) {
-            case 'listening':
+            case SKILL_LISTENING:
                 return {
                     headerBg: 'bg-blue-600',
                     border: 'border-blue-300',
@@ -528,7 +547,7 @@ export default function QuestionBuilder({
                     icon: <Headphones className="h-4 w-4 text-white" />,
                     name: 'Nghe (Listening)',
                 };
-            case 'writing':
+            case SKILL_WRITING:
                 return {
                     headerBg: 'bg-amber-500',
                     border: 'border-amber-300',
@@ -538,7 +557,7 @@ export default function QuestionBuilder({
                     icon: <PenTool className="h-4 w-4 text-white" />,
                     name: 'Viết (Writing)',
                 };
-            case 'speaking':
+            case SKILL_SPEAKING:
                 return {
                     headerBg: 'bg-pink-500',
                     border: 'border-pink-300',
@@ -548,7 +567,7 @@ export default function QuestionBuilder({
                     icon: <Mic className="h-4 w-4 text-white" />,
                     name: 'Nói (Speaking)',
                 };
-            case 'reading':
+            case SKILL_READING:
             default:
                 return {
                     headerBg: 'bg-emerald-600',
@@ -563,8 +582,8 @@ export default function QuestionBuilder({
     };
 
     const activeModalSkill = activeQuestionModalSectionIdx !== null
-        ? sections[activeQuestionModalSectionIdx]?.skill || 'reading'
-        : 'reading';
+        ? sections[activeQuestionModalSectionIdx]?.skill ?? SKILL_READING
+        : SKILL_READING;
 
     const compatibleQuestionTypes = QUESTION_TYPES.filter((t) => t.skills.includes(activeModalSkill));
 
@@ -738,9 +757,9 @@ export default function QuestionBuilder({
                                                         Kỹ Năng Phần Thi:
                                                     </label>
                                                     <div className="flex items-center gap-2 pt-0.5">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${section.skill === 'listening' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                                                            section.skill === 'writing' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                                                                section.skill === 'speaking' ? 'bg-pink-100 text-pink-800 border border-pink-200' :
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${section.skill === SKILL_LISTENING ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                            section.skill === SKILL_WRITING ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                                                section.skill === SKILL_SPEAKING ? 'bg-pink-100 text-pink-800 border border-pink-200' :
                                                                     'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                             }`}>
                                                             {secConfig.icon}
@@ -787,9 +806,9 @@ export default function QuestionBuilder({
                                                 {secQuestions.map((q, qIndex) => {
                                                     const qKey = getQuestionKey(secIdx, qIndex);
                                                     const isExpanded = expandedQuestionKeys.includes(qKey);
-                                                    const normalizedType: QuestionType = (q.question_type as string) === 'true_false' ? 'true_false_not_given' : (q.question_type || 'single_choice');
+                                                    const normalizedType: QuestionType = q.question_type || QUESTION_TYPE_SINGLE_CHOICE;
                                                     const typeInfo = QUESTION_TYPES.find((t) => t.type === normalizedType) || QUESTION_TYPES[0];
-                                                    const isListening = section.skill === 'listening';
+                                                    const isListening = section.skill === SKILL_LISTENING;
 
                                                     return (
                                                         <div
@@ -836,7 +855,7 @@ export default function QuestionBuilder({
                                                                             step="0.25"
                                                                             min={0}
                                                                             value={q.score}
-                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: e.target.value })}
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: Number(e.target.value) })}
                                                                             className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
                                                                             title="Điểm số câu hỏi"
                                                                         />
@@ -903,7 +922,7 @@ export default function QuestionBuilder({
                                                                             <select
                                                                                 value={normalizedType}
                                                                                 onChange={(e) => {
-                                                                                    const newType = e.target.value as QuestionType;
+                                                                                    const newType = Number(e.target.value) as QuestionType;
                                                                                     handleUpdateQuestion(secIdx, qIndex, {
                                                                                         question_type: newType,
                                                                                         options: getDefaultOptions(newType),
@@ -954,7 +973,7 @@ export default function QuestionBuilder({
                                                                             <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
                                                                                 Nội Dung Câu Hỏi / Đề Bài (*)
                                                                             </label>
-                                                                            {normalizedType !== 'diagram_labelling' && (
+                                                                            {normalizedType !== QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => toggleImageAttachment(secIdx, qIndex)}
@@ -978,7 +997,7 @@ export default function QuestionBuilder({
                                                                     </div>
 
                                                                     {/* Image Attachment */}
-                                                                    {normalizedType !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
+                                                                    {normalizedType !== QUESTION_TYPE_DIAGRAM_LABELLING && (q.image_url || expandedImageKeys.includes(qKey)) && (
                                                                         <div className="space-y-2">
                                                                             <MediaUploader
                                                                                 value={q.image_url}
@@ -993,7 +1012,7 @@ export default function QuestionBuilder({
 
                                                                     {/* Type Specific Editor */}
                                                                     <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
-                                                                        {normalizedType === 'single_choice' && (
+                                                                        {normalizedType === QUESTION_TYPE_SINGLE_CHOICE && (
                                                                             <SingleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer}
@@ -1002,7 +1021,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'multiple_choice' && (
+                                                                        {normalizedType === QUESTION_TYPE_MULTIPLE_CHOICE && (
                                                                             <MultipleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1013,7 +1032,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'true_false_not_given' && (
+                                                                        {normalizedType === QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN && (
                                                                             <TrueFalseEditor
                                                                                 correctAnswer={q.correct_answer}
                                                                                 metadata={q.metadata || {}}
@@ -1023,7 +1042,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'fill_in_blank' && (
+                                                                        {normalizedType === QUESTION_TYPE_FILL_IN_BLANK && (
                                                                             <FillInBlankEditor
                                                                                 content={q.content}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1034,7 +1053,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'drag_drop_cloze' && (
+                                                                        {normalizedType === QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                                                             <DragDropClozeEditor
                                                                                 content={q.content || ''}
                                                                                 options={q.options || { words: [] }}
@@ -1046,7 +1065,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1056,7 +1075,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching_image' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING_IMAGE && (
                                                                             <MatchingImageEditor
                                                                                 options={q.options || { sentences: [], images: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1066,7 +1085,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching_sentences' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING_SENTENCES && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1076,7 +1095,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'ordering' && (
+                                                                        {normalizedType === QUESTION_TYPE_ORDERING && (
                                                                             <OrderingEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1086,7 +1105,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'diagram_labelling' && (
+                                                                        {normalizedType === QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                                             <DiagramLabellingEditor
                                                                                 imageUrl={q.image_url || ''}
                                                                                 options={q.options || { labels: [], map_pins: [] }}
@@ -1098,7 +1117,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'find_mistake' && (
+                                                                        {normalizedType === QUESTION_TYPE_FIND_MISTAKE && (
                                                                             <FindMistakeEditor
                                                                                 options={q.options || { sentence_segments: [] }}
                                                                                 correctAnswer={q.correct_answer}
@@ -1107,14 +1126,14 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'essay' && (
+                                                                        {normalizedType === QUESTION_TYPE_ESSAY && (
                                                                             <EssayEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'audio_record' && (
+                                                                        {normalizedType === QUESTION_TYPE_AUDIO_RECORD && (
                                                                             <AudioRecordEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 audioUrl={q.audio_url}
@@ -1208,15 +1227,15 @@ export default function QuestionBuilder({
                                             : 'border-gray-200 bg-white hover:bg-gray-50'
                                             }`}
                                     >
-                                        <div className={`p-2 rounded-lg ${sk.skill === 'listening' ? 'bg-blue-100 text-blue-700' :
-                                            sk.skill === 'reading' ? 'bg-emerald-100 text-emerald-700' :
-                                                sk.skill === 'writing' ? 'bg-amber-100 text-amber-700' :
+                                        <div className={`p-2 rounded-lg ${sk.skill === SKILL_LISTENING ? 'bg-blue-100 text-blue-700' :
+                                            sk.skill === SKILL_READING ? 'bg-emerald-100 text-emerald-700' :
+                                                sk.skill === SKILL_WRITING ? 'bg-amber-100 text-amber-700' :
                                                     'bg-pink-100 text-pink-700'
                                             }`}>
-                                            {sk.skill === 'listening' && <Headphones className="h-4 w-4" />}
-                                            {sk.skill === 'reading' && <BookOpen className="h-4 w-4" />}
-                                            {sk.skill === 'writing' && <PenTool className="h-4 w-4" />}
-                                            {sk.skill === 'speaking' && <Mic className="h-4 w-4" />}
+                                            {sk.skill === SKILL_LISTENING && <Headphones className="h-4 w-4" />}
+                                            {sk.skill === SKILL_READING && <BookOpen className="h-4 w-4" />}
+                                            {sk.skill === SKILL_WRITING && <PenTool className="h-4 w-4" />}
+                                            {sk.skill === SKILL_SPEAKING && <Mic className="h-4 w-4" />}
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-gray-900">{sk.label}</p>

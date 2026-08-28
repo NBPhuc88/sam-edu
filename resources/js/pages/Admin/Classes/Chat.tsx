@@ -14,6 +14,7 @@ import {
 import React, { useState, useEffect, useRef } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
+import { SENDER_TYPE_ADMIN, SENDER_TYPE_TEACHER, SENDER_TYPE_STUDENT } from '@/constants/enums';
 import ChatEmojiPicker from './components/ChatEmojiPicker';
 import MessageReactionBar from './components/MessageReactionBar';
 import MessageReactionsDisplay, {
@@ -28,7 +29,7 @@ interface SchoolClass {
 }
 
 interface CurrentUser {
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     sender_avatar: string | null;
@@ -38,7 +39,7 @@ interface CurrentUser {
 interface ReplyToData {
     id: number;
     class_id: number;
-    sender_type: string;
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     message: string;
@@ -50,7 +51,7 @@ interface ChatMessageData {
     reply_to_id?: number | null;
     reply_to?: ReplyToData | null;
     reactions?: ReactionItem[];
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     sender_avatar: string | null;
@@ -475,15 +476,15 @@ export default function ClassChatPage({
         }, 10);
     };
 
-    const renderRoleBadge = (type: string) => {
+    const renderRoleBadge = (type: number) => {
         switch (type) {
-            case 'admin':
+            case SENDER_TYPE_ADMIN:
                 return (
                     <span className="inline-flex items-center rounded-full bg-[#f3e8ff] px-2 py-0.5 text-[11px] font-medium text-[#7e22ce] shadow-2xs">
                         người sở hữu
                     </span>
                 );
-            case 'teacher':
+            case SENDER_TYPE_TEACHER:
                 return (
                     <span className="inline-flex items-center rounded-full bg-[#dbeafe] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8] shadow-2xs">
                         giáo viên

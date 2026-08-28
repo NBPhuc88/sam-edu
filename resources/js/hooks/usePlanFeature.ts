@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react';
+import { PLAN_TYPE_FREE } from '@/constants/enums';
 
 interface CenterSharedData {
     id: number;
     code: string;
     name: string;
-    subscription_plan?: string | null;
-    plan_type?: 'trial' | 'basic' | 'advanced' | null;
+    subscription_plan?: number | null;
+    plan_type?: number | null;
     allowed_features?: string[];
     max_classes?: number | null;
     max_students?: number | null;
@@ -32,8 +33,8 @@ interface PageProps {
  * Custom hook kiểm tra xem trung tâm của người dùng hiện tại có được phép sử dụng tính năng này không.
  *
  * - Super Admin (hoặc người dùng không thuộc trung tâm nào) luôn có toàn quyền (true).
- * - Gói Dùng Thử (trial) luôn mở khóa toàn bộ tính năng (true).
- * - Gói trả phí (basic, advanced) sẽ kiểm tra theo danh sách `allowed_features`.
+ * - Gói Dùng Thử (PLAN_TYPE_FREE) luôn mở khóa toàn bộ tính năng (true).
+ * - Gói trả phí sẽ kiểm tra theo danh sách `allowed_features`.
  */
 export function usePlanFeature(featureCode: string): boolean {
     const { auth, center } = usePage().props as unknown as PageProps;
@@ -52,7 +53,7 @@ export function usePlanFeature(featureCode: string): boolean {
     }
 
     // Gói Dùng Thử mở khóa tất cả tính năng
-    if (center.plan_type === 'trial' || center.subscription_plan === 'trial') {
+    if (center.plan_type === PLAN_TYPE_FREE || center.subscription_plan === PLAN_TYPE_FREE) {
         return true;
     }
 

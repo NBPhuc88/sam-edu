@@ -40,7 +40,7 @@ interface ClassSubjectSchedule {
     weeks?: Record<string, [string, string][]>;
     room_id?: number | null;
     room?: { id: number; name: string };
-    status?: string;
+    status?: number;
     off_days?: any[];
     extra_days?: any[];
 }
@@ -52,7 +52,7 @@ interface ClassSubjectItem {
     teacher?: { id: number; full_name: string; teacher_code: string };
     start_date?: string;
     end_date?: string;
-    status?: string;
+    status?: number;
     class_schedules?: ClassSubjectSchedule[];
     classSchedules?: ClassSubjectSchedule[];
 }

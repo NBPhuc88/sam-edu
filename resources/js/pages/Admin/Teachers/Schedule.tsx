@@ -23,6 +23,14 @@ import Modal from '@/components/ui/Modal';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString, formatTime } from '@/lib/date';
+import {
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_COMPLETED,
+    SCHEDULE_STATUS_ACTIVE,
+    SCHEDULE_STATUS_INACTIVE,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -45,7 +53,7 @@ interface RoomEquipment {
     name: string;
     quantity: number;
     unit?: string | null;
-    status: string;
+    status: number;
 }
 
 interface RoomInfo {
@@ -81,7 +89,7 @@ interface TeacherSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     change_type?: string;
     topic: string | null;
     note: string | null;
@@ -98,14 +106,31 @@ interface TeacherSession {
     is_rescheduled_new_slot?: boolean;
     reschedule_info?: RescheduleInfo;
     reschedule_from_info?: RescheduleInfo;
+    class_subject?: {
+        school_class?: {
+            id: number;
+            name: string;
+            code: string;
+            students_count?: number;
+        };
+        subject?: {
+            id: number;
+            name: string;
+            code: string;
+        };
+    };
+    room?: RoomInfo;
 }
 
 interface WeekDay {
-    weekday_number: number;
-    weekday_label: string;
-    date_formatted: string;
-    date_raw: string;
-    is_today: boolean;
+    day_name?: string;
+    date?: string;
+    day_of_week?: number;
+    is_today?: boolean;
+    date_formatted?: string;
+    weekday_number?: number;
+    weekday_label?: string;
+    date_raw?: string;
 }
 
 interface TimeSlot {
@@ -121,7 +146,7 @@ interface RecurringSchedule {
     start_time: string;
     end_time: string;
     room_id: number | null;
-    status: string;
+    status: number;
     class_subject?: {
         school_class?: {
             id: number;
@@ -243,7 +268,8 @@ export default function TeacherSchedulePage({
         return t.substring(0, 5);
     };
 
-    const getSessionsForCell = (slot: TimeSlot, dateRaw: string) => {
+    const getSessionsForCell = (slot: TimeSlot, dateRaw?: string) => {
+        if (!dateRaw) return [];
         return sessions.filter((s) => {
             const sStart = formatTime(s.start_time);
             const sEnd = formatTime(s.end_time);
@@ -253,7 +279,8 @@ export default function TeacherSchedulePage({
         });
     };
 
-    const getRecurringForCell = (slot: TimeSlot, weekdayNumber: number) => {
+    const getRecurringForCell = (slot: TimeSlot, weekdayNumber?: number) => {
+        if (weekdayNumber === undefined) return [];
         return recurringSchedules.filter((rs) => {
             const rStart = formatTime(rs.start_time);
             const rEnd = formatTime(rs.end_time);
@@ -266,7 +293,7 @@ export default function TeacherSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string, changeType?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return (
                 <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
@@ -279,37 +306,25 @@ export default function TeacherSchedulePage({
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
                         Đã dạy
                     </span>
                 );
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
-                        Chưa điểm danh
-                    </span>
-                );
-            case 'cancelled':
+            case SESSION_STATUS_CANCELLED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
                         Nghỉ dạy
                     </span>
                 );
-            case 'rescheduled':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
-                        Đã đổi lịch
-                    </span>
-                );
-            case 'scheduled':
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return (
@@ -339,7 +354,7 @@ export default function TeacherSchedulePage({
         }
     };
 
-    const getSessionCardStyle = (status: string, sessionDate?: string, isOldSlot?: boolean, changeType?: string) => {
+    const getSessionCardStyle = (status: number, sessionDate?: string, isOldSlot?: boolean, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return {
                 container: 'border-purple-200 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs',
@@ -362,42 +377,28 @@ export default function TeacherSchedulePage({
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return {
                     container: 'border-emerald-200 bg-emerald-50/80 hover:border-emerald-400 hover:bg-emerald-100/70 shadow-2xs',
                     subjectText: 'text-emerald-900',
                     subjectIcon: 'text-emerald-600',
                     orderText: 'text-emerald-800',
                 };
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return {
                     container: 'border-purple-300 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs ring-1 ring-purple-300',
                     subjectText: 'text-purple-900',
                     subjectIcon: 'text-purple-600',
                     orderText: 'text-purple-800',
                 };
-            case 'unattended':
-                return {
-                    container: 'border-rose-200 bg-rose-50/80 hover:border-rose-300 hover:bg-rose-100/70 shadow-2xs',
-                    subjectText: 'text-rose-900',
-                    subjectIcon: 'text-rose-600',
-                    orderText: 'text-rose-800',
-                };
-            case 'cancelled':
+            case SESSION_STATUS_CANCELLED:
                 return {
                     container: 'border-red-200 bg-red-50/80 hover:border-red-400 hover:bg-red-100/70 shadow-2xs',
                     subjectText: 'text-red-900',
                     subjectIcon: 'text-red-600',
                     orderText: 'text-red-800',
                 };
-            case 'rescheduled':
-                return {
-                    container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
-                    subjectText: 'text-amber-900',
-                    subjectIcon: 'text-amber-600',
-                    orderText: 'text-amber-800',
-                };
-            case 'scheduled':
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return {
@@ -1005,7 +1006,7 @@ export default function TeacherSchedulePage({
                                     Đổi Lịch Dạy
                                 </Button>
                             )}
-                            {['in_progress', 'completed', 'unattended'].includes(selectedSession.status) ? (
+                            {selectedSession.status !== SESSION_STATUS_CANCELLED ? (
                                 <Button
                                     type="button"
                                     variant="success"

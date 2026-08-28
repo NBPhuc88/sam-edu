@@ -42,7 +42,7 @@ interface SubmissionItem {
     score: number | null;
     total_correct: number;
     total_questions: number;
-    status: 'in_progress' | 'submitted' | 'timeout_submitted' | 'missed';
+    status: number;
     is_graded: boolean;
     requires_manual_grading: boolean;
     graded_at: string | null;

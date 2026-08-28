@@ -9,13 +9,28 @@ import DiagramLabellingReview from './reviews/DiagramLabellingReview';
 import OrderingReview from './reviews/OrderingReview';
 import FindMistakeReview from './reviews/FindMistakeReview';
 import EssayAudioReview from './reviews/EssayAudioReview';
+import {
+    QUESTION_TYPE_SINGLE_CHOICE,
+    QUESTION_TYPE_MULTIPLE_CHOICE,
+    QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+    QUESTION_TYPE_FILL_IN_BLANK,
+    QUESTION_TYPE_DRAG_DROP_CLOZE,
+    QUESTION_TYPE_MATCHING,
+    QUESTION_TYPE_MATCHING_IMAGE,
+    QUESTION_TYPE_MATCHING_SENTENCES,
+    QUESTION_TYPE_ORDERING,
+    QUESTION_TYPE_DIAGRAM_LABELLING,
+    QUESTION_TYPE_FIND_MISTAKE,
+    QUESTION_TYPE_ESSAY,
+    QUESTION_TYPE_AUDIO_RECORD,
+} from '@/constants/enums';
 
 export interface QuestionReviewItem {
     id?: number;
     code?: string;
     title?: string | null;
-    question_type: string;
-    skill?: string;
+    question_type: number;
+    skill?: number;
     content: string;
     image_url?: string | null;
     audio_url?: string | null;
@@ -36,35 +51,35 @@ export default function QuestionReviewDetail({ question }: Props) {
 
     const renderTypeSpecificReview = () => {
         switch (question_type) {
-            case 'single_choice':
-            case 'multiple_choice':
-            case 'true_false_not_given':
+            case QUESTION_TYPE_SINGLE_CHOICE:
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return <ChoiceReview question={question} />;
 
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return <FillInBlankReview question={question} />;
 
-            case 'drag_drop_cloze':
+            case QUESTION_TYPE_DRAG_DROP_CLOZE:
                 return <DragDropClozeReview question={question} />;
 
-            case 'matching':
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING:
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return <MatchingReview question={question} />;
 
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return <MatchingImageReview question={question} />;
 
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return <DiagramLabellingReview question={question} />;
 
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return <OrderingReview question={question} />;
 
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return <FindMistakeReview question={question} />;
 
-            case 'essay':
-            case 'audio_record':
+            case QUESTION_TYPE_ESSAY:
+            case QUESTION_TYPE_AUDIO_RECORD:
                 return <EssayAudioReview question={question} />;
 
             default:

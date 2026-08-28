@@ -39,7 +39,7 @@ interface ClassSubjectSchedule {
     weeks?: Record<string, [string, string][]>;
     room_id?: number | null;
     room?: { id: number; name: string };
-    status?: string;
+    status?: number;
     off_days?: any[];
     extra_days?: any[];
 }
@@ -51,7 +51,7 @@ interface ClassSubjectItem {
     teacher?: { id: number; full_name: string; teacher_code: string };
     start_date?: string;
     end_date?: string;
-    status?: string;
+    status?: number;
     class_schedules?: ClassSubjectSchedule[];
     classSchedules?: ClassSubjectSchedule[];
 }
@@ -91,7 +91,7 @@ interface Room {
     center_id: number;
 }
 
-interface ClassSchedule {
+interface ScheduleDetail {
     id: number;
     class_subject_id: number;
     weeks: Record<string, [string, string][]>;
@@ -101,7 +101,7 @@ interface ClassSchedule {
     excluded_holiday_ids?: number[] | null;
     holidays?: VNHoliday[] | null;
     room_id: number | null;
-    status: string;
+    status: number;
     class_subject?: {
         id: number;
         class_id: number;
@@ -130,7 +130,7 @@ interface ClassSchedule {
 }
 
 interface EditProps {
-    schedule: ClassSchedule;
+    schedule: ScheduleDetail;
     centers: Center[];
     classes: SchoolClass[];
     subjects: Subject[];
@@ -403,7 +403,7 @@ export default function ScheduleEdit({
     const [startDate, setStartDate] = useState<string>(
         toISODateString(classSubject?.start_date || classSubject?.school_class?.start_date)
     );
-    const [status] = useState<string>(schedule.status || 'active');
+    const [status] = useState<number>(schedule.status ?? 1);
 
     const initialWeeklyTimes = React.useMemo(() => {
         const base: Record<number, { enabled: boolean; slots: WeekDaySlot[] }> = {

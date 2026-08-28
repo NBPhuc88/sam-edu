@@ -15,8 +15,19 @@ import Card from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
-
 import { usePermission } from '@/hooks/usePermission';
+import {
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_COMPLETED,
+    ATTENDANCE_STATUS_PRESENT,
+    ATTENDANCE_STATUS_ABSENT,
+    ATTENDANCE_STATUS_LATE,
+    ATTENDANCE_STATUS_EXCUSED,
+    ATTENDANCE_STATUS_LABELS,
+} from '@/constants/enums';
+
 interface StudentAttendanceItem {
     id: number;
     full_name: string;
@@ -62,7 +73,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
 }

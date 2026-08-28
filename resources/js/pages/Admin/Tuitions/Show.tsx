@@ -18,12 +18,27 @@ import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
+import {
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_CASH,
+    PAYMENT_METHOD_MOMO,
+    PAYMENT_METHOD_ZALOPAY,
+    PAYMENT_METHOD_CREDIT_CARD,
+    PAYMENT_METHOD_OTHER,
+    PAYMENT_METHOD_OPTIONS,
+    PAYMENT_METHOD_LABELS,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PENDING,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_OVERDUE,
+} from '@/constants/enums';
+
 interface TuitionPaymentItem {
     id: number;
     student_tuition_id: number;
     amount: number;
     payment_date: string;
-    payment_method: string;
+    payment_method: number;
     transaction_code: string | null;
     note: string | null;
     received_by: number | null;
@@ -73,7 +88,7 @@ interface ShowProps {
             username: string;
             full_name: string;
         };
-        payments: TuitionPaymentItem[];
+        payments?: TuitionPaymentItem[];
     };
     errors?: Record<string, string>;
 }
@@ -86,7 +101,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
         String(Math.max(0, Number(tuition.remaining_amount) || 0)),
     );
     const [addDate, setAddDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [addMethod, setAddMethod] = useState<string>('bank_transfer');
+    const [addMethod, setAddMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [addCode, setAddCode] = useState<string>('');
     const [addNote, setAddNote] = useState<string>('');
     const [isAdding, setIsAdding] = useState(false);
@@ -96,7 +111,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const [editingPayment, setEditingPayment] = useState<TuitionPaymentItem | null>(null);
     const [editAmount, setEditAmount] = useState<string>('');
     const [editDate, setEditDate] = useState<string>('');
-    const [editMethod, setEditMethod] = useState<string>('bank_transfer');
+    const [editMethod, setEditMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [editCode, setEditCode] = useState<string>('');
     const [editNote, setEditNote] = useState<string>('');
     const [isEditing, setIsEditing] = useState(false);
@@ -113,22 +128,8 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
         }).format(amount || 0);
     };
 
-    const getPaymentMethodLabel = (method: string) => {
-        switch (method) {
-            case 'cash':
-                return 'Tiền mặt';
-            case 'bank_transfer':
-                return 'Chuyển khoản NH';
-            case 'momo':
-                return 'Ví MoMo';
-            case 'zalopay':
-                return 'Ví ZaloPay';
-            case 'credit_card':
-                return 'Thẻ tín dụng';
-            case 'other':
-            default:
-                return 'Khác';
-        }
+    const getPaymentMethodLabel = (method: number) => {
+        return PAYMENT_METHOD_LABELS[method] || 'Khác';
     };
 
     const getStatusBadge = (status: number) => {
@@ -322,7 +323,7 @@ return;
                             {formatCurrency(paid)}
                         </h3>
                         <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                            <span>{tuition.payments.length} đợt đóng</span>
+                            <span>{tuition.payments?.length ?? 0} đợt đóng</span>
                             <span className="font-bold text-emerald-800">{percent}%</span>
                         </div>
                     </Card>
@@ -399,7 +400,7 @@ return;
                             <div>
                                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
                                     <Receipt className="h-4.5 w-4.5 text-emerald-600" />
-                                    Lịch Sử Các Đợt Thu Tiền ({tuition.payments.length} đợt)
+                                    Lịch Sử Các Đợt Thu Tiền ({tuition.payments?.length ?? 0} đợt)
                                 </h2>
                                 <p className="mt-0.5 text-xs text-gray-500">
                                     Danh sách các lần nộp tiền học phí của học sinh cho khóa học này.
@@ -441,7 +442,7 @@ return;
                                         tuition.payments.map((p, index) => (
                                             <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                                                 <td className="px-4 py-3.5 font-bold text-gray-900">
-                                                    Đợt {tuition.payments.length - index}
+                                                    Đợt {(tuition.payments?.length ?? 0) - index}
                                                 </td>
                                                 <td className="px-4 py-3.5 font-mono font-medium text-gray-700">
                                                     {p.payment_date}
@@ -591,15 +592,14 @@ return;
                             </label>
                             <select
                                 value={addMethod}
-                                onChange={(e) => setAddMethod(e.target.value)}
+                                onChange={(e) => setAddMethod(Number(e.target.value))}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                             >
-                                <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                                <option value="cash">Tiền mặt</option>
-                                <option value="momo">Ví MoMo</option>
-                                <option value="zalopay">Ví ZaloPay</option>
-                                <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                                <option value="other">Khác</option>
+                                {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -705,15 +705,14 @@ return;
                         </label>
                         <select
                             value={editMethod}
-                            onChange={(e) => setEditMethod(e.target.value)}
+                            onChange={(e) => setEditMethod(Number(e.target.value))}
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
-                            <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                            <option value="cash">Tiền mặt</option>
-                            <option value="momo">Ví MoMo</option>
-                            <option value="zalopay">Ví ZaloPay</option>
-                            <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                            <option value="other">Khác</option>
+                            {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

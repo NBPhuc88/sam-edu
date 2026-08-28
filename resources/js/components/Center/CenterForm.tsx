@@ -291,7 +291,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                                 Gói Dịch Vụ SaaS Hiện Tại
                             </label>
                             {(() => {
-                                const currentPlanObj = subscriptionPlans.find((p: any) => p.code === formData.subscription_plan);
+                                const currentPlanObj = subscriptionPlans.find((p: any) => p.code === formData.subscription_plan || p.id === formData.subscription_plan || String(p.id) === String(formData.subscription_plan));
                                 const displayPlanText = currentPlanObj ? currentPlanObj.name : formData.subscription_plan;
 
                                 return (

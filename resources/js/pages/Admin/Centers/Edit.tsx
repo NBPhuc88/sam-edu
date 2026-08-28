@@ -10,6 +10,14 @@ import Toast from '../../../components/ui/Toast';
 import AppLayout from '../../../layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 import { usePermission } from '@/hooks/usePermission';
+import {
+    SUBSCRIPTION_STATUS_ACTIVE,
+    SUBSCRIPTION_STATUS_PENDING,
+    SUBSCRIPTION_STATUS_EXPIRED,
+    SUBSCRIPTION_STATUS_CANCELLED,
+    SUBSCRIPTION_STATUS_LABELS,
+    PLAN_TYPE_LABELS,
+} from '@/constants/enums';
 
 interface SubscriptionRecord {
     id: number;
@@ -19,7 +27,7 @@ interface SubscriptionRecord {
     duration_days: number;
     starts_at: string;
     ends_at: string;
-    status: string;
+    status: number;
     created_at?: string;
 }
 
@@ -84,7 +92,18 @@ export const Edit: React.FC<EditProps> = ({
                                     Quản Lý Gói Cước SaaS Trung Tâm
                                 </h3>
                                 <p className="mt-1 text-xs text-gray-600">
-                                    Gói hiện tại: <strong className="text-emerald-700">{center.subscription_plan}</strong> • Hạn dùng: <strong>{center.expires_at ? formatDate(center.expires_at) : 'Vô thời hạn'}</strong>
+                                    {(() => {
+                                        const matchedPlan = subscriptionPlans?.find(
+                                            (p: any) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+                                        );
+                                        const planType = center.plan_type ?? matchedPlan?.plan_type ?? center.subscription_plan;
+                                        const planName = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || (center.subscription_plan ? `Gói #${center.subscription_plan}` : 'N/A');
+                                        return (
+                                            <>
+                                                Gói hiện tại: <strong className="text-emerald-700">{planName}</strong> • Hạn dùng: <strong>{center.expires_at ? formatDate(center.expires_at) : 'Vô thời hạn'}</strong>
+                                            </>
+                                        );
+                                    })()}
                                 </p>
                             </div>
                             <Button
@@ -155,8 +174,8 @@ export const Edit: React.FC<EditProps> = ({
                                                 {formatDate(sub.ends_at)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <Badge variant={sub.status === 'active' ? 'active' : 'info'}>
-                                                    {sub.status.toUpperCase()}
+                                                <Badge variant={sub.status === SUBSCRIPTION_STATUS_ACTIVE ? 'active' : sub.status === SUBSCRIPTION_STATUS_EXPIRED ? 'danger' : 'info'}>
+                                                    {SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status}
                                                 </Badge>
                                             </td>
                                         </tr>

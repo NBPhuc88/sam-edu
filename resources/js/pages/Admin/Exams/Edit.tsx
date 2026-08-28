@@ -18,6 +18,15 @@ import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './types';
+import {
+    EXAM_STATUS_DRAFT,
+    EXAM_STATUS_PUBLISHED,
+    EXAM_STATUS_COMPLETED,
+    EXAM_STATUS_CANCELLED,
+    EXAM_STATUS_LABELS,
+    SKILL_READING,
+    EXAM_SKILL_LABELS,
+} from '@/constants/enums';
 
 interface Props {
     exam: Exam;
@@ -47,7 +56,7 @@ export default function ExamEdit({
     const [maxAttempts, setMaxAttempts] = useState<number | string>(exam.max_attempts || 1);
     const [isPractice, setIsPractice] = useState(Boolean(exam.is_practice));
     const [description, setDescription] = useState(exam.description || '');
-    const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>(exam.status || 'draft');
+    const [status, setStatus] = useState<number>(exam.status ?? EXAM_STATUS_DRAFT);
 
     // Sections State (Initialize from exam.sections or fallback to grouping exam.questions)
     const [sections, setSections] = useState<ExamSectionData[]>(() => {
@@ -59,16 +68,16 @@ export default function ExamEdit({
         if (exam.questions && exam.questions.length > 0) {
             const skillMap: Record<string, ExamQuestionData[]> = {};
             exam.questions.forEach((q) => {
-                const sk = q.skill || 'reading';
+                const sk = q.skill ?? SKILL_READING;
                 if (!skillMap[sk]) skillMap[sk] = [];
                 skillMap[sk].push(q);
             });
 
             return Object.entries(skillMap).map(([sk, qs], idx) => ({
                 tempId: `sec_legacy_${idx}`,
-                title: `Phần ${idx + 1}: ${sk === 'listening' ? 'Kỹ Năng Nghe' : sk === 'writing' ? 'Kỹ Năng Viết' : sk === 'speaking' ? 'Kỹ Năng Nói' : 'Kỹ Năng Đọc'}`,
+                title: `Phần ${idx + 1}: ${EXAM_SKILL_LABELS[Number(sk)] || 'Kỹ Năng Đọc'}`,
                 description: null,
-                skill: sk as any,
+                skill: Number(sk),
                 order_index: idx,
                 questions: qs,
             }));
@@ -126,14 +135,14 @@ export default function ExamEdit({
                     id: sec.id || undefined,
                     title: (sec.title || '').trim(),
                     description: (sec.description || '').trim() || null,
-                    skill: sec.skill || 'reading',
+                    skill: sec.skill ?? SKILL_READING,
                     order_index: sIdx,
                     questions: (sec.questions || []).map((q, qIdx) => ({
                         id: q.id || undefined,
                         code: (q.code || '').trim() || null,
                         title: (q.title || '').trim() || null,
-                        question_type: q.question_type || 'single_choice',
-                        skill: sec.skill || 'reading',
+                        question_type: q.question_type,
+                        skill: sec.skill ?? SKILL_READING,
                         content: q.content || '',
                         image_url: q.image_url || null,
                         audio_url: q.audio_url || null,
@@ -449,14 +458,14 @@ export default function ExamEdit({
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as any)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="draft">Bản nháp</option>
-                                    <option value="published">Đã công bố</option>
-                                    <option value="completed">Đã kết thúc</option>
-                                    <option value="cancelled">Đã hủy</option>
+                                    <option value={EXAM_STATUS_DRAFT}>{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</option>
+                                    <option value={EXAM_STATUS_PUBLISHED}>{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</option>
+                                    <option value={EXAM_STATUS_COMPLETED}>{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</option>
+                                    <option value={EXAM_STATUS_CANCELLED}>{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</option>
                                 </select>
                             </div>
 

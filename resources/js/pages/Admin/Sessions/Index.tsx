@@ -23,6 +23,14 @@ import AppLayout from '@/layouts/AppLayout';
 import { formatDate, formatTime, toISODateString } from '@/lib/date';
 
 import { usePermission } from '@/hooks/usePermission';
+import {
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_COMPLETED,
+    SESSION_STATUS_LABELS,
+} from '@/constants/enums';
+
 interface Center {
     id: number;
     name: string;
@@ -61,7 +69,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
     attendances_count?: number;
@@ -233,26 +241,22 @@ export default function SessionIndex({
         router.get('/sessions', params, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;
@@ -676,7 +680,7 @@ export default function SessionIndex({
                                                 {/* Actions */}
                                                 <td className="px-4 py-3.5 text-right whitespace-nowrap">
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                                                        {session.status !== SESSION_STATUS_CANCELLED ? (
                                                             <Link href={`/attendance/session/${session.id}`}>
                                                                 <button
                                                                     type="button"

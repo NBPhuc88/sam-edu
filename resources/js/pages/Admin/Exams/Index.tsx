@@ -24,6 +24,17 @@ import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from '../ClassExams/AssignExamModal';
 import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
+import {
+    EXAM_STATUS_DRAFT,
+    EXAM_STATUS_PUBLISHED,
+    EXAM_STATUS_COMPLETED,
+    EXAM_STATUS_CANCELLED,
+    EXAM_STATUS_LABELS,
+    SKILL_LISTENING,
+    SKILL_WRITING,
+    SKILL_SPEAKING,
+    SKILL_READING,
+} from '@/constants/enums';
 
 import { usePermission } from '@/hooks/usePermission';
 
@@ -44,7 +55,7 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         subject_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -72,12 +83,12 @@ export default function ExamIndex({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : 'all',
     );
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [deletingExam, setDeletingExam] = useState<Exam | null>(null);
+    const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Quick View Questions Modal
@@ -117,35 +128,36 @@ export default function ExamIndex({
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
                 subject_id: selectedSubjectId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
     };
 
-    const handleResetFilter = () => {
+    const handleReset = () => {
         setSearch('');
         setSelectedCenterId('');
         setSelectedClassId('');
         setSelectedSubjectId('');
         setSelectedStatus('all');
-        router.get('/exams');
+        router.get('/exams', {}, { preserveState: true });
     };
 
     const openDeleteModal = (exam: Exam) => {
-        setDeletingExam(exam);
+        setExamToDelete(exam);
         setDeleteModalOpen(true);
     };
 
     const closeDeleteModal = () => {
-        setDeletingExam(null);
+        setExamToDelete(null);
         setDeleteModalOpen(false);
     };
 
-    const confirmDeleteExam = () => {
-        if (!deletingExam) return;
+    const handleDelete = () => {
+        if (!examToDelete) return;
+
         setIsDeleting(true);
-        router.delete(`/exams/${deletingExam.id}`, {
+        router.delete(`/exams/${examToDelete.id}`, {
             onSuccess: () => {
                 closeDeleteModal();
                 setIsDeleting(false);
@@ -166,18 +178,18 @@ export default function ExamIndex({
         setAssignModalOpen(true);
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: number) => {
         switch (status) {
-            case 'published':
-                return <Badge variant="active" className="whitespace-nowrap">Đã công bố</Badge>;
-            case 'draft':
-                return <Badge variant="pending" className="whitespace-nowrap">Bản nháp</Badge>;
-            case 'completed':
-                return <Badge variant="info" className="whitespace-nowrap">Hoàn thành</Badge>;
-            case 'cancelled':
-                return <Badge variant="expired" className="whitespace-nowrap">Đã hủy</Badge>;
+            case EXAM_STATUS_PUBLISHED:
+                return <Badge variant="active" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</Badge>;
+            case EXAM_STATUS_DRAFT:
+                return <Badge variant="pending" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</Badge>;
+            case EXAM_STATUS_COMPLETED:
+                return <Badge variant="info" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</Badge>;
+            case EXAM_STATUS_CANCELLED:
+                return <Badge variant="expired" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</Badge>;
             default:
-                return <Badge variant="info" className="whitespace-nowrap">{status}</Badge>;
+                return <Badge variant="info" className="whitespace-nowrap">{EXAM_STATUS_LABELS[status] || status}</Badge>;
         }
     };
 
@@ -359,7 +371,7 @@ export default function ExamIndex({
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                onClick={handleResetFilter}
+                                onClick={handleReset}
                             >
                                 Đặt Lại
                             </Button>
@@ -632,19 +644,19 @@ export default function ExamIndex({
                                                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-600 font-mono text-2xs font-bold text-white">
                                                     {idx + 1}
                                                 </span>
-                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${q.skill === 'listening'
+                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${q.skill === SKILL_LISTENING
                                                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                    : q.skill === 'writing'
+                                                    : q.skill === SKILL_WRITING
                                                         ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                        : q.skill === 'speaking'
+                                                        : q.skill === SKILL_SPEAKING
                                                             ? 'bg-pink-50 text-pink-700 border border-pink-200'
                                                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                     }`}>
-                                                    {q.skill === 'listening'
+                                                    {q.skill === SKILL_LISTENING
                                                         ? '🎧 Nghe'
-                                                        : q.skill === 'writing'
+                                                        : q.skill === SKILL_WRITING
                                                             ? '✍️ Viết'
-                                                            : q.skill === 'speaking'
+                                                            : q.skill === SKILL_SPEAKING
                                                                 ? '🗣️ Nói'
                                                                 : '📖 Đọc'}
                                                 </span>
@@ -687,11 +699,11 @@ export default function ExamIndex({
             {/* Delete Confirmation Modal */}
             <DeleteConfirmModal
                 isOpen={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                onConfirm={confirmDeleteExam}
+                onClose={closeDeleteModal}
+                onConfirm={handleDelete}
                 entity="exams"
-                entityId={deletingExam?.id || null}
-                entityName={`đề thi "${deletingExam?.name}" (${deletingExam?.code})`}
+                entityId={examToDelete?.id || null}
+                entityName={`đề thi "${examToDelete?.name}" (${examToDelete?.code})`}
                 isDeleting={isDeleting}
             />
         </AppLayout>

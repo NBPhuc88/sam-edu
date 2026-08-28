@@ -30,6 +30,16 @@ import Pagination from '@/components/ui/Pagination';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
+import {
+    ATTENDANCE_STATUS_PRESENT,
+    ATTENDANCE_STATUS_ABSENT,
+    ATTENDANCE_STATUS_LATE,
+    ATTENDANCE_STATUS_EXCUSED,
+    GENDER_MALE,
+    GENDER_FEMALE,
+    GENDER_OTHER,
+    GENDER_LABELS,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -44,9 +54,9 @@ interface Student {
     full_name: string;
     email: string | null;
     phone: string | null;
-    address: string | null;
     gender: number | null;
     date_of_birth: string | null;
+    address: string | null;
     admission_date: string | null;
     parent_name: string | null;
     parent_phone: string | null;
@@ -68,7 +78,7 @@ interface StudentSessionItem {
     subject_code?: string | null;
     teacher_name?: string | null;
     room_name?: string | null;
-    attendance_status: string;
+    attendance_status: number;
     attendance_note?: string | null;
     check_in_at?: string | null;
 }
@@ -160,16 +170,15 @@ export default function StudentShow({
         window.location.href = `/students/${student.id}/export-attendances?${params.toString()}`;
     };
 
-    const getAttendanceBadge = (status: string) => {
+    const getAttendanceBadge = (status: number) => {
         switch (status) {
-            case 'present':
+            case ATTENDANCE_STATUS_PRESENT:
                 return <Badge variant="active">Có mặt</Badge>;
-            case 'absent':
+            case ATTENDANCE_STATUS_ABSENT:
                 return <Badge variant="danger">Vắng</Badge>;
-            case 'late':
+            case ATTENDANCE_STATUS_LATE:
                 return <Badge variant="pending">Đi trễ</Badge>;
-            case 'excused':
-            case 'leave':
+            case ATTENDANCE_STATUS_EXCUSED:
                 return <Badge variant="expired">Có phép</Badge>;
             default:
                 return <Badge variant="info">Chưa điểm danh</Badge>;
@@ -178,10 +187,7 @@ export default function StudentShow({
 
     const formatGender = (gender: number | null) => {
         if (!gender) return '—';
-        if (gender === 1) return 'Nam';
-        if (gender === 2) return 'Nữ';
-        if (gender === 3) return 'Khác';
-        return '—';
+        return GENDER_LABELS[gender] || '—';
     };
 
     const formatRelationship = (rel: string | null) => {

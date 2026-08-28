@@ -19,6 +19,14 @@ import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 import QuestionBuilder from './QuestionBuilder';
 import { Center, ExamSectionData, Subject } from './types';
+import {
+    EXAM_STATUS_DRAFT,
+    EXAM_STATUS_PUBLISHED,
+    EXAM_STATUS_COMPLETED,
+    EXAM_STATUS_CANCELLED,
+    EXAM_STATUS_LABELS,
+    SKILL_READING,
+} from '@/constants/enums';
 
 interface Props {
     centers: Center[];
@@ -50,7 +58,7 @@ export default function ExamCreate({
     const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
     const [isPractice, setIsPractice] = useState(false);
     const [description, setDescription] = useState('');
-    const [status, setStatus] = useState<'draft' | 'published'>('draft');
+    const [status, setStatus] = useState<number>(EXAM_STATUS_DRAFT);
 
     // Sections State
     const [sections, setSections] = useState<ExamSectionData[]>([
@@ -58,7 +66,7 @@ export default function ExamCreate({
             tempId: 'sec_1',
             title: 'Phần 1: Kỹ Năng Đọc Hiểu',
             description: null,
-            skill: 'reading',
+            skill: SKILL_READING,
             order_index: 0,
             questions: [],
         },
@@ -425,14 +433,14 @@ export default function ExamCreate({
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as any)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="draft">Bản nháp</option>
-                                    <option value="published">Đã công bố</option>
-                                    <option value="completed">Đã kết thúc</option>
-                                    <option value="cancelled">Đã hủy</option>
+                                    <option value={EXAM_STATUS_DRAFT}>{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</option>
+                                    <option value={EXAM_STATUS_PUBLISHED}>{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</option>
+                                    <option value={EXAM_STATUS_COMPLETED}>{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</option>
+                                    <option value={EXAM_STATUS_CANCELLED}>{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</option>
                                 </select>
                             </div>
 

@@ -3,7 +3,7 @@ import React from 'react';
 export interface ExamSectionTabItem {
     id?: number;
     title: string;
-    skill?: string;
+    skill?: number;
     totalQuestions?: number;
     correctCount?: number;
     answeredCount?: number;

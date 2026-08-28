@@ -50,14 +50,15 @@ class Center extends Model
     protected function casts(): array
     {
         return [
-            'status'        => 'integer',
-            'plan_type'     => 'integer',
-            'expires_at'    => 'datetime:d-m-Y H:i',
-            'trial_ends_at' => 'datetime:d-m-Y H:i',
-            'max_students'  => 'integer',
-            'max_classes'   => 'integer',
-            'created_at'    => 'datetime:d-m-Y H:i',
-            'updated_at'    => 'datetime:d-m-Y H:i',
+            'status'            => 'integer',
+            'subscription_plan' => 'integer',
+            'plan_type'         => 'integer',
+            'expires_at'        => 'datetime:d-m-Y H:i',
+            'trial_ends_at'     => 'datetime:d-m-Y H:i',
+            'max_students'      => 'integer',
+            'max_classes'       => 'integer',
+            'created_at'        => 'datetime:d-m-Y H:i',
+            'updated_at'        => 'datetime:d-m-Y H:i',
         ];
     }
 

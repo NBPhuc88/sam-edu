@@ -16,6 +16,16 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import AppLayout from '@/layouts/AppLayout';
+import {
+    ROOM_STATUS_ACTIVE,
+    ROOM_STATUS_PAUSED,
+    ROOM_STATUS_CLOSED,
+    ROOM_STATUS_LABELS,
+    EQUIPMENT_STATUS_GOOD,
+    EQUIPMENT_STATUS_MAINTENANCE,
+    EQUIPMENT_STATUS_BROKEN,
+    EQUIPMENT_STATUS_LABELS,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -27,7 +37,7 @@ interface EquipmentRow {
     name: string;
     quantity: number;
     unit: string;
-    status: 'good' | 'maintenance' | 'broken';
+    status: number;
     note: string;
 }
 
@@ -55,7 +65,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
     const [code, setCode] = useState('');
     const [capacity, setCapacity] = useState('');
     const [location, setLocation] = useState<string>('');
-    const [status, setStatus] = useState<number>(1);
+    const [status, setStatus] = useState<number>(ROOM_STATUS_ACTIVE);
     const [equipments, setEquipments] = useState<EquipmentRow[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -66,7 +76,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                 name: preset?.name || '',
                 quantity: preset?.quantity || 1,
                 unit: preset?.unit || 'bộ',
-                status: 'good',
+                status: EQUIPMENT_STATUS_GOOD,
                 note: '',
             },
         ]);
@@ -257,9 +267,9 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                     value={status}
                                     onChange={(val) => setStatus(Number(val))}
                                     options={[
-                                        { value: 1, label: 'Đang hoạt động' },
-                                        { value: 0, label: 'Tạm dừng' },
-                                        { value: 2, label: 'Đã đóng' },
+                                        { value: ROOM_STATUS_ACTIVE, label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
+                                        { value: ROOM_STATUS_PAUSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
+                                        { value: ROOM_STATUS_CLOSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
                                     ]}
                                     error={errors.status}
                                 />
@@ -390,12 +400,12 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                                             </label>
                                             <select
                                                 value={item.status}
-                                                onChange={(e) => handleEquipmentChange(index, 'status', e.target.value as any)}
+                                                onChange={(e) => handleEquipmentChange(index, 'status', Number(e.target.value))}
                                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                             >
-                                                <option value="good">Hoạt động tốt</option>
-                                                <option value="maintenance">Đang bảo trì</option>
-                                                <option value="broken">Bị hỏng</option>
+                                                <option value={EQUIPMENT_STATUS_GOOD}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_GOOD]}</option>
+                                                <option value={EQUIPMENT_STATUS_MAINTENANCE}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_MAINTENANCE]}</option>
+                                                <option value={EQUIPMENT_STATUS_BROKEN}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_BROKEN]}</option>
                                             </select>
                                         </div>
 

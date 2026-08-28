@@ -57,7 +57,7 @@ interface ClassSubject {
 interface LatestChatMessage {
     id: number;
     class_id: number;
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     message: string;
@@ -102,7 +102,7 @@ interface Props {
         search?: string;
         center_id?: number | null;
         class_id?: number | null;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
     isSuperAdmin?: boolean;
@@ -123,7 +123,7 @@ export default function ChatGroupIndex({
         filters.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || '1',
+        filters.status !== undefined ? String(filters.status) : '1',
     );
 
     const handleSearch = (e: React.FormEvent) => {

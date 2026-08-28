@@ -35,9 +35,20 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import CustomPieChart from '../components/ui/CustomPieChart';
-import type { Column } from '../components/ui/DataTable';
-import DataTable from '../components/ui/DataTable';
+import DataTable, { Column } from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
+import {
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_TRIAL,
+    CENTER_STATUS_PENDING_PAYMENT,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_LOCKED,
+    CENTER_STATUS_LABELS,
+    PLAN_TYPE_FREE,
+    PLAN_TYPE_STANDARD,
+    PLAN_TYPE_PREMIUM,
+    PLAN_TYPE_LABELS,
+} from '@/constants/enums';
 import AppLayout from '../layouts/AppLayout';
 
 export const Dashboard: React.FC<any> = (props) => {
@@ -75,19 +86,13 @@ export const Dashboard: React.FC<any> = (props) => {
             {
                 header: 'Gói Dịch Vụ',
                 cell: (row) => {
-                    const planLabels: Record<string, string> = {
-                        trial: 'Dùng Thử (1 Tháng)',
-                        basic_5: 'Cơ Bản (5 Lớp)',
-                        basic_20: 'Cơ Bản (20 Lớp)',
-                        advanced_5: 'Nâng Cao (5 Lớp)',
-                        advanced_20: 'Nâng Cao (20 Lớp)',
-                    };
-                    const isAdvanced = row.subscription_plan?.startsWith('advanced');
-                    const isTrial = row.subscription_plan === 'trial';
+                    const planType = row.plan_type ?? row.subscription_plan;
+                    const isAdvanced = planType === PLAN_TYPE_PREMIUM;
+                    const isTrial = planType === PLAN_TYPE_FREE;
 
                     return (
                         <Badge variant={isAdvanced ? 'active' : isTrial ? 'info' : 'pending'}>
-                            {planLabels[row.subscription_plan] || row.subscription_plan || 'Cơ Bản'}
+                            {PLAN_TYPE_LABELS[planType] || (row.subscription_plan ? `Gói #${row.subscription_plan}` : 'Cơ Bản')}
                         </Badge>
                     );
                 },
@@ -100,8 +105,8 @@ export const Dashboard: React.FC<any> = (props) => {
             {
                 header: 'Trạng Thái',
                 cell: (row) => (
-                    <Badge variant={row.status === 'active' ? 'active' : 'expired'}>
-                        {row.status === 'active' ? 'Đang hoạt động' : 'Chờ kích hoạt'}
+                    <Badge variant={row.status === CENTER_STATUS_ACTIVE ? 'active' : 'expired'}>
+                        {CENTER_STATUS_LABELS[row.status] || (row.status === CENTER_STATUS_ACTIVE ? 'Đang hoạt động' : 'Chờ kích hoạt')}
                     </Badge>
                 ),
             },

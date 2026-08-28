@@ -21,12 +21,25 @@ import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import {
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_CASH,
+    PAYMENT_METHOD_ZALOPAY,
+    PAYMENT_METHOD_MOMO,
+    PAYMENT_METHOD_CREDIT_CARD,
+    PAYMENT_METHOD_OTHER,
+    PAYMENT_METHOD_LABELS,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PENDING,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_OVERDUE,
+} from '@/constants/enums';
 
 interface TuitionPayment {
     id: number;
-    amount: number | string;
+    amount: number;
     payment_date: string;
-    payment_method: string;
+    payment_method: number;
     transaction_code?: string | null;
     received_by?: string | null;
     note?: string | null;
@@ -35,10 +48,10 @@ interface TuitionPayment {
 interface StudentTuitionItem {
     id: number;
     title: string;
-    total_amount: number | string;
-    paid_amount: number | string;
-    remaining_amount: number | string;
-    status: string;
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
     due_date?: string | null;
     created_at?: string | null;
     payments_count?: number;
@@ -72,17 +85,16 @@ interface Props {
     };
     tuitions: PaginatedData<StudentTuitionItem>;
     stats: {
-        total_amount: number;
-        paid_amount: number;
-        remaining_amount: number;
-        total_records: number;
-        completed_count: number;
+        total_invoiced: number;
+        total_paid: number;
+        total_remaining: number;
+        paid_count: number;
         partial_count: number;
         unpaid_count: number;
     };
     filters: {
         search?: string;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
 }
@@ -94,10 +106,10 @@ export default function StudentTuitionIndex({
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || 'all');
+    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status !== undefined ? String(filters.status) : 'all');
     const [selectedTuition, setSelectedTuition] = useState<StudentTuitionItem | null>(null);
 
-    const formatCurrency = (val: number | string) => {
+    const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
@@ -110,7 +122,7 @@ export default function StudentTuitionIndex({
             '/student/tuitions',
             {
                 search: search || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                status: selectedStatus !== 'all' ? parseInt(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -122,29 +134,33 @@ export default function StudentTuitionIndex({
         router.get('/student/tuitions', {}, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: number) => {
         switch (status) {
-            case 'paid':
+            case TUITION_STATUS_PAID:
                 return <Badge variant="active">Đã Hoàn Thành</Badge>;
-            case 'partial':
+            case TUITION_STATUS_PARTIAL:
                 return <Badge variant="pending">Đang Đóng Từng Phần</Badge>;
-            case 'overdue':
+            case TUITION_STATUS_OVERDUE:
                 return <Badge variant="expired">Quá Hạn</Badge>;
-            case 'unpaid':
+            case TUITION_STATUS_PENDING:
             default:
                 return <Badge variant="danger">Chưa Đóng</Badge>;
         }
     };
 
-    const getPaymentMethodBadge = (method: string) => {
+    const getPaymentMethodBadge = (method: number) => {
         switch (method) {
-            case 'bank_transfer':
+            case PAYMENT_METHOD_BANK_TRANSFER:
                 return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">Chuyển khoản</span>;
-            case 'zalopay':
+            case PAYMENT_METHOD_ZALOPAY:
                 return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">QR ZaloPay</span>;
-            case 'cash':
+            case PAYMENT_METHOD_MOMO:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">Ví MoMo</span>;
+            case PAYMENT_METHOD_CREDIT_CARD:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">Thẻ tín dụng</span>;
+            case PAYMENT_METHOD_CASH:
             default:
-                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Tiền mặt</span>;
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">{PAYMENT_METHOD_LABELS[method] || 'Tiền mặt'}</span>;
         }
     };
 
@@ -173,9 +189,9 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-gray-500 uppercase">Tổng Học Phí</p>
                                 <h3 className="mt-1 text-2xl font-black text-gray-900 font-mono">
-                                    {formatCurrency(stats.total_amount || 0)}
+                                    {formatCurrency(stats.total_invoiced || 0)}
                                 </h3>
-                                <p className="text-2xs text-gray-400 mt-1">Tổng {stats.total_records || 0} khoản thu</p>
+                                <p className="text-2xs text-gray-400 mt-1">Tổng {(stats.paid_count || 0) + (stats.partial_count || 0) + (stats.unpaid_count || 0)} khoản thu</p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                 <Receipt className="h-6 w-6" />
@@ -188,10 +204,10 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-emerald-700 uppercase">Đã Thanh Toán</p>
                                 <h3 className="mt-1 text-2xl font-black text-emerald-600 font-mono">
-                                    {formatCurrency(stats.paid_amount || 0)}
+                                    {formatCurrency(stats.total_paid || 0)}
                                 </h3>
                                 <p className="text-2xs text-emerald-600 font-semibold mt-1">
-                                    {stats.completed_count || 0} khoản đã hoàn tất
+                                    {stats.paid_count || 0} khoản đã hoàn tất
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -205,7 +221,7 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-amber-700 uppercase">Còn Lại Cần Nộp</p>
                                 <h3 className="mt-1 text-2xl font-black text-amber-600 font-mono">
-                                    {formatCurrency(stats.remaining_amount || 0)}
+                                    {formatCurrency(stats.total_remaining || 0)}
                                 </h3>
                                 <p className="text-2xs text-amber-700 font-semibold mt-1">
                                     {stats.partial_count + stats.unpaid_count} khoản đang chờ đóng

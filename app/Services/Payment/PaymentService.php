@@ -100,9 +100,9 @@ class PaymentService implements PaymentServiceInterface
         $this->paymentTransactionRepository->create([
             'center_id'      => $center->id,
             'app_trans_id'   => $appTransId,
-            'payment_method' => 'other',
+            'payment_method' => Constant::PAYMENT_METHOD_OTHER,
             'amount'         => $amount,
-            'status'         => 'pending',
+            'status'         => Constant::PAYMENT_STATUS_PENDING,
             'metadata'       => [
                 'app_trans_id'    => $appTransId,
                 'plan_code'       => $plan->code,
@@ -179,9 +179,9 @@ class PaymentService implements PaymentServiceInterface
         $transaction = $this->paymentTransactionRepository->create([
             'center_id'      => $center->id,
             'app_trans_id'   => $appTransId,
-            'payment_method' => 'zalopay',
+            'payment_method' => Constant::PAYMENT_METHOD_ZALOPAY,
             'amount'         => $amount,
-            'status'         => 'pending',
+            'status'         => Constant::PAYMENT_STATUS_PENDING,
             'metadata'       => [
                 'app_trans_id' => $appTransId,
                 'plan_code'    => $validated['plan_code'],

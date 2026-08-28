@@ -17,6 +17,13 @@ import Input from '@/components/ui/Input';
 import DatePicker from '@/components/ui/DatePicker';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { Center, ClassExam, Exam, SchoolClass } from './types';
+import {
+    CLASS_EXAM_STATUS_CANCELLED,
+    CLASS_EXAM_STATUS_SCHEDULED,
+    CLASS_EXAM_STATUS_ONGOING,
+    CLASS_EXAM_STATUS_COMPLETED,
+    CLASS_EXAM_STATUS_LABELS,
+} from '@/constants/enums';
 
 interface Props {
     isOpen: boolean;
@@ -367,10 +374,10 @@ export default function AssignExamModal({
                             value={status}
                             onChange={(val) => setStatus(Number(val))}
                             options={[
-                                { value: 1, label: 'Đã lên lịch' },
-                                { value: 2, label: 'Đang diễn ra' },
-                                { value: 3, label: 'Đã kết thúc' },
-                                { value: 0, label: 'Đã hủy' },
+                                { value: CLASS_EXAM_STATUS_SCHEDULED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
+                                { value: CLASS_EXAM_STATUS_ONGOING, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
+                                { value: CLASS_EXAM_STATUS_COMPLETED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
+                                { value: CLASS_EXAM_STATUS_CANCELLED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
                             ]}
                             placement="top"
                             searchable={false}

@@ -19,13 +19,22 @@ import AppLayout from '@/layouts/AppLayout';
 import QuestionReviewDetail, { QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
 import ExamSectionPagination from '@/pages/ExamRoom/components/shared/ExamSectionPagination';
 import ExamSectionTabs, { ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
+import {
+    SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+    SKILL_LISTENING,
+    SKILL_READING,
+    SKILL_WRITING,
+    SKILL_SPEAKING,
+    QUESTION_TYPE_ESSAY,
+    QUESTION_TYPE_AUDIO_RECORD,
+} from '@/constants/enums';
 
 interface ExamQuestion {
     id: number;
     code?: string;
     title?: string | null;
-    question_type: string;
-    skill?: string;
+    question_type: number;
+    skill?: number;
     content: string;
     score: number;
     image_url?: string | null;
@@ -41,7 +50,7 @@ interface ExamSection {
     id: number;
     title: string;
     description?: string | null;
-    skill?: string;
+    skill?: number;
     order_index?: number;
     questions: ExamQuestion[];
 }
@@ -69,7 +78,7 @@ interface ClassExamData {
 
 interface QuestionGradeDetail {
     question_id: number;
-    question_type: string;
+    question_type: number;
     user_answer: any;
     correct_answer: any;
     is_correct: boolean;
@@ -86,7 +95,7 @@ interface SubmissionData {
     score: number | null;
     total_correct: number;
     total_questions: number;
-    status: string;
+    status: number;
     is_graded: boolean;
     requires_manual_grading: boolean;
     graded_at?: string;
@@ -342,7 +351,7 @@ export default function GradingShow({
                                 <p className="flex justify-between">
                                     <span className="text-gray-500">Hình thức nộp:</span>
                                     <span className="font-semibold">
-                                        {submission.status === 'timeout_submitted' ? 'Hết giờ tự thu bài' : 'Chủ động nộp bài'}
+                                        {submission.status === SUBMISSION_STATUS_TIMEOUT_SUBMITTED ? 'Hết giờ tự thu bài' : 'Chủ động nộp bài'}
                                     </span>
                                 </p>
                             </div>
@@ -387,16 +396,16 @@ export default function GradingShow({
                                         {activeSection.title}
                                     </h2>
                                     <span className="text-xs font-semibold text-gray-500">
-                                        Kỹ năng: {activeSection.skill === 'listening' ? 'Nghe hiểu' : activeSection.skill === 'reading' ? 'Đọc hiểu' : activeSection.skill === 'writing' ? 'Viết' : activeSection.skill === 'speaking' ? 'Nói' : 'Tổng hợp'} • Điểm phần này: <strong className="text-emerald-700">{activeSecEarned.toFixed(2)}</strong> / {activeSecMax} điểm
+                                        Kỹ năng: {activeSection.skill === SKILL_LISTENING ? 'Nghe hiểu' : activeSection.skill === SKILL_READING ? 'Đọc hiểu' : activeSection.skill === SKILL_WRITING ? 'Viết' : activeSection.skill === SKILL_SPEAKING ? 'Nói' : 'Tổng hợp'} • Điểm phần này: <strong className="text-emerald-700">{activeSecEarned.toFixed(2)}</strong> / {activeSecMax} điểm
                                     </span>
                                 </div>
                             </div>
-                            <span className={`text-2xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${activeSection.skill === 'listening' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                activeSection.skill === 'writing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                    activeSection.skill === 'speaking' ? 'bg-pink-50 text-pink-700 border border-pink-200' :
+                            <span className={`text-2xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${activeSection.skill === SKILL_LISTENING ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                activeSection.skill === SKILL_WRITING ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                    activeSection.skill === SKILL_SPEAKING ? 'bg-pink-50 text-pink-700 border border-pink-200' :
                                         'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 }`}>
-                                {activeSection.skill === 'listening' ? '🎧 Listening' : activeSection.skill === 'writing' ? '✍️ Writing' : activeSection.skill === 'speaking' ? '🗣️ Speaking' : '📖 Reading'}
+                                {activeSection.skill === SKILL_LISTENING ? '🎧 Listening' : activeSection.skill === SKILL_WRITING ? '✍️ Writing' : activeSection.skill === SKILL_SPEAKING ? '🗣️ Speaking' : '📖 Reading'}
                             </span>
                         </div>
 
@@ -422,7 +431,7 @@ export default function GradingShow({
                         const qDetail = gradingDetails[q.id] || ({} as QuestionGradeDetail);
                         const currentGrade = questionGrades[q.id] || { score_earned: 0, comment: '' };
                         const userAns = submission.answers ? submission.answers[q.id] : qDetail.user_answer;
-                        const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
+                        const isManual = q.question_type === QUESTION_TYPE_ESSAY || q.question_type === QUESTION_TYPE_AUDIO_RECORD;
                         const isSkipped = userAns === null || userAns === undefined || userAns === '' || (Array.isArray(userAns) && userAns.length === 0) || (typeof userAns === 'object' && Object.keys(userAns).length === 0);
                         const isCorrect = qDetail.is_correct === true || (currentGrade.score_earned >= q.score && q.score > 0);
 

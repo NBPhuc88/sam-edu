@@ -22,9 +22,9 @@ interface CenterInfo {
     id: number;
     code: string;
     name: string;
-    subscription_plan: string;
+    subscription_plan: number;
     expires_at: string | null;
-    status: string;
+    status: number;
 }
 
 interface RenewSubscriptionModalProps {
@@ -67,7 +67,8 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
     useEffect(() => {
         if (!isOpen || !center) return;
 
-        const initialPlanCode = center.subscription_plan || subscriptionPlans[0]?.code || 'basic_5';
+        const matched = subscriptionPlans.find((p) => p.id === center.subscription_plan || p.code === String(center.subscription_plan));
+        const initialPlanCode = matched?.code || subscriptionPlans[0]?.code || 'basic_5';
         setSelectedPlanCode(initialPlanCode);
         setCycle('monthly');
         setNote('');
@@ -81,7 +82,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         if (center.expires_at) {
             const expISO = toISODateString(center.expires_at);
 
-            if (expISO && expISO > today && center.subscription_plan === initialPlanCode) {
+            if (expISO && expISO > today && (matched?.code === initialPlanCode || matched?.id === center.subscription_plan)) {
                 initialStart = expISO;
             }
         }
@@ -106,7 +107,7 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
         // Gia hạn gói cước cũ -> tính từ ngày hết hạn cũ (nếu còn hạn)
         let newStart = today;
 
-        if (center?.expires_at && center.subscription_plan === newCode) {
+        if (center?.expires_at && (selectedPlan?.id === center.subscription_plan || selectedPlan?.code === String(center.subscription_plan))) {
             const expISO = toISODateString(center.expires_at);
 
             if (expISO && expISO > today) {
@@ -205,9 +206,13 @@ export const RenewSubscriptionModal: React.FC<RenewSubscriptionModalProps> = ({
 
     if (!isOpen || !center) return null;
 
-    const currentPlanObj = subscriptionPlans.find((p) => p.code === center.subscription_plan);
+    const currentPlanObj = subscriptionPlans.find(
+        (p) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+    );
     const selectedPlanObj = subscriptionPlans.find((p) => p.code === selectedPlanCode);
-    const isSamePlan = center.subscription_plan === selectedPlanCode;
+    const isSamePlan = currentPlanObj
+        ? currentPlanObj.code === selectedPlanCode
+        : String(center.subscription_plan) === selectedPlanCode;
 
     return (
         <Modal

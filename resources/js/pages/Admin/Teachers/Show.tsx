@@ -29,6 +29,12 @@ import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
+import {
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_COMPLETED,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -58,7 +64,7 @@ interface TeacherSessionItem {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
     class_name?: string | null;
@@ -152,26 +158,22 @@ export default function TeacherShow({
         window.location.href = `/teachers/${teacher.id}/export-sessions?${params.toString()}`;
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;

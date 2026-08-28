@@ -12,6 +12,18 @@ import { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 import { usePermission } from '@/hooks/usePermission';
+import {
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_TRIAL,
+    CENTER_STATUS_PENDING_PAYMENT,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_LOCKED,
+    CENTER_STATUS_LABELS,
+    PLAN_TYPE_FREE,
+    PLAN_TYPE_STANDARD,
+    PLAN_TYPE_PREMIUM,
+    PLAN_TYPE_LABELS,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -20,8 +32,9 @@ interface Center {
     phone: string | null;
     email: string | null;
     address: string | null;
-    status: 'active' | 'inactive' | 'expired' | 'suspended';
-    subscription_plan: string;
+    status: number;
+    subscription_plan: number;
+    plan_type?: number;
     expires_at: string | null;
     students_count?: number;
     classes_count?: number;
@@ -188,15 +201,13 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                             </td>
                                             <td className="px-6 py-4">
                                                 {(() => {
-                                                    const planLabels: Record<string, string> = {
-                                                        trial: 'Dùng Thử',
-                                                        basic_5: 'Cơ Bản (5 Lớp)',
-                                                        basic_20: 'Cơ Bản (20 Lớp)',
-                                                        advanced_5: 'Nâng Cao (5 Lớp)',
-                                                        advanced_20: 'Nâng Cao (20 Lớp)',
-                                                    };
-                                                    const isAdv = center.subscription_plan?.startsWith('advanced');
-                                                    const isTr = center.subscription_plan === 'trial';
+                                                    const matchedPlan = subscriptionPlans?.find(
+                                                        (p: any) => p.id === center.subscription_plan || p.code === String(center.subscription_plan)
+                                                    );
+                                                    const planType = center.plan_type ?? matchedPlan?.plan_type ?? center.subscription_plan;
+                                                    const isAdv = planType === PLAN_TYPE_PREMIUM;
+                                                    const isTr = planType === PLAN_TYPE_FREE;
+                                                    const displayLabel = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || (center.subscription_plan ? `Gói #${center.subscription_plan}` : 'N/A');
 
                                                     return (
                                                         <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
@@ -206,7 +217,7 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                                                   ? 'bg-blue-50 text-blue-800 border border-blue-200'
                                                                   : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                                         }`}>
-                                                            {planLabels[center.subscription_plan] || center.subscription_plan}
+                                                            {displayLabel}
                                                         </span>
                                                     );
                                                 })()}
@@ -244,20 +255,18 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                             </td>
                                             <td className="px-6 py-4">
                                                 {(() => {
-                                                    const val = String(center.status);
-                                                    if (val === '1' || val === 'active') {
-                                                        return <Badge variant="active">Đang hoạt động</Badge>;
+                                                    switch (center.status) {
+                                                        case CENTER_STATUS_ACTIVE:
+                                                            return <Badge variant="active">{CENTER_STATUS_LABELS[CENTER_STATUS_ACTIVE]}</Badge>;
+                                                        case CENTER_STATUS_TRIAL:
+                                                            return <Badge variant="info">{CENTER_STATUS_LABELS[CENTER_STATUS_TRIAL]}</Badge>;
+                                                        case CENTER_STATUS_PENDING_PAYMENT:
+                                                            return <Badge variant="pending">{CENTER_STATUS_LABELS[CENTER_STATUS_PENDING_PAYMENT]}</Badge>;
+                                                        case CENTER_STATUS_EXPIRED:
+                                                            return <Badge variant="danger">{CENTER_STATUS_LABELS[CENTER_STATUS_EXPIRED]}</Badge>;
+                                                        default:
+                                                            return <Badge variant="expired">{CENTER_STATUS_LABELS[CENTER_STATUS_LOCKED] || 'Bị khóa'}</Badge>;
                                                     }
-                                                    if (val === '2' || val === 'trial') {
-                                                        return <Badge variant="info">Dùng thử</Badge>;
-                                                    }
-                                                    if (val === '3' || val === 'pending') {
-                                                        return <Badge variant="pending">Chờ thanh toán</Badge>;
-                                                    }
-                                                    if (val === '4' || val === 'expired') {
-                                                        return <Badge variant="danger">Hết hạn</Badge>;
-                                                    }
-                                                    return <Badge variant="expired">Tạm dừng</Badge>;
                                                 })()}
                                             </td>
                                             {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (

@@ -24,6 +24,16 @@ import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import {
+    ROOM_STATUS_ACTIVE,
+    ROOM_STATUS_PAUSED,
+    ROOM_STATUS_CLOSED,
+    ROOM_STATUS_LABELS,
+    EQUIPMENT_STATUS_GOOD,
+    EQUIPMENT_STATUS_MAINTENANCE,
+    EQUIPMENT_STATUS_BROKEN,
+    EQUIPMENT_STATUS_LABELS,
+} from '@/constants/enums';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -38,7 +48,7 @@ interface RoomEquipment {
     name: string;
     quantity: number;
     unit: string | null;
-    status: 'good' | 'maintenance' | 'broken';
+    status: number;
     note: string | null;
 }
 
@@ -77,7 +87,7 @@ interface Props {
     filters: {
         search?: string;
         center_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -91,7 +101,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : 'all',
     );
 
     // Delete modal state
@@ -110,7 +120,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
             {
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -149,28 +159,28 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
-            return <Badge variant="active">Đang hoạt động</Badge>;
+        if (status === ROOM_STATUS_ACTIVE) {
+            return <Badge variant="active">{ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE]}</Badge>;
         }
-        if (status === 0) {
-            return <Badge variant="expired">Tạm dừng</Badge>;
+        if (status === ROOM_STATUS_PAUSED) {
+            return <Badge variant="expired">{ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED]}</Badge>;
         }
-        if (status === 2) {
-            return <Badge variant="danger">Đã đóng</Badge>;
+        if (status === ROOM_STATUS_CLOSED) {
+            return <Badge variant="danger">{ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED]}</Badge>;
         }
         return <Badge variant="info">Chưa rõ</Badge>;
     };
 
-    const getEquipmentStatusBadge = (status: string) => {
+    const getEquipmentStatusBadge = (status: number) => {
         switch (status) {
-            case 'good':
-                return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-semibold text-emerald-700 border border-emerald-200">Tốt</span>;
-            case 'maintenance':
-                return <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-700 border border-amber-200">Bảo trì</span>;
-            case 'broken':
-                return <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-2xs font-semibold text-red-700 border border-red-200">Hỏng</span>;
+            case EQUIPMENT_STATUS_GOOD:
+                return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-semibold text-emerald-700 border border-emerald-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_GOOD]}</span>;
+            case EQUIPMENT_STATUS_MAINTENANCE:
+                return <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-700 border border-amber-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_MAINTENANCE]}</span>;
+            case EQUIPMENT_STATUS_BROKEN:
+                return <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-2xs font-semibold text-red-700 border border-red-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_BROKEN]}</span>;
             default:
-                return <span className="text-xs text-gray-500">{status}</span>;
+                return <span className="text-xs text-gray-500">{EQUIPMENT_STATUS_LABELS[status] || status}</span>;
         }
     };
 
@@ -322,9 +332,9 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: '1', label: 'Đang hoạt động' },
-                                        { value: '0', label: 'Tạm dừng' },
-                                        { value: '2', label: 'Đã đóng' },
+                                        { value: String(ROOM_STATUS_ACTIVE), label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
+                                        { value: String(ROOM_STATUS_PAUSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
+                                        { value: String(ROOM_STATUS_CLOSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
                                     ]}
                                 />
                             </div>

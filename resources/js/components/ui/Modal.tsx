@@ -41,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({
         'max-w-5xl': 'max-w-5xl',
     };
 
-    const resolvedMaxWidth = maxWidthClasses[maxWidth] || (maxWidth.startsWith('max-w-') ? maxWidth : 'max-w-lg');
+    const resolvedMaxWidth = maxWidthClasses[maxWidth] || (typeof maxWidth === 'string' && maxWidth.startsWith('max-w-') ? maxWidth : 'max-w-lg');
 
     return (
         <AnimatePresence>

@@ -1,19 +1,6 @@
-export type SkillType = 'reading' | 'listening' | 'writing' | 'speaking';
+export type SkillType = number;
 
-export type QuestionType =
-    | 'single_choice'
-    | 'multiple_choice'
-    | 'true_false_not_given'
-    | 'fill_in_blank'
-    | 'drag_drop_cloze'
-    | 'matching'
-    | 'matching_sentences'
-    | 'matching_image'
-    | 'ordering'
-    | 'diagram_labelling'
-    | 'find_mistake'
-    | 'essay'
-    | 'audio_record';
+export type QuestionType = number;
 
 export interface ExamQuestionData {
     id?: number;
@@ -93,7 +80,7 @@ export interface ClassExam {
     duration_minutes?: number | null;
     max_score: number;
     pass_score?: number | null;
-    status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+    status: number;
     schoolClass?: SchoolClass;
     school_class?: SchoolClass;
     exam?: Exam;
@@ -110,7 +97,7 @@ export interface ClassExamSubmission {
     score?: number | null;
     total_correct: number;
     total_questions: number;
-    status: 'in_progress' | 'submitted' | 'timeout_submitted' | 'missed';
+    status: number;
     is_graded?: boolean;
     requires_manual_grading?: boolean;
     graded_at?: string | null;

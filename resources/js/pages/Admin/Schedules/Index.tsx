@@ -20,6 +20,14 @@ import AppLayout from '@/layouts/AppLayout';
 
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
+import {
+    SCHEDULE_STATUS_ACTIVE,
+    SCHEDULE_STATUS_INACTIVE,
+    SCHEDULE_STATUS_LABELS,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_LABELS,
+} from '@/constants/enums';
+
 interface Center {
     id: number;
     name: string;
@@ -57,7 +65,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
 }
 
@@ -68,7 +76,7 @@ interface ClassSchedule {
     off_days?: { date: string; start_time?: string | null; end_time?: string | null }[] | null;
     extra_days?: { date: string; start_time: string; end_time: string }[] | null;
     room_id: number | null;
-    status: string;
+    status: number;
     class_sessions_count?: number;
     room?: Room;
     class_subject?: {
@@ -117,7 +125,7 @@ interface Props {
         class_id?: number | null;
         subject_id?: number | null;
         teacher_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -143,7 +151,7 @@ export default function ScheduleIndex({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : 'all',
     );
 
     // Delete modal state
@@ -478,10 +486,10 @@ export default function ScheduleIndex({
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                {sch.status === 'active' ? (
-                                                    <Badge variant="active">Đang áp dụng</Badge>
+                                                {sch.status === SCHEDULE_STATUS_ACTIVE ? (
+                                                    <Badge variant="active">{SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_ACTIVE]}</Badge>
                                                 ) : (
-                                                    <Badge variant="expired">Tạm dừng</Badge>
+                                                    <Badge variant="expired">{SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_INACTIVE] || 'Tạm dừng'}</Badge>
                                                 )}
                                             </td>
 
@@ -631,8 +639,8 @@ export default function ScheduleIndex({
                                         <span className="font-mono text-gray-600">
                                             {ses.start_time ? String(ses.start_time).slice(0, 5) : '--:--'} - {ses.end_time ? String(ses.end_time).slice(0, 5) : '--:--'}
                                         </span>
-                                        <Badge variant={ses.status === 'scheduled' ? 'active' : 'info'}>
-                                            {ses.status === 'scheduled' ? 'Đã lên lịch' : ses.status}
+                                        <Badge variant={ses.status === SESSION_STATUS_SCHEDULED ? 'active' : 'info'}>
+                                            {SESSION_STATUS_LABELS[ses.status] || (ses.status === SESSION_STATUS_SCHEDULED ? 'Đã lên lịch' : ses.status)}
                                         </Badge>
                                     </div>
                                 </div>

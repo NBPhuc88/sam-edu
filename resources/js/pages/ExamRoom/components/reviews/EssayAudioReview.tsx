@@ -1,6 +1,7 @@
 import React from 'react';
 import { Volume2, FileText, CheckCircle2 } from 'lucide-react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
+import { QUESTION_TYPE_AUDIO_RECORD } from '@/constants/enums';
 
 interface Props {
     question: QuestionReviewItem;
@@ -9,7 +10,7 @@ interface Props {
 export default function EssayAudioReview({ question }: Props) {
     const { question_type, correct_answer, user_answer, teacher_comment } = question;
 
-    if (question_type === 'audio_record') {
+    if (question_type === QUESTION_TYPE_AUDIO_RECORD) {
         const audioSrc = typeof user_answer === 'string' && user_answer
             ? (user_answer.startsWith('http') || user_answer.startsWith('/')
                 ? user_answer

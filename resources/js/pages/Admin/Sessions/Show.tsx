@@ -1,20 +1,23 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Calendar,
     Clock,
-    DoorOpen,
     User,
-    BookOpen,
+    DoorOpen,
     ArrowLeft,
     ArrowRight,
     CheckSquare,
-    Edit3,
+    AlertCircle,
     History,
-    UserCheck,
+    Edit3,
+    BookOpen,
+    FileText,
     CheckCircle2,
     XCircle,
-    HelpCircle,
-    AlertTriangle,
+    UserCheck,
+    RotateCcw,
+    X,
+    Building2,
     Save,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -26,6 +29,17 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate, formatTime, formatDateTime, toISODateString } from '@/lib/date';
+import {
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_COMPLETED,
+    ATTENDANCE_STATUS_PRESENT,
+    ATTENDANCE_STATUS_ABSENT,
+    ATTENDANCE_STATUS_LATE,
+    ATTENDANCE_STATUS_EXCUSED,
+    ATTENDANCE_STATUS_LABELS,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -37,7 +51,7 @@ interface Student {
     id: number;
     student_code: string;
     full_name: string;
-    gender?: string | null;
+    gender?: number | null;
     phone?: string | null;
     parent_name?: string | null;
     parent_phone?: string | null;
@@ -62,7 +76,7 @@ interface Room {
 interface Attendance {
     id: number;
     student_id: number;
-    status: 'present' | 'absent' | 'late' | 'excused' | 'leave';
+    status: number;
     note: string | null;
     student?: Student;
 }
@@ -103,7 +117,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    status: number;
     topic: string | null;
     note: string | null;
     teacher_id: number;
@@ -224,26 +238,22 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         });
     };
 
-    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;
@@ -272,36 +282,36 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         attendanceMap.set(att.student_id, att);
     });
 
-    const getAttendanceStatusBadge = (status?: string) => {
+    const getAttendanceStatusBadge = (status?: number) => {
         switch (status) {
-            case 'present':
+            case ATTENDANCE_STATUS_PRESENT:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Có mặt
                     </span>
                 );
-            case 'absent':
+            case ATTENDANCE_STATUS_ABSENT:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700">
                         <XCircle className="h-3.5 w-3.5" /> Vắng mặt
                     </span>
                 );
-            case 'late':
+            case ATTENDANCE_STATUS_LATE:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700">
                         <Clock className="h-3.5 w-3.5" /> Đi muộn
                     </span>
                 );
-            case 'excused':
+            case ATTENDANCE_STATUS_EXCUSED:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-                        <AlertTriangle className="h-3.5 w-3.5" /> Có phép
+                        <AlertCircle className="h-3.5 w-3.5" /> Có phép
                     </span>
                 );
             default:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-                        <HelpCircle className="h-3.5 w-3.5" /> Chưa điểm danh
+                        Chưa điểm danh
                     </span>
                 );
         }
@@ -355,7 +365,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             Đổi Lịch / Phân Công Lại
                         </Button>
 
-                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                        {session.status !== SESSION_STATUS_CANCELLED ? (
                             <Link href={`/attendance/session/${session.id}`}>
                                 <Button
                                     variant="success"
@@ -534,7 +544,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             </p>
                         </div>
 
-                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                        {session.status !== SESSION_STATUS_CANCELLED ? (
                             <Link href={`/attendance/session/${session.id}`}>
                                 <button
                                     type="button"

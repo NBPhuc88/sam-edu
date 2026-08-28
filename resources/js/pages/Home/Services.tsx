@@ -40,7 +40,7 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
         if (plan.plan_type) {
             return plan.plan_type === 'advanced' || plan.plan_type === 'trial';
         }
-        return plan.code?.startsWith('advanced') || plan.code === 'trial';
+        return String(plan.code || '').startsWith('advanced') || plan.code === 'trial';
     };
 
     const faqs = [

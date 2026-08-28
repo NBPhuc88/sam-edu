@@ -5,6 +5,11 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
+import {
+    SUBJECT_STATUS_ACTIVE,
+    SUBJECT_STATUS_INACTIVE,
+    SUBJECT_STATUS_LABELS,
+} from '@/constants/enums';
 
 interface Center {
     id: number;
@@ -29,7 +34,7 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
     const [totalSessions, setTotalSessions] = useState<string>('24');
     const [durationMinutes, setDurationMinutes] = useState<string>('90');
     const [tuitionFee, setTuitionFee] = useState<string>('');
-    const [status, setStatus] = useState<number>(1);
+    const [status, setStatus] = useState<number>(SUBJECT_STATUS_ACTIVE);
     const [description, setDescription] = useState<string>('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,8 +202,8 @@ export default function SubjectCreate({ centers = [], errors = {} }: CreateProps
                                     onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value={1}>Đang mở dạy</option>
-                                    <option value={0}>Tạm dừng</option>
+                                    <option value={SUBJECT_STATUS_ACTIVE}>{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE]}</option>
+                                    <option value={SUBJECT_STATUS_INACTIVE}>{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE]}</option>
                                 </select>
                             </div>
 

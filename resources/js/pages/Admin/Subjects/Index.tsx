@@ -18,6 +18,11 @@ import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import {
+    SUBJECT_STATUS_ACTIVE,
+    SUBJECT_STATUS_INACTIVE,
+    SUBJECT_STATUS_LABELS,
+} from '@/constants/enums';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -53,7 +58,7 @@ interface Props {
     filters: {
         search?: string;
         center_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -67,7 +72,7 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : 'all',
     );
 
     // Delete modal state
@@ -93,7 +98,7 @@ return 'Chưa thiết lập';
             {
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -126,10 +131,10 @@ return 'Chưa thiết lập';
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
-            return <Badge variant="active">Đang mở dạy</Badge>;
+        if (status === SUBJECT_STATUS_ACTIVE) {
+            return <Badge variant="active">{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE]}</Badge>;
         }
-        return <Badge variant="expired">Tạm dừng</Badge>;
+        return <Badge variant="expired">{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE]}</Badge>;
     };
 
     return (
@@ -199,8 +204,8 @@ return 'Chưa thiết lập';
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: '1', label: 'Đang mở dạy' },
-                                        { value: '0', label: 'Tạm dừng' },
+                                        { value: String(SUBJECT_STATUS_ACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE] },
+                                        { value: String(SUBJECT_STATUS_INACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE] },
                                     ]}
                                 />
                             </div>

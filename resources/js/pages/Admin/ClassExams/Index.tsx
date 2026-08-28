@@ -27,6 +27,13 @@ import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import AppLayout from '@/layouts/AppLayout';
 import AssignExamModal from './AssignExamModal';
 import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
+import {
+    CLASS_EXAM_STATUS_CANCELLED,
+    CLASS_EXAM_STATUS_SCHEDULED,
+    CLASS_EXAM_STATUS_ONGOING,
+    CLASS_EXAM_STATUS_COMPLETED,
+    CLASS_EXAM_STATUS_LABELS,
+} from '@/constants/enums';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Props {
@@ -45,7 +52,7 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         exam_id?: number | null;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
     isTeacher?: boolean;
@@ -72,7 +79,7 @@ export default function ClassExamIndex({
         filters.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : 'all',
     );
 
     // Modal state
@@ -96,7 +103,7 @@ export default function ClassExamIndex({
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -125,8 +132,9 @@ export default function ClassExamIndex({
         setDeleteDialogOpen(true);
     };
 
-    const confirmDelete = () => {
+    const handleDelete = () => {
         if (!deletingExam) return;
+
         setIsDeleting(true);
         router.delete(`/class-exams/${deletingExam.id}`, {
             onFinish: () => {
@@ -138,30 +146,30 @@ export default function ClassExamIndex({
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 2) {
+        if (status === CLASS_EXAM_STATUS_ONGOING) {
             return (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
-                    <PlayCircle className="h-3 w-3" /> Đang diễn ra
+                    <PlayCircle className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING]}
                 </span>
             );
         }
-        if (status === 3) {
+        if (status === CLASS_EXAM_STATUS_COMPLETED) {
             return (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
-                    <CheckCircle2 className="h-3 w-3" /> Đã kết thúc
+                    <CheckCircle2 className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED]}
                 </span>
             );
         }
-        if (status === 0) {
+        if (status === CLASS_EXAM_STATUS_CANCELLED) {
             return (
                 <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
-                    <AlertCircle className="h-3 w-3" /> Đã hủy
+                    <AlertCircle className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED]}
                 </span>
             );
         }
         return (
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
-                <Calendar className="h-3 w-3" /> Đã lên lịch
+                <Calendar className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED]}
             </span>
         );
     };
@@ -347,10 +355,10 @@ export default function ClassExamIndex({
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
                                         { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: '1', label: 'Đã lên lịch' },
-                                        { value: '2', label: 'Đang diễn ra' },
-                                        { value: '3', label: 'Đã kết thúc' },
-                                        { value: '0', label: 'Đã hủy' },
+                                        { value: String(CLASS_EXAM_STATUS_SCHEDULED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
+                                        { value: String(CLASS_EXAM_STATUS_ONGOING), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
+                                        { value: String(CLASS_EXAM_STATUS_COMPLETED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
+                                        { value: String(CLASS_EXAM_STATUS_CANCELLED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
                                     ]}
                                     placeholder="Tất cả trạng thái"
                                     searchable={false}
@@ -593,7 +601,7 @@ export default function ClassExamIndex({
                 cancelLabel="Giữ Lại"
                 variant="danger"
                 isLoading={isDeleting}
-                onConfirm={confirmDelete}
+                onConfirm={handleDelete}
                 onCancel={() => setDeleteDialogOpen(false)}
             />
         </AppLayout>
