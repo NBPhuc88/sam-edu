@@ -162,6 +162,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::get('/{id}/edit', [CenterController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [CenterController::class, 'update'])->name('update');
         Route::delete('/{id}', [CenterController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/renew-subscription', [CenterController::class, 'renewSubscription'])->name('renew-subscription');
     });
 
     // Student Management Routes (CRUD, Export & Import)

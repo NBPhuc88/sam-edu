@@ -263,28 +263,48 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                     </div>
 
                     {/* Subscription Plan */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-800">
-                            Gói Dịch Vụ SaaS <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            name="subscription_plan"
-                            value={formData.subscription_plan}
-                            onChange={handleChange}
-                            disabled={!isSuperAdmin}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        >
-                            {subscriptionPlans.map((plan: any) => (
-                                <option key={plan.id} value={plan.code}>
-                                    {plan.name} (
-                                    {plan.price === 0
-                                        ? 'Miễn phí'
-                                        : `${plan.price.toLocaleString('vi-VN')}đ`}
-                                    )
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {mode === 'create' ? (
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                Gói Dịch Vụ SaaS <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="subscription_plan"
+                                value={formData.subscription_plan}
+                                onChange={handleChange}
+                                disabled={!isSuperAdmin}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            >
+                                {subscriptionPlans.map((plan: any) => (
+                                    <option key={plan.id} value={plan.code}>
+                                        {plan.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                Gói Dịch Vụ SaaS Hiện Tại
+                            </label>
+                            {(() => {
+                                const currentPlanObj = subscriptionPlans.find((p: any) => p.code === formData.subscription_plan);
+                                const displayPlanText = currentPlanObj ? currentPlanObj.name : formData.subscription_plan;
+
+                                return (
+                                    <Input
+                                        value={displayPlanText}
+                                        disabled
+                                        readOnly
+                                        className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed font-medium text-gray-900"
+                                    />
+                                );
+                            })()}
+                            <p className="mt-1.5 text-xs text-gray-500">
+                                💡 Để đổi gói cước hoặc gia hạn, vui lòng sử dụng chức năng <strong>Gia Hạn / Đổi Gói Cước</strong>.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Status */}
                     <div>
@@ -321,9 +341,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <DatePicker
                             value={formData.expires_at}
                             onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
-                            disabled={!isSuperAdmin}
-                            className="!py-3 !text-sm w-full"
+                            disabled={!isSuperAdmin || mode === 'edit'}
+                            className="!py-3 !text-sm w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
+                        {mode === 'edit' && (
+                            <p className="mt-1.5 text-xs text-gray-500">
+                                💡 Ngày hết hạn được tự động cập nhật khi Gia hạn hoặc Đổi gói cước.
+                            </p>
+                        )}
                     </div>
 
                     {/* Capacity Limits */}

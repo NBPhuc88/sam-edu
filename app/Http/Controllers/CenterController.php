@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Center\FilterCenterRequest;
+use App\Http\Requests\Center\RenewCenterSubscriptionRequest;
 use App\Http\Requests\Center\StoreCenterRequest;
 use App\Http\Requests\Center\UpdateCenterRequest;
 use App\Models\Admin;
@@ -39,13 +40,15 @@ class CenterController extends Controller
             abort(403, 'Tài khoản của bạn chưa được phân công quản lý trung tâm nào.');
         }
 
-        $search  = $request->query('search');
-        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
-        $centers = $this->centerService->getPaginatedCenters($perPage, is_string($search) ? $search : null);
+        $search            = $request->query('search');
+        $perPage           = $request->integer('per_page', config('app.pagination_per_page', 20));
+        $centers           = $this->centerService->getPaginatedCenters($perPage, is_string($search) ? $search : null);
+        $subscriptionPlans = $this->centerService->getSubscriptionPlans();
 
         return Inertia::render('Admin/Centers/Index', [
-            'centers' => $centers,
-            'filters' => [
+            'centers'           => $centers,
+            'subscriptionPlans' => $subscriptionPlans,
+            'filters'           => [
                 'search'   => $search ?? '',
                 'per_page' => $perPage,
             ],
@@ -109,10 +112,12 @@ class CenterController extends Controller
 
         $center            = $this->centerService->getCenterById($id);
         $subscriptionPlans = $this->centerService->getSubscriptionPlans();
+        $subscriptions     = $this->centerService->getCenterSubscriptions($id);
 
         return Inertia::render('Admin/Centers/Edit', [
             'center'            => $center,
             'subscriptionPlans' => $subscriptionPlans,
+            'subscriptions'     => $subscriptions,
         ]);
     }
 
@@ -142,6 +147,26 @@ class CenterController extends Controller
             : redirect()->route('centers.index');
 
         return $redirectRoute->with('success', 'Cập nhật thông tin trung tâm thành công!');
+    }
+
+    /**
+     * Renew or change subscription for a center (Super Admin only).
+     * @param RenewCenterSubscriptionRequest $request
+     * @param int                            $id
+     */
+    public function renewSubscription(RenewCenterSubscriptionRequest $request, int $id): RedirectResponse
+    {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Chỉ Super Admin mới có quyền gia hạn hoặc đổi gói cước cho trung tâm.');
+        }
+
+        $validated = $request->validated();
+        $this->centerService->renewOrChangeSubscription($id, $validated);
+
+        return back()->with('success', 'Xử lý gia hạn / đổi gói cước cho trung tâm thành công!');
     }
 
     /**

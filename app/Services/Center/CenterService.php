@@ -3,12 +3,17 @@
 namespace App\Services\Center;
 
 use App\Enums\Constant;
+use App\Mail\CenterSubscriptionRenewedMail;
 use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
+use App\Models\CenterSubscription;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Subscription\CenterSubscriptionRepositoryInterface;
 use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -16,7 +21,8 @@ class CenterService implements CenterServiceInterface
 {
     public function __construct(
         protected CenterRepositoryInterface $centerRepository,
-        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository
+        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository,
+        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository
     ) {
     }
 
@@ -119,5 +125,80 @@ class CenterService implements CenterServiceInterface
     public function getSubscriptionPlans(): Collection
     {
         return $this->subscriptionPlanRepository->getAllOrderedByPrice();
+    }
+
+    /**
+     * Renew or change subscription for a center.
+     *
+     * @param  int                  $centerId
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function renewOrChangeSubscription(int $centerId, array $data): CenterSubscription
+    {
+        return DB::transaction(function () use ($centerId, $data) {
+            $center = $this->centerRepository->find($centerId);
+            $plan   = $this->subscriptionPlanRepository->findByCode($data['plan_code']);
+
+            if (! $plan) {
+                throw new \InvalidArgumentException("Gói cước không tồn tại: {$data['plan_code']}");
+            }
+
+            $isSamePlan = ($center->subscription_plan === $plan->code);
+            $actionType = $isSamePlan ? 'renew' : 'change';
+
+            $startsAt     = Carbon::parse($data['starts_at']);
+            $endsAt       = Carbon::parse($data['ends_at']);
+            $durationDays = (int) $data['duration_days'];
+            $price        = (float) $data['price'];
+
+            // 1. Tạo bản ghi lịch sử gói cước center_subscriptions
+            $subscription = $this->centerSubscriptionRepository->create([
+                'center_id'     => $center->id,
+                'plan_code'     => $plan->code,
+                'plan_name'     => $plan->name,
+                'price'         => $price,
+                'duration_days' => $durationDays,
+                'starts_at'     => $startsAt,
+                'ends_at'       => $endsAt,
+                'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
+            ]);
+
+            // 2. Cập nhật Trung tâm (Gói cước, hạn mức, ngày hết hạn và kích hoạt lại nếu hết hạn)
+            $updateCenterData = [
+                'subscription_plan' => $plan->code,
+                'plan_type'         => $plan->plan_type,
+                'max_students'      => $plan->max_students,
+                'max_classes'       => $plan->max_classes,
+                'expires_at'        => $endsAt,
+                'status'            => Constant::CENTER_STATUS_ACTIVE,
+            ];
+
+            $updatedCenter = $this->centerRepository->update($center->id, $updateCenterData);
+
+            // 3. Gửi email thông báo qua Queue
+            if (! empty($updatedCenter->email)) {
+                try {
+                    Mail::to($updatedCenter->email)->queue(
+                        new CenterSubscriptionRenewedMail($updatedCenter, $subscription, $actionType)
+                    );
+                } catch (\Throwable $e) {
+                    Log::error("Lỗi khi đưa mail thông báo gia hạn/đổi gói vào Queue cho Trung tâm (ID: {$center->id}): " . $e->getMessage());
+                }
+            }
+
+            return $subscription;
+        });
+    }
+
+    /**
+     * Get subscription history for a center.
+     *
+     * @param  int        $centerId
+     * @return Collection
+     */
+    public function getCenterSubscriptions(int $centerId): Collection
+    {
+        return $this->centerSubscriptionRepository->getByCenterId($centerId);
     }
 }

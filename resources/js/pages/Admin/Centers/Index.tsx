@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Building2, Plus, Search, Edit2, Trash2, Calendar, AlertCircle } from 'lucide-react';
+import { Building2, Plus, Search, Edit2, Trash2, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
+import RenewSubscriptionModal from '../../../components/Center/RenewSubscriptionModal';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
@@ -35,19 +36,24 @@ interface IndexProps {
         to?: number | null;
         total: number;
     };
+    subscriptionPlans?: any[];
     filters: {
         search?: string;
         per_page?: number;
     };
 }
 
-export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
-    const { can } = usePermission();
+export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], filters }) => {
+    const { can, isSuperAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [perPage, setPerPage] = useState<number>(filters?.per_page || 20);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deletingCenter, setDeletingCenter] = useState<Center | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Renew Modal State
+    const [renewModalOpen, setRenewModalOpen] = useState(false);
+    const [renewCenter, setRenewCenter] = useState<Center | null>(null);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,10 +65,15 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
         setDeleteModalOpen(true);
     };
 
+    const openRenewModal = (center: Center) => {
+        setRenewCenter(center);
+        setRenewModalOpen(true);
+    };
+
     const confirmDelete = () => {
         if (!deletingCenter) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/centers/${deletingCenter.id}`, {
@@ -138,7 +149,7 @@ return;
                                     <th className="px-6 py-4">Quy Mô</th>
                                     <th className="px-6 py-4">Hạn Sử Dụng</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    {(can('centers.edit') || can('centers.delete')) && (
+                                    {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (
                                         <th className="px-6 py-4 text-right">
                                             Thao Tác
                                         </th>
@@ -246,9 +257,20 @@ return;
                                                     {center.status.toUpperCase()}
                                                 </Badge>
                                             </td>
-                                            {(can('centers.edit') || can('centers.delete')) && (
+                                            {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        {isSuperAdmin && (
+                                                            <Button
+                                                                variant="success"
+                                                                size="sm"
+                                                                icon={<RefreshCw className="h-3.5 w-3.5" />}
+                                                                onClick={() => openRenewModal(center)}
+                                                                title="Gia hạn hoặc Đổi gói cước SaaS"
+                                                            >
+                                                                Gia Hạn/Đổi Gói
+                                                            </Button>
+                                                        )}
                                                         {can('centers.edit') && (
                                                             <Link
                                                                 href={`/centers/${center.id}/edit`}
@@ -313,6 +335,19 @@ return;
                 />
             </div>
 
+            {/* Renew Subscription Modal */}
+            {renewCenter && (
+                <RenewSubscriptionModal
+                    isOpen={renewModalOpen}
+                    onClose={() => {
+                        setRenewModalOpen(false);
+                        setRenewCenter(null);
+                    }}
+                    center={renewCenter}
+                    subscriptionPlans={subscriptionPlans}
+                />
+            )}
+
             {/* Delete Confirmation Modal */}
             <Modal
                 isOpen={deleteModalOpen}
@@ -357,3 +392,4 @@ return;
 };
 
 export default Index;
+

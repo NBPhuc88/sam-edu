@@ -4,7 +4,9 @@ namespace App\Services\Center;
 
 use App\Enums\Constant;
 use App\Models\Center;
+use App\Models\CenterSubscription;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 interface CenterServiceInterface
 {
@@ -43,7 +45,24 @@ interface CenterServiceInterface
     public function deleteCenter(int $id): bool;
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
-    public function getSubscriptionPlans(): \Illuminate\Database\Eloquent\Collection;
+    public function getSubscriptionPlans(): Collection;
+
+    /**
+     * Renew or change subscription for a center.
+     *
+     * @param  int                  $centerId
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function renewOrChangeSubscription(int $centerId, array $data): CenterSubscription;
+
+    /**
+     * Get subscription history for a center.
+     *
+     * @param  int        $centerId
+     * @return Collection
+     */
+    public function getCenterSubscriptions(int $centerId): Collection;
 }
