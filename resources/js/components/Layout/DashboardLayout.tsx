@@ -57,7 +57,10 @@ interface DashboardLayoutProps {
     role: string | null;
     center?: CenterData | null;
     subscriptionPlans?: SubscriptionPlan[];
-    onZaloPayRenew?: (planCode: string) => Promise<void>;
+    onZaloPayRenew?: (
+        planCode: string,
+        durationType: 'monthly' | 'yearly',
+    ) => Promise<void>;
     headerExtra?: React.ReactNode;
 }
 
@@ -81,7 +84,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isLoadingPayment, setIsLoadingPayment] = useState(false);
-    const [selectedPlanCode, setSelectedPlanCode] = useState<string>('yearly');
+    const [durationType, setDurationType] = useState<'monthly' | 'yearly'>('yearly');
+
+    const paidPlans = subscriptionPlans.filter((p) => p.price > 0);
+
+    const [selectedPlanCode, setSelectedPlanCode] = useState<string>(
+        () => center?.subscription_plan ?? 'basic_5',
+    );
+
+    useEffect(() => {
+        if (paidPlans.length > 0 && !paidPlans.some((p) => p.code === selectedPlanCode)) {
+            const defaultCode = center?.subscription_plan && paidPlans.some((p) => p.code === center.subscription_plan)
+                ? center.subscription_plan
+                : paidPlans[0].code;
+            setSelectedPlanCode(defaultCode);
+        }
+    }, [subscriptionPlans, center]);
 
     // Auto close sidebar on Mobile (< 768px) whenever an Inertia page navigation completes
     useEffect(() => {
@@ -96,11 +114,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         };
     }, []);
 
-    const paidPlans = subscriptionPlans.filter((p) => p.price > 0);
     const showBanner =
         role === 'admin' &&
         center &&
         (center.is_expired || center.expiring_soon || center.expiring_1day);
+
+    const getPlanPrice = (plan: SubscriptionPlan): number => {
+        if (durationType === 'yearly') {
+            return plan.yearly_price ?? plan.price * 12;
+        }
+
+        return plan.price;
+    };
+
+    const selectedPlan =
+        paidPlans.find((p) => p.code === selectedPlanCode) ?? paidPlans[0];
+    const currentTotalPrice = selectedPlan ? getPlanPrice(selectedPlan) : 0;
 
     const handleZaloPayRenew = async () => {
         if (!onZaloPayRenew) {
@@ -110,7 +139,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         setIsLoadingPayment(true);
 
         try {
-            await onZaloPayRenew(selectedPlanCode);
+            await onZaloPayRenew(selectedPlanCode, durationType);
             setIsPaymentModalOpen(false);
         } finally {
             setIsLoadingPayment(false);
@@ -211,13 +240,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 icon={<CreditCard className="h-4 w-4" />}
                                 onClick={handleZaloPayRenew}
                             >
-                                Gửi yêu cầu gia hạn (
-                                {(
-                                    paidPlans.find(
-                                        (p) => p.code === selectedPlanCode,
-                                    )?.price ?? 4800000
-                                ).toLocaleString('vi-VN')}
-                                đ)
+                                Gửi yêu cầu gia hạn {durationType === 'yearly' ? '1 năm' : '1 tháng'} (
+                                {currentTotalPrice.toLocaleString('vi-VN')}đ)
                             </Button>
                         </>
                     }
@@ -228,62 +252,88 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             <strong>{center?.name}</strong>. Hệ thống sẽ tự động gửi Email thông báo yêu cầu gia hạn tới Quản trị viên hệ thống.
                         </p>
 
-                        {center?.subscription_plan === 'monthly' && (
-                            <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-                                <span className="shrink-0 text-sm">💡</span>
-                                <div>
-                                    <strong>Khuyên dùng:</strong> Nâng lên{' '}
-                                    <strong>Gói Theo Năm (4.800.000đ)</strong> —
-                                    tiết kiệm 20% (chỉ 400.000đ/tháng).
-                                </div>
+                        {/* Thời hạn gia hạn selection */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
+                                Thời Hạn Gia Hạn
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDurationType('yearly')}
+                                    className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
+                                        durationType === 'yearly'
+                                            ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/20 font-bold'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <span className="text-xs">Gia Hạn 1 Năm</span>
+                                    <span className="mt-0.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                                        ⚡ Tiết kiệm 20%
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setDurationType('monthly')}
+                                    className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
+                                        durationType === 'monthly'
+                                            ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/20 font-bold'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <span className="text-xs">Gia Hạn 1 Tháng</span>
+                                    <span className="mt-0.5 text-[10px] text-gray-500">Thanh toán từng tháng</span>
+                                </button>
                             </div>
-                        )}
+                        </div>
 
                         <div className="space-y-2">
                             <label className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
                                 Chọn Gói Cước
                             </label>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                {paidPlans.map((plan) => (
-                                    <div
-                                        key={plan.id}
-                                        onClick={() =>
-                                            setSelectedPlanCode(plan.code)
-                                        }
-                                        className={`cursor-pointer rounded-lg border p-3 transition-all ${
-                                            selectedPlanCode === plan.code
-                                                ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                : 'border-gray-200 bg-white hover:border-gray-300'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-gray-900">
-                                                {plan.name}
-                                            </span>
-                                            {plan.badge_text && (
-                                                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
-                                                    {plan.badge_text}
+                                {paidPlans.map((plan) => {
+                                    const planPrice = getPlanPrice(plan);
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            onClick={() =>
+                                                setSelectedPlanCode(plan.code)
+                                            }
+                                            className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                                                selectedPlanCode === plan.code
+                                                    ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-gray-900">
+                                                    {plan.name}
                                                 </span>
-                                            )}
+                                                {plan.badge_text && (
+                                                    <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                                                        {plan.badge_text}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="mt-1 text-sm font-extrabold text-emerald-700">
+                                                {planPrice.toLocaleString('vi-VN')}
+                                                đ{' '}
+                                                <span className="text-[10px] font-normal text-gray-500">
+                                                    /{' '}
+                                                    {durationType === 'yearly'
+                                                        ? 'năm'
+                                                        : 'tháng'}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-[11px] text-gray-500">
+                                                Tối đa {plan.max_students} HS ·{' '}
+                                                {plan.max_classes} lớp
+                                            </div>
                                         </div>
-                                        <div className="mt-1 text-sm font-extrabold text-emerald-700">
-                                            {plan.price.toLocaleString('vi-VN')}
-                                            đ{' '}
-                                            <span className="text-[10px] font-normal text-gray-500">
-                                                /{' '}
-                                                {plan.duration_days >= 365
-                                                    ? 'năm'
-                                                    : plan.duration_days >= 30
-                                                      ? 'tháng'
-                                                      : `${plan.duration_days} ngày`}
-                                            </span>
-                                        </div>
-                                        <div className="mt-1 text-[11px] text-gray-500">
-                                            Tối đa {plan.max_students} HS ·{' '}
-                                            {plan.max_classes} lớp
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -292,10 +342,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 Thông tin gửi yêu cầu gia hạn:
                             </div>
                             <div>
-                                • Cổng thanh toán ZaloPay đang bảo trì. Khi bấm "Gửi yêu cầu gia hạn", hệ thống sẽ tự động gửi Email thông báo tới Quản trị viên hệ thống.
+                                • Khi bấm "Gửi yêu cầu gia hạn", hệ thống sẽ tự động gửi Email thông báo tới Quản trị viên hệ thống.
                             </div>
                             <div>
-                                • Quản trị viên hệ thống sẽ nhận được thông tin gói cước bạn chọn và chủ động liên hệ để hỗ trợ gia hạn cho bạn.
+                                • Quản trị viên hệ thống sẽ nhận được thông tin gói cước và thời hạn bạn chọn để hỗ trợ gia hạn cho bạn.
                             </div>
                         </div>
                     </div>

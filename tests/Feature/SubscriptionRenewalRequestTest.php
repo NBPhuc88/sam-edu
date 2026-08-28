@@ -45,12 +45,14 @@ test('admin can request subscription renewal and queue email to super admin', fu
         'role'       => 'admin',
         'status'     => 'active',
     ]);
+    $centerAdmin->centers()->attach($center->id);
 
     $response = $this->actingAs($centerAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
-            'center_id' => $center->id,
-            'plan_code' => 'basic_5',
-            'note'      => 'Vui lòng hỗ trợ gia hạn sớm',
+            'center_id'     => $center->id,
+            'plan_code'     => 'basic_5',
+            'duration_type' => 'yearly',
+            'note'          => 'Vui lòng hỗ trợ gia hạn sớm',
         ]);
 
     $response->assertStatus(200);
@@ -62,6 +64,106 @@ test('admin can request subscription renewal and queue email to super admin', fu
 
     $this->assertDatabaseHas('payment_transactions', [
         'center_id'      => $center->id,
+        'amount'         => 2400000,
+        'payment_method' => 'other',
+        'status'         => 'pending',
+    ]);
+});
+
+test('super_admin cannot request subscription renewal', function () {
+    $center = Center::create([
+        'code'              => 'CTR-REQ-004',
+        'name'              => 'Trung Tâm Test Super Admin Reject',
+        'status'            => 'active',
+        'subscription_plan' => 'basic_5',
+        'expires_at'        => now()->addDays(5),
+    ]);
+
+    $superAdmin = Admin::create([
+        'admin_code' => 'ADM-SUP-98',
+        'username'   => 'super_admin_test_reject',
+        'email'      => 'superadmin.reject@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Super Admin Reject',
+        'role'       => 'super_admin',
+        'status'     => 'active',
+    ]);
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->postJson('/api/payments/request-renewal', [
+            'center_id' => $center->id,
+            'plan_code' => 'basic_5',
+        ]);
+
+    $response->assertStatus(403);
+});
+
+test('center admin cannot request renewal for unassigned center', function () {
+    $center1 = Center::create([
+        'code'   => 'CTR-REQ-005',
+        'name'   => 'Trung Tâm 1',
+        'status' => 'active',
+    ]);
+    $center2 = Center::create([
+        'code'   => 'CTR-REQ-006',
+        'name'   => 'Trung Tâm 2',
+        'status' => 'active',
+    ]);
+
+    $centerAdmin = Admin::create([
+        'admin_code' => 'ADM-CTR-02',
+        'username'   => 'center_admin_unassigned',
+        'email'      => 'center.admin.unassigned@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Center Admin Unassigned',
+        'role'       => 'admin',
+        'status'     => 'active',
+    ]);
+    $centerAdmin->centers()->attach($center1->id);
+
+    $response = $this->actingAs($centerAdmin, 'admin')
+        ->postJson('/api/payments/request-renewal', [
+            'center_id' => $center2->id,
+            'plan_code' => 'basic_5',
+        ]);
+
+    $response->assertStatus(403);
+});
+
+test('center admin can request renewal with monthly duration and calculate monthly price', function () {
+    $center = Center::create([
+        'code'              => 'CTR-REQ-007',
+        'name'              => 'Trung Tâm Monthly Renewal',
+        'status'            => 'active',
+        'subscription_plan' => 'basic_5',
+        'expires_at'        => now()->addDays(5),
+    ]);
+
+    $centerAdmin = Admin::create([
+        'admin_code' => 'ADM-CTR-03',
+        'username'   => 'center_admin_monthly',
+        'email'      => 'center.admin.monthly@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Center Admin Monthly',
+        'role'       => 'admin',
+        'status'     => 'active',
+    ]);
+    $centerAdmin->centers()->attach($center->id);
+
+    $response = $this->actingAs($centerAdmin, 'admin')
+        ->postJson('/api/payments/request-renewal', [
+            'center_id'     => $center->id,
+            'plan_code'     => 'basic_5',
+            'duration_type' => 'monthly',
+            'note'          => 'Gia hạn 1 tháng',
+        ]);
+
+    $response->assertStatus(200);
+    $response->assertJson(['success' => true]);
+
+    $this->assertDatabaseHas('payment_transactions', [
+        'center_id'      => $center->id,
+        'amount'         => 250000,
         'payment_method' => 'other',
         'status'         => 'pending',
     ]);

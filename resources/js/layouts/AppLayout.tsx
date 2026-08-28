@@ -76,7 +76,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     }, [flash, errors]);
 
     /** Handle subscription renewal email request */
-    const handleZaloPayRenew = async (planCode: string): Promise<void> => {
+    const handleZaloPayRenew = async (
+        planCode: string,
+        durationType: 'monthly' | 'yearly' = 'yearly',
+    ): Promise<void> => {
         const plans: any[] = subscription_plans ?? [];
         const targetPlan = plans.find((p: any) => p.code === planCode) ?? plans[0];
 
@@ -84,6 +87,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             const response = await apiClient.post('/api/payments/request-renewal', {
                 center_id: center?.id,
                 plan_code: targetPlan?.code ?? 'yearly',
+                duration_type: durationType,
             });
 
             if (response.data?.success) {

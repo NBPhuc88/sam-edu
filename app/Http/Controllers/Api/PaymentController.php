@@ -24,15 +24,15 @@ class PaymentController extends Controller
      */
     public function requestRenewal(RequestSubscriptionRenewalRequest $request): JsonResponse
     {
-        if (! Auth::guard('admin')->check()) {
+        /** @var Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
+
+        if (! $admin || $admin->role !== 'admin') {
             return response()->json([
                 'success' => false,
                 'message' => 'Chỉ Quản trị viên trung tâm mới có quyền gửi yêu cầu gia hạn dịch vụ.',
             ], 403);
         }
-
-        /** @var Admin|null $admin */
-        $admin = Auth::guard('admin')->user();
 
         $result = $this->paymentService->requestRenewal($request->validated(), $admin);
 

@@ -58,6 +58,20 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
+        $durationType = (string) ($data['duration_type'] ?? 'yearly');
+
+        if (! in_array($durationType, ['monthly', 'yearly'], true)) {
+            $durationType = 'yearly';
+        }
+
+        if ($durationType === 'monthly') {
+            $amount       = (int) $plan->price;
+            $durationDays = 30;
+        } else {
+            $amount       = (int) ($plan->yearly_price ?? ($plan->price * 12));
+            $durationDays = 365;
+        }
+
         $note = isset($data['note']) ? (string) $data['note'] : null;
 
         $contactEmail = $this->systemSettingRepository->getByKey(
@@ -71,7 +85,7 @@ class PaymentService implements PaymentServiceInterface
         foreach ($recipientEmails as $email) {
             try {
                 Mail::to($email)->queue(
-                    new CenterSubscriptionRenewalRequestedMail($center, $plan, $note, $requestingUser)
+                    new CenterSubscriptionRenewalRequestedMail($center, $plan, $note, $requestingUser, $durationType, $amount)
                 );
             } catch (\Throwable $e) {
                 Log::error("Lỗi khi gửi email yêu cầu gia hạn trung tâm {$center->id} tới {$email}: " . $e->getMessage());
@@ -83,12 +97,14 @@ class PaymentService implements PaymentServiceInterface
             'center_id'      => $center->id,
             'app_trans_id'   => $appTransId,
             'payment_method' => 'other',
-            'amount'         => $plan->price,
+            'amount'         => $amount,
             'status'         => 'pending',
             'metadata'       => [
                 'app_trans_id'    => $appTransId,
                 'plan_code'       => $plan->code,
                 'plan_name'       => $plan->name,
+                'duration_type'   => $durationType,
+                'duration_days'   => $durationDays,
                 'note'            => $note,
                 'requested_by_id' => $requestingUser?->id,
             ],

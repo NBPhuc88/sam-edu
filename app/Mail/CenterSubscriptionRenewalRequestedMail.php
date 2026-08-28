@@ -23,12 +23,16 @@ class CenterSubscriptionRenewalRequestedMail extends Mailable implements ShouldQ
      * @param SubscriptionPlan $plan
      * @param ?string          $note
      * @param ?Admin           $requestingUser
+     * @param string           $durationType
+     * @param ?int             $amount
      */
     public function __construct(
         public Center $center,
         public SubscriptionPlan $plan,
         public ?string $note = null,
-        public ?Admin $requestingUser = null
+        public ?Admin $requestingUser = null,
+        public string $durationType = 'yearly',
+        public ?int $amount = null
     ) {
     }
 
@@ -47,6 +51,10 @@ class CenterSubscriptionRenewalRequestedMail extends Mailable implements ShouldQ
      */
     public function content(): Content
     {
+        $calculatedAmount = $this->amount ?? ($this->durationType === 'monthly'
+            ? $this->plan->price
+            : ($this->plan->yearly_price ?? ($this->plan->price * 12)));
+
         return new Content(
             markdown: 'emails.center_subscription_renewal_requested',
             with: [
@@ -54,6 +62,8 @@ class CenterSubscriptionRenewalRequestedMail extends Mailable implements ShouldQ
                 'plan'           => $this->plan,
                 'note'           => $this->note,
                 'requestingUser' => $this->requestingUser,
+                'durationType'   => $this->durationType,
+                'amount'         => $calculatedAmount,
             ],
         );
     }
