@@ -371,6 +371,7 @@ export default function AssignExamModal({
                                 { value: 'completed', label: 'Đã kết thúc' },
                                 { value: 'cancelled', label: 'Đã hủy' },
                             ]}
+                            placement="top"
                             searchable={false}
                         />
                     </div>
