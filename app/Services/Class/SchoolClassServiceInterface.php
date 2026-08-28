@@ -110,4 +110,15 @@ interface SchoolClassServiceInterface
      * @return bool
      */
     public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null, ?Teacher $teacher = null): bool;
+
+    /**
+     * @param  int      $classId
+     * @param  int      $studentId
+     * @param  string   $status
+     * @param  ?string  $note
+     * @param  ?Admin   $admin
+     * @param  ?Teacher $teacher
+     * @return bool
+     */
+    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null, ?Admin $admin = null, ?Teacher $teacher = null): bool;
 }

@@ -79,8 +79,7 @@ class Student extends Authenticatable
     {
         return $this->belongsToMany(SchoolClass::class, 'class_students', 'student_id', 'class_id')
             ->withPivot('enrolled_at', 'left_at', 'status', 'note')
-            ->withTimestamps()
-            ->withTrashed();
+            ->withTimestamps();
     }
 
     /**

@@ -353,7 +353,11 @@ class StudentRepository implements StudentRepositoryInterface
                         'center_id',
                         'name',
                         'code'
-                    )->withCount('students');
+                    )->withCount([
+                        'students' => function ($q) {
+                            $q->where('class_students.status', 'active');
+                        },
+                    ]);
                 },
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'teacher:id,full_name,teacher_code,phone',
@@ -398,7 +402,11 @@ class StudentRepository implements StudentRepositoryInterface
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.schoolClass' => function ($cq) {
-                    $cq->select('id', 'center_id', 'name', 'code')->withCount('students');
+                    $cq->select('id', 'center_id', 'name', 'code')->withCount([
+                        'students' => function ($q) {
+                            $q->where('class_students.status', 'active');
+                        },
+                    ]);
                 },
                 'classSubject.subject:id,name,code',
                 'classSubject.teacher:id,full_name,teacher_code',

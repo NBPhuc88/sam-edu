@@ -736,4 +736,11 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         return $this->schoolClassRepository->detachStudent($classId, $studentId);
     }
+
+    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null, ?Admin $admin = null, ?Teacher $teacher = null): bool
+    {
+        $this->findClass($classId, $admin, $teacher);
+
+        return $this->schoolClassRepository->updateClassStudentStatus($classId, $studentId, $status, $note);
+    }
 }

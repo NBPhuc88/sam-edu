@@ -4,18 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Class\AddStudentsToClassRequest;
 use App\Http\Requests\Class\FilterClassStudentRequest;
+use App\Http\Requests\Class\UpdateClassStudentStatusRequest;
 use App\Http\Requests\Student\ImportCsvRequest;
+use App\Models\Admin;
+use App\Models\Teacher;
 use App\Services\Class\SchoolClassServiceInterface;
 use App\Services\Class\StudentExportImportServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Models\Admin;
-use App\Models\Teacher;
-use Illuminate\Support\Facades\Auth;
 
 class SchoolClassStudentController extends Controller
 {
@@ -171,5 +172,24 @@ class SchoolClassStudentController extends Controller
         $this->schoolClassService->removeStudentFromClass($classId, $studentId, $admin, $teacher);
 
         return back()->with('success', 'Đã xóa học sinh khỏi lớp học.');
+    }
+
+    public function updateStudentStatus(UpdateClassStudentStatusRequest $request, int $classId, int $studentId): RedirectResponse
+    {
+        [$admin, $teacher] = $this->getAuthUser();
+
+        $status = (string) $request->input('status');
+        $note   = $request->input('note');
+
+        $this->schoolClassService->updateClassStudentStatus(
+            $classId,
+            $studentId,
+            $status,
+            is_string($note) ? $note : null,
+            $admin,
+            $teacher
+        );
+
+        return back()->with('success', 'Đã cập nhật trạng thái học sinh trong lớp thành công.');
     }
 }

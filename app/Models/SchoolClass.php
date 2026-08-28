@@ -63,8 +63,7 @@ class SchoolClass extends Model
     {
         return $this->belongsToMany(Student::class, 'class_students', 'class_id', 'student_id')
             ->withPivot('enrolled_at', 'left_at', 'status', 'note')
-            ->withTimestamps()
-            ->withTrashed();
+            ->withTimestamps();
     }
 
     /**

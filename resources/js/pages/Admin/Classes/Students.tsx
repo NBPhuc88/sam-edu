@@ -8,6 +8,7 @@ import {
     GraduationCap,
     UserPlus,
     Trash2,
+    Edit2,
     AlertCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -28,6 +29,7 @@ interface SchoolClass {
     code: string;
     name: string;
     max_students: number;
+    students_count?: number;
     center?: { id: number; name: string };
 }
 
@@ -38,6 +40,7 @@ interface Student {
     full_name: string;
     email: string;
     phone: string | null;
+    status: number | string;
     parent_name: string | null;
     parent_phone: string | null;
     pivot?: {
@@ -81,6 +84,40 @@ export default function ClassStudentsPage({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [removingStudent, setRemovingStudent] = useState<Student | null>(null);
     const [isRemoving, setIsRemoving] = useState(false);
+
+    const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+    const [editingStatus, setEditingStatus] = useState<string>('active');
+    const [editingNote, setEditingNote] = useState<string>('');
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+
+    const handleOpenStatusModal = (student: Student) => {
+        setEditingStudent(student);
+        setEditingStatus(student.pivot?.status || 'active');
+        setEditingNote(student.pivot?.note || '');
+    };
+
+    const handleStatusSubmit = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!editingStudent) return;
+
+        setIsUpdatingStatus(true);
+        router.patch(
+            `/classes/${schoolClass.id}/students/${editingStudent.id}/status`,
+            {
+                status: editingStatus,
+                note: editingNote,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEditingStudent(null);
+                },
+                onFinish: () => {
+                    setIsUpdatingStatus(false);
+                },
+            },
+        );
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -192,20 +229,51 @@ export default function ClassStudentsPage({
         },
         {
             header: 'Trạng thái',
-            cell: (row) => (
-                <Badge
-                    variant={row.pivot?.status === 'active' ? 'active' : 'info'}
-                >
-                    {row.pivot?.status === 'active' ? 'Đang học' : 'Nghỉ học'}
-                </Badge>
-            ),
+            cell: (row) => {
+                const pivotStatus = row.pivot?.status;
+
+                return (
+                    <div
+                        className={!isTeacher ? 'cursor-pointer inline-block group' : 'inline-block'}
+                        onClick={() => !isTeacher && handleOpenStatusModal(row)}
+                        title={!isTeacher ? 'Nhấn để thay đổi trạng thái trong lớp' : undefined}
+                    >
+                        {pivotStatus === 'left' ? (
+                            <Badge variant="danger" className="transition-opacity group-hover:opacity-80">
+                                Đã thôi học
+                            </Badge>
+                        ) : pivotStatus === 'transferred' ? (
+                            <Badge variant="info" className="transition-opacity group-hover:opacity-80">
+                                Đã chuyển lớp
+                            </Badge>
+                        ) : pivotStatus === 'completed' ? (
+                            <Badge variant="pending" className="transition-opacity group-hover:opacity-80">
+                                Đã hoàn thành
+                            </Badge>
+                        ) : (
+                            <Badge variant="active" className="transition-opacity group-hover:opacity-80">
+                                Đang học
+                            </Badge>
+                        )}
+                    </div>
+                );
+            },
         },
         ...(!isTeacher
             ? [
                   {
                       header: 'Thao tác',
                       cell: (row: Student) => (
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-end gap-2">
+                              <Button
+                                  variant="edit"
+                                  size="sm"
+                                  icon={<Edit2 className="h-4 w-4" />}
+                                  onClick={() => handleOpenStatusModal(row)}
+                                  title="Chỉnh sửa trạng thái trong lớp"
+                              >
+                                  Đổi trạng thái
+                              </Button>
                               <Button
                                   variant="danger"
                                   size="sm"
@@ -213,7 +281,7 @@ export default function ClassStudentsPage({
                                   onClick={() => setRemovingStudent(row)}
                                   title="Xóa học sinh khỏi lớp"
                               >
-                                  Xóa Khỏi Lớp
+                                  Xóa
                               </Button>
                           </div>
                       ),
@@ -259,9 +327,9 @@ export default function ClassStudentsPage({
                             <p className="mt-1 text-sm text-gray-600">
                                 Sĩ số hiện tại:{' '}
                                 <span className="font-semibold text-gray-900">
-                                    {students.total}
+                                    {schoolClass.students_count ?? 0}
                                 </span>{' '}
-                                / {schoolClass.max_students} học sinh
+                                {schoolClass.max_students ? `/ ${schoolClass.max_students} học sinh` : 'học sinh'}
                             </p>
                         </div>
 
@@ -490,6 +558,80 @@ export default function ClassStudentsPage({
                 className={schoolClass.name}
                 classCode={schoolClass.code}
             />
+
+            {/* Update Class Student Status Modal */}
+            <Modal
+                isOpen={!!editingStudent}
+                onClose={() => setEditingStudent(null)}
+                title="Cập Nhật Trạng Thái Học Sinh Trong Lớp"
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={() => setEditingStudent(null)}
+                            disabled={isUpdatingStatus}
+                        >
+                            Hủy Bỏ
+                        </Button>
+                        <Button
+                            variant="edit"
+                            size="md"
+                            onClick={handleStatusSubmit}
+                            isLoading={isUpdatingStatus}
+                            icon={<Edit2 className="h-4 w-4" />}
+                        >
+                            Lưu Thay Đổi
+                        </Button>
+                    </>
+                }
+            >
+                <form onSubmit={handleStatusSubmit} className="space-y-4">
+                    <div className="space-y-1.5 rounded-lg border border-slate-200 bg-slate-50 p-3.5 text-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-500">Học sinh:</span>
+                            <span className="font-bold text-gray-900">{editingStudent?.full_name}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-500">Mã học sinh:</span>
+                            <span className="font-mono font-semibold text-gray-800">{editingStudent?.student_code}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-500">Lớp học:</span>
+                            <span className="font-semibold text-emerald-700">{schoolClass.name}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                            Trạng thái trong lớp <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            value={editingStatus}
+                            onChange={(e) => setEditingStatus(e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        >
+                            <option value="active">🟢 Đang học lớp này</option>
+                            <option value="completed">🟡 Đã hoàn thành khóa học</option>
+                            <option value="transferred">🔵 Đã chuyển sang lớp khác</option>
+                            <option value="left">🔴 Đã thôi học / Nghỉ học</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                            Ghi chú / Lý do (Tùy chọn)
+                        </label>
+                        <textarea
+                            rows={3}
+                            value={editingNote}
+                            onChange={(e) => setEditingNote(e.target.value)}
+                            placeholder="Nhập lý do chuyển lớp, xin nghỉ hoặc ngày hoàn tất..."
+                            className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                    </div>
+                </form>
+            </Modal>
 
             {/* Remove Student Confirmation Modal */}
             <Modal

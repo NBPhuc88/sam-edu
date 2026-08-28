@@ -153,6 +153,8 @@ interface SchoolClassRepositoryInterface
 
     public function detachStudent(int $classId, int $studentId): bool;
 
+    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null): bool;
+
     /**
      * @param  int        $classId
      * @param  array<int> $studentIds

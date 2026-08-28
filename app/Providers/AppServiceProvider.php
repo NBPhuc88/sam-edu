@@ -226,8 +226,7 @@ class AppServiceProvider extends ServiceProvider
                 $items = $model->newCollection();
             } else {
                 // 3. Deferred Join: Lấy dữ liệu và eager load quan hệ cho đúng các ID đã lấy
-                $items = $this->clone()
-                    ->setQuery($model->newQueryWithoutScopes()->getQuery())
+                $items = (clone $this)
                     ->whereIn($keyName, $ids)
                     ->get($columns);
 

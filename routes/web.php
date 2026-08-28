@@ -250,6 +250,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::post('/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('students.import');
         Route::get('/{classId}/students/available', [SchoolClassStudentController::class, 'availableStudents'])->name('students.available');
         Route::post('/{classId}/students/add', [SchoolClassStudentController::class, 'addStudents'])->name('students.add');
+        Route::patch('/{classId}/students/{studentId}/status', [SchoolClassStudentController::class, 'updateStudentStatus'])->name('students.update-status');
         Route::delete('/{classId}/students/{studentId}', [SchoolClassStudentController::class, 'removeStudent'])->name('students.remove');
 
         Route::get('/{classId}/exam-results', [SchoolClassExamResultController::class, 'index'])->name('exam-results.index');

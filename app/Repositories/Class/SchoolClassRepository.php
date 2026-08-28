@@ -51,7 +51,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'classSubjects.subject:id,name,code',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
-            ->withCount('students');
+            ->withCount([
+                'students' => function ($q) {
+                    $q->where('class_students.status', 'active')
+                        ->whereNull('class_students.left_at');
+                },
+            ]);
 
         if ($studentId !== null) {
             $query->whereHas('students', function ($q) use ($studentId) {
@@ -107,7 +112,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             });
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        return $query->latest('id')->paginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 
     /**
@@ -135,7 +140,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'classSubjects.subject:id,name,code',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
-            ->withCount('students');
+            ->withCount([
+                'students' => function ($q) {
+                    $q->where('class_students.status', 'active')
+                        ->whereNull('class_students.left_at');
+                },
+            ]);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -279,7 +289,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             })
             ->latest('students.id');
 
-        return $query->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        return $query->paginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
 
     public function count(): int
@@ -348,7 +358,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             'status'
         )->whereIn('center_id', $centerIds)
         ->with(['center:id,name,code'])
-        ->withCount('students');
+        ->withCount([
+            'students' => function ($q) {
+                $q->where('class_students.status', 'active')
+                    ->whereNull('class_students.left_at');
+            },
+        ]);
 
         if ($classIds !== null) {
             $query->whereIn('id', $classIds);
@@ -379,7 +394,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             'status'
         )->whereIn('center_id', $centerIds)
         ->with(['center:id,name,code'])
-        ->withCount('students');
+        ->withCount([
+            'students' => function ($q) {
+                $q->where('class_students.status', 'active')
+                    ->whereNull('class_students.left_at');
+            },
+        ]);
 
         if ($classIds !== null) {
             $query->whereIn('id', $classIds);
@@ -528,6 +548,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             'status'
         )
         ->with('center:id,name,code')
+        ->withCount([
+            'students' => function ($q) {
+                $q->where('class_students.status', 'active')
+                    ->whereNull('class_students.left_at');
+            },
+        ])
         ->findOrFail($classId);
     }
 
@@ -556,6 +582,27 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         return (bool) ClassStudent::where('class_id', $classId)
             ->where('student_id', $studentId)
             ->delete();
+    }
+
+    public function updateClassStudentStatus(int $classId, int $studentId, string $status, ?string $note = null): bool
+    {
+        $updateData = [
+            'status' => $status,
+        ];
+
+        if (in_array($status, ['left', 'transferred', 'completed'], true)) {
+            $updateData['left_at'] = now();
+        } else {
+            $updateData['left_at'] = null;
+        }
+
+        if ($note !== null) {
+            $updateData['note'] = $note;
+        }
+
+        return (bool) ClassStudent::where('class_id', $classId)
+            ->where('student_id', $studentId)
+            ->update($updateData);
     }
 
     public function attachStudents(int $classId, array $studentIds): int
