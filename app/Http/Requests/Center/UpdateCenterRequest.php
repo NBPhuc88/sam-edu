@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Center;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,8 +28,8 @@ class UpdateCenterRequest extends FormRequest
             'phone'             => ['sometimes', 'nullable', new VietnamesePhoneNumber()],
             'email'             => ['sometimes', 'nullable', 'email', 'max:100'],
             'address'           => ['sometimes', 'nullable', 'string', 'max:255'],
-            'status'            => ['sometimes', 'required', 'in:active,inactive,expired,suspended'],
-            'subscription_plan' => ['sometimes', 'required', 'string', 'max:100'],
+            'status'            => ['sometimes', 'required', 'integer', Rule::in(Constant::CENTER_STATUSES)],
+            'subscription_plan' => ['sometimes', 'required', 'integer', Rule::in(Constant::PLAN_TYPES)],
             'expires_at'        => ['sometimes', 'nullable', 'date'],
             'max_students'      => ['sometimes', 'nullable', 'integer', 'min:0'],
             'max_classes'       => ['sometimes', 'nullable', 'integer', 'min:0'],

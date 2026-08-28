@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Exam;
 
+use App\Enums\Constant;
 use App\Models\Exam;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -58,21 +59,21 @@ class UpdateExamRequest extends FormRequest
             'description'       => ['nullable', 'string'],
             'exam_date'         => ['nullable', 'date'],
             'start_time'        => ['nullable', 'date_format:H:i,H:i:s'],
-            'status'            => ['nullable'],
+            'status'            => ['nullable', 'integer', Rule::in(Constant::EXAM_STATUSES)],
 
             // Danh sách các Phần thi (Dynamic Sections)
             'sections'                              => ['nullable', 'array'],
             'sections.*.id'                         => ['nullable', 'integer'],
             'sections.*.title'                      => ['required_with:sections', 'string', 'max:255'],
             'sections.*.description'                => ['nullable', 'string'],
-            'sections.*.skill'                      => ['required_with:sections', 'string', 'in:listening,reading,writing,speaking'],
+            'sections.*.skill'                      => ['required_with:sections', 'integer', Rule::in(Constant::EXAM_SKILLS)],
             'sections.*.order_index'                => ['nullable', 'integer'],
             'sections.*.questions'                  => ['nullable', 'array'],
             'sections.*.questions.*.id'             => ['nullable', 'integer'],
             'sections.*.questions.*.code'           => ['nullable', 'string', 'max:50'],
             'sections.*.questions.*.title'          => ['nullable', 'string', 'max:500'],
-            'sections.*.questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'sections.*.questions.*.skill'          => ['nullable', 'integer', Rule::in(Constant::EXAM_SKILLS)],
+            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'integer', Rule::in(Constant::QUESTION_TYPES)],
             'sections.*.questions.*.content'        => ['nullable', 'string'],
             'sections.*.questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'sections.*.questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -88,8 +89,8 @@ class UpdateExamRequest extends FormRequest
             'questions.*.id'             => ['nullable', 'integer'],
             'questions.*.code'           => ['nullable', 'string', 'max:50'],
             'questions.*.title'          => ['nullable', 'string', 'max:500'],
-            'questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'questions.*.question_type'  => ['required_with:questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'questions.*.skill'          => ['nullable', 'integer', Rule::in(Constant::EXAM_SKILLS)],
+            'questions.*.question_type'  => ['required_with:questions', 'integer', Rule::in(Constant::QUESTION_TYPES)],
             'questions.*.content'        => ['nullable', 'string'],
             'questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -161,16 +162,17 @@ class UpdateExamRequest extends FormRequest
                     if (is_array($questions)) {
                         foreach ($questions as $qIdx => $q) {
                             $qNum       = $qIdx + 1;
-                            $qType      = $q['question_type'] ?? '';
+                            $qTypeRaw   = $q['question_type'] ?? 0;
+                            $qType      = (int) $qTypeRaw;
                             $correctAns = $q['correct_answer'] ?? null;
 
-                            // Các câu hỏi Tự luận (Viết) và Ghi âm (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
-                            if (in_array($qType, ['essay', 'writing', 'audio_record', 'oral', 'speaking'], true)) {
+                            // Các câu hỏi Tự luận (Viết) và Ghi âm / Vấn đáp (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
+                            if (in_array($qType, [Constant::QUESTION_TYPE_ESSAY, Constant::QUESTION_TYPE_AUDIO_RECORD, Constant::QUESTION_TYPE_ORAL], true)) {
                                 continue;
                             }
 
                             // 1. Trắc nghiệm 1 đáp án, Đúng/Sai, Tìm lỗi sai
-                            if (in_array($qType, ['true_false_not_given', 'single_choice', 'find_mistake'], true)) {
+                            if (in_array($qType, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN, Constant::QUESTION_TYPE_FIND_MISTAKE], true)) {
                                 if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -179,7 +181,7 @@ class UpdateExamRequest extends FormRequest
                                 }
                             }
                             // 2. Trắc nghiệm nhiều đáp án
-                            elseif ($qType === 'multiple_choice') {
+                            elseif ($qType === Constant::QUESTION_TYPE_MULTIPLE_CHOICE) {
                                 if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -188,7 +190,7 @@ class UpdateExamRequest extends FormRequest
                                 }
                             }
                             // 3. Điền vào chỗ trống
-                            elseif (in_array($qType, ['fill_in_blank', 'short_answer'], true)) {
+                            elseif (in_array($qType, [Constant::QUESTION_TYPE_FILL_IN_BLANK, Constant::QUESTION_TYPE_DRAG_DROP_CLOZE, Constant::QUESTION_TYPE_SHORT_ANSWER], true)) {
                                 $hasAnswers = false;
 
                                 if (is_array($correctAns)) {
@@ -215,7 +217,7 @@ class UpdateExamRequest extends FormRequest
                                 }
                             }
                             // 4. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
-                            elseif (in_array($qType, ['matching', 'matching_sentences', 'matching_image', 'diagram_labelling'], true)) {
+                            elseif (in_array($qType, [Constant::QUESTION_TYPE_MATCHING, Constant::QUESTION_TYPE_MATCHING_IMAGE, Constant::QUESTION_TYPE_MATCHING_SENTENCES, Constant::QUESTION_TYPE_DIAGRAM_LABELLING], true)) {
                                 if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -224,7 +226,7 @@ class UpdateExamRequest extends FormRequest
                                 }
                             }
                             // 5. Sắp xếp thứ tự (Ordering)
-                            elseif ($qType === 'ordering') {
+                            elseif ($qType === Constant::QUESTION_TYPE_ORDERING) {
                                 if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",

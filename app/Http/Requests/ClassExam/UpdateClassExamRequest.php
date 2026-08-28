@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\ClassExam;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateClassExamRequest extends FormRequest
 {
@@ -26,7 +28,7 @@ class UpdateClassExamRequest extends FormRequest
             'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:600'],
             'max_score'        => ['nullable', 'numeric', 'min:0.1', 'max:1000'],
             'pass_score'       => ['nullable', 'numeric', 'min:0', 'max:1000'],
-            'status'           => ['nullable', 'string', 'in:scheduled,ongoing,completed,cancelled'],
+            'status'           => ['nullable', 'integer', Rule::in(Constant::CLASS_EXAM_STATUSES)],
         ];
     }
 

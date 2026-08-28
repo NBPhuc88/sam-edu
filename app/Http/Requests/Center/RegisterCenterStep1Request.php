@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Center;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterCenterStep1Request extends FormRequest
 {
@@ -28,7 +30,7 @@ class RegisterCenterStep1Request extends FormRequest
             'email'             => ['required', 'email', 'max:100'],
             'address'           => ['nullable', 'string', 'max:255'],
             'subscription_plan' => ['required', 'string', 'exists:subscription_plans,code'],
-            'payment_method'    => ['nullable', 'string', 'in:zalopay,bank_transfer,momo,vnpay'],
+            'payment_method'    => ['nullable', 'integer', Rule::in(Constant::PAYMENT_METHODS)],
         ];
     }
 

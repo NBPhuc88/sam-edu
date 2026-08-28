@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,7 @@ class FilterAdminRequest extends FormRequest
     {
         return [
             'search'   => ['nullable', 'string', 'max:255'],
-            'role'     => ['nullable', 'string', Rule::in(['super_admin', 'admin'])],
+            'role'     => ['nullable', 'integer', Rule::in(Constant::ADMIN_ROLES)],
             'page'     => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Permission;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateRolePermissionsRequest extends FormRequest
 {
@@ -22,7 +24,7 @@ class UpdateRolePermissionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role'          => ['required', 'string', 'in:super_admin,admin,teacher,student'],
+            'role'          => ['required', 'integer', Rule::in(Constant::ROLE_PERMISSION_ROLES)],
             'permissions'   => ['present', 'array'],
             'permissions.*' => ['string'],
         ];

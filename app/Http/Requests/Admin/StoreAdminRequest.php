@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,8 +30,8 @@ class StoreAdminRequest extends FormRequest
             'email'        => ['nullable', 'email', 'max:100', 'unique:admins,email'],
             'phone'        => ['nullable', new VietnamesePhoneNumber()],
             'password'     => ['required', 'string', 'min:5', 'max:20'],
-            'role'         => ['required', Rule::in(['super_admin', 'admin', 1, 2, '1', '2'])],
-            'center_id'    => ['nullable', 'required_if:role,admin,2', 'exists:centers,id'],
+            'role'         => ['required', 'integer', Rule::in(Constant::ADMIN_ROLES)],
+            'center_id'    => ['nullable', 'required_if:role,' . Constant::ROLE_ADMIN, 'exists:centers,id'],
             'center_ids'   => ['nullable', 'array'],
             'center_ids.*' => ['exists:centers,id'],
         ];

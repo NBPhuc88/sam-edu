@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Teacher;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -37,10 +38,10 @@ class StoreTeacherRequest extends FormRequest
                 }),
             ],
             'date_of_birth'  => ['nullable', 'date', 'before:today'],
-            'gender'         => ['nullable', 'string', 'in:male,female,other'],
+            'gender'         => ['nullable', 'integer', Rule::in(Constant::GENDERS)],
             'hire_date'      => ['nullable', 'date'],
             'specialization' => ['nullable', 'string', 'max:100'],
-            'status'         => ['nullable', 'string', 'in:active,inactive,locked'],
+            'status'         => ['nullable', 'integer', Rule::in(Constant::TEACHER_STATUSES)],
             'note'           => ['nullable', 'string'],
         ];
     }

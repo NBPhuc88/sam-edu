@@ -13,13 +13,10 @@ class UpdateClassStudentStatusRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::in([Constant::CLASS_STUDENT_STATUS_ACTIVE, Constant::CLASS_STUDENT_STATUS_COMPLETED, Constant::CLASS_STUDENT_STATUS_TRANSFERRED, Constant::CLASS_STUDENT_STATUS_LEFT, 'active', 'completed', 'transferred', 'left', '0', '1', '2', '3'])],
+            'status' => ['required', 'integer', Rule::in(Constant::CLASS_STUDENT_STATUSES)],
             'note'   => ['nullable', 'string', 'max:500'],
         ];
     }

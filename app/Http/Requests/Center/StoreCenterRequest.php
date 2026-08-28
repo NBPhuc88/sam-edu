@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Center;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCenterRequest extends FormRequest
 {
@@ -23,8 +25,8 @@ class StoreCenterRequest extends FormRequest
             'phone'             => ['nullable', new VietnamesePhoneNumber()],
             'email'             => ['nullable', 'email', 'max:100'],
             'address'           => ['nullable', 'string', 'max:255'],
-            'status'            => ['required', 'in:active,inactive,expired,suspended'],
-            'subscription_plan' => ['required', 'string', 'max:100'],
+            'status'            => ['required', 'integer', Rule::in(Constant::CENTER_STATUSES)],
+            'subscription_plan' => ['required', 'integer', Rule::in(Constant::PLAN_TYPES)],
             'expires_at'        => ['nullable', 'date'],
             'max_students'      => ['nullable', 'integer', 'min:0'],
             'max_classes'       => ['nullable', 'integer', 'min:0'],

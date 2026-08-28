@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Class;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +36,7 @@ class UpdateSchoolClassRequest extends FormRequest
             'max_students'          => ['nullable', 'integer', 'min:1', 'max:500'],
             'start_date'            => ['nullable', 'date'],
             'end_date'              => ['nullable', 'date', 'after_or_equal:start_date'],
-            'status'                => ['nullable'],
+            'status'                => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
             'subjects'              => ['nullable', 'array'],
             'subjects.*.subject_id' => ['required_with:subjects', 'integer', 'exists:subjects,id'],
             'subjects.*.teacher_id' => ['required_with:subjects', 'integer', 'exists:teachers,id'],
