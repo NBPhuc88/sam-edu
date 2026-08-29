@@ -161,26 +161,20 @@ class Constant
     // 5. TRUNG TÂM, GÓI DỊCH VỤ & SAAS (CENTERS & PLANS)
     // ==========================================
     // Bảng centers
-    public const int CENTER_STATUS_LOCKED          = 0; // Bị khóa
-    public const int CENTER_STATUS_ACTIVE          = 1; // Đang hoạt động
-    public const int CENTER_STATUS_TRIAL           = 2; // Dùng thử
-    public const int CENTER_STATUS_PENDING_PAYMENT = 3; // Chờ thanh toán
-    public const int CENTER_STATUS_EXPIRED         = 4; // Hết hạn
+    public const int CENTER_STATUS_ACTIVE  = 1; // Đang hoạt động
+    public const int CENTER_STATUS_PAUSED  = 2; // Tạm dừng
+    public const int CENTER_STATUS_EXPIRED = 3; // Đã hết hạn
 
     public const array CENTER_STATUSES = [
-        self::CENTER_STATUS_LOCKED,
         self::CENTER_STATUS_ACTIVE,
-        self::CENTER_STATUS_TRIAL,
-        self::CENTER_STATUS_PENDING_PAYMENT,
+        self::CENTER_STATUS_PAUSED,
         self::CENTER_STATUS_EXPIRED,
     ];
 
     public const array CENTER_STATUS_LABELS = [
-        self::CENTER_STATUS_ACTIVE          => 'Đang hoạt động',
-        self::CENTER_STATUS_TRIAL           => 'Dùng thử',
-        self::CENTER_STATUS_PENDING_PAYMENT => 'Chờ thanh toán',
-        self::CENTER_STATUS_EXPIRED         => 'Hết hạn',
-        self::CENTER_STATUS_LOCKED          => 'Bị khóa',
+        self::CENTER_STATUS_ACTIVE  => 'Đang hoạt động',
+        self::CENTER_STATUS_PAUSED  => 'Tạm dừng',
+        self::CENTER_STATUS_EXPIRED => 'Đã hết hạn',
     ];
 
     // Bảng center_subscriptions

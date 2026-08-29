@@ -1,3 +1,9 @@
+import {
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_PAUSED,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_OPTIONS,
+} from '@/constants/enums';
 import { toISODateString } from '@/lib/date';
 import { Link,usePage } from '@inertiajs/react';
 import { ArrowLeft,Building2,Save } from 'lucide-react';
@@ -71,7 +77,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
               : '';
 
         const rawStatus = initialValues?.status;
-        const normalizedStatus = rawStatus === 0 ? 0 : rawStatus === 2 ? 2 : rawStatus === 3 ? 3 : rawStatus === 4 ? 4 : 1;
+        const normalizedStatus = rawStatus === 2 ? CENTER_STATUS_PAUSED : rawStatus === 3 ? CENTER_STATUS_EXPIRED : CENTER_STATUS_ACTIVE;
 
         return {
             code: initialValues?.code || '',
@@ -387,21 +393,11 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             disabled={!isSuperAdmin}
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value={1}>
-                                Đang hoạt động
-                            </option>
-                            <option value={0}>
-                                Tạm dừng / Khóa
-                            </option>
-                            <option value={2}>
-                                Dùng thử
-                            </option>
-                            <option value={3}>
-                                Chờ thanh toán
-                            </option>
-                            <option value={4}>
-                                Đã hết hạn
-                            </option>
+                            {CENTER_STATUS_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

@@ -99,19 +99,21 @@ export const STUDENT_STATUS_OPTIONS = [
 // 5. TRUNG TÂM, GÓI DỊCH VỤ & SAAS (CENTERS & PLANS)
 // ==========================================
 // Bảng centers
-export const CENTER_STATUS_LOCKED = 0; // Bị khóa
 export const CENTER_STATUS_ACTIVE = 1; // Đang hoạt động
-export const CENTER_STATUS_TRIAL = 2; // Dùng thử
-export const CENTER_STATUS_PENDING_PAYMENT = 3; // Chờ thanh toán
-export const CENTER_STATUS_EXPIRED = 4; // Hết hạn
+export const CENTER_STATUS_PAUSED = 2; // Tạm dừng
+export const CENTER_STATUS_EXPIRED = 3; // Đã hết hạn
 
 export const CENTER_STATUS_LABELS: Record<number, string> = {
     [CENTER_STATUS_ACTIVE]: 'Đang hoạt động',
-    [CENTER_STATUS_TRIAL]: 'Dùng thử',
-    [CENTER_STATUS_PENDING_PAYMENT]: 'Chờ thanh toán',
-    [CENTER_STATUS_EXPIRED]: 'Hết hạn',
-    [CENTER_STATUS_LOCKED]: 'Bị khóa',
+    [CENTER_STATUS_PAUSED]: 'Tạm dừng',
+    [CENTER_STATUS_EXPIRED]: 'Đã hết hạn',
 };
+
+export const CENTER_STATUS_OPTIONS = [
+    { value: CENTER_STATUS_ACTIVE, label: 'Đang hoạt động' },
+    { value: CENTER_STATUS_PAUSED, label: 'Tạm dừng' },
+    { value: CENTER_STATUS_EXPIRED, label: 'Đã hết hạn' },
+];
 
 // Bảng center_subscriptions
 export const SUBSCRIPTION_STATUS_PENDING = 0; // Chờ kích hoạt

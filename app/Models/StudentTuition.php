@@ -56,22 +56,6 @@ class StudentTuition extends Model
         'updated_at'       => 'datetime:d-m-Y H:i',
     ];
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'completed', 'paid' => \App\Enums\Constant::TUITION_STATUS_PAID,
-                'partial'           => \App\Enums\Constant::TUITION_STATUS_PARTIAL,
-                'overdue'           => \App\Enums\Constant::TUITION_STATUS_OVERDUE,
-                default             => \App\Enums\Constant::TUITION_STATUS_PENDING,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<Center, $this>
      */

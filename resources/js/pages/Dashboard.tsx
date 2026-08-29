@@ -1,9 +1,11 @@
 import {
-CENTER_STATUS_ACTIVE,
-CENTER_STATUS_LABELS,
-PLAN_TYPE_FREE,
-PLAN_TYPE_LABELS,
-PLAN_TYPE_PREMIUM
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_PAUSED,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_LABELS,
+    PLAN_TYPE_FREE,
+    PLAN_TYPE_LABELS,
+    PLAN_TYPE_PREMIUM
 } from '@/constants/enums';
 import { Link,router } from '@inertiajs/react';
 import {
@@ -99,11 +101,18 @@ export const Dashboard: React.FC<any> = (props) => {
             },
             {
                 header: 'Trạng Thái',
-                cell: (row) => (
-                    <Badge variant={row.status === CENTER_STATUS_ACTIVE ? 'active' : 'expired'}>
-                        {CENTER_STATUS_LABELS[row.status] || (row.status === CENTER_STATUS_ACTIVE ? 'Đang hoạt động' : 'Chờ kích hoạt')}
-                    </Badge>
-                ),
+                cell: (row) => {
+                    switch (row.status) {
+                        case CENTER_STATUS_ACTIVE:
+                            return <Badge variant="active">{CENTER_STATUS_LABELS[CENTER_STATUS_ACTIVE] || 'Đang hoạt động'}</Badge>;
+                        case CENTER_STATUS_PAUSED:
+                            return <Badge variant="pending">{CENTER_STATUS_LABELS[CENTER_STATUS_PAUSED] || 'Tạm dừng'}</Badge>;
+                        case CENTER_STATUS_EXPIRED:
+                            return <Badge variant="danger">{CENTER_STATUS_LABELS[CENTER_STATUS_EXPIRED] || 'Đã hết hạn'}</Badge>;
+                        default:
+                            return <Badge variant="expired">Tạm dừng</Badge>;
+                    }
+                },
             },
         ];
 

@@ -35,20 +35,6 @@ class ClassSchedule extends Model
         ];
     }
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'inactive', 'paused', 'stopped' => \App\Enums\Constant::SCHEDULE_STATUS_INACTIVE,
-                default                         => \App\Enums\Constant::SCHEDULE_STATUS_ACTIVE,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * @return \Illuminate\Database\Eloquent\Casts\Attribute<array<string, array<int, array{0: string, 1: string}>>, mixed>
      */

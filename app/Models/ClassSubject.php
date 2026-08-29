@@ -32,21 +32,6 @@ class ClassSubject extends Model
         ];
     }
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'inactive', 'paused' => \App\Enums\Constant::CLASS_SUBJECT_STATUS_INACTIVE,
-                'completed'          => \App\Enums\Constant::CLASS_SUBJECT_STATUS_COMPLETED,
-                default              => \App\Enums\Constant::CLASS_SUBJECT_STATUS_ACTIVE,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<SchoolClass, $this>
      */

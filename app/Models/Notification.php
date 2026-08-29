@@ -29,25 +29,6 @@ class Notification extends Model
         ];
     }
 
-    public function setTypeAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['type'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['type'] = match ($value) {
-                'tuition'              => \App\Enums\Constant::NOTIFICATION_TYPE_TUITION,
-                'exam'                 => \App\Enums\Constant::NOTIFICATION_TYPE_EXAM,
-                'schedule'             => \App\Enums\Constant::NOTIFICATION_TYPE_SCHEDULE,
-                'attendance'           => \App\Enums\Constant::NOTIFICATION_TYPE_ATTENDANCE,
-                'subscription_renewal' => 6,
-                'center_registration'  => 7,
-                default                => \App\Enums\Constant::NOTIFICATION_TYPE_GENERAL,
-            };
-        } else {
-            $this->attributes['type'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<Center, $this>
      */

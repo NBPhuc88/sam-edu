@@ -309,7 +309,7 @@ class CenterRepository implements CenterRepositoryInterface
 
     public function markExpiredCenters(): int
     {
-        return Center::whereIn('status', [Constant::CENTER_STATUS_ACTIVE, Constant::CENTER_STATUS_TRIAL])
+        return Center::where('status', Constant::CENTER_STATUS_ACTIVE)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
             ->update(['status' => Constant::CENTER_STATUS_EXPIRED]);

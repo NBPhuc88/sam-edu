@@ -33,6 +33,24 @@ class SendSubscriptionExpiringNotificationsCommand extends Command
         $days       = (int) $this->option('days');
         $targetDate = now()->addDays($days);
 
+        // 1. Tự động chuyển các trung tâm đã hết hạn sang trạng thái CENTER_STATUS_EXPIRED (3)
+        $expiredCount = Center::query()
+            ->where('status', Constant::CENTER_STATUS_ACTIVE)
+            ->where(function ($q) {
+                $q->where('expires_at', '<', now())
+                    ->orWhere(function ($sub) {
+                        $sub->whereNull('expires_at')
+                            ->where('trial_ends_at', '<', now());
+                    });
+            })
+            ->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+
+        if ($expiredCount > 0) {
+            $this->info("Đã tự động cập nhật trạng thái 'Đã hết hạn' cho {$expiredCount} trung tâm.");
+            Log::info("Auto-updated {$expiredCount} expired centers to CENTER_STATUS_EXPIRED.");
+        }
+
+        // 2. Gửi email cảnh báo cho các trung tâm sắp hết hạn trong N ngày tới
         $centers = Center::query()
             ->where('status', Constant::CENTER_STATUS_ACTIVE)
             ->where(function ($query) use ($targetDate) {

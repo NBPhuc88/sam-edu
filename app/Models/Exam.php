@@ -54,22 +54,6 @@ class Exam extends Model
         ];
     }
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'published' => \App\Enums\Constant::EXAM_STATUS_PUBLISHED,
-                'completed' => \App\Enums\Constant::EXAM_STATUS_COMPLETED,
-                'cancelled' => \App\Enums\Constant::EXAM_STATUS_CANCELLED,
-                default     => \App\Enums\Constant::EXAM_STATUS_DRAFT,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<Center, $this>
      */

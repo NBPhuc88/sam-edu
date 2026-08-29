@@ -44,35 +44,6 @@ class Admin extends Authenticatable
         ];
     }
 
-    public function setRoleAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['role'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['role'] = match ($value) {
-                'super_admin' => Constant::ROLE_SUPER_ADMIN,
-                'admin'       => Constant::ROLE_ADMIN,
-                default       => Constant::ROLE_ADMIN,
-            };
-        } else {
-            $this->attributes['role'] = (int) $value;
-        }
-    }
-
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'inactive', 'paused' => Constant::STATUS_INACTIVE,
-                default              => Constant::STATUS_ACTIVE,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * Kiểm tra admin có phải super_admin hay không.
      */

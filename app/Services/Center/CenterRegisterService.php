@@ -53,9 +53,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'phone'                => $data['phone'],
                 'email'                => $data['email'],
                 'address'              => $data['address'] ?? null,
-                'status'               => $planCode === 'trial' ? 'active' : 'pending_payment',
+                'status'               => $planCode === 'trial' ? Constant::CENTER_STATUS_ACTIVE : Constant::CENTER_STATUS_PAUSED,
                 'subscription_plan_id' => $plan ? $plan->id : 1,
-                'plan_type'            => $plan->plan_type ?? ($planCode === 'trial' ? 'trial' : 'basic'),
+                'plan_type'            => $plan->plan_type ?? ($planCode === 'trial' ? Constant::PLAN_TYPE_FREE : Constant::PLAN_TYPE_STANDARD),
                 'expires_at'           => $planCode === 'trial' ? now()->addDays(30) : null,
                 'trial_ends_at'        => $planCode === 'trial' ? now()->addDays(30) : null,
                 'max_students'         => $plan->max_students ?? ($planCode === 'trial' ? 600 : 150),
@@ -83,9 +83,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'phone'                => $data['phone'],
                 'email'                => $data['email'],
                 'address'              => $data['address'] ?? null,
-                'status'               => 'active',
+                'status'               => Constant::CENTER_STATUS_ACTIVE,
                 'subscription_plan_id' => $plan ? $plan->id : 1,
-                'plan_type'            => 'trial',
+                'plan_type'            => Constant::PLAN_TYPE_FREE,
                 'expires_at'           => now()->addDays(30),
                 'trial_ends_at'        => now()->addDays(30),
                 'max_students'         => $plan->max_students ?? 600,
@@ -115,9 +115,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'phone'                => $data['phone'],
             'email'                => $data['email'],
             'address'              => $data['address'] ?? null,
-            'status'               => 'pending_payment',
+            'status'               => Constant::CENTER_STATUS_PAUSED,
             'subscription_plan_id' => $plan ? $plan->id : 1,
-            'plan_type'            => $plan->plan_type ?? 'basic',
+            'plan_type'            => $plan->plan_type ?? Constant::PLAN_TYPE_STANDARD,
             'expires_at'           => null,
             'max_students'         => $plan->max_students ?? null,
             'max_classes'          => $plan->max_classes ?? null,
@@ -142,7 +142,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'center_id'        => $center->id,
             'amount'           => $amount,
             'payment_method'   => $paymentMethod,
-            'status'           => 'pending',
+            'status'           => Constant::PAYMENT_STATUS_PENDING,
             'note'             => "Đăng ký mới gói {$planCode} qua " . strtoupper($paymentMethod),
             'metadata'         => array_merge([
                 'plan_code'     => $planCode,
@@ -201,7 +201,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
         $statusCheck   = $gateway->checkStatus($appTransId);
 
         if (! empty($statusCheck['success']) && $statusCheck['status'] === 'paid') {
-            $this->paymentTransactionRepository->update($transaction->id, ['status' => 'success']);
+            $this->paymentTransactionRepository->update($transaction->id, ['status' => Constant::PAYMENT_STATUS_SUCCESS]);
 
             $center = $this->centerRepository->find($transaction->center_id);
 
@@ -212,9 +212,9 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 $planObj      = $this->subscriptionPlanRepository->findByCode($paidPlanCode);
 
                 $this->centerRepository->update($center->id, [
-                    'status'               => 'active',
+                    'status'               => Constant::CENTER_STATUS_ACTIVE,
                     'subscription_plan_id' => $planObj ? $planObj->id : 1,
-                    'plan_type'            => $planObj->plan_type ?? 'basic',
+                    'plan_type'            => $planObj->plan_type ?? Constant::PLAN_TYPE_STANDARD,
                     'max_students'         => $planObj->max_students ?? $center->max_students,
                     'max_classes'          => $planObj->max_classes ?? $center->max_classes,
                     'expires_at'           => now()->addDays($durationDays),

@@ -28,22 +28,6 @@ class NotificationRecipient extends Model
         ];
     }
 
-    public function setRecipientTypeAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['recipient_type'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['recipient_type'] = match ($value) {
-                'admin'   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
-                'teacher' => \App\Enums\Constant::ACCOUNT_TYPE_TEACHER,
-                'student' => \App\Enums\Constant::ACCOUNT_TYPE_STUDENT,
-                default   => \App\Enums\Constant::ACCOUNT_TYPE_ADMIN,
-            };
-        } else {
-            $this->attributes['recipient_type'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<Notification, $this>
      */

@@ -63,22 +63,6 @@ class Center extends Model
         ];
     }
 
-    public function setPlanTypeAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['plan_type'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['plan_type'] = match ($value) {
-                'trial', 'free'              => \App\Enums\Constant::PLAN_TYPE_FREE,
-                'standard', 'basic'          => \App\Enums\Constant::PLAN_TYPE_STANDARD,
-                'premium', 'advanced', 'pro' => \App\Enums\Constant::PLAN_TYPE_PREMIUM,
-                default                      => \App\Enums\Constant::PLAN_TYPE_FREE,
-            };
-        } else {
-            $this->attributes['plan_type'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<SubscriptionPlan, $this>
      */

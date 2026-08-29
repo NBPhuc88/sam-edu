@@ -62,22 +62,6 @@ class ClassExam extends Model
         ];
     }
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'ongoing', 'active' => Constant::CLASS_EXAM_STATUS_ONGOING,
-                'completed'         => Constant::CLASS_EXAM_STATUS_COMPLETED,
-                'cancelled'         => Constant::CLASS_EXAM_STATUS_CANCELLED,
-                default             => Constant::CLASS_EXAM_STATUS_SCHEDULED,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<SchoolClass, $this>
      */

@@ -57,25 +57,9 @@ class SubscriptionPlan extends Model
         ];
     }
 
-    public function setPlanTypeAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['plan_type'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['plan_type'] = match ($value) {
-                'trial', 'free'              => \App\Enums\Constant::PLAN_TYPE_FREE,
-                'standard', 'basic'          => \App\Enums\Constant::PLAN_TYPE_STANDARD,
-                'premium', 'advanced', 'pro' => \App\Enums\Constant::PLAN_TYPE_PREMIUM,
-                default                      => \App\Enums\Constant::PLAN_TYPE_FREE,
-            };
-        } else {
-            $this->attributes['plan_type'] = (int) $value;
-        }
-    }
-
     public function hasFeature(string $featureCode): bool
     {
-        if ($this->plan_type === 'trial' || (int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
+        if ((int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

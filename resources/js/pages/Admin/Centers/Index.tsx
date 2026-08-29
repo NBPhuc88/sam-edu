@@ -1,13 +1,11 @@
 import {
-CENTER_STATUS_ACTIVE,
-CENTER_STATUS_EXPIRED,
-CENTER_STATUS_LABELS,
-CENTER_STATUS_LOCKED,
-CENTER_STATUS_PENDING_PAYMENT,
-CENTER_STATUS_TRIAL,
-PLAN_TYPE_FREE,
-PLAN_TYPE_LABELS,
-PLAN_TYPE_PREMIUM
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_PAUSED,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_LABELS,
+    PLAN_TYPE_FREE,
+    PLAN_TYPE_LABELS,
+    PLAN_TYPE_PREMIUM
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
@@ -256,15 +254,13 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                                 {(() => {
                                                     switch (center.status) {
                                                         case CENTER_STATUS_ACTIVE:
-                                                            return <Badge variant="active">{CENTER_STATUS_LABELS[CENTER_STATUS_ACTIVE]}</Badge>;
-                                                        case CENTER_STATUS_TRIAL:
-                                                            return <Badge variant="info">{CENTER_STATUS_LABELS[CENTER_STATUS_TRIAL]}</Badge>;
-                                                        case CENTER_STATUS_PENDING_PAYMENT:
-                                                            return <Badge variant="pending">{CENTER_STATUS_LABELS[CENTER_STATUS_PENDING_PAYMENT]}</Badge>;
+                                                            return <Badge variant="active">{CENTER_STATUS_LABELS[CENTER_STATUS_ACTIVE] || 'Đang hoạt động'}</Badge>;
+                                                        case CENTER_STATUS_PAUSED:
+                                                            return <Badge variant="pending">{CENTER_STATUS_LABELS[CENTER_STATUS_PAUSED] || 'Tạm dừng'}</Badge>;
                                                         case CENTER_STATUS_EXPIRED:
-                                                            return <Badge variant="danger">{CENTER_STATUS_LABELS[CENTER_STATUS_EXPIRED]}</Badge>;
+                                                            return <Badge variant="danger">{CENTER_STATUS_LABELS[CENTER_STATUS_EXPIRED] || 'Đã hết hạn'}</Badge>;
                                                         default:
-                                                            return <Badge variant="expired">{CENTER_STATUS_LABELS[CENTER_STATUS_LOCKED] || 'Bị khóa'}</Badge>;
+                                                            return <Badge variant="expired">Tạm dừng</Badge>;
                                                     }
                                                 })()}
                                             </td>

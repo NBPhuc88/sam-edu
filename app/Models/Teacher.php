@@ -54,35 +54,6 @@ class Teacher extends Authenticatable
         ];
     }
 
-    public function setStatusAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['status'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['status'] = match ($value) {
-                'inactive', 'paused', 'locked', 'suspended' => \App\Enums\Constant::STATUS_INACTIVE,
-                default                                     => \App\Enums\Constant::STATUS_ACTIVE,
-            };
-        } else {
-            $this->attributes['status'] = (int) $value;
-        }
-    }
-
-    public function setGenderAttribute($value): void
-    {
-        if (is_numeric($value)) {
-            $this->attributes['gender'] = (int) $value;
-        } elseif (is_string($value)) {
-            $this->attributes['gender'] = match ($value) {
-                'male'   => \App\Enums\Constant::GENDER_MALE,
-                'female' => \App\Enums\Constant::GENDER_FEMALE,
-                default  => \App\Enums\Constant::GENDER_OTHER,
-            };
-        } else {
-            $this->attributes['gender'] = (int) $value;
-        }
-    }
-
     /**
      * @return BelongsTo<Center, $this>
      */

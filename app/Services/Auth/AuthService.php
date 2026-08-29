@@ -2,6 +2,10 @@
 
 namespace App\Services\Auth;
 
+use App\Enums\Constant;
+use App\Models\Admin;
+use App\Models\Student;
+use App\Models\Teacher;
 use App\Repositories\Admin\AdminRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
@@ -54,12 +58,65 @@ class AuthService implements AuthServiceInterface
             ];
         }
 
-        if (isset($account->status) && ((int) $account->status === \App\Enums\Constant::STATUS_INACTIVE || in_array($account->status, ['inactive', 'locked', 'suspended', 'expired', 0, '0'], true))) {
+        if (isset($account->status) && (int) $account->status !== Constant::STATUS_ACTIVE) {
             return [
                 'success' => false,
                 'account' => null,
-                'error'   => 'Tài khoản của bạn đã bị khóa, hết hạn hoặc chưa kích hoạt.',
+                'error'   => 'Tài khoản của bạn đã bị khóa, tạm ngưng hoặc chưa kích hoạt.',
             ];
+        }
+
+        // Kiểm tra trạng thái Trung tâm trực thuộc (Admin phụ, Giáo viên, Học sinh chỉ đăng nhập được khi Trung tâm Đang hoạt động)
+        if ($account instanceof Admin) {
+            if ((int) $account->role !== Constant::ROLE_SUPER_ADMIN) {
+                $center = $account->centers()->first();
+
+                if (! $center) {
+                    return [
+                        'success' => false,
+                        'account' => null,
+                        'error'   => 'Tài khoản chưa được phân công quản lý trung tâm nào.',
+                    ];
+                }
+
+                if ((int) $center->status !== Constant::CENTER_STATUS_ACTIVE) {
+                    $errorMessage = (int) $center->status === Constant::CENTER_STATUS_PAUSED
+                        ? 'Trung tâm của bạn hiện đang tạm dừng hoạt động. Vui lòng liên hệ Quản trị viên hệ thống.'
+                        : ((int) $center->status === Constant::CENTER_STATUS_EXPIRED
+                            ? 'Gói dịch vụ của Trung tâm đã hết hạn. Vui lòng liên hệ Quản trị viên để gia hạn.'
+                            : 'Trung tâm của bạn không ở trạng thái hoạt động.');
+
+                    return [
+                        'success' => false,
+                        'account' => null,
+                        'error'   => $errorMessage,
+                    ];
+                }
+            }
+        } elseif ($account instanceof Teacher || $account instanceof Student) {
+            $center = $account->center;
+
+            if (! $center) {
+                return [
+                    'success' => false,
+                    'account' => null,
+                    'error'   => 'Tài khoản chưa được liên kết với bất kỳ trung tâm nào.',
+                ];
+            }
+
+            if ((int) $center->status !== Constant::CENTER_STATUS_ACTIVE) {
+                $errorMessage = (int) $center->status === Constant::CENTER_STATUS_PAUSED
+                    ? 'Trung tâm của bạn hiện đang tạm dừng hoạt động. Vui lòng liên hệ Quản trị viên.'
+                    : ((int) $center->status === Constant::CENTER_STATUS_EXPIRED
+                        ? 'Gói dịch vụ của Trung tâm đã hết hạn. Vui lòng liên hệ Quản trị viên để gia hạn.'
+                        : 'Trung tâm của bạn không ở trạng thái hoạt động.');
+
+                return [
+                    'success' => false,
+                    'account' => null,
+                    'error'   => $errorMessage,
+                ];
+            }
         }
 
         // Update last login if column exists
