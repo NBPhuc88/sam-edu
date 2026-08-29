@@ -9,7 +9,7 @@
  * Xem: .agents/AGENTS.md - Mục 6.1
  */
 
-import { Head,usePage } from '@inertiajs/react';
+import { Head,router,usePage } from '@inertiajs/react';
 import React,{ useEffect,useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import ScrollToTop from '../components/ui/ScrollToTop';
@@ -32,45 +32,99 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     const user = auth?.user ?? null;
     const role = auth?.role ?? null;
 
-    const [toast, setToast] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' }>({
+    const [toast, setToast] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: 'success' | 'error' | 'warning' | 'info';
+        key: number;
+    }>({
         isOpen: false,
         message: '',
         type: 'info',
+        key: 0,
     });
 
+    const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+        if (!message) {
+            return;
+        }
+        setToast({
+            isOpen: true,
+            message,
+            type,
+            key: Date.now() + Math.random(),
+        });
+    };
+
+    // Lắng nghe sự kiện toàn cục từ Inertia router và custom app events
+    useEffect(() => {
+        // 1. Lắng nghe lỗi validation khi submit form (kích hoạt mỗi lần có lỗi 422 kể cả trùng lặp)
+        const removeErrorListener = router.on('error', (errorsPayload: any) => {
+            const errorObj = errorsPayload?.detail?.errors || errorsPayload;
+            if (errorObj && typeof errorObj === 'object') {
+                const errorValues = Object.values(errorObj);
+                if (errorValues.length > 0) {
+                    const firstError = Array.isArray(errorValues[0]) ? errorValues[0][0] : errorValues[0];
+                    if (typeof firstError === 'string') {
+                        showToast(firstError, 'error');
+                    }
+                }
+            }
+        });
+
+        // 2. Lắng nghe lỗi HTTP exception / network error
+        const removeExceptionListener = router.on('httpException', (event: any) => {
+            const response = event?.detail?.response;
+            const message = response?.data?.message || 'Có lỗi xảy ra trong quá trình xử lý.';
+            showToast(message, 'error');
+        });
+
+        // 3. Lắng nghe thông báo flash khi request thành công
+        const removeSuccessListener = router.on('success', (event: any) => {
+            const pageFlash = event?.detail?.page?.props?.flash;
+            if (pageFlash?.success) {
+                showToast(pageFlash.success, 'success');
+            } else if (pageFlash?.error) {
+                showToast(pageFlash.error, 'error');
+            } else if (pageFlash?.warning) {
+                showToast(pageFlash.warning, 'warning');
+            } else if (pageFlash?.info) {
+                showToast(pageFlash.info, 'info');
+            }
+        });
+
+        // 4. Lắng nghe custom event từ các component con (vd: client-side validation)
+        const handleCustomToast = (event: Event) => {
+            const customEvent = event as CustomEvent<{ message: string; type?: 'success' | 'error' | 'warning' | 'info' }>;
+            if (customEvent.detail?.message) {
+                showToast(customEvent.detail.message, customEvent.detail.type || 'info');
+            }
+        };
+
+        window.addEventListener('app:toast', handleCustomToast);
+
+        return () => {
+            removeErrorListener();
+            removeExceptionListener();
+            removeSuccessListener();
+            window.removeEventListener('app:toast', handleCustomToast);
+        };
+    }, []);
+
+    // Hiển thị flash hoặc errors khi tải trang lần đầu
     useEffect(() => {
         if (flash?.success) {
-            setToast({
-                isOpen: true,
-                message: flash.success,
-                type: 'success',
-            });
+            showToast(flash.success, 'success');
         } else if (flash?.error) {
-            setToast({
-                isOpen: true,
-                message: flash.error,
-                type: 'error',
-            });
+            showToast(flash.error, 'error');
         } else if (flash?.warning) {
-            setToast({
-                isOpen: true,
-                message: flash.warning,
-                type: 'warning',
-            });
+            showToast(flash.warning, 'warning');
         } else if (flash?.info) {
-            setToast({
-                isOpen: true,
-                message: flash.info,
-                type: 'info',
-            });
+            showToast(flash.info, 'info');
         } else if (errors && Object.keys(errors).length > 0) {
             const firstError = Object.values(errors)[0];
             if (typeof firstError === 'string') {
-                setToast({
-                    isOpen: true,
-                    message: firstError,
-                    type: 'error',
-                });
+                showToast(firstError, 'error');
             }
         }
     }, [flash, errors]);
@@ -91,30 +145,24 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             });
 
             if (response.data?.success) {
-                setToast({
-                    isOpen: true,
-                    message:
-                        response.data.message ||
+                showToast(
+                    response.data.message ||
                         'Đã gửi yêu cầu gia hạn tới Quản trị viên hệ thống thành công!',
-                    type: 'success',
-                });
+                    'success',
+                );
             } else {
-                setToast({
-                    isOpen: true,
-                    message:
-                        response.data?.message ||
+                showToast(
+                    response.data?.message ||
                         'Không thể gửi yêu cầu gia hạn. Vui lòng thử lại!',
-                    type: 'error',
-                });
+                    'error',
+                );
             }
         } catch (err: any) {
-            setToast({
-                isOpen: true,
-                message:
-                    err?.response?.data?.message ||
+            showToast(
+                err?.response?.data?.message ||
                     'Có lỗi xảy ra khi gửi yêu cầu gia hạn.',
-                type: 'error',
-            });
+                'error',
+            );
         }
     };
 
@@ -122,6 +170,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <>
             <Head title={title} />
             <Toast
+                key={toast.key}
                 isOpen={toast.isOpen}
                 message={toast.message}
                 type={toast.type}

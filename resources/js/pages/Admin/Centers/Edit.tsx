@@ -6,6 +6,7 @@ SUBSCRIPTION_STATUS_LABELS
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
+import { notify } from '@/lib/toast';
 import { Head,router } from '@inertiajs/react';
 import { History,RefreshCw,Sparkles } from 'lucide-react';
 import React,{ useState } from 'react';
@@ -14,7 +15,6 @@ import RenewSubscriptionModal from '../../../components/Center/RenewSubscription
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
-import Toast from '../../../components/ui/Toast';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface SubscriptionRecord {
@@ -45,19 +45,10 @@ export const Edit: React.FC<EditProps> = ({
     const { isSuperAdmin } = usePermission();
     const [isLoading, setIsLoading] = useState(false);
     const [renewModalOpen, setRenewModalOpen] = useState(false);
-    const [toast, setToast] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' }>({
-        isOpen: false,
-        message: '',
-        type: 'success',
-    });
 
     const handleUpdate = (formData: any) => {
         if (!formData || Object.keys(formData).length === 0) {
-            setToast({
-                isOpen: true,
-                message: 'Không có thông tin nào thay đổi để cập nhật.',
-                type: 'info',
-            });
+            notify.info('Không có thông tin nào thay đổi để cập nhật.');
             return;
         }
 
@@ -66,19 +57,12 @@ export const Edit: React.FC<EditProps> = ({
             preserveScroll: true,
             onSuccess: () => {
                 setIsLoading(false);
-                setToast({
-                    isOpen: true,
-                    message: 'Cập nhật thông tin trung tâm thành công!',
-                    type: 'success',
-                });
+                notify.success('Cập nhật thông tin trung tâm thành công!');
             },
-            onError: () => {
+            onError: (errs) => {
                 setIsLoading(false);
-                setToast({
-                    isOpen: true,
-                    message: 'Có lỗi xảy ra khi cập nhật. Vui lòng kiểm tra lại.',
-                    type: 'error',
-                });
+                const firstErr = errs && Object.values(errs)[0];
+                notify.error(typeof firstErr === 'string' ? firstErr : 'Có lỗi xảy ra khi cập nhật. Vui lòng kiểm tra lại.');
             },
         });
     };
@@ -86,13 +70,6 @@ export const Edit: React.FC<EditProps> = ({
     return (
         <AppLayout title={`Chỉnh sửa Trung Tâm: ${center.name} - SAM Digital`}>
             <Head title={`Chỉnh sửa Trung Tâm - ${center.name}`} />
-
-            <Toast
-                isOpen={toast.isOpen}
-                message={toast.message}
-                type={toast.type}
-                onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
-            />
 
             <div className="mx-auto max-w-4xl space-y-6">
                 {/* Super Admin Quick Renew Action Bar */}

@@ -5,6 +5,7 @@ import {
     CENTER_STATUS_OPTIONS,
 } from '@/constants/enums';
 import { toISODateString } from '@/lib/date';
+import { notify } from '@/lib/toast';
 import { Link,usePage } from '@inertiajs/react';
 import { ArrowLeft,Building2,Save } from 'lucide-react';
 import React,{ useState } from 'react';
@@ -117,7 +118,15 @@ export const CenterForm: React.FC<CenterFormProps> = ({
         }
 
         setClientErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        const hasErrors = Object.keys(newErrors).length > 0;
+        if (hasErrors) {
+            const firstError = Object.values(newErrors)[0];
+            if (typeof firstError === 'string') {
+                notify.error(firstError);
+            }
+        }
+
+        return !hasErrors;
     };
 
     const handleChange = (
