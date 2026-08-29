@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Constant;
 use App\Models\Permission;
 use App\Models\RolePermission;
 use Illuminate\Database\Seeder;
@@ -11,20 +12,20 @@ class PermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * @param ?string $targetRole
+     * @param int|string|null $targetRole
      */
-    public function run(?string $targetRole = null): void
+    public function run(int|string|null $targetRole = null): void
     {
         // 1. Đồng bộ permissions từ config
         Artisan::call('permission:sync');
 
         $allPermissions = Permission::all();
 
-        // 2. Định nghĩa danh sách quyền mặc định cho từng vai trò
+        // 2. Định nghĩa danh sách quyền mặc định cho từng vai trò theo số nguyên Constant
         $roleDefaults = [
-            'super_admin' => $allPermissions->pluck('code')->toArray(),
+            Constant::ROLE_SUPER_ADMIN => $allPermissions->pluck('code')->toArray(),
 
-            'admin' => [
+            Constant::ROLE_ADMIN => [
                 'dashboard.index', 'statistics.index',
                 'teachers.index', 'teachers.show', 'teachers.create', 'teachers.edit', 'teachers.delete', 'teachers.export', 'teachers.export-sessions', 'teachers.import', 'teachers.schedule',
                 'students.index', 'students.show', 'students.create', 'students.edit', 'students.delete', 'students.assign-classes', 'students.export', 'students.export-attendances', 'students.import', 'students.schedule',
@@ -40,7 +41,7 @@ class PermissionSeeder extends Seeder
                 'tuitions.index', 'tuitions.create', 'tuitions.edit', 'tuitions.delete', 'tuitions.export', 'tuitions.payments',
             ],
 
-            'teacher' => [
+            Constant::ROLE_TEACHER => [
                 'dashboard.index',
                 'teachers.schedule',
                 'students.index', 'students.show', 'students.schedule',
@@ -53,7 +54,7 @@ class PermissionSeeder extends Seeder
                 'online-exam.enter', 'practice-exams.index',
             ],
 
-            'student' => [
+            Constant::ROLE_STUDENT => [
                 'dashboard.index',
                 'classes.index', 'classes.schedule', 'classes.exam-results', 'classes.chat',
                 'schedules.index',
@@ -62,28 +63,32 @@ class PermissionSeeder extends Seeder
             ],
         ];
 
-        $rolesToSeed = ($targetRole && isset($roleDefaults[$targetRole]))
-            ? [$targetRole => $roleDefaults[$targetRole]]
+        $normalizedTargetRole = null;
+        if ($targetRole !== null) {
+            $normalizedTargetRole = is_numeric($targetRole) ? (int) $targetRole : match ($targetRole) {
+                'super_admin' => Constant::ROLE_SUPER_ADMIN,
+                'teacher'     => Constant::ROLE_TEACHER,
+                'student'     => Constant::ROLE_STUDENT,
+                default       => Constant::ROLE_ADMIN,
+            };
+        }
+
+        $rolesToSeed = ($normalizedTargetRole !== null && isset($roleDefaults[$normalizedTargetRole]))
+            ? [$normalizedTargetRole => $roleDefaults[$normalizedTargetRole]]
             : $roleDefaults;
 
-        foreach ($rolesToSeed as $role => $codes) {
+        foreach ($rolesToSeed as $numericRole => $codes) {
             $permissionIds = $allPermissions->whereIn('code', $codes)->pluck('id');
-            $numericRole   = match ($role) {
-                'super_admin' => \App\Enums\Constant::ROLE_SUPER_ADMIN,
-                'teacher'     => \App\Enums\Constant::ROLE_TEACHER,
-                'student'     => \App\Enums\Constant::ROLE_STUDENT,
-                default       => \App\Enums\Constant::ROLE_ADMIN,
-            };
 
             // Xóa quyền cũ của role và gán lại quyền chuẩn
-            RolePermission::where('role', $numericRole)->orWhere('role', $role)->delete();
+            RolePermission::where('role', (int) $numericRole)->delete();
 
             $records = [];
             $now     = now();
 
             foreach ($permissionIds as $permId) {
                 $records[] = [
-                    'role'          => $numericRole,
+                    'role'          => (int) $numericRole,
                     'permission_id' => $permId,
                     'created_at'    => $now,
                     'updated_at'    => $now,

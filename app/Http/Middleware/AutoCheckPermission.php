@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Constant;
 use App\Services\Permission\PermissionServiceInterface;
 use Closure;
 use Illuminate\Http\Request;
@@ -93,12 +94,12 @@ class AutoCheckPermission
 
         $effectiveRole = $this->resolveEffectiveRole();
 
-        if (! $effectiveRole) {
+        if ($effectiveRole === null) {
             return redirect()->route('login');
         }
 
         // Super Admin có toàn quyền
-        if ($effectiveRole === 'super_admin') {
+        if ($effectiveRole === Constant::ROLE_SUPER_ADMIN) {
             return $next($request);
         }
 
@@ -168,22 +169,23 @@ class AutoCheckPermission
     /**
      * Xác định effective role của user đang đăng nhập.
      */
-    private function resolveEffectiveRole(): ?string
+    private function resolveEffectiveRole(): ?int
     {
         if (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
 
-            return ($admin && $admin->isSuperAdmin()) ? 'super_admin' : 'admin';
+            return ($admin && $admin->isSuperAdmin()) ? Constant::ROLE_SUPER_ADMIN : Constant::ROLE_ADMIN;
         }
 
         if (Auth::guard('teacher')->check()) {
-            return 'teacher';
+            return Constant::ROLE_TEACHER;
         }
 
         if (Auth::guard('student')->check()) {
-            return 'student';
+            return Constant::ROLE_STUDENT;
         }
 
         return null;
     }
 }
+

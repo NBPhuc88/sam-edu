@@ -2,6 +2,7 @@
 
 namespace App\Services\Permission;
 
+use App\Enums\Constant;
 use App\Models\Permission;
 use App\Repositories\Permission\PermissionRepositoryInterface;
 use Database\Seeders\PermissionSeeder;
@@ -25,7 +26,7 @@ class PermissionService implements PermissionServiceInterface
     {
         $permissions = $this->permissionRepository->getAllOrdered();
 
-        $roles      = ['super_admin', 'admin', 'teacher', 'student'];
+        $roles      = Constant::ROLE_PERMISSION_ROLES;
         $roleGrants = [];
 
         foreach ($roles as $role) {
@@ -60,35 +61,36 @@ class PermissionService implements PermissionServiceInterface
             'modules'    => array_values($modules),
             'roleGrants' => $roleGrants,
             'roles'      => [
-                ['key' => 'super_admin', 'name' => 'Super Admin', 'description' => 'Quản trị viên toàn hệ thống (Toàn quyền)'],
-                ['key' => 'admin', 'name' => 'Admin Phụ', 'description' => 'Quản trị viên quản lý Trung tâm được gán'],
-                ['key' => 'teacher', 'name' => 'Giáo Viên', 'description' => 'Giáo viên phụ trách giảng dạy và chấm bài'],
-                ['key' => 'student', 'name' => 'Học Sinh', 'description' => 'Học sinh tham gia lớp học và phòng thi'],
+                ['key' => Constant::ROLE_SUPER_ADMIN, 'name' => 'Super Admin', 'description' => 'Quản trị viên toàn hệ thống (Toàn quyền)'],
+                ['key' => Constant::ROLE_ADMIN, 'name' => 'Admin Phụ', 'description' => 'Quản trị viên quản lý Trung tâm được gán'],
+                ['key' => Constant::ROLE_TEACHER, 'name' => 'Giáo Viên', 'description' => 'Giáo viên phụ trách giảng dạy và chấm bài'],
+                ['key' => Constant::ROLE_STUDENT, 'name' => 'Học Sinh', 'description' => 'Học sinh tham gia lớp học và phòng thi'],
             ],
         ];
     }
 
     /**
+     * @param int|string         $role
      * @param array<int, string> $permissionCodes
-     * @param string             $role
      */
-    public function updateRolePermissions(string $role, array $permissionCodes): void
+    public function updateRolePermissions(int|string $role, array $permissionCodes): void
     {
+        $numericRole   = $this->normalizeRole($role);
         $permissionIds = Permission::whereIn('code', $permissionCodes)->pluck('id')->toArray();
 
-        $this->permissionRepository->syncRolePermissions($role, $permissionIds);
+        $this->permissionRepository->syncRolePermissions($numericRole, $permissionIds);
 
         // Xóa cache của role
-        $this->clearRoleCache($role);
+        $this->clearRoleCache($numericRole);
     }
 
-    public function resetToDefault(?string $role = null): void
+    public function resetToDefault(int|string|null $role = null): void
     {
         $seeder = new PermissionSeeder();
         $seeder->run($role);
 
         // Xóa cache
-        if ($role) {
+        if ($role !== null) {
             $this->clearRoleCache($role);
         } else {
             $this->clearAllCache();
@@ -103,7 +105,7 @@ class PermissionService implements PermissionServiceInterface
 
     public function clearAllCache(): void
     {
-        $roles = ['super_admin', 'admin', 'teacher', 'student'];
+        $roles = Constant::ROLE_PERMISSION_ROLES;
 
         foreach ($roles as $r) {
             $this->clearRoleCache($r);
@@ -112,37 +114,38 @@ class PermissionService implements PermissionServiceInterface
 
     /**
      * @return array<int, string>
-     * @param  string             $role
-     * @param  ?string            $adminRole
+     * @param  int|string         $role
+     * @param  int|string|null    $adminRole
      */
-    public function getPermissionsForUser(string $role, int|string|null $adminRole = null): array
+    public function getPermissionsForUser(int|string $role, int|string|null $adminRole = null): array
     {
-        $isSuperAdmin  = ($role === 'admin' && ($adminRole === 'super_admin' || (int) $adminRole === \App\Enums\Constant::ROLE_SUPER_ADMIN));
-        $effectiveRole = $isSuperAdmin ? 'super_admin' : $role;
+        $numericRole = $this->normalizeRole($role, $adminRole);
 
         // Super Admin có tất cả quyền
-        if ($effectiveRole === 'super_admin') {
+        if ($numericRole === Constant::ROLE_SUPER_ADMIN) {
             return Cache::remember(
-                self::CACHE_PREFIX . 'super_admin',
+                self::CACHE_PREFIX . Constant::ROLE_SUPER_ADMIN,
                 self::CACHE_TTL_SECONDS,
                 fn () => Permission::pluck('code')->toArray()
             );
         }
 
         return Cache::remember(
-            self::CACHE_PREFIX . $effectiveRole,
+            self::CACHE_PREFIX . $numericRole,
             self::CACHE_TTL_SECONDS,
-            fn () => $this->permissionRepository->getGrantedPermissionCodesByRole($effectiveRole)
+            fn () => $this->permissionRepository->getGrantedPermissionCodesByRole($numericRole)
         );
     }
 
-    public function roleHasPermission(string $effectiveRole, string $permissionCode): bool
+    public function roleHasPermission(int|string $effectiveRole, string $permissionCode): bool
     {
-        if ($effectiveRole === 'super_admin') {
+        $numericRole = $this->normalizeRole($effectiveRole);
+
+        if ($numericRole === Constant::ROLE_SUPER_ADMIN) {
             return true;
         }
 
-        $granted = $this->getPermissionsForUser($effectiveRole);
+        $granted = $this->getPermissionsForUser($numericRole);
 
         return in_array($permissionCode, $granted, true);
     }
@@ -152,8 +155,33 @@ class PermissionService implements PermissionServiceInterface
         return $this->permissionRepository->permissionExists($permissionCode);
     }
 
-    private function clearRoleCache(string $role): void
+    private function normalizeRole(int|string $role, int|string|null $adminRole = null): int
     {
+        if (is_numeric($role)) {
+            $numericRole = (int) $role;
+
+            if ($numericRole === Constant::ROLE_ADMIN && ($adminRole === 'super_admin' || (int) $adminRole === Constant::ROLE_SUPER_ADMIN)) {
+                return Constant::ROLE_SUPER_ADMIN;
+            }
+
+            return $numericRole;
+        }
+
+        return match ($role) {
+            'super_admin' => Constant::ROLE_SUPER_ADMIN,
+            'teacher'     => Constant::ROLE_TEACHER,
+            'student'     => Constant::ROLE_STUDENT,
+            default       => ($adminRole === 'super_admin' || (int) $adminRole === Constant::ROLE_SUPER_ADMIN)
+                ? Constant::ROLE_SUPER_ADMIN
+                : Constant::ROLE_ADMIN,
+        };
+    }
+
+    private function clearRoleCache(int|string $role): void
+    {
+        $numericRole = $this->normalizeRole($role);
+        Cache::forget(self::CACHE_PREFIX . $numericRole);
         Cache::forget(self::CACHE_PREFIX . $role);
     }
 }
+

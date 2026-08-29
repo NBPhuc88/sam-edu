@@ -17,6 +17,18 @@ class UpdateRolePermissionsRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('role') && is_numeric($this->input('role'))) {
+            $this->merge([
+                'role' => (int) $this->input('role'),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

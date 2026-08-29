@@ -474,3 +474,26 @@ export const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
     [NOTIFICATION_TYPE_SCHEDULE]: 'Lịch học',
     [NOTIFICATION_TYPE_ATTENDANCE]: 'Điểm danh',
 };
+
+// ==========================================
+// 9E. VAI TRÒ PHÂN QUYỀN (ROLE PERMISSIONS ROLES)
+// ==========================================
+export const ROLE_PERMISSION_SUPER_ADMIN = 1;
+export const ROLE_PERMISSION_ADMIN = 2;
+export const ROLE_PERMISSION_TEACHER = 3;
+export const ROLE_PERMISSION_STUDENT = 4;
+
+export const ROLE_PERMISSION_ROLES = [
+    ROLE_PERMISSION_SUPER_ADMIN,
+    ROLE_PERMISSION_ADMIN,
+    ROLE_PERMISSION_TEACHER,
+    ROLE_PERMISSION_STUDENT,
+];
+
+export const ROLE_PERMISSION_ROLE_LABELS: Record<number, string> = {
+    [ROLE_PERMISSION_SUPER_ADMIN]: 'Super Admin',
+    [ROLE_PERMISSION_ADMIN]: 'Admin',
+    [ROLE_PERMISSION_TEACHER]: 'Giáo viên',
+    [ROLE_PERMISSION_STUDENT]: 'Học sinh',
+};
+

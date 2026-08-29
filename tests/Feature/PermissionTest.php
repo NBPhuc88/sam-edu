@@ -1,10 +1,13 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Permission;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Services\Permission\PermissionServiceInterface;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -28,7 +31,7 @@ test('super admin can access permissions management page', function () {
         'full_name'  => 'Super Admin Perm Test',
         'email'      => 'superadmin_perm@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000088',
     ]);
 
@@ -50,21 +53,21 @@ test('super admin can update role permissions', function () {
         'full_name'  => 'Super Admin Update',
         'email'      => 'superadmin_upd@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000087',
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')->post(route('permissions.edit'), [
-        'role'        => 'teacher',
+        'role'        => Constant::ROLE_TEACHER,
         'permissions' => ['dashboard.index', 'students.index'],
     ]);
 
     $response->assertRedirect();
     $response->assertSessionHas('success');
 
-    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
-    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeTrue();
-    expect($permissionService->roleHasPermission('teacher', 'exams.create'))->toBeFalse();
+    $permissionService = app(PermissionServiceInterface::class);
+    expect($permissionService->roleHasPermission(Constant::ROLE_TEACHER, 'students.index'))->toBeTrue();
+    expect($permissionService->roleHasPermission(Constant::ROLE_TEACHER, 'exams.create'))->toBeFalse();
 });
 
 test('student accessing unauthorized route receives 404', function () {
@@ -73,7 +76,7 @@ test('student accessing unauthorized route receives 404', function () {
         'name'   => 'Trung Tâm Student Test',
         'email'  => 'center86@test.com',
         'phone'  => '0901234586',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -84,7 +87,7 @@ test('student accessing unauthorized route receives 404', function () {
         'username'     => 'student_perm_test',
         'password'     => 'password123',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     // Học sinh không có quyền xem trang giáo viên teachers.index → nhận 404
@@ -99,7 +102,7 @@ test('teacher can access allowed route but receives 404 on disallowed create rou
         'name'   => 'Trung Tâm Teacher Test',
         'email'  => 'center85@test.com',
         'phone'  => '0901234585',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $teacher = Teacher::create([
@@ -110,7 +113,7 @@ test('teacher can access allowed route but receives 404 on disallowed create rou
         'username'     => 'teacher_perm_test',
         'password'     => 'password123',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     // Giáo viên có quyền xem students.index
@@ -128,27 +131,27 @@ test('super admin can reset role permissions to default', function () {
         'full_name'  => 'Super Admin Reset',
         'email'      => 'superadmin_reset@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000084',
     ]);
 
-    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
+    $permissionService = app(PermissionServiceInterface::class);
 
     // 1. Thay đổi quyền của giáo viên thành rỗng
-    $permissionService->updateRolePermissions('teacher', []);
-    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeFalse();
+    $permissionService->updateRolePermissions(Constant::ROLE_TEACHER, []);
+    expect($permissionService->roleHasPermission(Constant::ROLE_TEACHER, 'students.index'))->toBeFalse();
 
     // 2. Gọi API khôi phục mặc định cho vai trò teacher
     $response = $this->actingAs($superAdmin, 'admin')->post(route('permissions.reset'), [
-        'role' => 'teacher',
+        'role' => Constant::ROLE_TEACHER,
     ]);
 
     $response->assertRedirect();
     $response->assertSessionHas('success');
 
     // 3. Kiểm tra lại quyền mặc định đã được khôi phục
-    expect($permissionService->roleHasPermission('teacher', 'students.index'))->toBeTrue();
-    expect($permissionService->roleHasPermission('teacher', 'classes.index'))->toBeTrue();
+    expect($permissionService->roleHasPermission(Constant::ROLE_TEACHER, 'students.index'))->toBeTrue();
+    expect($permissionService->roleHasPermission(Constant::ROLE_TEACHER, 'classes.index'))->toBeTrue();
 });
 
 test('super admin can sync permissions from config', function () {
@@ -157,7 +160,7 @@ test('super admin can sync permissions from config', function () {
         'full_name'  => 'Super Admin Sync',
         'email'      => 'superadmin_sync@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000083',
     ]);
 
@@ -173,7 +176,7 @@ test('role without classes.exam-results permission cannot access class exam resu
         'name'   => 'Trung Tâm Class Exam Test',
         'email'  => 'center82@test.com',
         'phone'  => '0901234582',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -184,19 +187,19 @@ test('role without classes.exam-results permission cannot access class exam resu
         'username'     => 'student_exam_perm',
         'password'     => 'password123',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
-    $class = \App\Models\SchoolClass::create([
+    $class = SchoolClass::create([
         'center_id' => $center->id,
         'name'      => 'Lớp Toán 12',
         'code'      => 'CLS000000082',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     // Thu hồi quyền classes.exam-results của role student
-    $permissionService = app(\App\Services\Permission\PermissionServiceInterface::class);
-    $permissionService->updateRolePermissions('student', ['dashboard.index', 'classes.index']);
+    $permissionService = app(PermissionServiceInterface::class);
+    $permissionService->updateRolePermissions(Constant::ROLE_STUDENT, ['dashboard.index', 'classes.index']);
 
     $response = $this->actingAs($student, 'student')->get(route('classes.exam-results.index', ['classId' => $class->id]));
 
@@ -209,7 +212,7 @@ test('super admin receives full permissions and admin_role string super_admin in
         'full_name'  => 'Super Admin Inertia Check',
         'email'      => 'superadmin_inertia@test.com',
         'password'   => 'password123',
-        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM000000081',
     ]);
 
@@ -225,3 +228,4 @@ test('super admin receives full permissions and admin_role string super_admin in
             ->has('auth.permissions', $allPermissionsCount)
     );
 });
+
