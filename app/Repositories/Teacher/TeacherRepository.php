@@ -37,7 +37,7 @@ class TeacherRepository implements TeacherRepositoryInterface
      */
     public function getTeachersCursor(?int $centerId = null): Generator
     {
-        $query = Teacher::query()->orderBy('id', 'asc');
+        $query = Teacher::with('center')->orderBy('id', 'asc');
 
         if ($centerId !== null) {
             $query->where('center_id', $centerId);

@@ -197,7 +197,17 @@ class StudentController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        [$admin, $teacher] = $this->getAuthUser();
+        $isSuperAdmin      = $admin && $admin->isSuperAdmin();
+
+        if ($admin && ! $isSuperAdmin) {
+            $centerId = (int) $admin->centers()->value('centers.id');
+        } elseif ($teacher) {
+            $centerId = (int) $teacher->center_id;
+        } else {
+            $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
+        }
+
         $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
         $fileName = 'danh_sach_hoc_sinh_' . date('Y-m-d_H-i-s') . '.csv';
 
@@ -206,7 +216,7 @@ class StudentController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
-        return response()->stream(function () use ($centerId, $classId) {
+        return response()->stream(function () use ($centerId, $classId, $isSuperAdmin) {
             $handle = fopen('php://output', 'w');
 
             if ($handle === false) {
@@ -215,7 +225,7 @@ class StudentController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
 
-            foreach ($this->studentExportImportService->exportStudentsCsv($centerId, $classId) as $row) {
+            foreach ($this->studentExportImportService->exportStudentsCsv($centerId, $classId, $isSuperAdmin) as $row) {
                 fputcsv($handle, $row);
             }
 
@@ -231,18 +241,25 @@ class StudentController extends Controller
             return back()->with('error', 'Vui lòng chọn tệp CSV.');
         }
 
-        [$admin]  = $this->getAuthUser();
-        $centerId = null;
+        [$admin, $teacher] = $this->getAuthUser();
+        $isSuperAdmin      = $admin && $admin->isSuperAdmin();
+        $centerId          = null;
 
         if ($admin) {
-            if ($admin->isSuperAdmin()) {
+            if ($isSuperAdmin) {
                 $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
             } else {
                 $centerId = (int) $admin->centers()->value('centers.id');
             }
+        } elseif ($teacher) {
+            $centerId = (int) $teacher->center_id;
         }
 
-        $result = $this->studentExportImportService->importStudentsCsv($file->getPathname(), $centerId);
+        $result = $this->studentExportImportService->importStudentsCsv(
+            $file->getPathname(),
+            $centerId,
+            $isSuperAdmin
+        );
 
         $msg = "Import thành công: {$result['imported']} học sinh mới, cập nhật: {$result['updated']} học sinh.";
 
@@ -255,13 +272,16 @@ class StudentController extends Controller
 
     public function downloadSample(): StreamedResponse
     {
+        [$admin]      = $this->getAuthUser();
+        $isSuperAdmin = $admin && $admin->isSuperAdmin();
+
         $fileName = 'mau_import_hoc_sinh.csv';
         $headers  = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ];
 
-        return response()->stream(function () {
+        return response()->stream(function () use ($isSuperAdmin) {
             $handle = fopen('php://output', 'w');
 
             if ($handle === false) {
@@ -270,7 +290,7 @@ class StudentController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
 
-            foreach ($this->studentExportImportService->getSampleCsvRows() as $row) {
+            foreach ($this->studentExportImportService->getSampleCsvRows($isSuperAdmin) as $row) {
                 fputcsv($handle, $row);
             }
 

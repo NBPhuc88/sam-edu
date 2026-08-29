@@ -38,7 +38,7 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function getStudentsCursor(?int $centerId = null, ?int $classId = null): \Generator
     {
-        $query = Student::query()->orderBy('id', 'asc');
+        $query = Student::with('center')->orderBy('id', 'asc');
 
         if ($centerId !== null) {
             $query->where('center_id', $centerId);

@@ -2,9 +2,11 @@
 
 namespace App\Services\Student;
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Student;
 use App\Repositories\Student\StudentRepositoryInterface;
+use Generator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -16,14 +18,14 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     }
 
     /**
-     * @return \Generator<int, array<int, string>>
+     * @return Generator<int, array<int, string>>
      * @param  ?int                                $centerId
      * @param  ?int                                $classId
+     * @param  bool                                $isSuperAdmin
      */
-    public function exportStudentsCsv(?int $centerId = null, ?int $classId = null): \Generator
+    public function exportStudentsCsv(?int $centerId = null, ?int $classId = null, bool $isSuperAdmin = false): Generator
     {
-        // Header row
-        yield [
+        $headers = [
             'Mã học sinh',
             'Tên đăng nhập',
             'Họ',
@@ -40,8 +42,14 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             'Trạng thái',
         ];
 
+        if ($isSuperAdmin) {
+            $headers[] = 'Mã trung tâm';
+        }
+
+        yield $headers;
+
         foreach ($this->studentRepository->getStudentsCursor($centerId, $classId) as $student) {
-            yield [
+            $row = [
                 (string) $student->student_code,
                 (string) $student->username,
                 (string) $student->first_name,
@@ -57,14 +65,20 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 (string) $student->parent_relationship,
                 (string) (is_object($student->status) ? $student->status->value : $student->status),
             ];
+
+            if ($isSuperAdmin) {
+                $row[] = (string) ($student->center?->code ?? $student->center_id ?? '');
+            }
+
+            yield $row;
         }
     }
 
     /**
-     * @return \Generator<int, array<string, string>>
+     * @return Generator<int, array<string, string>>
      * @param  string                                 $filePath
      */
-    public function readCsvStream(string $filePath): \Generator
+    public function readCsvStream(string $filePath): Generator
     {
         if (($handle = fopen($filePath, 'r')) === false) {
             return;
@@ -110,18 +124,15 @@ class StudentExportImportService implements StudentExportImportServiceInterface
      * @return array{imported: int, updated: int, errors: array<int, string>}
      * @param  string                                                         $filePath
      * @param  ?int                                                           $centerId
+     * @param  bool                                                           $isSuperAdmin
      */
-    public function importStudentsCsv(string $filePath, ?int $centerId = null): array
+    public function importStudentsCsv(string $filePath, ?int $centerId = null, bool $isSuperAdmin = false): array
     {
-        if (! $centerId) {
-            $centerId = Center::first()?->id;
-        }
-
-        if (! $centerId) {
+        if (! $isSuperAdmin && ! $centerId) {
             return [
                 'imported' => 0,
                 'updated'  => 0,
-                'errors'   => ['Không tìm thấy thông tin trung tâm hợp lệ để thực hiện import.'],
+                'errors'   => ['Tài khoản quản trị chưa được gán trung tâm hợp lệ để thực hiện import.'],
             ];
         }
 
@@ -145,6 +156,35 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 continue;
             }
 
+            // Xác định trung tâm cho dòng này
+            $targetCenterId = $centerId;
+
+            if ($isSuperAdmin) {
+                $centerCodeOrId = $row['mã trung tâm'] ?? $row['center_code'] ?? $row['mã tt'] ?? $row['center_id'] ?? $row['trung tâm'] ?? null;
+
+                if (! empty($centerCodeOrId)) {
+                    $center = Center::where('code', $centerCodeOrId)->orWhere('id', $centerCodeOrId)->first();
+
+                    if ($center) {
+                        $targetCenterId = $center->id;
+                    } else {
+                        $errors[] = "Dòng {$lineIndex}: Không tìm thấy trung tâm với mã \"{$centerCodeOrId}\".";
+
+                        continue;
+                    }
+                } elseif (! $targetCenterId) {
+                    $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã trung tâm.";
+
+                    continue;
+                }
+            }
+
+            if (! $targetCenterId) {
+                $errors[] = "Dòng {$lineIndex}: Không xác định được trung tâm quản lý.";
+
+                continue;
+            }
+
             if (empty($studentCode)) {
                 $studentCode = 'STD' . strtoupper(Str::random(6));
             }
@@ -162,6 +202,9 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
             $dob = $row['ngày sinh'] ?? $row['date_of_birth'] ?? null;
 
+            $statusRaw = $row['trạng thái'] ?? $row['status'] ?? 1;
+            $statusVal = is_numeric($statusRaw) ? (int) $statusRaw : ($statusRaw === 'active' || $statusRaw === 'hoạt động' ? Constant::STUDENT_STATUS_ACTIVE : Constant::STUDENT_STATUS_INACTIVE);
+
             $data = [
                 'student_code'        => $studentCode,
                 'username'            => $username,
@@ -176,8 +219,8 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'parent_name'         => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                 'parent_phone'        => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                 'parent_relationship' => $row['mối quan hệ phụ huynh'] ?? $row['parent_relationship'] ?? 'bố',
-                'status'              => isset($row['trạng thái']) ? (int) $row['trạng thái'] : 1,
-                'center_id'           => $centerId,
+                'status'              => $statusVal,
+                'center_id'           => $targetCenterId,
             ];
 
             if ($existingStudent) {
@@ -185,14 +228,14 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 $updatedCount++;
             } else {
                 // Kiểm tra giới hạn số học sinh active
-                if ($centerId && $data['status'] === 1) {
-                    $center = Center::find($centerId);
+                if ($targetCenterId && $data['status'] === Constant::STUDENT_STATUS_ACTIVE) {
+                    $center = Center::find($targetCenterId);
 
                     if ($center && $center->max_students !== null) {
-                        $activeCount = Student::where('center_id', $centerId)->where('status', 1)->count();
+                        $activeCount = Student::where('center_id', $targetCenterId)->where('status', Constant::STUDENT_STATUS_ACTIVE)->count();
 
                         if ($activeCount >= $center->max_students) {
-                            $errors[] = "Dòng {$lineIndex}: Không thể thêm học sinh mới do trung tâm đã đạt giới hạn tối đa ({$center->max_students}) học sinh của gói dịch vụ.";
+                            $errors[] = "Dòng {$lineIndex}: Không thể thêm học sinh mới do trung tâm ({$center->name}) đã đạt giới hạn tối đa ({$center->max_students}) học sinh của gói dịch vụ.";
 
                             continue;
                         }
@@ -214,58 +257,73 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
     /**
      * @return array<int, array<int, string>>
+     * @param  bool                           $isSuperAdmin
      */
-    public function getSampleCsvRows(): array
+    public function getSampleCsvRows(bool $isSuperAdmin = false): array
     {
+        $headers = [
+            'Mã học sinh',
+            'Tên đăng nhập',
+            'Họ',
+            'Tên',
+            'Họ và tên',
+            'Email',
+            'Số điện thoại',
+            'Ngày sinh',
+            'Giới tính',
+            'Địa chỉ',
+            'Tên phụ huynh',
+            'SĐT phụ huynh',
+            'Mối quan hệ phụ huynh',
+            'Trạng thái',
+        ];
+
+        $row1 = [
+            'STD001',
+            'nguyenvana',
+            'Nguyễn Văn',
+            'A',
+            'Nguyễn Văn A',
+            'nguyenvana@gmail.com',
+            '0912345678',
+            '2008-05-15',
+            'nam',
+            '123 Đường Lê Lợi, Q1, TP.HCM',
+            'Nguyễn Văn B',
+            '0909876543',
+            'Bố',
+            'active',
+        ];
+
+        $row2 = [
+            'STD002',
+            'tranthib',
+            'Trần Thị',
+            'B',
+            'Trần Thị B',
+            'tranthib@gmail.com',
+            '0923456789',
+            '2009-08-20',
+            'nu',
+            '456 Đường Nguyễn Huệ, Q1, TP.HCM',
+            'Trần Văn C',
+            '0908765432',
+            'Mẹ',
+            'active',
+        ];
+
+        if ($isSuperAdmin) {
+            $sampleCenterCode = Center::value('code') ?? 'CTR0000001';
+            $headers[]        = 'Mã trung tâm';
+            $row1[]           = $sampleCenterCode;
+            $row2[]           = $sampleCenterCode;
+        }
+
         return [
-            [
-                'Mã học sinh',
-                'Tên đăng nhập',
-                'Họ',
-                'Tên',
-                'Họ và tên',
-                'Email',
-                'Số điện thoại',
-                'Ngày sinh',
-                'Giới tính',
-                'Địa chỉ',
-                'Tên phụ huynh',
-                'SĐT phụ huynh',
-                'Mối quan hệ phụ huynh',
-                'Trạng thái',
-            ],
-            [
-                'STD001',
-                'nguyenvana',
-                'Nguyễn Văn',
-                'A',
-                'Nguyễn Văn A',
-                'nguyenvana@gmail.com',
-                '0912345678',
-                '2008-05-15',
-                'nam',
-                '123 Đường Lê Lợi, Q1, TP.HCM',
-                'Nguyễn Văn B',
-                '0909876543',
-                'Bố',
-                'active',
-            ],
-            [
-                'STD002',
-                'tranthib',
-                'Trần Thị',
-                'B',
-                'Trần Thị B',
-                'tranthib@gmail.com',
-                '0923456789',
-                '2009-08-20',
-                'nu',
-                '456 Đường Nguyễn Huệ, Q1, TP.HCM',
-                'Trần Văn C',
-                '0908765432',
-                'Mẹ',
-                'active',
-            ],
+            $headers,
+            $row1,
+            $row2,
         ];
     }
 }
+

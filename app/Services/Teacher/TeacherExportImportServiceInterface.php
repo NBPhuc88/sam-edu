@@ -7,8 +7,9 @@ interface TeacherExportImportServiceInterface
     /**
      * @return \Generator<int, array<int, string>>
      * @param  ?int                                $centerId
+     * @param  bool                                $isSuperAdmin
      */
-    public function exportTeachersCsv(?int $centerId = null): \Generator;
+    public function exportTeachersCsv(?int $centerId = null, bool $isSuperAdmin = false): \Generator;
 
     /**
      * @return \Generator<int, array<string, string>>
@@ -20,11 +21,13 @@ interface TeacherExportImportServiceInterface
      * @return array{imported: int, updated: int, errors: array<int, string>}
      * @param  string                                                         $filePath
      * @param  ?int                                                           $centerId
+     * @param  bool                                                           $isSuperAdmin
      */
-    public function importTeachersCsv(string $filePath, ?int $centerId = null): array;
+    public function importTeachersCsv(string $filePath, ?int $centerId = null, bool $isSuperAdmin = false): array;
 
     /**
      * @return array<int, array<int, string>>
+     * @param  bool                           $isSuperAdmin
      */
-    public function getSampleCsvRows(): array;
+    public function getSampleCsvRows(bool $isSuperAdmin = false): array;
 }
