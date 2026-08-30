@@ -44,16 +44,16 @@ class StudentTuitionController extends Controller
         }
 
         $search  = $request->input('search');
-        $status  = $request->input('status');
+        $status  = $request->filled('status') ? $request->integer('status') : null;
         $page    = $request->integer('page', 1);
         $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $tuitions = $this->studentTuitionService->getPaginatedTuitions(
-            is_string($search) ? $search : null,
+            is_string($search) && trim($search) !== '' ? trim($search) : null,
             null,
             null,
             $student->id,
-            is_string($status) && $status !== '' ? $status : null,
+            $status !== null && $status > 0 ? (int) $status : null,
             $perPage,
             $page,
             null
@@ -66,8 +66,8 @@ class StudentTuitionController extends Controller
             'tuitions' => $tuitions,
             'stats'    => $stats,
             'filters'  => [
-                'search'   => $search ?? '',
-                'status'   => $status ?? '',
+                'search'   => is_string($search) ? $search : '',
+                'status'   => $status ?? 0,
                 'per_page' => $perPage,
             ],
         ]);
@@ -86,7 +86,7 @@ class StudentTuitionController extends Controller
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $status   = $request->input('status');
+        $status   = $request->filled('status') ? (int) $request->input('status') : null;
         $month    = $request->input('month');
         $page     = $request->integer('page', 1);
         $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
@@ -96,7 +96,7 @@ class StudentTuitionController extends Controller
             $centerId,
             $classId,
             null,
-            is_string($status) ? $status : null,
+            $status !== null && $status > 0 ? $status : null,
             $perPage,
             $page,
             $admin,
@@ -127,7 +127,7 @@ class StudentTuitionController extends Controller
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
                 'class_id'  => $classId,
-                'status'    => $status ?? '',
+                'status'    => $status ?? 0,
                 'month'     => $month ?? '',
                 'per_page'  => $perPage,
             ],
@@ -140,7 +140,7 @@ class StudentTuitionController extends Controller
         $search   = $request->input('search');
         $centerId = $request->input('center_id') ? (int) $request->input('center_id') : null;
         $classId  = $request->input('class_id') ? (int) $request->input('class_id') : null;
-        $status   = $request->input('status');
+        $status   = $request->filled('status') ? (int) $request->input('status') : null;
         $month    = $request->input('month');
 
         $fileName = 'danh_sach_hoc_phi_' . date('Y-m-d_H-i-s') . '.xls';

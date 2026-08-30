@@ -290,4 +290,3 @@ test('giáo viên và admin có thể ghim và bỏ ghim tin nhắn chat', funct
 
     expect($msg2->fresh()->is_pinned)->toBeFalse();
 });
-

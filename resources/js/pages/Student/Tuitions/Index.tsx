@@ -80,12 +80,17 @@ interface Props {
     };
     tuitions: PaginatedData<StudentTuitionItem>;
     stats: {
-        total_invoiced: number;
-        total_paid: number;
-        total_remaining: number;
-        paid_count: number;
-        partial_count: number;
-        unpaid_count: number;
+        total_invoiced?: number;
+        total_paid?: number;
+        total_remaining?: number;
+        paid_count?: number;
+        partial_count?: number;
+        unpaid_count?: number;
+        total_amount?: number;
+        paid_amount?: number;
+        remaining_amount?: number;
+        completed_count?: number;
+        total_records?: number;
     };
     filters: {
         search?: string;
@@ -113,12 +118,16 @@ export default function StudentTuitionIndex({
 
     const handleFilter = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
+        const params: Record<string, any> = {};
+        if (search && search.trim() !== '') {
+            params.search = search.trim();
+        }
+        if (selectedStatus && Number(selectedStatus) > 0) {
+            params.status = Number(selectedStatus);
+        }
         router.get(
             '/student/tuitions',
-            {
-                search: search || undefined,
-                status: selectedStatus ? Number(selectedStatus) : undefined,
-            },
+            params,
             { preserveState: true },
         );
     };
@@ -128,6 +137,14 @@ export default function StudentTuitionIndex({
         setSelectedStatus(0);
         router.get('/student/tuitions', {}, { preserveState: true });
     };
+
+    const totalInvoiced = stats.total_invoiced ?? stats.total_amount ?? 0;
+    const totalPaid = stats.total_paid ?? stats.paid_amount ?? 0;
+    const totalRemaining = stats.total_remaining ?? stats.remaining_amount ?? 0;
+    const paidCount = stats.paid_count ?? stats.completed_count ?? 0;
+    const partialCount = stats.partial_count ?? 0;
+    const unpaidCount = stats.unpaid_count ?? 0;
+    const totalCount = stats.total_records ?? (paidCount + partialCount + unpaidCount);
 
     const getStatusBadge = (status: number) => {
         switch (status) {
@@ -184,9 +201,9 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-gray-500 uppercase">Tổng Học Phí</p>
                                 <h3 className="mt-1 text-2xl font-black text-gray-900 font-mono">
-                                    {formatCurrency(stats.total_invoiced || 0)}
+                                    {formatCurrency(totalInvoiced)}
                                 </h3>
-                                <p className="text-2xs text-gray-400 mt-1">Tổng {(stats.paid_count || 0) + (stats.partial_count || 0) + (stats.unpaid_count || 0)} khoản thu</p>
+                                <p className="text-2xs text-gray-400 mt-1">Tổng {totalCount} khoản thu</p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                 <Receipt className="h-6 w-6" />
@@ -199,10 +216,10 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-emerald-700 uppercase">Đã Thanh Toán</p>
                                 <h3 className="mt-1 text-2xl font-black text-emerald-600 font-mono">
-                                    {formatCurrency(stats.total_paid || 0)}
+                                    {formatCurrency(totalPaid)}
                                 </h3>
                                 <p className="text-2xs text-emerald-600 font-semibold mt-1">
-                                    {stats.paid_count || 0} khoản đã hoàn tất
+                                    {paidCount} khoản đã hoàn tất
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -216,10 +233,10 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-amber-700 uppercase">Còn Lại Cần Nộp</p>
                                 <h3 className="mt-1 text-2xl font-black text-amber-600 font-mono">
-                                    {formatCurrency(stats.total_remaining || 0)}
+                                    {formatCurrency(totalRemaining)}
                                 </h3>
                                 <p className="text-2xs text-amber-700 font-semibold mt-1">
-                                    {stats.partial_count + stats.unpaid_count} khoản đang chờ đóng
+                                    {partialCount + unpaidCount} khoản đang chờ đóng
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
@@ -266,7 +283,7 @@ export default function StudentTuitionIndex({
                             >
                                 Tìm kiếm
                             </Button>
-                            {(search || selectedStatus) && (
+                            {(Boolean(search) || selectedStatus > 0) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>
                                     Đặt Lại
                                 </Button>

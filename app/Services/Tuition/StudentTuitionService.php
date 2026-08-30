@@ -50,7 +50,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?int                 $centerId
      * @param  ?int                 $classId
      * @param  ?int                 $studentId
-     * @param  ?string              $status
+     * @param  ?int                 $status
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
@@ -62,21 +62,25 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?int $studentId = null,
-        ?string $status = null,
+        ?int $status = null,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?string $month = null
     ): LengthAwarePaginator {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        if ($admin !== null) {
+            $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        if ($allowedCenterIds !== null) {
-            if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
-                $centerIds = []; // No access
-            } elseif ($centerId !== null) {
-                $centerIds = [$centerId];
+            if ($allowedCenterIds !== null) {
+                if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                    $centerIds = []; // No access
+                } elseif ($centerId !== null) {
+                    $centerIds = [$centerId];
+                } else {
+                    $centerIds = $allowedCenterIds;
+                }
             } else {
-                $centerIds = $allowedCenterIds;
+                $centerIds = $centerId;
             }
         } else {
             $centerIds = $centerId;
@@ -475,15 +479,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
-     * @param  ?string    $month
-     * @param  ?Admin     $admin
-     * @return \Generator
-    /**
-     * @param  ?string    $search
-     * @param  ?int       $centerId
-     * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -492,7 +488,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator {
@@ -558,19 +554,19 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $st          = is_object($item->status) ? $item->status->value : $item->status;
+            $st          = (int) $item->status;
             $statusLabel = match ($st) {
-                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'Đã hoàn thành',
-                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'Còn nợ (Đóng dở)',
-                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'Quá hạn',
-                default                                            => 'Chưa đóng',
+                Constant::TUITION_STATUS_COMPLETED => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL   => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE   => 'Quá hạn',
+                default                            => 'Chưa đóng',
             };
 
             $statusClass = match ($st) {
-                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'status-completed',
-                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'status-partial',
-                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'status-overdue',
-                default                                            => 'status-pending',
+                Constant::TUITION_STATUS_COMPLETED => 'status-completed',
+                Constant::TUITION_STATUS_PARTIAL   => 'status-partial',
+                Constant::TUITION_STATUS_OVERDUE   => 'status-overdue',
+                default                            => 'status-pending',
             };
 
             // Lấy danh sách lớp học của học sinh (nối bằng dấu phẩy)
@@ -663,7 +659,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -672,7 +668,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator {
@@ -723,12 +719,12 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $st          = is_object($item->status) ? $item->status->value : $item->status;
+            $st          = (int) $item->status;
             $statusLabel = match ($st) {
-                Constant::TUITION_STATUS_PAID, 'completed', 'paid' => 'Đã hoàn thành',
-                Constant::TUITION_STATUS_PARTIAL, 'partial'        => 'Còn nợ (Đóng dở)',
-                Constant::TUITION_STATUS_OVERDUE, 'overdue'        => 'Quá hạn',
-                default                                            => 'Chưa đóng',
+                Constant::TUITION_STATUS_PAID    => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE => 'Quá hạn',
+                default                          => 'Chưa đóng',
             };
 
             $classNames = '';
