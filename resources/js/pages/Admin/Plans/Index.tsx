@@ -13,6 +13,7 @@ import {
     Clock,
     DollarSign,
     Edit2,
+    Filter,
     Layers,
     Plus,
     Search,
@@ -267,7 +268,12 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button type="submit" variant="success" size="sm" icon={<Search className="h-3.5 w-3.5" />}>
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
                                 Tìm kiếm
                             </Button>
                             {(search || selectedType) && (

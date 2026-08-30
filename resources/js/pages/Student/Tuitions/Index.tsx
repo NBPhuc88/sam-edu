@@ -19,13 +19,14 @@ import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
 import { Head,router } from '@inertiajs/react';
 import {
-BookOpen,
-CheckCircle2,
-Clock,
-Eye,
-Receipt,
-Search,
-Wallet
+    BookOpen,
+    CheckCircle2,
+    Clock,
+    Eye,
+    Filter,
+    Receipt,
+    Search,
+    Wallet,
 } from 'lucide-react';
 import React,{ useState } from 'react';
 
@@ -257,8 +258,13 @@ export default function StudentTuitionIndex({
                                 <option value={TUITION_STATUS_OVERDUE}>Quá hạn</option>
                             </select>
 
-                            <Button variant="success" size="sm" type="submit">
-                                Lọc
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
+                                Tìm kiếm
                             </Button>
                             {(search || selectedStatus) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>

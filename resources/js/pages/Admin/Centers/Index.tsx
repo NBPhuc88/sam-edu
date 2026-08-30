@@ -10,7 +10,7 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
 import { Head,Link,router } from '@inertiajs/react';
-import { AlertCircle,Building2,Calendar,Edit2,Plus,RefreshCw,Search,Trash2 } from 'lucide-react';
+import { AlertCircle,Building2,Calendar,Edit2,Filter,Plus,RefreshCw,Search,Trash2 } from 'lucide-react';
 import React,{ useState } from 'react';
 import RenewSubscriptionModal from '../../../components/Center/RenewSubscriptionModal';
 import Badge from '../../../components/ui/Badge';
@@ -139,8 +139,13 @@ export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], f
                                 className="!py-2.5 !text-sm"
                             />
                         </div>
-                        <Button type="submit" variant="secondary" size="md" className="px-5">
-                            Tìm Kiếm
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="md"
+                            icon={<Filter className="h-4 w-4" />}
+                        >
+                            Tìm kiếm
                         </Button>
                     </form>
                 </Card>

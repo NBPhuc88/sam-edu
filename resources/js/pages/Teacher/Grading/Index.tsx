@@ -357,10 +357,10 @@ export default function GradingIndex({
                                 <Button
                                     type="submit"
                                     variant="success"
-                                    size="sm"
-                                    icon={<Filter className="h-3.5 w-3.5" />}
+                                    size="md"
+                                    icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Lọc Kết Quả
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>

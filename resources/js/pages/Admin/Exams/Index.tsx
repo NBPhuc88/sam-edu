@@ -25,6 +25,7 @@ Clock,
 Edit2,
 Eye,
 FileCheck,
+Filter,
 HelpCircle,
 Plus,
 Search,
@@ -371,10 +372,10 @@ export default function ExamIndex({
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
-                                icon={<Search className="h-4 w-4" />}
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
                             >
-                                Tìm Kiếm
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

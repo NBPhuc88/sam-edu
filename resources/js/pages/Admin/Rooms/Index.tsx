@@ -350,10 +350,10 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
+                                size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Áp Dụng Lọc
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

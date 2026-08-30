@@ -309,7 +309,7 @@ export default function ChatGroupIndex({
                                     size="md"
                                     icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Lọc dữ liệu
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>

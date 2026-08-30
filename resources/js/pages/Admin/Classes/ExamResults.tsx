@@ -4,17 +4,18 @@ import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
-import { Head,Link,router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-ArrowLeft,
-Award,
-BarChart3,
-CheckCircle2,
-FileCheck,
-FileSpreadsheet,
-GraduationCap,
-Search,
-Users
+    ArrowLeft,
+    Award,
+    BarChart3,
+    CheckCircle2,
+    FileCheck,
+    FileSpreadsheet,
+    Filter,
+    GraduationCap,
+    Search,
+    Users,
 } from 'lucide-react';
 import React,{ useState } from 'react';
 
@@ -298,8 +299,13 @@ export default function ClassExamResultsPage({
                                 ))}
                             </select>
 
-                            <Button variant="success" size="sm" type="submit">
-                                Lọc
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
+                                Tìm kiếm
                             </Button>
                             {(search || selectedExamId) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>

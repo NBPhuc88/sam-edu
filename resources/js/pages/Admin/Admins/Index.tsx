@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/react';
 import {
     AlertCircle,
     Edit,
+    Filter,
     Plus,
     Search,
     Shield,
@@ -251,8 +252,13 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
                             <option value={ROLE_ADMIN}>Admin Trung tâm</option>
                         </select>
 
-                        <Button variant="secondary" size="md" type="submit" className="px-5">
-                            Lọc danh sách
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="md"
+                            icon={<Filter className="h-4 w-4" />}
+                        >
+                            Tìm kiếm
                         </Button>
                     </form>
                 </Card>

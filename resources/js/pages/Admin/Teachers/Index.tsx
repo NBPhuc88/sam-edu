@@ -348,7 +348,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

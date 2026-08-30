@@ -519,10 +519,10 @@ export default function SessionIndex({
                                 <Button
                                     type="submit"
                                     variant="success"
-                                    size="sm"
+                                    size="md"
                                     icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Áp Dụng Lọc
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>
