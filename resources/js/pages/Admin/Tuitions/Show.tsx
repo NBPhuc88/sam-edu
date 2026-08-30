@@ -1,3 +1,4 @@
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import { Head,Link,router } from '@inertiajs/react';
 import {
 AlertCircle,
@@ -136,6 +137,11 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const [deletePaymentOpen, setDeletePaymentOpen] = useState(false);
     const [deletingPayment, setDeletingPayment] = useState<TuitionPaymentItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Delete Tuition Modal State
+    const [deleteTuitionModalOpen, setDeleteTuitionModalOpen] = useState(false);
+    const [deletingTuitionTarget, setDeletingTuitionTarget] = useState<StudentClassTuitionItem | null>(null);
+    const [isDeletingTuition, setIsDeletingTuition] = useState(false);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -277,6 +283,29 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
         });
     };
 
+    // Open Delete Tuition Modal
+    const openDeleteTuitionModal = (item: StudentClassTuitionItem) => {
+        setDeletingTuitionTarget(item);
+        setDeleteTuitionModalOpen(true);
+    };
+
+    // Handle confirm Delete Tuition
+    const handleConfirmDeleteTuition = () => {
+        if (!deletingTuitionTarget) {
+            return;
+        }
+
+        setIsDeletingTuition(true);
+
+        router.delete(`/tuitions/${deletingTuitionTarget.id}`, {
+            onFinish: () => {
+                setIsDeletingTuition(false);
+                setDeleteTuitionModalOpen(false);
+                setDeletingTuitionTarget(null);
+            },
+        });
+    };
+
     return (
         <AppLayout title="Chi Tiết Hồ Sơ Học Phí - SAM Digital">
             <Head title="Chi Tiết Hồ Sơ Học Phí" />
@@ -304,13 +333,6 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                        {can('tuitions.edit') && (
-                            <Link href={`/tuitions/${tuition.id}/edit`}>
-                                <Button variant="edit" size="md" icon={<Edit2 className="h-4 w-4" />}>
-                                    Chỉnh Sửa Hồ Sơ
-                                </Button>
-                            </Link>
-                        )}
                         {can('tuitions.payments') && (
                             <Button
                                 variant="success"
@@ -386,6 +408,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                                         <th className="px-6 py-3">Đã Đóng</th>
                                         <th className="px-6 py-3">Còn Nợ</th>
                                         <th className="px-6 py-3">Trạng Thái</th>
+                                        <th className="px-6 py-3 text-right">Thao Tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 bg-white">
@@ -423,6 +446,44 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                                                 </td>
                                                 <td className="px-6 py-3.5">
                                                     {getStatusBadge(Number(st.status))}
+                                                </td>
+                                                <td className="px-6 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {!isCurrent && (
+                                                            <Link href={`/tuitions/${st.id}`}>
+                                                                <Button
+                                                                    variant="success"
+                                                                    size="sm"
+                                                                    title="Xem lịch sử đóng tiền lớp này"
+                                                                >
+                                                                    Xem đợt thu
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('tuitions.edit') && (
+                                                            <Link href={`/tuitions/${st.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    title={`Sửa học phí lớp ${st.school_class?.name || ''}`}
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('tuitions.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                title={`Xóa học phí lớp ${st.school_class?.name || ''}`}
+                                                                onClick={() => openDeleteTuitionModal(st)}
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -893,6 +954,17 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                     </p>
                 </div>
             </Modal>
+
+            {/* Modal 4: Xác Nhận Xóa Hồ Sơ Học Phí Lớp Học */}
+            <DeleteConfirmModal
+                isOpen={deleteTuitionModalOpen}
+                onClose={() => setDeleteTuitionModalOpen(false)}
+                onConfirm={handleConfirmDeleteTuition}
+                entity="tuitions"
+                entityId={deletingTuitionTarget?.id || null}
+                entityName={`hồ sơ học phí lớp "${deletingTuitionTarget?.school_class?.name || deletingTuitionTarget?.title || ''}" của học sinh "${tuition.student?.full_name || ''}"`}
+                isDeleting={isDeletingTuition}
+            />
         </AppLayout>
     );
 };
