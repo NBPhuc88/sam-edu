@@ -32,10 +32,14 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền truy cập quản lý Quản trị viên hệ thống.');
         }
 
-        $search   = (string) $request->input('search', '');
-        $role     = (string) $request->input('role', '');
-        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
-        $admins   = $this->adminService->getPaginatedAdmins($perPage, $search ?: null, $role ?: 'admin');
+        $search  = (string) $request->input('search', '');
+        $role    = $request->input('role');
+        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
+        $admins  = $this->adminService->getPaginatedAdmins(
+            $perPage,
+            $search ?: null,
+            $role !== null && $role !== '' ? (int) $role : null
+        );
         $formData = $this->adminService->getFormData();
 
         return Inertia::render('Admin/Admins/Index', [
@@ -44,7 +48,7 @@ class AdminController extends Controller
             'hasSuperAdmin' => $formData['hasSuperAdmin'],
             'filters'       => [
                 'search'   => $search,
-                'role'     => $role,
+                'role'     => $role !== null && $role !== '' ? (int) $role : '',
                 'per_page' => $perPage,
             ],
         ]);

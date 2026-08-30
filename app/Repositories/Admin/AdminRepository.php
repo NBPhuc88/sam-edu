@@ -30,7 +30,7 @@ class AdminRepository implements AdminRepositoryInterface
         return Admin::findOrFail($id);
     }
 
-    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator
+    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, int|string|null $role = null): LengthAwarePaginator
     {
         return Admin::query()
             ->select(
@@ -53,9 +53,8 @@ class AdminRepository implements AdminRepositoryInterface
                         ->orWhere('phone', 'like', "%{$search}%");
                 });
             })
-            ->when($role, function ($query, $role) {
-                $roleVal = ($role === 'super_admin' || $role === 1 || $role === '1') ? Constant::ROLE_SUPER_ADMIN : (($role === 'admin' || $role === 2 || $role === '2') ? Constant::ROLE_ADMIN : $role);
-                $query->where('role', $roleVal);
+            ->when($role !== null && $role !== '', function ($query) use ($role) {
+                $query->where('role', (int) $role);
             })
             ->latest()
             ->deferredPaginate($perPage)

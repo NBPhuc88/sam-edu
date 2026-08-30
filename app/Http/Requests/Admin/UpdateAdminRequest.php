@@ -58,6 +58,8 @@ class UpdateAdminRequest extends FormRequest
             'password.min'          => 'Mật khẩu phải từ 5 ký tự trở lên.',
             'password.max'          => 'Mật khẩu không được vượt quá 20 ký tự.',
             'role.required'         => 'Vui lòng chọn vai trò quản trị.',
+            'role.integer'          => 'Vai trò quản trị phải là số nguyên hợp lệ.',
+            'role.in'               => 'Vai trò quản trị không hợp lệ.',
             'center_id.required_if' => 'Quản trị viên cần được phân công vào 1 trung tâm.',
         ];
     }
