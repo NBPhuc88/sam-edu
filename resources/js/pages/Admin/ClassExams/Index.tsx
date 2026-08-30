@@ -3,35 +3,35 @@ import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
 import {
-CLASS_EXAM_STATUS_CANCELLED,
-CLASS_EXAM_STATUS_COMPLETED,
-CLASS_EXAM_STATUS_LABELS,
-CLASS_EXAM_STATUS_ONGOING,
-CLASS_EXAM_STATUS_SCHEDULED,
+    CLASS_EXAM_STATUS_CANCELLED,
+    CLASS_EXAM_STATUS_COMPLETED,
+    CLASS_EXAM_STATUS_LABELS,
+    CLASS_EXAM_STATUS_ONGOING,
+    CLASS_EXAM_STATUS_SCHEDULED,
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-AlertCircle,
-Award,
-BookOpen,
-Calendar,
-CheckCircle2,
-Clock,
-Edit2,
-FileCheck,
-Filter,
-PlayCircle,
-Plus,
-Search,
-Trash2,
-Users
+    AlertCircle,
+    Award,
+    BookOpen,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    Edit2,
+    FileCheck,
+    Filter,
+    PlayCircle,
+    Plus,
+    Search,
+    Trash2,
+    Users
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 import AssignExamModal from './AssignExamModal';
-import { Center,ClassExam,Exam,PaginatedData,SchoolClass } from './types';
+import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Props {
@@ -75,7 +75,7 @@ export default function ClassExamIndex({
         filters.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Modal state
@@ -350,7 +350,7 @@ export default function ClassExamIndex({
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: '', label: 'Tất cả trạng thái' },
                                         { value: String(CLASS_EXAM_STATUS_SCHEDULED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
                                         { value: String(CLASS_EXAM_STATUS_ONGOING), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
                                         { value: String(CLASS_EXAM_STATUS_COMPLETED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },

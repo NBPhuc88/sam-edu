@@ -6,34 +6,34 @@ import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { TruncatedText } from '@/components/ui/Tooltip';
 import {
-EQUIPMENT_STATUS_BROKEN,
-EQUIPMENT_STATUS_GOOD,
-EQUIPMENT_STATUS_LABELS,
-EQUIPMENT_STATUS_MAINTENANCE,
-ROOM_STATUS_ACTIVE,
-ROOM_STATUS_CLOSED,
-ROOM_STATUS_LABELS,
-ROOM_STATUS_PAUSED,
+    EQUIPMENT_STATUS_BROKEN,
+    EQUIPMENT_STATUS_GOOD,
+    EQUIPMENT_STATUS_LABELS,
+    EQUIPMENT_STATUS_MAINTENANCE,
+    ROOM_STATUS_ACTIVE,
+    ROOM_STATUS_CLOSED,
+    ROOM_STATUS_LABELS,
+    ROOM_STATUS_PAUSED,
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-AlertCircle,
-Armchair,
-Building2,
-CheckCircle2,
-DoorOpen,
-Edit2,
-Eye,
-Filter,
-MapPin,
-Plus,
-Search,
-Trash2,
-Users,
-XCircle,
+    AlertCircle,
+    Armchair,
+    Building2,
+    CheckCircle2,
+    DoorOpen,
+    Edit2,
+    Eye,
+    Filter,
+    MapPin,
+    Plus,
+    Search,
+    Trash2,
+    Users,
+    XCircle,
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -99,7 +99,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Delete modal state
@@ -329,7 +329,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: '', label: 'Tất cả trạng thái' },
                                         { value: String(ROOM_STATUS_ACTIVE), label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
                                         { value: String(ROOM_STATUS_PAUSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
                                         { value: String(ROOM_STATUS_CLOSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
@@ -527,13 +527,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                         key={i}
                                         href={link.url || '#'}
                                         preserveState
-                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                            link.active
-                                                ? 'bg-emerald-600 text-white shadow-xs'
-                                                : link.url
-                                                  ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                  : 'cursor-not-allowed text-gray-300'
-                                        }`}
+                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${link.active
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : link.url
+                                                ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                : 'cursor-not-allowed text-gray-300'
+                                            }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
                                 ))}

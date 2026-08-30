@@ -69,7 +69,7 @@ class StudentController extends Controller
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
                 'class_id'  => $classId,
-                'status'    => $status !== null && $status !== '' ? (string) $status : 'all',
+                'status'    => $status !== null && $status !== '' ? (string) $status : '',
                 'per_page'  => $perPage,
             ],
             'isTeacher' => (bool) $teacher,
