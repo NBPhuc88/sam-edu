@@ -142,6 +142,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Exam\ExamResultRepositoryInterface::class, \App\Repositories\Exam\ExamResultRepository::class);
         $this->app->bind(\App\Repositories\Exam\ExamRepositoryInterface::class, \App\Repositories\Exam\ExamRepository::class);
         $this->app->bind(\App\Repositories\ClassExam\ClassExamRepositoryInterface::class, \App\Repositories\ClassExam\ClassExamRepository::class);
+        $this->app->bind(\App\Repositories\Holiday\HolidayRepositoryInterface::class, \App\Repositories\Holiday\HolidayRepository::class);
+        $this->app->bind(\App\Repositories\Grading\GradingRepositoryInterface::class, \App\Repositories\Grading\GradingRepository::class);
         $this->app->bind(\App\Repositories\Permission\PermissionRepositoryInterface::class, \App\Repositories\Permission\PermissionRepository::class);
         $this->app->bind(\App\Repositories\Notification\NotificationRepositoryInterface::class, \App\Repositories\Notification\NotificationRepository::class);
         $this->app->bind(\App\Services\Notification\NotificationServiceInterface::class, \App\Services\Notification\NotificationService::class);

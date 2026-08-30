@@ -84,6 +84,16 @@ class Center extends Model
         return null;
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return \App\Enums\Constant::CENTER_STATUS_LABELS[(int) $this->status] ?? 'Đang hoạt động';
+    }
+
+    public function getPlanNameAttribute(): string
+    {
+        return $this->currentPlan()?->name ?? 'Gói Dùng Thử';
+    }
+
     public function hasFeature(string $featureCode): bool
     {
         if ((int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {

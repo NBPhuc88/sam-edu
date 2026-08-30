@@ -12,7 +12,7 @@ Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** xin thông báo: 
 | :--- | :--- |
 | **Mã trung tâm** | `{{ $center->code }}` |
 | **Tên trung tâm** | **{{ $center->name }}** |
-| **Gói dịch vụ hiện tại** | **{{ strtoupper($center->subscription_plan ?? 'N/A') }}** |
+| **Gói dịch vụ hiện tại** | **{{ $center->plan_name }}** |
 | **Ngày hết hạn** | **{{ $center->expires_at ? $center->expires_at->format('d/m/Y H:i') : ($center->trial_ends_at ? $center->trial_ends_at->format('d/m/Y H:i') : 'N/A') }}** |
 | **Email liên hệ** | {{ $center->email ?? 'Chưa cập nhật' }} |
 | **Số điện thoại** | {{ $center->phone ?? 'Chưa cập nhật' }} |

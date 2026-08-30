@@ -11,7 +11,7 @@ Hệ thống vừa nhận được yêu cầu gia hạn gói dịch vụ từ **
 | **Email liên hệ** | {{ $center->email ?? 'N/A' }} |
 | **Số điện thoại** | {{ $center->phone ?? 'N/A' }} |
 | **Gói dịch vụ chọn gia hạn** | **{{ $plan->name }}** — {{ ($durationType ?? 'yearly') === 'yearly' ? '1 Năm' : '1 Tháng' }} ({{ number_format($amount ?? $plan->price, 0, ',', '.') }}đ) |
-| **Gói hiện tại** | {{ strtoupper($center->subscription_plan) }} |
+| **Gói hiện tại** | {{ $center->plan_name }} |
 | **Ngày hết hạn hiện tại** | {{ $center->expires_at ? $center->expires_at->format('d/m/Y H:i') : 'Chưa có' }} |
 | **Người gửi yêu cầu** | {{ $requestingUser?->full_name ?? 'Quản trị trung tâm' }} ({{ $requestingUser?->email ?? 'N/A' }}) |
 | **Thời gian gửi yêu cầu** | {{ now()->format('d/m/Y H:i:s') }} |

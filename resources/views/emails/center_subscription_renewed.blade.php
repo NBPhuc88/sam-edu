@@ -17,7 +17,7 @@ Hệ thống Quản lý Giáo Dục **SAM Digital** xin thông báo: Gói cướ
 | **Ngày kết thúc** | **{{ \Illuminate\Support\Carbon::parse($subscription->ends_at)->format('d/m/Y') }}** |
 | **Giới hạn Học sinh** | **{{ $center->max_students ? $center->max_students . ' học sinh' : 'Không giới hạn' }}** |
 | **Giới hạn Lớp học** | **{{ $center->max_classes ? $center->max_classes . ' lớp' : 'Không giới hạn' }}** |
-| **Trạng thái hệ thống** | **{{ $center->status === 'active' ? 'Đang hoạt động' : 'Đã cập nhật' }}** |
+| **Trạng thái hệ thống** | **{{ $center->status_label }}** |
 </x-mail::table>
 
 Cảm ơn Quản lý Trung tâm đã đồng hành cùng **SAM Digital**. Nếu có thắc mắc hoặc cần hỗ trợ thêm, vui lòng liên hệ Bộ phận Chăm sóc Khách hàng của chúng tôi.
