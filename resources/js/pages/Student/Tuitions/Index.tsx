@@ -100,7 +100,7 @@ export default function StudentTuitionIndex({
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status !== undefined ? String(filters.status) : 'all');
+    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status !== undefined && filters.status !== null ? String(filters.status) : '');
     const [selectedTuition, setSelectedTuition] = useState<StudentTuitionItem | null>(null);
 
     const formatCurrency = (val: number) => {
@@ -116,7 +116,7 @@ export default function StudentTuitionIndex({
             '/student/tuitions',
             {
                 search: search || undefined,
-                status: selectedStatus !== 'all' ? parseInt(selectedStatus) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -124,7 +124,7 @@ export default function StudentTuitionIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/student/tuitions', {}, { preserveState: true });
     };
 
@@ -250,17 +250,17 @@ export default function StudentTuitionIndex({
                                 }}
                                 className="rounded-xl border border-gray-200 bg-slate-50/50 py-2 px-3 text-xs sm:text-sm text-gray-700 focus:border-emerald-500 focus:bg-white focus:outline-hidden"
                             >
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="paid">Đã hoàn thành</option>
-                                <option value="partial">Đang đóng từng phần</option>
-                                <option value="unpaid">Chưa đóng</option>
-                                <option value="overdue">Quá hạn</option>
+                                <option value="">Tất cả trạng thái</option>
+                                <option value={TUITION_STATUS_PAID}>Đã hoàn thành</option>
+                                <option value={TUITION_STATUS_PARTIAL}>Đang đóng từng phần</option>
+                                <option value={TUITION_STATUS_PENDING}>Chưa đóng</option>
+                                <option value={TUITION_STATUS_OVERDUE}>Quá hạn</option>
                             </select>
 
                             <Button variant="success" size="sm" type="submit">
                                 Lọc
                             </Button>
-                            {(search || selectedStatus !== 'all') && (
+                            {(search || selectedStatus) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>
                                     Đặt Lại
                                 </Button>

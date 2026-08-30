@@ -184,4 +184,3 @@ class PermissionService implements PermissionServiceInterface
         Cache::forget(self::CACHE_PREFIX . $role);
     }
 }
-

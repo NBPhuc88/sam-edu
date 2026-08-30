@@ -17,8 +17,8 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
     /**
      * @return Generator<int, array<int, string>>
-     * @param  ?int                                $centerId
-     * @param  bool                                $isSuperAdmin
+     * @param  ?int                               $centerId
+     * @param  bool                               $isSuperAdmin
      */
     public function exportTeachersCsv(?int $centerId = null, bool $isSuperAdmin = false): Generator
     {
@@ -71,7 +71,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
     /**
      * @return Generator<int, array<string, string>>
-     * @param  string                                 $filePath
+     * @param  string                                $filePath
      */
     public function readCsvStream(string $filePath): Generator
     {
@@ -299,4 +299,3 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
         ];
     }
 }
-

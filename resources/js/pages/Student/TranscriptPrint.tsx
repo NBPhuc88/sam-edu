@@ -74,7 +74,7 @@ export default function TranscriptPrint({
     printDate,
 }: Props) {
     const [currentClassFilter, setCurrentClassFilter] = useState<string>(
-        selectedClassId ? String(selectedClassId) : 'all',
+        selectedClassId ? String(selectedClassId) : '',
     );
 
     const handleClassFilterChange = (classIdStr: string) => {
@@ -83,7 +83,7 @@ export default function TranscriptPrint({
             '/student/transcript/print',
             {
                 student_id: student.id,
-                class_id: classIdStr !== 'all' ? classIdStr : undefined,
+                class_id: classIdStr ? Number(classIdStr) : undefined,
             },
             { preserveState: true },
         );
@@ -98,15 +98,15 @@ export default function TranscriptPrint({
             <Head title={`Bảng Điểm - ${student.full_name} (${student.student_code})`} />
 
             {/* Top Toolbar (Hidden when printing) */}
-            <div className="mx-auto max-w-4xl mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-200 print:hidden">
+            <div className="mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-4 shadow-xs border border-slate-200 print:hidden">
                 <div className="flex items-center gap-3">
-                    <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-emerald-700 transition-colors"
+                    <button
+                        onClick={() => window.history.back()}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-2xs transition-colors hover:bg-gray-50"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        Quay lại Trang chủ
-                    </Link>
+                        Quay Lại
+                    </button>
 
                     {enrolledClasses.length > 1 && (
                         <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
@@ -116,7 +116,7 @@ export default function TranscriptPrint({
                                 onChange={(e) => handleClassFilterChange(e.target.value)}
                                 className="rounded-lg border border-gray-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                             >
-                                <option value="all">Tất cả các lớp học ({enrolledClasses.length} lớp)</option>
+                                <option value="">Tất cả các lớp học ({enrolledClasses.length} lớp)</option>
                                 {enrolledClasses.map((cls) => (
                                     <option key={cls.id} value={cls.id}>
                                         {cls.name} ({cls.code})

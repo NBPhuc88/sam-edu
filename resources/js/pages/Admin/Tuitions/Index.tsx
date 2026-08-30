@@ -117,10 +117,10 @@ export const Index: React.FC<IndexProps> = ({
         filters?.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters?.status || 'all',
+        filters?.status !== undefined && filters?.status !== null ? String(filters.status) : '',
     );
     const [selectedMonth, setSelectedMonth] = useState<string>(
-        filters?.month || 'all',
+        filters?.month || '',
     );
 
     // Filter classes by selected center
@@ -146,10 +146,10 @@ export const Index: React.FC<IndexProps> = ({
             '/tuitions',
             {
                 search: searchTerm || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
-                month: selectedMonth !== 'all' ? selectedMonth : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
+                month: selectedMonth || undefined,
             },
             { preserveState: true },
         );
@@ -158,10 +158,10 @@ export const Index: React.FC<IndexProps> = ({
     const handleExport = () => {
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
-        if (selectedCenterId) params.append('center_id', selectedCenterId);
-        if (selectedClassId) params.append('class_id', selectedClassId);
-        if (selectedStatus && selectedStatus !== 'all') params.append('status', selectedStatus);
-        if (selectedMonth && selectedMonth !== 'all') params.append('month', selectedMonth);
+        if (selectedCenterId) params.append('center_id', String(Number(selectedCenterId)));
+        if (selectedClassId) params.append('class_id', String(Number(selectedClassId)));
+        if (selectedStatus) params.append('status', String(Number(selectedStatus)));
+        if (selectedMonth) params.append('month', selectedMonth);
 
         window.location.href = `/tuitions/export?${params.toString()}`;
     };
@@ -170,8 +170,8 @@ export const Index: React.FC<IndexProps> = ({
         setSearchTerm('');
         setSelectedCenterId('');
         setSelectedClassId('');
-        setSelectedStatus('all');
-        setSelectedMonth('all');
+        setSelectedStatus('');
+        setSelectedMonth('');
         router.get('/tuitions', {}, { preserveState: true });
     };
 
@@ -408,7 +408,7 @@ export const Index: React.FC<IndexProps> = ({
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: '', label: 'Tất cả Trạng thái' },
                                         { value: '0', label: 'Chưa đóng' },
                                         { value: '2', label: 'Đang đóng (Còn nợ)' },
                                         { value: '1', label: 'Đã hoàn thành' },

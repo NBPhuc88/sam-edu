@@ -602,8 +602,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
                     $paymentAmountFormatted = number_format((float) $payment->amount, 0, ',', '.');
                     $paymentDateFormatted   = $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d/m/Y') : '—';
                     $paymentMethodLabel     = Constant::PAYMENT_METHOD_LABELS[(int) $payment->payment_method] ?? 'Khác';
-                    $transactionCode = htmlspecialchars($payment->transaction_code ?? '—', ENT_QUOTES, 'UTF-8');
-                    $receiverName    = htmlspecialchars($payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—'), ENT_QUOTES, 'UTF-8');
+                    $transactionCode        = htmlspecialchars($payment->transaction_code ?? '—', ENT_QUOTES, 'UTF-8');
+                    $receiverName           = htmlspecialchars($payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—'), ENT_QUOTES, 'UTF-8');
 
                     yield '<tr>'
                         . "<td class=\"text-center\">{$stt}</td>"
@@ -746,7 +746,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
                 foreach ($payments as $idx => $payment) {
                     $installmentLabel   = 'Đợt ' . ($idx + 1);
                     $paymentMethodLabel = Constant::PAYMENT_METHOD_LABELS[(int) $payment->payment_method] ?? 'Khác';
-                    $receiverName = $payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—');
+                    $receiverName       = $payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—');
 
                     yield [
                         $stt++,

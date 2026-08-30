@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Schedule;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FilterClassScheduleRequest extends FormRequest
 {
@@ -27,7 +29,7 @@ class FilterClassScheduleRequest extends FormRequest
             'class_id'   => ['nullable', 'integer'],
             'subject_id' => ['nullable', 'integer'],
             'teacher_id' => ['nullable', 'integer'],
-            'status'     => ['nullable', 'string'],
+            'status'     => ['nullable', 'integer', Rule::in(Constant::SCHEDULE_STATUSES)],
             'page'       => ['nullable', 'integer', 'min:1'],
             'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

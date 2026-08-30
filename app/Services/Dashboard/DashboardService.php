@@ -737,17 +737,17 @@ class DashboardService implements DashboardServiceInterface
         $currentPlan = $center->currentPlan();
 
         return [
-            'id'                => $center->id,
-            'code'              => $center->code,
-            'name'              => $center->name,
+            'id'                   => $center->id,
+            'code'                 => $center->code,
+            'name'                 => $center->name,
             'subscription_plan_id' => $center->subscription_plan_id,
-            'plan_type'         => $center->plan_type,
-            'allowed_features'  => $currentPlan?->allowed_features ?? [],
-            'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
-            'is_expired'        => $isExpired,
-            'expiring_soon'     => $expiringSoon,
-            'expiring_1day'     => $expiring1DayAlert,
-            'days_remaining'    => $daysRemaining,
+            'plan_type'            => $center->plan_type,
+            'allowed_features'     => $currentPlan?->allowed_features ?? [],
+            'expires_at'           => $expiresAt ? $expiresAt->toIso8601String() : null,
+            'is_expired'           => $isExpired,
+            'expiring_soon'        => $expiringSoon,
+            'expiring_1day'        => $expiring1DayAlert,
+            'days_remaining'       => $daysRemaining,
         ];
     }
 

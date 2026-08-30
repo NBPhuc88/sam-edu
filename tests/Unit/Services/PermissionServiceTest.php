@@ -43,4 +43,3 @@ test('updateRolePermissions updates grants and clears role cache', function () {
 
     expect($this->service->roleHasPermission(Constant::ROLE_TEACHER, 'students.create'))->toBeTrue();
 });
-

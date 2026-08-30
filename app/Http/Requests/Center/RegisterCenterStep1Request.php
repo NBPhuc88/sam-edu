@@ -25,9 +25,9 @@ class RegisterCenterStep1Request extends FormRequest
     public function rules(): array
     {
         return [
-            'name'              => ['required', 'string', 'max:100'],
-            'phone'             => ['required', new VietnamesePhoneNumber()],
-            'email'             => ['required', 'email', 'max:100'],
+            'name'                 => ['required', 'string', 'max:100'],
+            'phone'                => ['required', new VietnamesePhoneNumber()],
+            'email'                => ['required', 'email', 'max:100'],
             'address'              => ['nullable', 'string', 'max:255'],
             'subscription_plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
             'payment_method'       => ['nullable', 'integer', Rule::in(Constant::PAYMENT_METHODS)],

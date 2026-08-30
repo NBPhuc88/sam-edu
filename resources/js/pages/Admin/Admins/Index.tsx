@@ -106,7 +106,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         if (search.trim()) {
             params.search = search.trim();
         }
-        if (roleFilter !== '' && roleFilter !== 'all') {
+        if (roleFilter) {
             params.role = Number(roleFilter);
         }
 

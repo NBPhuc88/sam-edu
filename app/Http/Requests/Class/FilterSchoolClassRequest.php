@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Class;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FilterSchoolClassRequest extends FormRequest
 {
@@ -24,7 +26,7 @@ class FilterSchoolClassRequest extends FormRequest
         return [
             'search'    => ['nullable', 'string', 'max:255'],
             'center_id' => ['nullable', 'integer'],
-            'status'    => ['nullable', 'string'],
+            'status'    => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
             'page'      => ['nullable', 'integer', 'min:1'],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

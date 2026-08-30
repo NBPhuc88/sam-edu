@@ -5,23 +5,29 @@ import type { Column } from '@/components/ui/DataTable';
 import DataTable from '@/components/ui/DataTable';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import {
+    CLASS_STUDENT_STATUS_ACTIVE,
+    CLASS_STUDENT_STATUS_COMPLETED,
+    CLASS_STUDENT_STATUS_LEFT,
+    CLASS_STUDENT_STATUS_TRANSFERRED,
+} from '@/constants/enums';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
-import { Head,router,usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
-AlertCircle,
-ArrowLeft,
-Download,
-Edit2,
-FileSpreadsheet,
-GraduationCap,
-Search,
-Trash2,
-Upload,
-UserPlus,
+    AlertCircle,
+    ArrowLeft,
+    Download,
+    Edit2,
+    FileSpreadsheet,
+    GraduationCap,
+    Search,
+    Trash2,
+    Upload,
+    UserPlus,
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 import AddStudentModal from './components/AddStudentModal';
 
 interface SchoolClass {
@@ -86,13 +92,14 @@ export default function ClassStudentsPage({
     const [isRemoving, setIsRemoving] = useState(false);
 
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-    const [editingStatus, setEditingStatus] = useState<string>('active');
+    const [editingStatus, setEditingStatus] = useState<number>(CLASS_STUDENT_STATUS_ACTIVE);
     const [editingNote, setEditingNote] = useState<string>('');
     const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
 
     const handleOpenStatusModal = (student: Student) => {
         setEditingStudent(student);
-        setEditingStatus(student.pivot?.status || 'active');
+        const st = student.pivot?.status;
+        setEditingStatus(st !== undefined && st !== null ? Number(st) : CLASS_STUDENT_STATUS_ACTIVE);
         setEditingNote(student.pivot?.note || '');
     };
 
@@ -104,7 +111,7 @@ export default function ClassStudentsPage({
         router.patch(
             `/classes/${schoolClass.id}/students/${editingStudent.id}/status`,
             {
-                status: editingStatus,
+                status: Number(editingStatus),
                 note: editingNote,
             },
             {
@@ -230,7 +237,7 @@ export default function ClassStudentsPage({
         {
             header: 'Trạng thái',
             cell: (row) => {
-                const pivotStatus = row.pivot?.status;
+                const pivotStatus = row.pivot?.status !== undefined ? Number(row.pivot.status) : CLASS_STUDENT_STATUS_ACTIVE;
 
                 return (
                     <div
@@ -238,15 +245,15 @@ export default function ClassStudentsPage({
                         onClick={() => !isTeacher && handleOpenStatusModal(row)}
                         title={!isTeacher ? 'Nhấn để thay đổi trạng thái trong lớp' : undefined}
                     >
-                        {pivotStatus === 'left' ? (
+                        {pivotStatus === CLASS_STUDENT_STATUS_LEFT ? (
                             <Badge variant="danger" className="transition-opacity group-hover:opacity-80">
                                 Đã thôi học
                             </Badge>
-                        ) : pivotStatus === 'transferred' ? (
+                        ) : pivotStatus === CLASS_STUDENT_STATUS_TRANSFERRED ? (
                             <Badge variant="info" className="transition-opacity group-hover:opacity-80">
                                 Đã chuyển lớp
                             </Badge>
-                        ) : pivotStatus === 'completed' ? (
+                        ) : pivotStatus === CLASS_STUDENT_STATUS_COMPLETED ? (
                             <Badge variant="pending" className="transition-opacity group-hover:opacity-80">
                                 Đã hoàn thành
                             </Badge>
@@ -608,13 +615,13 @@ export default function ClassStudentsPage({
                         </label>
                         <select
                             value={editingStatus}
-                            onChange={(e) => setEditingStatus(e.target.value)}
+                            onChange={(e) => setEditingStatus(Number(e.target.value))}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
-                            <option value="active">🟢 Đang học lớp này</option>
-                            <option value="completed">🟡 Đã hoàn thành khóa học</option>
-                            <option value="transferred">🔵 Đã chuyển sang lớp khác</option>
-                            <option value="left">🔴 Đã thôi học / Nghỉ học</option>
+                            <option value={CLASS_STUDENT_STATUS_ACTIVE}>🟢 Đang học lớp này</option>
+                            <option value={CLASS_STUDENT_STATUS_COMPLETED}>🟡 Đã hoàn thành khóa học</option>
+                            <option value={CLASS_STUDENT_STATUS_TRANSFERRED}>🔵 Đã chuyển sang lớp khác</option>
+                            <option value={CLASS_STUDENT_STATUS_LEFT}>🔴 Đã thôi học / Nghỉ học</option>
                         </select>
                     </div>
 

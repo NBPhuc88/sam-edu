@@ -131,9 +131,9 @@ export default function ChatGroupIndex({
             '/chats',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus || undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus !== 'all' && selectedStatus !== '' ? Number(selectedStatus) : undefined,
             },
             {
                 preserveState: true,
@@ -149,7 +149,7 @@ export default function ChatGroupIndex({
         setSelectedStatus('1');
         router.get(
             '/chats',
-            { status: '1' },
+            { status: 1 },
             {
                 preserveState: true,
                 preserveScroll: true,

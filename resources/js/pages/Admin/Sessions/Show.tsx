@@ -179,7 +179,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
         teacher_id: session.teacher_id ? String(session.teacher_id) : '',
         room_id: session.room_id ? String(session.room_id) : '',
-        status: session.status || 'scheduled',
+        status: session.status !== undefined && session.status !== null ? Number(session.status) : SESSION_STATUS_SCHEDULED,
         reason: '',
     });
 
@@ -190,7 +190,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
             end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
             teacher_id: session.teacher_id ? String(session.teacher_id) : '',
             room_id: session.room_id ? String(session.room_id) : '',
-            status: session.status || 'scheduled',
+            status: session.status !== undefined && session.status !== null ? Number(session.status) : SESSION_STATUS_SCHEDULED,
             reason: '',
         });
         setIsRescheduleModalOpen(true);
@@ -773,16 +773,14 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             </label>
                             <select
                                 value={data.status}
-                                onChange={(e) => setData('status', e.target.value as any)}
+                                onChange={(e) => setData('status', Number(e.target.value))}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 required
                             >
-                                <option value="scheduled">Dự kiến</option>
-                                <option value="in_progress">Đang diễn ra</option>
-                                <option value="completed">Đã hoàn thành</option>
-                                <option value="unattended">Chưa điểm danh</option>
-                                <option value="cancelled">Đã hủy</option>
-                                <option value="rescheduled">Đã đổi lịch</option>
+                                <option value={SESSION_STATUS_SCHEDULED}>Dự kiến</option>
+                                <option value={SESSION_STATUS_IN_PROGRESS}>Đang diễn ra</option>
+                                <option value={SESSION_STATUS_COMPLETED}>Đã hoàn thành</option>
+                                <option value={SESSION_STATUS_CANCELLED}>Đã hủy</option>
                             </select>
                             {errors.status && (
                                 <p className="mt-1 text-xs text-red-600">{errors.status}</p>

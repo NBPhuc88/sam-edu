@@ -15,7 +15,7 @@ return new class () extends Migration {
             return;
         }
 
-        $type = strtolower((string) Schema::getColumnType('centers', 'status'));
+        $type      = strtolower((string) Schema::getColumnType('centers', 'status'));
         $isNumeric = in_array($type, ['integer', 'tinyint', 'smallint', 'bigint', 'int'], true);
 
         if ($isNumeric) {

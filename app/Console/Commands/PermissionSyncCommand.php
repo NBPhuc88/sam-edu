@@ -21,9 +21,9 @@ class PermissionSyncCommand extends Command
      */
     protected $description = 'Đồng bộ danh sách quyền từ file config/permissions.php vào cơ sở dữ liệu';
 
-   /**
-     * Execute the console command.
-     */
+    /**
+      * Execute the console command.
+      */
     public function handle(): int
     {
         $this->info('Đang đồng bộ danh mục permissions từ config/permissions.php...');
@@ -95,7 +95,7 @@ class PermissionSyncCommand extends Command
             ->delete();
 
         $this->info(
-            "Đồng bộ thành công! " .
+            'Đồng bộ thành công! ' .
             "Tổng số quyền: {$totalSynced} " .
             "(Tạo mới: {$totalCreated}, " .
             "Cập nhật: {$totalUpdated}, " .

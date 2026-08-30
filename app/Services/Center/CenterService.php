@@ -133,6 +133,7 @@ class CenterService implements CenterServiceInterface
      * Super Admin thực hiện gia hạn hoặc thay đổi gói cước dịch vụ SaaS cho Trung tâm.
      *
      * @param  array<string, mixed> $data
+     * @param  int                  $centerId
      * @return CenterSubscription
      */
     public function renewOrChangeSubscription(int $centerId, array $data): CenterSubscription

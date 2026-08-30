@@ -69,7 +69,7 @@ interface Props {
 export default function PlanIndex({ plans, stats, filters }: Props) {
     const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedType, setSelectedType] = useState<string>(filters.type || 'all');
+    const [selectedType, setSelectedType] = useState<string>(filters.type || '');
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -86,7 +86,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
             '/plans',
             {
                 search: search || undefined,
-                type: selectedType !== 'all' ? selectedType : undefined,
+                type: selectedType || undefined,
             },
             {
                 preserveState: true,
@@ -101,7 +101,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
             '/plans',
             {
                 search: search || undefined,
-                type: type !== 'all' ? type : undefined,
+                type: type || undefined,
             },
             {
                 preserveState: true,
@@ -112,7 +112,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
 
     const handleReset = () => {
         setSearch('');
-        setSelectedType('all');
+        setSelectedType('');
         router.get('/plans');
     };
 
@@ -258,7 +258,7 @@ return 'Miễn phí (0đ)';
                                     aria-label="Lọc theo loại gói cước"
                                     className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả loại gói</option>
+                                    <option value="">Tất cả loại gói</option>
                                     <option value="free">Gói Miễn Phí (Trial)</option>
                                     <option value="paid">Gói Trả Phí</option>
                                     <option value="featured">Gói Nổi Bật</option>
@@ -270,7 +270,7 @@ return 'Miễn phí (0đ)';
                             <Button type="submit" variant="success" size="sm" icon={<Search className="h-3.5 w-3.5" />}>
                                 Tìm kiếm
                             </Button>
-                            {(search || selectedType !== 'all') && (
+                            {(search || selectedType) && (
                                 <Button type="button" variant="secondary" size="sm" onClick={handleReset}>
                                     Đặt lại
                                 </Button>

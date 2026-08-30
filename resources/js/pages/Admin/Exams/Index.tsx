@@ -82,7 +82,7 @@ export default function ExamIndex({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Delete modal state
@@ -120,10 +120,10 @@ export default function ExamIndex({
             '/exams',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -134,7 +134,7 @@ export default function ExamIndex({
         setSelectedCenterId('');
         setSelectedClassId('');
         setSelectedSubjectId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/exams', {}, { preserveState: true });
     };
 

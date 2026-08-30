@@ -102,7 +102,7 @@ export default function ClassIndex({
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Delete modal state
@@ -116,8 +116,8 @@ export default function ClassIndex({
             '/classes',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -126,7 +126,7 @@ export default function ClassIndex({
     const handleResetFilter = () => {
         setSearch('');
         setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/classes', {}, { preserveState: true });
     };
 
@@ -236,7 +236,7 @@ return;
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: '', label: 'Tất cả Trạng thái' },
                                         { value: '1', label: 'Đang hoạt động' },
                                         { value: '0', label: 'Tạm dừng' },
                                         { value: '2', label: 'Đã hoàn thành' },

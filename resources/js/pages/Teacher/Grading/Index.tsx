@@ -123,7 +123,7 @@ export default function GradingIndex({
     const [search, setSearch] = useState(filters.search || '');
     const [selectedClassId, setSelectedClassId] = useState(filters.class_id ? String(filters.class_id) : '');
     const [selectedExamId, setSelectedExamId] = useState(filters.class_exam_id ? String(filters.class_exam_id) : '');
-    const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
+    const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
 
     // Available exams filtered by selected class
     const availableExams = selectedClassId
@@ -131,13 +131,18 @@ export default function GradingIndex({
         : classExams;
 
     const handleFilterChange = (override: Partial<typeof filters> = {}) => {
+        const targetSearch = override.search !== undefined ? override.search : search;
+        const targetClassId = override.class_id !== undefined ? override.class_id : (selectedClassId ? Number(selectedClassId) : undefined);
+        const targetExamId = override.class_exam_id !== undefined ? override.class_exam_id : (selectedExamId ? Number(selectedExamId) : undefined);
+        const targetStatus = override.status !== undefined ? override.status : selectedStatus;
+
         router.get(
             '/grading',
             {
-                search: override.search !== undefined ? override.search : search,
-                class_id: override.class_id !== undefined ? override.class_id : (selectedClassId ? Number(selectedClassId) : null),
-                class_exam_id: override.class_exam_id !== undefined ? override.class_exam_id : (selectedExamId ? Number(selectedExamId) : null),
-                status: override.status !== undefined ? override.status : selectedStatus,
+                search: targetSearch || undefined,
+                class_id: targetClassId || undefined,
+                class_exam_id: targetExamId || undefined,
+                status: targetStatus || undefined,
                 page: 1,
             },
             {
@@ -156,7 +161,7 @@ export default function GradingIndex({
         setSearch('');
         setSelectedClassId('');
         setSelectedExamId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/grading', {}, { preserveState: true });
     };
 
@@ -303,7 +308,7 @@ export default function GradingIndex({
                                         handleFilterChange({ status: val });
                                     }}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
+                                        { value: '', label: 'Tất cả trạng thái' },
                                         { value: 'pending', label: '⏳ Chờ chấm điểm' },
                                         { value: 'manual_needed', label: '✍️ Cần chấm tự luận / nói' },
                                         { value: 'graded', label: '✅ Đã chấm xong' },

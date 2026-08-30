@@ -188,4 +188,3 @@ class AutoCheckPermission
         return null;
     }
 }
-

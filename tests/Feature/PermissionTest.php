@@ -228,4 +228,3 @@ test('super admin receives full permissions and admin_role string super_admin in
             ->has('auth.permissions', $allPermissionsCount)
     );
 });
-

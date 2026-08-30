@@ -108,7 +108,7 @@ export default function StudentIndex({
         filters.class_id ? String(filters.class_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined && filters.status !== null ? String(filters.status) : 'all',
+        filters.status !== undefined && filters.status !== null ? String(filters.status) : '',
     );
 
     // Filter available classes by selected center
@@ -162,9 +162,9 @@ export default function StudentIndex({
             '/students',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -174,7 +174,7 @@ export default function StudentIndex({
         setSearch('');
         setSelectedCenterId('');
         setSelectedClassId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/students', {}, { preserveState: true });
     };
 
@@ -412,7 +412,7 @@ return;
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: '', label: 'Tất cả Trạng thái' },
                                         { value: '1', label: 'Đang học' },
                                         { value: '0', label: 'Nghỉ học' },
                                         { value: '2', label: 'Đã tốt nghiệp' },

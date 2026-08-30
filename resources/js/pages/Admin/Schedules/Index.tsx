@@ -151,7 +151,7 @@ export default function ScheduleIndex({
         filters.subject_id ? String(filters.subject_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Delete modal state
@@ -171,10 +171,10 @@ export default function ScheduleIndex({
             '/schedules',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -185,7 +185,7 @@ export default function ScheduleIndex({
         setSelectedCenterId('');
         setSelectedClassId('');
         setSelectedSubjectId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/schedules', {}, { preserveState: true });
     };
 
@@ -341,15 +341,15 @@ export default function ScheduleIndex({
                                 </div>
                             )}
 
-                            <div>
+                                <div>
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả Trạng thái</option>
-                                    <option value="active">Đang áp dụng</option>
-                                    <option value="inactive">Tạm dừng</option>
+                                    <option value="">Tất cả Trạng thái</option>
+                                    <option value={SCHEDULE_STATUS_ACTIVE}>Đang áp dụng</option>
+                                    <option value={SCHEDULE_STATUS_INACTIVE}>Tạm dừng</option>
                                 </select>
                             </div>
                         </div>

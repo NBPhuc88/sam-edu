@@ -162,7 +162,7 @@ export default function SessionIndex({
     const [dateTo, setDateTo] = useState(filters.date_to || '');
     const [dateScope, setDateScope] = useState<string>(filters.date_scope || 'from_today');
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+        filters.status !== undefined && filters.status !== null ? String(filters.status) : '',
     );
 
     // Dynamic filtering for classes/subjects/teachers based on center selection
@@ -182,7 +182,7 @@ export default function SessionIndex({
     const cleanParams = (raw: Record<string, any>) => {
         const cleaned: Record<string, any> = {};
         Object.entries(raw).forEach(([key, val]) => {
-            if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+            if (val !== undefined && val !== null && val !== '') {
                 cleaned[key] = val;
             }
         });
@@ -193,16 +193,16 @@ export default function SessionIndex({
         e.preventDefault();
         const params = cleanParams({
             search,
-            center_id: selectedCenterId,
-            class_id: selectedClassId,
-            subject_id: selectedSubjectId,
-            teacher_id: !isTeacher ? selectedTeacherId : undefined,
-            room_id: !isTeacher ? selectedRoomId : undefined,
+            center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+            class_id: selectedClassId ? Number(selectedClassId) : undefined,
+            subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+            teacher_id: !isTeacher && selectedTeacherId ? Number(selectedTeacherId) : undefined,
+            room_id: !isTeacher && selectedRoomId ? Number(selectedRoomId) : undefined,
             session_date: sessionDate,
             date_from: dateFrom,
             date_to: dateTo,
             date_scope: dateScope,
-            status: selectedStatus,
+            status: selectedStatus ? Number(selectedStatus) : undefined,
             per_page: filters.per_page !== 20 ? filters.per_page : undefined,
         });
         router.get('/sessions', params, { preserveState: true });
@@ -219,7 +219,7 @@ export default function SessionIndex({
         setDateFrom('');
         setDateTo('');
         setDateScope('from_today');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/sessions', { date_scope: 'from_today' }, { preserveState: true });
     };
 
@@ -488,13 +488,11 @@ export default function SessionIndex({
                                     onChange={(e) => setSelectedStatus(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">-- Tất cả trạng thái --</option>
-                                    <option value="scheduled">Dự kiến</option>
-                                    <option value="in_progress">Đang diễn ra</option>
-                                    <option value="completed">Đã hoàn thành</option>
-                                    <option value="unattended">Chưa điểm danh</option>
-                                    <option value="cancelled">Đã hủy</option>
-                                    <option value="rescheduled">Đã đổi lịch</option>
+                                    <option value="">-- Tất cả trạng thái --</option>
+                                    <option value={SESSION_STATUS_SCHEDULED}>Dự kiến</option>
+                                    <option value={SESSION_STATUS_IN_PROGRESS}>Đang diễn ra</option>
+                                    <option value={SESSION_STATUS_COMPLETED}>Đã hoàn thành</option>
+                                    <option value={SESSION_STATUS_CANCELLED}>Đã hủy</option>
                                 </select>
                             </div>
                         </div>

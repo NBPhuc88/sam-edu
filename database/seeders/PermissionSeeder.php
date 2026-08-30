@@ -64,6 +64,7 @@ class PermissionSeeder extends Seeder
         ];
 
         $normalizedTargetRole = null;
+
         if ($targetRole !== null) {
             $normalizedTargetRole = is_numeric($targetRole) ? (int) $targetRole : match ($targetRole) {
                 'super_admin' => Constant::ROLE_SUPER_ADMIN,

@@ -72,7 +72,7 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
         filters.center_id ? String(filters.center_id) : '',
     );
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : 'all',
+        filters.status !== undefined ? String(filters.status) : '',
     );
 
     // Delete modal state
@@ -82,8 +82,8 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
 
     const formatCurrency = (amount: number | string | null) => {
         if (amount === null || amount === undefined) {
-return 'Chưa thiết lập';
-}
+            return 'Chưa thiết lập';
+        }
 
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -97,8 +97,8 @@ return 'Chưa thiết lập';
             '/subjects',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -107,7 +107,7 @@ return 'Chưa thiết lập';
     const handleResetFilter = () => {
         setSearch('');
         setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/subjects', {}, { preserveState: true });
     };
 
@@ -203,7 +203,7 @@ return 'Chưa thiết lập';
                                     value={selectedStatus}
                                     onChange={(val) => setSelectedStatus(val)}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
+                                        { value: '', label: 'Tất cả Trạng thái' },
                                         { value: String(SUBJECT_STATUS_ACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE] },
                                         { value: String(SUBJECT_STATUS_INACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE] },
                                     ]}
