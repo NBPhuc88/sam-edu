@@ -268,23 +268,35 @@ class StoreExamRequest extends FormRequest
                                     }
                                 }
                             }
-                            // 3. Điền vào chỗ trống
-                            elseif (in_array($qType, [Constant::QUESTION_TYPE_FILL_IN_BLANK, Constant::QUESTION_TYPE_DRAG_DROP_CLOZE, Constant::QUESTION_TYPE_SHORT_ANSWER], true)) {
+                            // 5. Điền vào chỗ trống / Trả lời ngắn
+                            elseif (in_array($qType, [Constant::QUESTION_TYPE_FILL_IN_BLANK, Constant::QUESTION_TYPE_SHORT_ANSWER], true)) {
                                 $hasAnswers = false;
 
                                 if (is_array($correctAns)) {
                                     foreach ($correctAns as $blankConfig) {
-                                        if (is_array($blankConfig) && ! empty($blankConfig['accepted_answers'])) {
-                                            $nonEmpty = array_filter($blankConfig['accepted_answers'], fn ($a) => is_string($a) && trim($a) !== '');
+                                        if (is_array($blankConfig)) {
+                                            $accepted = $blankConfig['accepted_answers'] ?? $blankConfig;
 
-                                            if (! empty($nonEmpty)) {
+                                            if (is_array($accepted)) {
+                                                $nonEmpty = array_filter($accepted, fn ($a) => is_scalar($a) && trim((string) $a) !== '');
+
+                                                if (! empty($nonEmpty)) {
+                                                    $hasAnswers = true;
+
+                                                    break;
+                                                }
+                                            } elseif (is_scalar($accepted) && trim((string) $accepted) !== '') {
                                                 $hasAnswers = true;
 
                                                 break;
                                             }
+                                        } elseif (is_scalar($blankConfig) && trim((string) $blankConfig) !== '') {
+                                            $hasAnswers = true;
+
+                                            break;
                                         }
                                     }
-                                } elseif (is_string($correctAns) && trim($correctAns) !== '') {
+                                } elseif (is_scalar($correctAns) && trim((string) $correctAns) !== '') {
                                     $hasAnswers = true;
                                 }
 
@@ -295,16 +307,35 @@ class StoreExamRequest extends FormRequest
                                     );
                                 }
                             }
-                            // 4. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
+                            // 6. Kéo thả từ vào chỗ trống (Drag & Drop Cloze)
+                            elseif ($qType === Constant::QUESTION_TYPE_DRAG_DROP_CLOZE) {
+                                $hasAnswers = false;
+
+                                if (is_array($correctAns)) {
+                                    $nonEmpty = array_filter($correctAns, fn ($w) => is_scalar($w) && trim((string) $w) !== '');
+
+                                    if (! empty($nonEmpty)) {
+                                        $hasAnswers = true;
+                                    }
+                                }
+
+                                if (! $hasAnswers) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn từ đúng cho các ô trống của câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 7. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
                             elseif (in_array($qType, [Constant::QUESTION_TYPE_MATCHING, Constant::QUESTION_TYPE_MATCHING_IMAGE, Constant::QUESTION_TYPE_MATCHING_SENTENCES, Constant::QUESTION_TYPE_DIAGRAM_LABELLING], true)) {
-                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns, fn ($v) => is_scalar($v) && trim((string) $v) !== '')) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                         "Vui lòng ghép nối đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
                             }
-                            // 5. Sắp xếp thứ tự (Ordering)
+                            // 8. Sắp xếp thứ tự (Ordering)
                             elseif ($qType === Constant::QUESTION_TYPE_ORDERING) {
                                 if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
@@ -313,7 +344,7 @@ class StoreExamRequest extends FormRequest
                                     );
                                 }
                             }
-                            // 6. Các dạng câu hỏi trắc nghiệm / tự động chấm khác
+                            // 9. Các dạng câu hỏi trắc nghiệm / tự động chấm khác
                             else {
                                 if ($correctAns === null || $correctAns === '' || (is_array($correctAns) && count($correctAns) === 0)) {
                                     $validator->errors()->add(

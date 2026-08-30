@@ -201,3 +201,89 @@ test('deleting an exam deletes all related media and directory on storage', func
         ->and(Storage::disk('sam')->exists('media/custom_question_image.png'))->toBeFalse()
         ->and(Storage::disk('sam')->exists("exams/{$exam->id}"))->toBeFalse();
 });
+
+test('drag and drop cloze question with assigned answers passes validation upon exam update and create', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000090',
+        'name'   => 'Trung Tâm Test Cloze',
+        'email'  => 'center90@test.com',
+        'phone'  => '0901234590',
+        'status' => Constant::STATUS_ACTIVE,
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'superadmin_test_90',
+        'full_name'  => 'Super Admin 90',
+        'email'      => 'admin90@test.com',
+        'password'   => 'password123',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM000000090',
+    ]);
+
+    $subject = Subject::create([
+        'center_id'        => $center->id,
+        'code'             => 'S000000090',
+        'name'             => 'Môn Học Test 90',
+        'total_sessions'   => 20,
+        'duration_minutes' => 60,
+        'tuition_fee'      => 2000000,
+        'status'           => Constant::STATUS_ACTIVE,
+    ]);
+
+    $exam = Exam::create([
+        'center_id'        => $center->id,
+        'subject_id'       => $subject->id,
+        'code'             => 'EX000000090',
+        'name'             => 'Đề Thi Cloze',
+        'duration_minutes' => 45,
+        'max_score'        => 10,
+        'status'           => Constant::EXAM_STATUS_DRAFT,
+    ]);
+
+    $section = ExamSection::create([
+        'exam_id' => $exam->id,
+        'title'   => 'Phần 1 Cloze',
+        'skill'   => Constant::SKILL_READING,
+    ]);
+
+    $payloadWithValidCloze = [
+        'name'             => 'Đề Thi Cloze Đã Sửa',
+        'code'             => 'EX000000090',
+        'center_id'        => $center->id,
+        'subject_id'       => $subject->id,
+        'duration_minutes' => 60,
+        'max_score'        => 10,
+        'pass_score'       => 5,
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
+        'sections'         => [
+            [
+                'id'          => $section->id,
+                'title'       => 'Phần 1 Cloze',
+                'skill'       => Constant::SKILL_READING,
+                'order_index' => 0,
+                'questions'   => [
+                    [
+                        'code'          => 'Q000000091',
+                        'question_type' => Constant::QUESTION_TYPE_DRAG_DROP_CLOZE,
+                        'content'       => 'Nội dung chứa [blank_1]',
+                        'score'         => 10.0,
+                        'options'       => [
+                            'words' => [
+                                ['id' => 'w1', 'text' => 'số lẻ'],
+                                ['id' => 'w2', 'text' => 'số chẵn'],
+                            ],
+                        ],
+                        'correct_answer' => [
+                            'blank_1' => 'w2',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    $response = $this->actingAs($admin, 'admin')->patch(route('exams.update', $exam->id), $payloadWithValidCloze);
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('exams.index'));
+});
