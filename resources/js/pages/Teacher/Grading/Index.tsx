@@ -131,25 +131,29 @@ export default function GradingIndex({
         : classExams;
 
     const handleFilterChange = (override: Partial<typeof filters> = {}) => {
-        const targetSearch = override.search !== undefined ? override.search : search;
-        const targetClassId = override.class_id !== undefined ? (override.class_id ? Number(override.class_id) : undefined) : (selectedClassId ? Number(selectedClassId) : undefined);
-        const targetExamId = override.class_exam_id !== undefined ? (override.class_exam_id ? Number(override.class_exam_id) : undefined) : (selectedExamId ? Number(selectedExamId) : undefined);
-        const targetStatus = override.status !== undefined ? (override.status ? Number(override.status) : undefined) : (selectedStatus ? Number(selectedStatus) : undefined);
+        const nextClassId = override.class_id !== undefined ? Number(override.class_id) : selectedClassId;
+        const nextExamId = override.class_exam_id !== undefined ? Number(override.class_exam_id) : selectedExamId;
+        const nextStatus = override.status !== undefined ? Number(override.status) : selectedStatus;
+        const nextSearch = override.search !== undefined ? override.search : search;
 
-        router.get(
-            '/grading',
-            {
-                search: targetSearch || undefined,
-                class_id: targetClassId || undefined,
-                class_exam_id: targetExamId || undefined,
-                status: targetStatus || undefined,
-                page: 1,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            }
-        );
+        const params: Record<string, any> = { page: 1 };
+        if (nextSearch && nextSearch.trim() !== '') {
+            params.search = nextSearch.trim();
+        }
+        if (nextClassId && nextClassId > 0) {
+            params.class_id = nextClassId;
+        }
+        if (nextExamId && nextExamId > 0) {
+            params.class_exam_id = nextExamId;
+        }
+        if (nextStatus && nextStatus > 0) {
+            params.status = nextStatus;
+        }
+
+        router.get('/grading', params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -264,7 +268,7 @@ export default function GradingIndex({
                                         const num = Number(val);
                                         setSelectedClassId(num);
                                         setSelectedExamId(0);
-                                        handleFilterChange({ class_id: num || null, class_exam_id: null });
+                                        handleFilterChange({ class_id: num, class_exam_id: 0 });
                                     }}
                                     options={[
                                         { value: 0, label: '-- Tất cả lớp học --' },
@@ -286,7 +290,7 @@ export default function GradingIndex({
                                     onChange={(val) => {
                                         const num = Number(val);
                                         setSelectedExamId(num);
-                                        handleFilterChange({ class_exam_id: num || null });
+                                        handleFilterChange({ class_exam_id: num });
                                     }}
                                     options={[
                                         { value: 0, label: '-- Tất cả bài thi --' },

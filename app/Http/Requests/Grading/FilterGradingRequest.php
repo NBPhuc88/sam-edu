@@ -19,8 +19,8 @@ class FilterGradingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'class_id'      => ['nullable', 'integer', 'exists:classes,id'],
-            'class_exam_id' => ['nullable', 'integer', 'exists:class_exams,id'],
+            'class_id'      => ['nullable', 'integer'],
+            'class_exam_id' => ['nullable', 'integer'],
             'status'        => ['nullable', 'integer', Rule::in(Constant::GRADING_FILTERS)],
             'search'        => ['nullable', 'string', 'max:100'],
             'page'          => ['nullable', 'integer', 'min:1'],

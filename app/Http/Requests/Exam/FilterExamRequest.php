@@ -20,9 +20,9 @@ class FilterExamRequest extends FormRequest
     {
         return [
             'search'     => ['nullable', 'string', 'max:255'],
-            'center_id'  => ['nullable', 'integer', 'exists:centers,id'],
-            'class_id'   => ['nullable', 'integer', 'exists:classes,id'],
-            'subject_id' => ['nullable', 'integer', 'exists:subjects,id'],
+            'center_id'  => ['nullable', 'integer'],
+            'class_id'   => ['nullable', 'integer'],
+            'subject_id' => ['nullable', 'integer'],
             'status'     => ['nullable', 'integer', Rule::in(Constant::EXAM_STATUSES)],
             'page'       => ['nullable', 'integer', 'min:1'],
             'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],

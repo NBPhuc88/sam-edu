@@ -20,8 +20,8 @@ class FilterChatGroupRequest extends FormRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
-            'class_id'  => ['nullable', 'integer', 'exists:classes,id'],
+            'center_id' => ['nullable', 'integer'],
+            'class_id'  => ['nullable', 'integer'],
             'status'    => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'      => ['nullable', 'integer', 'min:1'],
