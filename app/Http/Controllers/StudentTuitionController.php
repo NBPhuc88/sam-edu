@@ -67,7 +67,7 @@ class StudentTuitionController extends Controller
             'stats'    => $stats,
             'filters'  => [
                 'search'   => $search ?? '',
-                'status'   => $status ?? 'all',
+                'status'   => $status ?? '',
                 'per_page' => $perPage,
             ],
         ]);
@@ -127,8 +127,8 @@ class StudentTuitionController extends Controller
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
                 'class_id'  => $classId,
-                'status'    => $status ?? 'all',
-                'month'     => $month ?? 'all',
+                'status'    => $status ?? '',
+                'month'     => $month ?? '',
                 'per_page'  => $perPage,
             ],
         ]);

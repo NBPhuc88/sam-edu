@@ -105,9 +105,7 @@ export const Index: React.FC<IndexProps> = ({
     classes,
     filters,
 }) => {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(

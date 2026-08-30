@@ -19,8 +19,8 @@ interface CreateProps {
 }
 
 export default function TeacherCreate({ centers = [], errors = {} }: CreateProps) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(

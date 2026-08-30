@@ -37,8 +37,7 @@ interface EditProps {
 }
 
 export default function TeacherEdit({ teacher, centers = [], errors = {} }: EditProps) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(teacher.center_id));
     const [fullName, setFullName] = useState<string>(teacher.full_name || '');

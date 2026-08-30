@@ -4,6 +4,7 @@ import {
     CENTER_STATUS_EXPIRED,
     CENTER_STATUS_OPTIONS,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import { toISODateString } from '@/lib/date';
 import { notify } from '@/lib/toast';
 import { Link,usePage } from '@inertiajs/react';
@@ -45,8 +46,7 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     isLoading = false,
     errors = {},
 }) => {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
     const backHref = isSuperAdmin ? '/centers' : '/dashboard';
 
     const calculateExpirationDate = (planId: number): string => {

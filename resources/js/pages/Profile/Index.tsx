@@ -26,7 +26,7 @@ interface ProfileData {
     email: string | null;
     phone: string | null;
     role: string;
-    admin_role?: string | null;
+    admin_role?: number | null;
     role_label: string;
     center_name?: string | null;
     gender?: string | null;

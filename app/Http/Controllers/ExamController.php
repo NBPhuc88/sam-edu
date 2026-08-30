@@ -72,7 +72,7 @@ class ExamController extends Controller
                 'center_id'  => $centerId,
                 'class_id'   => $classId,
                 'subject_id' => $subjectId,
-                'status'     => $status ?? 'all',
+                'status'     => $status ?? '',
                 'per_page'   => $perPage,
             ],
         ]);

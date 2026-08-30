@@ -1,4 +1,5 @@
 import AppLogo from '@/components/common/AppLogo';
+import { ROLE_SUPER_ADMIN } from '@/constants/enums';
 import apiClient from '@/lib/axios';
 import getEcho from '@/lib/echo';
 import { Link,router,usePage } from '@inertiajs/react';
@@ -12,7 +13,7 @@ interface AuthUser {
     username: string;
     email: string | null;
     role: string;
-    admin_role?: 'super_admin' | 'admin' | null;
+    admin_role?: number | null;
     avatar?: string | null;
 }
 
@@ -82,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
         }
 
         const isSuper = (role === 'admin' || user.role === 'admin') &&
-            user.admin_role === 'super_admin';
+            user.admin_role === ROLE_SUPER_ADMIN;
 
         if (isSuper) {
             const echo = getEcho();
@@ -187,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     // Hiển thị logo và tên Trung tâm ở chính giữa header cho: Admin phụ, Giáo viên, Học sinh
     const isSuperAdmin = (role === 'admin' || user?.role === 'admin') &&
-        user?.admin_role === 'super_admin';
+        user?.admin_role === ROLE_SUPER_ADMIN;
     const isSubAdmin = role === 'admin' && !isSuperAdmin;
     const isTeacher = role === 'teacher';
     const isStudent = role === 'student';

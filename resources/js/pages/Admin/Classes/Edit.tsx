@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import { AlertTriangle,ArrowLeft,BookOpen,Calendar,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
@@ -67,8 +68,7 @@ export default function ClassEdit({
     teachers = [],
     errors = {},
 }: EditProps) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(schoolClass.center_id));
     const [name, setName] = useState<string>(schoolClass.name || '');

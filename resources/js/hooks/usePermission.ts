@@ -1,3 +1,4 @@
+import { ROLE_SUPER_ADMIN } from '@/constants/enums';
 import { usePage } from '@inertiajs/react';
 
 interface AuthProp {
@@ -7,7 +8,7 @@ interface AuthProp {
         email?: string | null;
         full_name: string;
         role: string;
-        admin_role?: 'super_admin' | 'admin' | null;
+        admin_role?: number | null;
         center_id?: number | null;
     } | null;
     role: string | null;
@@ -18,7 +19,7 @@ export function usePermission() {
     const { auth } = usePage<{ auth?: AuthProp }>().props;
 
     const user = auth?.user;
-    const isSuperAdmin = (auth?.role === 'admin' || user?.role === 'admin') && user?.admin_role === 'super_admin';
+    const isSuperAdmin = (auth?.role === 'admin' || user?.role === 'admin') && user?.admin_role === ROLE_SUPER_ADMIN;
     const permissions: string[] = auth?.permissions || [];
 
     const can = (permissionCode: string): boolean => {

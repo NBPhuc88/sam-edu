@@ -55,7 +55,7 @@ class RoomController extends Controller
             'filters' => [
                 'search'    => $search ?? '',
                 'center_id' => $centerId,
-                'status'    => $status ?? 'all',
+                'status'    => $status ?? '',
                 'per_page'  => $perPage,
             ],
         ]);

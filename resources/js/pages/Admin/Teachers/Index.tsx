@@ -67,10 +67,8 @@ interface Props {
 }
 
 export default function TeacherIndex({ teachers, centers = [], filters }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const canExportCsv = useCanExportCsv();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(

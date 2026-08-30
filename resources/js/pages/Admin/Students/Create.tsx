@@ -3,6 +3,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import { ArrowLeft,Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
@@ -28,8 +29,8 @@ interface CreateProps {
 }
 
 export default function StudentCreate({ centers = [], classes = [], errors = {} }: CreateProps) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(

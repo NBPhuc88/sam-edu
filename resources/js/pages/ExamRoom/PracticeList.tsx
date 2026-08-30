@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import { TruncatedText } from '@/components/ui/Tooltip';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
@@ -37,8 +38,7 @@ export default function PracticeList({
     subjects = [],
     filters,
 }: Props) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(

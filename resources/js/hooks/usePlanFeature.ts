@@ -1,20 +1,14 @@
-import { PLAN_TYPE_FREE } from '@/constants/enums';
+import { PLAN_TYPE_FREE, ROLE_SUPER_ADMIN } from '@/constants/enums';
 import { usePage } from '@inertiajs/react';
 
 interface CenterSharedData {
     id: number;
-    code: string;
     name: string;
     subscription_plan_id?: number | null;
     plan_type?: number | null;
-    allowed_features?: string[];
-    max_classes?: number | null;
-    max_students?: number | null;
-    expires_at?: string | null;
-    is_expired?: boolean;
-    expiring_soon?: boolean;
-    expiring_1day?: boolean;
-    days_remaining?: number;
+    plan_code?: string | null;
+    allowed_features?: string[] | null;
+    is_active?: boolean;
 }
 
 interface PageProps {
@@ -22,7 +16,7 @@ interface PageProps {
         user?: {
             id: number;
             role: string;
-            admin_role?: 'super_admin' | 'admin' | null;
+            admin_role?: number | null;
         } | null;
         role?: string | null;
     };
@@ -40,7 +34,7 @@ export function usePlanFeature(featureCode: string): boolean {
     const { auth, center } = usePage().props as unknown as PageProps;
 
     const isSuper = (auth?.role === 'admin' || auth?.user?.role === 'admin') &&
-        auth?.user?.admin_role === 'super_admin';
+        auth?.user?.admin_role === ROLE_SUPER_ADMIN;
 
     // Super Admin có toàn quyền truy cập
     if (isSuper) {

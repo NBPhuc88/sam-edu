@@ -6,6 +6,7 @@ SUBJECT_STATUS_ACTIVE,
 SUBJECT_STATUS_INACTIVE,
 SUBJECT_STATUS_LABELS,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import { ArrowLeft,Save } from 'lucide-react';
@@ -37,8 +38,7 @@ interface EditProps {
 }
 
 export default function SubjectEdit({ subject, centers = [], errors = {} }: EditProps) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(subject.center_id));
     const [name, setName] = useState<string>(subject.name || '');

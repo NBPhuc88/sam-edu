@@ -136,9 +136,8 @@ export default function SessionIndex({
     filters,
     isTeacher: isTeacherProp,
 }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const isTeacher = Boolean(isTeacherProp || auth?.user?.role === 'teacher');
 
     const [search, setSearch] = useState(filters.search || '');

@@ -9,6 +9,7 @@ EXAM_STATUS_LABELS,
 EXAM_STATUS_PUBLISHED,
 SKILL_READING,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
 import { Head,Link,router,usePage } from '@inertiajs/react';
@@ -37,8 +38,8 @@ export default function ExamCreate({
     subjects = [],
     errors = {},
 }: Props) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const initialCenterId = auth?.user?.center_id
         ? String(auth.user.center_id)

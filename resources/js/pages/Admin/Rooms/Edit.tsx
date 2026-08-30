@@ -13,6 +13,7 @@ ROOM_STATUS_CLOSED,
 ROOM_STATUS_LABELS,
 ROOM_STATUS_PAUSED,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
@@ -81,8 +82,7 @@ const QUICK_PRESETS = [
 ];
 
 export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(room.center_id));
     const [name, setName] = useState(room.name || '');

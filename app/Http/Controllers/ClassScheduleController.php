@@ -70,7 +70,7 @@ class ClassScheduleController extends Controller
                 'class_id'   => $classId,
                 'subject_id' => $subjectId,
                 'teacher_id' => $teacherId,
-                'status'     => $status ?? 'all',
+                'status'     => $status ?? '',
                 'per_page'   => $perPage,
             ],
         ]);

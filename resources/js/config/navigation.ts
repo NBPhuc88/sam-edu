@@ -7,6 +7,7 @@
  * 100% Tiếng Việt
  */
 
+import { ROLE_SUPER_ADMIN } from '@/constants/enums';
 import type { LucideIcon } from 'lucide-react';
 import {
 BarChart3,
@@ -195,18 +196,18 @@ export function getNavigationItems(
         return [];
     }
 
-    const isSuperAdmin = role === 'admin' && (adminRole === 'super_admin' || adminRole === 1 || adminRole === '1');
+    const isSuperAdmin = role === 'admin' && adminRole === ROLE_SUPER_ADMIN;
     const isTrial = planType === 'trial';
 
     return filterNavItemsByPermissionsAndPlan(masterNavigation, permissions, isSuperAdmin, allowedFeatures, isTrial);
 }
 
-export function getAccountLabel(role: string | null, adminRole?: string | number | null): string {
+export function getAccountLabel(role: string | null, adminRole?: number | null): string {
     if (!role) {
         return 'Khách';
     }
 
-    const isSuper = adminRole === 'super_admin' || adminRole === 1 || adminRole === '1';
+    const isSuper = adminRole === ROLE_SUPER_ADMIN;
 
     const labels: Record<string, string> = {
         admin: isSuper ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',

@@ -52,7 +52,7 @@ class ProfileService implements ProfileServiceInterface
             'email'               => $user->email,
             'phone'               => $user->phone ?? null,
             'role'                => $role,
-            'admin_role'          => $user->role ?? null,
+            'admin_role'          => $role === 'admin' && isset($user->role) ? (int) $user->role : null,
             'role_label'          => $roleLabel,
             'center_name'         => $centerName,
             'gender'              => $user->gender ?? null,

@@ -75,10 +75,12 @@ class HandleInertiaRequests extends Middleware
                 'student' => $user->full_name,
             };
 
+            $numericAdminRole = null;
+
             if ($role === 'admin') {
-                $adminRoleStr = ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()))
-                    ? 'super_admin'
-                    : 'admin';
+                $isSuperAdmin = ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()));
+                $adminRoleStr     = $isSuperAdmin ? 'super_admin' : 'admin';
+                $numericAdminRole = $isSuperAdmin ? Constant::ROLE_SUPER_ADMIN : Constant::ROLE_ADMIN;
             }
 
             $userData = [
@@ -87,7 +89,7 @@ class HandleInertiaRequests extends Middleware
                 'email'      => $user->email ?? null,
                 'full_name'  => $fullName,
                 'role'       => $role,
-                'admin_role' => $adminRoleStr,
+                'admin_role' => $numericAdminRole,
                 'center_id'  => ($role === 'admin' && method_exists($user, 'assignedCenterId')) ? $user->assignedCenterId() : null,
             ];
         }

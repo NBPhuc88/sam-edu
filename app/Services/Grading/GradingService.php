@@ -56,7 +56,7 @@ class GradingService implements GradingServiceInterface
             'filters'     => [
                 'class_id'      => $classId,
                 'class_exam_id' => $classExamId,
-                'status'        => $filters['status'] ?? 'all',
+                'status'        => $filters['status'] ?? '',
                 'search'        => $search ?? '',
                 'per_page'      => $perPage,
             ],

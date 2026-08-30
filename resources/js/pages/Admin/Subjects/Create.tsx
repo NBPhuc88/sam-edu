@@ -6,6 +6,7 @@ SUBJECT_STATUS_ACTIVE,
 SUBJECT_STATUS_INACTIVE,
 SUBJECT_STATUS_LABELS,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import { ArrowLeft,Save } from 'lucide-react';
@@ -23,8 +24,8 @@ interface CreateProps {
 }
 
 export default function SubjectCreate({ centers = [], errors = {} }: CreateProps) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(

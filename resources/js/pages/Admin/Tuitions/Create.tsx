@@ -11,6 +11,7 @@ import Card from '../../../components/ui/Card';
 import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
 import ScrollableSelect from '../../../components/ui/ScrollableSelect';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface CenterItem {
@@ -50,8 +51,8 @@ export const Create: React.FC<CreateProps> = ({
     selectedCenterId,
     errors = {},
 }) => {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(

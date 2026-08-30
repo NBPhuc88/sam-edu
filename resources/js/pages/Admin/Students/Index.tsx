@@ -95,10 +95,8 @@ export default function StudentIndex({
     filters,
     isTeacher = false,
 }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const canExportCsv = useCanExportCsv();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<string>(
