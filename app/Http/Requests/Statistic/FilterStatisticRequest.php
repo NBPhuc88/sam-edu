@@ -22,9 +22,11 @@ class FilterStatisticRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'center_id' => ['nullable', 'integer'],
-            'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
-            'page'      => ['nullable', 'integer', 'min:1'],
+            'center_id'  => ['nullable', 'integer'],
+            'month'      => ['nullable', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'subject_id' => ['nullable', 'integer'],
+            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page'       => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

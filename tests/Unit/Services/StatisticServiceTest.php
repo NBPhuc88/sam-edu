@@ -36,7 +36,7 @@ test('getStatisticData returns forbidden true when student accesses statistics',
     expect($data['forbidden'])->toBeTrue();
 });
 
-test('getStatisticData returns center and class stats for super admin', function () {
+test('getStatisticData returns center detail and class stats for super admin', function () {
     $superAdmin = Admin::create([
         'username'   => 'super_admin_stat',
         'full_name'  => 'Super Admin Stat',
@@ -52,5 +52,14 @@ test('getStatisticData returns center and class stats for super admin', function
 
     expect($data['forbidden'])->toBeFalse()
         ->and($data['isSuperAdmin'])->toBeTrue()
-        ->and($data)->toHaveKeys(['centerStats', 'classStats', 'classChartStats']);
+        ->and($data)->toHaveKeys(['centerDetail', 'classStats', 'allowedCenters', 'selectedCenterId', 'selectedMonth'])
+        ->and($data['centerDetail'])->toHaveKeys([
+            'monthlyNewStudents',
+            'monthlyRevenue',
+            'monthlyTuitionCreated',
+            'topSubjectsByMonth',
+            'topSubjectsLast3Months',
+            'subjectTrend',
+            'centerSubjects',
+        ]);
 });
