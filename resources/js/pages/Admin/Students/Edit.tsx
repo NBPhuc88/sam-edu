@@ -4,10 +4,11 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, router } from '@inertiajs/react';
-import { Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
-import React,{ useMemo,useState } from 'react';
+import { Calendar, Check, GraduationCap, HeartHandshake, HelpCircle, Save, User } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 interface Center {
     id: number;
@@ -26,6 +27,11 @@ interface StudentClassTag {
     id: number;
     name: string;
     code: string;
+}
+
+interface StudentTuitionItem {
+    id: number;
+    class_id: number;
 }
 
 interface Student {
@@ -47,6 +53,7 @@ interface Student {
     center_id: number;
     center?: Center;
     classes?: StudentClassTag[];
+    tuitions?: StudentTuitionItem[];
 }
 
 interface EditProps {
@@ -79,10 +86,37 @@ export default function StudentEdit({ student, centers = [], classes = [], error
         return classes.filter((c) => !centerId || Number(c.center_id) === Number(centerId));
     }, [classes, centerId]);
 
+    const existingTuitionClassIds = useMemo(() => {
+        return (student.tuitions || []).map((t) => Number(t.class_id));
+    }, [student.tuitions]);
+
+    const classesWithoutTuition = useMemo(() => {
+        return availableClasses.filter(
+            (c) => selectedClassIds.includes(c.id) && !existingTuitionClassIds.includes(c.id)
+        );
+    }, [selectedClassIds, availableClasses, existingTuitionClassIds]);
+
+    const [selectedTuitionClassIds, setSelectedTuitionClassIds] = useState<number[]>([]);
+    const [showTuitionConfirm, setShowTuitionConfirm] = useState(false);
+
     const toggleClass = (classId: number) => {
         setSelectedClassIds((prev) =>
             prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
         );
+    };
+
+    const toggleTuitionClass = (classId: number) => {
+        setSelectedTuitionClassIds((prev) =>
+            prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
+        );
+    };
+
+    const handleSelectAllTuitionClasses = () => {
+        if (selectedTuitionClassIds.length === classesWithoutTuition.length) {
+            setSelectedTuitionClassIds([]);
+        } else {
+            setSelectedTuitionClassIds(classesWithoutTuition.map((c) => c.id));
+        }
     };
 
     const normalizeStatus = (val: any): number => {
@@ -100,6 +134,16 @@ export default function StudentEdit({ student, centers = [], classes = [], error
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (classesWithoutTuition.length > 0) {
+            setSelectedTuitionClassIds(classesWithoutTuition.map((c) => c.id));
+            setShowTuitionConfirm(true);
+        } else {
+            executeSubmit(0, []);
+        }
+    };
+
+    const executeSubmit = (createTuition: number, tuitionClassIds: number[] = []) => {
         setIsSubmitting(true);
 
         const payload: any = {
@@ -119,6 +163,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
             status,
             note: note || null,
             class_ids: selectedClassIds,
+            create_tuition: createTuition,
+            tuition_class_ids: createTuition ? tuitionClassIds : [],
         };
 
         if (password && password.trim() !== '') {
@@ -127,6 +173,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
 
         router.patch(`/students/${student.id}`, payload, {
             onFinish: () => setIsSubmitting(false),
+            onError: () => setShowTuitionConfirm(false),
         });
     };
 
@@ -501,6 +548,121 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                     </div>
                 </form>
             </div>
+
+            {showTuitionConfirm && (
+                <Modal
+                    isOpen={showTuitionConfirm}
+                    onClose={() => !isSubmitting && setShowTuitionConfirm(false)}
+                    title="Xác Nhận Tạo Học Phí Cho Lớp Học"
+                    maxWidth="lg"
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <HelpCircle className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1 text-sm">
+                                <p className="font-semibold text-gray-900">
+                                    Có tạo học phí cho các lớp chưa có học phí?
+                                </p>
+                                <p className="text-gray-600 leading-relaxed text-xs">
+                                    Học sinh <span className="font-medium text-gray-900">{fullName || student.full_name}</span> có <span className="font-semibold text-emerald-800">{classesWithoutTuition.length} lớp học</span> chưa được tạo học phí. Chọn các lớp bạn muốn tự động sinh hồ sơ học phí:
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* List of classes without tuition with checkboxes */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <button
+                                    type="button"
+                                    onClick={handleSelectAllTuitionClasses}
+                                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 cursor-pointer select-none"
+                                >
+                                    <div
+                                        className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                            selectedTuitionClassIds.length === classesWithoutTuition.length
+                                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                : 'border-gray-300 bg-white'
+                                        }`}
+                                    >
+                                        {selectedTuitionClassIds.length === classesWithoutTuition.length && (
+                                            <Check className="w-3 h-3 stroke-[3]" />
+                                        )}
+                                    </div>
+                                    Chọn tất cả lớp ({selectedTuitionClassIds.length}/{classesWithoutTuition.length})
+                                </button>
+                            </div>
+
+                            <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-xl border border-gray-200">
+                                {classesWithoutTuition.map((cls) => {
+                                    const isChecked = selectedTuitionClassIds.includes(cls.id);
+                                    return (
+                                        <div
+                                            key={cls.id}
+                                            onClick={() => toggleTuitionClass(cls.id)}
+                                            className={`cursor-pointer flex items-center justify-between gap-3 p-2.5 rounded-lg border transition-all select-none ${
+                                                isChecked
+                                                    ? 'bg-white border-emerald-400 ring-1 ring-emerald-400/40 shadow-2xs'
+                                                    : 'bg-white/60 border-gray-200 hover:bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <div
+                                                    className={`w-4.5 h-4.5 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                                        isChecked
+                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                            : 'border-gray-300 bg-white'
+                                                    }`}
+                                                >
+                                                    {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="font-semibold text-gray-900 text-xs">
+                                                        {cls.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="shrink-0 text-2xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono border border-gray-200">
+                                                {cls.code}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2 border-t border-gray-100">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setShowTuitionConfirm(false)}
+                                disabled={isSubmitting}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => executeSubmit(0, [])}
+                                isLoading={isSubmitting}
+                            >
+                                Không tạo học phí
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="success"
+                                onClick={() => executeSubmit(selectedTuitionClassIds.length > 0 ? 1 : 0, selectedTuitionClassIds)}
+                                isLoading={isSubmitting}
+                            >
+                                {selectedTuitionClassIds.length > 0
+                                    ? `Có, tạo học phí (${selectedTuitionClassIds.length} lớp)`
+                                    : 'Có, tạo học phí'}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </AppLayout>
     );
 }

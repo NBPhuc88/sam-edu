@@ -69,6 +69,9 @@ class UpdateStudentRequest extends FormRequest
             'note'                => ['nullable', 'string'],
             'class_ids'           => ['nullable', 'array'],
             'class_ids.*'         => ['integer', 'exists:classes,id'],
+            'create_tuition'      => ['nullable', 'boolean'],
+            'tuition_class_ids'   => ['nullable', 'array'],
+            'tuition_class_ids.*' => ['integer', 'exists:classes,id'],
         ];
     }
 

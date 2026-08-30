@@ -457,3 +457,91 @@ test('addStudents creates tuition only for selected tuition_student_ids', functi
     expect(StudentTuition::where('student_id', $student1->id)->where('class_id', $this->class1->id)->exists())->toBeTrue();
     expect(StudentTuition::where('student_id', $student2->id)->where('class_id', $this->class1->id)->exists())->toBeFalse();
 });
+
+test('store creates student with tuition when create_tuition is true', function () {
+    $this->class1->update(['total_tuition_fee' => 1700000]);
+    $this->class2->update(['total_tuition_fee' => 2500000]);
+
+    $response = $this->actingAs($this->admin, 'admin')->post(route('students.store'), [
+        'center_id'         => $this->center->id,
+        'full_name'         => 'Học Sinh Có Học Phí',
+        'username'          => 'hscohocphi',
+        'password'          => '12345678',
+        'admission_date'    => Carbon::now()->toDateString(),
+        'status'            => Constant::STUDENT_STATUS_ACTIVE,
+        'class_ids'         => [$this->class1->id, $this->class2->id],
+        'create_tuition'    => 1,
+        'tuition_class_ids' => [$this->class1->id],
+    ]);
+
+    $response->assertRedirect(route('students.index'));
+
+    $student = Student::where('username', 'hscohocphi')->first();
+    expect($student)->not->toBeNull();
+    expect($student->classes)->toHaveCount(2);
+
+    // Only class1 has tuition created
+    $tuitionClass1 = StudentTuition::where('student_id', $student->id)->where('class_id', $this->class1->id)->first();
+    expect($tuitionClass1)->not->toBeNull();
+    expect((float) $tuitionClass1->total_amount)->toEqual(1700000.0);
+
+    expect(StudentTuition::where('student_id', $student->id)->where('class_id', $this->class2->id)->exists())->toBeFalse();
+});
+
+test('store creates student without tuition when create_tuition is false', function () {
+    $this->class1->update(['total_tuition_fee' => 1700000]);
+
+    $response = $this->actingAs($this->admin, 'admin')->post(route('students.store'), [
+        'center_id'      => $this->center->id,
+        'full_name'      => 'Học Sinh Không Học Phí',
+        'username'       => 'hskhonghocphi',
+        'password'       => '12345678',
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+        'class_ids'      => [$this->class1->id],
+        'create_tuition' => 0,
+    ]);
+
+    $response->assertRedirect(route('students.index'));
+
+    $student = Student::where('username', 'hskhonghocphi')->first();
+    expect($student)->not->toBeNull();
+    expect(StudentTuition::where('student_id', $student->id)->where('class_id', $this->class1->id)->exists())->toBeFalse();
+});
+
+test('update creates tuition for newly assigned classes when create_tuition is true', function () {
+    $this->class2->update(['total_tuition_fee' => 3000000]);
+
+    $student = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000099',
+        'first_name'     => 'Update',
+        'last_name'      => 'Tuition',
+        'full_name'      => 'Update Tuition Test',
+        'username'       => 'updatetuition',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+    $student->classes()->attach($this->class1->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
+
+    $response = $this->actingAs($this->admin, 'admin')->patch(route('students.update', $student->id), [
+        'center_id'         => $this->center->id,
+        'student_code'      => $student->student_code,
+        'full_name'         => 'Update Tuition Test',
+        'admission_date'    => Carbon::now()->toDateString(),
+        'status'            => Constant::STUDENT_STATUS_ACTIVE,
+        'class_ids'         => [$this->class1->id, $this->class2->id],
+        'create_tuition'    => 1,
+        'tuition_class_ids' => [$this->class2->id],
+    ]);
+
+    $response->assertRedirect(route('students.index'));
+
+    $student->refresh();
+    expect($student->classes)->toHaveCount(2);
+
+    $tuitionClass2 = StudentTuition::where('student_id', $student->id)->where('class_id', $this->class2->id)->first();
+    expect($tuitionClass2)->not->toBeNull();
+    expect((float) $tuitionClass2->total_amount)->toEqual(3000000.0);
+});

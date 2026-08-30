@@ -284,6 +284,46 @@ class StudentService implements StudentServiceInterface
 
             if (! empty($validClassIds)) {
                 $this->studentRepository->syncClasses($student, $validClassIds);
+
+                $createTuition = ! empty($data['create_tuition']);
+
+                if ($createTuition) {
+                    $tuitionClassIds = ! empty($data['tuition_class_ids']) && is_array($data['tuition_class_ids'])
+                        ? array_values(array_intersect($validClassIds, array_map('intval', $data['tuition_class_ids'])))
+                        : $validClassIds;
+
+                    if (! empty($tuitionClassIds)) {
+                        $classes = SchoolClass::query()
+                            ->whereIn('id', $tuitionClassIds)
+                            ->with('classSubjects')
+                            ->get();
+
+                        foreach ($classes as $schoolClass) {
+                            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                                ? $schoolClass->total_tuition_fee
+                                : $schoolClass->classSubjects->sum('tuition_fee'));
+
+                            if ($totalTuitionFee > 0) {
+                                StudentTuition::firstOrCreate(
+                                    [
+                                        'center_id'  => $schoolClass->center_id,
+                                        'student_id' => $student->id,
+                                        'class_id'   => $schoolClass->id,
+                                    ],
+                                    [
+                                        'title'            => 'Học phí ' . $schoolClass->name,
+                                        'total_amount'     => $totalTuitionFee,
+                                        'paid_amount'      => 0,
+                                        'remaining_amount' => $totalTuitionFee,
+                                        'status'           => Constant::TUITION_STATUS_PENDING,
+                                        'due_date'         => $schoolClass->end_date ?: null,
+                                        'created_by'       => $admin?->id,
+                                    ]
+                                );
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -414,6 +454,46 @@ class StudentService implements StudentServiceInterface
         if (array_key_exists('class_ids', $data) && is_array($data['class_ids'])) {
             $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $data['class_ids']);
             $this->studentRepository->syncClasses($updatedStudent, $validClassIds);
+
+            $createTuition = ! empty($data['create_tuition']);
+
+            if ($createTuition && ! empty($validClassIds)) {
+                $tuitionClassIds = ! empty($data['tuition_class_ids']) && is_array($data['tuition_class_ids'])
+                    ? array_values(array_intersect($validClassIds, array_map('intval', $data['tuition_class_ids'])))
+                    : $validClassIds;
+
+                if (! empty($tuitionClassIds)) {
+                    $classes = SchoolClass::query()
+                        ->whereIn('id', $tuitionClassIds)
+                        ->with('classSubjects')
+                        ->get();
+
+                    foreach ($classes as $schoolClass) {
+                        $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                            ? $schoolClass->total_tuition_fee
+                            : $schoolClass->classSubjects->sum('tuition_fee'));
+
+                        if ($totalTuitionFee > 0) {
+                            StudentTuition::firstOrCreate(
+                                [
+                                    'center_id'  => $schoolClass->center_id,
+                                    'student_id' => $updatedStudent->id,
+                                    'class_id'   => $schoolClass->id,
+                                ],
+                                [
+                                    'title'            => 'Học phí ' . $schoolClass->name,
+                                    'total_amount'     => $totalTuitionFee,
+                                    'paid_amount'      => 0,
+                                    'remaining_amount' => $totalTuitionFee,
+                                    'status'           => Constant::TUITION_STATUS_PENDING,
+                                    'due_date'         => $schoolClass->end_date ?: null,
+                                    'created_by'       => $admin?->id,
+                                ]
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         if ($isPassChanged && ! empty($updatedStudent->email)) {
