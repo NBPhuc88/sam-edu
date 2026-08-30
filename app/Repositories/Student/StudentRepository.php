@@ -283,7 +283,7 @@ class StudentRepository implements StudentRepositoryInterface
     {
         $syncData     = [];
         $defaultPivot = array_merge([
-            'status'      => 'active',
+            'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
             'enrolled_at' => now(),
         ], $pivotDefaults);
 
@@ -297,7 +297,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function attachClasses(Student $student, array $classIds, array $pivotDefaults = []): void
     {
         $defaultPivot = array_merge([
-            'status'      => 'active',
+            'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
             'enrolled_at' => now(),
         ], $pivotDefaults);
 
@@ -322,6 +322,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): Collection
     {
         $classIds = ClassStudent::where('student_id', $studentId)
+            ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
             ->pluck('class_id')
             ->toArray();
 
@@ -355,7 +356,7 @@ class StudentRepository implements StudentRepositoryInterface
                         'code'
                     )->withCount([
                         'students' => function ($q) {
-                            $q->where('class_students.status', 'active');
+                            $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
                         },
                     ]);
                 },

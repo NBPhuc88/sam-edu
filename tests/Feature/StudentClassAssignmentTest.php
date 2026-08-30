@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\RolePermission;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Support\Carbon;
@@ -264,4 +265,126 @@ test('teacher can view student list of class they teach', function () {
             ->has('students')
             ->where('isTeacher', true)
     );
+});
+
+test('assignClasses creates tuition only when create_tuition is true', function () {
+    $this->class1->update(['total_tuition_fee' => 1500000]);
+
+    $student = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000010',
+        'first_name'     => 'Tuition',
+        'last_name'      => 'Test',
+        'full_name'      => 'Tuition Test 1',
+        'username'       => 'tuitiontest1',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    // 1. When create_tuition is 0/false -> No tuition created
+    $this->actingAs($this->admin, 'admin')->post(
+        route('students.assign-classes', $student->id),
+        [
+            'class_ids'      => [$this->class1->id],
+            'create_tuition' => 0,
+        ]
+    )->assertSessionHas('success');
+
+    expect(StudentTuition::where('student_id', $student->id)->where('class_id', $this->class1->id)->exists())->toBeFalse();
+
+    // 2. When student is assigned to new class with create_tuition is 1/true -> Tuition created
+    $this->class2->update(['total_tuition_fee' => 2000000]);
+    $this->actingAs($this->admin, 'admin')->post(
+        route('students.assign-classes', $student->id),
+        [
+            'class_ids'      => [$this->class1->id, $this->class2->id],
+            'create_tuition' => 1,
+        ]
+    )->assertSessionHas('success');
+
+    $tuition = StudentTuition::where('student_id', $student->id)->where('class_id', $this->class2->id)->first();
+    expect($tuition)->not->toBeNull();
+    expect((float) $tuition->total_amount)->toEqual(2000000.0);
+});
+
+test('addStudents creates tuition only when create_tuition is true', function () {
+    $this->class1->update(['total_tuition_fee' => 1200000]);
+
+    $studentNoTuition = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000011',
+        'first_name'     => 'No',
+        'last_name'      => 'Tuition',
+        'full_name'      => 'No Tuition',
+        'username'       => 'notuition',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $studentWithTuition = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000012',
+        'first_name'     => 'With',
+        'last_name'      => 'Tuition',
+        'full_name'      => 'With Tuition',
+        'username'       => 'withtuition',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    // 1. Without tuition
+    $this->actingAs($this->admin, 'admin')->post(
+        route('classes.students.add', $this->class1->id),
+        [
+            'student_ids'    => [$studentNoTuition->id],
+            'create_tuition' => 0,
+        ]
+    )->assertSessionHas('success');
+
+    expect(StudentTuition::where('student_id', $studentNoTuition->id)->where('class_id', $this->class1->id)->exists())->toBeFalse();
+
+    // 2. With tuition
+    $this->actingAs($this->admin, 'admin')->post(
+        route('classes.students.add', $this->class1->id),
+        [
+            'student_ids'    => [$studentWithTuition->id],
+            'create_tuition' => 1,
+        ]
+    )->assertSessionHas('success');
+
+    $tuition = StudentTuition::where('student_id', $studentWithTuition->id)->where('class_id', $this->class1->id)->first();
+    expect($tuition)->not->toBeNull();
+    expect((float) $tuition->total_amount)->toEqual(1200000.0);
+});
+
+test('bulkAssign creates tuition only when create_tuition is true', function () {
+    $this->class1->update(['total_tuition_fee' => 1800000]);
+
+    $student = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000013',
+        'first_name'     => 'Bulk',
+        'last_name'      => 'Tuition',
+        'full_name'      => 'Bulk Tuition',
+        'username'       => 'bulktuition',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $this->actingAs($this->admin, 'admin')->post(
+        route('students.bulk-assign-classes'),
+        [
+            'class_id'       => $this->class1->id,
+            'student_ids'    => [$student->id],
+            'create_tuition' => 1,
+        ]
+    )->assertSessionHas('success');
+
+    $tuition = StudentTuition::where('student_id', $student->id)->where('class_id', $this->class1->id)->first();
+    expect($tuition)->not->toBeNull();
+    expect((float) $tuition->total_amount)->toEqual(1800000.0);
 });

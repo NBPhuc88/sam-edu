@@ -8,7 +8,9 @@ use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
 use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -488,17 +490,51 @@ class StudentService implements StudentServiceInterface
         return $this->studentRepository->delete($student->id);
     }
 
-    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null, bool $createTuition = false): void
     {
         $student  = $this->findStudent($studentId, $admin);
         $centerId = (int) $student->center_id;
 
-        $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $classIds);
+        $existingClassIds = $student->classes()->pluck('classes.id')->toArray();
+        $validClassIds    = $this->studentRepository->filterValidClassIds($centerId, $classIds);
+        $newClassIds      = array_values(array_diff($validClassIds, $existingClassIds));
 
         $this->studentRepository->syncClasses($student, $validClassIds);
+
+        if ($createTuition && ! empty($newClassIds)) {
+            $classes = SchoolClass::query()
+                ->whereIn('id', $newClassIds)
+                ->with('classSubjects')
+                ->get();
+
+            foreach ($classes as $schoolClass) {
+                $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                    ? $schoolClass->total_tuition_fee
+                    : $schoolClass->classSubjects->sum('tuition_fee'));
+
+                if ($totalTuitionFee > 0) {
+                    StudentTuition::firstOrCreate(
+                        [
+                            'center_id'  => $schoolClass->center_id,
+                            'student_id' => $student->id,
+                            'class_id'   => $schoolClass->id,
+                        ],
+                        [
+                            'title'            => 'Học phí ' . $schoolClass->name,
+                            'total_amount'     => $totalTuitionFee,
+                            'paid_amount'      => 0,
+                            'remaining_amount' => $totalTuitionFee,
+                            'status'           => Constant::TUITION_STATUS_PENDING,
+                            'due_date'         => $schoolClass->end_date ?: null,
+                            'created_by'       => $admin?->id,
+                        ]
+                    );
+                }
+            }
+        }
     }
 
-    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, bool $createTuition = false): array
     {
         $class = $this->schoolClassRepository->find($classId);
 
@@ -515,11 +551,40 @@ class StudentService implements StudentServiceInterface
         $validStudents = $this->studentRepository->getActiveStudents([(int) $class->center_id])
             ->whereIn('id', $studentIds);
 
-        $successCount = 0;
+        $successCount       = 0;
+        $attachedStudentIds = [];
 
         foreach ($validStudents as $student) {
             $this->studentRepository->attachClasses($student, [$classId]);
+            $attachedStudentIds[] = $student->id;
             $successCount++;
+        }
+
+        if ($createTuition && ! empty($attachedStudentIds)) {
+            $totalTuitionFee = (float) ($class->total_tuition_fee > 0
+                ? $class->total_tuition_fee
+                : $class->classSubjects()->sum('tuition_fee'));
+
+            if ($totalTuitionFee > 0) {
+                foreach ($attachedStudentIds as $studentId) {
+                    StudentTuition::firstOrCreate(
+                        [
+                            'center_id'  => $class->center_id,
+                            'student_id' => $studentId,
+                            'class_id'   => $class->id,
+                        ],
+                        [
+                            'title'            => 'Học phí ' . $class->name,
+                            'total_amount'     => $totalTuitionFee,
+                            'paid_amount'      => 0,
+                            'remaining_amount' => $totalTuitionFee,
+                            'status'           => Constant::TUITION_STATUS_PENDING,
+                            'due_date'         => $class->end_date ?: null,
+                            'created_by'       => $admin?->id,
+                        ]
+                    );
+                }
+            }
         }
 
         return [

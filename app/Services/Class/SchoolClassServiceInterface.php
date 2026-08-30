@@ -98,9 +98,10 @@ interface SchoolClassServiceInterface
      * @param  array<int> $studentIds
      * @param  ?Admin     $admin
      * @param  ?Teacher   $teacher
+     * @param  bool       $createTuition
      * @return int
      */
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null): int;
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false): int;
 
     /**
      * @param  int      $classId

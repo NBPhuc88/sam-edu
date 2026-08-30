@@ -92,7 +92,7 @@ class RoomRepository implements RoomRepositoryInterface
 
             $upcomingSessionsCount = $room->classSessions()
                 ->where('session_date', '>=', now()->toDateString())
-                ->where('status', '!=', 'cancelled')
+                ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                 ->count();
 
             $inUseClasses = [];

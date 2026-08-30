@@ -148,7 +148,7 @@ test('khi thêm học sinh vào lớp hệ thống tự động tạo hồ sơ h
 
     /** @var SchoolClassService $classService */
     $classService = app(SchoolClassService::class);
-    $added        = $classService->addStudentsToClass($class->id, [$this->student1->id, $this->student2->id], $this->superAdmin);
+    $added        = $classService->addStudentsToClass($class->id, [$this->student1->id, $this->student2->id], $this->superAdmin, null, true);
 
     expect($added)->toBe(2);
 
@@ -196,8 +196,8 @@ test('danh sách học phí gom nhóm theo học sinh khi không filter lớp v�
     // Gán student1 vào cả 2 lớp (Tổng = 3.000.000)
     /** @var SchoolClassService $classService */
     $classService = app(SchoolClassService::class);
-    $classService->addStudentsToClass($classA->id, [$this->student1->id], $this->superAdmin);
-    $classService->addStudentsToClass($classB->id, [$this->student1->id], $this->superAdmin);
+    $classService->addStudentsToClass($classA->id, [$this->student1->id], $this->superAdmin, null, true);
+    $classService->addStudentsToClass($classB->id, [$this->student1->id], $this->superAdmin, null, true);
 
     /** @var StudentTuitionRepository $tuitionRepo */
     $tuitionRepo = app(StudentTuitionRepository::class);

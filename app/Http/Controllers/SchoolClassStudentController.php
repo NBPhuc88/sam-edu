@@ -159,8 +159,9 @@ class SchoolClassStudentController extends Controller
     {
         [$admin, $teacher] = $this->getAuthUser();
 
-        $studentIds = (array) $request->input('student_ids', []);
-        $count      = $this->schoolClassService->addStudentsToClass($classId, $studentIds, $admin, $teacher);
+        $studentIds    = (array) $request->input('student_ids', []);
+        $createTuition = $request->boolean('create_tuition', false);
+        $count         = $this->schoolClassService->addStudentsToClass($classId, $studentIds, $admin, $teacher, $createTuition);
 
         return back()->with('success', "Đã thêm thành công {$count} học sinh vào lớp học.");
     }

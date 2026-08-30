@@ -73,16 +73,18 @@ interface StudentServiceInterface
      * @param int        $studentId
      * @param array<int> $classIds
      * @param ?Admin     $admin
+     * @param bool       $createTuition
      */
-    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void;
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null, bool $createTuition = false): void;
 
     /**
      * @param  int                                        $classId
      * @param  array<int>                                 $studentIds
      * @param  ?Admin                                     $admin
+     * @param  bool                                       $createTuition
      * @return array{success_count: int, message: string}
      */
-    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array;
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, bool $createTuition = false): array;
 
     /**
      * @param int    $studentId

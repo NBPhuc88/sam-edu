@@ -160,8 +160,9 @@ class StudentController extends Controller
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
-        $classIds = $request->input('class_ids', []);
-        $this->studentService->assignClassesToStudent($id, is_array($classIds) ? $classIds : [], $admin);
+        $classIds      = $request->input('class_ids', []);
+        $createTuition = $request->boolean('create_tuition', false);
+        $this->studentService->assignClassesToStudent($id, is_array($classIds) ? $classIds : [], $admin, $createTuition);
 
         return back()->with('success', 'Cập nhật danh sách lớp học của học sinh thành công!');
     }
@@ -174,10 +175,11 @@ class StudentController extends Controller
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
-        $classId    = (int) $request->input('class_id');
-        $studentIds = (array) $request->input('student_ids', []);
+        $classId       = (int) $request->input('class_id');
+        $studentIds    = (array) $request->input('student_ids', []);
+        $createTuition = $request->boolean('create_tuition', false);
 
-        $result = $this->studentService->bulkAssignStudentsToClass($classId, $studentIds, $admin);
+        $result = $this->studentService->bulkAssignStudentsToClass($classId, $studentIds, $admin, $createTuition);
 
         return back()->with('success', $result['message']);
     }

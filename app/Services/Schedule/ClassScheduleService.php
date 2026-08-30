@@ -1659,7 +1659,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     {
         $classSubject = $schedule->classSubject;
 
-        if (! $classSubject || $schedule->status !== 'active') {
+        if (! $classSubject || (int) $schedule->status !== Constant::SCHEDULE_STATUS_ACTIVE) {
             return null;
         }
 

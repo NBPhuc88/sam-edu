@@ -719,7 +719,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->getAvailableStudentsForClass($classId, (int) $schoolClass->center_id, $search);
     }
 
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null): int
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false): int
     {
         $schoolClass = $this->findClass($classId, $admin, $teacher);
 
@@ -731,29 +731,30 @@ class SchoolClassService implements SchoolClassServiceInterface
 
         $added = $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
 
-        // Tự động thêm khoản thu học phí cho học sinh với số tiền phải thu = tổng số tiền của lớp
-        $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
-            ? $schoolClass->total_tuition_fee
-            : $schoolClass->classSubjects()->sum('tuition_fee'));
+        if ($createTuition) {
+            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                ? $schoolClass->total_tuition_fee
+                : $schoolClass->classSubjects()->sum('tuition_fee'));
 
-        if ($totalTuitionFee > 0 && ! empty($validStudentIds)) {
-            foreach ($validStudentIds as $studentId) {
-                StudentTuition::firstOrCreate(
-                    [
-                        'center_id'  => $schoolClass->center_id,
-                        'student_id' => $studentId,
-                        'class_id'   => $schoolClass->id,
-                    ],
-                    [
-                        'title'            => 'Học phí ' . $schoolClass->name,
-                        'total_amount'     => $totalTuitionFee,
-                        'paid_amount'      => 0,
-                        'remaining_amount' => $totalTuitionFee,
-                        'status'           => Constant::TUITION_STATUS_PENDING,
-                        'due_date'         => $schoolClass->end_date ?: null,
-                        'created_by'       => $admin?->id,
-                    ]
-                );
+            if ($totalTuitionFee > 0 && ! empty($validStudentIds)) {
+                foreach ($validStudentIds as $studentId) {
+                    StudentTuition::firstOrCreate(
+                        [
+                            'center_id'  => $schoolClass->center_id,
+                            'student_id' => $studentId,
+                            'class_id'   => $schoolClass->id,
+                        ],
+                        [
+                            'title'            => 'Học phí ' . $schoolClass->name,
+                            'total_amount'     => $totalTuitionFee,
+                            'paid_amount'      => 0,
+                            'remaining_amount' => $totalTuitionFee,
+                            'status'           => Constant::TUITION_STATUS_PENDING,
+                            'due_date'         => $schoolClass->end_date ?: null,
+                            'created_by'       => $admin?->id,
+                        ]
+                    );
+                }
             }
         }
 

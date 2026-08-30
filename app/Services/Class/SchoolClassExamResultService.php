@@ -97,7 +97,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
             ])
             ->withCount([
                 'students' => function ($q) {
-                    $q->where('class_students.status', 'active');
+                    $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
                 },
             ])
             ->find($classId);

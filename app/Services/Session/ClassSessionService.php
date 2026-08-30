@@ -214,7 +214,7 @@ class ClassSessionService implements ClassSessionServiceInterface
                 $conflictSession = ClassSession::query()
                     ->where('id', '!=', $session->id)
                     ->where('session_date', $newDate)
-                    ->where('status', '!=', 'cancelled')
+                    ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                     ->whereHas('classSubject', function ($q) use ($classId) {
                         $q->where('class_id', $classId);
                     })
@@ -243,7 +243,7 @@ class ClassSessionService implements ClassSessionServiceInterface
                     ->where('id', '!=', $session->id)
                     ->where('teacher_id', $effectiveTeacherId)
                     ->where('session_date', $newDate)
-                    ->where('status', '!=', 'cancelled')
+                    ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                     ->where('start_time', '<', $cleanNewEnd)
                     ->where('end_time', '>', $cleanNewStart)
                     ->with([

@@ -3,8 +3,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import { router } from '@inertiajs/react';
-import { AlertCircle,Check,Search } from 'lucide-react';
-import React,{ useMemo,useState } from 'react';
+import { AlertCircle, Check, HelpCircle, Search } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 interface SchoolClassOption {
     id: number;
@@ -49,12 +49,14 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
     const [selectedClassIds, setSelectedClassIds] = useState<number[]>(initialSelectedIds);
     const [search, setSearch] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showTuitionConfirm, setShowTuitionConfirm] = useState(false);
 
     // Reset selection when student changes
     React.useEffect(() => {
         if (student) {
             setSelectedClassIds((student.classes || []).map((c) => c.id));
             setSearch('');
+            setShowTuitionConfirm(false);
         }
     }, [student]);
 
@@ -85,15 +87,29 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const newlyAddedClassIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
+
+        if (newlyAddedClassIds.length > 0) {
+            setShowTuitionConfirm(true);
+        } else {
+            executeSubmit(0);
+        }
+    };
+
+    const executeSubmit = (createTuition: number) => {
         setIsSubmitting(true);
 
         router.post(
             `/students/${student.id}/assign-classes`,
-            { class_ids: selectedClassIds },
+            {
+                class_ids: selectedClassIds,
+                create_tuition: createTuition,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSubmitting(false);
+                    setShowTuitionConfirm(false);
                     onClose();
                 },
                 onError: () => {
@@ -216,6 +232,58 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                     </Button>
                 </div>
             </form>
+
+            {showTuitionConfirm && (
+                <Modal
+                    isOpen={showTuitionConfirm}
+                    onClose={() => !isSubmitting && setShowTuitionConfirm(false)}
+                    title="Xác Nhận Tạo Học Phí"
+                    maxWidth="md"
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <HelpCircle className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1 text-sm">
+                                <p className="font-semibold text-gray-900">
+                                    Tạo học phí cho các lớp mới?
+                                </p>
+                                <p className="text-gray-600 leading-relaxed text-xs">
+                                    Học sinh <span className="font-medium text-gray-900">{student.full_name}</span> được phân vào lớp học mới. Bạn có muốn tự động tạo khoản thu học phí cho các lớp mới này không?
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setShowTuitionConfirm(false)}
+                                disabled={isSubmitting}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => executeSubmit(0)}
+                                isLoading={isSubmitting}
+                            >
+                                Không tạo học phí
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="success"
+                                onClick={() => executeSubmit(1)}
+                                isLoading={isSubmitting}
+                            >
+                                Có, tạo học phí
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </Modal>
     );
 }
