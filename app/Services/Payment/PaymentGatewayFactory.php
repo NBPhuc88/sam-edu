@@ -2,20 +2,22 @@
 
 namespace App\Services\Payment;
 
+use App\Enums\Constant;
+
 class PaymentGatewayFactory
 {
     /**
      * Khởi tạo Payment Gateway Instance phù hợp với phương thức thanh toán.
      *
-     * @param  string                  $paymentMethod ('zalopay', 'bank_transfer', 'momo', 'vnpay')
+     * @param  int|string              $paymentMethod
      * @return PaymentGatewayInterface
      */
-    public static function make(string $paymentMethod): PaymentGatewayInterface
+    public static function make(int|string $paymentMethod): PaymentGatewayInterface
     {
         return match ($paymentMethod) {
-            'zalopay'                 => new ZaloPayGateway(),
-            'bank_transfer', 'vietqr' => new BankTransferGateway(),
-            default                   => new ZaloPayGateway(),
+            Constant::PAYMENT_METHOD_BANK_TRANSFER, 'bank_transfer', 'vietqr' => new BankTransferGateway(),
+            Constant::PAYMENT_METHOD_ZALOPAY, 'zalopay'                       => new ZaloPayGateway(),
+            default                                                           => new ZaloPayGateway(),
         };
     }
 }

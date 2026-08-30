@@ -16,6 +16,11 @@ import Input from '../../components/ui/Input';
 import PublicLayout from '../../layouts/PublicLayout';
 import apiClient from '../../lib/axios';
 import { isValidVietnamesePhone } from '../../utils/validation';
+import {
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_LABELS,
+    PAYMENT_METHOD_ZALOPAY,
+} from '@/constants/enums';
 
 interface RegisterCenterProps {
     contactInfo?: {
@@ -59,9 +64,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
 
         return 'trial';
     });
-    const [paymentMethod, setPaymentMethod] = useState<
-        'zalopay' | 'bank_transfer' | 'momo' | 'vnpay'
-    >('zalopay');
+    const [paymentMethod, setPaymentMethod] = useState<number>(PAYMENT_METHOD_ZALOPAY);
 
     // Step 2 / Notification Info State
     const [appTransId, setAppTransId] = useState<string | null>(null);
@@ -147,7 +150,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
         } catch (err: any) {
             setErrorMessage(
                 err.response?.data?.message ||
-                    'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.',
+                'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.',
             );
         } finally {
             setLoading(false);
@@ -291,7 +294,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                         Khởi tạo mã quản lý trung tâm tức thì
                                     </li>
                                     <li>
-                                        14 ngày dùng thử miễn phí đầy đủ tính
+                                        30 ngày dùng thử miễn phí đầy đủ tính
                                         năng
                                     </li>
                                     <li>
@@ -385,11 +388,10 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 {/* Trial */}
                                                 <div
                                                     onClick={() => setSelectedPlan('trial')}
-                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan === 'trial'
-                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${selectedPlan === 'trial'
+                                                        ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
@@ -412,11 +414,10 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 {/* Basic 5 */}
                                                 <div
                                                     onClick={() => setSelectedPlan('basic_5')}
-                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan === 'basic_5'
-                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${selectedPlan === 'basic_5'
+                                                        ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-extrabold text-blue-800">
@@ -439,11 +440,10 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 {/* Basic 20 */}
                                                 <div
                                                     onClick={() => setSelectedPlan('basic_20')}
-                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan === 'basic_20'
-                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${selectedPlan === 'basic_20'
+                                                        ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-extrabold text-blue-800">
@@ -466,11 +466,10 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 {/* Advanced 5 */}
                                                 <div
                                                     onClick={() => setSelectedPlan('advanced_5')}
-                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                                                        selectedPlan === 'advanced_5'
-                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all ${selectedPlan === 'advanced_5'
+                                                        ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-extrabold text-purple-800">
@@ -493,11 +492,10 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                 {/* Advanced 20 */}
                                                 <div
                                                     onClick={() => setSelectedPlan('advanced_20')}
-                                                    className={`cursor-pointer rounded-xl border p-4 transition-all sm:col-span-2 lg:col-span-2 ${
-                                                        selectedPlan === 'advanced_20'
-                                                            ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border p-4 transition-all sm:col-span-2 lg:col-span-2 ${selectedPlan === 'advanced_20'
+                                                        ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
@@ -531,33 +529,31 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                                         <div
                                                             onClick={() =>
                                                                 setPaymentMethod(
-                                                                    'zalopay',
+                                                                    PAYMENT_METHOD_ZALOPAY,
                                                                 )
                                                             }
-                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
-                                                                paymentMethod ===
-                                                                'zalopay'
-                                                                    ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                                    : 'border-gray-200 hover:border-gray-300'
-                                                            }`}
+                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${paymentMethod ===
+                                                                PAYMENT_METHOD_ZALOPAY
+                                                                ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                }`}
                                                         >
                                                             <div className="text-xs font-bold text-gray-900">
-                                                                Chuyển Khoản / Hỗ Trợ
+                                                                ZaloPay QR
                                                             </div>
                                                         </div>
 
                                                         <div
                                                             onClick={() =>
                                                                 setPaymentMethod(
-                                                                    'bank_transfer',
+                                                                    PAYMENT_METHOD_BANK_TRANSFER,
                                                                 )
                                                             }
-                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${
-                                                                paymentMethod ===
-                                                                'bank_transfer'
-                                                                    ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
-                                                                    : 'border-gray-200 hover:border-gray-300'
-                                                            }`}
+                                                            className={`cursor-pointer rounded-xl border p-3 text-center transition-all ${paymentMethod ===
+                                                                PAYMENT_METHOD_BANK_TRANSFER
+                                                                ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20'
+                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                }`}
                                                         >
                                                             <div className="text-xs font-bold text-gray-900">
                                                                 VietQR Ngân hàng
@@ -591,10 +587,7 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             <p className="mt-1 text-xs text-gray-500">
                                                 Phương thức:{' '}
                                                 <span className="font-bold text-emerald-800 uppercase">
-                                                    {paymentMethod ===
-                                                    'bank_transfer'
-                                                        ? 'Chuyển khoản VietQR'
-                                                        : paymentMethod}
+                                                    {PAYMENT_METHOD_LABELS[paymentMethod] || 'Chuyển khoản / Cổng thanh toán'}
                                                 </span>
                                             </p>
                                         </div>
@@ -627,46 +620,46 @@ export const RegisterCenter: React.FC<RegisterCenterProps> = ({
                                             </div>
 
                                             {paymentMethod ===
-                                                'bank_transfer' && (
-                                                <div className="space-y-2 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-left text-xs text-gray-800">
-                                                    <div>
-                                                        <span className="font-semibold text-gray-600">
-                                                            Ngân hàng:
-                                                        </span>{' '}
-                                                        <strong className="text-blue-900">
-                                                            {bankName ||
-                                                                'VietinBank'}
-                                                        </strong>
+                                                PAYMENT_METHOD_BANK_TRANSFER && (
+                                                    <div className="space-y-2 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-left text-xs text-gray-800">
+                                                        <div>
+                                                            <span className="font-semibold text-gray-600">
+                                                                Ngân hàng:
+                                                            </span>{' '}
+                                                            <strong className="text-blue-900">
+                                                                {bankName ||
+                                                                    'VietinBank'}
+                                                            </strong>
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold text-gray-600">
+                                                                Số tài khoản:
+                                                            </span>{' '}
+                                                            <strong className="font-mono text-sm text-blue-900 select-all">
+                                                                {accountNo ||
+                                                                    '1008889999'}
+                                                            </strong>
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold text-gray-600">
+                                                                Chủ tài khoản:
+                                                            </span>{' '}
+                                                            <strong className="text-blue-900">
+                                                                {accountName ||
+                                                                    'CONG TY CP SAM DIGITAL'}
+                                                            </strong>
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold text-gray-600">
+                                                                Nội dung:
+                                                            </span>{' '}
+                                                            <strong className="font-mono text-sm text-emerald-800 select-all">
+                                                                {transferMemo ||
+                                                                    `SAM ${appTransId}`}
+                                                            </strong>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <span className="font-semibold text-gray-600">
-                                                            Số tài khoản:
-                                                        </span>{' '}
-                                                        <strong className="font-mono text-sm text-blue-900 select-all">
-                                                            {accountNo ||
-                                                                '1008889999'}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="font-semibold text-gray-600">
-                                                            Chủ tài khoản:
-                                                        </span>{' '}
-                                                        <strong className="text-blue-900">
-                                                            {accountName ||
-                                                                'CONG TY CP SAM DIGITAL'}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span className="font-semibold text-gray-600">
-                                                            Nội dung:
-                                                        </span>{' '}
-                                                        <strong className="font-mono text-sm text-emerald-800 select-all">
-                                                            {transferMemo ||
-                                                                `SAM ${appTransId}`}
-                                                        </strong>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                )}
 
                                             <Button
                                                 variant="success"

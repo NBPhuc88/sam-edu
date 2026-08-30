@@ -35,7 +35,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
     public function registerStep1(array $data): array
     {
         $planId        = (int) ($data['subscription_plan_id'] ?? 1);
-        $paymentMethod = (string) ($data['payment_method'] ?? 'zalopay');
+        $paymentMethod = isset($data['payment_method']) ? (int) $data['payment_method'] : Constant::PAYMENT_METHOD_ZALOPAY;
         $plan          = $this->subscriptionPlanRepository->findById($planId);
         $planCode      = $plan?->code ?? 'trial';
 
@@ -58,25 +58,27 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'plan_type'            => $plan->plan_type ?? ($planCode === 'trial' ? Constant::PLAN_TYPE_FREE : Constant::PLAN_TYPE_STANDARD),
                 'expires_at'           => $planCode === 'trial' ? now()->addDays(30) : null,
                 'trial_ends_at'        => $planCode === 'trial' ? now()->addDays(30) : null,
-                'max_students'         => $plan->max_students ?? ($planCode === 'trial' ? 600 : 150),
-                'max_classes'          => $plan->max_classes ?? ($planCode === 'trial' ? 20 : 5),
+                'max_students'         => $plan->max_students ?? 600,
+                'max_classes'          => $plan->max_classes ?? 20,
             ]);
 
             $this->sendAdminNotificationMail($center);
             $this->createAdminNotification($center, $planCode);
 
             return [
-                'success'   => true,
-                'step'      => 'contact_notification',
-                'center_id' => $center->id,
-                'code'      => $center->code,
-                'name'      => $center->name,
-                'plan'      => $center->subscription_plan_id,
-                'message'   => 'Đăng ký thông tin Trung tâm thành công! Ban quản trị SAM Digital sẽ liên hệ hỗ trợ kích hoạt trong thời gian sớm nhất.',
+                'success' => true,
+                'step'    => 'contact_notification',
+                'code'    => $center->code,
+                'name'    => $center->name,
+                'plan'    => $planCode,
+                'message' => 'Đăng ký trung tâm thành công! Hệ thống sẽ liên hệ kích hoạt dịch vụ cho bạn.',
             ];
         }
 
-        if ($planCode === 'trial') {
+        $amount       = (float) ($plan ? $plan->price : 0);
+        $durationDays = (int) ($plan && $plan->duration_months ? $plan->duration_months * 30 : 30);
+
+        if ($planCode === 'trial' || $amount <= 0) {
             $center = $this->centerRepository->create([
                 'code'                 => $code,
                 'name'                 => $data['name'],
@@ -93,21 +95,17 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             ]);
 
             $this->sendAdminNotificationMail($center);
-            $this->createAdminNotification($center, $planCode);
+            $this->createAdminNotification($center, 'trial');
 
             return [
-                'success'   => true,
-                'step'      => 'contact_notification',
-                'center_id' => $center->id,
-                'code'      => $center->code,
-                'name'      => $center->name,
-                'plan'      => $center->subscription_plan_id,
-                'message'   => 'Đăng ký dùng thử 30 ngày thành công! Ban quản trị SAM Digital đã ghi nhận thông tin trung tâm.',
+                'success' => true,
+                'step'    => 'contact_notification',
+                'code'    => $center->code,
+                'name'    => $center->name,
+                'plan'    => 'trial',
+                'message' => 'Đăng ký dùng thử 30 ngày thành công!',
             ];
         }
-
-        $amount       = $plan ? $plan->price : 500000;
-        $durationDays = $plan ? $plan->duration_days : 30;
 
         $center = $this->centerRepository->create([
             'code'                 => $code,
@@ -137,13 +135,15 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'plan_name'    => $plan ? $plan->name : 'Gói dịch vụ',
         ]);
 
+        $paymentMethodLabel = Constant::PAYMENT_METHOD_LABELS[$paymentMethod] ?? 'Thanh toán';
+
         $this->paymentTransactionRepository->create([
             'transaction_code' => $appTransId,
             'center_id'        => $center->id,
             'amount'           => $amount,
             'payment_method'   => $paymentMethod,
             'status'           => Constant::PAYMENT_STATUS_PENDING,
-            'note'             => "Đăng ký mới gói {$planCode} qua " . strtoupper($paymentMethod),
+            'note'             => "Đăng ký mới gói {$planCode} qua {$paymentMethodLabel}",
             'metadata'         => array_merge([
                 'plan_code'     => $planCode,
                 'duration_days' => $durationDays,
@@ -271,7 +271,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'center_id'           => $center->id,
             'title'               => $notifTitle,
             'content'             => $notifContent,
-            'type'                => 'center_registration',
+            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
             'created_by_admin_id' => null,
         ]);
 
@@ -294,7 +294,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_name'     => $center->name,
                 'title'           => $notifTitle,
                 'content'         => $notifContent,
-                'type'            => 'center_registration',
+                'type'            => Constant::NOTIFICATION_TYPE_GENERAL,
                 'created_at'      => now()->diffForHumans(),
             ]));
         } catch (\Throwable $e) {

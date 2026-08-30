@@ -12,6 +12,7 @@ import DatePicker from '../../../components/ui/DatePicker';
 import Input from '../../../components/ui/Input';
 import ScrollableSelect from '../../../components/ui/ScrollableSelect';
 import { usePermission } from '@/hooks/usePermission';
+import { PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_METHOD_OPTIONS } from '@/constants/enums';
 import AppLayout from '../../../layouts/AppLayout';
 
 interface CenterItem {
@@ -69,7 +70,7 @@ export const Create: React.FC<CreateProps> = ({
     const [hasInitialPayment, setHasInitialPayment] = useState<boolean>(false);
     const [initialAmount, setInitialAmount] = useState<string>('');
     const [initialDate, setInitialDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [initialMethod, setInitialMethod] = useState<string>('bank_transfer');
+    const [initialMethod, setInitialMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [initialCode, setInitialCode] = useState<string>('');
     const [initialNote, setInitialNote] = useState<string>('Đóng đợt 1');
 
@@ -391,15 +392,14 @@ export const Create: React.FC<CreateProps> = ({
                                     </label>
                                     <select
                                         value={initialMethod}
-                                        onChange={(e) => setInitialMethod(e.target.value)}
+                                        onChange={(e) => setInitialMethod(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                                        <option value="cash">Tiền mặt</option>
-                                        <option value="momo">Ví MoMo</option>
-                                        <option value="zalopay">Ví ZaloPay</option>
-                                        <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                                        <option value="other">Khác</option>
+                                        {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
