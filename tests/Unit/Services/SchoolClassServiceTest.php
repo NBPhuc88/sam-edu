@@ -7,6 +7,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\Class\SchoolClassService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->service = app(SchoolClassService::class);
@@ -66,7 +67,7 @@ test('createClass throws exception when max_classes limit is reached', function 
     ];
 
     expect(fn () => $this->service->createClass($data, $this->superAdmin))
-        ->toThrow(\InvalidArgumentException::class, 'đã đạt tối đa');
+        ->toThrow(ValidationException::class, 'đã đạt tối đa');
 });
 
 test('updateClass cascades status changes to isolated students in the class', function () {

@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\Teacher;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -104,14 +105,14 @@ test('room creation is limited by center max_classes for active and paused rooms
     ], $this->superAdmin);
     expect($room2)->toBeInstanceOf(Room::class);
 
-    // Tạo phòng 3 khi đã đạt hạn mức 2 -> Ném ngoại lệ InvalidArgumentException
+    // Tạo phòng 3 khi đã đạt hạn mức 2 -> Ném ngoại lệ ValidationException
     expect(fn () => $roomService->createRoom([
         'center_id' => $this->center->id,
         'name'      => 'Phòng 103',
         'code'      => 'R000000103',
         'capacity'  => 30,
         'status'    => Constant::ROOM_STATUS_ACTIVE,
-    ], $this->superAdmin))->toThrow(\InvalidArgumentException::class);
+    ], $this->superAdmin))->toThrow(ValidationException::class);
 
     // Đổi phòng 2 sang 'closed' -> Phòng closed không tính vào hạn mức -> Số phòng active/paused còn 1/2
     $room2->update(['status' => Constant::ROOM_STATUS_CLOSED]);
@@ -154,7 +155,7 @@ test('class creation is limited by max_classes for active and paused classes', f
         'name'      => 'Lớp Toán 3',
         'code'      => 'CLS000000003',
         'status'    => Constant::CLASS_STATUS_ACTIVE,
-    ], $this->superAdmin))->toThrow(\InvalidArgumentException::class);
+    ], $this->superAdmin))->toThrow(ValidationException::class);
 
     // Chuyển lớp 2 sang completed -> Không tính vào hạn mức
     $class2->update(['status' => Constant::CLASS_STATUS_COMPLETED]);

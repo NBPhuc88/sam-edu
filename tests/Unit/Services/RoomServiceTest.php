@@ -6,6 +6,7 @@ use App\Models\Center;
 use App\Models\Room;
 use App\Services\Room\RoomService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->service = app(RoomService::class);
@@ -62,7 +63,7 @@ test('createRoom throws exception when max_classes limit is exceeded for room co
     ];
 
     expect(fn () => $this->service->createRoom($data, $this->superAdmin))
-        ->toThrow(\InvalidArgumentException::class, 'đã đạt tối đa');
+        ->toThrow(ValidationException::class, 'đã đạt tối đa');
 });
 
 test('updateRoom updates capacity and location', function () {

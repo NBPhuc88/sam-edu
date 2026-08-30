@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -271,7 +272,9 @@ class SchoolClassService implements SchoolClassServiceInterface
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để tạo thêm.");
+                    throw ValidationException::withMessages([
+                        'name' => "Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để tạo thêm.",
+                    ]);
                 }
             }
         }
@@ -351,7 +354,9 @@ class SchoolClassService implements SchoolClassServiceInterface
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để mở lại lớp này.");
+                    throw ValidationException::withMessages([
+                        'status' => "Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để mở lại lớp này.",
+                    ]);
                 }
             }
         }

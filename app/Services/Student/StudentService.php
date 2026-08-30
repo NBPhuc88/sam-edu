@@ -20,6 +20,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -243,7 +244,9 @@ class StudentService implements StudentServiceInterface
                 $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId);
 
                 if ($activeStudentsCount >= $center->max_students) {
-                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                    throw ValidationException::withMessages([
+                        'full_name' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                    ]);
                 }
             }
         }
@@ -345,7 +348,9 @@ class StudentService implements StudentServiceInterface
                 $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId, $student->id);
 
                 if ($activeStudentsCount >= $center->max_students) {
-                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                    throw ValidationException::withMessages([
+                        'status' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                    ]);
                 }
             }
         }

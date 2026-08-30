@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Services\Student\StudentService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     Mail::fake();
@@ -70,7 +71,7 @@ test('createStudent throws exception when max_students limit reached for active 
     ];
 
     expect(fn () => $this->service->createStudent($data, $this->superAdmin))
-        ->toThrow(\InvalidArgumentException::class, 'Số học sinh đang hoạt động');
+        ->toThrow(ValidationException::class, 'Số học sinh đang hoạt động');
 });
 
 test('updateStudent updates student information and changes status successfully', function () {
