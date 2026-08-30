@@ -146,10 +146,10 @@ export default function ChatGroupIndex({
         setSearch('');
         setSelectedCenterId(0);
         setSelectedClassId(0);
-        setSelectedStatus(1);
+        setSelectedStatus(0);
         router.get(
             '/chats',
-            { status: 1 },
+            {},
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -161,12 +161,14 @@ export default function ChatGroupIndex({
         switch (status) {
             case 1:
                 return <Badge variant="active">Đang học</Badge>;
-            case 0:
-                return <Badge variant="pending">Tạm ngưng</Badge>;
             case 2:
+                return <Badge variant="pending">Tạm ngưng</Badge>;
+            case 3:
                 return <Badge variant="expired">Hoàn thành</Badge>;
-            default:
+            case 4:
                 return <Badge variant="info">Đã đóng</Badge>;
+            default:
+                return <Badge variant="info">Khác</Badge>;
         }
     };
 

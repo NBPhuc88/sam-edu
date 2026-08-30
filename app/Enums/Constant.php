@@ -545,6 +545,25 @@ class Constant
         self::SUBMISSION_STATUS_MISSED            => 'Bỏ thi',
     ];
 
+    // Trạng thái bộ lọc chấm điểm (Grading Filter Statuses)
+    public const int GRADING_FILTER_ALL           = 0;
+    public const int GRADING_FILTER_GRADED        = 1; // Đã chấm xong
+    public const int GRADING_FILTER_PENDING       = 2; // Chờ chấm điểm
+    public const int GRADING_FILTER_MANUAL_NEEDED = 3; // Cần chấm tự luận / nói
+
+    public const array GRADING_FILTERS = [
+        self::GRADING_FILTER_ALL,
+        self::GRADING_FILTER_GRADED,
+        self::GRADING_FILTER_PENDING,
+        self::GRADING_FILTER_MANUAL_NEEDED,
+    ];
+
+    public const array GRADING_FILTER_LABELS = [
+        self::GRADING_FILTER_GRADED        => 'Đã chấm xong',
+        self::GRADING_FILTER_PENDING       => 'Chờ chấm điểm',
+        self::GRADING_FILTER_MANUAL_NEEDED => 'Cần chấm tự luận / nói',
+    ];
+
     // ==========================================
     // 9. TÀI CHÍNH, HỌC PHÍ & GIAO DỊCH (FINANCE & PAYMENTS)
     // ==========================================

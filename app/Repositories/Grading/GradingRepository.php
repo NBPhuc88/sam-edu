@@ -60,7 +60,7 @@ class GradingRepository implements GradingRepositoryInterface
     public function getPaginatedSubmissions(
         ?int $classId,
         ?int $classExamId,
-        ?string $gradedStatus,
+        ?int $gradedStatus,
         ?string $search,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
@@ -92,7 +92,7 @@ class GradingRepository implements GradingRepositoryInterface
         $totalSubmissions = (clone $baseQuery)->count();
         $gradedCount      = (clone $baseQuery)->where('is_graded', true)->count();
         $pendingCount     = (clone $baseQuery)->where('is_graded', false)->count();
-        $averageScore     = (clone $baseQuery)->where('is_graded', true)->whereNotNull('score')->avg('score') ?? 0.0;
+        $averageScore     = (clone $baseQuery)->where('is_graded', true)->avg('score') ?? 0;
 
         return [
             'total_submissions' => $totalSubmissions,
@@ -126,7 +126,7 @@ class GradingRepository implements GradingRepositoryInterface
     protected function buildSubmissionQuery(
         ?int $classId,
         ?int $classExamId,
-        ?string $gradedStatus,
+        ?int $gradedStatus,
         ?string $search,
         ?Teacher $teacher = null,
         ?Admin $admin = null
@@ -143,11 +143,11 @@ class GradingRepository implements GradingRepositoryInterface
             });
         }
 
-        if ($gradedStatus === 'graded') {
+        if ($gradedStatus === Constant::GRADING_FILTER_GRADED) {
             $query->where('is_graded', true);
-        } elseif ($gradedStatus === 'pending') {
+        } elseif ($gradedStatus === Constant::GRADING_FILTER_PENDING) {
             $query->where('is_graded', false);
-        } elseif ($gradedStatus === 'manual_needed') {
+        } elseif ($gradedStatus === Constant::GRADING_FILTER_MANUAL_NEEDED) {
             $query->where('requires_manual_grading', true)->where('is_graded', false);
         }
 

@@ -103,7 +103,7 @@ interface Props {
     filters: {
         class_id?: number | null;
         class_exam_id?: number | null;
-        status?: string;
+        status?: number | null;
         search?: string;
         per_page?: number;
     };
@@ -123,7 +123,7 @@ export default function GradingIndex({
     const [search, setSearch] = useState(filters.search || '');
     const [selectedClassId, setSelectedClassId] = useState<number>(filters.class_id ? Number(filters.class_id) : 0);
     const [selectedExamId, setSelectedExamId] = useState<number>(filters.class_exam_id ? Number(filters.class_exam_id) : 0);
-    const [selectedStatus, setSelectedStatus] = useState<any>(filters.status || 0);
+    const [selectedStatus, setSelectedStatus] = useState<number>(filters.status ? Number(filters.status) : 0);
 
     // Available exams filtered by selected class
     const availableExams = selectedClassId
@@ -132,9 +132,9 @@ export default function GradingIndex({
 
     const handleFilterChange = (override: Partial<typeof filters> = {}) => {
         const targetSearch = override.search !== undefined ? override.search : search;
-        const targetClassId = override.class_id !== undefined ? override.class_id : (selectedClassId ? Number(selectedClassId) : undefined);
-        const targetExamId = override.class_exam_id !== undefined ? override.class_exam_id : (selectedExamId ? Number(selectedExamId) : undefined);
-        const targetStatus = override.status !== undefined ? override.status : (selectedStatus || undefined);
+        const targetClassId = override.class_id !== undefined ? (override.class_id ? Number(override.class_id) : undefined) : (selectedClassId ? Number(selectedClassId) : undefined);
+        const targetExamId = override.class_exam_id !== undefined ? (override.class_exam_id ? Number(override.class_exam_id) : undefined) : (selectedExamId ? Number(selectedExamId) : undefined);
+        const targetStatus = override.status !== undefined ? (override.status ? Number(override.status) : undefined) : (selectedStatus ? Number(selectedStatus) : undefined);
 
         router.get(
             '/grading',
@@ -306,14 +306,15 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedStatus}
                                     onChange={(val) => {
-                                        setSelectedStatus(val);
-                                        handleFilterChange({ status: val });
+                                        const numVal = Number(val);
+                                        setSelectedStatus(numVal);
+                                        handleFilterChange({ status: numVal });
                                     }}
                                     options={[
                                         { value: 0, label: 'Tất cả trạng thái' },
-                                        { value: 'pending', label: '⏳ Chờ chấm điểm' },
-                                        { value: 'manual_needed', label: '✍️ Cần chấm tự luận / nói' },
-                                        { value: 'graded', label: '✅ Đã chấm xong' },
+                                        { value: 1, label: '✅ Đã chấm xong' },
+                                        { value: 2, label: '⏳ Chờ chấm điểm' },
+                                        { value: 3, label: '✍️ Cần chấm tự luận / nói' },
                                     ]}
                                     placeholder="Chọn trạng thái"
                                 />
