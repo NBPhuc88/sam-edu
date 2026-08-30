@@ -16,6 +16,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
+import Pagination from '../../../components/ui/Pagination';
 import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 
@@ -43,12 +44,16 @@ interface IndexProps {
         data: AdminItem[];
         links: any[];
         total: number;
+        from?: number | null;
+        to?: number | null;
+        per_page?: number;
     };
     centers: Center[];
     hasSuperAdmin?: boolean;
     filters: {
         search: string;
         role: number | string | null;
+        per_page?: number;
     };
 }
 
@@ -56,7 +61,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
     const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(
-        filters.role !== undefined && filters.role !== null ? String(filters.role) : ''
+        filters.role !== undefined && filters.role !== null && filters.role !== '' ? String(filters.role) : ''
     );
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<AdminItem | null>(null);
@@ -106,7 +111,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         if (search.trim()) {
             params.search = search.trim();
         }
-        if (roleFilter) {
+        if (roleFilter !== '' && roleFilter !== null && roleFilter !== undefined && roleFilter !== 'all') {
             params.role = Number(roleFilter);
         }
 
@@ -405,6 +410,23 @@ return;
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination */}
+                    {admins.links && admins.links.length > 3 && (
+                        <div className="border-t border-gray-100 p-4">
+                            <Pagination
+                                links={admins.links}
+                                from={admins.from}
+                                to={admins.to}
+                                total={admins.total}
+                                perPage={filters.per_page || 20}
+                                currentParams={{
+                                    search: search || undefined,
+                                    role: roleFilter ? Number(roleFilter) : undefined,
+                                }}
+                            />
+                        </div>
+                    )}
                 </Card>
 
                 {/* Modal Thêm mới / Chỉnh sửa Admin */}
