@@ -1320,7 +1320,7 @@ class TestCenterSeeder extends Seeder
         $notifId = DB::table('notifications')->insertGetId([
             'title'               => 'Thông Báo Lịch Nghỉ Lễ & Khai Giảng Khóa Mới',
             'content'             => 'Hệ thống SAM Digital xin thông báo lịch nghỉ lễ và kế hoạch khai giảng các lớp học mới trong tháng tới. Quý thầy cô và học sinh vui lòng kiểm tra lịch học chi tiết trên ứng dụng.',
-            'type'                => 'system',
+            'type'                => \App\Enums\Constant::NOTIFICATION_TYPE_GENERAL,
             'created_by_admin_id' => $superAdmin->id,
             'created_at'          => $this->now,
             'updated_at'          => $this->now,
@@ -1332,7 +1332,7 @@ class TestCenterSeeder extends Seeder
             foreach ($adminIds as $aId) {
                 DB::table('notification_recipients')->insert([
                     'notification_id' => $notifId,
-                    'recipient_type'  => 'admin',
+                    'recipient_type'  => \App\Enums\Constant::RECIPIENT_TYPE_ADMIN,
                     'recipient_id'    => $aId,
                     'read_at'         => null,
                     'created_at'      => $this->now,

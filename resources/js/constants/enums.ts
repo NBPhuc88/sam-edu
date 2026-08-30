@@ -466,6 +466,8 @@ export const NOTIFICATION_TYPE_TUITION = 2; // Học phí / Thanh toán
 export const NOTIFICATION_TYPE_EXAM = 3; // Khảo thí / Điểm số
 export const NOTIFICATION_TYPE_SCHEDULE = 4; // Lịch học / Ca học
 export const NOTIFICATION_TYPE_ATTENDANCE = 5; // Điểm danh
+export const NOTIFICATION_TYPE_CENTER_REGISTRATION = 6; // Đăng ký trung tâm mới
+export const NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL = 7; // Yêu cầu gia hạn gói dịch vụ
 
 export const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
     [NOTIFICATION_TYPE_GENERAL]: 'Thông báo chung',
@@ -473,6 +475,8 @@ export const NOTIFICATION_TYPE_LABELS: Record<number, string> = {
     [NOTIFICATION_TYPE_EXAM]: 'Khảo thí & Điểm số',
     [NOTIFICATION_TYPE_SCHEDULE]: 'Lịch học',
     [NOTIFICATION_TYPE_ATTENDANCE]: 'Điểm danh',
+    [NOTIFICATION_TYPE_CENTER_REGISTRATION]: 'Đăng ký trung tâm mới',
+    [NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL]: 'Yêu cầu gia hạn gói dịch vụ',
 };
 
 // ==========================================

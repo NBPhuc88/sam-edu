@@ -724,11 +724,13 @@ class Constant
     // ==========================================
     // 9D. LOẠI THÔNG BÁO (NOTIFICATION TYPES)
     // ==========================================
-    public const int NOTIFICATION_TYPE_GENERAL    = 1; // Hệ thống / Chung
-    public const int NOTIFICATION_TYPE_TUITION    = 2; // Học phí / Thanh toán
-    public const int NOTIFICATION_TYPE_EXAM       = 3; // Khảo thí / Điểm số
-    public const int NOTIFICATION_TYPE_SCHEDULE   = 4; // Lịch học / Ca học
-    public const int NOTIFICATION_TYPE_ATTENDANCE = 5; // Điểm danh
+    public const int NOTIFICATION_TYPE_GENERAL              = 1; // Hệ thống / Chung
+    public const int NOTIFICATION_TYPE_TUITION              = 2; // Học phí / Thanh toán
+    public const int NOTIFICATION_TYPE_EXAM                 = 3; // Khảo thí / Điểm số
+    public const int NOTIFICATION_TYPE_SCHEDULE             = 4; // Lịch học / Ca học
+    public const int NOTIFICATION_TYPE_ATTENDANCE           = 5; // Điểm danh
+    public const int NOTIFICATION_TYPE_CENTER_REGISTRATION  = 6; // Đăng ký trung tâm mới
+    public const int NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL = 7; // Yêu cầu gia hạn gói dịch vụ
 
     public const array NOTIFICATION_TYPES = [
         self::NOTIFICATION_TYPE_GENERAL,
@@ -736,14 +738,18 @@ class Constant
         self::NOTIFICATION_TYPE_EXAM,
         self::NOTIFICATION_TYPE_SCHEDULE,
         self::NOTIFICATION_TYPE_ATTENDANCE,
+        self::NOTIFICATION_TYPE_CENTER_REGISTRATION,
+        self::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
     ];
 
     public const array NOTIFICATION_TYPE_LABELS = [
-        self::NOTIFICATION_TYPE_GENERAL    => 'Thông báo chung',
-        self::NOTIFICATION_TYPE_TUITION    => 'Học phí',
-        self::NOTIFICATION_TYPE_EXAM       => 'Khảo thí & Điểm số',
-        self::NOTIFICATION_TYPE_SCHEDULE   => 'Lịch học',
-        self::NOTIFICATION_TYPE_ATTENDANCE => 'Điểm danh',
+        self::NOTIFICATION_TYPE_GENERAL              => 'Thông báo chung',
+        self::NOTIFICATION_TYPE_TUITION              => 'Học phí',
+        self::NOTIFICATION_TYPE_EXAM                 => 'Khảo thí & Điểm số',
+        self::NOTIFICATION_TYPE_SCHEDULE             => 'Lịch học',
+        self::NOTIFICATION_TYPE_ATTENDANCE           => 'Điểm danh',
+        self::NOTIFICATION_TYPE_CENTER_REGISTRATION  => 'Đăng ký trung tâm mới',
+        self::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL => 'Yêu cầu gia hạn gói dịch vụ',
     ];
 
     // ==========================================

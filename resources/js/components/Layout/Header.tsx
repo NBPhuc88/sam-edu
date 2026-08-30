@@ -1,10 +1,14 @@
 import AppLogo from '@/components/common/AppLogo';
-import { ROLE_SUPER_ADMIN } from '@/constants/enums';
+import {
+    NOTIFICATION_TYPE_CENTER_REGISTRATION,
+    NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+    ROLE_SUPER_ADMIN,
+} from '@/constants/enums';
 import apiClient from '@/lib/axios';
 import getEcho from '@/lib/echo';
-import { Link,router,usePage } from '@inertiajs/react';
-import { Bell,Building2,CreditCard,LogOut,Menu,X } from 'lucide-react';
-import React,{ useEffect,useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, Building2, CreditCard, LogOut, Menu, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 
 interface AuthUser {
@@ -34,7 +38,7 @@ interface NotificationItem {
     notification_id: number;
     title: string;
     content: string;
-    type?: string | null;
+    type?: number | string | null;
     center_id?: number | null;
     center_name?: string | null;
     is_read: boolean;
@@ -329,6 +333,16 @@ export const Header: React.FC<HeaderProps> = ({
                                             </div>
                                         ))
                                     )}
+                                </div>
+
+                                <div className="mt-2.5 border-t border-gray-100 pt-2 text-center">
+                                    <Link
+                                        href="/notifications"
+                                        onClick={() => setIsPopoverOpen(false)}
+                                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                    >
+                                        Xem tất cả thông báo &rarr;
+                                    </Link>
                                 </div>
                             </div>
                         )}

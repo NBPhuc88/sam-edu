@@ -174,11 +174,13 @@ class StoreExamRequest extends FormRequest
                             if (in_array($qType, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_MULTIPLE_CHOICE], true) && is_array($q['options'] ?? null)) {
                                 foreach ($q['options'] as $opt) {
                                     $optText = is_array($opt) ? ($opt['text'] ?? '') : (is_string($opt) ? $opt : '');
+
                                     if (trim((string) $optText) === '') {
                                         $validator->errors()->add(
                                             "sections.{$sIdx}.questions.{$qIdx}.options",
                                             "Vui lòng nhập đầy đủ nội dung các phương án cho câu số {$qNum} phần {$secNum}."
                                         );
+
                                         break;
                                     }
                                 }
@@ -187,6 +189,7 @@ class StoreExamRequest extends FormRequest
                             // 1. Trắc nghiệm 1 đáp án
                             if ($qType === Constant::QUESTION_TYPE_SINGLE_CHOICE) {
                                 $optionIds = [];
+
                                 if (is_array($q['options'] ?? null)) {
                                     foreach ($q['options'] as $opt) {
                                         if (is_array($opt) && isset($opt['id'])) {
@@ -196,6 +199,7 @@ class StoreExamRequest extends FormRequest
                                         }
                                     }
                                 }
+
                                 if (empty($correctAns) || ! is_string($correctAns) || (! empty($optionIds) && ! in_array((string) $correctAns, $optionIds, true))) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -206,6 +210,7 @@ class StoreExamRequest extends FormRequest
                             // 2. Đúng / Sai / Không đề cập
                             elseif ($qType === Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN) {
                                 $validTfAnswers = ['TRUE', 'FALSE', 'NOT_GIVEN', 'YES', 'NO', 'NOT'];
+
                                 if (empty($correctAns) || ! is_string($correctAns) || ! in_array(strtoupper(trim((string) $correctAns)), $validTfAnswers, true)) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -216,6 +221,7 @@ class StoreExamRequest extends FormRequest
                             // 3. Tìm lỗi sai
                             elseif ($qType === Constant::QUESTION_TYPE_FIND_MISTAKE) {
                                 $underlinedIds = [];
+
                                 if (is_array($q['options']['sentence_segments'] ?? null)) {
                                     foreach ($q['options']['sentence_segments'] as $seg) {
                                         if (! empty($seg['underlined']) && isset($seg['id'])) {
@@ -223,6 +229,7 @@ class StoreExamRequest extends FormRequest
                                         }
                                     }
                                 }
+
                                 if (empty($correctAns) || ! is_string($correctAns) || (! empty($underlinedIds) && ! in_array((string) $correctAns, $underlinedIds, true))) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -233,6 +240,7 @@ class StoreExamRequest extends FormRequest
                             // 4. Trắc nghiệm nhiều đáp án
                             elseif ($qType === Constant::QUESTION_TYPE_MULTIPLE_CHOICE) {
                                 $optionIds = [];
+
                                 if (is_array($q['options'] ?? null)) {
                                     foreach ($q['options'] as $opt) {
                                         if (is_array($opt) && isset($opt['id'])) {
@@ -241,6 +249,7 @@ class StoreExamRequest extends FormRequest
                                     }
                                 }
                                 $filteredAns = is_array($correctAns) ? array_filter($correctAns, fn ($a) => is_string($a) && trim($a) !== '') : [];
+
                                 if (empty($filteredAns)) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -253,6 +262,7 @@ class StoreExamRequest extends FormRequest
                                                 "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                                 "Đáp án đã chọn không khớp với các phương án của câu số {$qNum} phần {$secNum}."
                                             );
+
                                             break;
                                         }
                                     }

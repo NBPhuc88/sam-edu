@@ -155,3 +155,92 @@ test('registering a new center creates notification and broadcasts event for sup
 
     Event::assertDispatched(\App\Events\CenterRegisteredEvent::class);
 });
+
+test('authenticated user can view notifications page with pagination and filters', function () {
+    $superAdmin = Admin::create([
+        'admin_code' => 'ADM-SUP-95',
+        'username'   => 'super_admin_page_test',
+        'email'      => 'superadmin.page@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Super Admin Page Test',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+    ]);
+
+    for ($i = 1; $i <= 20; $i++) {
+        $notif = Notification::create([
+            'title'   => "Thông báo số {$i}",
+            'content' => "Nội dung thông báo số {$i}",
+            'type'    => Constant::NOTIFICATION_TYPE_GENERAL,
+        ]);
+
+        NotificationRecipient::create([
+            'notification_id' => $notif->id,
+            'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
+            'recipient_id'    => $superAdmin->id,
+            'read_at'         => $i <= 5 ? now() : null,
+        ]);
+    }
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->get('/notifications');
+
+    $response->assertStatus(200);
+    $response->assertInertia(
+        fn ($page) => $page
+        ->component('Admin/Notifications/Index')
+        ->has('notifications.data', 15)
+        ->where('notifications.total', 20)
+        ->where('unread_count', 15)
+    );
+
+    // Test filter: unread only (is_read = 2)
+    $unreadResponse = $this->actingAs($superAdmin, 'admin')
+        ->get('/notifications?is_read=2');
+
+    $unreadResponse->assertStatus(200);
+    $unreadResponse->assertInertia(
+        fn ($page) => $page
+        ->component('Admin/Notifications/Index')
+        ->where('notifications.total', 15)
+    );
+});
+
+test('user can mark all notifications as read via web endpoint', function () {
+    $superAdmin = Admin::create([
+        'admin_code' => 'ADM-SUP-94',
+        'username'   => 'super_admin_mark_all_test',
+        'email'      => 'superadmin.markall@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Super Admin Mark All Test',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+    ]);
+
+    for ($i = 1; $i <= 3; $i++) {
+        $notif = Notification::create([
+            'title'   => "Thông báo chưa đọc {$i}",
+            'content' => "Nội dung {$i}",
+            'type'    => Constant::NOTIFICATION_TYPE_GENERAL,
+        ]);
+
+        NotificationRecipient::create([
+            'notification_id' => $notif->id,
+            'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
+            'recipient_id'    => $superAdmin->id,
+            'read_at'         => null,
+        ]);
+    }
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->postJson('/notifications/mark-all-read');
+
+    $response->assertStatus(200);
+    $response->assertJson(['success' => true]);
+
+    $unreadCount = NotificationRecipient::where('recipient_id', $superAdmin->id)
+        ->whereNull('read_at')
+        ->count();
+
+    expect($unreadCount)->toBe(0);
+});

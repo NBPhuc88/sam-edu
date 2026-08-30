@@ -18,6 +18,7 @@ use App\Http\Controllers\GradingController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MediaUploadController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PracticeExamController;
@@ -121,6 +122,13 @@ Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.
             'requiredPlan' => 'advanced',
         ]);
     })->name('upgrade-plan');
+
+    // System Notifications Management Routes
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::patch('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark_all_read');
+    });
 
     // System Permissions Management Routes (Super Admin)
     Route::prefix('permissions')->name('permissions.')->group(function () {

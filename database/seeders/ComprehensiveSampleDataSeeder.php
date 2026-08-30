@@ -1735,7 +1735,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
         $notification = Notification::create([
             'title'               => 'Thông Báo Lịch Nghỉ Lễ & Khai Giảng Khóa Học Mới',
             'content'             => 'Hệ thống Sam-Edu xin thông báo lịch nghỉ lễ và kế hoạch khai giảng các lớp học mới trong tháng tới. Quý thầy cô và học sinh vui lòng kiểm tra lịch học chi tiết trên ứng dụng.',
-            'type'                => 'system',
+            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
             'created_by_admin_id' => $superAdmin->id,
         ]);
 
@@ -1745,7 +1745,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             foreach ($adminIds as $aId) {
                 NotificationRecipient::create([
                     'notification_id' => $notification->id,
-                    'recipient_type'  => 'admin',
+                    'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
                     'recipient_id'    => $aId,
                     'read_at'         => null,
                 ]);

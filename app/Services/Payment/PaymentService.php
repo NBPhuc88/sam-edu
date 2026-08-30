@@ -124,7 +124,7 @@ class PaymentService implements PaymentServiceInterface
             'center_id'           => $center->id,
             'title'               => $notifTitle,
             'content'             => $notifContent,
-            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
+            'type'                => Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
             'created_by_admin_id' => $requestingUser?->id,
         ]);
 
@@ -147,7 +147,7 @@ class PaymentService implements PaymentServiceInterface
                 'center_name'     => $center->name,
                 'title'           => $notifTitle,
                 'content'         => $notifContent,
-                'type'            => 'subscription_renewal',
+                'type'            => Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
                 'duration_type'   => $durationType,
                 'amount'          => $amount,
                 'created_at'      => now()->diffForHumans(),

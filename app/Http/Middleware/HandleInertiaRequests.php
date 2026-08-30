@@ -167,14 +167,26 @@ class HandleInertiaRequests extends Middleware
                 ->count();
 
             $userNotifications = $recipients->map(function (NotificationRecipient $recipient) {
-                $notif = $recipient->notification;
+                $notif   = $recipient->notification;
+                $rawType = (int) ($notif?->type ?? Constant::NOTIFICATION_TYPE_GENERAL);
+
+                if ($rawType === Constant::NOTIFICATION_TYPE_GENERAL) {
+                    $title   = mb_strtolower($notif?->title ?? '');
+                    $content = mb_strtolower($notif?->content ?? '');
+
+                    if (str_contains($title, 'đăng ký') || str_contains($content, 'đăng ký')) {
+                        $rawType = Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION;
+                    } elseif (str_contains($title, 'gia hạn') || str_contains($content, 'gia hạn')) {
+                        $rawType = Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL;
+                    }
+                }
 
                 return [
                     'id'              => $recipient->id,
                     'notification_id' => $recipient->notification_id,
                     'title'           => $notif?->title ?? 'Thông báo',
                     'content'         => $notif?->content ?? '',
-                    'type'            => $notif?->type ?? 'general',
+                    'type'            => $rawType,
                     'center_id'       => $notif?->center_id ?? null,
                     'center_name'     => $notif?->center?->name ?? null,
                     'is_read'         => $recipient->read_at !== null,

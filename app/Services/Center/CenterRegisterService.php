@@ -271,7 +271,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
             'center_id'           => $center->id,
             'title'               => $notifTitle,
             'content'             => $notifContent,
-            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
+            'type'                => Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
             'created_by_admin_id' => null,
         ]);
 
@@ -294,7 +294,7 @@ class CenterRegisterService implements CenterRegisterServiceInterface
                 'center_name'     => $center->name,
                 'title'           => $notifTitle,
                 'content'         => $notifContent,
-                'type'            => Constant::NOTIFICATION_TYPE_GENERAL,
+                'type'            => Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
                 'created_at'      => now()->diffForHumans(),
             ]));
         } catch (\Throwable $e) {
