@@ -123,7 +123,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                         : undefined,
                 page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     };
 
@@ -142,7 +142,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                         : undefined,
                 page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     };
 
@@ -163,7 +163,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                         : undefined,
                 page: 1,
             },
-            { preserveState: true },
+            { preserveState: true, preserveScroll: true },
         );
     };
 
@@ -661,7 +661,7 @@ export const Statistics: React.FC<StatisticsProps> = ({
                                             per_page: newPerPage,
                                             page: 1,
                                         },
-                                        { preserveState: true },
+                                        { preserveState: true, preserveScroll: true },
                                     );
                                 }}
                             />
