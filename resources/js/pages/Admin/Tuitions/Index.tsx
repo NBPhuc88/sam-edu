@@ -69,6 +69,7 @@ interface StudentTuitionItem {
     };
     classes?: Array<{
         id: number;
+        tuition_id?: number;
         name: string;
         code: string;
         total_amount: number;
@@ -143,7 +144,11 @@ export const Index: React.FC<IndexProps> = ({
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [deletingTuition, setDeletingTuition] = useState<StudentTuitionItem | null>(null);
+    const [deletingTuition, setDeletingTuition] = useState<{
+        id: number;
+        studentName?: string;
+        className?: string;
+    } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const formatCurrency = (amount: number) => {
@@ -188,8 +193,12 @@ export const Index: React.FC<IndexProps> = ({
         router.get('/tuitions', {}, { preserveState: true });
     };
 
-    const openDeleteModal = (tuition: StudentTuitionItem) => {
-        setDeletingTuition(tuition);
+    const openDeleteModal = (tuitionId: number, studentName?: string, className?: string) => {
+        setDeletingTuition({
+            id: tuitionId,
+            studentName,
+            className,
+        });
         setDeleteModalOpen(true);
     };
 
@@ -519,55 +528,79 @@ export const Index: React.FC<IndexProps> = ({
                                                 </td>
 
                                                 <td className="px-6 py-4">
-                                                    <div className="flex flex-col gap-1.5 max-w-[220px]">
+                                                    <div className="flex flex-col gap-2 max-w-[280px]">
                                                         {item.classes && item.classes.length > 0 ? (
-                                                            item.classes.map((cls, cIdx) => (
-                                                                <Tooltip
-                                                                    key={cIdx}
-                                                                    content={
-                                                                        <div className="space-y-1 py-0.5">
-                                                                            <div className="font-bold text-white text-xs">{cls.name}</div>
-                                                                            <div className="text-[11px] text-gray-300">
-                                                                                Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{cls.code || 'N/A'}</span>
+                                                            item.classes.map((cls, cIdx) => {
+                                                                const classTuitionId = cls.tuition_id || item.id;
+                                                                return (
+                                                                    <div
+                                                                        key={cIdx}
+                                                                        className="flex items-center justify-between gap-2 p-1.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-colors shadow-2xs"
+                                                                    >
+                                                                        <Tooltip
+                                                                            content={
+                                                                                <div className="space-y-1 py-0.5">
+                                                                                    <div className="font-bold text-white text-xs">{cls.name}</div>
+                                                                                    <div className="text-[11px] text-gray-300">
+                                                                                        Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{cls.code || 'N/A'}</span>
+                                                                                    </div>
+                                                                                    <div className="text-[11px] text-gray-300">
+                                                                                        Học phí: <span className="font-semibold text-amber-300">{formatCurrency(cls.total_amount)}</span>
+                                                                                    </div>
+                                                                                    <div className="text-[11px] text-gray-300">
+                                                                                        Đã đóng: <span className="font-semibold text-emerald-400">{formatCurrency(cls.paid_amount)}</span>
+                                                                                        {cls.remaining_amount > 0 && (
+                                                                                            <span> • Còn nợ: <span className="text-rose-300 font-semibold">{formatCurrency(cls.remaining_amount)}</span></span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            }
+                                                                        >
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-xs font-mono font-bold text-blue-700 border border-blue-200 shrink-0">
+                                                                                        {cls.code || cls.name}
+                                                                                    </span>
+                                                                                    <span className="text-xs font-medium text-gray-700 truncate" title={cls.name}>
+                                                                                        {cls.name}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="text-[11px] text-gray-300">
-                                                                                Học phí: <span className="font-semibold text-amber-300">{formatCurrency(cls.total_amount)}</span>
-                                                                            </div>
-                                                                            <div className="text-[11px] text-gray-300">
-                                                                                Đã đóng: <span className="font-semibold text-emerald-400">{formatCurrency(cls.paid_amount)}</span>
-                                                                                {cls.remaining_amount > 0 && (
-                                                                                    <span> • Còn nợ: <span className="text-rose-300 font-semibold">{formatCurrency(cls.remaining_amount)}</span></span>
-                                                                                )}
-                                                                            </div>
+                                                                        </Tooltip>
+
+                                                                        <div className="flex items-center gap-1 shrink-0">
+                                                                            {can('tuitions.edit') && (
+                                                                                <Link
+                                                                                    href={`/tuitions/${classTuitionId}/edit`}
+                                                                                    title={`Sửa học phí lớp ${cls.name}`}
+                                                                                >
+                                                                                    <Button
+                                                                                        variant="edit"
+                                                                                        size="sm"
+                                                                                        className="!p-1 !h-6 !w-6 !min-w-6"
+                                                                                        icon={<Edit2 className="h-3 w-3" />}
+                                                                                    />
+                                                                                </Link>
+                                                                            )}
+                                                                            {can('tuitions.delete') && (
+                                                                                <Button
+                                                                                    variant="danger"
+                                                                                    size="sm"
+                                                                                    className="!p-1 !h-6 !w-6 !min-w-6"
+                                                                                    icon={<Trash2 className="h-3 w-3" />}
+                                                                                    title={`Xóa học phí lớp ${cls.name}`}
+                                                                                    onClick={() => openDeleteModal(classTuitionId, item.student?.full_name, cls.name)}
+                                                                                />
+                                                                            )}
                                                                         </div>
-                                                                    }
-                                                                >
-                                                                    <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
-                                                                        <span>{cls.code || cls.name}</span>
                                                                     </div>
-                                                                </Tooltip>
-                                                            ))
+                                                                );
+                                                            })
                                                         ) : (
-                                                            <Tooltip
-                                                                content={
-                                                                    <div className="space-y-1 py-0.5">
-                                                                        <div className="font-bold text-white text-xs">{item.school_class?.name ?? 'Chưa gán lớp'}</div>
-                                                                        <div className="text-[11px] text-gray-300">
-                                                                            Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{item.school_class?.code ?? 'N/A'}</span>
-                                                                        </div>
-                                                                        <div className="text-[11px] text-gray-300">
-                                                                            Học phí: <span className="font-semibold text-amber-300">{formatCurrency(total)}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                }
-                                                            >
-                                                                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
-                                                                    <span>{item.school_class?.code || item.school_class?.name || 'Chưa gán lớp'}</span>
-                                                                </div>
-                                                            </Tooltip>
+                                                            <div className="text-xs text-gray-400 italic">Chưa gán lớp</div>
                                                         )}
                                                         {item.center && (
-                                                            <div className="text-[11px] text-gray-400">
+                                                            <div className="text-[11px] text-gray-400 px-0.5">
                                                                 {item.center.name}
                                                             </div>
                                                         )}
@@ -638,29 +671,33 @@ export const Index: React.FC<IndexProps> = ({
                                                                 </Button>
                                                             </Link>
 
-                                                            {can('tuitions.edit') && (
-                                                                <Link href={`/tuitions/${item.id}/edit`}>
-                                                                    <Button
-                                                                        variant="edit"
-                                                                        size="sm"
-                                                                        icon={<Edit2 className="h-4 w-4" />}
-                                                                        title="Chỉnh sửa thông tin"
-                                                                    >
-                                                                        Sửa
-                                                                    </Button>
-                                                                </Link>
-                                                            )}
+                                                            {(!item.classes || item.classes.length <= 1) && (
+                                                                <>
+                                                                    {can('tuitions.edit') && (
+                                                                        <Link href={`/tuitions/${item.classes?.[0]?.tuition_id || item.id}/edit`}>
+                                                                            <Button
+                                                                                variant="edit"
+                                                                                size="sm"
+                                                                                icon={<Edit2 className="h-4 w-4" />}
+                                                                                title="Chỉnh sửa thông tin"
+                                                                            >
+                                                                                Sửa
+                                                                            </Button>
+                                                                        </Link>
+                                                                    )}
 
-                                                            {can('tuitions.delete') && (
-                                                                <Button
-                                                                    variant="danger"
-                                                                    size="sm"
-                                                                    icon={<Trash2 className="h-4 w-4" />}
-                                                                    onClick={() => openDeleteModal(item)}
-                                                                    title="Xóa hồ sơ học phí"
-                                                                >
-                                                                    Xóa
-                                                                </Button>
+                                                                    {can('tuitions.delete') && (
+                                                                        <Button
+                                                                            variant="danger"
+                                                                            size="sm"
+                                                                            icon={<Trash2 className="h-4 w-4" />}
+                                                                            onClick={() => openDeleteModal(item.classes?.[0]?.tuition_id || item.id, item.student?.full_name, item.classes?.[0]?.name || item.school_class?.name)}
+                                                                            title="Xóa hồ sơ học phí"
+                                                                        >
+                                                                            Xóa
+                                                                        </Button>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </div>
                                                     </td>
@@ -725,7 +762,7 @@ export const Index: React.FC<IndexProps> = ({
                 onConfirm={confirmDelete}
                 entity="tuitions"
                 entityId={deletingTuition?.id || null}
-                entityName={`hồ sơ học phí của học sinh "${deletingTuition?.student?.full_name}"`}
+                entityName={`hồ sơ học phí${deletingTuition?.className ? ` lớp "${deletingTuition.className}"` : ''} của học sinh "${deletingTuition?.studentName || ''}"`}
                 isDeleting={isDeleting}
             />
         </AppLayout>

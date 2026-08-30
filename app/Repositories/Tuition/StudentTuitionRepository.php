@@ -130,6 +130,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 $item->classes = [
                     [
                         'id'               => $item->schoolClass?->id ?? $item->class_id,
+                        'tuition_id'       => $item->id,
                         'name'             => $item->schoolClass?->name ?? 'Lớp học',
                         'code'             => $item->schoolClass?->code ?? '',
                         'total_amount'     => (float) $item->total_amount,
@@ -200,6 +201,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $classes = $studentTuitions->map(function ($t) {
                 return [
                     'id'               => $t->schoolClass?->id ?? $t->class_id,
+                    'tuition_id'       => $t->id,
                     'name'             => $t->schoolClass?->name ?? 'Lớp học',
                     'code'             => $t->schoolClass?->code ?? '',
                     'total_amount'     => (float) $t->total_amount,
