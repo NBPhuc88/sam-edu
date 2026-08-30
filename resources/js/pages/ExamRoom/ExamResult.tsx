@@ -43,7 +43,7 @@ export default function ExamResult({
 
     const isPassed = passScore !== null ? studentScore >= passScore : studentScore >= maxScore / 2;
 
-    const [activeFilter, setActiveFilter] = useState<'all' | 'correct' | 'incorrect'>('all');
+    const [activeFilter, setActiveFilter] = useState<'correct' | 'incorrect' | ''>('');
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
     const sectionStats = React.useMemo(() => {
@@ -193,9 +193,9 @@ export default function ExamResult({
                     <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
-                            onClick={() => setActiveFilter('all')}
+                            onClick={() => setActiveFilter('')}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                                activeFilter === 'all'
+                                !activeFilter
                                     ? 'bg-slate-900 text-white'
                                     : 'bg-white text-gray-700 border border-gray-200 hover:bg-slate-50'
                             }`}

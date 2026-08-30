@@ -51,7 +51,7 @@ class RoomRepository implements RoomRepositoryInterface
             });
         }
 
-        if (! empty($status) && $status !== 'all') {
+        if (! empty($status) && $status !== '') {
             $query->where('status', $status);
         }
 

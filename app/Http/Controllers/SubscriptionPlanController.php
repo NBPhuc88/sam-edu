@@ -30,13 +30,13 @@ class SubscriptionPlanController extends Controller
     public function index(FilterSubscriptionPlanRequest $request): InertiaResponse
     {
         $search  = $request->input('search');
-        $type    = $request->input('type', 'all');
+        $type    = $request->input('type');
         $page    = $request->integer('page', 1);
         $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
 
         $plans = $this->planService->getPaginatedPlans(
-            is_string($search) ? $search : null,
-            $type !== 'all' ? (string) $type : null,
+            is_string($search) && $search !== '' ? $search : null,
+            is_string($type) && $type !== '' ? $type : null,
             $perPage,
             $page
         );
@@ -48,7 +48,7 @@ class SubscriptionPlanController extends Controller
             'stats'   => $stats,
             'filters' => [
                 'search'   => $search ?? '',
-                'type'     => $type,
+                'type'     => $type ?? '',
                 'per_page' => $perPage,
             ],
         ]);

@@ -110,7 +110,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             $query->whereDate('session_date', '<=', $dateTo);
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'scheduled'               => Constant::SESSION_STATUS_SCHEDULED,
                 'in_progress'             => Constant::SESSION_STATUS_IN_PROGRESS,

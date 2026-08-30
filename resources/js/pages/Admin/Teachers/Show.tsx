@@ -75,7 +75,7 @@ interface TeacherSessionItem {
 }
 
 interface FilterData {
-    type: 'month' | 'all' | 'select_month';
+    type?: string;
     month: number;
     year: number;
     start_date: string | null;
@@ -127,16 +127,18 @@ export default function TeacherShow({
     const canExportPlan = useCanExportCsv();
     const canExport = canExportPermission && canExportPlan;
 
-    const [filterType, setFilterType] = useState<'month' | 'all' | 'select_month'>(filters.type || 'month');
+    const [filterType, setFilterType] = useState<string>(
+        filters.type ?? 'month'
+    );
     const [selectedMonth, setSelectedMonth] = useState<number>(filters.month || new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState<number>(filters.year || currentYear);
 
-    const handleFilterChange = (type: 'month' | 'all' | 'select_month', m = selectedMonth, y = selectedYear) => {
+    const handleFilterChange = (type: string, m = selectedMonth, y = selectedYear) => {
         setFilterType(type);
         router.get(
             `/teachers/${teacher.id}/show`,
             {
-                type,
+                type: type || undefined,
                 month: type === 'select_month' ? m : undefined,
                 year: type === 'select_month' ? y : undefined,
                 per_page: sessions.per_page !== 20 ? sessions.per_page : undefined,
@@ -150,7 +152,9 @@ export default function TeacherShow({
 
     const handleExport = () => {
         const params = new URLSearchParams();
-        params.set('type', filterType);
+        if (filterType) {
+            params.set('type', filterType);
+        }
         if (filterType === 'select_month') {
             params.set('month', String(selectedMonth));
             params.set('year', String(selectedYear));
@@ -211,7 +215,7 @@ export default function TeacherShow({
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
 
     const getFilterLabel = () => {
-        if (filters.type === 'all') return 'Từ trước đến nay';
+        if (!filters.type || filters.type === '') return 'Từ trước đến nay';
         if (filters.type === 'select_month') return `Tháng ${filters.month}/${filters.year}`;
         return `Tháng ${filters.month}/${filters.year} (Tháng này)`;
     };
@@ -345,8 +349,8 @@ export default function TeacherShow({
 
                         <button
                             type="button"
-                            onClick={() => handleFilterChange('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'all'
+                            onClick={() => handleFilterChange('')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterType || filterType === ''
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                                 }`}

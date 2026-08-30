@@ -5,24 +5,24 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-AlertCircle,
-Calendar,
-CheckCircle2,
-Clock,
-DollarSign,
-Edit2,
-Layers,
-Plus,
-Search,
-Shield,
-Sparkles,
-Tag,
-Trash2,
-Users,
+    AlertCircle,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    DollarSign,
+    Edit2,
+    Layers,
+    Plus,
+    Search,
+    Shield,
+    Sparkles,
+    Tag,
+    Trash2,
+    Users,
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface SubscriptionPlan {
@@ -123,8 +123,8 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
 
     const confirmDelete = () => {
         if (!deletingPlan) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/plans/${deletingPlan.id}`, {
@@ -143,8 +143,8 @@ return;
 
     const formatCurrency = (val: number | null | undefined) => {
         if (val === null || val === undefined || val === 0) {
-return 'Miễn phí (0đ)';
-}
+            return 'Miễn phí (0đ)';
+        }
 
         return `${val.toLocaleString('vi-VN')}đ`;
     };
@@ -317,13 +317,12 @@ return 'Miễn phí (0đ)';
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-start gap-2.5">
                                                     <div
-                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-bold text-xs ${
-                                                            plan.is_featured
+                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-bold text-xs ${plan.is_featured
                                                                 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300'
                                                                 : plan.price === 0
-                                                                  ? 'bg-blue-100 text-blue-800'
-                                                                  : 'bg-emerald-100 text-emerald-800'
-                                                        }`}
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-emerald-100 text-emerald-800'
+                                                            }`}
                                                     >
                                                         {plan.is_featured ? <Sparkles className="h-4 w-4" /> : <DollarSign className="h-4 w-4" />}
                                                     </div>
@@ -363,8 +362,8 @@ return 'Miễn phí (0đ)';
                                                         <div className="text-[11px] text-emerald-600 font-medium">
                                                             {plan.price > 0
                                                                 ? `Tiết kiệm ~${Math.round(
-                                                                      (1 - plan.yearly_price / (plan.price * 12)) * 100,
-                                                                  )}%/năm`
+                                                                    (1 - plan.yearly_price / (plan.price * 12)) * 100,
+                                                                )}%/năm`
                                                                 : '/năm'}
                                                         </div>
                                                     </div>
@@ -470,7 +469,7 @@ return 'Miễn phí (0đ)';
                                 perPage={filters.per_page ?? 20}
                                 currentParams={{
                                     search: search || undefined,
-                                    type: selectedType !== 'all' ? selectedType : undefined,
+                                    type: selectedType !== '' ? selectedType : undefined,
                                 }}
                             />
                         </div>

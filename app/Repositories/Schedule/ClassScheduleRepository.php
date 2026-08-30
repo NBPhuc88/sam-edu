@@ -83,7 +83,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             });
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', $status);
         }
 

@@ -1,6 +1,7 @@
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Head,Link,usePage } from '@inertiajs/react';
+import { PLAN_TYPE_FREE, PLAN_TYPE_LABELS, PLAN_TYPE_PREMIUM, PLAN_TYPE_STANDARD } from '@/constants/enums';
 import {
 ArrowLeft,
 CheckCircle2,
@@ -23,7 +24,7 @@ interface UpgradePlanProps {
     featureName?: string;
     message?: string;
     currentPlan?: string;
-    planType?: string;
+    planType?: number | null;
     requiredPlan?: string;
 }
 
@@ -119,13 +120,9 @@ export default function UpgradePlan({
                                     Gói hiện tại của Trung tâm
                                 </span>
                                 <div className="text-lg font-bold text-gray-900 mt-0.5">
-                                    {planType === 'trial'
-                                        ? 'Gói Dùng Thử (Trial)'
-                                        : planType === 'basic'
-                                          ? 'Gói Cơ Bản (Basic)'
-                                          : planType === 'advanced'
-                                            ? 'Gói Nâng Cao (Advanced)'
-                                            : currentPlan || 'Gói Cơ Bản'}
+                                    {(planType && PLAN_TYPE_LABELS[Number(planType)])
+                                        ? PLAN_TYPE_LABELS[Number(planType)]
+                                        : currentPlan || 'Gói Cơ Bản'}
                                 </div>
                             </div>
 

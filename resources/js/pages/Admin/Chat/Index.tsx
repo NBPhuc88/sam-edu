@@ -4,21 +4,21 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-ArrowRight,
-BookOpen,
-Building2,
-Clock,
-Filter,
-GraduationCap,
-MessageSquare,
-Search,
-Smile,
-Sparkles,
-Users
+    ArrowRight,
+    BookOpen,
+    Building2,
+    Clock,
+    Filter,
+    GraduationCap,
+    MessageSquare,
+    Search,
+    Smile,
+    Sparkles,
+    Users
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 
 interface Center {
     id: number;
@@ -133,7 +133,7 @@ export default function ChatGroupIndex({
                 search: search || undefined,
                 center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
                 class_id: selectedClassId ? Number(selectedClassId) : undefined,
-                status: selectedStatus !== 'all' && selectedStatus !== '' ? Number(selectedStatus) : undefined,
+                status: selectedStatus !== '' && selectedStatus !== '' ? Number(selectedStatus) : undefined,
             },
             {
                 preserveState: true,

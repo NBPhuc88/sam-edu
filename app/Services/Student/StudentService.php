@@ -926,7 +926,7 @@ class StudentService implements StudentServiceInterface
     {
         $now = CarbonImmutable::now();
 
-        if ($filterType === 'all') {
+        if ($filterType === '' || empty($filterType)) {
             return [null, $now->format('Y-m-d'), (int) $now->format('n'), (int) $now->format('Y')];
         }
 

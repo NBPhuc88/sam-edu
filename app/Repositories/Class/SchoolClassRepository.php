@@ -78,7 +78,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             }
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {

@@ -751,7 +751,7 @@ class TeacherService implements TeacherServiceInterface
     {
         $now = CarbonImmutable::now();
 
-        if ($filterType === 'all') {
+        if ($filterType === '' || empty($filterType)) {
             return [null, null, (int) $now->format('n'), (int) $now->format('Y')];
         }
 

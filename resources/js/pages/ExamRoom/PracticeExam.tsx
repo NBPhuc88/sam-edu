@@ -152,7 +152,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     } | null>(null);
 
     // Filter review questions
-    const [reviewFilter, setReviewFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all');
+    const [reviewFilter, setReviewFilter] = useState<'correct' | 'incorrect' | 'skipped' | ''>('');
     const [reviewSectionIndex, setReviewSectionIndex] = useState(0);
 
     // Countdown Timer
@@ -726,9 +726,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 border border-gray-200 shadow-2xs">
                                     <button
                                         type="button"
-                                        onClick={() => setReviewFilter('all')}
+                                        onClick={() => setReviewFilter('')}
                                         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                            reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-200'
+                                            !reviewFilter ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-200'
                                         }`}
                                     >
                                         Tất cả ({activeSec.totalQuestions})

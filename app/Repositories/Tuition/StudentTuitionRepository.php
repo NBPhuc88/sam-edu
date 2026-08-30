@@ -82,7 +82,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('student_id', $studentId);
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'completed', 'paid' => Constant::TUITION_STATUS_PAID,
                 'pending', 'unpaid' => Constant::TUITION_STATUS_PENDING,
@@ -92,7 +92,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             });
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -234,7 +234,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -336,7 +336,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'completed', 'paid' => Constant::TUITION_STATUS_PAID,
                 'pending', 'unpaid' => Constant::TUITION_STATUS_PENDING,
@@ -346,7 +346,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             });
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -403,7 +403,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -431,7 +431,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
 
         // 2. Monthly Trend (6 months recent)
         $monthlyTrend = [];
-        $baseDate     = ($month && $month !== 'all') ? \Illuminate\Support\Carbon::parse($month . '-01') : now();
+        $baseDate     = ($month && $month !== '') ? \Illuminate\Support\Carbon::parse($month . '-01') : now();
 
         for ($i = 5; $i >= 0; $i--) {
             $m          = (clone $baseDate)->subMonths($i);

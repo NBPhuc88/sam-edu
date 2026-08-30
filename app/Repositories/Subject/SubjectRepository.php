@@ -48,7 +48,7 @@ class SubjectRepository implements SubjectRepositoryInterface
             }
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'active'   => Constant::SUBJECT_STATUS_ACTIVE,
                 'inactive' => Constant::SUBJECT_STATUS_INACTIVE,

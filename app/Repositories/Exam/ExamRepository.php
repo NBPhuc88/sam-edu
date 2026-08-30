@@ -72,7 +72,7 @@ class ExamRepository implements ExamRepositoryInterface
             $query->where('subject_id', $subjectId);
         }
 
-        if ($status !== null && $status !== 'all' && $status !== '') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'published' => Constant::EXAM_STATUS_PUBLISHED,
                 'draft'     => Constant::EXAM_STATUS_DRAFT,

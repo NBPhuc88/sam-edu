@@ -29,7 +29,7 @@ class GradingService implements GradingServiceInterface
     {
         $classId      = ! empty($filters['class_id']) ? (int) $filters['class_id'] : null;
         $classExamId  = ! empty($filters['class_exam_id']) ? (int) $filters['class_exam_id'] : null;
-        $gradedStatus = ! empty($filters['status']) && $filters['status'] !== 'all' ? (string) $filters['status'] : null;
+        $gradedStatus = ! empty($filters['status']) && $filters['status'] !== '' ? (string) $filters['status'] : null;
         $search       = ! empty($filters['search']) ? (string) $filters['search'] : null;
         $page         = ! empty($filters['page']) ? (int) $filters['page'] : 1;
         $perPage      = ! empty($filters['per_page']) ? (int) $filters['per_page'] : (int) config('app.pagination_per_page', 15);

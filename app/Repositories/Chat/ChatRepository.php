@@ -274,7 +274,7 @@ class ChatRepository implements ChatRepositoryInterface
 
         if ($status === null || $status === '') {
             $query->where('status', 1);
-        } elseif ($status !== 'all') {
+        } elseif ($status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {

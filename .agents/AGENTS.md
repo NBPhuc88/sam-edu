@@ -91,7 +91,7 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 > - **Bên gửi (Frontend) BẮT BUỘC gửi giá trị số nguyên (`number` / `integer`) & LÀM SẠCH PARAMS TRƯỚC KHI GỬI**:
 >   - Đối với tất cả các trường có kiểu dữ liệu là số nguyên trong cơ sở dữ liệu (`status`, `role`, `plan_id`, `subscription_plan_id`, `gender`, `plan_type`, `center_id`, `max_students`, `max_classes`, v.v.), phía Frontend (Form submissions, Select dropdowns, URL Filter query params) **BẮT BUỘC phải gửi giá trị kiểu số nguyên (`Number(...)` hoặc hằng số `ENUM`)**.
 >   - **Nghiêm cấm gửi chuỗi định danh thay cho số**: Tuyệt đối **KHÔNG** gửi chuỗi như `'active'`, `'inactive'`, `'scheduled'`, `'in_progress'`, `'completed'`, `'cancelled'`, `'admin'`, `'super_admin'`, `'paid'`, `'unpaid'` lên server.
->   - **Xử lý lựa chọn "Tất cả" / Không lọc**: Khi người dùng chọn "Tất cả" (`'all'`) hoặc để trống (`''`), Frontend **BẮT BUỘC phải loại bỏ hoàn toàn trường đó khỏi request params** (`undefined` hoặc không đưa key đó vào object params gửi lên `router.get()`), tuyệt đối không gửi chuỗi rỗng `""` hay `'all'` lên server.
+>   - **Xử lý lựa chọn "Tất cả" / Không lọc**: Khi người dùng chọn "Tất cả" (`''`) hoặc để trống (`''`), Frontend **BẮT BUỘC phải loại bỏ hoàn toàn trường đó khỏi request params** (`undefined` hoặc không đưa key đó vào object params gửi lên `router.get()`), tuyệt đối không gửi chuỗi rỗng `""` hay `''` lên server.
 > - **Xử lý Phía Backend (FormRequests & FilterRequests)**:
 >   - Các `FormRequest` và `FilterRequest` validate đúng kiểu `'nullable', 'integer'` (kèm `Rule::in(...)`).
 >   - **KHÔNG sử dụng `prepareForValidation()`** để can thiệp / biến đổi dữ liệu request. Phía Frontend có trách nhiệm đảm bảo dữ liệu gửi lên đúng chuẩn sạch sẽ.

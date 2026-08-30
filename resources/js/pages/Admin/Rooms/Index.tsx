@@ -118,7 +118,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
             {
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
+                status: selectedStatus !== '' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -127,7 +127,7 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     const handleResetFilter = () => {
         setSearch('');
         setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/rooms', {}, { preserveState: true });
     };
 

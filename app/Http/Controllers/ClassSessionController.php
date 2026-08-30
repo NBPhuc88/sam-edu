@@ -96,7 +96,7 @@ class ClassSessionController extends Controller
                 'date_from'    => $dateFrom,
                 'date_to'      => $dateTo,
                 'date_scope'   => $dateScope,
-                'status'       => ($status && $status !== 'all') ? $status : null,
+                'status'       => ($status && $status !== '') ? $status : null,
                 'per_page'     => $perPage !== 20 ? $perPage : null,
             ], fn ($val) => $val !== null && $val !== ''),
         ]);

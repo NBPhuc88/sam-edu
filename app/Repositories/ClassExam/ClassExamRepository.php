@@ -73,7 +73,7 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             $query->where('exam_id', $examId);
         }
 
-        if ($status && $status !== 'all') {
+        if ($status && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'scheduled' => Constant::CLASS_EXAM_STATUS_SCHEDULED,
                 'ongoing'   => Constant::CLASS_EXAM_STATUS_ONGOING,

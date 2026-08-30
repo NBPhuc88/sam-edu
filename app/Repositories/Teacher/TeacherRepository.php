@@ -111,7 +111,7 @@ class TeacherRepository implements TeacherRepositoryInterface
             }
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
                 'active'                => Constant::TEACHER_STATUS_ACTIVE,
                 'inactive', 'suspended' => Constant::TEACHER_STATUS_INACTIVE,

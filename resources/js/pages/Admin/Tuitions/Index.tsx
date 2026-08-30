@@ -393,8 +393,8 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <input
                                     type="month"
-                                    value={selectedMonth === 'all' ? '' : selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value || 'all')}
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
                                     title="Lọc theo tháng phát sinh/hạn nộp (Để trống để xem tổng tất cả)"
                                     placeholder="Tất cả các tháng"
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"

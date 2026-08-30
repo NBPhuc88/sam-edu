@@ -7,7 +7,7 @@ import { getNavigationItems } from '../../config/navigation';
 
 interface SidebarProps {
     role: string | null;
-    adminRole?: string | null;
+    adminRole?: number | null;
     fullName?: string | null;
     open: boolean;
     onClose?: () => void;
@@ -196,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const { url, props } = usePage<any>();
     const permissions: string[] = props.auth?.permissions || [];
     const allowedFeatures: string[] = props.center?.allowed_features || [];
-    const planType: string | null = props.center?.plan_type || null;
+    const planType: number | null = props.center?.plan_type ? Number(props.center.plan_type) : null;
     const navItems = getNavigationItems(role, adminRole, permissions, allowedFeatures, planType);
 
     return (

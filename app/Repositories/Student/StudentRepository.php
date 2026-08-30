@@ -139,7 +139,7 @@ class StudentRepository implements StudentRepositoryInterface
             });
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } elseif ($status === 'active') {

@@ -53,7 +53,7 @@ class StudentTuitionController extends Controller
             null,
             null,
             $student->id,
-            is_string($status) && $status !== 'all' ? $status : null,
+            is_string($status) && $status !== '' ? $status : null,
             $perPage,
             $page,
             null
@@ -100,20 +100,20 @@ class StudentTuitionController extends Controller
             $perPage,
             $page,
             $admin,
-            is_string($month) && $month !== 'all' ? $month : null
+            is_string($month) && $month !== '' ? $month : null
         );
 
         $stats = $this->studentTuitionService->getSummaryStats(
             $admin,
             $centerId,
             $classId,
-            is_string($month) && $month !== 'all' ? $month : null
+            is_string($month) && $month !== '' ? $month : null
         );
         $chartStats = $this->studentTuitionService->getDetailedChartStats(
             $admin,
             $centerId,
             $classId,
-            is_string($month) && $month !== 'all' ? $month : null
+            is_string($month) && $month !== '' ? $month : null
         );
         $formData = $this->studentTuitionService->getFormData($admin, $centerId);
 
@@ -161,8 +161,8 @@ class StudentTuitionController extends Controller
                 is_string($search) ? $search : null,
                 $centerId,
                 $classId,
-                is_string($status) && $status !== 'all' ? $status : null,
-                is_string($month) && $month !== 'all' ? $month : null,
+                is_string($status) && $status !== '' ? $status : null,
+                is_string($month) && $month !== '' ? $month : null,
                 $admin
             ) as $chunk) {
                 fwrite($handle, $chunk);

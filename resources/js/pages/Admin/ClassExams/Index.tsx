@@ -99,7 +99,7 @@ export default function ClassExamIndex({
                 search: search || undefined,
                 center_id: selectedCenterId || undefined,
                 class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? Number(selectedStatus) : undefined,
+                status: selectedStatus !== '' ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -109,7 +109,7 @@ export default function ClassExamIndex({
         setSearch('');
         setSelectedCenterId('');
         setSelectedClassId('');
-        setSelectedStatus('all');
+        setSelectedStatus('');
         router.get('/class-exams', {}, { preserveState: true });
     };
 

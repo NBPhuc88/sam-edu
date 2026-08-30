@@ -18,7 +18,7 @@ class FilterSubscriptionPlanRequest extends FormRequest
     {
         return [
             'search'   => ['nullable', 'string', 'max:255'],
-            'type'     => ['nullable', 'string', 'in:all,free,paid,featured'],
+            'type'     => ['nullable', 'string', 'in:free,paid,featured'],
             'page'     => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
