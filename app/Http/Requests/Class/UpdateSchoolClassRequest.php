@@ -32,14 +32,15 @@ class UpdateSchoolClassRequest extends FormRequest
                     ->whereNull('deleted_at')
                     ->ignore($classId),
             ],
-            'description'           => ['nullable', 'string', 'max:1000'],
-            'max_students'          => ['nullable', 'integer', 'min:1', 'max:500'],
-            'start_date'            => ['nullable', 'date'],
-            'end_date'              => ['nullable', 'date', 'after_or_equal:start_date'],
-            'status'                => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
-            'subjects'              => ['nullable', 'array'],
-            'subjects.*.subject_id' => ['required_with:subjects', 'integer', 'exists:subjects,id'],
-            'subjects.*.teacher_id' => ['required_with:subjects', 'integer', 'exists:teachers,id'],
+            'description'            => ['nullable', 'string', 'max:1000'],
+            'max_students'           => ['nullable', 'integer', 'min:1', 'max:500'],
+            'start_date'             => ['nullable', 'date'],
+            'end_date'               => ['nullable', 'date', 'after_or_equal:start_date'],
+            'status'                 => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
+            'subjects'               => ['nullable', 'array'],
+            'subjects.*.subject_id'  => ['required_with:subjects', 'integer', 'exists:subjects,id'],
+            'subjects.*.teacher_id'  => ['required_with:subjects', 'integer', 'exists:teachers,id'],
+            'subjects.*.tuition_fee' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Services\Class;
 
+use App\Enums\Constant;
+use App\Models\StudentTuition;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Illuminate\Support\Str;
@@ -156,6 +158,29 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             }
 
             $this->schoolClassRepository->attachStudent($classId, $student->id, "Import từ CSV dòng {$lineIndex}");
+
+            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                ? $schoolClass->total_tuition_fee
+                : $schoolClass->classSubjects()->sum('tuition_fee'));
+
+            if ($totalTuitionFee > 0) {
+                StudentTuition::firstOrCreate(
+                    [
+                        'center_id'  => $schoolClass->center_id,
+                        'student_id' => $student->id,
+                        'class_id'   => $schoolClass->id,
+                    ],
+                    [
+                        'title'            => 'Học phí ' . $schoolClass->name,
+                        'total_amount'     => $totalTuitionFee,
+                        'paid_amount'      => 0,
+                        'remaining_amount' => $totalTuitionFee,
+                        'status'           => Constant::TUITION_STATUS_PENDING,
+                        'due_date'         => $schoolClass->end_date ?: null,
+                    ]
+                );
+            }
+
             $importedCount++;
         }
 

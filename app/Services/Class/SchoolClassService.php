@@ -8,6 +8,7 @@ use App\Models\ClassSession;
 use App\Models\SchoolClass;
 use App\Models\SessionReschedule;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -728,7 +729,35 @@ class SchoolClassService implements SchoolClassServiceInterface
             ->pluck('id')
             ->toArray();
 
-        return $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
+        $added = $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
+
+        // Tự động thêm khoản thu học phí cho học sinh với số tiền phải thu = tổng số tiền của lớp
+        $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+            ? $schoolClass->total_tuition_fee
+            : $schoolClass->classSubjects()->sum('tuition_fee'));
+
+        if ($totalTuitionFee > 0 && ! empty($validStudentIds)) {
+            foreach ($validStudentIds as $studentId) {
+                StudentTuition::firstOrCreate(
+                    [
+                        'center_id'  => $schoolClass->center_id,
+                        'student_id' => $studentId,
+                        'class_id'   => $schoolClass->id,
+                    ],
+                    [
+                        'title'            => 'Học phí ' . $schoolClass->name,
+                        'total_amount'     => $totalTuitionFee,
+                        'paid_amount'      => 0,
+                        'remaining_amount' => $totalTuitionFee,
+                        'status'           => Constant::TUITION_STATUS_PENDING,
+                        'due_date'         => $schoolClass->end_date ?: null,
+                        'created_by'       => $admin?->id,
+                    ]
+                );
+            }
+        }
+
+        return $added;
     }
 
     public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null, ?Teacher $teacher = null): bool

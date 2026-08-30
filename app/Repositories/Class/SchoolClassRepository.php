@@ -43,12 +43,13 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'max_students',
                 'start_date',
                 'end_date',
-                'status'
+                'status',
+                'total_tuition_fee'
             )
             ->with([
                 'center:id,name,code',
-                'classSubjects:id,class_id,subject_id,teacher_id,status',
-                'classSubjects.subject:id,name,code',
+                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee',
+                'classSubjects.subject:id,name,code,tuition_fee',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
             ->withCount([
@@ -132,12 +133,13 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 'max_students',
                 'start_date',
                 'end_date',
-                'status'
+                'status',
+                'total_tuition_fee'
             )
             ->with([
                 'center:id,name,code',
-                'classSubjects:id,class_id,subject_id,teacher_id,status',
-                'classSubjects.subject:id,name,code',
+                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee',
+                'classSubjects.subject:id,name,code,tuition_fee',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
             ->withCount([
@@ -196,8 +198,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
-     * @param  SchoolClass                                         $schoolClass
-     * @param  array<int, array{subject_id: int, teacher_id: int}> $subjectsWithTeachers
+     * @param  SchoolClass                                                                              $schoolClass
+     * @param  array<int, array{subject_id: int, teacher_id: int, tuition_fee?: float|int|string|null}> $subjectsWithTeachers
      * @return void
      */
     public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void
@@ -209,7 +211,11 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             if (! empty($item['subject_id']) && ! empty($item['teacher_id'])) {
                 $subjectId                  = (int) $item['subject_id'];
                 $teacherId                  = (int) $item['teacher_id'];
-                $uniqueSubjects[$subjectId] = $teacherId;
+                $tuitionFee                 = isset($item['tuition_fee']) && $item['tuition_fee'] !== '' ? (float) $item['tuition_fee'] : null;
+                $uniqueSubjects[$subjectId] = [
+                    'teacher_id'  => $teacherId,
+                    'tuition_fee' => $tuitionFee,
+                ];
             }
         }
 
@@ -225,18 +231,23 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         }
 
         // 3. Cập nhật hoặc tạo mới (updateOrCreate) để bảo toàn ID và không gây Duplicate Entry
-        foreach ($uniqueSubjects as $subjectId => $teacherId) {
+        foreach ($uniqueSubjects as $subjectId => $data) {
             ClassSubject::updateOrCreate(
                 [
                     'class_id'   => $schoolClass->id,
                     'subject_id' => $subjectId,
                 ],
                 [
-                    'teacher_id' => $teacherId,
-                    'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+                    'teacher_id'  => $data['teacher_id'],
+                    'tuition_fee' => $data['tuition_fee'],
+                    'status'      => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
                 ]
             );
         }
+
+        // 4. Tự động tính và cập nhật cột total_tuition_fee của lớp
+        $totalTuitionFee = (float) ClassSubject::where('class_id', $schoolClass->id)->sum('tuition_fee');
+        $schoolClass->update(['total_tuition_fee' => $totalTuitionFee]);
     }
 
     /**

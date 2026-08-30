@@ -21,7 +21,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import ScrollableSelect from '../../../components/ui/ScrollableSelect';
-import { TruncatedText } from '../../../components/ui/Tooltip';
+import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import TuitionChartSection,{ TuitionChartStatsData } from './components/TuitionChartSection';
 
@@ -67,6 +67,15 @@ interface StudentTuitionItem {
         name: string;
         code: string;
     };
+    classes?: Array<{
+        id: number;
+        name: string;
+        code: string;
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
+        status: number;
+    }>;
 }
 
 interface IndexProps {
@@ -510,22 +519,56 @@ export const Index: React.FC<IndexProps> = ({
                                                 </td>
 
                                                 <td className="px-6 py-4">
-                                                    <div className="max-w-[220px]">
-                                                        <TruncatedText
-                                                            text={item.school_class?.name ?? 'Chưa gán lớp'}
-                                                            maxLines={1}
-                                                            className="font-semibold text-gray-800"
-                                                        />
-                                                        <div className="mt-0.5 text-xs text-gray-500">
-                                                            <TruncatedText
-                                                                text={`${item.title || item.school_class?.code || ''}${item.center ? ` (${item.center.name})` : ''}`}
-                                                                maxLines={1}
-                                                                className="text-xs text-gray-500"
-                                                            />
-                                                        </div>
-                                                        {item.creator && (
-                                                            <div className="mt-0.5 text-[11px] text-gray-400">
-                                                                Tạo bởi: <span className="font-medium text-gray-600">{item.creator.full_name || item.creator.username}</span>
+                                                    <div className="flex flex-col gap-1.5 max-w-[220px]">
+                                                        {item.classes && item.classes.length > 0 ? (
+                                                            item.classes.map((cls, cIdx) => (
+                                                                <Tooltip
+                                                                    key={cIdx}
+                                                                    content={
+                                                                        <div className="space-y-1 py-0.5">
+                                                                            <div className="font-bold text-white text-xs">{cls.name}</div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{cls.code || 'N/A'}</span>
+                                                                            </div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Học phí: <span className="font-semibold text-amber-300">{formatCurrency(cls.total_amount)}</span>
+                                                                            </div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Đã đóng: <span className="font-semibold text-emerald-400">{formatCurrency(cls.paid_amount)}</span>
+                                                                                {cls.remaining_amount > 0 && (
+                                                                                    <span> • Còn nợ: <span className="text-rose-300 font-semibold">{formatCurrency(cls.remaining_amount)}</span></span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+                                                                >
+                                                                    <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
+                                                                        <span>{cls.code || cls.name}</span>
+                                                                    </div>
+                                                                </Tooltip>
+                                                            ))
+                                                        ) : (
+                                                            <Tooltip
+                                                                content={
+                                                                    <div className="space-y-1 py-0.5">
+                                                                        <div className="font-bold text-white text-xs">{item.school_class?.name ?? 'Chưa gán lớp'}</div>
+                                                                        <div className="text-[11px] text-gray-300">
+                                                                            Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{item.school_class?.code ?? 'N/A'}</span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-gray-300">
+                                                                            Học phí: <span className="font-semibold text-amber-300">{formatCurrency(total)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            >
+                                                                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
+                                                                    <span>{item.school_class?.code || item.school_class?.name || 'Chưa gán lớp'}</span>
+                                                                </div>
+                                                            </Tooltip>
+                                                        )}
+                                                        {item.center && (
+                                                            <div className="text-[11px] text-gray-400">
+                                                                {item.center.name}
                                                             </div>
                                                         )}
                                                     </div>

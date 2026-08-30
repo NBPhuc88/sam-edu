@@ -19,6 +19,7 @@ interface Subject {
     name: string;
     code: string;
     center_id: number;
+    tuition_fee?: number | string | null;
 }
 
 interface Teacher {
@@ -38,6 +39,7 @@ interface CreateProps {
 interface SubjectTeacherRow {
     subject_id: string;
     teacher_id: string;
+    tuition_fee: string;
 }
 
 export default function ClassCreate({ centers = [], subjects = [], teachers = [], errors = {} }: CreateProps) {
@@ -55,9 +57,9 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     const [status, setStatus] = useState<string>('1');
     const [description, setDescription] = useState<string>('');
 
-    // Dynamic list of subjects & assigned teachers
+    // Dynamic list of subjects & assigned teachers & subject tuition fee
     const [subjectRows, setSubjectRows] = useState<SubjectTeacherRow[]>([
-        { subject_id: '', teacher_id: '' },
+        { subject_id: '', teacher_id: '', tuition_fee: '' },
     ]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,13 +85,29 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         return teachers; // Fallback to all teachers if none match this center
     }, [centerId, teachers]);
 
+    const totalTuitionFee = React.useMemo(() => {
+        return subjectRows.reduce((sum, r) => {
+            if (r.subject_id) {
+                return sum + (Number(r.tuition_fee) || 0);
+            }
+            return sum;
+        }, 0);
+    }, [subjectRows]);
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+        }).format(amount || 0);
+    };
+
     const handleAddSubjectRow = () => {
-        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '' }]);
+        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '', tuition_fee: '' }]);
     };
 
     const handleRemoveSubjectRow = (index: number) => {
         if (subjectRows.length === 1) {
-            setSubjectRows([{ subject_id: '', teacher_id: '' }]);
+            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '' }]);
 
             return;
         }
@@ -97,9 +115,18 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         setSubjectRows(subjectRows.filter((_, idx) => idx !== index));
     };
 
-    const handleRowChange = (index: number, field: 'subject_id' | 'teacher_id', value: string) => {
+    const handleRowChange = (index: number, field: 'subject_id' | 'teacher_id' | 'tuition_fee', value: string) => {
         const updated = [...subjectRows];
         updated[index][field] = value;
+
+        // Khi chọn môn học, tự động điền học phí mặc định của môn học nếu có
+        if (field === 'subject_id') {
+            const foundSubject = subjects.find((s) => String(s.id) === String(value));
+            if (foundSubject && foundSubject.tuition_fee !== undefined && foundSubject.tuition_fee !== null) {
+                updated[index].tuition_fee = String(Number(foundSubject.tuition_fee));
+            }
+        }
+
         setSubjectRows(updated);
     };
 
@@ -107,16 +134,13 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         e.preventDefault();
         setIsSubmitting(true);
 
-        const subjectMap = new Map<number, number>();
-        subjectRows.forEach((r) => {
-            if (r.subject_id && r.teacher_id) {
-                subjectMap.set(Number(r.subject_id), Number(r.teacher_id));
-            }
-        });
-        const validSubjects = Array.from(subjectMap.entries()).map(([subject_id, teacher_id]) => ({
-            subject_id,
-            teacher_id,
-        }));
+        const validSubjects = subjectRows
+            .filter((r) => r.subject_id && r.teacher_id)
+            .map((r) => ({
+                subject_id: Number(r.subject_id),
+                teacher_id: Number(r.teacher_id),
+                tuition_fee: r.tuition_fee !== '' ? Number(r.tuition_fee) : null,
+            }));
 
         router.post(
             '/classes',
@@ -178,7 +202,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         onChange={(e) => {
                                             setCenterId(e.target.value);
                                             // Reset subject rows when center changes
-                                            setSubjectRows([{ subject_id: '', teacher_id: '' }]);
+                                            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '' }]);
                                         }}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                         required
@@ -302,26 +326,32 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
 
                     {/* Subjects & Teachers Configuration Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
-                        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
                                     <BookOpen className="h-5 w-5 text-blue-600" />
                                     2. Danh Sách Môn Học & Giáo Viên Phụ Trách
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    1 lớp học có thể chọn nhiều môn học, mỗi môn học chọn 1 giáo viên giảng dạy tương ứng.
+                                    1 lớp học có thể chọn nhiều môn học, mỗi môn học chọn 1 giáo viên giảng dạy và số tiền học tương ứng.
                                 </p>
                             </div>
 
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="md"
-                                icon={<Plus className="h-4 w-4 text-emerald-600" />}
-                                onClick={handleAddSubjectRow}
-                            >
-                                Thêm Môn Học
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3.5 py-2 border border-emerald-200 text-emerald-900">
+                                    <span className="text-xs font-semibold text-emerald-800">Tổng Học Phí:</span>
+                                    <span className="text-base font-black text-emerald-700">{formatCurrency(totalTuitionFee)}</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="md"
+                                    icon={<Plus className="h-4 w-4 text-emerald-600" />}
+                                    onClick={handleAddSubjectRow}
+                                >
+                                    Thêm Môn Học
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
@@ -343,7 +373,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     {/* Subject Select */}
                                     <div className="flex-1">
                                         <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                            Môn Học
+                                            Môn Học <span className="text-red-500">*</span>
                                         </label>
                                         <select
                                             value={row.subject_id}
@@ -353,7 +383,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                             <option value="">-- Chọn Môn Học --</option>
                                             {availableSubjects.map((s) => (
                                                 <option key={s.id} value={s.id}>
-                                                    {s.name}
+                                                    {s.name} {s.tuition_fee ? `(${formatCurrency(Number(s.tuition_fee))})` : ''}
                                                 </option>
                                             ))}
                                         </select>
@@ -370,7 +400,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     {/* Teacher Select */}
                                     <div className="flex-1">
                                         <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                            Giáo Viên Phụ Trách
+                                            Giáo Viên Phụ Trách <span className="text-red-500">*</span>
                                         </label>
                                         <select
                                             value={row.teacher_id}
@@ -392,6 +422,22 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                                 </Link>
                                             </p>
                                         )}
+                                    </div>
+
+                                    {/* Subject Tuition Fee */}
+                                    <div className="w-full sm:w-44">
+                                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                            Học Phí Môn (VNĐ)
+                                        </label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="1000"
+                                            value={row.tuition_fee}
+                                            onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
+                                            placeholder="0"
+                                            className="!py-2.5 !text-sm"
+                                        />
                                     </div>
 
                                     {/* Remove Row Button */}

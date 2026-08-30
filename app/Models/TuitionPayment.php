@@ -39,7 +39,7 @@ class TuitionPayment extends Model
 
     protected $casts = [
         'payment_method' => 'integer',
-        'amount'         => 'decimal:2',
+        'amount'         => 'decimal:0',
         'payment_date'   => 'date:d-m-Y',
         'created_at'     => 'datetime:d-m-Y H:i',
         'updated_at'     => 'datetime:d-m-Y H:i',

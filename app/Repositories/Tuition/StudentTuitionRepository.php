@@ -121,7 +121,124 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             });
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        // Trường hợp 1: Có filter theo lớp học cụ thể ($classId !== null)
+        if ($classId !== null) {
+            $paginator = $query->latest('id')->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+
+            $paginator->getCollection()->transform(function ($item) {
+                $statusInt     = is_object($item->status) ? $item->status->value : (int) $item->status;
+                $item->classes = [
+                    [
+                        'id'               => $item->schoolClass?->id ?? $item->class_id,
+                        'name'             => $item->schoolClass?->name ?? 'Lớp học',
+                        'code'             => $item->schoolClass?->code ?? '',
+                        'total_amount'     => (float) $item->total_amount,
+                        'paid_amount'      => (float) $item->paid_amount,
+                        'remaining_amount' => (float) $item->remaining_amount,
+                        'status'           => $statusInt,
+                    ],
+                ];
+
+                return $item;
+            });
+
+            return $paginator;
+        }
+
+        // Trường hợp 2: Không filter theo lớp học -> Gom nhóm và tính tổng tiền theo từng học sinh
+        $studentIdsPaginator = (clone $query)
+            ->select('student_id')
+            ->distinct()
+            ->latest('student_id')
+            ->paginate($perPage, ['student_id'], 'page', $page)
+            ->withQueryString();
+
+        $studentIds = $studentIdsPaginator->pluck('student_id')->all();
+
+        if (empty($studentIds)) {
+            return $studentIdsPaginator;
+        }
+
+        // Nạp tất cả các khoản học phí của các học sinh trong trang hiện tại
+        $allTuitions = StudentTuition::query()
+            ->whereIn('student_id', $studentIds)
+            ->when($centerIds !== null, function ($q) use ($centerIds) {
+                if (is_array($centerIds)) {
+                    $q->whereIn('center_id', $centerIds);
+                } else {
+                    $q->where('center_id', $centerIds);
+                }
+            })
+            ->with([
+                'student:id,full_name,student_code,phone,deleted_at',
+                'schoolClass:id,name,code',
+                'center:id,name,code',
+                'creator:id,username,full_name',
+                'payments' => function ($q) {
+                    $q->select('id', 'student_tuition_id', 'amount', 'payment_date', 'payment_method', 'transaction_code');
+                },
+            ])
+            ->withCount('payments')
+            ->get();
+
+        $grouped = $allTuitions->groupBy('student_id');
+        $items   = collect();
+
+        foreach ($studentIds as $sId) {
+            $studentTuitions = $grouped->get($sId, collect());
+
+            if ($studentTuitions->isEmpty()) {
+                continue;
+            }
+
+            $primaryTuition  = $studentTuitions->sortByDesc('id')->first();
+            $totalAmount     = (float) $studentTuitions->sum('total_amount');
+            $paidAmount      = (float) $studentTuitions->sum('paid_amount');
+            $remainingAmount = (float) $studentTuitions->sum('remaining_amount');
+            $paymentsCount   = (int) $studentTuitions->sum('payments_count');
+
+            $classes = $studentTuitions->map(function ($t) {
+                return [
+                    'id'               => $t->schoolClass?->id ?? $t->class_id,
+                    'name'             => $t->schoolClass?->name ?? 'Lớp học',
+                    'code'             => $t->schoolClass?->code ?? '',
+                    'total_amount'     => (float) $t->total_amount,
+                    'paid_amount'      => (float) $t->paid_amount,
+                    'remaining_amount' => (float) $t->remaining_amount,
+                    'status'           => is_object($t->status) ? $t->status->value : (int) $t->status,
+                ];
+            })->values()->all();
+
+            $hasOverdue = $studentTuitions->contains(function ($t) {
+                $st = is_object($t->status) ? $t->status->value : (int) $t->status;
+
+                return $st === Constant::TUITION_STATUS_OVERDUE;
+            });
+
+            if ($remainingAmount <= 0 && $totalAmount > 0) {
+                $statusOverall = Constant::TUITION_STATUS_PAID;
+            } elseif ($hasOverdue) {
+                $statusOverall = Constant::TUITION_STATUS_OVERDUE;
+            } elseif ($paidAmount > 0) {
+                $statusOverall = Constant::TUITION_STATUS_PARTIAL;
+            } else {
+                $statusOverall = Constant::TUITION_STATUS_PENDING;
+            }
+
+            $item                   = clone $primaryTuition;
+            $item->total_amount     = $totalAmount;
+            $item->paid_amount      = $paidAmount;
+            $item->remaining_amount = $remainingAmount;
+            $item->status           = $statusOverall;
+            $item->payments_count   = $paymentsCount;
+            $item->classes          = $classes;
+
+            $items->push($item);
+        }
+
+        $studentIdsPaginator->setCollection($items);
+
+        return $studentIdsPaginator;
     }
 
     /**
@@ -148,7 +265,12 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'created_at'
             )
             ->with([
-                'student:id,full_name,student_code,email,phone,deleted_at',
+                'student:id,full_name,student_code,email,phone,parent_name,parent_phone,deleted_at',
+                'student.tuitions' => function ($q) {
+                    $q->select('id', 'center_id', 'student_id', 'class_id', 'title', 'total_amount', 'paid_amount', 'remaining_amount', 'status', 'due_date')
+                        ->with('schoolClass:id,name,code')
+                        ->withCount('payments');
+                },
                 'schoolClass:id,name,code',
                 'center:id,name,code',
                 'creator:id,username,full_name',
