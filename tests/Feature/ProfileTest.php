@@ -21,7 +21,7 @@ test('user can view profile page', function () {
         'full_name'  => 'Test Admin Profile',
         'email'      => 'admin_profile@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => Constant::ROLE_ADMIN,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000099',
     ]);
@@ -43,7 +43,7 @@ test('user can send password change otp with 5 minutes expiry', function () {
         'full_name'  => 'Test Admin Otp',
         'email'      => 'admin_otp@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => Constant::ROLE_ADMIN,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000098',
     ]);
@@ -67,7 +67,7 @@ test('user can update password with valid otp and is rejected with expired otp',
         'full_name'  => 'Test Admin Pass',
         'email'      => 'admin_pass@sam-edu.vn',
         'password'   => 'old_password123',
-        'role'       => Constant::ROLE_ADMIN,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000097',
     ]);
@@ -126,7 +126,7 @@ test('user can complete 2-step email change verification', function () {
         'full_name'  => 'Test Admin Email',
         'email'      => 'old_email@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => Constant::ROLE_ADMIN,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000096',
     ]);

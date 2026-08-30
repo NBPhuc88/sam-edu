@@ -6,8 +6,8 @@
 // ==========================================
 // 0. TRẠNG THÁI TOÀN CỤC CHUNG (GENERIC STATUSES)
 // ==========================================
-export const STATUS_INACTIVE = 0; // Không hoạt động / Tắt / Khóa / Tạm dừng
 export const STATUS_ACTIVE = 1; // Đang hoạt động / Bật / Hoạt động
+export const STATUS_INACTIVE = 2; // Không hoạt động / Tắt / Khóa / Tạm dừng
 
 // ==========================================
 // 1. PHÂN TRANG & HIỂN THỊ (PAGINATION)
@@ -57,9 +57,9 @@ export const GENDER_OPTIONS = [
 // 4. NGƯỜI DÙNG & TÀI KHOẢN (USERS & STATUSES)
 // ==========================================
 // Bảng admins
-export const ADMIN_STATUS_INACTIVE = 0; // Tạm ngưng
 export const ADMIN_STATUS_ACTIVE = 1; // Đang hoạt động
-export const ADMIN_STATUS_LOCKED = 2; // Đã khóa
+export const ADMIN_STATUS_INACTIVE = 2; // Tạm ngưng
+export const ADMIN_STATUS_LOCKED = 3; // Đã khóa
 
 export const ADMIN_STATUS_LABELS: Record<number, string> = {
     [ADMIN_STATUS_ACTIVE]: 'Đang hoạt động',
@@ -68,9 +68,9 @@ export const ADMIN_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng teachers
-export const TEACHER_STATUS_INACTIVE = 0; // Tạm nghỉ
 export const TEACHER_STATUS_ACTIVE = 1; // Đang làm việc
-export const TEACHER_STATUS_LOCKED = 2; // Đã khóa
+export const TEACHER_STATUS_INACTIVE = 2; // Tạm nghỉ
+export const TEACHER_STATUS_LOCKED = 3; // Đã khóa
 
 export const TEACHER_STATUS_LABELS: Record<number, string> = {
     [TEACHER_STATUS_ACTIVE]: 'Đang làm việc',
@@ -79,9 +79,9 @@ export const TEACHER_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng students
-export const STUDENT_STATUS_INACTIVE = 0; // Tạm ngưng / Nghỉ học
 export const STUDENT_STATUS_ACTIVE = 1; // Đang theo học
-export const STUDENT_STATUS_GRADUATED = 2; // Đã tốt nghiệp
+export const STUDENT_STATUS_INACTIVE = 2; // Tạm ngưng / Nghỉ học
+export const STUDENT_STATUS_GRADUATED = 3; // Đã tốt nghiệp
 
 export const STUDENT_STATUS_LABELS: Record<number, string> = {
     [STUDENT_STATUS_ACTIVE]: 'Đang học',
@@ -116,14 +116,14 @@ export const CENTER_STATUS_OPTIONS = [
 ];
 
 // Bảng center_subscriptions
-export const SUBSCRIPTION_STATUS_PENDING = 0; // Chờ kích hoạt
-export const SUBSCRIPTION_STATUS_ACTIVE = 1; // Đang hiệu lực
-export const SUBSCRIPTION_STATUS_EXPIRED = 2; // Đã hết hạn
-export const SUBSCRIPTION_STATUS_CANCELLED = 3; // Đã hủy
+export const SUBSCRIPTION_STATUS_PENDING = 1; // Chờ kích hoạt
+export const SUBSCRIPTION_STATUS_ACTIVE = 2; // Đang hiệu lực
+export const SUBSCRIPTION_STATUS_EXPIRED = 3; // Đã hết hạn
+export const SUBSCRIPTION_STATUS_CANCELLED = 4; // Đã hủy
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<number, string> = {
-    [SUBSCRIPTION_STATUS_ACTIVE]: 'Đang hiệu lực',
     [SUBSCRIPTION_STATUS_PENDING]: 'Chờ kích hoạt',
+    [SUBSCRIPTION_STATUS_ACTIVE]: 'Đang hiệu lực',
     [SUBSCRIPTION_STATUS_EXPIRED]: 'Đã hết hạn',
     [SUBSCRIPTION_STATUS_CANCELLED]: 'Đã hủy',
 };
@@ -143,11 +143,11 @@ export const PLAN_TYPE_LABELS: Record<number, string> = {
 // 6. ĐÀO TẠO, LỚP HỌC, ĐIỂM DANH (CLASSES & ATTENDANCE)
 // ==========================================
 // Bảng classes
-export const CLASS_STATUS_INACTIVE = 0; // Tạm ngưng / Đã hủy
-export const CLASS_STATUS_CANCELLED = 0;
 export const CLASS_STATUS_ACTIVE = 1; // Đang hoạt động
-export const CLASS_STATUS_COMPLETED = 2; // Đã hoàn thành
-export const CLASS_STATUS_CLOSED = 3; // Đã đóng
+export const CLASS_STATUS_INACTIVE = 2; // Tạm ngưng / Đã hủy
+export const CLASS_STATUS_CANCELLED = 2;
+export const CLASS_STATUS_COMPLETED = 3; // Đã hoàn thành
+export const CLASS_STATUS_CLOSED = 4; // Đã đóng
 
 export const CLASS_STATUS_LABELS: Record<number, string> = {
     [CLASS_STATUS_ACTIVE]: 'Đang hoạt động',
@@ -157,10 +157,10 @@ export const CLASS_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_students
-export const CLASS_STUDENT_STATUS_LEFT = 0; // Đã thôi học / Nghỉ học
 export const CLASS_STUDENT_STATUS_ACTIVE = 1; // Đang học lớp này
 export const CLASS_STUDENT_STATUS_COMPLETED = 2; // Đã hoàn thành khóa
 export const CLASS_STUDENT_STATUS_TRANSFERRED = 3; // Đã chuyển lớp
+export const CLASS_STUDENT_STATUS_LEFT = 4; // Đã thôi học / Nghỉ học
 
 export const CLASS_STUDENT_STATUS_LABELS: Record<number, string> = {
     [CLASS_STUDENT_STATUS_ACTIVE]: 'Đang học',
@@ -170,9 +170,9 @@ export const CLASS_STUDENT_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_subjects
-export const CLASS_SUBJECT_STATUS_INACTIVE = 0; // Tạm dừng
 export const CLASS_SUBJECT_STATUS_ACTIVE = 1; // Đang phân công
-export const CLASS_SUBJECT_STATUS_COMPLETED = 2; // Đã hoàn thành
+export const CLASS_SUBJECT_STATUS_INACTIVE = 2; // Tạm dừng
+export const CLASS_SUBJECT_STATUS_COMPLETED = 3; // Đã hoàn thành
 
 export const CLASS_SUBJECT_STATUS_LABELS: Record<number, string> = {
     [CLASS_SUBJECT_STATUS_ACTIVE]: 'Đang phân công',
@@ -181,8 +181,8 @@ export const CLASS_SUBJECT_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_schedules
-export const SCHEDULE_STATUS_INACTIVE = 0; // Đã dừng
 export const SCHEDULE_STATUS_ACTIVE = 1; // Đang áp dụng
+export const SCHEDULE_STATUS_INACTIVE = 2; // Đã dừng
 
 export const SCHEDULE_STATUS_LABELS: Record<number, string> = {
     [SCHEDULE_STATUS_ACTIVE]: 'Đang áp dụng',
@@ -190,10 +190,10 @@ export const SCHEDULE_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_sessions
-export const SESSION_STATUS_CANCELLED = 0; // Đã hủy / Nghỉ
 export const SESSION_STATUS_SCHEDULED = 1; // Sắp diễn ra
 export const SESSION_STATUS_IN_PROGRESS = 2; // Đang diễn ra
 export const SESSION_STATUS_COMPLETED = 3; // Đã hoàn thành
+export const SESSION_STATUS_CANCELLED = 4; // Đã hủy / Nghỉ
 
 export const SESSION_STATUS_LABELS: Record<number, string> = {
     [SESSION_STATUS_SCHEDULED]: 'Sắp diễn ra',
@@ -203,9 +203,9 @@ export const SESSION_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng session_reschedules
-export const RESCHEDULE_STATUS_PENDING = 0; // Chờ duyệt
-export const RESCHEDULE_STATUS_APPROVED = 1; // Đã duyệt
-export const RESCHEDULE_STATUS_REJECTED = 2; // Từ chối
+export const RESCHEDULE_STATUS_PENDING = 1; // Chờ duyệt
+export const RESCHEDULE_STATUS_APPROVED = 2; // Đã duyệt
+export const RESCHEDULE_STATUS_REJECTED = 3; // Từ chối
 
 export const RESCHEDULE_STATUS_LABELS: Record<number, string> = {
     [RESCHEDULE_STATUS_PENDING]: 'Chờ duyệt',
@@ -230,8 +230,8 @@ export const ATTENDANCE_STATUS_LABELS: Record<number, string> = {
 // 7. CƠ SỞ VẬT CHẤT & MÔN HỌC (ROOMS & SUBJECTS)
 // ==========================================
 // Bảng subjects
-export const SUBJECT_STATUS_INACTIVE = 0; // Tạm ngưng
 export const SUBJECT_STATUS_ACTIVE = 1; // Đang giảng dạy
+export const SUBJECT_STATUS_INACTIVE = 2; // Tạm ngưng
 
 export const SUBJECT_STATUS_LABELS: Record<number, string> = {
     [SUBJECT_STATUS_ACTIVE]: 'Đang giảng dạy',
@@ -239,9 +239,9 @@ export const SUBJECT_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng rooms
-export const ROOM_STATUS_PAUSED = 0; // Tạm dừng
 export const ROOM_STATUS_ACTIVE = 1; // Đang sử dụng
-export const ROOM_STATUS_CLOSED = 2; // Đã đóng
+export const ROOM_STATUS_PAUSED = 2; // Tạm dừng
+export const ROOM_STATUS_CLOSED = 3; // Đã đóng
 
 export const ROOM_STATUS_LABELS: Record<number, string> = {
     [ROOM_STATUS_ACTIVE]: 'Đang hoạt động',
@@ -264,10 +264,10 @@ export const EQUIPMENT_STATUS_LABELS: Record<number, string> = {
 // 8. KHẢO THÍ & ĐỀ THI (EXAM SYSTEM)
 // ==========================================
 // Bảng exams
-export const EXAM_STATUS_DRAFT = 0; // Bản nháp
-export const EXAM_STATUS_PUBLISHED = 1; // Đã xuất bản
-export const EXAM_STATUS_COMPLETED = 2; // Đã kết thúc
-export const EXAM_STATUS_CANCELLED = 3; // Đã hủy
+export const EXAM_STATUS_DRAFT = 1; // Bản nháp
+export const EXAM_STATUS_PUBLISHED = 2; // Đã xuất bản
+export const EXAM_STATUS_COMPLETED = 3; // Đã kết thúc
+export const EXAM_STATUS_CANCELLED = 4; // Đã hủy
 
 export const EXAM_STATUS_LABELS: Record<number, string> = {
     [EXAM_STATUS_DRAFT]: 'Bản nháp',
@@ -325,10 +325,10 @@ export const QUESTION_TYPE_LABELS: Record<number, string> = {
 };
 
 // Bảng class_exams
-export const CLASS_EXAM_STATUS_CANCELLED = 0; // Đã hủy
 export const CLASS_EXAM_STATUS_SCHEDULED = 1; // Sắp diễn ra
 export const CLASS_EXAM_STATUS_ONGOING = 2; // Đang mở thi
 export const CLASS_EXAM_STATUS_COMPLETED = 3; // Đã đóng thi
+export const CLASS_EXAM_STATUS_CANCELLED = 4; // Đã hủy
 
 export const CLASS_EXAM_STATUS_LABELS: Record<number, string> = {
     [CLASS_EXAM_STATUS_SCHEDULED]: 'Sắp diễn ra',
@@ -338,10 +338,10 @@ export const CLASS_EXAM_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_exam_submissions
-export const SUBMISSION_STATUS_MISSED = 0; // Bỏ thi
 export const SUBMISSION_STATUS_IN_PROGRESS = 1; // Đang làm bài
 export const SUBMISSION_STATUS_SUBMITTED = 2; // Đã nộp bài
 export const SUBMISSION_STATUS_TIMEOUT_SUBMITTED = 3; // Hết giờ tự nộp
+export const SUBMISSION_STATUS_MISSED = 4; // Bỏ thi
 
 export const SUBMISSION_STATUS_LABELS: Record<number, string> = {
     [SUBMISSION_STATUS_IN_PROGRESS]: 'Đang làm bài',
@@ -354,11 +354,11 @@ export const SUBMISSION_STATUS_LABELS: Record<number, string> = {
 // 9. TÀI CHÍNH, HỌC PHÍ & GIAO DỊCH (FINANCE & PAYMENTS)
 // ==========================================
 // Bảng student_tuitions
-export const TUITION_STATUS_PENDING = 0; // Chưa đóng
-export const TUITION_STATUS_PAID = 1; // Đã thanh toán đủ (Hoàn tất)
-export const TUITION_STATUS_COMPLETED = 1; // Alias
-export const TUITION_STATUS_PARTIAL = 2; // Đóng một phần
-export const TUITION_STATUS_OVERDUE = 3; // Quá hạn
+export const TUITION_STATUS_PENDING = 1; // Chưa đóng
+export const TUITION_STATUS_PAID = 2; // Đã thanh toán đủ (Hoàn tất)
+export const TUITION_STATUS_COMPLETED = 2; // Alias
+export const TUITION_STATUS_PARTIAL = 3; // Đóng một phần
+export const TUITION_STATUS_OVERDUE = 4; // Quá hạn
 
 export const TUITION_STATUS_LABELS: Record<number, string> = {
     [TUITION_STATUS_PENDING]: 'Chưa đóng',
@@ -394,10 +394,10 @@ export const PAYMENT_METHOD_OPTIONS = [
 ];
 
 // Bảng payment_transactions
-export const PAYMENT_STATUS_PENDING = 0; // Đang xử lý
-export const PAYMENT_STATUS_SUCCESS = 1; // Thành công
-export const PAYMENT_STATUS_FAILED = 2; // Thất bại
-export const PAYMENT_STATUS_REFUNDED = 3; // Đã hoàn tiền
+export const PAYMENT_STATUS_PENDING = 1; // Đang xử lý
+export const PAYMENT_STATUS_SUCCESS = 2; // Thành công
+export const PAYMENT_STATUS_FAILED = 3; // Thất bại
+export const PAYMENT_STATUS_REFUNDED = 4; // Đã hoàn tiền
 
 export const PAYMENT_STATUS_LABELS: Record<number, string> = {
     [PAYMENT_STATUS_PENDING]: 'Đang xử lý',
@@ -407,10 +407,10 @@ export const PAYMENT_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng contact_requests
-export const CONTACT_STATUS_PENDING = 0; // Chờ liên hệ
-export const CONTACT_STATUS_CONTACTED = 1; // Đã liên hệ
-export const CONTACT_STATUS_RESOLVED = 2; // Đã xử lý xong
-export const CONTACT_STATUS_CANCELLED = 3; // Hủy bỏ
+export const CONTACT_STATUS_PENDING = 1; // Chờ liên hệ
+export const CONTACT_STATUS_CONTACTED = 2; // Đã liên hệ
+export const CONTACT_STATUS_RESOLVED = 3; // Đã xử lý xong
+export const CONTACT_STATUS_CANCELLED = 4; // Hủy bỏ
 
 export const CONTACT_STATUS_LABELS: Record<number, string> = {
     [CONTACT_STATUS_PENDING]: 'Chờ liên hệ',

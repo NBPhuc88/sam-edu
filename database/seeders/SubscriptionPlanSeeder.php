@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Constant;
 use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
@@ -40,7 +41,7 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'code'          => 'trial',
                 'name'          => 'Gói Dùng Thử (1 Tháng)',
-                'plan_type'     => 'trial',
+                'plan_type'     => Constant::PLAN_TYPE_FREE,
                 'price'         => 0,
                 'yearly_price'  => 0,
                 'duration_days' => 30,
@@ -59,7 +60,7 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'code'          => 'basic_5',
                 'name'          => 'Gói Cơ Bản (5 Lớp)',
-                'plan_type'     => 'basic',
+                'plan_type'     => Constant::PLAN_TYPE_STANDARD,
                 'price'         => 250000,
                 'yearly_price'  => 2400000,
                 'duration_days' => 30,
@@ -80,7 +81,7 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'code'          => 'basic_20',
                 'name'          => 'Gói Cơ Bản (20 Lớp)',
-                'plan_type'     => 'basic',
+                'plan_type'     => Constant::PLAN_TYPE_STANDARD,
                 'price'         => 500000,
                 'yearly_price'  => 4800000,
                 'duration_days' => 30,
@@ -101,7 +102,7 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'code'          => 'advanced_5',
                 'name'          => 'Gói Nâng Cao (5 Lớp)',
-                'plan_type'     => 'advanced',
+                'plan_type'     => Constant::PLAN_TYPE_PREMIUM,
                 'price'         => 500000,
                 'yearly_price'  => 4800000,
                 'duration_days' => 30,
@@ -122,7 +123,7 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'code'          => 'advanced_20',
                 'name'          => 'Gói Nâng Cao (20 Lớp)',
-                'plan_type'     => 'advanced',
+                'plan_type'     => Constant::PLAN_TYPE_PREMIUM,
                 'price'         => 1000000,
                 'yearly_price'  => 9600000,
                 'duration_days' => 30,

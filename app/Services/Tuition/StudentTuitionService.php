@@ -223,7 +223,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'total_amount'     => $totalAmount,
             'paid_amount'      => 0,
             'remaining_amount' => $totalAmount,
-            'status'           => 'pending',
+            'status'           => Constant::TUITION_STATUS_PENDING,
             'due_date'         => $data['due_date'] ?? null,
             'note'             => $data['note'] ?? null,
             'created_by'       => $admin?->id,

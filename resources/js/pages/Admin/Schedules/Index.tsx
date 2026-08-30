@@ -139,17 +139,17 @@ export default function ScheduleIndex({
     const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -180,10 +180,10 @@ export default function ScheduleIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedSubjectId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedSubjectId(0);
+        setSelectedStatus(0);
         router.get('/schedules', {}, { preserveState: true });
     };
 
@@ -292,10 +292,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                        onChange={(e) => setSelectedCenterId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Trung tâm</option>
+                                        <option value="0">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -309,10 +309,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedClassId}
-                                        onChange={(e) => setSelectedClassId(e.target.value)}
+                                        onChange={(e) => setSelectedClassId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Lớp học</option>
+                                        <option value="0">Tất cả Lớp học</option>
                                         {classes.map((cls) => (
                                             <option key={cls.id} value={cls.id}>
                                                 {cls.name} ({cls.code})
@@ -326,10 +326,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedSubjectId}
-                                        onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                        onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Môn học</option>
+                                        <option value="0">Tất cả Môn học</option>
                                         {subjects.map((sub) => (
                                             <option key={sub.id} value={sub.id}>
                                                 {sub.name} ({sub.code})
@@ -342,10 +342,10 @@ export default function ScheduleIndex({
                                 <div>
                                 <select
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">Tất cả Trạng thái</option>
+                                    <option value="0">Tất cả Trạng thái</option>
                                     <option value={SCHEDULE_STATUS_ACTIVE}>Đang áp dụng</option>
                                     <option value={SCHEDULE_STATUS_INACTIVE}>Tạm dừng</option>
                                 </select>

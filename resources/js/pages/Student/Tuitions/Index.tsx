@@ -100,7 +100,7 @@ export default function StudentTuitionIndex({
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status !== undefined && filters.status !== null ? String(filters.status) : '');
+    const [selectedStatus, setSelectedStatus] = useState<number>(filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0);
     const [selectedTuition, setSelectedTuition] = useState<StudentTuitionItem | null>(null);
 
     const formatCurrency = (val: number) => {
@@ -124,7 +124,7 @@ export default function StudentTuitionIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedStatus('');
+        setSelectedStatus(0);
         router.get('/student/tuitions', {}, { preserveState: true });
     };
 
@@ -246,11 +246,11 @@ export default function StudentTuitionIndex({
                             <select
                                 value={selectedStatus}
                                 onChange={(e) => {
-                                    setSelectedStatus(e.target.value);
+                                    setSelectedStatus(Number(e.target.value));
                                 }}
                                 className="rounded-xl border border-gray-200 bg-slate-50/50 py-2 px-3 text-xs sm:text-sm text-gray-700 focus:border-emerald-500 focus:bg-white focus:outline-hidden"
                             >
-                                <option value="">Tất cả trạng thái</option>
+                                <option value="0">Tất cả trạng thái</option>
                                 <option value={TUITION_STATUS_PAID}>Đã hoàn thành</option>
                                 <option value={TUITION_STATUS_PARTIAL}>Đang đóng từng phần</option>
                                 <option value={TUITION_STATUS_PENDING}>Chưa đóng</option>

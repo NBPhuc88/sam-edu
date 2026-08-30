@@ -1,37 +1,45 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\ClassExam;
+use App\Models\ClassExamSubmission;
+use App\Models\Exam;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\Subject;
 use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\PermissionSeeder::class);
+    $this->seed(PermissionSeeder::class);
 
     $this->center1 = Center::create([
-        'code'              => 'CTR000000001',
-        'name'              => 'Trung tâm Quận 1',
-        'email'             => 'center1@sam-edu.vn',
-        'phone'             => '0901111111',
-        'address'           => '123 Lê Lợi, Q1',
-        'status'            => 'active',
-        'plan_type'         => 'trial',
-        'subscription_plan' => 'trial',
-        'expires_at'        => now()->addYear(),
+        'code'                 => 'CTR000000001',
+        'name'                 => 'Trung tâm Quận 1',
+        'email'                => 'center1@sam-edu.vn',
+        'phone'                => '0901111111',
+        'address'              => '123 Lê Lợi, Q1',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'plan_type'            => Constant::PLAN_TYPE_FREE,
+        'subscription_plan_id' => 1,
+        'expires_at'           => now()->addYear(),
     ]);
 
     $this->center2 = Center::create([
-        'code'              => 'CTR000000002',
-        'name'              => 'Trung tâm Quận 2',
-        'email'             => 'center2@sam-edu.vn',
-        'phone'             => '0902222222',
-        'address'           => '456 Thảo Điền, Q2',
-        'status'            => 'active',
-        'plan_type'         => 'trial',
-        'subscription_plan' => 'trial',
-        'expires_at'        => now()->addYear(),
+        'code'                 => 'CTR000000002',
+        'name'                 => 'Trung tâm Quận 2',
+        'email'                => 'center2@sam-edu.vn',
+        'phone'                => '0902222222',
+        'address'              => '456 Thảo Điền, Q2',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'plan_type'            => Constant::PLAN_TYPE_FREE,
+        'subscription_plan_id' => 1,
+        'expires_at'           => now()->addYear(),
     ]);
 
     $this->adminCenter2 = Admin::create([
@@ -39,7 +47,8 @@ beforeEach(function () {
         'full_name'  => 'Admin Center 2',
         'email'      => 'admin2@sam-edu.vn',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code' => 'ADM000000088',
     ]);
     $this->adminCenter2->centers()->attach($this->center2->id);
@@ -51,7 +60,7 @@ test('rate limiting blocks excessive login attempts with 429 status', function (
     // Make 10 requests (allowed)
     for ($i = 0; $i < 10; $i++) {
         $this->post('/login', [
-            'role'     => 'admin',
+            'role'     => Constant::ROLE_ADMIN,
             'username' => 'wrong_user',
             'password' => 'wrong_pass',
         ]);
@@ -59,7 +68,7 @@ test('rate limiting blocks excessive login attempts with 429 status', function (
 
     // 11th request must be throttled
     $response = $this->post('/login', [
-        'role'     => 'admin',
+        'role'     => Constant::ROLE_ADMIN,
         'username' => 'wrong_user',
         'password' => 'wrong_pass',
     ]);
@@ -128,14 +137,14 @@ test('media upload rejects dangerous SVG files to prevent stored XSS', function 
 });
 
 test('deleting a class exam submission automatically removes associated audio files from disk', function () {
-    \Illuminate\Support\Facades\Storage::fake('sam');
+    Storage::fake('sam');
 
     $audioPath = 'exams/speaking/test_audio_sample_123.webm';
-    \Illuminate\Support\Facades\Storage::disk('sam')->put($audioPath, 'dummy audio content');
+    Storage::disk('sam')->put($audioPath, 'dummy audio content');
 
-    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists($audioPath))->toBeTrue();
+    expect(Storage::disk('sam')->exists($audioPath))->toBeTrue();
 
-    $student = \App\Models\Student::create([
+    $student = Student::create([
         'student_code' => 'STD000000099',
         'username'     => 'test_student_clean',
         'first_name'   => 'Test',
@@ -144,38 +153,38 @@ test('deleting a class exam submission automatically removes associated audio fi
         'email'        => 'student_clean@sam-edu.vn',
         'password'     => 'password123',
         'center_id'    => $this->center2->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
-    $subject = \App\Models\Subject::create([
+    $subject = Subject::create([
         'center_id'        => $this->center2->id,
         'code'             => 'S000000099',
         'name'             => 'Tiếng Anh Giao Tiếp',
         'total_sessions'   => 20,
         'duration_minutes' => 60,
         'tuition_fee'      => 2000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
-    $class = \App\Models\SchoolClass::create([
+    $class = SchoolClass::create([
         'center_id'    => $this->center2->id,
         'code'         => 'C000000099',
         'name'         => 'Lớp Giao Tiếp 01',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
-    $exam = \App\Models\Exam::create([
+    $exam = Exam::create([
         'center_id'        => $this->center2->id,
         'subject_id'       => $subject->id,
         'code'             => 'EX000000099',
         'name'             => 'Đề Thi Speaking',
         'duration_minutes' => 30,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
-    $classExam = \App\Models\ClassExam::create([
+    $classExam = ClassExam::create([
         'code'             => 'CE000000099',
         'access_code'      => '123456',
         'class_id'         => $class->id,
@@ -184,14 +193,14 @@ test('deleting a class exam submission automatically removes associated audio fi
         'exam_date'        => now()->format('Y-m-d'),
         'duration_minutes' => 30,
         'max_score'        => 10,
-        'status'           => 'ongoing',
+        'status'           => Constant::CLASS_EXAM_STATUS_ONGOING,
     ]);
 
-    $submission = \App\Models\ClassExamSubmission::create([
+    $submission = ClassExamSubmission::create([
         'class_exam_id'  => $classExam->id,
         'student_id'     => $student->id,
         'attempt_number' => 1,
-        'status'         => 'submitted',
+        'status'         => Constant::SUBMISSION_STATUS_SUBMITTED,
         'answers'        => [
             1 => 'answer text',
             2 => $audioPath,
@@ -203,5 +212,5 @@ test('deleting a class exam submission automatically removes associated audio fi
     $submission->delete();
 
     // The audio file must be automatically deleted from disk 'sam'
-    expect(\Illuminate\Support\Facades\Storage::disk('sam')->exists($audioPath))->toBeFalse();
+    expect(Storage::disk('sam')->exists($audioPath))->toBeFalse();
 });

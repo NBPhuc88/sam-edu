@@ -78,7 +78,7 @@ class HandleInertiaRequests extends Middleware
             $numericAdminRole = null;
 
             if ($role === 'admin') {
-                $isSuperAdmin = ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()));
+                $isSuperAdmin     = ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()));
                 $adminRoleStr     = $isSuperAdmin ? 'super_admin' : 'admin';
                 $numericAdminRole = $isSuperAdmin ? Constant::ROLE_SUPER_ADMIN : Constant::ROLE_ADMIN;
             }

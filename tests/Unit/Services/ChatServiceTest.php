@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -13,14 +14,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test ChatService',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_chat_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Chat',
         'password'   => Hash::make('password123'),
-        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
-        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
     $this->schoolClass = SchoolClass::create([
@@ -91,7 +92,7 @@ test('sendMessage throws 403 exception when class status is inactive', function 
         'center_id' => $this->center->id,
         'code'      => 'CLS' . random_int(1000000, 9999999),
         'name'      => 'Lop Chat Inactive',
-        'status'    => 0,
+        'status'    => Constant::CLASS_STATUS_INACTIVE,
     ]);
 
     \Illuminate\Support\Facades\Auth::guard('admin')->login($this->superAdmin);

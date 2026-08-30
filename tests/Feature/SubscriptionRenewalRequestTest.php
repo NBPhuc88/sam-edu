@@ -53,10 +53,12 @@ test('admin can request subscription renewal and queue email to super admin', fu
     ]);
     $centerAdmin->centers()->attach($center->id);
 
+    $plan = \App\Models\SubscriptionPlan::where('code', 'basic_5')->first() ?? \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($centerAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
             'center_id'     => $center->id,
-            'plan_code'     => 'basic_5',
+            'plan_id'       => $plan->id,
             'duration_type' => 'yearly',
             'note'          => 'Vui lòng hỗ trợ gia hạn sớm',
         ]);
@@ -95,10 +97,12 @@ test('super_admin cannot request subscription renewal', function () {
         'status'     => Constant::STATUS_ACTIVE,
     ]);
 
+    $plan = \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($superAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
             'center_id' => $center->id,
-            'plan_code' => 'basic_5',
+            'plan_id'   => $plan->id,
         ]);
 
     $response->assertStatus(403);
@@ -127,10 +131,12 @@ test('center admin cannot request renewal for unassigned center', function () {
     ]);
     $centerAdmin->centers()->attach($center1->id);
 
+    $plan = \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($centerAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
             'center_id' => $center2->id,
-            'plan_code' => 'basic_5',
+            'plan_id'   => $plan->id,
         ]);
 
     $response->assertStatus(403);
@@ -156,10 +162,12 @@ test('center admin can request renewal with monthly duration and calculate month
     ]);
     $centerAdmin->centers()->attach($center->id);
 
+    $plan = \App\Models\SubscriptionPlan::where('code', 'basic_5')->first() ?? \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($centerAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
             'center_id'     => $center->id,
-            'plan_code'     => 'basic_5',
+            'plan_id'       => $plan->id,
             'duration_type' => 'monthly',
             'note'          => 'Gia hạn 1 tháng',
         ]);
@@ -196,10 +204,12 @@ test('teacher cannot request subscription renewal', function () {
         'status'       => Constant::STATUS_ACTIVE,
     ]);
 
+    $plan = \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($teacher, 'teacher')
         ->postJson('/api/payments/request-renewal', [
             'center_id' => $center->id,
-            'plan_code' => 'basic_5',
+            'plan_id'   => $plan->id,
         ]);
 
     $response->assertStatus(403);
@@ -226,10 +236,12 @@ test('student cannot request subscription renewal', function () {
         'status'       => 1,
     ]);
 
+    $plan = \App\Models\SubscriptionPlan::first();
+
     $response = $this->actingAs($student, 'student')
         ->postJson('/api/payments/request-renewal', [
             'center_id' => $center->id,
-            'plan_code' => 'basic_5',
+            'plan_id'   => $plan->id,
         ]);
 
     $response->assertStatus(403);

@@ -90,11 +90,11 @@ test('updateClass cascades status changes to isolated students in the class', fu
 
     $schoolClass->students()->attach($student->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
 
-    // Pause class -> should set isolated student to inactive (status 0)
-    $this->service->updateClass($schoolClass->id, ['status' => 0], $this->superAdmin);
+    // Pause class -> should set isolated student to inactive
+    $this->service->updateClass($schoolClass->id, ['status' => Constant::CLASS_STATUS_INACTIVE], $this->superAdmin);
 
     $studentStatusVal = is_object($student->fresh()->status) ? $student->fresh()->status->value : (int) $student->fresh()->status;
-    expect((int) $studentStatusVal)->toBe(0);
+    expect((int) $studentStatusVal)->toBe(Constant::STUDENT_STATUS_INACTIVE);
 });
 
 test('addStudentsToClass attaches valid center students', function () {

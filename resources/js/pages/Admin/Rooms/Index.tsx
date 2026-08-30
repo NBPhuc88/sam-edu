@@ -95,11 +95,11 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
     const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -117,8 +117,8 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
             '/rooms',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== '' ? Number(selectedStatus) : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -126,8 +126,8 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/rooms', {}, { preserveState: true });
     };
 
@@ -307,12 +307,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     </label>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="-- Tất cả Trung Tâm --"
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((center) => ({
-                                                value: String(center.id),
+                                                value: center.id,
                                                 label: `${center.name} (${center.code})`,
                                             })),
                                         ]}
@@ -327,12 +327,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                 </label>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả trạng thái' },
-                                        { value: String(ROOM_STATUS_ACTIVE), label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
-                                        { value: String(ROOM_STATUS_PAUSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
-                                        { value: String(ROOM_STATUS_CLOSED), label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
+                                        { value: 0, label: 'Tất cả trạng thái' },
+                                        { value: ROOM_STATUS_ACTIVE, label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
+                                        { value: ROOM_STATUS_PAUSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
+                                        { value: ROOM_STATUS_CLOSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
                                     ]}
                                 />
                             </div>

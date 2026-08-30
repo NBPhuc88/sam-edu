@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -24,7 +25,7 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm Test',
         'email'  => 'centertest@test.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -32,7 +33,8 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_class@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code' => 'ADM000000096',
     ]);
 
@@ -45,7 +47,7 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'password'     => 'password123',
         'teacher_code' => 'GV000000007',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -57,27 +59,28 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'password'     => 'password123',
         'student_code' => 'HS000000007',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
         'center_id' => $center->id,
         'code'      => 'SUB007',
         'name'      => 'Vật Lý 10',
+        'status'    => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
         'center_id' => $center->id,
         'code'      => 'CLS007',
         'name'      => 'Lớp 10 Lý',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $classSubject = ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     // Gán điểm thi cho học sinh trong lớp
@@ -91,7 +94,7 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $examResult = ExamResult::create([
@@ -108,7 +111,7 @@ test('soft deleting school class retains exam results and past sessions but bloc
         'session_date'     => now()->subDays(2)->toDateString(),
         'start_time'       => '14:00',
         'end_time'         => '16:00',
-        'status'           => 'completed',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
     ]);
 
     // 1. Xóa lớp học

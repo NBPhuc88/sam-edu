@@ -7,6 +7,7 @@ use App\Models\ClassChatMessage;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\SubscriptionPlan;
 use App\Models\Teacher;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\SubscriptionPlanSeeder;
@@ -18,6 +19,22 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(SubscriptionPlanSeeder::class);
     $this->seed(PermissionSeeder::class);
+
+    $this->planChat = SubscriptionPlan::whereJsonContains('allowed_features', 'chat')->first() ?? SubscriptionPlan::create([
+        'code'             => 'plan_chat_test',
+        'name'             => 'Gói Chat Test',
+        'plan_type'        => Constant::PLAN_TYPE_PREMIUM,
+        'allowed_features' => ['chat'],
+        'status'           => Constant::STATUS_ACTIVE,
+    ]);
+
+    $this->planNoChat = SubscriptionPlan::whereJsonDoesntContain('allowed_features', 'chat')->first() ?? SubscriptionPlan::create([
+        'code'             => 'plan_no_chat_test',
+        'name'             => 'Gói Không Chat Test',
+        'plan_type'        => Constant::PLAN_TYPE_STANDARD,
+        'allowed_features' => ['grading'],
+        'status'           => Constant::STATUS_ACTIVE,
+    ]);
 });
 
 test('unauthenticated users are redirected to login when visiting chat groups page', function () {
@@ -27,21 +44,21 @@ test('unauthenticated users are redirected to login when visiting chat groups pa
 
 test('super admin can view chat groups of all centers and filter by center and class', function () {
     $centerA = Center::create([
-        'code'              => 'CTR000000001',
-        'name'              => 'Trung Tâm A',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000001',
+        'name'                 => 'Trung Tâm A',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $centerB = Center::create([
-        'code'              => 'CTR000000002',
-        'name'              => 'Trung Tâm B',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000002',
+        'name'                 => 'Trung Tâm B',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $superAdmin = Admin::create([
@@ -58,14 +75,14 @@ test('super admin can view chat groups of all centers and filter by center and c
         'center_id' => $centerA->id,
         'code'      => 'CLS000000001',
         'name'      => 'Lớp Toán 10 A',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $classB = SchoolClass::create([
         'center_id' => $centerB->id,
         'code'      => 'CLS000000002',
         'name'      => 'Lớp Văn 10 B',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     ClassChatMessage::create([
@@ -106,21 +123,21 @@ test('super admin can view chat groups of all centers and filter by center and c
 
 test('sub-admin only sees chat groups in their assigned center', function () {
     $centerA = Center::create([
-        'code'              => 'CTR000000003',
-        'name'              => 'Trung Tâm Alpha',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000003',
+        'name'                 => 'Trung Tâm Alpha',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $centerB = Center::create([
-        'code'              => 'CTR000000004',
-        'name'              => 'Trung Tâm Beta',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000004',
+        'name'                 => 'Trung Tâm Beta',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $adminA = Admin::create([
@@ -138,14 +155,14 @@ test('sub-admin only sees chat groups in their assigned center', function () {
         'center_id' => $centerA->id,
         'code'      => 'CLS000000003',
         'name'      => 'Lớp Anh 10 Alpha',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $classB = SchoolClass::create([
         'center_id' => $centerB->id,
         'code'      => 'CLS000000004',
         'name'      => 'Lớp Hóa 10 Beta',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($adminA, 'admin')->get(route('chats.index'));
@@ -161,12 +178,12 @@ test('sub-admin only sees chat groups in their assigned center', function () {
 
 test('teacher only sees chat groups of classes they teach', function () {
     $center = Center::create([
-        'code'              => 'CTR000000005',
-        'name'              => 'Trung Tâm Delta',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000005',
+        'name'                 => 'Trung Tâm Delta',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $teacher1 = Teacher::create([
@@ -178,7 +195,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'full_name'    => 'Giáo Viên Một',
         'email'        => 'teacher_one@test.com',
         'password'     => 'password123',
-        'status'       => Constant::STATUS_ACTIVE,
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $teacher2 = Teacher::create([
@@ -190,7 +207,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'full_name'    => 'Giáo Viên Hai',
         'email'        => 'teacher_two@test.com',
         'password'     => 'password123',
-        'status'       => Constant::STATUS_ACTIVE,
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -203,7 +220,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'center_id' => $center->id,
         'code'      => 'CLS000000005',
         'name'      => 'Lớp Lý T1',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
     $class1->classSubjects()->create([
         'subject_id' => $subject->id,
@@ -215,7 +232,7 @@ test('teacher only sees chat groups of classes they teach', function () {
         'center_id' => $center->id,
         'code'      => 'CLS000000006',
         'name'      => 'Lớp Lý T2',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
     $class2->classSubjects()->create([
         'subject_id' => $subject->id,
@@ -235,12 +252,12 @@ test('teacher only sees chat groups of classes they teach', function () {
 
 test('student only sees chat groups of classes they are enrolled in', function () {
     $center = Center::create([
-        'code'              => 'CTR000000006',
-        'name'              => 'Trung Tâm Omega',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addMonth(),
+        'code'                 => 'CTR000000006',
+        'name'                 => 'Trung Tâm Omega',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonth(),
     ]);
 
     $student = Student::create([
@@ -252,14 +269,14 @@ test('student only sees chat groups of classes they are enrolled in', function (
         'full_name'    => 'Học Sinh Một',
         'email'        => 'student_one@test.com',
         'password'     => 'password123',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $classEnrolled = SchoolClass::create([
         'center_id' => $center->id,
         'code'      => 'CLS000000007',
         'name'      => 'Lớp Học Sinh Tham Gia',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
     $classEnrolled->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
@@ -267,7 +284,7 @@ test('student only sees chat groups of classes they are enrolled in', function (
         'center_id' => $center->id,
         'code'      => 'CLS000000008',
         'name'      => 'Lớp Khác Không Tham Gia',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($student, 'student')->get(route('chats.index'));
@@ -282,12 +299,12 @@ test('student only sees chat groups of classes they are enrolled in', function (
 
 test('center without chat plan feature is redirected to UpgradePlan page with 403', function () {
     $centerBasic = Center::create([
-        'code'              => 'CTR000000007',
-        'name'              => 'Trung Tâm Gói Cơ Bản',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'basic_5', // basic plan without 'chat' in allowed_features
-        'plan_type'         => 'basic',
-        'expires_at'        => Carbon::now()->addMonths(6),
+        'code'                 => 'CTR000000007',
+        'name'                 => 'Trung Tâm Gói Cơ Bản',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $this->planNoChat->id,
+        'plan_type'            => Constant::PLAN_TYPE_STANDARD,
+        'expires_at'           => Carbon::now()->addMonths(6),
     ]);
 
     $adminBasic = Admin::create([

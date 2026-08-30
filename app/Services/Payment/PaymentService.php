@@ -230,7 +230,7 @@ class PaymentService implements PaymentServiceInterface
         }
 
         $this->paymentTransactionRepository->update($transaction->id, [
-            'status'   => 'failed',
+            'status'   => Constant::PAYMENT_STATUS_FAILED,
             'metadata' => array_merge($transaction->metadata ?? [], ['payload' => $result]),
         ]);
 
@@ -272,7 +272,7 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
-        if ($transaction->status === 'success') {
+        if ((int) $transaction->status === Constant::PAYMENT_STATUS_SUCCESS) {
             return [
                 'return_code'    => 1,
                 'return_message' => 'success (already processed)',
@@ -286,7 +286,7 @@ class PaymentService implements PaymentServiceInterface
 
         DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planId) {
             $this->paymentTransactionRepository->update($transaction->id, [
-                'status'   => 'success',
+                'status'   => Constant::PAYMENT_STATUS_SUCCESS,
                 'paid_at'  => now(),
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'zp_trans_id' => $zpTransId,
@@ -353,10 +353,10 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
-        if ($transaction->status === 'success') {
+        if ((int) $transaction->status === Constant::PAYMENT_STATUS_SUCCESS) {
             return [
                 'success'     => true,
-                'status'      => 'success',
+                'status'      => Constant::PAYMENT_STATUS_SUCCESS,
                 'transaction' => $transaction,
             ];
         }
@@ -365,7 +365,7 @@ class PaymentService implements PaymentServiceInterface
 
         if (isset($result['return_code']) && (int) $result['return_code'] === 1) {
             $this->paymentTransactionRepository->update($transaction->id, [
-                'status'   => 'success',
+                'status'   => Constant::PAYMENT_STATUS_SUCCESS,
                 'paid_at'  => now(),
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'zp_trans_id' => (string) ($result['zp_trans_id'] ?? ''),

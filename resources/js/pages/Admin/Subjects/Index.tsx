@@ -66,11 +66,11 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
     const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -104,8 +104,8 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/subjects', {}, { preserveState: true });
     };
 
@@ -183,12 +183,12 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
                                 <div>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -199,11 +199,11 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Trạng thái' },
-                                        { value: String(SUBJECT_STATUS_ACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE] },
-                                        { value: String(SUBJECT_STATUS_INACTIVE), label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE] },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: SUBJECT_STATUS_ACTIVE, label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE] },
+                                        { value: SUBJECT_STATUS_INACTIVE, label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE] },
                                     ]}
                                 />
                             </div>

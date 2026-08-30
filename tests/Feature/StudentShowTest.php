@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Attendance;
 use App\Models\Center;
@@ -25,7 +26,7 @@ test('super admin can access student show page', function () {
         'code'   => 'CTR000000031',
         'name'   => 'Trung Tâm Student Test',
         'email'  => 'center_student@test.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -33,7 +34,8 @@ test('super admin can access student show page', function () {
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_student@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code' => 'ADM000000094',
     ]);
 
@@ -46,7 +48,7 @@ test('super admin can access student show page', function () {
         'password'            => 'password123',
         'student_code'        => 'STD000000001',
         'center_id'           => $center->id,
-        'status'              => 1,
+        'status'              => Constant::STUDENT_STATUS_ACTIVE,
         'parent_name'         => 'Lê Văn Phụ Huynh',
         'parent_phone'        => '0912345678',
         'parent_relationship' => 'father',
@@ -59,60 +61,61 @@ test('super admin can access student show page', function () {
         'full_name'    => 'Giáo Viên Toán',
         'email'        => 'teacher_math@test.com',
         'password'     => 'password123',
-        'teacher_code' => 'GV000000031',
+        'teacher_code' => 'GV000000001',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
+    ]);
+
+    $room = Room::create([
+        'center_id' => $center->id,
+        'code'      => 'R001',
+        'name'      => 'Phòng 101',
+        'capacity'  => 30,
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
         'center_id' => $center->id,
-        'code'      => 'SUB002',
-        'name'      => 'Văn 10',
+        'code'      => 'SUB001',
+        'name'      => 'Toán 10',
+        'status'    => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
         'center_id' => $center->id,
-        'code'      => 'CLS002',
-        'name'      => 'Lớp 10B1',
-        'status'    => 1,
-    ]);
-
-    ClassStudent::create([
-        'class_id'    => $class->id,
-        'student_id'  => $student->id,
-        'status'      => 'active',
-        'enrolled_at' => now(),
+        'code'      => 'CLS001',
+        'name'      => 'Lớp 10A',
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $classSubject = ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
-    $room = Room::create([
-        'center_id' => $center->id,
-        'code'      => 'R002',
-        'name'      => 'Phòng 201',
-        'capacity'  => 25,
+    ClassStudent::create([
+        'class_id'    => $class->id,
+        'student_id'  => $student->id,
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+        'enrolled_at' => now(),
     ]);
 
     $session = ClassSession::create([
         'class_subject_id' => $classSubject->id,
         'teacher_id'       => $teacher->id,
         'room_id'          => $room->id,
-        'session_date'     => now()->format('Y-m-d'),
-        'start_time'       => '14:00:00',
-        'end_time'         => '15:30:00',
-        'status'           => 'completed',
+        'session_date'     => now()->toDateString(),
+        'start_time'       => '08:00:00',
+        'end_time'         => '09:30:00',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
     ]);
 
     Attendance::create([
         'session_id' => $session->id,
         'student_id' => $student->id,
-        'status'     => 'present',
-        'marked_at'  => now(),
+        'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')
@@ -135,7 +138,7 @@ test('teacher can access student show page in same center', function () {
         'code'   => 'CTR000000041',
         'name'   => 'Trung Tâm Teacher Access',
         'email'  => 'center_teacher_acc@test.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $teacher = Teacher::create([
@@ -147,7 +150,7 @@ test('teacher can access student show page in same center', function () {
         'password'     => 'password123',
         'teacher_code' => 'GV000000041',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -159,33 +162,34 @@ test('teacher can access student show page in same center', function () {
         'password'     => 'password123',
         'student_code' => 'STD000000041',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
         'center_id' => $center->id,
         'code'      => 'CLS041',
         'name'      => 'Lớp 11A',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
         'center_id' => $center->id,
         'code'      => 'SUB041',
         'name'      => 'Toán 11',
+        'status'    => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     ClassStudent::create([
         'class_id'    => $class->id,
         'student_id'  => $student->id,
-        'status'      => 'active',
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
         'enrolled_at' => now(),
     ]);
 
@@ -205,7 +209,7 @@ test('teacher cannot export student attendances', function () {
         'code'   => 'CTR000000051',
         'name'   => 'Trung Tâm No Export',
         'email'  => 'center_no_exp@test.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $teacher = Teacher::create([
@@ -217,7 +221,7 @@ test('teacher cannot export student attendances', function () {
         'password'     => 'password123',
         'teacher_code' => 'GV000000051',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -229,7 +233,7 @@ test('teacher cannot export student attendances', function () {
         'password'     => 'password123',
         'student_code' => 'STD000000051',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($teacher, 'teacher')

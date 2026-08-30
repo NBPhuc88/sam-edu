@@ -68,14 +68,14 @@ export default function ClassExamIndex({
     const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Modal state
@@ -88,7 +88,7 @@ export default function ClassExamIndex({
     const [isDeleting, setIsDeleting] = useState(false);
 
     const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -97,9 +97,9 @@ export default function ClassExamIndex({
             '/class-exams',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== '' ? Number(selectedStatus) : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -107,9 +107,9 @@ export default function ClassExamIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         router.get('/class-exams', {}, { preserveState: true });
     };
 
@@ -305,13 +305,13 @@ export default function ClassExamIndex({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: c.name,
                                             })),
                                         ]}
@@ -328,11 +328,11 @@ export default function ClassExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     options={[
-                                        { value: '', label: '-- Tất cả Lớp Học --' },
+                                        { value: 0, label: '-- Tất cả Lớp Học --' },
                                         ...filteredClasses.map((c) => ({
-                                            value: String(c.id),
+                                            value: c.id,
                                             label: c.name,
                                         })),
                                     ]}
@@ -348,13 +348,13 @@ export default function ClassExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả trạng thái' },
-                                        { value: String(CLASS_EXAM_STATUS_SCHEDULED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
-                                        { value: String(CLASS_EXAM_STATUS_ONGOING), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
-                                        { value: String(CLASS_EXAM_STATUS_COMPLETED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
-                                        { value: String(CLASS_EXAM_STATUS_CANCELLED), label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
+                                        { value: 0, label: 'Tất cả trạng thái' },
+                                        { value: CLASS_EXAM_STATUS_SCHEDULED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
+                                        { value: CLASS_EXAM_STATUS_ONGOING, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
+                                        { value: CLASS_EXAM_STATUS_COMPLETED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
+                                        { value: CLASS_EXAM_STATUS_CANCELLED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
                                     ]}
                                     placeholder="Tất cả trạng thái"
                                     searchable={false}

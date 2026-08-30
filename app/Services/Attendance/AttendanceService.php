@@ -129,7 +129,7 @@ class AttendanceService implements AttendanceServiceInterface
             }
         }
 
-        if ((int) $session->status === 4) {
+        if ($session->reschedules()->exists()) {
             throw ValidationException::withMessages([
                 'session' => 'Không thể điểm danh ca học đã đổi lịch.',
             ]);

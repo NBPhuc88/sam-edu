@@ -25,6 +25,13 @@ import React,{ useState } from 'react';
 import AssignClassModal from './components/AssignClassModal';
 import BulkAssignClassModal from './components/BulkAssignClassModal';
 
+import {
+    GENDER_LABELS,
+    STUDENT_STATUS_ACTIVE,
+    STUDENT_STATUS_GRADUATED,
+    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_LABELS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import { formatDate } from '@/lib/date';
@@ -99,19 +106,19 @@ export default function StudentIndex({
     const canExportCsv = useCanExportCsv();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined && filters.status !== null ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Filter available classes by selected center
     const availableClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
 
     // Selection & Bulk Actions state
@@ -170,9 +177,9 @@ export default function StudentIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         router.get('/students', {}, { preserveState: true });
     };
 
@@ -180,11 +187,11 @@ export default function StudentIndex({
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-            queryParams.append('center_id', selectedCenterId);
+            queryParams.append('center_id', String(selectedCenterId));
         }
 
         if (selectedClassId) {
-            queryParams.append('class_id', selectedClassId);
+            queryParams.append('class_id', String(selectedClassId));
         }
 
         window.location.href = `/students/export?${queryParams.toString()}`;
@@ -215,7 +222,7 @@ export default function StudentIndex({
         formData.append('file', selectedFile);
 
         if (selectedCenterId) {
-            formData.append('center_id', selectedCenterId);
+            formData.append('center_id', String(selectedCenterId));
         }
 
         router.post('/students/import', formData, {
@@ -253,28 +260,20 @@ return;
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
-            return <Badge variant="active">Đang học</Badge>;
+        if (status === STUDENT_STATUS_ACTIVE) {
+            return <Badge variant="active">{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE]}</Badge>;
         }
 
-        if (status === 2) {
-            return <Badge variant="pending">Đã tốt nghiệp</Badge>;
+        if (status === STUDENT_STATUS_GRADUATED) {
+            return <Badge variant="pending">{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED]}</Badge>;
         }
 
-        return <Badge variant="expired">Nghỉ học</Badge>;
+        return <Badge variant="expired">{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE]}</Badge>;
     };
 
     const getGenderLabel = (gender: number | null) => {
-        if (gender === 1) {
-            return 'Nam';
-        }
-        if (gender === 2) {
-            return 'Nữ';
-        }
-        if (gender === 3) {
-            return 'Khác';
-        }
-        return 'Chưa rõ';
+        if (!gender) return '-';
+        return GENDER_LABELS[gender] || '-';
     };
 
     return (
@@ -374,14 +373,14 @@ return;
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -392,12 +391,12 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     placeholder="Tất cả Lớp học"
                                     options={[
-                                        { value: '', label: 'Tất cả Lớp học' },
+                                        { value: 0, label: 'Tất cả Lớp học' },
                                         ...availableClasses.map((cls) => ({
-                                            value: String(cls.id),
+                                            value: cls.id,
                                             label: cls.name,
                                         })),
                                     ]}
@@ -408,12 +407,12 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Trạng thái' },
-                                        { value: '1', label: 'Đang học' },
-                                        { value: '0', label: 'Nghỉ học' },
-                                        { value: '2', label: 'Đã tốt nghiệp' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: STUDENT_STATUS_ACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] },
+                                        { value: STUDENT_STATUS_INACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] },
+                                        { value: STUDENT_STATUS_GRADUATED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] },
                                     ]}
                                 />
                             </div>

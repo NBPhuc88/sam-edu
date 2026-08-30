@@ -101,7 +101,7 @@ test('không cho phép tạo hồ sơ học phí có tiền đợt 1 lớn hơn 
         'total_amount'           => 5000000,
         'initial_payment_amount' => 6000000, // Lớn hơn 5.000.000đ
         'initial_payment_date'   => now()->format('Y-m-d'),
-        'initial_payment_method' => 'cash',
+        'initial_payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('initial_payment_amount');
@@ -117,7 +117,7 @@ test('cho phép tạo hồ sơ học phí có tiền đợt 1 bằng hoặc nh�
         'total_amount'           => 5000000,
         'initial_payment_amount' => 3000000,
         'initial_payment_date'   => now()->format('Y-m-d'),
-        'initial_payment_method' => 'bank_transfer',
+        'initial_payment_method' => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -152,7 +152,7 @@ test('không cho phép thu đợt mới vượt quá số tiền cần đóng c�
     $response = $this->actingAs($this->superAdmin, 'admin')->post("/tuitions/{$tuition->id}/payments", [
         'amount'         => 2500000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('amount');
@@ -183,7 +183,7 @@ test('cho phép thu đợt mới bằng chính xác số tiền còn nợ và ch
     $response = $this->actingAs($this->superAdmin, 'admin')->post("/tuitions/{$tuition->id}/payments", [
         'amount'         => 2000000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -223,7 +223,7 @@ test('không cho phép sửa đợt thu khiến tổng tiền thu vượt quá t
     $response = $this->actingAs($this->superAdmin, 'admin')->patch("/tuitions/payments/{$payment2->id}", [
         'amount'         => 3500000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('amount');

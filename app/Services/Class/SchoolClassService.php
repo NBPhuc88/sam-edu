@@ -16,6 +16,7 @@ use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -419,21 +420,21 @@ class SchoolClassService implements SchoolClassServiceInterface
         }
 
         // 1 câu lệnh SQL duy nhất cập nhật trạng thái học sinh tương ứng
-        if ($newClassStatus === 0 || $newClassStatus === 3) {
-            \Illuminate\Support\Facades\DB::table('students')
+        if ($newClassStatus === Constant::CLASS_STATUS_INACTIVE || $newClassStatus === Constant::CLASS_STATUS_CLOSED) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->where('status', 1)
-                ->update(['status' => 0]);
-        } elseif ($newClassStatus === 2) {
-            \Illuminate\Support\Facades\DB::table('students')
+                ->where('status', Constant::STUDENT_STATUS_ACTIVE)
+                ->update(['status' => Constant::STUDENT_STATUS_INACTIVE]);
+        } elseif ($newClassStatus === Constant::CLASS_STATUS_COMPLETED) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->where('status', 1)
-                ->update(['status' => 2]);
-        } elseif ($newClassStatus === 1) {
-            \Illuminate\Support\Facades\DB::table('students')
+                ->where('status', Constant::STUDENT_STATUS_ACTIVE)
+                ->update(['status' => Constant::STUDENT_STATUS_GRADUATED]);
+        } elseif ($newClassStatus === Constant::CLASS_STATUS_ACTIVE) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->whereIn('status', [0, 2])
-                ->update(['status' => 1]);
+                ->whereIn('status', [Constant::STUDENT_STATUS_INACTIVE, Constant::STUDENT_STATUS_GRADUATED])
+                ->update(['status' => Constant::STUDENT_STATUS_ACTIVE]);
         }
     }
 

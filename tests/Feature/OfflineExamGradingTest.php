@@ -39,25 +39,25 @@ beforeEach(function () {
     ]);
 
     $this->center = Center::create([
-        'code'              => 'CTR000000081',
-        'name'              => 'Trung Tâm Nâng Cao',
-        'email'             => 'center_adv@test.com',
-        'phone'             => '0901111222',
-        'subscription_plan' => 'advanced_test',
-        'plan_type'         => Constant::PLAN_TYPE_PREMIUM,
-        'expires_at'        => now()->addYear(),
-        'status'            => Constant::STATUS_ACTIVE,
+        'code'                 => 'CTR000000081',
+        'name'                 => 'Trung Tâm Nâng Cao',
+        'email'                => 'center_adv@test.com',
+        'phone'                => '0901111222',
+        'subscription_plan_id' => $this->planAdvanced->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => now()->addYear(),
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $this->basicCenter = Center::create([
-        'code'              => 'CTR000000082',
-        'name'              => 'Trung Tâm Cơ Bản',
-        'email'             => 'center_basic@test.com',
-        'phone'             => '0902222333',
-        'subscription_plan' => 'basic_test',
-        'plan_type'         => Constant::PLAN_TYPE_STANDARD,
-        'expires_at'        => now()->addYear(),
-        'status'            => Constant::STATUS_ACTIVE,
+        'code'                 => 'CTR000000082',
+        'name'                 => 'Trung Tâm Cơ Bản',
+        'email'                => 'center_basic@test.com',
+        'phone'                => '0902222333',
+        'subscription_plan_id' => $this->planBasic->id,
+        'plan_type'            => Constant::PLAN_TYPE_STANDARD,
+        'expires_at'           => now()->addYear(),
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
     ]);
 });
 

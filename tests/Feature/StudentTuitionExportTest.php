@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Room;
@@ -8,20 +9,20 @@ use App\Models\Student;
 use App\Models\StudentTuition;
 use App\Models\Subject;
 use App\Models\Teacher;
+use App\Models\TuitionPayment;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->center = Center::create([
-        'code'              => 'CTR000000999',
-        'name'              => 'Trung Tâm Export Test',
-        'phone'             => '0901234599',
-        'email'             => 'export_test@gmail.com',
-        'address'           => '456 Export Street, TP.HCM',
-        'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
-        'max_classes'       => 10,
-        'max_students'      => 50,
-        'status'            => 'active',
+        'code'         => 'CTR000000999',
+        'name'         => 'Trung Tâm Export Test',
+        'phone'        => '0901234599',
+        'email'        => 'export_test@gmail.com',
+        'address'      => '456 Export Street, TP.HCM',
+        'plan_type'    => Constant::PLAN_TYPE_STANDARD,
+        'max_classes'  => 10,
+        'max_students' => 50,
+        'status'       => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $this->superAdmin = Admin::create([
@@ -31,8 +32,8 @@ beforeEach(function () {
         'email'      => 'super_export@gmail.com',
         'phone'      => '0901111999',
         'password'   => bcrypt('password123'),
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
 
     $this->teacher = Teacher::create([
@@ -45,7 +46,7 @@ beforeEach(function () {
         'email'        => 'gv_export@gmail.com',
         'phone'        => '0903333999',
         'password'     => bcrypt('password123'),
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $this->subject = Subject::create([
@@ -53,7 +54,7 @@ beforeEach(function () {
         'code'        => 'MH000000099',
         'name'        => 'Môn Lý Export',
         'tuition_fee' => 3000000,
-        'status'      => 'active',
+        'status'      => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->room = Room::create([
@@ -61,6 +62,7 @@ beforeEach(function () {
         'code'      => 'R000000099',
         'name'      => 'Phòng 201',
         'capacity'  => 30,
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
     ]);
 
     $this->schoolClass = SchoolClass::create([
@@ -72,7 +74,7 @@ beforeEach(function () {
         'name'         => 'Lớp Vật Lý K9',
         'max_capacity' => 30,
         'start_date'   => '2026-08-01',
-        'status'       => 1,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $this->student = Student::create([
@@ -85,7 +87,7 @@ beforeEach(function () {
         'email'        => 'student_export@gmail.com',
         'phone'        => '0988888999',
         'password'     => bcrypt('password123'),
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $this->admin2 = Admin::create([
@@ -95,8 +97,8 @@ beforeEach(function () {
         'email'      => 'admin2_export@gmail.com',
         'phone'      => '0902222999',
         'password'   => bcrypt('password123'),
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
 
     $this->schoolClass2 = SchoolClass::create([
@@ -108,13 +110,13 @@ beforeEach(function () {
         'name'         => 'Lớp Hóa Học K9',
         'max_capacity' => 30,
         'start_date'   => '2026-08-01',
-        'status'       => 1,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     // Gán học sinh vào 2 lớp
     $this->student->classes()->attach([
-        $this->schoolClass->id  => ['status' => 'active', 'enrolled_at' => now()],
-        $this->schoolClass2->id => ['status' => 'active', 'enrolled_at' => now()],
+        $this->schoolClass->id  => ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()],
+        $this->schoolClass2->id => ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()],
     ]);
 
     $this->tuition = StudentTuition::create([
@@ -125,26 +127,26 @@ beforeEach(function () {
         'total_amount'     => 3000000,
         'paid_amount'      => 3000000,
         'remaining_amount' => 0,
-        'status'           => 'completed',
+        'status'           => Constant::TUITION_STATUS_PAID,
         'due_date'         => '2026-08-31',
         'created_by'       => $this->superAdmin->id,
     ]);
 
     // Ghi nhận 2 đợt thu bởi 2 Admin khác nhau
-    \App\Models\TuitionPayment::create([
+    TuitionPayment::create([
         'student_tuition_id' => $this->tuition->id,
         'amount'             => 1000000,
         'payment_date'       => '2026-08-10',
-        'payment_method'     => 'cash',
+        'payment_method'     => Constant::PAYMENT_METHOD_CASH,
         'transaction_code'   => 'TXN001',
         'received_by'        => $this->superAdmin->id,
     ]);
 
-    \App\Models\TuitionPayment::create([
+    TuitionPayment::create([
         'student_tuition_id' => $this->tuition->id,
         'amount'             => 2000000,
         'payment_date'       => '2026-08-20',
-        'payment_method'     => 'bank_transfer',
+        'payment_method'     => Constant::PAYMENT_METHOD_BANK_TRANSFER,
         'transaction_code'   => 'TXN002',
         'received_by'        => $this->admin2->id,
     ]);
@@ -167,7 +169,7 @@ test('SuperAdmin can download tuitions export xls file with multi-row payments a
     $response = $this->actingAs($this->superAdmin, 'admin')
         ->get(route('tuitions.export', [
             'center_id' => $this->center->id,
-            'status'    => 'completed',
+            'status'    => Constant::TUITION_STATUS_PAID,
         ]));
 
     $response->assertOk();

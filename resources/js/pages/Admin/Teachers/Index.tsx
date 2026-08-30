@@ -23,6 +23,13 @@ Upload,
 } from 'lucide-react';
 import React,{ useState } from 'react';
 
+import {
+    GENDER_LABELS,
+    TEACHER_STATUS_ACTIVE,
+    TEACHER_STATUS_INACTIVE,
+    TEACHER_STATUS_LABELS,
+    TEACHER_STATUS_LOCKED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import { formatDate } from '@/lib/date';
@@ -71,11 +78,11 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
     const canExportCsv = useCanExportCsv();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Import modal state
@@ -104,8 +111,8 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/teachers', {}, { preserveState: true });
     };
 
@@ -113,7 +120,11 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-            queryParams.append('center_id', selectedCenterId);
+            queryParams.append('center_id', String(selectedCenterId));
+        }
+
+        if (selectedStatus) {
+            queryParams.append('status', String(selectedStatus));
         }
 
         window.location.href = `/teachers/export?${queryParams.toString()}`;
@@ -144,7 +155,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         formData.append('file', selectedFile);
 
         if (selectedCenterId) {
-            formData.append('center_id', selectedCenterId);
+            formData.append('center_id', String(selectedCenterId));
         }
 
         router.post('/teachers/import', formData, {
@@ -182,23 +193,21 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
-            return <Badge variant="active">Đang hoạt động</Badge>;
+        if (status === TEACHER_STATUS_ACTIVE) {
+            return <Badge variant="active">{TEACHER_STATUS_LABELS[TEACHER_STATUS_ACTIVE]}</Badge>;
         }
-        if (status === 0) {
-            return <Badge variant="expired">Tạm dừng</Badge>;
+        if (status === TEACHER_STATUS_INACTIVE) {
+            return <Badge variant="expired">{TEACHER_STATUS_LABELS[TEACHER_STATUS_INACTIVE]}</Badge>;
         }
-        if (status === 2) {
-            return <Badge variant="danger">Bị khóa</Badge>;
+        if (status === TEACHER_STATUS_LOCKED) {
+            return <Badge variant="danger">{TEACHER_STATUS_LABELS[TEACHER_STATUS_LOCKED]}</Badge>;
         }
         return <Badge variant="info">Chưa rõ</Badge>;
     };
 
     const getGenderLabel = (gender: number | null) => {
-        if (gender === 1) return 'Nam';
-        if (gender === 2) return 'Nữ';
-        if (gender === 3) return 'Khác';
-        return '-';
+        if (!gender) return '-';
+        return GENDER_LABELS[gender] || '-';
     };
 
     return (
@@ -297,12 +306,12 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 <div>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -313,12 +322,12 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Trạng thái' },
-                                        { value: '1', label: 'Đang hoạt động' },
-                                        { value: '0', label: 'Tạm dừng' },
-                                        { value: '2', label: 'Bị khóa' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: TEACHER_STATUS_ACTIVE, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_ACTIVE] },
+                                        { value: TEACHER_STATUS_INACTIVE, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_INACTIVE] },
+                                        { value: TEACHER_STATUS_LOCKED, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_LOCKED] },
                                     ]}
                                 />
                             </div>

@@ -114,7 +114,7 @@ test('authenticate fails when account status is inactive or locked', function ()
 
     expect($result['success'])->toBeFalse()
         ->and($result['account'])->toBeNull()
-        ->and($result['error'])->toBe('Tài khoản của bạn đã bị khóa, hết hạn hoặc chưa kích hoạt.');
+        ->and($result['error'])->toBe('Tài khoản của bạn đã bị khóa, tạm ngưng hoặc chưa kích hoạt.');
 });
 
 test('logout clears device session token and logs out all guards', function () {

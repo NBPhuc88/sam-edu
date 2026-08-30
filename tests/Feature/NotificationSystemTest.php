@@ -5,6 +5,7 @@ use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
+use App\Models\SubscriptionPlan;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,12 +22,14 @@ beforeEach(function () {
 test('requesting renewal creates notification for super admins', function () {
     Event::fake();
 
+    $basicPlan = SubscriptionPlan::where('code', 'basic_5')->first();
+
     $center = Center::create([
-        'code'              => 'CTR-NOTIF-01',
-        'name'              => 'Trung Tâm Test Notification',
-        'status'            => Constant::STATUS_ACTIVE,
-        'subscription_plan' => 'basic_5',
-        'expires_at'        => now()->addDays(3),
+        'code'                 => 'CTR-NOTIF-01',
+        'name'                 => 'Trung Tâm Test Notification',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $basicPlan->id,
+        'expires_at'           => now()->addDays(3),
     ]);
 
     $superAdmin = Admin::create([
@@ -53,7 +56,7 @@ test('requesting renewal creates notification for super admins', function () {
     $response = $this->actingAs($centerAdmin, 'admin')
         ->postJson('/api/payments/request-renewal', [
             'center_id'     => $center->id,
-            'plan_code'     => 'basic_5',
+            'plan_id'       => $basicPlan->id,
             'duration_type' => 'yearly',
         ]);
 
@@ -118,6 +121,8 @@ test('super admin can fetch notifications and mark them as read', function () {
 test('registering a new center creates notification and broadcasts event for super admins', function () {
     Event::fake();
 
+    $trialPlan = SubscriptionPlan::where('plan_type', Constant::PLAN_TYPE_FREE)->first() ?? SubscriptionPlan::first();
+
     $superAdmin = Admin::create([
         'admin_code' => 'ADM-SUP-99',
         'username'   => 'super_admin_reg_notif_test',
@@ -129,12 +134,12 @@ test('registering a new center creates notification and broadcasts event for sup
     ]);
 
     $response = $this->postJson('/register-center/step1', [
-        'name'              => 'Trung Tâm Tin Học New Test',
-        'phone'             => '0987654321',
-        'email'             => 'newcenter@test.com',
-        'address'           => '123 Đường Test, Hà Nội',
-        'subscription_plan' => 'trial',
-        'payment_method'    => 'zalopay',
+        'name'                 => 'Trung Tâm Tin Học New Test',
+        'phone'                => '0987654321',
+        'email'                => 'newcenter@test.com',
+        'address'              => '123 Đường Test, Hà Nội',
+        'subscription_plan_id' => $trialPlan->id,
+        'payment_method'       => Constant::PAYMENT_METHOD_ZALOPAY,
     ]);
 
     $response->assertStatus(200);

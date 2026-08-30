@@ -87,7 +87,7 @@ test('updateStudent updates student information and changes status successfully'
 
     $updated = $this->service->updateStudent($student->id, [
         'full_name'   => 'New Name',
-        'status'      => 0,
+        'status'      => Constant::STUDENT_STATUS_INACTIVE,
         'parent_name' => 'Nguyen Van Parent',
     ], $this->superAdmin);
 

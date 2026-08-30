@@ -13,8 +13,8 @@ class Constant
     // ==========================================
     // 0. TRẠNG THÁI TOÀN CỤC CHUNG (GENERIC STATUSES)
     // ==========================================
-    public const int STATUS_INACTIVE = 0; // Không hoạt động / Tắt / Khóa / Tạm dừng
     public const int STATUS_ACTIVE   = 1; // Đang hoạt động / Bật / Hoạt động
+    public const int STATUS_INACTIVE = 2; // Không hoạt động / Tắt / Khóa / Tạm dừng
 
     // ==========================================
     // 1. PHÂN TRANG & HIỂN THỊ (PAGINATION)
@@ -101,13 +101,13 @@ class Constant
     // 4. NGƯỜI DÙNG & TÀI KHOẢN (USERS & STATUSES)
     // ==========================================
     // Bảng admins
-    public const int ADMIN_STATUS_INACTIVE = 0; // Tạm ngưng
     public const int ADMIN_STATUS_ACTIVE   = 1; // Đang hoạt động
-    public const int ADMIN_STATUS_LOCKED   = 2; // Đã khóa
+    public const int ADMIN_STATUS_INACTIVE = 2; // Tạm ngưng
+    public const int ADMIN_STATUS_LOCKED   = 3; // Đã khóa
 
     public const array ADMIN_STATUSES = [
-        self::ADMIN_STATUS_INACTIVE,
         self::ADMIN_STATUS_ACTIVE,
+        self::ADMIN_STATUS_INACTIVE,
         self::ADMIN_STATUS_LOCKED,
     ];
 
@@ -118,13 +118,13 @@ class Constant
     ];
 
     // Bảng teachers
-    public const int TEACHER_STATUS_INACTIVE = 0; // Tạm nghỉ
     public const int TEACHER_STATUS_ACTIVE   = 1; // Đang làm việc
-    public const int TEACHER_STATUS_LOCKED   = 2; // Đã khóa
+    public const int TEACHER_STATUS_INACTIVE = 2; // Tạm nghỉ
+    public const int TEACHER_STATUS_LOCKED   = 3; // Đã khóa
 
     public const array TEACHER_STATUSES = [
-        self::TEACHER_STATUS_INACTIVE,
         self::TEACHER_STATUS_ACTIVE,
+        self::TEACHER_STATUS_INACTIVE,
         self::TEACHER_STATUS_LOCKED,
     ];
 
@@ -135,13 +135,13 @@ class Constant
     ];
 
     // Bảng students
-    public const int STUDENT_STATUS_INACTIVE  = 0; // Tạm ngưng / Khóa / Nghỉ học
     public const int STUDENT_STATUS_ACTIVE    = 1; // Đang theo học
-    public const int STUDENT_STATUS_GRADUATED = 2; // Đã tốt nghiệp
+    public const int STUDENT_STATUS_INACTIVE  = 2; // Tạm ngưng / Khóa / Nghỉ học
+    public const int STUDENT_STATUS_GRADUATED = 3; // Đã tốt nghiệp
 
     public const array STUDENT_STATUSES = [
-        self::STUDENT_STATUS_INACTIVE,
         self::STUDENT_STATUS_ACTIVE,
+        self::STUDENT_STATUS_INACTIVE,
         self::STUDENT_STATUS_GRADUATED,
     ];
 
@@ -178,10 +178,10 @@ class Constant
     ];
 
     // Bảng center_subscriptions
-    public const int SUBSCRIPTION_STATUS_PENDING   = 0; // Chờ kích hoạt
-    public const int SUBSCRIPTION_STATUS_ACTIVE    = 1; // Đang hiệu lực
-    public const int SUBSCRIPTION_STATUS_EXPIRED   = 2; // Đã hết hạn
-    public const int SUBSCRIPTION_STATUS_CANCELLED = 3; // Đã hủy
+    public const int SUBSCRIPTION_STATUS_PENDING   = 1; // Chờ kích hoạt
+    public const int SUBSCRIPTION_STATUS_ACTIVE    = 2; // Đang hiệu lực
+    public const int SUBSCRIPTION_STATUS_EXPIRED   = 3; // Đã hết hạn
+    public const int SUBSCRIPTION_STATUS_CANCELLED = 4; // Đã hủy
 
     public const array SUBSCRIPTION_STATUSES = [
         self::SUBSCRIPTION_STATUS_PENDING,
@@ -191,8 +191,8 @@ class Constant
     ];
 
     public const array SUBSCRIPTION_STATUS_LABELS = [
-        self::SUBSCRIPTION_STATUS_ACTIVE    => 'Đang hiệu lực',
         self::SUBSCRIPTION_STATUS_PENDING   => 'Chờ kích hoạt',
+        self::SUBSCRIPTION_STATUS_ACTIVE    => 'Đang hiệu lực',
         self::SUBSCRIPTION_STATUS_EXPIRED   => 'Đã hết hạn',
         self::SUBSCRIPTION_STATUS_CANCELLED => 'Đã hủy',
     ];
@@ -222,15 +222,15 @@ class Constant
     // 6. ĐÀO TẠO, LỚP HỌC, ĐIỂM DANH (CLASSES & ATTENDANCE)
     // ==========================================
     // Bảng classes
-    public const int CLASS_STATUS_INACTIVE  = 0; // Tạm ngưng / Đã hủy
-    public const int CLASS_STATUS_CANCELLED = 0; // Alias cho CLASS_STATUS_INACTIVE
     public const int CLASS_STATUS_ACTIVE    = 1; // Đang hoạt động
-    public const int CLASS_STATUS_COMPLETED = 2; // Đã hoàn thành
-    public const int CLASS_STATUS_CLOSED    = 3; // Đã đóng
+    public const int CLASS_STATUS_INACTIVE  = 2; // Tạm ngưng / Đã hủy
+    public const int CLASS_STATUS_CANCELLED = 2; // Alias cho CLASS_STATUS_INACTIVE
+    public const int CLASS_STATUS_COMPLETED = 3; // Đã hoàn thành
+    public const int CLASS_STATUS_CLOSED    = 4; // Đã đóng
 
     public const array CLASS_STATUSES = [
-        self::CLASS_STATUS_INACTIVE,
         self::CLASS_STATUS_ACTIVE,
+        self::CLASS_STATUS_INACTIVE,
         self::CLASS_STATUS_COMPLETED,
         self::CLASS_STATUS_CLOSED,
     ];
@@ -243,16 +243,16 @@ class Constant
     ];
 
     // Bảng class_students
-    public const int CLASS_STUDENT_STATUS_LEFT        = 0; // Đã thôi học / Nghỉ học
     public const int CLASS_STUDENT_STATUS_ACTIVE      = 1; // Đang học lớp này
     public const int CLASS_STUDENT_STATUS_COMPLETED   = 2; // Đã hoàn thành khóa
     public const int CLASS_STUDENT_STATUS_TRANSFERRED = 3; // Đã chuyển lớp
+    public const int CLASS_STUDENT_STATUS_LEFT        = 4; // Đã thôi học / Nghỉ học
 
     public const array CLASS_STUDENT_STATUSES = [
-        self::CLASS_STUDENT_STATUS_LEFT,
         self::CLASS_STUDENT_STATUS_ACTIVE,
         self::CLASS_STUDENT_STATUS_COMPLETED,
         self::CLASS_STUDENT_STATUS_TRANSFERRED,
+        self::CLASS_STUDENT_STATUS_LEFT,
     ];
 
     public const array CLASS_STUDENT_STATUS_LABELS = [
@@ -263,13 +263,13 @@ class Constant
     ];
 
     // Bảng class_subjects
-    public const int CLASS_SUBJECT_STATUS_INACTIVE  = 0; // Tạm dừng
     public const int CLASS_SUBJECT_STATUS_ACTIVE    = 1; // Đang phân công
-    public const int CLASS_SUBJECT_STATUS_COMPLETED = 2; // Đã hoàn thành
+    public const int CLASS_SUBJECT_STATUS_INACTIVE  = 2; // Tạm dừng
+    public const int CLASS_SUBJECT_STATUS_COMPLETED = 3; // Đã hoàn thành
 
     public const array CLASS_SUBJECT_STATUSES = [
-        self::CLASS_SUBJECT_STATUS_INACTIVE,
         self::CLASS_SUBJECT_STATUS_ACTIVE,
+        self::CLASS_SUBJECT_STATUS_INACTIVE,
         self::CLASS_SUBJECT_STATUS_COMPLETED,
     ];
 
@@ -280,12 +280,12 @@ class Constant
     ];
 
     // Bảng class_schedules
-    public const int SCHEDULE_STATUS_INACTIVE = 0; // Đã dừng
     public const int SCHEDULE_STATUS_ACTIVE   = 1; // Đang áp dụng
+    public const int SCHEDULE_STATUS_INACTIVE = 2; // Đã dừng
 
     public const array SCHEDULE_STATUSES = [
-        self::SCHEDULE_STATUS_INACTIVE,
         self::SCHEDULE_STATUS_ACTIVE,
+        self::SCHEDULE_STATUS_INACTIVE,
     ];
 
     public const array SCHEDULE_STATUS_LABELS = [
@@ -294,16 +294,16 @@ class Constant
     ];
 
     // Bảng class_sessions
-    public const int SESSION_STATUS_CANCELLED   = 0; // Đã hủy / Nghỉ
     public const int SESSION_STATUS_SCHEDULED   = 1; // Sắp diễn ra
     public const int SESSION_STATUS_IN_PROGRESS = 2; // Đang diễn ra
     public const int SESSION_STATUS_COMPLETED   = 3; // Đã hoàn thành
+    public const int SESSION_STATUS_CANCELLED   = 4; // Đã hủy / Nghỉ
 
     public const array SESSION_STATUSES = [
-        self::SESSION_STATUS_CANCELLED,
         self::SESSION_STATUS_SCHEDULED,
         self::SESSION_STATUS_IN_PROGRESS,
         self::SESSION_STATUS_COMPLETED,
+        self::SESSION_STATUS_CANCELLED,
     ];
 
     public const array SESSION_STATUS_LABELS = [
@@ -314,9 +314,9 @@ class Constant
     ];
 
     // Bảng session_reschedules
-    public const int RESCHEDULE_STATUS_PENDING  = 0; // Chờ duyệt
-    public const int RESCHEDULE_STATUS_APPROVED = 1; // Đã duyệt
-    public const int RESCHEDULE_STATUS_REJECTED = 2; // Từ chối
+    public const int RESCHEDULE_STATUS_PENDING  = 1; // Chờ duyệt
+    public const int RESCHEDULE_STATUS_APPROVED = 2; // Đã duyệt
+    public const int RESCHEDULE_STATUS_REJECTED = 3; // Từ chối
 
     public const array RESCHEDULE_STATUSES = [
         self::RESCHEDULE_STATUS_PENDING,
@@ -354,12 +354,12 @@ class Constant
     // 7. CƠ SỞ VẬT CHẤT & MÔN HỌC (ROOMS & SUBJECTS)
     // ==========================================
     // Bảng subjects
-    public const int SUBJECT_STATUS_INACTIVE = 0; // Tạm ngưng
     public const int SUBJECT_STATUS_ACTIVE   = 1; // Đang giảng dạy
+    public const int SUBJECT_STATUS_INACTIVE = 2; // Tạm ngưng
 
     public const array SUBJECT_STATUSES = [
-        self::SUBJECT_STATUS_INACTIVE,
         self::SUBJECT_STATUS_ACTIVE,
+        self::SUBJECT_STATUS_INACTIVE,
     ];
 
     public const array SUBJECT_STATUS_LABELS = [
@@ -368,13 +368,13 @@ class Constant
     ];
 
     // Bảng rooms
-    public const int ROOM_STATUS_PAUSED = 0; // Tạm dừng
     public const int ROOM_STATUS_ACTIVE = 1; // Đang sử dụng
-    public const int ROOM_STATUS_CLOSED = 2; // Đã đóng
+    public const int ROOM_STATUS_PAUSED = 2; // Tạm dừng
+    public const int ROOM_STATUS_CLOSED = 3; // Đã đóng
 
     public const array ROOM_STATUSES = [
-        self::ROOM_STATUS_PAUSED,
         self::ROOM_STATUS_ACTIVE,
+        self::ROOM_STATUS_PAUSED,
         self::ROOM_STATUS_CLOSED,
     ];
 
@@ -405,10 +405,10 @@ class Constant
     // 8. KHẢO THÍ & ĐỀ THI (EXAM SYSTEM)
     // ==========================================
     // Bảng exams
-    public const int EXAM_STATUS_DRAFT     = 0; // Bản nháp
-    public const int EXAM_STATUS_PUBLISHED = 1; // Đã xuất bản
-    public const int EXAM_STATUS_COMPLETED = 2; // Đã kết thúc
-    public const int EXAM_STATUS_CANCELLED = 3; // Đã hủy
+    public const int EXAM_STATUS_DRAFT     = 1; // Bản nháp
+    public const int EXAM_STATUS_PUBLISHED = 2; // Đã xuất bản
+    public const int EXAM_STATUS_COMPLETED = 3; // Đã kết thúc
+    public const int EXAM_STATUS_CANCELLED = 4; // Đã hủy
 
     public const array EXAM_STATUSES = [
         self::EXAM_STATUS_DRAFT,
@@ -502,16 +502,16 @@ class Constant
     ];
 
     // Bảng class_exams
-    public const int CLASS_EXAM_STATUS_CANCELLED = 0; // Đã hủy
     public const int CLASS_EXAM_STATUS_SCHEDULED = 1; // Sắp diễn ra
     public const int CLASS_EXAM_STATUS_ONGOING   = 2; // Đang mở thi
     public const int CLASS_EXAM_STATUS_COMPLETED = 3; // Đã đóng thi
+    public const int CLASS_EXAM_STATUS_CANCELLED = 4; // Đã hủy
 
     public const array CLASS_EXAM_STATUSES = [
-        self::CLASS_EXAM_STATUS_CANCELLED,
         self::CLASS_EXAM_STATUS_SCHEDULED,
         self::CLASS_EXAM_STATUS_ONGOING,
         self::CLASS_EXAM_STATUS_COMPLETED,
+        self::CLASS_EXAM_STATUS_CANCELLED,
     ];
 
     public const array CLASS_EXAM_STATUS_LABELS = [
@@ -522,20 +522,20 @@ class Constant
     ];
 
     // Bảng class_exam_submissions
-    public const int SUBMISSION_STATUS_MISSED                       = 0; // Bỏ thi
     public const int SUBMISSION_STATUS_IN_PROGRESS                  = 1; // Đang làm bài
     public const int SUBMISSION_STATUS_SUBMITTED                    = 2; // Đã nộp bài
     public const int SUBMISSION_STATUS_TIMEOUT_SUBMITTED            = 3; // Hết giờ tự nộp
-    public const int CLASS_EXAM_SUBMISSION_STATUS_MISSED            = 0;
+    public const int SUBMISSION_STATUS_MISSED                       = 4; // Bỏ thi
     public const int CLASS_EXAM_SUBMISSION_STATUS_IN_PROGRESS       = 1;
     public const int CLASS_EXAM_SUBMISSION_STATUS_SUBMITTED         = 2;
     public const int CLASS_EXAM_SUBMISSION_STATUS_TIMEOUT_SUBMITTED = 3;
+    public const int CLASS_EXAM_SUBMISSION_STATUS_MISSED            = 4;
 
     public const array SUBMISSION_STATUSES = [
-        self::SUBMISSION_STATUS_MISSED,
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_SUBMITTED,
         self::SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+        self::SUBMISSION_STATUS_MISSED,
     ];
 
     public const array SUBMISSION_STATUS_LABELS = [
@@ -549,11 +549,11 @@ class Constant
     // 9. TÀI CHÍNH, HỌC PHÍ & GIAO DỊCH (FINANCE & PAYMENTS)
     // ==========================================
     // Bảng student_tuitions
-    public const int TUITION_STATUS_PENDING   = 0; // Chưa đóng
-    public const int TUITION_STATUS_PAID      = 1; // Đã thanh toán đủ (Hoàn tất)
-    public const int TUITION_STATUS_COMPLETED = 1; // Alias cho TUITION_STATUS_PAID
-    public const int TUITION_STATUS_PARTIAL   = 2; // Đóng một phần
-    public const int TUITION_STATUS_OVERDUE   = 3; // Quá hạn
+    public const int TUITION_STATUS_PENDING   = 1; // Chưa đóng
+    public const int TUITION_STATUS_PAID      = 2; // Đã thanh toán đủ (Hoàn tất)
+    public const int TUITION_STATUS_COMPLETED = 2; // Alias cho TUITION_STATUS_PAID
+    public const int TUITION_STATUS_PARTIAL   = 3; // Đóng một phần
+    public const int TUITION_STATUS_OVERDUE   = 4; // Quá hạn
 
     public const array TUITION_STATUSES = [
         self::TUITION_STATUS_PENDING,
@@ -597,10 +597,10 @@ class Constant
     ];
 
     // Bảng payment_transactions
-    public const int PAYMENT_STATUS_PENDING  = 0; // Đang xử lý
-    public const int PAYMENT_STATUS_SUCCESS  = 1; // Thành công
-    public const int PAYMENT_STATUS_FAILED   = 2; // Thất bại
-    public const int PAYMENT_STATUS_REFUNDED = 3; // Đã hoàn tiền
+    public const int PAYMENT_STATUS_PENDING  = 1; // Đang xử lý
+    public const int PAYMENT_STATUS_SUCCESS  = 2; // Thành công
+    public const int PAYMENT_STATUS_FAILED   = 3; // Thất bại
+    public const int PAYMENT_STATUS_REFUNDED = 4; // Đã hoàn tiền
 
     public const array PAYMENT_STATUSES = [
         self::PAYMENT_STATUS_PENDING,
@@ -617,10 +617,10 @@ class Constant
     ];
 
     // Bảng contact_requests
-    public const int CONTACT_STATUS_PENDING   = 0; // Chờ liên hệ
-    public const int CONTACT_STATUS_CONTACTED = 1; // Đã liên hệ
-    public const int CONTACT_STATUS_RESOLVED  = 2; // Đã xử lý xong
-    public const int CONTACT_STATUS_CANCELLED = 3; // Hủy bỏ
+    public const int CONTACT_STATUS_PENDING   = 1; // Chờ liên hệ
+    public const int CONTACT_STATUS_CONTACTED = 2; // Đã liên hệ
+    public const int CONTACT_STATUS_RESOLVED  = 3; // Đã xử lý xong
+    public const int CONTACT_STATUS_CANCELLED = 4; // Hủy bỏ
 
     public const array CONTACT_STATUSES = [
         self::CONTACT_STATUS_PENDING,

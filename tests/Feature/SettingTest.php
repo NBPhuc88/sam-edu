@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
+use App\Models\Center;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -17,8 +19,8 @@ test('super admin can access settings page', function () {
         'email'      => 'super_setting@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Setting',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')->get(route('settings.index'));
@@ -39,8 +41,8 @@ test('super admin can update system settings and seo metadata', function () {
         'email'      => 'super_setting2@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Setting 2',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')->post(route('settings.update'), [
@@ -79,9 +81,17 @@ test('regular admin cannot access or update settings', function () {
         'email'      => 'sub_admin@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Phụ',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
+
+    $center = Center::create([
+        'code'   => 'CTR-SETTING-01',
+        'name'   => 'Center Setting 01',
+        'email'  => 'center_setting@test.com',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
+    ]);
+    $admin->centers()->attach($center->id);
 
     // Truy cập xem cài đặt -> 404 (AutoCheckPermission không có quyền)
     $response = $this->actingAs($admin, 'admin')->get(route('settings.index'));

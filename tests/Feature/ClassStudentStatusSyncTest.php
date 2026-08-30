@@ -139,12 +139,12 @@ test('class creation is limited by max_classes for active and paused classes', f
     ], $this->superAdmin);
     expect($class1)->toBeInstanceOf(SchoolClass::class);
 
-    // Tạo lớp 2 (paused: status = 0) -> OK (2/2)
+    // Tạo lớp 2 (paused: status = CLASS_STATUS_INACTIVE) -> OK (2/2)
     $class2 = $classService->createClass([
         'center_id' => $this->center->id,
         'name'      => 'Lớp Toán 2',
         'code'      => 'CLS000000002',
-        'status'    => 0,
+        'status'    => Constant::CLASS_STATUS_INACTIVE,
     ], $this->superAdmin);
     expect($class2)->toBeInstanceOf(SchoolClass::class);
 
@@ -153,18 +153,18 @@ test('class creation is limited by max_classes for active and paused classes', f
         'center_id' => $this->center->id,
         'name'      => 'Lớp Toán 3',
         'code'      => 'CLS000000003',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ], $this->superAdmin))->toThrow(\InvalidArgumentException::class);
 
-    // Chuyển lớp 2 sang completed (status = 2) -> Không tính vào hạn mức
-    $class2->update(['status' => 2]);
+    // Chuyển lớp 2 sang completed -> Không tính vào hạn mức
+    $class2->update(['status' => Constant::CLASS_STATUS_COMPLETED]);
 
     // Tạo lớp mới thành công
     $class3 = $classService->createClass([
         'center_id' => $this->center->id,
         'name'      => 'Lớp Toán 3',
         'code'      => 'CLS000000003',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ], $this->superAdmin);
     expect($class3)->toBeInstanceOf(SchoolClass::class);
 });
@@ -215,21 +215,21 @@ test('class status change to paused cascades only isolated students to paused', 
     $classA->students()->attach($student2->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
     $classB->students()->attach($student2->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
-    // Đổi trạng thái Lớp A sang Tạm dừng (status = 0)
+    // Đổi trạng thái Lớp A sang Tạm dừng
     $classService->updateClass($classA->id, [
         'center_id' => $this->center->id,
         'name'      => 'Lớp A',
         'code'      => 'CLS000000010',
-        'status'    => 0,
+        'status'    => Constant::CLASS_STATUS_INACTIVE,
     ], $this->superAdmin);
 
-    // Kiểm tra: $student1 (chỉ học lớp A) phải bị chuyển sang status = 0
+    // Kiểm tra: $student1 (chỉ học lớp A) phải bị chuyển sang inactive
     $s1Status = is_object($student1->fresh()->status) ? $student1->fresh()->status->value : (int) $student1->fresh()->status;
-    expect($s1Status)->toBe(0);
+    expect($s1Status)->toBe(Constant::STUDENT_STATUS_INACTIVE);
 
-    // Kiểm tra: $student2 (vẫn đang học lớp B active) phải giữ nguyên status = 1
+    // Kiểm tra: $student2 (vẫn đang học lớp B active) phải giữ nguyên active
     $s2Status = is_object($student2->fresh()->status) ? $student2->fresh()->status->value : (int) $student2->fresh()->status;
-    expect($s2Status)->toBe(1);
+    expect($s2Status)->toBe(Constant::STUDENT_STATUS_ACTIVE);
 });
 
 test('class status change to completed cascades isolated students to graduated', function () {
@@ -255,17 +255,17 @@ test('class status change to completed cascades isolated students to graduated',
     ]);
     $classA->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
 
-    // Đổi Lớp A sang Hoàn thành (status = 2)
+    // Đổi Lớp A sang Hoàn thành
     $classService->updateClass($classA->id, [
         'center_id' => $this->center->id,
         'name'      => 'Lớp Hoàn Thành',
         'code'      => 'CLS000000030',
-        'status'    => 2,
+        'status'    => Constant::CLASS_STATUS_COMPLETED,
     ], $this->superAdmin);
 
-    // Học sinh chuyển sang Tốt nghiệp (status = 2)
+    // Học sinh chuyển sang Tốt nghiệp
     $sStatus = is_object($student->fresh()->status) ? $student->fresh()->status->value : (int) $student->fresh()->status;
-    expect($sStatus)->toBe(2);
+    expect($sStatus)->toBe(Constant::STUDENT_STATUS_GRADUATED);
 });
 
 test('secondary admin cannot reopen completed or closed classes', function () {
@@ -300,7 +300,7 @@ test('inactive or paused student cannot enter online exam room or practice exam'
         'username'     => 'hs_paused_test',
         'email'        => 'hspaused@gmail.com',
         'password'     => bcrypt('password123'),
-        'status'       => 0, // Paused / Inactive
+        'status'       => Constant::STUDENT_STATUS_INACTIVE,
     ]);
 
     // Thử truy cập thi thử -> 403 Forbidden

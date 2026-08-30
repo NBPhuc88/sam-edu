@@ -108,8 +108,8 @@ export default function ClassExamResultsPage({
     isStudent = false,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedExamId, setSelectedExamId] = useState<string>(
-        filters.class_exam_id ? String(filters.class_exam_id) : '',
+    const [selectedExamId, setSelectedExamId] = useState<number>(
+        filters.class_exam_id ? Number(filters.class_exam_id) : 0,
     );
 
     const handleFilter = (e?: React.FormEvent) => {
@@ -118,7 +118,7 @@ export default function ClassExamResultsPage({
             `/classes/${schoolClass.id}/exam-results`,
             {
                 search: search || undefined,
-                class_exam_id: selectedExamId || undefined,
+                class_exam_id: selectedExamId ? Number(selectedExamId) : undefined,
             },
             { preserveState: true },
         );
@@ -126,7 +126,7 @@ export default function ClassExamResultsPage({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedExamId('');
+        setSelectedExamId(0);
         router.get(`/classes/${schoolClass.id}/exam-results`, {}, { preserveState: true });
     };
 
@@ -286,11 +286,11 @@ export default function ClassExamResultsPage({
                             <select
                                 value={selectedExamId}
                                 onChange={(e) => {
-                                    setSelectedExamId(e.target.value);
+                                    setSelectedExamId(Number(e.target.value));
                                 }}
                                 className="rounded-xl border border-gray-200 bg-slate-50/50 py-2 px-3 text-xs sm:text-sm text-gray-700 focus:border-emerald-500 focus:bg-white focus:outline-hidden max-w-[200px]"
                             >
-                                <option value="">Tất cả bài thi của lớp</option>
+                                <option value="0">Tất cả bài thi của lớp</option>
                                 {classExams.map((ex) => (
                                     <option key={ex.id} value={ex.id}>
                                         {ex.title}

@@ -59,14 +59,14 @@ test('admin can update exam basic info and sections', function () {
     $section = ExamSection::create([
         'exam_id' => $exam->id,
         'title'   => 'Phần 1 Gốc',
-        'skill'   => 'reading',
+        'skill'   => Constant::SKILL_READING,
     ]);
 
     $q1 = ExamQuestion::create([
         'exam_id'       => $exam->id,
         'section_id'    => $section->id,
         'code'          => 'Q000000088',
-        'question_type' => 'single_choice',
+        'question_type' => Constant::QUESTION_TYPE_SINGLE_CHOICE,
         'content'       => 'Câu hỏi 1',
         'score'         => 5.0,
     ]);
@@ -84,20 +84,20 @@ test('admin can update exam basic info and sections', function () {
             [
                 'id'          => $section->id,
                 'title'       => 'Phần 1 Đã Sửa',
-                'skill'       => 'reading',
+                'skill'       => Constant::SKILL_READING,
                 'order_index' => 0,
                 'questions'   => [
                     [
                         'id'             => $q1->id,
                         'code'           => 'Q000000088',
-                        'question_type'  => 'single_choice',
+                        'question_type'  => Constant::QUESTION_TYPE_SINGLE_CHOICE,
                         'content'        => 'Câu hỏi 1 đã sửa',
                         'score'          => 5.0,
                         'correct_answer' => 'A',
                     ],
                     [
                         'code'          => 'Q000000089',
-                        'question_type' => 'essay',
+                        'question_type' => Constant::QUESTION_TYPE_ESSAY,
                         'content'       => 'Câu hỏi 2 mới thêm',
                         'score'         => 5.0,
                     ],

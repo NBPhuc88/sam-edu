@@ -381,7 +381,7 @@ class GradingService implements GradingServiceInterface
                 'description'           => $data['description'] ?? null,
                 'max_score'             => $maxScore,
                 'pass_score'            => $passScore,
-                'status'                => 'published',
+                'status'                => Constant::EXAM_STATUS_PUBLISHED,
                 'is_practice'           => false,
                 'created_by_teacher_id' => $teacher?->id,
                 'created_by_admin_id'   => $admin?->id,
@@ -405,7 +405,7 @@ class GradingService implements GradingServiceInterface
                 'duration_minutes'      => (int) ($data['duration_minutes'] ?? Constant::DEFAULT_EXAM_DURATION_MINUTES),
                 'max_score'             => $maxScore,
                 'pass_score'            => $passScore,
-                'status'                => 'completed',
+                'status'                => Constant::CLASS_EXAM_STATUS_COMPLETED,
                 'created_by_teacher_id' => $teacher?->id,
                 'created_by_admin_id'   => $admin?->id,
             ]);

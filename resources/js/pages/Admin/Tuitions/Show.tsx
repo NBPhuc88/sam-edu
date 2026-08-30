@@ -18,9 +18,13 @@ import Modal from '../../../components/ui/Modal';
 import AppLayout from '../../../layouts/AppLayout';
 
 import {
-PAYMENT_METHOD_BANK_TRANSFER,
-PAYMENT_METHOD_LABELS,
-PAYMENT_METHOD_OPTIONS
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_LABELS,
+    PAYMENT_METHOD_OPTIONS,
+    TUITION_STATUS_OVERDUE,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_PENDING,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 
@@ -124,13 +128,13 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
+        if (status === TUITION_STATUS_PAID) {
             return <Badge variant="active">Đã hoàn thành</Badge>;
         }
-        if (status === 2) {
+        if (status === TUITION_STATUS_PARTIAL) {
             return <Badge variant="pending">Còn nợ</Badge>;
         }
-        if (status === 3) {
+        if (status === TUITION_STATUS_OVERDUE) {
             return <Badge variant="danger">Quá hạn</Badge>;
         }
         return <Badge variant="expired">Chưa đóng</Badge>;

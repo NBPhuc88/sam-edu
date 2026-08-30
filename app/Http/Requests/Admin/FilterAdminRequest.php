@@ -55,4 +55,3 @@ class FilterAdminRequest extends FormRequest
         ];
     }
 }
-

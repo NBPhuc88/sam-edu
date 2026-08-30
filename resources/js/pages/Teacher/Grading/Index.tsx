@@ -121,20 +121,20 @@ export default function GradingIndex({
     isAdmin,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedClassId, setSelectedClassId] = useState(filters.class_id ? String(filters.class_id) : '');
-    const [selectedExamId, setSelectedExamId] = useState(filters.class_exam_id ? String(filters.class_exam_id) : '');
-    const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
+    const [selectedClassId, setSelectedClassId] = useState<number>(filters.class_id ? Number(filters.class_id) : 0);
+    const [selectedExamId, setSelectedExamId] = useState<number>(filters.class_exam_id ? Number(filters.class_exam_id) : 0);
+    const [selectedStatus, setSelectedStatus] = useState<any>(filters.status || 0);
 
     // Available exams filtered by selected class
     const availableExams = selectedClassId
-        ? classExams.filter((e) => String(e.class_id) === selectedClassId)
+        ? classExams.filter((e) => Number(e.class_id) === selectedClassId)
         : classExams;
 
     const handleFilterChange = (override: Partial<typeof filters> = {}) => {
         const targetSearch = override.search !== undefined ? override.search : search;
         const targetClassId = override.class_id !== undefined ? override.class_id : (selectedClassId ? Number(selectedClassId) : undefined);
         const targetExamId = override.class_exam_id !== undefined ? override.class_exam_id : (selectedExamId ? Number(selectedExamId) : undefined);
-        const targetStatus = override.status !== undefined ? override.status : selectedStatus;
+        const targetStatus = override.status !== undefined ? override.status : (selectedStatus || undefined);
 
         router.get(
             '/grading',
@@ -159,9 +159,9 @@ export default function GradingIndex({
 
     const handleResetFilters = () => {
         setSearch('');
-        setSelectedClassId('');
-        setSelectedExamId('');
-        setSelectedStatus('');
+        setSelectedClassId(0);
+        setSelectedExamId(0);
+        setSelectedStatus(0);
         router.get('/grading', {}, { preserveState: true });
     };
 
@@ -261,14 +261,15 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedClassId}
                                     onChange={(val) => {
-                                        setSelectedClassId(val);
-                                        setSelectedExamId('');
-                                        handleFilterChange({ class_id: val ? Number(val) : null, class_exam_id: null });
+                                        const num = Number(val);
+                                        setSelectedClassId(num);
+                                        setSelectedExamId(0);
+                                        handleFilterChange({ class_id: num || null, class_exam_id: null });
                                     }}
                                     options={[
-                                        { value: '', label: '-- Tất cả lớp học --' },
+                                        { value: 0, label: '-- Tất cả lớp học --' },
                                         ...classes.map((cls) => ({
-                                            value: String(cls.id),
+                                            value: cls.id,
                                             label: cls.name,
                                         })),
                                     ]}
@@ -283,13 +284,14 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedExamId}
                                     onChange={(val) => {
-                                        setSelectedExamId(val);
-                                        handleFilterChange({ class_exam_id: val ? Number(val) : null });
+                                        const num = Number(val);
+                                        setSelectedExamId(num);
+                                        handleFilterChange({ class_exam_id: num || null });
                                     }}
                                     options={[
-                                        { value: '', label: '-- Tất cả bài thi --' },
+                                        { value: 0, label: '-- Tất cả bài thi --' },
                                         ...availableExams.map((e) => ({
-                                            value: String(e.id),
+                                            value: e.id,
                                             label: e.title,
                                         })),
                                     ]}
@@ -308,7 +310,7 @@ export default function GradingIndex({
                                         handleFilterChange({ status: val });
                                     }}
                                     options={[
-                                        { value: '', label: 'Tất cả trạng thái' },
+                                        { value: 0, label: 'Tất cả trạng thái' },
                                         { value: 'pending', label: '⏳ Chờ chấm điểm' },
                                         { value: 'manual_needed', label: '✍️ Cần chấm tự luận / nói' },
                                         { value: 'graded', label: '✅ Đã chấm xong' },

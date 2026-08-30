@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -19,7 +20,7 @@ test('soft deleted student preserves tuition records and is displayed in tuition
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm Test',
         'email'  => 'centertest@test.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -27,7 +28,8 @@ test('soft deleted student preserves tuition records and is displayed in tuition
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_tui@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code' => 'ADM000000098',
     ]);
 
@@ -40,14 +42,14 @@ test('soft deleted student preserves tuition records and is displayed in tuition
         'password'     => 'password123',
         'student_code' => 'HS000000010',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
         'center_id' => $center->id,
         'code'      => 'CLS010',
         'name'      => 'Lớp 10A10',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $tuition = StudentTuition::create([

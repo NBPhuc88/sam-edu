@@ -529,12 +529,12 @@ class StudentRepository implements StudentRepositoryInterface
                 $join->on('class_sessions.id', '=', 'attendances.session_id')
                     ->where('attendances.student_id', '=', $studentId);
             })
-            ->selectRaw("
-                SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count,
-                SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN attendances.status IN ('excused', 'leave') THEN 1 ELSE 0 END) as excused_count
-            ")
+            ->selectRaw('
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_PRESENT . ' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_ABSENT . ' THEN 1 ELSE 0 END) as absent_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_LATE . ' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_EXCUSED . ' THEN 1 ELSE 0 END) as excused_count
+            ')
             ->first();
 
         $presentCount  = (int) ($attendanceCounts->present_count ?? 0);

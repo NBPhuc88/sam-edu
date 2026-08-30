@@ -70,17 +70,17 @@ export default function ExamIndex({
     const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -109,7 +109,7 @@ export default function ExamIndex({
 
     // Filter subjects by selected center
     const filteredSubjects = selectedCenterId
-        ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
+        ? subjects.filter((s) => Number(s.center_id) === selectedCenterId)
         : subjects;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -129,10 +129,10 @@ export default function ExamIndex({
 
     const handleReset = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedSubjectId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedSubjectId(0);
+        setSelectedStatus(0);
         router.get('/exams', {}, { preserveState: true });
     };
 
@@ -324,14 +324,14 @@ export default function ExamIndex({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedSubjectId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedSubjectId(0);
                                         }}
                                         placeholder="-- Tất cả Trung Tâm --"
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -346,12 +346,12 @@ export default function ExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedSubjectId}
-                                    onChange={(val) => setSelectedSubjectId(val)}
+                                    onChange={(val) => setSelectedSubjectId(Number(val))}
                                     placeholder="-- Tất cả Môn Học --"
                                     options={[
-                                        { value: '', label: '-- Tất cả Môn Học --' },
+                                        { value: 0, label: '-- Tất cả Môn Học --' },
                                         ...filteredSubjects.map((s) => ({
-                                            value: String(s.id),
+                                            value: s.id,
                                             label: `${s.name} (${s.code})`,
                                         })),
                                     ]}

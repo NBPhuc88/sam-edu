@@ -60,8 +60,8 @@ interface IndexProps {
 export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, filters }: IndexProps) {
     const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
-    const [roleFilter, setRoleFilter] = useState(
-        filters.role !== undefined && filters.role !== null && filters.role !== '' ? String(filters.role) : ''
+    const [roleFilter, setRoleFilter] = useState<number>(
+        filters.role !== undefined && filters.role !== null && filters.role !== '' ? Number(filters.role) : 0
     );
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<AdminItem | null>(null);
@@ -111,7 +111,7 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
         if (search.trim()) {
             params.search = search.trim();
         }
-        if (roleFilter !== '' && roleFilter !== null && roleFilter !== undefined && roleFilter !== '') {
+        if (roleFilter) {
             params.role = Number(roleFilter);
         }
 
@@ -243,10 +243,10 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
 
                         <select
                             value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
+                            onChange={(e) => setRoleFilter(Number(e.target.value))}
                             className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-2xs focus:border-emerald-500 focus:outline-hidden"
                         >
-                            <option value="">-- Tất cả vai trò --</option>
+                            <option value="0">-- Tất cả vai trò --</option>
                             <option value={ROLE_SUPER_ADMIN}>Super Admin</option>
                             <option value={ROLE_ADMIN}>Admin Trung tâm</option>
                         </select>

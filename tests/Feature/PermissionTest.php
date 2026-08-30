@@ -223,7 +223,7 @@ test('super admin receives full permissions and admin_role string super_admin in
     $response->assertOk();
     $response->assertInertia(
         fn ($page) => $page
-            ->where('auth.user.admin_role', 'super_admin')
+            ->where('auth.user.admin_role', Constant::ROLE_SUPER_ADMIN)
             ->where('auth.role', 'admin')
             ->has('auth.permissions', $allPermissionsCount)
     );

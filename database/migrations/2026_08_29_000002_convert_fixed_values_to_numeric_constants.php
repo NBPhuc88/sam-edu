@@ -22,8 +22,8 @@ return new class () extends Migration {
         if ($this->shouldConvert('admins', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('admins', 'status', 1);
             DB::table('admins')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('admins')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('admins')->where('status', 'locked')->orWhere('status', '2')->update([$intCol => 2]);
+            DB::table('admins')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
+            DB::table('admins')->whereIn('status', ['locked', '2'])->update([$intCol => 3]);
             $this->dropOldAndRename('admins', 'status', $intCol);
         }
 
@@ -31,8 +31,8 @@ return new class () extends Migration {
         if ($this->shouldConvert('teachers', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('teachers', 'status', 1);
             DB::table('teachers')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('teachers')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('teachers')->where('status', 'locked')->orWhere('status', '2')->update([$intCol => 2]);
+            DB::table('teachers')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
+            DB::table('teachers')->whereIn('status', ['locked', '2'])->update([$intCol => 3]);
             $this->dropOldAndRename('teachers', 'status', $intCol);
         }
 
@@ -53,14 +53,12 @@ return new class () extends Migration {
             $this->dropOldAndRename('students', 'gender', $intCol);
         }
 
-        // 4. Centers (status, subscription_plan, plan_type)
+        // 4. Centers (status → 3 trạng thái: active=1, paused=2, expired=3)
         if ($this->shouldConvert('centers', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('centers', 'status', 1);
-            DB::table('centers')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('centers')->where('status', 'trial')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('centers')->where('status', 'pending_payment')->orWhere('status', '3')->update([$intCol => 3]);
-            DB::table('centers')->where('status', 'expired')->orWhere('status', '4')->update([$intCol => 4]);
-            DB::table('centers')->whereIn('status', ['locked', 'inactive', 'suspended', '0'])->update([$intCol => 0]);
+            DB::table('centers')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('centers')->whereIn('status', ['trial', 'pending_payment', 'locked', 'inactive', 'suspended', 'paused', '0', '2', '3'])->update([$intCol => 2]);
+            DB::table('centers')->whereIn('status', ['expired', '4'])->update([$intCol => 3]);
             $this->dropOldAndRename('centers', 'status', $intCol);
         }
 
@@ -141,48 +139,48 @@ return new class () extends Migration {
         }
 
         if ($this->shouldConvert('center_subscriptions', 'status')) {
-            $intCol = $this->createIntColumnIfNotExists('center_subscriptions', 'status', 0);
-            DB::table('center_subscriptions')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('center_subscriptions')->where('status', 'pending')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('center_subscriptions')->where('status', 'expired')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('center_subscriptions')->where('status', 'cancelled')->orWhere('status', '3')->update([$intCol => 3]);
+            $intCol = $this->createIntColumnIfNotExists('center_subscriptions', 'status', 1);
+            DB::table('center_subscriptions')->whereIn('status', ['pending', '0'])->update([$intCol => 1]);
+            DB::table('center_subscriptions')->whereIn('status', ['active', '1'])->update([$intCol => 2]);
+            DB::table('center_subscriptions')->whereIn('status', ['expired', '2'])->update([$intCol => 3]);
+            DB::table('center_subscriptions')->whereIn('status', ['cancelled', '3'])->update([$intCol => 4]);
             $this->dropOldAndRename('center_subscriptions', 'status', $intCol);
         }
 
         // 7. Class Students (status)
         if ($this->shouldConvert('class_students', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_students', 'status', 1);
-            DB::table('class_students')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_students')->where('status', 'completed')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('class_students')->where('status', 'transferred')->orWhere('status', '3')->update([$intCol => 3]);
-            DB::table('class_students')->where('status', 'left')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('class_students')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('class_students')->whereIn('status', ['completed', '2'])->update([$intCol => 2]);
+            DB::table('class_students')->whereIn('status', ['transferred', '3'])->update([$intCol => 3]);
+            DB::table('class_students')->whereIn('status', ['left', '0'])->update([$intCol => 4]);
             $this->dropOldAndRename('class_students', 'status', $intCol);
         }
 
         // 8. Class Subjects (status)
         if ($this->shouldConvert('class_subjects', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_subjects', 'status', 1);
-            DB::table('class_subjects')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_subjects')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('class_subjects')->where('status', 'completed')->orWhere('status', '2')->update([$intCol => 2]);
+            DB::table('class_subjects')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('class_subjects')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
+            DB::table('class_subjects')->whereIn('status', ['completed', '2'])->update([$intCol => 3]);
             $this->dropOldAndRename('class_subjects', 'status', $intCol);
         }
 
         // 9. Class Schedules (status)
         if ($this->shouldConvert('class_schedules', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_schedules', 'status', 1);
-            DB::table('class_schedules')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_schedules')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('class_schedules')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('class_schedules')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
             $this->dropOldAndRename('class_schedules', 'status', $intCol);
         }
 
         // 10. Class Sessions (status)
         if ($this->shouldConvert('class_sessions', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_sessions', 'status', 1);
-            DB::table('class_sessions')->where('status', 'scheduled')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_sessions')->where('status', 'in_progress')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('class_sessions')->where('status', 'completed')->orWhere('status', '3')->update([$intCol => 3]);
-            DB::table('class_sessions')->whereIn('status', ['cancelled', 'unattended', '0'])->update([$intCol => 0]);
+            DB::table('class_sessions')->whereIn('status', ['scheduled', '1'])->update([$intCol => 1]);
+            DB::table('class_sessions')->whereIn('status', ['in_progress', '2'])->update([$intCol => 2]);
+            DB::table('class_sessions')->whereIn('status', ['completed', '3'])->update([$intCol => 3]);
+            DB::table('class_sessions')->whereIn('status', ['cancelled', 'unattended', '0'])->update([$intCol => 4]);
             $this->dropOldAndRename('class_sessions', 'status', $intCol);
         }
 
@@ -199,25 +197,25 @@ return new class () extends Migration {
         // 12. Subjects (status)
         if ($this->shouldConvert('subjects', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('subjects', 'status', 1);
-            DB::table('subjects')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('subjects')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('subjects')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('subjects')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
             $this->dropOldAndRename('subjects', 'status', $intCol);
         }
 
         // 13. Center Subjects (status)
         if ($this->shouldConvert('center_subjects', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('center_subjects', 'status', 1);
-            DB::table('center_subjects')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('center_subjects')->where('status', 'inactive')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('center_subjects')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('center_subjects')->whereIn('status', ['inactive', '0'])->update([$intCol => 2]);
             $this->dropOldAndRename('center_subjects', 'status', $intCol);
         }
 
         // 14. Rooms (status)
         if ($this->shouldConvert('rooms', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('rooms', 'status', 1);
-            DB::table('rooms')->where('status', 'active')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('rooms')->whereIn('status', ['paused', 'inactive', '0'])->update([$intCol => 0]);
-            DB::table('rooms')->where('status', 'closed')->orWhere('status', '2')->update([$intCol => 2]);
+            DB::table('rooms')->whereIn('status', ['active', '1'])->update([$intCol => 1]);
+            DB::table('rooms')->whereIn('status', ['paused', 'inactive', '0'])->update([$intCol => 2]);
+            DB::table('rooms')->whereIn('status', ['closed', '2'])->update([$intCol => 3]);
             $this->dropOldAndRename('rooms', 'status', $intCol);
         }
 
@@ -232,11 +230,11 @@ return new class () extends Migration {
 
         // 16. Exams (status, skill)
         if ($this->shouldConvert('exams', 'status')) {
-            $intCol = $this->createIntColumnIfNotExists('exams', 'status', 0);
-            DB::table('exams')->where('status', 'draft')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('exams')->where('status', 'published')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('exams')->where('status', 'completed')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('exams')->where('status', 'cancelled')->orWhere('status', '3')->update([$intCol => 3]);
+            $intCol = $this->createIntColumnIfNotExists('exams', 'status', 1);
+            DB::table('exams')->whereIn('status', ['draft', '0'])->update([$intCol => 1]);
+            DB::table('exams')->whereIn('status', ['published', '1'])->update([$intCol => 2]);
+            DB::table('exams')->whereIn('status', ['completed', '2'])->update([$intCol => 3]);
+            DB::table('exams')->whereIn('status', ['cancelled', '3'])->update([$intCol => 4]);
             $this->dropOldAndRename('exams', 'status', $intCol);
         }
 
@@ -252,30 +250,30 @@ return new class () extends Migration {
         // 17. Class Exams (status)
         if ($this->shouldConvert('class_exams', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_exams', 'status', 1);
-            DB::table('class_exams')->where('status', 'scheduled')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_exams')->where('status', 'ongoing')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('class_exams')->where('status', 'completed')->orWhere('status', '3')->update([$intCol => 3]);
-            DB::table('class_exams')->where('status', 'cancelled')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('class_exams')->whereIn('status', ['scheduled', '1'])->update([$intCol => 1]);
+            DB::table('class_exams')->whereIn('status', ['ongoing', '2'])->update([$intCol => 2]);
+            DB::table('class_exams')->whereIn('status', ['completed', '3'])->update([$intCol => 3]);
+            DB::table('class_exams')->whereIn('status', ['cancelled', '0'])->update([$intCol => 4]);
             $this->dropOldAndRename('class_exams', 'status', $intCol);
         }
 
         // 18. Class Exam Submissions (status)
         if ($this->shouldConvert('class_exam_submissions', 'status')) {
             $intCol = $this->createIntColumnIfNotExists('class_exam_submissions', 'status', 1);
-            DB::table('class_exam_submissions')->where('status', 'in_progress')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('class_exam_submissions')->where('status', 'submitted')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('class_exam_submissions')->where('status', 'timeout_submitted')->orWhere('status', '3')->update([$intCol => 3]);
-            DB::table('class_exam_submissions')->where('status', 'missed')->orWhere('status', '0')->update([$intCol => 0]);
+            DB::table('class_exam_submissions')->whereIn('status', ['in_progress', '1'])->update([$intCol => 1]);
+            DB::table('class_exam_submissions')->whereIn('status', ['submitted', '2'])->update([$intCol => 2]);
+            DB::table('class_exam_submissions')->whereIn('status', ['timeout_submitted', '3'])->update([$intCol => 3]);
+            DB::table('class_exam_submissions')->whereIn('status', ['missed', '0'])->update([$intCol => 4]);
             $this->dropOldAndRename('class_exam_submissions', 'status', $intCol);
         }
 
         // 19. Student Tuitions (status)
         if ($this->shouldConvert('student_tuitions', 'status')) {
-            $intCol = $this->createIntColumnIfNotExists('student_tuitions', 'status', 0);
-            DB::table('student_tuitions')->whereIn('status', ['completed', 'paid', '1'])->update([$intCol => 1]);
-            DB::table('student_tuitions')->whereIn('status', ['pending', '0'])->update([$intCol => 0]);
-            DB::table('student_tuitions')->whereIn('status', ['partial', '2'])->update([$intCol => 2]);
-            DB::table('student_tuitions')->whereIn('status', ['overdue', '3'])->update([$intCol => 3]);
+            $intCol = $this->createIntColumnIfNotExists('student_tuitions', 'status', 1);
+            DB::table('student_tuitions')->whereIn('status', ['pending', '0'])->update([$intCol => 1]);
+            DB::table('student_tuitions')->whereIn('status', ['completed', 'paid', '1'])->update([$intCol => 2]);
+            DB::table('student_tuitions')->whereIn('status', ['partial', '2'])->update([$intCol => 3]);
+            DB::table('student_tuitions')->whereIn('status', ['overdue', '3'])->update([$intCol => 4]);
             $this->dropOldAndRename('student_tuitions', 'status', $intCol);
         }
 
@@ -293,11 +291,11 @@ return new class () extends Migration {
 
         // 21. Payment Transactions (status, payment_method)
         if ($this->shouldConvert('payment_transactions', 'status')) {
-            $intCol = $this->createIntColumnIfNotExists('payment_transactions', 'status', 0);
-            DB::table('payment_transactions')->where('status', 'pending')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('payment_transactions')->where('status', 'success')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('payment_transactions')->where('status', 'failed')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('payment_transactions')->where('status', 'refunded')->orWhere('status', '3')->update([$intCol => 3]);
+            $intCol = $this->createIntColumnIfNotExists('payment_transactions', 'status', 1);
+            DB::table('payment_transactions')->whereIn('status', ['pending', '0'])->update([$intCol => 1]);
+            DB::table('payment_transactions')->whereIn('status', ['success', '1'])->update([$intCol => 2]);
+            DB::table('payment_transactions')->whereIn('status', ['failed', '2'])->update([$intCol => 3]);
+            DB::table('payment_transactions')->whereIn('status', ['refunded', '3'])->update([$intCol => 4]);
             $this->dropOldAndRename('payment_transactions', 'status', $intCol);
         }
 
@@ -314,11 +312,11 @@ return new class () extends Migration {
 
         // 22. Contact Requests (status)
         if ($this->shouldConvert('contact_requests', 'status')) {
-            $intCol = $this->createIntColumnIfNotExists('contact_requests', 'status', 0);
-            DB::table('contact_requests')->where('status', 'pending')->orWhere('status', '0')->update([$intCol => 0]);
-            DB::table('contact_requests')->where('status', 'contacted')->orWhere('status', '1')->update([$intCol => 1]);
-            DB::table('contact_requests')->where('status', 'resolved')->orWhere('status', '2')->update([$intCol => 2]);
-            DB::table('contact_requests')->where('status', 'cancelled')->orWhere('status', '3')->update([$intCol => 3]);
+            $intCol = $this->createIntColumnIfNotExists('contact_requests', 'status', 1);
+            DB::table('contact_requests')->whereIn('status', ['pending', '0'])->update([$intCol => 1]);
+            DB::table('contact_requests')->whereIn('status', ['contacted', '1'])->update([$intCol => 2]);
+            DB::table('contact_requests')->whereIn('status', ['resolved', '2'])->update([$intCol => 3]);
+            DB::table('contact_requests')->whereIn('status', ['cancelled', '3'])->update([$intCol => 4]);
             $this->dropOldAndRename('contact_requests', 'status', $intCol);
         }
 
@@ -427,6 +425,40 @@ return new class () extends Migration {
             DB::table('role_permissions')->where('role', 'teacher')->orWhere('role', '3')->update([$intCol => 3]);
             DB::table('role_permissions')->where('role', 'student')->orWhere('role', '4')->update([$intCol => 4]);
             $this->dropOldAndRename('role_permissions', 'role', $intCol);
+        }
+
+        // ── Bước cuối: Shift giá trị 0-based → 1-based cho các bảng đã là tinyint ──
+
+        // 32. students.status (đã là tinyint, cần shift: 0→2 inactive, 2→3 graduated)
+        if (Schema::hasTable('students') && Schema::hasColumn('students', 'status')) {
+            $type = strtolower((string) Schema::getColumnType('students', 'status'));
+
+            if (in_array($type, ['integer', 'tinyint', 'smallint', 'bigint', 'int'], true)) {
+                DB::statement('
+                    UPDATE students SET status = CASE
+                        WHEN status = 2 THEN 3
+                        WHEN status = 0 THEN 2
+                        ELSE status
+                    END
+                    WHERE status IN (0, 2)
+                ');
+            }
+        }
+
+        // 33. classes.status (đã là tinyint, cần shift: 0→2 inactive, 2→3 completed)
+        if (Schema::hasTable('classes') && Schema::hasColumn('classes', 'status')) {
+            $type = strtolower((string) Schema::getColumnType('classes', 'status'));
+
+            if (in_array($type, ['integer', 'tinyint', 'smallint', 'bigint', 'int'], true)) {
+                DB::statement('
+                    UPDATE classes SET status = CASE
+                        WHEN status = 2 THEN 3
+                        WHEN status = 0 THEN 2
+                        ELSE status
+                    END
+                    WHERE status IN (0, 2)
+                ');
+            }
         }
     }
 

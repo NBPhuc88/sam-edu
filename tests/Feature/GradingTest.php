@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -22,11 +23,12 @@ test('unauthenticated users cannot access grading routes', function () {
 
 test('teacher can view grading index and filter by class', function () {
     $center = Center::create([
-        'code'   => 'CTR000000091',
-        'name'   => 'Trung Tâm Test 1',
-        'email'  => 'center1@test.com',
-        'phone'  => '0901234567',
-        'status' => 'active',
+        'code'       => 'CTR000000091',
+        'name'       => 'Trung Tâm Test 1',
+        'email'      => 'center1@test.com',
+        'phone'      => '0901234567',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => now()->addYear(),
     ]);
 
     $teacher = Teacher::create([
@@ -38,7 +40,7 @@ test('teacher can view grading index and filter by class', function () {
         'full_name'    => 'Nguyễn Văn A',
         'email'        => 'teacher1@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -48,7 +50,7 @@ test('teacher can view grading index and filter by class', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -56,14 +58,14 @@ test('teacher can view grading index and filter by class', function () {
         'code'         => 'C000000091',
         'name'         => 'Lớp Giao Tiếp 01',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -73,7 +75,7 @@ test('teacher can view grading index and filter by class', function () {
         'name'             => 'Đề Thi Giữa Kỳ',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $classExam = ClassExam::create([
@@ -85,7 +87,7 @@ test('teacher can view grading index and filter by class', function () {
         'exam_date'             => now()->format('Y-m-d'),
         'duration_minutes'      => 15,
         'max_score'             => 10,
-        'status'                => 'ongoing',
+        'status'                => Constant::CLASS_EXAM_STATUS_ONGOING,
         'created_by_teacher_id' => $teacher->id,
     ]);
 
@@ -98,7 +100,7 @@ test('teacher can view grading index and filter by class', function () {
         'full_name'    => 'Trần Văn B',
         'email'        => 'student1@test.com',
         'password'     => 'password123',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -111,7 +113,7 @@ test('teacher can view grading index and filter by class', function () {
         'score'                   => 0,
         'total_correct'           => 0,
         'total_questions'         => 1,
-        'status'                  => 'submitted',
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
         'is_graded'               => false,
         'requires_manual_grading' => true,
         'answers'                 => [],
@@ -125,11 +127,12 @@ test('teacher can view grading index and filter by class', function () {
 
 test('teacher can grade essay and audio submission successfully', function () {
     $center = Center::create([
-        'code'   => 'CTR000000092',
-        'name'   => 'Trung Tâm Test 2',
-        'email'  => 'center2@test.com',
-        'phone'  => '0901234568',
-        'status' => 'active',
+        'code'       => 'CTR000000092',
+        'name'       => 'Trung Tâm Test 2',
+        'email'      => 'center2@test.com',
+        'phone'      => '0901234568',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => now()->addYear(),
     ]);
 
     $teacher = Teacher::create([
@@ -141,7 +144,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'full_name'    => 'Lê Văn C',
         'email'        => 'teacher2@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -151,7 +154,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -159,14 +162,14 @@ test('teacher can grade essay and audio submission successfully', function () {
         'code'         => 'C000000092',
         'name'         => 'Lớp Học Thuật 02',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -176,7 +179,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'name'             => 'Đề Thi Viết & Nói',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $section = ExamSection::create([
@@ -210,7 +213,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'exam_date'             => now()->format('Y-m-d'),
         'duration_minutes'      => 30,
         'max_score'             => 10,
-        'status'                => 'ongoing',
+        'status'                => Constant::CLASS_EXAM_STATUS_ONGOING,
         'created_by_teacher_id' => $teacher->id,
     ]);
 
@@ -223,7 +226,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'full_name'    => 'Phạm Văn D',
         'email'        => 'student2@test.com',
         'password'     => 'password123',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -236,7 +239,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'score'                   => 0,
         'total_correct'           => 0,
         'total_questions'         => 2,
-        'status'                  => 'submitted',
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
         'is_graded'               => false,
         'requires_manual_grading' => true,
         'answers'                 => [

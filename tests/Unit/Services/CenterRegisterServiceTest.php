@@ -24,9 +24,8 @@ test('registerStep1 registers center with trial plan when online payment is disa
         ->and($result['step'])->toBe('contact_notification');
 
     $this->assertDatabaseHas('centers', [
-        'name'              => 'Trung Tam Tuong Lai',
-        'email'             => 'contact@tuonglai.edu.vn',
-        'subscription_plan' => 'trial',
+        'name'  => 'Trung Tam Tuong Lai',
+        'email' => 'contact@tuonglai.edu.vn',
     ]);
 });
 

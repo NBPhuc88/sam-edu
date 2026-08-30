@@ -25,6 +25,12 @@ import { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
 import TuitionChartSection,{ TuitionChartStatsData } from './components/TuitionChartSection';
 
+import {
+    TUITION_STATUS_OVERDUE,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_PENDING,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 interface StudentTuitionItem {
     id: number;
@@ -108,14 +114,14 @@ export const Index: React.FC<IndexProps> = ({
     const { can, isSuperAdmin } = usePermission();
 
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters?.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters?.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters?.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters?.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters?.status !== undefined && filters?.status !== null ? String(filters.status) : '',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters?.status !== undefined && filters?.status !== null ? Number(filters.status) : 0,
     );
     const [selectedMonth, setSelectedMonth] = useState<string>(
         filters?.month || '',
@@ -123,7 +129,7 @@ export const Index: React.FC<IndexProps> = ({
 
     // Filter classes by selected center
     const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
 
     // Delete modal state
@@ -156,9 +162,9 @@ export const Index: React.FC<IndexProps> = ({
     const handleExport = () => {
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
-        if (selectedCenterId) params.append('center_id', String(Number(selectedCenterId)));
-        if (selectedClassId) params.append('class_id', String(Number(selectedClassId)));
-        if (selectedStatus) params.append('status', String(Number(selectedStatus)));
+        if (selectedCenterId) params.append('center_id', String(selectedCenterId));
+        if (selectedClassId) params.append('class_id', String(selectedClassId));
+        if (selectedStatus) params.append('status', String(selectedStatus));
         if (selectedMonth) params.append('month', selectedMonth);
 
         window.location.href = `/tuitions/export?${params.toString()}`;
@@ -166,9 +172,9 @@ export const Index: React.FC<IndexProps> = ({
 
     const handleResetFilter = () => {
         setSearchTerm('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         setSelectedMonth('');
         router.get('/tuitions', {}, { preserveState: true });
     };
@@ -194,13 +200,13 @@ export const Index: React.FC<IndexProps> = ({
     };
 
     const getStatusBadge = (status: number) => {
-        if (status === 1) {
+        if (status === TUITION_STATUS_PAID) {
             return <Badge variant="active">Đã hoàn thành</Badge>;
         }
-        if (status === 2) {
+        if (status === TUITION_STATUS_PARTIAL) {
             return <Badge variant="pending">Còn nợ</Badge>;
         }
-        if (status === 3) {
+        if (status === TUITION_STATUS_OVERDUE) {
             return <Badge variant="danger">Quá hạn</Badge>;
         }
         return <Badge variant="expired">Chưa đóng</Badge>;
@@ -358,13 +364,13 @@ export const Index: React.FC<IndexProps> = ({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: c.name,
                                             })),
                                         ]}
@@ -377,11 +383,11 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Lớp học' },
+                                        { value: 0, label: 'Tất cả Lớp học' },
                                         ...filteredClasses.map((cl) => ({
-                                            value: String(cl.id),
+                                            value: cl.id,
                                             label: cl.name,
                                         })),
                                     ]}
@@ -404,13 +410,13 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Trạng thái' },
-                                        { value: '0', label: 'Chưa đóng' },
-                                        { value: '2', label: 'Đang đóng (Còn nợ)' },
-                                        { value: '1', label: 'Đã hoàn thành' },
-                                        { value: '3', label: 'Quá hạn' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: TUITION_STATUS_PENDING, label: 'Chờ thanh toán' },
+                                        { value: TUITION_STATUS_PAID, label: 'Đã hoàn thành' },
+                                        { value: TUITION_STATUS_PARTIAL, label: 'Thanh toán 1 phần' },
+                                        { value: TUITION_STATUS_OVERDUE, label: 'Quá hạn' },
                                     ]}
                                     placeholder="Tất cả Trạng thái"
                                     searchable={false}

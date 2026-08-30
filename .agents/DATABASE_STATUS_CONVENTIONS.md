@@ -7,11 +7,13 @@ Tài liệu này tổng hợp và quy định chi tiết tất cả các giá tr
 ## 1. Lưu Ý Quan Trọng Về Kiểu Dữ Liệu (Data Type Rules)
 
 > [!IMPORTANT]
-> **Tất cả các trường trạng thái và giá trị phân loại cố định sử dụng số nguyên `TINYINT UNSIGNED`**:
+> **Tất cả các trường trạng thái và giá trị phân loại cố định sử dụng số nguyên `TINYINT UNSIGNED` bắt đầu từ 1 (`>= 1`), giá trị `0` dành riêng cho "Tất cả" (All Filters)**:
+> - **Quy ước giá trị số**: Tất cả các status, role, type hợp lệ trong DB đều là số nguyên dương `>= 1` (ví dụ `1, 2, 3, 4`). Giá trị `0` được quy ước dành riêng cho lựa chọn "Tất cả" trên giao diện bộ lọc Frontend và kiểm tra `!empty($filter)` trên Backend.
 > - Toàn bộ hằng số được định nghĩa tập trung tại [`app/Enums/Constant.php`](file:///home/phuc/Desktop/web/projects/demo/app/Enums/Constant.php).
 > - Khi viết truy vấn Backend (Eloquent / QueryBuilder), **bắt buộc so sánh bằng số nguyên hoặc hằng số `Constant::...`** (ví dụ: `->where('status', Constant::CLASS_STATUS_ACTIVE)`).
 > - **Tuyệt đối không so sánh bằng chuỗi** như `where('status', 'active')` để tránh lỗi so sánh kiểu MySQL làm mất dữ liệu hoặc sai lệch kết quả truy vấn.
 > - **Trong Form Request Validation**: Luôn sử dụng `Rule::in(Constant::...)` hoặc mảng hằng số tương ứng thay vì danh sách chuỗi `'in:active,inactive'`.
+> - **Trên Frontend (React/Inertia)**: Luôn khởi tạo và reset filter state bằng số `0` (ví dụ: `selectedStatus = 0`), `<select>` hoặc `<ScrollableSelect>` option "Tất cả" có `value={0}` hoặc `value="0"`. Loại bỏ param `0` hoặc undefined khi gửi request backend nếu dùng cleanParams, hoặc backend chỉ lọc khi `!empty($filter)`.
 
 ---
 

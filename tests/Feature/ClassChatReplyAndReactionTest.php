@@ -24,14 +24,14 @@ beforeEach(function () {
     ]);
 
     $this->center = Center::create([
-        'code'              => 'CTR000000099',
-        'name'              => 'Trung Tâm Chat Test',
-        'email'             => 'chatcenter@test.com',
-        'phone'             => '0901234567',
-        'subscription_plan' => 'advanced_monthly',
-        'plan_type'         => Constant::PLAN_TYPE_PREMIUM,
-        'expires_at'        => now()->addYear(),
-        'status'            => Constant::STATUS_ACTIVE,
+        'code'                 => 'CTR000000099',
+        'name'                 => 'Trung Tâm Chat Test',
+        'email'                => 'chatcenter@test.com',
+        'phone'                => '0901234567',
+        'subscription_plan_id' => $this->plan->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => now()->addYear(),
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $this->teacher = Teacher::create([

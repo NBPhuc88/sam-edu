@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
+use App\Models\SubscriptionPlan;
 use App\Models\Teacher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -14,13 +16,14 @@ beforeEach(function () {
 });
 
 test('basic plan center can access exams, class exams, and grading', function () {
+    $plan   = SubscriptionPlan::where('code', 'basic_5')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-BASIC-EXAM',
-        'name'              => 'Trung tâm Test Basic Exam',
-        'status'            => 'active',
-        'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
-        'expires_at'        => Carbon::now()->addMonths(6),
+        'code'                 => 'CTR-TEST-BASIC-EXAM',
+        'name'                 => 'Trung tâm Test Basic Exam',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_STANDARD,
+        'expires_at'           => Carbon::now()->addMonths(6),
     ]);
 
     $admin = Admin::create([
@@ -29,8 +32,8 @@ test('basic plan center can access exams, class exams, and grading', function ()
         'email'      => 'admin.basic.exam@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Test Basic Exam',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $admin->centers()->sync([$center->id]);
 
@@ -48,13 +51,14 @@ test('basic plan center can access exams, class exams, and grading', function ()
 });
 
 test('basic plan center is blocked from online exam, practice exam, and csv export for all user types', function () {
+    $plan   = SubscriptionPlan::where('code', 'basic_5')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-BASIC-BLOCK',
-        'name'              => 'Trung tâm Test Basic Block',
-        'status'            => 'active',
-        'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
-        'expires_at'        => Carbon::now()->addMonths(6),
+        'code'                 => 'CTR-TEST-BASIC-BLOCK',
+        'name'                 => 'Trung tâm Test Basic Block',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_STANDARD,
+        'expires_at'           => Carbon::now()->addMonths(6),
     ]);
 
     $admin = Admin::create([
@@ -63,8 +67,8 @@ test('basic plan center is blocked from online exam, practice exam, and csv expo
         'email'      => 'admin.basic.block@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Test Basic Block',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $admin->centers()->sync([$center->id]);
 
@@ -77,7 +81,7 @@ test('basic plan center is blocked from online exam, practice exam, and csv expo
         'first_name'   => 'Giáo viên',
         'last_name'    => 'Test',
         'full_name'    => 'Giáo viên Test Basic',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -89,7 +93,7 @@ test('basic plan center is blocked from online exam, practice exam, and csv expo
         'first_name'   => 'Học sinh',
         'last_name'    => 'Test',
         'full_name'    => 'Học sinh Test Basic',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     // Admin: Bị chặn phòng thi trực tuyến & thi thử & xuất CSV
@@ -107,13 +111,14 @@ test('basic plan center is blocked from online exam, practice exam, and csv expo
 });
 
 test('advanced plan center can access exams, online exam, and practice exams', function () {
+    $plan   = SubscriptionPlan::where('code', 'advanced_20')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-ADV',
-        'name'              => 'Trung tâm Test Advanced',
-        'status'            => 'active',
-        'subscription_plan' => 'advanced_20',
-        'plan_type'         => 'advanced',
-        'expires_at'        => Carbon::now()->addMonths(6),
+        'code'                 => 'CTR-TEST-ADV',
+        'name'                 => 'Trung tâm Test Advanced',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonths(6),
     ]);
 
     $admin = Admin::create([
@@ -122,8 +127,8 @@ test('advanced plan center can access exams, online exam, and practice exams', f
         'email'      => 'admin.adv@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Test Adv',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $admin->centers()->sync([$center->id]);
 
@@ -134,13 +139,14 @@ test('advanced plan center can access exams, online exam, and practice exams', f
 });
 
 test('trial center has access to full features', function () {
+    $plan   = SubscriptionPlan::where('code', 'trial')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-TRIAL',
-        'name'              => 'Trung tâm Test Trial',
-        'status'            => 'active',
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addDays(20),
+        'code'                 => 'CTR-TEST-TRIAL',
+        'name'                 => 'Trung tâm Test Trial',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_FREE,
+        'expires_at'           => Carbon::now()->addDays(20),
     ]);
 
     $admin = Admin::create([
@@ -149,8 +155,8 @@ test('trial center has access to full features', function () {
         'email'      => 'admin.trial@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Test Trial',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $admin->centers()->sync([$center->id]);
 
@@ -159,13 +165,14 @@ test('trial center has access to full features', function () {
 });
 
 test('expired center is completely blocked', function () {
+    $plan   = SubscriptionPlan::where('code', 'advanced_20')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-EXP',
-        'name'              => 'Trung tâm Test Expired',
-        'status'            => 'active',
-        'subscription_plan' => 'advanced_20',
-        'plan_type'         => 'advanced',
-        'expires_at'        => Carbon::now()->subDay(),
+        'code'                 => 'CTR-TEST-EXP',
+        'name'                 => 'Trung tâm Test Expired',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->subDay(),
     ]);
 
     $admin = Admin::create([
@@ -174,23 +181,24 @@ test('expired center is completely blocked', function () {
         'email'      => 'admin.exp@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Test Exp',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $admin->centers()->sync([$center->id]);
 
     $response = $this->actingAs($admin, 'admin')->get(route('teachers.index'));
-    $response->assertStatus(403);
+    $response->assertRedirect(route('login'));
 });
 
 test('holiday management is restricted to super admin only', function () {
+    $plan   = SubscriptionPlan::where('code', 'advanced_20')->first();
     $center = Center::create([
-        'code'              => 'CTR-TEST-HOLIDAY',
-        'name'              => 'Trung tâm Test Holiday',
-        'status'            => 'active',
-        'subscription_plan' => 'advanced_20',
-        'plan_type'         => 'advanced',
-        'expires_at'        => Carbon::now()->addMonths(6),
+        'code'                 => 'CTR-TEST-HOLIDAY',
+        'name'                 => 'Trung tâm Test Holiday',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => $plan?->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => Carbon::now()->addMonths(6),
     ]);
 
     $subAdmin = Admin::create([
@@ -199,8 +207,8 @@ test('holiday management is restricted to super admin only', function () {
         'email'      => 'admin.sub@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Admin Phụ',
-        'role'       => 'admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
     $subAdmin->centers()->sync([$center->id]);
 
@@ -210,8 +218,8 @@ test('holiday management is restricted to super admin only', function () {
         'email'      => 'super.holiday@test.com',
         'password'   => Hash::make('password'),
         'full_name'  => 'Super Admin Holiday',
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
     ]);
 
     // Admin phụ không có quyền truy cập Ngày lễ (bị chặn bởi AutoCheckPermission ẩn trang với mã 404)

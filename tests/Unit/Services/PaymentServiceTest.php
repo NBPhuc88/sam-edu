@@ -30,7 +30,7 @@ test('createZaloPayOrder creates pending transaction and order URL', function ()
     $data = [
         'center_id'       => $this->center->id,
         'amount'          => 5000000,
-        'plan_code'       => 'pro_yearly',
+        'plan_id'         => 1,
         'plan_name'       => 'Goi Pro 1 Nam',
         'duration_months' => 12,
     ];
