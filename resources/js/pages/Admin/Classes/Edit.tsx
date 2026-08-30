@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -6,7 +7,7 @@ import Modal from '@/components/ui/Modal';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
-import { AlertTriangle,ArrowLeft,BookOpen,Calendar,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
+import { AlertTriangle,BookOpen,Calendar,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
 import React,{ useState } from 'react';
 
 interface Center {
@@ -317,11 +318,7 @@ export default function ClassEdit({
                 {/* Header Top Bar */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/classes">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/classes" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Lớp Học: {schoolClass.name}
@@ -668,11 +665,7 @@ export default function ClassEdit({
 
                     {/* Submit Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-2">
-                        <Link href="/classes">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/classes" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="edit"

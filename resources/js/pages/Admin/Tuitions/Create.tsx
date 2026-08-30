@@ -1,19 +1,19 @@
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import { PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_METHOD_OPTIONS } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
 import {
-ArrowLeft,
 DollarSign,
 Receipt,
 Save,
 } from 'lucide-react';
 import React,{ useState } from 'react';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import ScrollableSelect from '../../../components/ui/ScrollableSelect';
-import { usePermission } from '@/hooks/usePermission';
-import { PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_METHOD_OPTIONS } from '@/constants/enums';
-import AppLayout from '../../../layouts/AppLayout';
 
 interface CenterItem {
     id: number;
@@ -157,11 +157,7 @@ export const Create: React.FC<CreateProps> = ({
                 {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Tạo Khoản Thu Học Phí Mới</h1>
                             <p className="text-sm text-gray-500">
@@ -432,11 +428,7 @@ export const Create: React.FC<CreateProps> = ({
 
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="success"

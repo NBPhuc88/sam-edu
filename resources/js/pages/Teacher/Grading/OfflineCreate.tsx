@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -751,11 +752,7 @@ export default function OfflineCreate({ classes, isTeacher, isAdmin }: Props) {
                             </p>
 
                             <div className="flex items-center gap-2.5">
-                                <Link href="/grading">
-                                    <Button type="button" variant="secondary" size="md">
-                                        Hủy Bỏ
-                                    </Button>
-                                </Link>
+                                <BackButton fallbackUrl="/grading" size="md" label="Hủy Bỏ" />
 
                                 <Button
                                     type="submit"

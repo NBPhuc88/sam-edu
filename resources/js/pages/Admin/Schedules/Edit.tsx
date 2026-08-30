@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
@@ -9,7 +10,6 @@ import { formatDate,parseDate,toISODateString } from '@/lib/date';
 import { Head,Link,router } from '@inertiajs/react';
 import {
 AlertCircle,
-ArrowLeft,
 BookOpen,
 CalendarDays,
 CalendarPlus,
@@ -1067,11 +1067,7 @@ export default function ScheduleEdit({
             <div className="mx-auto max-w-6xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/schedules">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/schedules" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Cập Nhật Lịch Học</h1>
                             <p className="text-sm text-gray-500">

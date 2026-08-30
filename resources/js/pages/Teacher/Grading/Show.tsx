@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -14,10 +15,9 @@ import AppLayout from '@/layouts/AppLayout';
 import QuestionReviewDetail,{ QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
 import ExamSectionPagination from '@/pages/ExamRoom/components/shared/ExamSectionPagination';
 import ExamSectionTabs,{ ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
-import { Head,Link,router } from '@inertiajs/react';
+import { Head,router } from '@inertiajs/react';
 import {
 AlertCircle,
-ArrowLeft,
 CheckCircle2,
 Clock,
 FileText,
@@ -279,11 +279,7 @@ export default function GradingShow({
                 {/* Top Page Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <Link href="/grading">
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
-                                Quay Lại Danh Sách
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/grading" label="Quay Lại Danh Sách" />
                         <div>
                             <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <PenTool className="h-5 w-5 text-emerald-600" />
@@ -635,11 +631,7 @@ export default function GradingShow({
 
                 {/* Bottom Action Buttons (Static / In-flow at bottom of page) */}
                 <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-200">
-                    <Link href="/grading">
-                        <Button variant="secondary" size="md" className="font-bold px-5">
-                            Hủy & Quay Lại
-                        </Button>
-                    </Link>
+                    <BackButton fallbackUrl="/grading" size="md" className="font-bold px-5" label="Hủy & Quay Lại" />
                     <Button
                         type="button"
                         variant="success"

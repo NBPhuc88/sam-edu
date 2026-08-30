@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -8,8 +9,8 @@ SUBJECT_STATUS_LABELS,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router,usePage } from '@inertiajs/react';
-import { ArrowLeft,Save } from 'lucide-react';
+import { Head,router,usePage } from '@inertiajs/react';
+import { Save } from 'lucide-react';
 import React,{ useState } from 'react';
 
 interface Center {
@@ -87,11 +88,7 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
                 {/* Top bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/subjects">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/subjects" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Môn Học: {subject.name}
@@ -241,11 +238,7 @@ export default function SubjectEdit({ subject, centers = [], errors = {} }: Edit
 
                     {/* Submit Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-2">
-                        <Link href="/subjects">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/subjects" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="edit"

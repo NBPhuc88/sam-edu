@@ -1,8 +1,15 @@
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
+import BackButton from '@/components/ui/BackButton';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router } from '@inertiajs/react';
 import {
 AlertCircle,
-ArrowLeft,
 BookOpen,
 CheckCircle2,
 Edit2,
@@ -11,13 +18,6 @@ Receipt,
 Trash2,
 } from 'lucide-react';
 import React,{ useState } from 'react';
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import Modal from '../../../components/ui/Modal';
-import AppLayout from '../../../layouts/AppLayout';
 
 import {
     PAYMENT_METHOD_BANK_TRANSFER,
@@ -314,11 +314,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                 {/* Top Action Bar */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="md" />
                         <div>
                             <div className="flex items-center gap-2.5">
                                 <h1 className="text-2xl font-bold text-gray-900">

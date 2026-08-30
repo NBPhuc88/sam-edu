@@ -1,11 +1,12 @@
+import BackButton from '@/components/ui/BackButton';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft,Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
 import React,{ useMemo,useState } from 'react';
 
 interface Center {
@@ -137,11 +138,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                 {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/students">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/students" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa: {student.full_name}
@@ -491,11 +488,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
 
                     {/* Submit Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-2">
-                        <Link href="/students">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/students" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="edit"

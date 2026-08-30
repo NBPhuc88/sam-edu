@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -13,10 +14,9 @@ SKILL_READING,
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import { Head,router,usePage } from '@inertiajs/react';
 import {
 AlertCircle,
-ArrowLeft,
 Award,
 Calculator,
 Clock,
@@ -235,15 +235,7 @@ export default function ExamEdit({
                 {/* Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<ArrowLeft className="h-4 w-4" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Đề Thi (Kho Đề Thi)
@@ -541,15 +533,7 @@ export default function ExamEdit({
 
                     {/* Submit Actions */}
                     <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowLeft className="h-5 w-5" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" size="lg" />
                         <Button
                             type="submit"
                             variant="success"

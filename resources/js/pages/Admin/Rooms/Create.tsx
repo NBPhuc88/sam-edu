@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -14,10 +15,9 @@ ROOM_STATUS_PAUSED,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import { Head,router,usePage } from '@inertiajs/react';
 import {
 Armchair,
-ArrowLeft,
 DoorOpen,
 Monitor,
 Plus,
@@ -134,15 +134,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
                 {/* Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/rooms">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<ArrowLeft className="h-4 w-4" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/rooms" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Thêm Phòng Học Mới
@@ -449,15 +441,7 @@ export default function RoomCreate({ centers = [], errors = {} }: Props) {
 
                     {/* Submit Action Buttons */}
                     <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-                        <Link href="/rooms">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowLeft className="h-5 w-5" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/rooms" size="lg" />
                         <Button
                             type="submit"
                             variant="success"

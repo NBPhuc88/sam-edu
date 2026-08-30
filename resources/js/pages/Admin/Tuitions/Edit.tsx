@@ -1,13 +1,14 @@
-import { Head,Link,router,usePage } from '@inertiajs/react';
-import { ArrowLeft,Save } from 'lucide-react';
-import React,{ useState } from 'react';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import ScrollableSelect from '../../../components/ui/ScrollableSelect';
+import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { usePermission } from '@/hooks/usePermission';
-import AppLayout from '../../../layouts/AppLayout';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
+import { Save } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface CenterItem {
     id: number;
@@ -151,11 +152,7 @@ export const Edit: React.FC<EditProps> = ({
                 {/* Top bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl={`/tuitions/${tuition.id}`} size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Hồ Sơ Học Phí #{tuition.id}
@@ -301,11 +298,7 @@ export const Edit: React.FC<EditProps> = ({
 
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
-                        <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl={`/tuitions/${tuition.id}`} size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="edit"
