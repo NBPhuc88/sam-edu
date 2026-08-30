@@ -29,6 +29,8 @@ class StoreClassExamRequest extends FormRequest
             'max_score'        => ['nullable', 'numeric', 'min:0.1', 'max:1000'],
             'pass_score'       => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'status'           => ['nullable', 'integer', Rule::in(Constant::CLASS_EXAM_STATUSES)],
+            'code'             => ['nullable', 'string', 'max:50', Rule::unique('class_exams', 'code')->whereNull('deleted_at')],
+            'access_code'      => ['nullable', 'string', 'max:20'],
         ];
     }
 

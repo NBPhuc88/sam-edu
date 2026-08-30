@@ -238,9 +238,27 @@ class ClassExamRepository implements ClassExamRepositoryInterface
 
     public function getNextClassExamCode(): string
     {
-        $maxId = (int) (ClassExam::max('id') ?? 0);
+        $maxId   = (int) (ClassExam::withTrashed()->max('id') ?? 0);
+        $nextNum = $maxId + 1;
+        $code    = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
 
-        return sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxId + 1);
+        while ($this->codeExists($code)) {
+            $nextNum++;
+            $code = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
+        }
+
+        return $code;
+    }
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        $query = ClassExam::withTrashed()->where('code', $code);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
     }
 
     public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission

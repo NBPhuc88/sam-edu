@@ -45,6 +45,7 @@ class Constant
     public const string PREFIX_EXAM_ALT          = 'EX';
     public const string PREFIX_EXAM_TYPE         = 'ET';
     public const string PREFIX_SUBSCRIPTION_PLAN = 'PLAN';
+    public const string PREFIX_CLASS_EXAM        = 'CE';
 
     // ==========================================
     // 3. AUTHENTICATION, GUARDS & PHÂN QUYỀN (ROLES)

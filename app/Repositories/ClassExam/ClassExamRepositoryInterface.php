@@ -66,6 +66,8 @@ interface ClassExamRepositoryInterface
 
     public function getNextClassExamCode(): string;
 
+    public function codeExists(string $code, ?int $excludeId = null): bool;
+
     public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission;
 
     /**
