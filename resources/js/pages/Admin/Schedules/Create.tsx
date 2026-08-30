@@ -1111,8 +1111,14 @@ export default function ScheduleCreate({
                                     </div>
                                 )}
                                 <input type="hidden" name="teacher_id" value={selectedTeacherId} />
-                                {errors.teacher_id && (
+                                {errors.teacher_id && !errors.teacher_id.includes('Trùng lịch') && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.teacher_id}</p>
+                                )}
+                                {errors.teacher_id && errors.teacher_id.includes('Trùng lịch') && (
+                                    <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-amber-700">
+                                        <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                                        <span>Trùng lịch dạy trong tuần (xem chi tiết và điều chỉnh tại Mục 2 bên dưới).</span>
+                                    </p>
                                 )}
                             </div>
 
@@ -1258,6 +1264,16 @@ export default function ScheduleCreate({
                             </div>
                         )}
 
+                        {(errors.weeks || (errors.teacher_id && errors.teacher_id.includes('Trùng lịch'))) && (
+                            <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                                <div>
+                                    <p className="font-bold">Lỗi trùng lịch học / lịch dạy trong tuần:</p>
+                                    <p className="mt-1 font-normal text-red-700">{errors.weeks || errors.teacher_id}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
                                 const conf = weeklyTimes[day.id];
@@ -1292,16 +1308,41 @@ export default function ScheduleCreate({
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 {conf.slots.map((slot, sIdx) => {
+                                                    const sStart = slot.start_time ? String(slot.start_time).slice(0, 5) : '';
+                                                    const sEnd = slot.end_time ? String(slot.end_time).slice(0, 5) : '';
+                                                    const isInvalidTime = !!(sStart && sEnd && sStart >= sEnd);
+
+                                                    let sameDayConflictMsg: string | null = null;
+                                                    if (sStart && sEnd) {
+                                                        for (let oIdx = 0; oIdx < conf.slots.length; oIdx++) {
+                                                            if (oIdx === sIdx) continue;
+                                                            const otherSlot = conf.slots[oIdx];
+                                                            const oStart = otherSlot.start_time ? String(otherSlot.start_time).slice(0, 5) : '';
+                                                            const oEnd = otherSlot.end_time ? String(otherSlot.end_time).slice(0, 5) : '';
+                                                            if (oStart && oEnd && sStart < oEnd && oStart < sEnd) {
+                                                                sameDayConflictMsg = `Trùng giờ với Ca ${oIdx + 1} (${oStart} - ${oEnd})`;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+
                                                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
                                                     const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
-                                                    const isConflicted = !!otherConflict || !!teacherConflict;
+                                                    const isConflicted = isInvalidTime || !!sameDayConflictMsg || !!otherConflict || !!teacherConflict;
 
                                                     return (
-                                                        <div key={sIdx} className={`rounded-lg bg-white p-2.5 shadow-xs border ${isConflicted ? 'border-red-400 bg-red-50/30' : 'border-emerald-200/80'}`}>
-                                                            <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
+                                                        <div
+                                                            key={sIdx}
+                                                            className={`rounded-xl bg-white p-3 shadow-xs border transition-all ${
+                                                                isConflicted
+                                                                    ? 'border-red-400 bg-white'
+                                                                    : 'border-emerald-200/80 bg-white'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-2 text-xs font-semibold text-gray-800">
                                                                 <span className="flex items-center gap-1">
                                                                     <span>Ca {sIdx + 1}</span>
-                                                                    <span className="font-mono text-gray-500">({slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)})</span>
+                                                                    <span className="font-mono text-gray-500">({sStart || '--:--'} - {sEnd || '--:--'})</span>
                                                                 </span>
                                                                 <div className="flex items-center gap-1.5">
                                                                     <button
@@ -1310,7 +1351,7 @@ export default function ScheduleCreate({
                                                                         className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-0.5"
                                                                         title="Chỉnh sửa giờ trong popup có nút Lưu"
                                                                     >
-                                                                        <Edit3 className="h-3 w-3" />
+                                                                        <Edit3 className="h-3.5 w-3.5" />
                                                                         Sửa
                                                                     </button>
                                                                     {conf.slots.length > 1 && (
@@ -1328,41 +1369,55 @@ export default function ScheduleCreate({
 
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <div>
-                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Bắt đầu</label>
+                                                                    <label className="mb-1 block text-[11px] text-gray-500 font-medium">Bắt đầu</label>
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
                                                                         title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
                                                                     >
                                                                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                        <span>{slot.start_time?.slice(0, 5) || '18:00'}</span>
+                                                                        <span>{sStart || '18:00'}</span>
                                                                     </button>
                                                                 </div>
                                                                 <div>
-                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Kết thúc</label>
+                                                                    <label className="mb-1 block text-[11px] text-gray-500 font-medium">Kết thúc</label>
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
                                                                         title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
                                                                     >
                                                                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                        <span>{slot.end_time?.slice(0, 5) || '20:00'}</span>
+                                                                        <span>{sEnd || '20:00'}</span>
                                                                     </button>
                                                                 </div>
                                                             </div>
 
+                                                            {isInvalidTime && (
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                                                                    <span>Giờ kết thúc ({sEnd}) phải sau giờ bắt đầu ({sStart})!</span>
+                                                                </div>
+                                                            )}
+
+                                                            {sameDayConflictMsg && (
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                                                                    <span>{sameDayConflictMsg}</span>
+                                                                </div>
+                                                            )}
+
                                                             {otherConflict && (
-                                                                <div className="mt-2 flex items-start gap-1 rounded bg-red-100 p-1.5 text-[11px] font-semibold text-red-800">
-                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 mt-0.5" />
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
                                                                     <span>Trùng với môn <strong>{otherConflict.subjectName}</strong> ({otherConflict.timeRange})</span>
                                                                 </div>
                                                             )}
 
                                                             {teacherConflict && (
-                                                                <div className="mt-2 flex items-start gap-1 rounded bg-amber-100 p-1.5 text-[11px] font-semibold text-amber-900 border border-amber-300">
-                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-700 mt-0.5" />
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-300">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                                                                     <span>Trùng lịch dạy GV <strong>{teacherConflict.teacherName}</strong> tại lớp <strong>{teacherConflict.className}</strong> ({teacherConflict.timeRange})</span>
                                                                 </div>
                                                             )}
@@ -1433,6 +1488,12 @@ export default function ScheduleCreate({
                         </div>
 
                         {/* Holiday toggle switch */}
+                        {errors.off_days && (
+                            <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                                <span>{errors.off_days}</span>
+                            </div>
+                        )}
                         <div className="mb-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
                             <div className="flex items-center gap-3">
                                 <CalendarDays className="h-5 w-5 text-emerald-600 shrink-0" />
@@ -1572,6 +1633,13 @@ export default function ScheduleCreate({
                                 Thêm Buổi Học Bù
                             </Button>
                         </div>
+
+                        {errors.extra_days && (
+                            <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                                <span>{errors.extra_days}</span>
+                            </div>
+                        )}
 
                         {extraDays.length > 0 ? (
                             <div className="space-y-3">
