@@ -896,6 +896,42 @@ export default function ScheduleCreate({
         setSlotModalOpen(false);
     };
 
+    const scrollToFirstError = () => {
+        setTimeout(() => {
+            const errorSelectors = [
+                '.border-red-400',
+                '.border-red-500',
+                '.text-red-600',
+                '.text-red-800',
+                '.text-amber-900',
+                '#form-submit-error',
+                '#section-weekly-schedule-error',
+                'input:invalid',
+                'select:invalid',
+            ];
+
+            for (const selector of errorSelectors) {
+                const elements = document.querySelectorAll(selector);
+                for (let i = 0; i < elements.length; i++) {
+                    const el = elements[i] as HTMLElement;
+                    if (el && el.offsetParent !== null) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (typeof el.focus === 'function' && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'BUTTON')) {
+                            el.focus({ preventScroll: true });
+                        }
+                        return;
+                    }
+                }
+            }
+        }, 100);
+    };
+
+    useEffect(() => {
+        if (Object.keys(errors).length > 0 || formSubmitError) {
+            scrollToFirstError();
+        }
+    }, [errors, formSubmitError]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setFormSubmitError(null);
@@ -903,6 +939,7 @@ export default function ScheduleCreate({
         const slotErrors = validateWeeklyTimes(weeklyTimes);
         if (slotErrors.length > 0) {
             setFormSubmitError(`Không thể lưu lịch học: ${slotErrors[0].message}`);
+            scrollToFirstError();
             return;
         }
 
@@ -915,12 +952,14 @@ export default function ScheduleCreate({
                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
                     if (otherConflict) {
                         setFormSubmitError(`Trùng lịch học trong lớp: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với môn ${otherConflict.subjectName} (${otherConflict.timeRange})!`);
+                        scrollToFirstError();
                         return;
                     }
 
                     const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
                     if (teacherConflict) {
                         setFormSubmitError(`Trùng lịch dạy của giáo viên: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với lịch dạy lớp ${teacherConflict.className} (môn ${teacherConflict.subjectName}) của Giáo viên ${teacherConflict.teacherName}!`);
+                        scrollToFirstError();
                         return;
                     }
                 }
@@ -929,6 +968,7 @@ export default function ScheduleCreate({
 
         if (classStartDate && startDate < classStartDate) {
             setFormSubmitError(`Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+            scrollToFirstError();
             return;
         }
 
@@ -936,12 +976,14 @@ export default function ScheduleCreate({
             for (const off of offDays) {
                 if (off.date && toISODateString(off.date) < classStartDate) {
                     setFormSubmitError(`Ngày nghỉ (${formatDate(off.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    scrollToFirstError();
                     return;
                 }
             }
             for (const extra of extraDays) {
                 if (extra.date && toISODateString(extra.date) < classStartDate) {
                     setFormSubmitError(`Ngày học bù (${formatDate(extra.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    scrollToFirstError();
                     return;
                 }
             }
@@ -984,6 +1026,7 @@ export default function ScheduleCreate({
                 status,
             },
             {
+                onError: () => scrollToFirstError(),
                 onFinish: () => setIsSubmitting(false),
             },
         );
