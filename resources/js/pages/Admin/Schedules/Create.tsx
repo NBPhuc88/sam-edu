@@ -23,8 +23,9 @@ Plus,
 Save,
 Sparkles,
 Square,
-Trash2
+Trash2,
 } from 'lucide-react';
+import { SCHEDULE_STATUS_ACTIVE } from '@/constants/enums';
 import React,{ useEffect,useState } from 'react';
 
 interface Center {
@@ -353,7 +354,7 @@ export default function ScheduleCreate({
     const [startDate, setStartDate] = useState<string>(
         initialClassStartDate && todayIso < initialClassStartDate ? initialClassStartDate : todayIso
     );
-    const [status] = useState<string>('active');
+    const [status] = useState<number>(SCHEDULE_STATUS_ACTIVE);
 
     // Weekly schedules: Map of weekday -> { enabled: boolean, slots: [{start_time, end_time}] }
     const [weeklyTimes, setWeeklyTimes] = useState<

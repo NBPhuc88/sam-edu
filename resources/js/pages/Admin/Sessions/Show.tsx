@@ -173,7 +173,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         : rooms;
 
     // Reschedule form state
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors, transform } = useForm({
         session_date: session.session_date ? toISODateString(String(session.session_date)) : '',
         start_time: session.start_time ? session.start_time.substring(0, 5) : '08:00',
         end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
@@ -198,6 +198,12 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
 
     const handleRescheduleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        transform((raw) => ({
+            ...raw,
+            teacher_id: raw.teacher_id ? Number(raw.teacher_id) : null,
+            room_id: raw.room_id ? Number(raw.room_id) : null,
+            status: Number(raw.status),
+        }));
         patch(`/sessions/${session.id}`, {
             onSuccess: () => {
                 setIsRescheduleModalOpen(false);
