@@ -27,8 +27,11 @@ export default function MatchingEditor({
     onChangeCorrectAnswer,
     onChangeQuestion,
 }: Props) {
-    const leftItems: Item[] = options?.left_items && options.left_items.length > 0
-        ? options.left_items.map((item: any, idx: number) => ({
+    const rawLeft = (options as any)?.left_items || (options as any)?.left || (options as any)?.leftItems;
+    const rawRight = (options as any)?.right_items || (options as any)?.right || (options as any)?.rightItems;
+
+    const leftItems: Item[] = Array.isArray(rawLeft) && rawLeft.length > 0
+        ? rawLeft.map((item: any, idx: number) => ({
             id: String(item?.id ?? item?.key ?? `L${idx + 1}`),
             label: String(item?.label ?? item?.text ?? item?.name ?? ''),
             text: String(item?.text ?? item?.label ?? ''),
@@ -39,8 +42,8 @@ export default function MatchingEditor({
             { id: 'L3', label: 'Vế 3 (Cột Trái)', text: 'Vế 3 (Cột Trái)' },
         ];
 
-    const rightItems: Item[] = options?.right_items && options.right_items.length > 0
-        ? options.right_items.map((item: any, idx: number) => ({
+    const rightItems: Item[] = Array.isArray(rawRight) && rawRight.length > 0
+        ? rawRight.map((item: any, idx: number) => ({
             id: String(item?.id ?? item?.key ?? `R${idx + 1}`),
             text: String(item?.text ?? item?.label ?? item?.name ?? ''),
             label: String(item?.label ?? item?.text ?? ''),
