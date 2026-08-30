@@ -197,7 +197,13 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
+                    {/* Hidden dummy inputs to absorb browser password manager auto-fill */}
+                    <div style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', zIndex: -1 }} aria-hidden="true">
+                        <input type="text" name="prevent_autofill_username" tabIndex={-1} autoComplete="username" />
+                        <input type="password" name="prevent_autofill_password" tabIndex={-1} autoComplete="current-password" />
+                    </div>
+
                     {/* Basic Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
@@ -212,6 +218,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    id="student_center_id"
+                                    name="center_id"
                                     value={centerId}
                                     onChange={(e) => setCenterId(e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -235,6 +243,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Họ Và Tên Học Sinh <span className="text-red-500">*</span>
                                 </label>
                                 <Input
+                                    id="student_full_name"
+                                    name="full_name"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Ví dụ: Trần Thị Mai"
@@ -253,6 +267,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Mã Học Sinh (Không thể thay đổi)
                                 </label>
                                 <Input
+                                    id="student_code_display"
+                                    name="student_code_display"
                                     value={studentCode}
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 font-mono !py-3 !text-sm text-gray-600"
@@ -265,6 +281,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Tên Đăng Nhập (@username) <span className="text-xs font-normal text-gray-500">(Tùy chọn)</span>
                                 </label>
                                 <Input
+                                    id="student_username"
+                                    name="student_user_login"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     placeholder="Để trống nếu không cấp tài khoản đăng nhập"
@@ -282,7 +304,13 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Mật Khẩu Mới (Để trống nếu không đổi/không dùng)
                                 </label>
                                 <Input
+                                    id="student_password"
+                                    name="student_user_password"
                                     type="password"
+                                    autoComplete="new-password"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -300,9 +328,16 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Địa Chỉ Email
                                 </label>
                                 <Input
+                                    id="student_email"
+                                    name="student_contact_email"
                                     type="email"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="example@gmail.com"
                                     maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
@@ -317,6 +352,9 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Số Điện Thoại Học Sinh
                                 </label>
                                 <Input
+                                    id="student_phone"
+                                    name="phone"
+                                    autoComplete="off"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="Ví dụ: 0912345678"
@@ -346,6 +384,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Giới Tính
                                 </label>
                                 <select
+                                    id="student_gender"
+                                    name="gender"
                                     value={gender}
                                     onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -362,8 +402,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Địa Chỉ Thường Trú
                                 </label>
                                 <Input
+                                    id="student_address"
+                                    name="address"
+                                    autoComplete="off"
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
+                                    placeholder="Ví dụ: Số 123 Đường Nguyễn Trãi, Quận 1, TP.HCM"
                                     maxLength={255}
                                     className="!py-3 !text-sm"
                                 />
@@ -385,8 +429,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Họ Tên Phụ Huynh
                                 </label>
                                 <Input
+                                    id="student_parent_name"
+                                    name="parent_name"
+                                    autoComplete="off"
                                     value={parentName}
                                     onChange={(e) => setParentName(e.target.value)}
+                                    placeholder="Ví dụ: Trần Văn Hùng"
                                     maxLength={50}
                                     className="!py-3 !text-sm"
                                 />
@@ -398,6 +446,9 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Số Điện Thoại Phụ Huynh
                                 </label>
                                 <Input
+                                    id="student_parent_phone"
+                                    name="parent_phone"
+                                    autoComplete="off"
                                     value={parentPhone}
                                     onChange={(e) => setParentPhone(e.target.value)}
                                     placeholder="Ví dụ: 0901234567"
@@ -412,8 +463,12 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     Mối Quan Hệ
                                 </label>
                                 <Input
+                                    id="student_parent_relationship"
+                                    name="parent_relationship"
+                                    autoComplete="off"
                                     value={parentRelationship}
                                     onChange={(e) => setParentRelationship(e.target.value)}
+                                    placeholder="Ví dụ: Bố, Mẹ, Người giám hộ..."
                                     maxLength={50}
                                     className="!py-3 !text-sm"
                                 />

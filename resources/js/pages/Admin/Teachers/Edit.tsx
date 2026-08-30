@@ -119,7 +119,13 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
+                    {/* Hidden dummy inputs to absorb browser password manager auto-fill */}
+                    <div style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', zIndex: -1 }} aria-hidden="true">
+                        <input type="text" name="prevent_autofill_username" tabIndex={-1} autoComplete="username" />
+                        <input type="password" name="prevent_autofill_password" tabIndex={-1} autoComplete="current-password" />
+                    </div>
+
                     {/* Basic Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
@@ -127,30 +133,31 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                             1. Thông Tin Cơ Bản & Tài Khoản
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
-                            {/* Center Selection (Super Admin only) */}
-                            {isSuperAdmin && (
-                                <div className="md:col-span-2">
-                                    <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                        Trung Tâm Đào Tạo <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={centerId}
-                                        onChange={(e) => setCenterId(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        required
-                                    >
-                                        {centers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.center_id && (
-                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
-                                    )}
-                                </div>
-                            )}
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Center */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Trung Tâm Đào Tạo <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="teacher_center_id"
+                                    name="center_id"
+                                    value={centerId}
+                                    onChange={(e) => setCenterId(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    required
+                                >
+                                    <option value="">-- Chọn Trung Tâm --</option>
+                                    {centers.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} ({c.code})
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.center_id && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                )}
+                            </div>
 
                             {/* Full Name */}
                             <div>
@@ -158,10 +165,17 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     Họ Và Tên Giáo Viên <span className="text-red-500">*</span>
                                 </label>
                                 <Input
+                                    id="teacher_full_name"
+                                    name="full_name"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
+                                    placeholder="Ví dụ: Nguyễn Văn An"
                                     maxLength={50}
-                                    className="!py-3 !text-sm"
+                                    className="!py-3 !text-sm font-medium"
                                     required
                                 />
                                 {errors.full_name && (
@@ -172,9 +186,11 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                             {/* Teacher Code */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-800">
-                                    Mã Giáo Viên
+                                    Mã Giáo Viên (Không thể thay đổi)
                                 </label>
                                 <Input
+                                    id="teacher_code_display"
+                                    name="teacher_code_display"
                                     value={teacherCode}
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 font-mono !py-3 !text-sm text-gray-600"
@@ -187,6 +203,12 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     Tên Đăng Nhập (@username) <span className="text-red-500">*</span>
                                 </label>
                                 <Input
+                                    id="teacher_username"
+                                    name="teacher_user_login"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     maxLength={19}
@@ -204,7 +226,13 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     Mật Khẩu Mới (Để trống nếu không đổi)
                                 </label>
                                 <Input
+                                    id="teacher_password"
+                                    name="teacher_user_password"
                                     type="password"
+                                    autoComplete="new-password"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -222,9 +250,16 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
                                     Địa Chỉ Email
                                 </label>
                                 <Input
+                                    id="teacher_email"
+                                    name="teacher_contact_email"
                                     type="email"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="example@gmail.com"
                                     maxLength={100}
                                     className="!py-3 !text-sm"
                                 />

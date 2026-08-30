@@ -111,7 +111,13 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
+                    {/* Hidden dummy inputs to absorb browser password manager auto-fill */}
+                    <div style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', zIndex: -1 }} aria-hidden="true">
+                        <input type="text" name="prevent_autofill_username" tabIndex={-1} autoComplete="username" />
+                        <input type="password" name="prevent_autofill_password" tabIndex={-1} autoComplete="current-password" />
+                    </div>
+
                     {/* Basic Info Card */}
                     <Card className="border-gray-200 bg-white p-6 shadow-xs sm:p-8">
                         <h2 className="mb-5 flex items-center gap-2 text-base font-bold uppercase tracking-wider text-gray-900">
@@ -127,6 +133,8 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                         Trung Tâm Đào Tạo <span className="text-red-500">*</span>
                                     </label>
                                     <select
+                                        id="teacher_center_id"
+                                        name="center_id"
                                         value={centerId}
                                         onChange={(e) => setCenterId(e.target.value)}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -151,6 +159,12 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Họ Và Tên Giáo Viên <span className="text-red-500">*</span>
                                 </label>
                                 <Input
+                                    id="teacher_full_name"
+                                    name="full_name"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={fullName}
                                     onChange={(e) => handleFullNameChange(e.target.value)}
                                     placeholder="Ví dụ: Nguyễn Văn An"
@@ -169,6 +183,8 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Mã Giáo Viên
                                 </label>
                                 <Input
+                                    id="teacher_code_display"
+                                    name="teacher_code_display"
                                     value="Hệ thống tự động sinh mã (VD: GV0000001)"
                                     disabled
                                     className="cursor-not-allowed bg-slate-50 !py-3 !text-sm text-gray-500 italic"
@@ -181,6 +197,12 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Tên Đăng Nhập (@username) <span className="text-red-500">*</span>
                                 </label>
                                 <Input
+                                    id="teacher_username"
+                                    name="teacher_user_login"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                                     placeholder="Ví dụ: gv_nguyenan"
@@ -199,7 +221,13 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Mật Khẩu Đăng Nhập (Mặc định: 12345678)
                                 </label>
                                 <Input
+                                    id="teacher_password"
+                                    name="teacher_user_password"
                                     type="password"
+                                    autoComplete="new-password"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -217,10 +245,16 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     Địa Chỉ Email
                                 </label>
                                 <Input
+                                    id="teacher_email"
+                                    name="teacher_contact_email"
                                     type="email"
+                                    autoComplete="off"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
+                                    data-form-type="other"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="nguyenvanan@gmail.com"
+                                    placeholder="example@gmail.com"
                                     maxLength={100}
                                     className="!py-3 !text-sm"
                                 />
