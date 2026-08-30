@@ -19,11 +19,17 @@ interface Center {
     code: string;
 }
 
+interface StudentTuitionItem {
+    id: number;
+    class_id: number;
+}
+
 interface StudentInfo {
     id: number;
     student_code?: string;
     full_name?: string;
     phone?: string | null;
+    tuitions?: StudentTuitionItem[];
 }
 
 interface Props {
@@ -61,10 +67,22 @@ export default function BulkAssignClassModal({
                     id,
                     full_name: `Học sinh #${id}`,
                     student_code: '',
+                    tuitions: [],
                 }
             );
         });
     }, [selectedStudentIds, students]);
+
+    // Lọc danh sách học sinh CHƯA ĐƯỢC TẠO HỌC PHÍ cho lớp học được chọn
+    const studentsWithoutTuition = useMemo(() => {
+        if (!selectedClassId) return selectedStudentsList;
+        return selectedStudentsList.filter((s) => {
+            const hasTuition = (s.tuitions || []).some(
+                (t) => Number(t.class_id) === Number(selectedClassId)
+            );
+            return !hasTuition;
+        });
+    }, [selectedStudentsList, selectedClassId]);
 
     const [selectedTuitionStudentIds, setSelectedTuitionStudentIds] = useState<number[]>([]);
 
@@ -101,8 +119,13 @@ export default function BulkAssignClassModal({
         e.preventDefault();
         if (!selectedClassId) return;
 
-        setSelectedTuitionStudentIds(selectedStudentIds);
-        setShowTuitionConfirm(true);
+        if (studentsWithoutTuition.length > 0) {
+            setSelectedTuitionStudentIds(studentsWithoutTuition.map((s) => s.id));
+            setShowTuitionConfirm(true);
+        } else {
+            // Tất cả học sinh đã có học phí cho lớp này
+            executeSubmit(0, []);
+        }
     };
 
     const toggleTuitionStudent = (id: number) => {
@@ -112,10 +135,10 @@ export default function BulkAssignClassModal({
     };
 
     const handleSelectAllTuitionStudents = () => {
-        if (selectedTuitionStudentIds.length === selectedStudentIds.length) {
+        if (selectedTuitionStudentIds.length === studentsWithoutTuition.length) {
             setSelectedTuitionStudentIds([]);
         } else {
-            setSelectedTuitionStudentIds([...selectedStudentIds]);
+            setSelectedTuitionStudentIds(studentsWithoutTuition.map((s) => s.id));
         }
     };
 
@@ -294,15 +317,15 @@ export default function BulkAssignClassModal({
                             </div>
                             <div className="space-y-1 text-sm">
                                 <p className="font-semibold text-gray-900">
-                                    Có tạo học phí cho các học sinh được ghi danh?
+                                    Có tạo học phí cho các học sinh chưa có học phí?
                                 </p>
                                 <p className="text-gray-600 leading-relaxed text-xs">
-                                    Bạn đang ghi danh <span className="font-semibold text-emerald-800">{selectedStudentsList.length} học sinh</span> vào lớp <span className="font-semibold text-gray-900">{targetClass?.name || 'đã chọn'}</span>. Chọn các học sinh bạn muốn tự động sinh hồ sơ học phí:
+                                    Lớp <span className="font-semibold text-gray-900">{targetClass?.name || 'đã chọn'}</span> có <span className="font-semibold text-emerald-800">{studentsWithoutTuition.length} học sinh</span> chưa được tạo học phí. Chọn các học sinh bạn muốn tự động sinh hồ sơ học phí:
                                 </p>
                             </div>
                         </div>
 
-                        {/* List of selected students with checkboxes */}
+                        {/* List of students without tuition with checkboxes */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between px-1">
                                 <button
@@ -312,21 +335,21 @@ export default function BulkAssignClassModal({
                                 >
                                     <div
                                         className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors ${
-                                            selectedTuitionStudentIds.length === selectedStudentsList.length
+                                            selectedTuitionStudentIds.length === studentsWithoutTuition.length
                                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                                 : 'border-gray-300 bg-white'
                                         }`}
                                     >
-                                        {selectedTuitionStudentIds.length === selectedStudentsList.length && (
+                                        {selectedTuitionStudentIds.length === studentsWithoutTuition.length && (
                                             <Check className="w-3 h-3 stroke-[3]" />
                                         )}
                                     </div>
-                                    Chọn tất cả học sinh ({selectedTuitionStudentIds.length}/{selectedStudentsList.length})
+                                    Chọn tất cả học sinh ({selectedTuitionStudentIds.length}/{studentsWithoutTuition.length})
                                 </button>
                             </div>
 
                             <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-xl border border-gray-200">
-                                {selectedStudentsList.map((st) => {
+                                {studentsWithoutTuition.map((st) => {
                                     const isChecked = selectedTuitionStudentIds.includes(st.id);
                                     return (
                                         <div

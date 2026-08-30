@@ -651,7 +651,12 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         $query = Student::query()
             ->select('id', 'full_name', 'student_code', 'phone', 'email', 'status', 'center_id')
             ->where('center_id', $centerId)
-            ->where('status', 1);
+            ->where('status', 1)
+            ->withExists([
+                'tuitions as has_tuition' => function ($q) use ($classId) {
+                    $q->where('class_id', $classId);
+                },
+            ]);
 
         if (! empty($enrolledStudentIds)) {
             $query->whereNotIn('id', $enrolledStudentIds);

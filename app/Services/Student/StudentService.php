@@ -506,10 +506,10 @@ class StudentService implements StudentServiceInterface
 
         $this->studentRepository->syncClasses($student, $validClassIds);
 
-        if ($createTuition && ! empty($newClassIds)) {
+        if ($createTuition && ! empty($validClassIds)) {
             $targetClassIds = $tuitionClassIds !== null
-                ? array_values(array_intersect($newClassIds, array_map('intval', $tuitionClassIds)))
-                : $newClassIds;
+                ? array_values(array_intersect($validClassIds, array_map('intval', $tuitionClassIds)))
+                : $validClassIds;
 
             if (! empty($targetClassIds)) {
                 $classes = SchoolClass::query()

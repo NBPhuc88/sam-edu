@@ -19,12 +19,18 @@ interface StudentClassTag {
     code: string;
 }
 
+interface StudentTuitionItem {
+    id: number;
+    class_id: number;
+}
+
 interface Student {
     id: number;
     student_code: string;
     full_name: string;
     center_id: number;
     classes?: StudentClassTag[];
+    tuitions?: StudentTuitionItem[];
 }
 
 interface Props {
@@ -45,6 +51,10 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
     const initialSelectedIds = useMemo(() => {
         return (student.classes || []).map((c) => c.id);
     }, [student]);
+
+    const existingTuitionClassIds = useMemo(() => {
+        return (student.tuitions || []).map((t) => Number(t.class_id));
+    }, [student.tuitions]);
 
     const [selectedClassIds, setSelectedClassIds] = useState<number[]>(initialSelectedIds);
     const [search, setSearch] = useState('');
@@ -85,21 +95,24 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
         }
     };
 
-    const newlyAddedClasses = useMemo(() => {
-        const newlyAddedIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
-        return centerClasses.filter((c) => newlyAddedIds.includes(c.id));
-    }, [selectedClassIds, initialSelectedIds, centerClasses]);
+    // Các lớp được chọn mà học sinh CHƯA ĐƯỢC TẠO HỌC PHÍ
+    const classesWithoutTuition = useMemo(() => {
+        return centerClasses.filter(
+            (c) => selectedClassIds.includes(c.id) && !existingTuitionClassIds.includes(c.id)
+        );
+    }, [selectedClassIds, centerClasses, existingTuitionClassIds]);
 
     const [selectedTuitionClassIds, setSelectedTuitionClassIds] = useState<number[]>([]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const newlyAddedIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
 
-        if (newlyAddedIds.length > 0) {
-            setSelectedTuitionClassIds(newlyAddedIds);
+        // Kiểm tra xem có lớp nào trong danh sách chọn chưa được tạo học phí không
+        if (classesWithoutTuition.length > 0) {
+            setSelectedTuitionClassIds(classesWithoutTuition.map((c) => c.id));
             setShowTuitionConfirm(true);
         } else {
+            // Tất cả lớp đã có học phí
             executeSubmit(0, []);
         }
     };
@@ -111,10 +124,10 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
     };
 
     const handleSelectAllTuitionClasses = () => {
-        if (selectedTuitionClassIds.length === newlyAddedClasses.length) {
+        if (selectedTuitionClassIds.length === classesWithoutTuition.length) {
             setSelectedTuitionClassIds([]);
         } else {
-            setSelectedTuitionClassIds(newlyAddedClasses.map((c) => c.id));
+            setSelectedTuitionClassIds(classesWithoutTuition.map((c) => c.id));
         }
     };
 
@@ -198,25 +211,28 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
 
                         <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1.5 border border-gray-200 rounded-xl p-2 bg-slate-50/50">
                             {filteredClasses.length === 0 ? (
-                                <p className="text-center py-8 text-sm text-gray-500">
-                                    Không tìm thấy lớp học nào khớp với "{search}".
-                                </p>
+                                <div className="text-center py-8 text-gray-500 text-sm">
+                                    Không tìm thấy lớp học phù hợp với từ khóa "{search}".
+                                </div>
                             ) : (
                                 filteredClasses.map((cls) => {
                                     const isSelected = selectedClassIds.includes(cls.id);
+                                    const isInitial = initialSelectedIds.includes(cls.id);
+                                    const hasTuition = existingTuitionClassIds.includes(cls.id);
+
                                     return (
                                         <div
                                             key={cls.id}
                                             onClick={() => toggleClass(cls.id)}
-                                            className={`cursor-pointer flex items-center justify-between gap-3.5 p-3 rounded-xl border transition-all select-none ${
+                                            className={`cursor-pointer flex items-center justify-between gap-3 p-3 rounded-xl border transition-all select-none ${
                                                 isSelected
-                                                    ? 'bg-emerald-50/90 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
-                                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
+                                                    ? 'bg-emerald-50/70 border-emerald-500/80 ring-1 ring-emerald-500/20'
+                                                    : 'bg-white border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/20'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div
-                                                    className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border transition-colors ${
+                                                    className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
                                                         isSelected
                                                             ? 'bg-emerald-600 border-emerald-600 text-white'
                                                             : 'border-gray-300 bg-white'
@@ -225,19 +241,25 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="font-semibold text-gray-900 text-sm leading-tight">
-                                                            {cls.name}
-                                                        </span>
-                                                        <span className="shrink-0 text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-mono font-medium border border-gray-200">
-                                                            {cls.code}
-                                                        </span>
-                                                    </div>
+                                                    <p className="font-semibold text-gray-900 text-sm truncate">
+                                                        {cls.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 font-mono">{cls.code}</p>
                                                 </div>
                                             </div>
-                                            <Badge variant={isSelected ? 'active' : 'info'} className="shrink-0 whitespace-nowrap">
-                                                {isSelected ? 'Đang học' : 'Chưa ghi danh'}
-                                            </Badge>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                {hasTuition && (
+                                                    <span className="text-2xs font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                                                        Đã có học phí
+                                                    </span>
+                                                )}
+                                                {isInitial && (
+                                                    <span className="text-2xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 border border-gray-200">
+                                                        Đang theo học
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })
@@ -250,7 +272,7 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                     <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
                         Đóng
                     </Button>
-                    <Button type="submit" variant="success" isLoading={isSubmitting} disabled={centerClasses.length === 0}>
+                    <Button type="submit" variant="success" isLoading={isSubmitting}>
                         Lưu Thay Đổi
                     </Button>
                 </div>
@@ -260,7 +282,7 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                 <Modal
                     isOpen={showTuitionConfirm}
                     onClose={() => !isSubmitting && setShowTuitionConfirm(false)}
-                    title="Xác Nhận Tạo Học Phí Cho Lớp Mới"
+                    title="Xác Nhận Tạo Học Phí Cho Lớp Học"
                     maxWidth="lg"
                 >
                     <div className="space-y-4">
@@ -270,15 +292,15 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                             </div>
                             <div className="space-y-1 text-sm">
                                 <p className="font-semibold text-gray-900">
-                                    Có tạo học phí cho các lớp mới được thêm?
+                                    Có tạo học phí cho các lớp chưa có học phí?
                                 </p>
                                 <p className="text-gray-600 leading-relaxed text-xs">
-                                    Học sinh <span className="font-medium text-gray-900">{student.full_name}</span> được phân vào <span className="font-semibold text-emerald-800">{newlyAddedClasses.length} lớp học mới</span>. Chọn các lớp bạn muốn tự động sinh hồ sơ học phí:
+                                    Học sinh <span className="font-medium text-gray-900">{student.full_name}</span> có <span className="font-semibold text-emerald-800">{classesWithoutTuition.length} lớp học</span> chưa được tạo học phí. Chọn các lớp bạn muốn tự động sinh hồ sơ học phí:
                                 </p>
                             </div>
                         </div>
 
-                        {/* List of newly added classes with checkboxes */}
+                        {/* List of classes without tuition with checkboxes */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between px-1">
                                 <button
@@ -288,21 +310,21 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                                 >
                                     <div
                                         className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors ${
-                                            selectedTuitionClassIds.length === newlyAddedClasses.length
+                                            selectedTuitionClassIds.length === classesWithoutTuition.length
                                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                                 : 'border-gray-300 bg-white'
                                         }`}
                                     >
-                                        {selectedTuitionClassIds.length === newlyAddedClasses.length && (
+                                        {selectedTuitionClassIds.length === classesWithoutTuition.length && (
                                             <Check className="w-3 h-3 stroke-[3]" />
                                         )}
                                     </div>
-                                    Chọn tất cả lớp mới ({selectedTuitionClassIds.length}/{newlyAddedClasses.length})
+                                    Chọn tất cả lớp ({selectedTuitionClassIds.length}/{classesWithoutTuition.length})
                                 </button>
                             </div>
 
                             <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-xl border border-gray-200">
-                                {newlyAddedClasses.map((cls) => {
+                                {classesWithoutTuition.map((cls) => {
                                     const isChecked = selectedTuitionClassIds.includes(cls.id);
                                     return (
                                         <div

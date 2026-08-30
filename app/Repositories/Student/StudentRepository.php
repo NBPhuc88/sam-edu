@@ -116,7 +116,8 @@ class StudentRepository implements StudentRepositoryInterface
             )
             ->with([
                 'center:id,name,code',
-                'classes:id,name,code'
+                'classes:id,name,code',
+                'tuitions:id,student_id,class_id',
             ]);
 
         if ($centerIds !== null) {
@@ -186,6 +187,7 @@ class StudentRepository implements StudentRepositoryInterface
             ->with([
                 'center:id,name,code',
                 'classes:id,name,code,center_id',
+                'tuitions:id,student_id,class_id',
             ]);
 
         if ($allowedCenterIds !== null) {
