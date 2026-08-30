@@ -63,6 +63,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     ]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+    const currentErrors = { ...errors, ...clientErrors };
 
     // Filter available subjects and teachers by selected center with fallback to all items
     const availableSubjects = React.useMemo(() => {
@@ -128,18 +130,56 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         }
 
         setSubjectRows(updated);
+
+        // Xóa lỗi client của trường tương ứng nếu đang có
+        if (clientErrors[`subjects.${index}.${field}`]) {
+            const nextErrors = { ...clientErrors };
+            delete nextErrors[`subjects.${index}.${field}`];
+            setClientErrors(nextErrors);
+        }
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (isSuperAdmin && !centerId) {
+            newErrors['center_id'] = 'Vui lòng chọn Trung tâm đào tạo.';
+        }
+
+        if (!name.trim()) {
+            newErrors['name'] = 'Vui lòng nhập tên lớp học.';
+        }
+
+        subjectRows.forEach((row, index) => {
+            const hasSubject = Boolean(row.subject_id);
+            const hasTeacher = Boolean(row.teacher_id);
+
+            if (hasSubject && !hasTeacher) {
+                newErrors[`subjects.${index}.teacher_id`] = `Vui lòng chọn giáo viên phụ trách cho môn học (dòng ${index + 1}).`;
+            } else if (!hasSubject && hasTeacher) {
+                newErrors[`subjects.${index}.subject_id`] = `Vui lòng chọn môn học tương ứng cho giáo viên (dòng ${index + 1}).`;
+            }
+        });
+
+        setClientErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
         setIsSubmitting(true);
 
-        const validSubjects = subjectRows
-            .filter((r) => r.subject_id && r.teacher_id)
+        const payloadSubjects = subjectRows
+            .filter((r) => r.subject_id || r.teacher_id || (r.tuition_fee !== '' && r.tuition_fee !== null))
             .map((r) => ({
-                subject_id: Number(r.subject_id),
-                teacher_id: Number(r.teacher_id),
-                tuition_fee: r.tuition_fee !== '' ? Number(r.tuition_fee) : null,
+                subject_id: r.subject_id ? Number(r.subject_id) : null,
+                teacher_id: r.teacher_id ? Number(r.teacher_id) : null,
+                tuition_fee: r.tuition_fee !== '' && r.tuition_fee !== null ? Number(r.tuition_fee) : null,
             }));
 
         router.post(
@@ -152,7 +192,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                 end_date: endDate || undefined,
                 status: Number(status),
                 description: description || undefined,
-                subjects: validSubjects,
+                subjects: payloadSubjects,
             },
             {
                 onFinish: () => setIsSubmitting(false),
@@ -214,8 +254,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.center_id && (
-                                        <p className="mt-1.5 text-sm text-red-600">{errors.center_id}</p>
+                                    {currentErrors.center_id && (
+                                        <p className="mt-1.5 text-sm text-red-600">{currentErrors.center_id}</p>
                                     )}
                                 </div>
                             )}
@@ -227,13 +267,20 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                 </label>
                                 <Input
                                     value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (clientErrors.name) {
+                                            const next = { ...clientErrors };
+                                            delete next.name;
+                                            setClientErrors(next);
+                                        }
+                                    }}
                                     placeholder="Ví dụ: Lớp Ôn Thi THPT Quốc Gia 12A1"
                                     className="!py-3 !text-sm"
                                     required
                                 />
-                                {errors.name && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.name}</p>
+                                {currentErrors.name && (
+                                    <p className="mt-1.5 text-sm text-red-600">{currentErrors.name}</p>
                                 )}
                             </div>
 
@@ -303,8 +350,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     onChange={(val) => setEndDate(val)}
                                     className="!py-3 !text-sm w-full"
                                 />
-                                {errors.end_date && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.end_date}</p>
+                                {currentErrors.end_date && (
+                                    <p className="mt-1.5 text-sm text-red-600">{currentErrors.end_date}</p>
                                 )}
                             </div>
 
@@ -355,110 +402,142 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                         </div>
 
                         <div className="space-y-4">
-                            {subjectRows.map((row, index) => (
-                                <div
-                                    key={index}
-                                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-slate-50 p-4 sm:flex-row sm:items-start"
-                                >
-                                    {/* Number Badge */}
-                                    <div className="flex flex-col items-center">
-                                        <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
-                                            &nbsp;
-                                        </span>
-                                        <div className="flex h-[42px] w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
-                                            {index + 1}
+                            {subjectRows.map((row, index) => {
+                                const subjectError = currentErrors[`subjects.${index}.subject_id`];
+                                const teacherError = currentErrors[`subjects.${index}.teacher_id`];
+                                const tuitionError = currentErrors[`subjects.${index}.tuition_fee`];
+                                const hasRowError = Boolean(subjectError || teacherError || tuitionError);
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`flex flex-col gap-4 rounded-xl p-4 sm:flex-row sm:items-start transition-all ${
+                                            hasRowError
+                                                ? 'border-2 border-red-400 bg-red-50/20 ring-1 ring-red-400/20 shadow-xs'
+                                                : 'border border-gray-200 bg-slate-50'
+                                        }`}
+                                    >
+                                        {/* Number Badge */}
+                                        <div className="flex flex-col items-center">
+                                            <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
+                                                &nbsp;
+                                            </span>
+                                            <div
+                                                className={`flex h-[42px] w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                                    hasRowError ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                                }`}
+                                            >
+                                                {index + 1}
+                                            </div>
+                                        </div>
+
+                                        {/* Subject Select */}
+                                        <div className="flex-1">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Môn Học <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                value={row.subject_id}
+                                                onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                    subjectError
+                                                        ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
+                                                        : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                }`}
+                                            >
+                                                <option value="">-- Chọn Môn Học --</option>
+                                                {availableSubjects.map((s) => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.name} {s.tuition_fee ? `(${formatCurrency(Number(s.tuition_fee))})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {subjectError && (
+                                                <p className="mt-1 text-xs font-medium text-red-600">
+                                                    {subjectError}
+                                                </p>
+                                            )}
+                                            {availableSubjects.length === 0 && (
+                                                <p className="mt-1 text-xs text-amber-600">
+                                                    Chưa có môn học.{' '}
+                                                    <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
+                                                        Tạo môn học mới
+                                                    </Link>
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Teacher Select */}
+                                        <div className="flex-1">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Giáo Viên Phụ Trách <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                value={row.teacher_id}
+                                                onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                    teacherError
+                                                        ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
+                                                        : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                }`}
+                                            >
+                                                <option value="">-- Chọn Giáo Viên --</option>
+                                                {availableTeachers.map((t) => (
+                                                    <option key={t.id} value={t.id}>
+                                                        {t.full_name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {teacherError && (
+                                                <p className="mt-1 text-xs font-medium text-red-600">
+                                                    {teacherError}
+                                                </p>
+                                            )}
+                                            {availableTeachers.length === 0 && (
+                                                <p className="mt-1 text-xs text-amber-600">
+                                                    Chưa có giáo viên.{' '}
+                                                    <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
+                                                        Tạo giáo viên mới
+                                                    </Link>
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Subject Tuition Fee */}
+                                        <div className="w-full sm:w-44">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Học Phí Môn (VNĐ)
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="1000"
+                                                value={row.tuition_fee}
+                                                onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
+                                                placeholder="0"
+                                                error={tuitionError}
+                                                className="!py-2.5 !text-sm"
+                                            />
+                                        </div>
+
+                                        {/* Remove Row Button */}
+                                        <div className="flex flex-col">
+                                            <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
+                                                &nbsp;
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="danger"
+                                                size="sm"
+                                                icon={<Trash2 className="h-4 w-4" />}
+                                                onClick={() => handleRemoveSubjectRow(index)}
+                                                title="Xóa dòng môn học này"
+                                                className="!h-[42px]"
+                                            />
                                         </div>
                                     </div>
-
-                                    {/* Subject Select */}
-                                    <div className="flex-1">
-                                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                            Môn Học <span className="text-red-500">*</span>
-                                        </label>
-                                        <select
-                                            value={row.subject_id}
-                                            onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        >
-                                            <option value="">-- Chọn Môn Học --</option>
-                                            {availableSubjects.map((s) => (
-                                                <option key={s.id} value={s.id}>
-                                                    {s.name} {s.tuition_fee ? `(${formatCurrency(Number(s.tuition_fee))})` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {availableSubjects.length === 0 && (
-                                            <p className="mt-1 text-xs text-amber-600">
-                                                Chưa có môn học.{' '}
-                                                <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
-                                                    Tạo môn học mới
-                                                </Link>
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Teacher Select */}
-                                    <div className="flex-1">
-                                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                            Giáo Viên Phụ Trách <span className="text-red-500">*</span>
-                                        </label>
-                                        <select
-                                            value={row.teacher_id}
-                                            onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                                        >
-                                            <option value="">-- Chọn Giáo Viên --</option>
-                                            {availableTeachers.map((t) => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.full_name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {availableTeachers.length === 0 && (
-                                            <p className="mt-1 text-xs text-amber-600">
-                                                Chưa có giáo viên.{' '}
-                                                <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
-                                                    Tạo giáo viên mới
-                                                </Link>
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Subject Tuition Fee */}
-                                    <div className="w-full sm:w-44">
-                                        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                            Học Phí Môn (VNĐ)
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="1000"
-                                            value={row.tuition_fee}
-                                            onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
-                                            placeholder="0"
-                                            className="!py-2.5 !text-sm"
-                                        />
-                                    </div>
-
-                                    {/* Remove Row Button */}
-                                    <div className="flex flex-col">
-                                        <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
-                                            &nbsp;
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            variant="danger"
-                                            size="sm"
-                                            icon={<Trash2 className="h-4 w-4" />}
-                                            onClick={() => handleRemoveSubjectRow(index)}
-                                            title="Xóa dòng môn học này"
-                                            className="!h-[42px]"
-                                        >
-                                            Xóa
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </Card>
 

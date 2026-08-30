@@ -6,6 +6,8 @@ use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+use Illuminate\Validation\Validator;
+
 class UpdateSchoolClassRequest extends FormRequest
 {
     public function authorize(): bool
@@ -38,10 +40,42 @@ class UpdateSchoolClassRequest extends FormRequest
             'end_date'               => ['nullable', 'date', 'after_or_equal:start_date'],
             'status'                 => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
             'subjects'               => ['nullable', 'array'],
-            'subjects.*.subject_id'  => ['required_with:subjects', 'integer', 'exists:subjects,id'],
-            'subjects.*.teacher_id'  => ['required_with:subjects', 'integer', 'exists:teachers,id'],
+            'subjects.*.subject_id'  => ['nullable', 'integer', 'exists:subjects,id'],
+            'subjects.*.teacher_id'  => ['nullable', 'integer', 'exists:teachers,id'],
             'subjects.*.tuition_fee' => ['nullable', 'numeric', 'min:0'],
         ];
+    }
+
+    /**
+     * @param Validator $validator
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $subjects = $this->input('subjects', []);
+
+            if (is_array($subjects)) {
+                foreach ($subjects as $idx => $row) {
+                    $rowNum = $idx + 1;
+                    $subId  = $row['subject_id'] ?? null;
+                    $tchId  = $row['teacher_id'] ?? null;
+
+                    if (! empty($subId) && empty($tchId)) {
+                        $validator->errors()->add(
+                            "subjects.{$idx}.teacher_id",
+                            "Vui lòng chọn giáo viên phụ trách cho môn học (dòng {$rowNum})."
+                        );
+                    }
+
+                    if (empty($subId) && ! empty($tchId)) {
+                        $validator->errors()->add(
+                            "subjects.{$idx}.subject_id",
+                            "Vui lòng chọn môn học tương ứng cho giáo viên (dòng {$rowNum})."
+                        );
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -60,7 +94,11 @@ class UpdateSchoolClassRequest extends FormRequest
             'max_students.max'               => 'Sĩ số tối đa không được vượt quá 500 học sinh.',
             'end_date.after_or_equal'        => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
             'subjects.*.subject_id.required' => 'Vui lòng chọn môn học.',
+            'subjects.*.subject_id.exists'   => 'Môn học đã chọn không tồn tại.',
             'subjects.*.teacher_id.required' => 'Vui lòng chọn giáo viên phụ trách cho môn học.',
+            'subjects.*.teacher_id.exists'   => 'Giáo viên đã chọn không tồn tại.',
+            'subjects.*.tuition_fee.numeric' => 'Học phí môn học phải là dạng số.',
+            'subjects.*.tuition_fee.min'     => 'Học phí môn học không được nhỏ hơn 0.',
         ];
     }
 }
