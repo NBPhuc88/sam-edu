@@ -328,7 +328,7 @@ class ChatRepository implements ChatRepositoryInterface
     ): Collection {
         $query = SchoolClass::query()
             ->select('id', 'name', 'code', 'center_id', 'status')
-            ->where('status', 1);
+            ->where('status', Constant::CLASS_STATUS_ACTIVE);
 
         if ($studentId !== null) {
             $query->whereHas('students', function ($q) use ($studentId) {

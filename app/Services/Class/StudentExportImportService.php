@@ -22,7 +22,11 @@ class StudentExportImportService implements StudentExportImportServiceInterface
      */
     public function exportClassStudentsCsv(int $classId): \Generator
     {
+        $schoolClass = $this->schoolClassRepository->findById($classId);
+        $classCode   = $schoolClass ? (string) $schoolClass->code : '';
+
         yield [
+            'Mã lớp',
             'Mã học sinh',
             'Tên đăng nhập',
             'Họ và tên',
@@ -34,6 +38,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
         foreach ($this->schoolClassRepository->getClassStudentsCursor($classId) as $student) {
             yield [
+                $classCode,
                 (string) $student->student_code,
                 (string) $student->username,
                 (string) $student->full_name,
@@ -112,6 +117,21 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
+            $rowClassCode = $row['mã lớp'] ?? $row['class_code'] ?? $row['mã lớp học'] ?? '';
+            $targetClass  = $schoolClass;
+
+            if (! empty($rowClassCode) && $rowClassCode !== $schoolClass->code) {
+                $foundClass = $this->schoolClassRepository->findByCode($rowClassCode);
+
+                if (! $foundClass || $foundClass->center_id !== $schoolClass->center_id) {
+                    $errors[] = "Dòng {$lineIndex}: Không tìm thấy lớp học với mã \"{$rowClassCode}\" trong trung tâm này.";
+
+                    continue;
+                }
+
+                $targetClass = $foundClass;
+            }
+
             $studentCode = $row['mã học sinh'] ?? $row['student_code'] ?? $row['code'] ?? '';
             $username    = $row['tên đăng nhập'] ?? $row['username'] ?? '';
             $email       = $row['email'] ?? '';
@@ -151,32 +171,32 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                     'phone'        => $row['số điện thoại'] ?? $row['phone'] ?? null,
                     'parent_name'  => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                     'parent_phone' => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
-                    'center_id'    => $schoolClass->center_id,
-                    'status'       => 1,
+                    'center_id'    => $targetClass->center_id,
+                    'status'       => Constant::STUDENT_STATUS_ACTIVE,
                     'password'     => bcrypt('12345678'),
                 ]);
             }
 
-            $this->schoolClassRepository->attachStudent($classId, $student->id, "Import từ CSV dòng {$lineIndex}");
+            $this->schoolClassRepository->attachStudent($targetClass->id, $student->id, "Import từ CSV dòng {$lineIndex}");
 
-            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
-                ? $schoolClass->total_tuition_fee
-                : $schoolClass->classSubjects()->sum('tuition_fee'));
+            $totalTuitionFee = (float) ($targetClass->total_tuition_fee > 0
+                ? $targetClass->total_tuition_fee
+                : $targetClass->classSubjects()->sum('tuition_fee'));
 
             if ($totalTuitionFee > 0) {
                 StudentTuition::firstOrCreate(
                     [
-                        'center_id'  => $schoolClass->center_id,
+                        'center_id'  => $targetClass->center_id,
                         'student_id' => $student->id,
-                        'class_id'   => $schoolClass->id,
+                        'class_id'   => $targetClass->id,
                     ],
                     [
-                        'title'            => 'Học phí ' . $schoolClass->name,
+                        'title'            => 'Học phí ' . $targetClass->name,
                         'total_amount'     => $totalTuitionFee,
                         'paid_amount'      => 0,
                         'remaining_amount' => $totalTuitionFee,
                         'status'           => Constant::TUITION_STATUS_PENDING,
-                        'due_date'         => $schoolClass->end_date ?: null,
+                        'due_date'         => $targetClass->end_date ?: null,
                     ]
                 );
             }
@@ -197,6 +217,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     {
         return [
             [
+                'Mã lớp',
                 'Mã học sinh',
                 'Tên đăng nhập',
                 'Họ và tên',
@@ -206,7 +227,8 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'SĐT phụ huynh',
             ],
             [
-                'STD001',
+                'CLS0000001',
+                'STD0000001',
                 'nguyenvana',
                 'Nguyễn Văn A',
                 'nguyenvana@gmail.com',
@@ -215,7 +237,8 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 '0909876543',
             ],
             [
-                'STD002',
+                'CLS0000001',
+                'STD0000002',
                 'tranthib',
                 'Trần Thị B',
                 'tranthib@gmail.com',

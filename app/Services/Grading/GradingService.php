@@ -239,7 +239,7 @@ class GradingService implements GradingServiceInterface
     {
         $classesQuery = SchoolClass::query()
             ->select('id', 'center_id', 'name', 'code', 'status')
-            ->whereIn('status', [1, 2])
+            ->whereIn('status', [Constant::CLASS_STATUS_ACTIVE, Constant::CLASS_STATUS_INACTIVE])
             ->with([
                 'center:id,name,code',
                 'classSubjects' => function ($q) use ($teacher) {
@@ -252,7 +252,7 @@ class GradingService implements GradingServiceInterface
                 },
                 'students' => function ($q) {
                     $q->select('students.id', 'students.student_code', 'students.full_name', 'students.phone', 'students.gender', 'students.avatar')
-                        ->where('students.status', 1)
+                        ->where('students.status', Constant::STUDENT_STATUS_ACTIVE)
                         ->orderBy('students.full_name');
                 },
             ]);

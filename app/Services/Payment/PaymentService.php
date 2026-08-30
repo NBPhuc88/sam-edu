@@ -83,7 +83,7 @@ class PaymentService implements PaymentServiceInterface
             (string) config('mail.from.address', 'phucstt01@gmail.com')
         );
 
-        $superAdminEmails = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->orWhere('role', 'super_admin')->pluck('email')->filter()->toArray();
+        $superAdminEmails = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->pluck('email')->filter()->toArray();
         $recipientEmails  = array_unique(array_filter(array_merge([$contactEmail], $superAdminEmails)));
 
         foreach ($recipientEmails as $email) {
@@ -128,7 +128,7 @@ class PaymentService implements PaymentServiceInterface
             'created_by_admin_id' => $requestingUser?->id,
         ]);
 
-        $superAdminIds = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->orWhere('role', 'super_admin')->pluck('id')->toArray();
+        $superAdminIds = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->pluck('id')->toArray();
 
         foreach ($superAdminIds as $sAdminId) {
             NotificationRecipient::create([

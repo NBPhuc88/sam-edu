@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Student;
 use App\Services\Student\StudentExportImportService;
@@ -10,7 +11,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test StudentCSV',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 });
 
@@ -24,16 +25,17 @@ test('exportStudentsCsv generates headers and student data rows without center c
         'student_code' => 'HS9990001',
         'email'        => 'an.export@example.com',
         'password'     => Hash::make('password123'),
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $generator = $this->service->exportStudentsCsv($this->center->id, null, false);
     $rows      = iterator_to_array($generator);
 
     expect($rows)->not()->toBeEmpty();
-    expect($rows[0][0])->toBe('Mã học sinh');
+    expect($rows[0][0])->toBe('Mã lớp');
+    expect($rows[0][1])->toBe('Mã học sinh');
     expect($rows[0])->not()->toContain('Mã trung tâm');
-    expect($rows[1][0])->toBe('HS9990001');
+    expect($rows[1][1])->toBe('HS9990001');
 });
 
 test('exportStudentsCsv includes center column for super admin', function () {
@@ -46,7 +48,7 @@ test('exportStudentsCsv includes center column for super admin', function () {
         'student_code' => 'HS9990002',
         'email'        => 'bao.export@example.com',
         'password'     => Hash::make('password123'),
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $generator = $this->service->exportStudentsCsv($this->center->id, null, true);
@@ -61,8 +63,8 @@ test('exportStudentsCsv includes center column for super admin', function () {
 test('importStudentsCsv creates new student with center assigned by sub admin', function () {
     $tmpFile = tempnam(sys_get_temp_dir(), 'std_import_') . '.csv';
     $fp      = fopen($tmpFile, 'w');
-    fputcsv($fp, ['Mã học sinh', 'Tên đăng nhập', 'Họ và tên', 'Email']);
-    fputcsv($fp, ['HS8880001', 'import_std_user', 'Import Student', 'import.std@example.com']);
+    fputcsv($fp, ['Mã lớp', 'Mã học sinh', 'Tên đăng nhập', 'Họ và tên', 'Email']);
+    fputcsv($fp, ['', 'HS8880001', 'import_std_user', 'Import Student', 'import.std@example.com']);
     fclose($fp);
 
     $result = $this->service->importStudentsCsv($tmpFile, $this->center->id, false);
@@ -81,13 +83,13 @@ test('importStudentsCsv by super admin resolves center from center code column',
     $anotherCenter = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Another Student Center',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $tmpFile = tempnam(sys_get_temp_dir(), 'std_import_sa_') . '.csv';
     $fp      = fopen($tmpFile, 'w');
-    fputcsv($fp, ['Mã học sinh', 'Tên đăng nhập', 'Họ và tên', 'Email', 'Mã trung tâm']);
-    fputcsv($fp, ['HS7770001', 'import_sa_std', 'SA Student', 'sa.std@example.com', $anotherCenter->code]);
+    fputcsv($fp, ['Mã lớp', 'Mã học sinh', 'Tên đăng nhập', 'Họ và tên', 'Email', 'Mã trung tâm']);
+    fputcsv($fp, ['', 'HS7770001', 'import_sa_std', 'SA Student', 'sa.std@example.com', $anotherCenter->code]);
     fclose($fp);
 
     $result = $this->service->importStudentsCsv($tmpFile, null, true);
@@ -104,7 +106,8 @@ test('importStudentsCsv by super admin resolves center from center code column',
 test('getSampleCsvRows returns valid header and sample rows with or without center code', function () {
     $rowsSubAdmin = $this->service->getSampleCsvRows(false);
     expect($rowsSubAdmin)->toHaveCount(3);
-    expect($rowsSubAdmin[0][0])->toBe('Mã học sinh');
+    expect($rowsSubAdmin[0][0])->toBe('Mã lớp');
+    expect($rowsSubAdmin[0][1])->toBe('Mã học sinh');
     expect($rowsSubAdmin[0])->not()->toContain('Mã trung tâm');
 
     $rowsSuperAdmin = $this->service->getSampleCsvRows(true);

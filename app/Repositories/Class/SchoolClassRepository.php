@@ -164,6 +164,14 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         return $class;
     }
 
+    public function findByCode(string $code): ?SchoolClass
+    {
+        /** @var SchoolClass|null $class */
+        $class = SchoolClass::where('code', $code)->first();
+
+        return $class;
+    }
+
     /**
      * @param  array<string, mixed> $data
      * @return SchoolClass
@@ -322,7 +330,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     public function countActiveByCenterIds(array $centerIds): int
     {
         return SchoolClass::whereIn('center_id', $centerIds)
-            ->where('status', 1)
+            ->where('status', Constant::CLASS_STATUS_ACTIVE)
             ->count();
     }
 
@@ -572,7 +580,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     {
         $query = SchoolClass::query()
             ->select('id', 'center_id', 'name', 'code', 'start_date', 'end_date')
-            ->where('status', 1)
+            ->where('status', Constant::CLASS_STATUS_ACTIVE)
             ->with([
                 'classSubjects:id,class_id,subject_id,teacher_id,start_date,end_date,status',
                 'classSubjects.subject:id,name,code,total_sessions,duration_minutes',
@@ -651,7 +659,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
         $query = Student::query()
             ->select('id', 'full_name', 'student_code', 'phone', 'email', 'status', 'center_id')
             ->where('center_id', $centerId)
-            ->where('status', 1)
+            ->where('status', Constant::STUDENT_STATUS_ACTIVE)
             ->withExists([
                 'tuitions as has_tuition' => function ($q) use ($classId) {
                     $q->where('class_id', $classId);

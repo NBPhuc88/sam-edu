@@ -38,6 +38,8 @@ interface SchoolClassRepositoryInterface
 
     public function findById(int $classId): ?SchoolClass;
 
+    public function findByCode(string $code): ?SchoolClass;
+
     /**
      * @param  array<string, mixed> $data
      * @return SchoolClass

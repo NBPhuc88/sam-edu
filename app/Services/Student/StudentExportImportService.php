@@ -4,6 +4,8 @@ namespace App\Services\Student;
 
 use App\Enums\Constant;
 use App\Models\Center;
+use App\Models\ClassStudent;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Generator;
@@ -26,6 +28,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     public function exportStudentsCsv(?int $centerId = null, ?int $classId = null, bool $isSuperAdmin = false): Generator
     {
         $headers = [
+            'Mã lớp',
             'Mã học sinh',
             'Tên đăng nhập',
             'Họ',
@@ -49,7 +52,10 @@ class StudentExportImportService implements StudentExportImportServiceInterface
         yield $headers;
 
         foreach ($this->studentRepository->getStudentsCursor($centerId, $classId) as $student) {
+            $classCodes = $student->classes ? $student->classes->pluck('code')->implode(', ') : '';
+
             $row = [
+                $classCodes,
                 (string) $student->student_code,
                 (string) $student->username,
                 (string) $student->first_name,
@@ -223,9 +229,12 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'center_id'           => $targetCenterId,
             ];
 
+            $studentObj = $existingStudent;
+
             if ($existingStudent) {
                 $this->studentRepository->updateOrCreateByCode($studentCode, $data);
                 $updatedCount++;
+                $studentObj = $this->studentRepository->findByCode($studentCode);
             } else {
                 // Kiểm tra giới hạn số học sinh active
                 if ($targetCenterId && $data['status'] === Constant::STUDENT_STATUS_ACTIVE) {
@@ -243,8 +252,35 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 }
 
                 $data['password'] = Hash::make('12345678');
-                $this->studentRepository->updateOrCreateByCode($studentCode, $data);
+                $studentObj       = $this->studentRepository->updateOrCreateByCode($studentCode, $data);
                 $importedCount++;
+            }
+
+            // Ghi danh vào lớp học nếu có cột Mã lớp trong CSV
+            $classCodesRaw = $row['mã lớp'] ?? $row['class_code'] ?? $row['mã lớp học'] ?? $row['lớp'] ?? '';
+
+            if (! empty($classCodesRaw) && $studentObj) {
+                $classCodes = array_filter(array_map('trim', explode(',', (string) $classCodesRaw)));
+
+                foreach ($classCodes as $cCode) {
+                    $foundClass = SchoolClass::where('code', $cCode)
+                        ->where('center_id', $targetCenterId)
+                        ->first();
+
+                    if ($foundClass) {
+                        ClassStudent::updateOrCreate(
+                            [
+                                'class_id'   => $foundClass->id,
+                                'student_id' => $studentObj->id,
+                            ],
+                            [
+                                'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+                                'enrolled_at' => now(),
+                                'note'        => "Import từ CSV dòng {$lineIndex}",
+                            ]
+                        );
+                    }
+                }
             }
         }
 
@@ -262,6 +298,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
     public function getSampleCsvRows(bool $isSuperAdmin = false): array
     {
         $headers = [
+            'Mã lớp',
             'Mã học sinh',
             'Tên đăng nhập',
             'Họ',
@@ -279,6 +316,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
         ];
 
         $row1 = [
+            'CLS0000001',
             'STD001',
             'nguyenvana',
             'Nguyễn Văn',
@@ -296,6 +334,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
         ];
 
         $row2 = [
+            'CLS0000001',
             'STD002',
             'tranthib',
             'Trần Thị',

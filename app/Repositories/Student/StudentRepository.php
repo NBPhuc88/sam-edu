@@ -38,7 +38,7 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function getStudentsCursor(?int $centerId = null, ?int $classId = null): \Generator
     {
-        $query = Student::with('center')->orderBy('id', 'asc');
+        $query = Student::with(['center', 'classes'])->orderBy('id', 'asc');
 
         if ($centerId !== null) {
             $query->where('center_id', $centerId);
@@ -462,7 +462,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function countActiveByCenterId(int $centerId, ?int $excludeId = null): int
     {
         $query = Student::where('center_id', $centerId)
-            ->where('status', 1);
+            ->where('status', Constant::STUDENT_STATUS_ACTIVE);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);
