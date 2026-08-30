@@ -157,27 +157,105 @@ class StoreExamRequest extends FormRequest
                             $qType      = (int) $qTypeRaw;
                             $correctAns = $q['correct_answer'] ?? null;
 
+                            // Kiểm tra nội dung câu hỏi bắt buộc
+                            if (trim((string) ($q['content'] ?? '')) === '' && $qType !== Constant::QUESTION_TYPE_DIAGRAM_LABELLING) {
+                                $validator->errors()->add(
+                                    "sections.{$sIdx}.questions.{$qIdx}.content",
+                                    "Vui lòng nhập nội dung đề bài cho câu số {$qNum} phần {$secNum}."
+                                );
+                            }
+
                             // Các câu hỏi Tự luận (Viết) và Ghi âm / Vấn đáp (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
                             if (in_array($qType, [Constant::QUESTION_TYPE_ESSAY, Constant::QUESTION_TYPE_AUDIO_RECORD, Constant::QUESTION_TYPE_ORAL], true)) {
                                 continue;
                             }
 
-                            // 1. Trắc nghiệm 1 đáp án, Đúng/Sai, Tìm lỗi sai
-                            if (in_array($qType, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN, Constant::QUESTION_TYPE_FIND_MISTAKE], true)) {
-                                if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
+                            // Kiểm tra nội dung các phương án trắc nghiệm
+                            if (in_array($qType, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_MULTIPLE_CHOICE], true) && is_array($q['options'] ?? null)) {
+                                foreach ($q['options'] as $opt) {
+                                    $optText = is_array($opt) ? ($opt['text'] ?? '') : (is_string($opt) ? $opt : '');
+                                    if (trim((string) $optText) === '') {
+                                        $validator->errors()->add(
+                                            "sections.{$sIdx}.questions.{$qIdx}.options",
+                                            "Vui lòng nhập đầy đủ nội dung các phương án cho câu số {$qNum} phần {$secNum}."
+                                        );
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 1. Trắc nghiệm 1 đáp án
+                            if ($qType === Constant::QUESTION_TYPE_SINGLE_CHOICE) {
+                                $optionIds = [];
+                                if (is_array($q['options'] ?? null)) {
+                                    foreach ($q['options'] as $opt) {
+                                        if (is_array($opt) && isset($opt['id'])) {
+                                            $optionIds[] = (string) $opt['id'];
+                                        } elseif (is_string($opt)) {
+                                            $optionIds[] = $opt;
+                                        }
+                                    }
+                                }
+                                if (empty($correctAns) || ! is_string($correctAns) || (! empty($optionIds) && ! in_array((string) $correctAns, $optionIds, true))) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
-                                        "Vui lòng chọn đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                        "Vui lòng chọn 1 đáp án đúng hợp lệ cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
                             }
-                            // 2. Trắc nghiệm nhiều đáp án
+                            // 2. Đúng / Sai / Không đề cập
+                            elseif ($qType === Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN) {
+                                $validTfAnswers = ['TRUE', 'FALSE', 'NOT_GIVEN', 'YES', 'NO', 'NOT'];
+                                if (empty($correctAns) || ! is_string($correctAns) || ! in_array(strtoupper(trim((string) $correctAns)), $validTfAnswers, true)) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn đáp án đúng (Đúng / Sai / Không đề cập) cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 3. Tìm lỗi sai
+                            elseif ($qType === Constant::QUESTION_TYPE_FIND_MISTAKE) {
+                                $underlinedIds = [];
+                                if (is_array($q['options']['sentence_segments'] ?? null)) {
+                                    foreach ($q['options']['sentence_segments'] as $seg) {
+                                        if (! empty($seg['underlined']) && isset($seg['id'])) {
+                                            $underlinedIds[] = (string) $seg['id'];
+                                        }
+                                    }
+                                }
+                                if (empty($correctAns) || ! is_string($correctAns) || (! empty($underlinedIds) && ! in_array((string) $correctAns, $underlinedIds, true))) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn phần gạch chân bị sai ngữ pháp cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 4. Trắc nghiệm nhiều đáp án
                             elseif ($qType === Constant::QUESTION_TYPE_MULTIPLE_CHOICE) {
-                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                                $optionIds = [];
+                                if (is_array($q['options'] ?? null)) {
+                                    foreach ($q['options'] as $opt) {
+                                        if (is_array($opt) && isset($opt['id'])) {
+                                            $optionIds[] = (string) $opt['id'];
+                                        }
+                                    }
+                                }
+                                $filteredAns = is_array($correctAns) ? array_filter($correctAns, fn ($a) => is_string($a) && trim($a) !== '') : [];
+                                if (empty($filteredAns)) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                         "Vui lòng chọn ít nhất 1 đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
+                                } elseif (! empty($optionIds)) {
+                                    foreach ($filteredAns as $ansId) {
+                                        if (! in_array((string) $ansId, $optionIds, true)) {
+                                            $validator->errors()->add(
+                                                "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                                "Đáp án đã chọn không khớp với các phương án của câu số {$qNum} phần {$secNum}."
+                                            );
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                             // 3. Điền vào chỗ trống
