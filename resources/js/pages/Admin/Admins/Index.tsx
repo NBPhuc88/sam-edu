@@ -185,8 +185,8 @@ export default function AdminsIndex({ admins, centers, hasSuperAdmin = true, fil
 
     const confirmDelete = () => {
         if (!deletingAdmin) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/admins/${deletingAdmin.id}`, {
@@ -295,11 +295,10 @@ return;
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div
-                                                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
-                                                            Number(admin.role) === ROLE_SUPER_ADMIN
-                                                                ? 'bg-emerald-100 text-emerald-700'
-                                                                : 'bg-slate-100 text-slate-700'
-                                                        }`}
+                                                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${Number(admin.role) === ROLE_SUPER_ADMIN
+                                                            ? 'bg-emerald-100 text-emerald-700'
+                                                            : 'bg-slate-100 text-slate-700'
+                                                            }`}
                                                     >
                                                         {admin.full_name
                                                             .charAt(0)
@@ -546,11 +545,10 @@ return;
                                         />
                                         Admin (Phân công theo Trung tâm)
                                     </label>
-                                    <label className={`flex items-center gap-2 text-sm font-semibold cursor-pointer ${
-                                        (hasSuperAdmin || admins.data.some(a => Number(a.role) === ROLE_SUPER_ADMIN)) && Number(editingAdmin?.role) !== ROLE_SUPER_ADMIN
-                                            ? 'text-gray-400 cursor-not-allowed'
-                                            : 'text-gray-800'
-                                    }`}>
+                                    <label className={`flex items-center gap-2 text-sm font-semibold cursor-pointer ${(hasSuperAdmin || admins.data.some(a => Number(a.role) === ROLE_SUPER_ADMIN)) && Number(editingAdmin?.role) !== ROLE_SUPER_ADMIN
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-gray-800'
+                                        }`}>
                                         <input
                                             type="radio"
                                             name="role"
