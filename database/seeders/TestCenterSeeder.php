@@ -735,11 +735,11 @@ class TestCenterSeeder extends Seeder
 
             // 6. Tin nhắn trao đổi lớp học (Class Chat)
             $messages = [
-                ['teacher', $teacher->id, $teacher->full_name, 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt 3 tháng tới.', true],
-                ['teacher', $teacher->id, $teacher->full_name, 'Mọi người nhớ chuẩn bị đầy đủ tài liệu và làm bài tập về nhà trước buổi học nhé.', false],
-                ['student', $enrolledStudents[0]->id, $enrolledStudents[0]->full_name, 'Dạ em chào Thầy/Cô và các bạn ạ!', false],
-                ['student', $enrolledStudents[1]->id, $enrolledStudents[1]->full_name, 'Thầy/Cô cho em hỏi bài tập buổi 2 nộp hạn chót vào lúc nào ạ?', false],
-                ['teacher', $teacher->id, $teacher->full_name, 'Hạn nộp bài tập là trước 12:00 trưa ngày mai em nhé!', false],
+                [Constant::SENDER_TYPE_TEACHER, $teacher->id, $teacher->full_name, 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt 3 tháng tới.', true],
+                [Constant::SENDER_TYPE_TEACHER, $teacher->id, $teacher->full_name, 'Mọi người nhớ chuẩn bị đầy đủ tài liệu và làm bài tập về nhà trước buổi học nhé.', false],
+                [Constant::SENDER_TYPE_STUDENT, $enrolledStudents[0]->id, $enrolledStudents[0]->full_name, 'Dạ em chào Thầy/Cô và các bạn ạ!', false],
+                [Constant::SENDER_TYPE_STUDENT, $enrolledStudents[1]->id, $enrolledStudents[1]->full_name, 'Thầy/Cô cho em hỏi bài tập buổi 2 nộp hạn chót vào lúc nào ạ?', false],
+                [Constant::SENDER_TYPE_TEACHER, $teacher->id, $teacher->full_name, 'Hạn nộp bài tập là trước 12:00 trưa ngày mai em nhé!', false],
             ];
 
             foreach ($messages as [$senderType, $senderId, $senderName, $msg, $isPinned]) {

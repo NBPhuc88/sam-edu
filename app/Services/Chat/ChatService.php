@@ -239,6 +239,12 @@ class ChatService implements ChatServiceInterface
         $updated        = $this->chatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
         $redisPinnedKey = "chat:class:{$classId}:pinned";
 
+        try {
+            Redis::del("chat:class:{$classId}:messages");
+        } catch (\Throwable $e) {
+            // Fallback
+        }
+
         if (! $updated || ! $updated->is_pinned) {
             try {
                 Redis::del($redisPinnedKey);

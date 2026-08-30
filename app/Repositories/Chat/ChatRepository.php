@@ -128,7 +128,10 @@ class ChatRepository implements ChatRepositoryInterface
             'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
         ]);
 
-        return $targetMessage->fresh();
+        return $targetMessage->fresh([
+            'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+            'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+        ]);
     }
 
     /**

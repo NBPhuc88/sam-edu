@@ -644,9 +644,10 @@ export default function ClassChatPage({
                         ) : (
                             messages.map((msg, index) => {
                                 const isSelf =
-                                    msg.sender_type ===
-                                        currentUser.sender_type &&
-                                    msg.sender_id === currentUser.sender_id;
+                                    Number(msg.sender_type) ===
+                                        Number(currentUser.sender_type) &&
+                                    Number(msg.sender_id) ===
+                                        Number(currentUser.sender_id);
 
                                 const isHovered =
                                     activeHoverMessageId === msg.id;
@@ -661,13 +662,17 @@ export default function ClassChatPage({
 
                                 const isSameSenderAsPrev =
                                     prevMsg !== null &&
-                                    prevMsg.sender_type === msg.sender_type &&
-                                    prevMsg.sender_id === msg.sender_id;
+                                    Number(prevMsg.sender_type) ===
+                                        Number(msg.sender_type) &&
+                                    Number(prevMsg.sender_id) ===
+                                        Number(msg.sender_id);
 
                                 const isSameSenderAsNext =
                                     nextMsg !== null &&
-                                    nextMsg.sender_type === msg.sender_type &&
-                                    nextMsg.sender_id === msg.sender_id;
+                                    Number(nextMsg.sender_type) ===
+                                        Number(msg.sender_type) &&
+                                    Number(nextMsg.sender_id) ===
+                                        Number(msg.sender_id);
 
                                 const isFirstInGroup = !isSameSenderAsPrev;
                                 const isLastInGroup = !isSameSenderAsNext;
@@ -682,6 +687,50 @@ export default function ClassChatPage({
                                 );
                                 const initials = getInitials(msg.sender_name);
                                 const isSticker = isImageOrSticker(msg.message);
+
+                                const actionButtons = (
+                                    <div className="flex items-center gap-1 shrink-0 self-center">
+                                        {/* Reply Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setReplyingTo(msg)
+                                            }
+                                            title="Trả lời tin nhắn này"
+                                            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:text-emerald-700 bg-white/80 hover:bg-emerald-50 border border-gray-200/90 shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            <Reply className="h-3.5 w-3.5" />
+                                        </button>
+
+                                        {/* Pin Button (Visible for Admin / Teacher) */}
+                                        {currentUser.can_pin && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleTogglePin(msg.id)
+                                                }
+                                                title={
+                                                    msg.is_pinned
+                                                        ? 'Bỏ ghim tin nhắn'
+                                                        : 'Ghim tin nhắn'
+                                                }
+                                                className={`flex h-7 w-7 items-center justify-center rounded-full border shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer ${
+                                                    msg.is_pinned
+                                                        ? 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
+                                                        : 'bg-white/80 border-gray-200/90 text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+                                                }`}
+                                            >
+                                                <Pin
+                                                    className={`h-3.5 w-3.5 ${
+                                                        msg.is_pinned
+                                                            ? 'fill-amber-500 text-amber-600'
+                                                            : ''
+                                                    }`}
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+                                );
 
                                 return (
                                     <div
@@ -736,6 +785,9 @@ export default function ClassChatPage({
                                             </div>
                                         )}
 
+                                        {/* Action buttons on left for self messages */}
+                                        {isSelf && actionButtons}
+
                                         {/* Message Bubble Container */}
                                         <div
                                             className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${
@@ -744,7 +796,7 @@ export default function ClassChatPage({
                                                     : 'items-start'
                                             }`}
                                         >
-                                            {/* Quick Reaction Floating Bar on Hover */}
+                                            {/* Quick Reaction Floating Bar on Hover (Displayed below the message) */}
                                             {isHovered && (
                                                 <MessageReactionBar
                                                     isSelf={isSelf}
@@ -754,14 +806,6 @@ export default function ClassChatPage({
                                                             emoji
                                                         )
                                                     }
-                                                    onReply={() =>
-                                                        setReplyingTo(msg)
-                                                    }
-                                                    onTogglePin={() =>
-                                                        handleTogglePin(msg.id)
-                                                    }
-                                                    isPinned={msg.is_pinned}
-                                                    canPin={currentUser.can_pin}
                                                 />
                                             )}
 
@@ -903,6 +947,9 @@ export default function ClassChatPage({
                                                     />
                                                 )}
                                         </div>
+
+                                        {/* Action buttons on right for other senders' messages */}
+                                        {!isSelf && actionButtons}
                                     </div>
                                 );
                             })

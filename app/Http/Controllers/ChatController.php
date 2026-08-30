@@ -120,7 +120,7 @@ class ChatController extends Controller
         $this->chatService->authorizeAccess($classId);
         $senderInfo = $this->getCurrentUserSenderInfo();
 
-        if (! in_array($senderInfo['sender_type'], ['admin', 'teacher'])) {
+        if (! $senderInfo['can_pin']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Chỉ Giáo viên hoặc Admin mới có quyền ghim tin nhắn.',
@@ -136,7 +136,7 @@ class ChatController extends Controller
     }
 
     /**
-     * @return array{sender_type: string, sender_id: int, sender_name: string, sender_avatar: string|null, can_pin: bool}
+     * @return array{sender_type: int, sender_id: int, sender_name: string, sender_avatar: string|null, can_pin: bool}
      */
     protected function getCurrentUserSenderInfo(): array
     {

@@ -1168,7 +1168,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             // 7. Tin nhắn trao đổi lớp học (Class Chat) & Reactions
             $chatMessages = [
                 [
-                    'sender_type' => 'teacher',
+                    'sender_type' => Constant::SENDER_TYPE_TEACHER,
                     'sender_id'   => $teacher->id,
                     'sender_name' => $teacher->full_name,
                     'message'     => 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt quá trình học tập.',
@@ -1176,7 +1176,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'reply_to_id' => null,
                 ],
                 [
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[0]->id,
                     'sender_name' => $enrolledStudents[0]->full_name,
                     'message'     => 'Dạ em chào Thầy/Cô và các bạn trong lớp ạ!',
@@ -1184,7 +1184,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'reply_to_id' => null,
                 ],
                 [
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[1]->id,
                     'sender_name' => $enrolledStudents[1]->full_name,
                     'message'     => 'Thầy/Cô cho em hỏi tài liệu học phần tuần này đã tải lên chưa ạ?',
@@ -1215,7 +1215,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 $replyMsg = ClassChatMessage::create([
                     'class_id'       => $schoolClass->id,
                     'reply_to_id'    => $savedMessages[2]->id,
-                    'sender_type'    => 'teacher',
+                    'sender_type'    => Constant::SENDER_TYPE_TEACHER,
                     'sender_id'      => $teacher->id,
                     'sender_name'    => $teacher->full_name,
                     'message'        => 'Thầy đã đính kèm tài liệu trong mục Tài liệu của lớp, các em tải về ôn tập nhé!',
@@ -1227,7 +1227,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 ClassChatMessageReaction::create([
                     'message_id'  => $savedMessages[0]->id,
                     'class_id'    => $schoolClass->id,
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[0]->id,
                     'sender_name' => $enrolledStudents[0]->full_name,
                     'emoji'       => '❤️',

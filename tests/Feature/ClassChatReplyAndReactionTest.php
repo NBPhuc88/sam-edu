@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Constant;
+use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassChatMessage;
 use App\Models\SchoolClass;
@@ -203,3 +204,90 @@ test('đổi biểu tượng cảm xúc sang emoji khác', function () {
         'emoji'      => '😮',
     ]);
 });
+
+test('giáo viên và admin có thể ghim và bỏ ghim tin nhắn chat', function () {
+    $admin = Admin::create([
+        'username'   => 'admin_chat_pin_test',
+        'first_name' => 'Ad',
+        'last_name'  => 'Min',
+        'full_name'  => 'Quản trị viên Trung tâm',
+        'email'      => 'adminchatpin@test.com',
+        'password'   => 'password123',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM000000099',
+    ]);
+    $admin->centers()->attach($this->center->id);
+
+    $msg1 = ClassChatMessage::create([
+        'class_id'    => $this->schoolClass->id,
+        'sender_type' => Constant::ACCOUNT_TYPE_TEACHER,
+        'sender_id'   => $this->teacher->id,
+        'sender_name' => $this->teacher->full_name,
+        'message'     => 'Thông báo quan trọng số 1',
+    ]);
+
+    $msg2 = ClassChatMessage::create([
+        'class_id'    => $this->schoolClass->id,
+        'sender_type' => Constant::ACCOUNT_TYPE_STUDENT,
+        'sender_id'   => $this->student->id,
+        'sender_name' => $this->student->full_name,
+        'message'     => 'Tin nhắn số 2 của học sinh',
+    ]);
+
+    // 1. Học sinh không có quyền ghim tin nhắn (403)
+    $responseStudent = $this->actingAs($this->student, 'student')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg1->id}/pin");
+
+    $responseStudent->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Chỉ Giáo viên hoặc Admin mới có quyền ghim tin nhắn.',
+        ]);
+
+    // 2. Giáo viên ghim tin nhắn số 1
+    $responseTeacher = $this->actingAs($this->teacher, 'teacher')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg1->id}/pin");
+
+    $responseTeacher->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => [
+                'id'             => $msg1->id,
+                'is_pinned'      => true,
+                'pinned_by_name' => $this->teacher->full_name,
+            ],
+        ]);
+
+    expect($msg1->fresh()->is_pinned)->toBeTrue();
+
+    // 3. Admin ghim tin nhắn số 2 -> msg1 tự động bỏ ghim, msg2 được ghim
+    $responseAdmin = $this->actingAs($admin, 'admin')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg2->id}/pin");
+
+    $responseAdmin->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => [
+                'id'             => $msg2->id,
+                'is_pinned'      => true,
+                'pinned_by_name' => $admin->full_name,
+            ],
+        ]);
+
+    expect($msg1->fresh()->is_pinned)->toBeFalse();
+    expect($msg2->fresh()->is_pinned)->toBeTrue();
+
+    // 4. Admin bỏ ghim tin nhắn số 2 (gọi lại toggle pin)
+    $responseUnpin = $this->actingAs($admin, 'admin')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg2->id}/pin");
+
+    $responseUnpin->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => null,
+        ]);
+
+    expect($msg2->fresh()->is_pinned)->toBeFalse();
+});
+
