@@ -536,6 +536,7 @@ export default function ExamEdit({
                         sections={sections}
                         onChangeSections={setSections}
                         examMaxScore={calculatedMaxScore}
+                        errors={errors}
                     />
 
                     {/* Submit Actions */}

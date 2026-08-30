@@ -511,6 +511,7 @@ export default function ExamCreate({
                         sections={sections}
                         onChangeSections={setSections}
                         examMaxScore={calculatedMaxScore}
+                        errors={errors}
                     />
 
                     {/* Submit Actions */}

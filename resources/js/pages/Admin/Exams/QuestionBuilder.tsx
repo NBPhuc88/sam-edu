@@ -23,6 +23,7 @@ SKILL_SPEAKING,
 SKILL_WRITING,
 } from '@/constants/enums';
 import {
+AlertCircle,
 AlertTriangle,
 AlignLeft,
 ArrowUpDown,
@@ -47,7 +48,7 @@ Plus,
 Sparkles,
 Trash2
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React,{ useEffect,useState } from 'react';
 import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
 import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
 import DragDropClozeEditor from './QuestionEditors/DragDropClozeEditor';
@@ -73,12 +74,14 @@ interface Props {
     sections: ExamSectionData[];
     onChangeSections: (sections: ExamSectionData[]) => void;
     examMaxScore: number | string;
+    errors?: Record<string, string>;
 }
 
 export default function QuestionBuilder({
     sections = [],
     onChangeSections,
     examMaxScore = 10,
+    errors = {},
 }: Props) {
     // Modal states
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
@@ -108,6 +111,98 @@ export default function QuestionBuilder({
     const [expandedSectionIndexes, setExpandedSectionIndexes] = useState<number[]>([0]);
     const [expandedQuestionKeys, setExpandedQuestionKeys] = useState<string[]>(['0-0']);
     const [expandedImageKeys, setExpandedImageKeys] = useState<string[]>([]);
+
+    // --- Helper to extract section-level errors ---
+    const getSectionErrors = (secIdx: number) => {
+        if (!errors || Object.keys(errors).length === 0) return [];
+        const prefix = `sections.${secIdx}.`;
+        return Object.entries(errors)
+            .filter(([key]) => key.startsWith(prefix) && !key.startsWith(`sections.${secIdx}.questions.`))
+            .map(([key, message]) => ({
+                key,
+                field: key.replace(prefix, ''),
+                message,
+            }));
+    };
+
+    // --- Helper to extract all errors for a specific question ---
+    const getQuestionErrors = (secIdx: number, qIdx: number) => {
+        if (!errors || Object.keys(errors).length === 0) return [];
+        const prefix = `sections.${secIdx}.questions.${qIdx}.`;
+        const legacyPrefix = `questions.${qIdx}.`;
+        return Object.entries(errors)
+            .filter(([key]) => key.startsWith(prefix) || key.startsWith(legacyPrefix) || key === `sections.${secIdx}.questions.${qIdx}` || key === `questions.${qIdx}`)
+            .map(([key, message]) => {
+                let field = '';
+                if (key.startsWith(prefix)) {
+                    field = key.replace(prefix, '');
+                } else if (key.startsWith(legacyPrefix)) {
+                    field = key.replace(legacyPrefix, '');
+                } else {
+                    field = 'general';
+                }
+                return { key, field, message };
+            });
+    };
+
+    // --- Helper to get error message for a specific question field ---
+    const getQuestionFieldError = (secIdx: number, qIdx: number, field: string): string | undefined => {
+        if (!errors || Object.keys(errors).length === 0) return undefined;
+        const directKey = `sections.${secIdx}.questions.${qIdx}.${field}`;
+        if (errors[directKey]) return errors[directKey];
+        const legacyKey = `questions.${qIdx}.${field}`;
+        if (errors[legacyKey]) return errors[legacyKey];
+
+        const prefix = `sections.${secIdx}.questions.${qIdx}.${field}.`;
+        const found = Object.entries(errors).find(([k]) => k.startsWith(prefix));
+        if (found) return found[1];
+        return undefined;
+    };
+
+    // --- Auto-expand sections & questions containing validation errors and smooth scroll ---
+    useEffect(() => {
+        if (!errors || Object.keys(errors).length === 0) return;
+
+        const sectionsToExpand = new Set<number>(expandedSectionIndexes);
+        const questionsToExpand = new Set<string>(expandedQuestionKeys);
+        let firstErrorElementId: string | null = null;
+
+        sections.forEach((sec, sIdx) => {
+            const secErrors = getSectionErrors(sIdx);
+            let sectionHasError = secErrors.length > 0;
+
+            (sec.questions || []).forEach((_, qIdx) => {
+                const qErrors = getQuestionErrors(sIdx, qIdx);
+                if (qErrors.length > 0) {
+                    sectionHasError = true;
+                    const qKey = `${sIdx}-${qIdx}`;
+                    questionsToExpand.add(qKey);
+                    if (!firstErrorElementId) {
+                        firstErrorElementId = `question-card-${sIdx}-${qIdx}`;
+                    }
+                }
+            });
+
+            if (sectionHasError) {
+                sectionsToExpand.add(sIdx);
+                if (!firstErrorElementId && secErrors.length > 0) {
+                    firstErrorElementId = `section_block_${sec.tempId || sec.id || sIdx}`;
+                }
+            }
+        });
+
+        setExpandedSectionIndexes(Array.from(sectionsToExpand));
+        setExpandedQuestionKeys(Array.from(questionsToExpand));
+
+        if (firstErrorElementId) {
+            setTimeout(() => {
+                const el = document.getElementById(firstErrorElementId!);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 200);
+        }
+    }, [errors]);
 
     // Calculate total questions and total score across all sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
@@ -654,12 +749,15 @@ export default function QuestionBuilder({
                         const secConfig = getSkillConfig(section.skill);
                         const secQuestions = section.questions || [];
                         const secScore = secQuestions.reduce((s, q) => s + (Number(q.score) || 0), 0);
+                        const secErrors = getSectionErrors(secIdx);
+                        const secHasErrors = secErrors.length > 0 || secQuestions.some((_, qIdx) => getQuestionErrors(secIdx, qIdx).length > 0);
+                        const secTitleError = secErrors.find((e) => e.field === 'title')?.message;
 
                         return (
                             <div
                                 key={section.tempId || section.id || secIdx}
                                 id={`section_block_${section.tempId || section.id || secIdx}`}
-                                className={`rounded-2xl border-2 ${secConfig.border} overflow-hidden shadow-xs scroll-mt-6`}
+                                className={`rounded-2xl border-2 ${secHasErrors ? 'border-red-500 ring-2 ring-red-500/20' : secConfig.border} overflow-hidden shadow-xs scroll-mt-6`}
                             >
                                 {/* ── Section Header Bar ── */}
                                 <div
@@ -686,6 +784,12 @@ export default function QuestionBuilder({
                                         <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${secConfig.badge}`}>
                                             {secConfig.name} • {secQuestions.length} câu • {secScore} điểm
                                         </span>
+                                        {secHasErrors && (
+                                            <span className="inline-flex items-center gap-1 text-2xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white shadow-2xs">
+                                                <AlertCircle className="h-3 w-3 text-white" />
+                                                Có lỗi trong phần này
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-1.5 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
@@ -735,7 +839,7 @@ export default function QuestionBuilder({
                                 {isSecExpanded && (
                                     <div className="bg-slate-50/60 p-4 space-y-4 border-t border-gray-100">
                                         {/* Section Metadata: Editable Title & Description */}
-                                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                                        <div className={`bg-white p-4 rounded-xl border shadow-2xs space-y-3 ${secTitleError ? 'border-red-400 bg-red-50/10' : 'border-gray-200'}`}>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 <div className="sm:col-span-2">
                                                     <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
@@ -747,8 +851,15 @@ export default function QuestionBuilder({
                                                         value={section.title}
                                                         onChange={(e) => handleUpdateSection(secIdx, { title: e.target.value })}
                                                         placeholder="VD: Phần 1: Đọc hiểu văn bản / Reading Passage 1..."
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                        className={`w-full rounded-lg px-3 py-1.5 text-xs font-bold text-gray-900 focus:outline-hidden ${
+                                                            secTitleError
+                                                                ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                : 'border border-gray-300 bg-white focus:border-emerald-500'
+                                                        }`}
                                                     />
+                                                    {secTitleError && (
+                                                        <p className="mt-1 text-xs text-red-600 font-semibold">{secTitleError}</p>
+                                                    )}
                                                 </div>
 
                                                 <div>
@@ -809,13 +920,27 @@ export default function QuestionBuilder({
                                                     const typeInfo = QUESTION_TYPES.find((t) => t.type === normalizedType) || QUESTION_TYPES[0];
                                                     const isListening = section.skill === SKILL_LISTENING;
 
+                                                    const qErrors = getQuestionErrors(secIdx, qIndex);
+                                                    const hasQError = qErrors.length > 0;
+                                                    const qTitleError = getQuestionFieldError(secIdx, qIndex, 'title');
+                                                    const qContentError = getQuestionFieldError(secIdx, qIndex, 'content');
+                                                    const qScoreError = getQuestionFieldError(secIdx, qIndex, 'score');
+                                                    const qAudioError = getQuestionFieldError(secIdx, qIndex, 'audio_url');
+                                                    const qAnswerError = getQuestionFieldError(secIdx, qIndex, 'correct_answer');
+                                                    const qOptionsError = getQuestionFieldError(secIdx, qIndex, 'options');
+                                                    const hasAnswerError = Boolean(qAnswerError || qOptionsError);
+
                                                     return (
                                                         <div
                                                             key={qKey}
-                                                            className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${isExpanded
-                                                                ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
-                                                                : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
-                                                                }`}
+                                                            id={`question-card-${secIdx}-${qIndex}`}
+                                                            className={`rounded-xl border-2 overflow-hidden transition-all duration-150 scroll-mt-6 ${
+                                                                hasQError
+                                                                    ? 'border-red-500 bg-red-50/15 shadow-sm ring-2 ring-red-500/20'
+                                                                    : isExpanded
+                                                                        ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20 bg-white'
+                                                                        : 'border-gray-200 hover:border-gray-300 hover:shadow-xs bg-white'
+                                                            }`}
                                                         >
                                                             {/* Question Row Header */}
                                                             <div
@@ -824,7 +949,7 @@ export default function QuestionBuilder({
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${secConfig.dot} font-mono text-2xs font-extrabold text-white`}>
+                                                                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${hasQError ? 'bg-red-600' : secConfig.dot} font-mono text-2xs font-extrabold text-white`}>
                                                                             {qIndex + 1}
                                                                         </span>
                                                                     </div>
@@ -842,20 +967,32 @@ export default function QuestionBuilder({
                                                                                 — {q.content}
                                                                             </span>
                                                                         )}
+                                                                        {hasQError && (
+                                                                            <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 border border-red-200">
+                                                                                <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                                                                                Có lỗi ({qErrors.length})
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
                                                                     {/* Score */}
-                                                                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
-                                                                        <span className="text-gray-500">Điểm:</span>
+                                                                    <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
+                                                                        qScoreError
+                                                                            ? 'border-red-500 bg-red-50 text-red-700 font-bold ring-1 ring-red-500/30'
+                                                                            : 'border-gray-200 bg-white'
+                                                                    }`}>
+                                                                        <span className={qScoreError ? 'text-red-700 font-bold' : 'text-gray-500'}>Điểm:</span>
                                                                         <input
                                                                             type="number"
                                                                             step="0.25"
                                                                             min={0}
                                                                             value={q.score}
                                                                             onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: Number(e.target.value) })}
-                                                                            className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
+                                                                            className={`w-12 text-center font-bold border-none p-0 focus:ring-0 text-xs ${
+                                                                                qScoreError ? 'text-red-700 bg-transparent' : 'text-gray-900 bg-white'
+                                                                            }`}
                                                                             title="Điểm số câu hỏi"
                                                                         />
                                                                     </div>
@@ -914,6 +1051,21 @@ export default function QuestionBuilder({
                                                             {/* Expanded Question Editor */}
                                                             {isExpanded && (
                                                                 <div className="border-t border-gray-200 p-5 space-y-5 bg-white">
+                                                                    {/* Question Error Callout Banner */}
+                                                                    {hasQError && (
+                                                                        <div className="rounded-xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-800 space-y-1.5 shadow-2xs">
+                                                                            <div className="font-bold flex items-center gap-1.5 text-red-900">
+                                                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                                                                                <span>Vui lòng kiểm tra và sửa thông tin bị lỗi trong câu hỏi này:</span>
+                                                                            </div>
+                                                                            <ul className="list-disc list-inside space-y-0.5 text-red-700 pl-1 font-medium">
+                                                                                {qErrors.map((err, errIdx) => (
+                                                                                    <li key={errIdx}>{err.message}</li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+
                                                                     {/* Question Type Selector */}
                                                                     <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                                                                         <div className="flex items-center gap-2">
@@ -942,14 +1094,19 @@ export default function QuestionBuilder({
 
                                                                     {/* Audio Section: ONLY FOR LISTENING */}
                                                                     {isListening && (
-                                                                        <MediaUploader
-                                                                            value={q.audio_url || ''}
-                                                                            onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url || null })}
-                                                                            accept="audio/*"
-                                                                            label="File Audio Nghe (Listening Track MP3) (*)"
-                                                                            placeholder="Dán đường dẫn URL file audio hoặc chọn tải lên từ máy..."
-                                                                            folder="exams/audio"
-                                                                        />
+                                                                        <div className={qAudioError ? 'p-2.5 rounded-xl border-2 border-red-500 bg-red-50/20' : ''}>
+                                                                            <MediaUploader
+                                                                                value={q.audio_url || ''}
+                                                                                onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url || null })}
+                                                                                accept="audio/*"
+                                                                                label="File Audio Nghe (Listening Track MP3) (*)"
+                                                                                placeholder="Dán đường dẫn URL file audio hoặc chọn tải lên từ máy..."
+                                                                                folder="exams/audio"
+                                                                            />
+                                                                            {qAudioError && (
+                                                                                <p className="mt-1.5 text-xs text-red-600 font-semibold">{qAudioError}</p>
+                                                                            )}
+                                                                        </div>
                                                                     )}
 
                                                                     {/* Question Title */}
@@ -962,8 +1119,15 @@ export default function QuestionBuilder({
                                                                             value={q.title || ''}
                                                                             onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { title: e.target.value || null })}
                                                                             placeholder="VD: Questions 1-5, Section 1, Part 2..."
-                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                            className={`w-full rounded-xl px-3.5 py-2 text-sm text-gray-900 focus:outline-hidden ${
+                                                                                qTitleError
+                                                                                    ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                                    : 'border border-gray-300 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                                            }`}
                                                                         />
+                                                                        {qTitleError && (
+                                                                            <p className="mt-1 text-xs text-red-600 font-semibold">{qTitleError}</p>
+                                                                        )}
                                                                     </div>
 
                                                                     {/* Question Content */}
@@ -990,9 +1154,16 @@ export default function QuestionBuilder({
                                                                             value={q.content}
                                                                             onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { content: e.target.value })}
                                                                             placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
-                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                            className={`w-full rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-hidden ${
+                                                                                qContentError
+                                                                                    ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                                    : 'border border-gray-300 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                                            }`}
                                                                             required
                                                                         />
+                                                                        {qContentError && (
+                                                                            <p className="mt-1 text-xs text-red-600 font-semibold">{qContentError}</p>
+                                                                        )}
                                                                     </div>
 
                                                                     {/* Image Attachment */}
@@ -1010,7 +1181,17 @@ export default function QuestionBuilder({
                                                                     )}
 
                                                                     {/* Type Specific Editor */}
-                                                                    <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
+                                                                    <div className={`rounded-xl p-4 transition-all ${
+                                                                        hasAnswerError
+                                                                            ? 'bg-red-50/30 border-2 border-red-400 ring-2 ring-red-400/20'
+                                                                            : 'bg-slate-50/70 border border-slate-200'
+                                                                    }`}>
+                                                                        {hasAnswerError && (
+                                                                            <div className="mb-3 flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-100/80 px-3 py-2 rounded-lg border border-red-200">
+                                                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                                                                                <span>{qAnswerError || qOptionsError || 'Vui lòng kiểm tra phương án và đáp án đúng cho câu hỏi này.'}</span>
+                                                                            </div>
+                                                                        )}
                                                                         {normalizedType === QUESTION_TYPE_SINGLE_CHOICE && (
                                                                             <SingleChoiceEditor
                                                                                 options={q.options || []}
