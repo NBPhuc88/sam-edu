@@ -5,7 +5,6 @@ ArrowLeft,
 BookOpen,
 CheckCircle2,
 Edit2,
-Eye,
 Plus,
 Receipt,
 Trash2,
@@ -372,15 +371,10 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                 {allStudentTuitions.length > 0 && (
                     <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
                         <div className="border-b border-gray-200 bg-slate-50 px-6 py-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
-                                    <BookOpen className="h-4.5 w-4.5 text-blue-600" />
-                                    Danh Sách Học Phí Theo Từng Lớp ({allStudentTuitions.length} lớp)
-                                </h2>
-                                <span className="text-xs text-gray-500">
-                                    Bấm <strong>"Xem chi tiết"</strong> để quản lý các đợt đóng tiền của lớp tương ứng
-                                </span>
-                            </div>
+                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
+                                <BookOpen className="h-4.5 w-4.5 text-blue-600" />
+                                Danh Sách Học Phí Theo Từng Lớp ({allStudentTuitions.length} lớp)
+                            </h2>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-gray-600">
@@ -392,7 +386,6 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                                         <th className="px-6 py-3">Đã Đóng</th>
                                         <th className="px-6 py-3">Còn Nợ</th>
                                         <th className="px-6 py-3">Trạng Thái</th>
-                                        <th className="px-6 py-3 text-right">Thao Tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 bg-white">
@@ -430,19 +423,6 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                                                 </td>
                                                 <td className="px-6 py-3.5">
                                                     {getStatusBadge(Number(st.status))}
-                                                </td>
-                                                <td className="px-6 py-3.5 text-right">
-                                                    {isCurrent ? (
-                                                        <span className="inline-flex items-center rounded-md bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
-                                                            Đang xem
-                                                        </span>
-                                                    ) : (
-                                                        <Link href={`/tuitions/${st.id}`}>
-                                                            <Button variant="secondary" size="sm" icon={<Eye className="h-3.5 w-3.5" />}>
-                                                                Xem chi tiết
-                                                            </Button>
-                                                        </Link>
-                                                    )}
                                                 </td>
                                             </tr>
                                         );
