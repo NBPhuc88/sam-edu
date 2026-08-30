@@ -543,31 +543,29 @@ export default function QuestionBuilder({
     const getDefaultCorrectAnswer = (type: QuestionType) => {
         switch (type) {
             case QUESTION_TYPE_SINGLE_CHOICE:
-                return 'A';
+                return null;
             case QUESTION_TYPE_MULTIPLE_CHOICE:
-                return ['A', 'B'];
+                return [];
             case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
-                return 'TRUE';
+                return null;
             case QUESTION_TYPE_FILL_IN_BLANK:
                 return {
-                    blank_1: { accepted_answers: [''], case_sensitive: false },
+                    blank_1: { accepted_answers: [], case_sensitive: false },
                 };
             case QUESTION_TYPE_DRAG_DROP_CLOZE:
-                return {
-                    blank_1: 'w1',
-                };
+                return {};
             case QUESTION_TYPE_MATCHING:
-                return { L1: 'R1', L2: 'R2', L3: 'R3' };
+                return {};
             case QUESTION_TYPE_MATCHING_IMAGE:
-                return { S1: 'IMG_A', S2: 'IMG_B', S3: 'IMG_C' };
+                return {};
             case QUESTION_TYPE_MATCHING_SENTENCES:
-                return { L1: 'R1', L2: 'R2', L3: 'R3' };
+                return {};
             case QUESTION_TYPE_ORDERING:
-                return ['t1', 't2', 't3'];
+                return [];
             case QUESTION_TYPE_DIAGRAM_LABELLING:
-                return { loc_1: 'A', loc_2: 'B' };
+                return {};
             case QUESTION_TYPE_FIND_MISTAKE:
-                return 'A';
+                return null;
             default:
                 return null;
         }

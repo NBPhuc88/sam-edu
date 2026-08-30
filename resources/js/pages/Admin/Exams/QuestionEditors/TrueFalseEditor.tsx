@@ -54,8 +54,10 @@ export default function TrueFalseEditor({
         onChangeMetadata({ ...metadata, variant: variantId });
         onChangeOptions(selected.options);
 
-        // Reset correct answer to first option of the selected variant
-        onChangeCorrectAnswer(selected.options[0].id);
+        // Reset correct answer to empty if previous answer is not part of new variant
+        if (correctAnswer && !selected.options.some((o) => o.id === correctAnswer)) {
+            onChangeCorrectAnswer('');
+        }
     };
 
     return (
@@ -120,6 +122,13 @@ export default function TrueFalseEditor({
                         );
                     })}
                 </div>
+
+                {!correctAnswer && (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-bold text-red-700 border border-red-200">
+                        <span className="text-sm">⚠️</span>
+                        <span>Vui lòng tích chọn 1 phương án làm đáp án đúng cho câu hỏi này.</span>
+                    </div>
+                )}
             </div>
         </div>
     );
