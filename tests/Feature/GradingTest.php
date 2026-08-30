@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -22,11 +23,12 @@ test('unauthenticated users cannot access grading routes', function () {
 
 test('teacher can view grading index and filter by class', function () {
     $center = Center::create([
-        'code'   => 'CTR000000091',
-        'name'   => 'Trung Tâm Test 1',
-        'email'  => 'center1@test.com',
-        'phone'  => '0901234567',
-        'status' => 'active',
+        'code'       => 'CTR000000091',
+        'name'       => 'Trung Tâm Test 1',
+        'email'      => 'center1@test.com',
+        'phone'      => '0901234567',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => now()->addYear(),
     ]);
 
     $teacher = Teacher::create([
@@ -38,7 +40,7 @@ test('teacher can view grading index and filter by class', function () {
         'full_name'    => 'Nguyễn Văn A',
         'email'        => 'teacher1@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -48,7 +50,7 @@ test('teacher can view grading index and filter by class', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -56,14 +58,14 @@ test('teacher can view grading index and filter by class', function () {
         'code'         => 'C000000091',
         'name'         => 'Lớp Giao Tiếp 01',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -73,7 +75,7 @@ test('teacher can view grading index and filter by class', function () {
         'name'             => 'Đề Thi Giữa Kỳ',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $classExam = ClassExam::create([
@@ -85,7 +87,7 @@ test('teacher can view grading index and filter by class', function () {
         'exam_date'             => now()->format('Y-m-d'),
         'duration_minutes'      => 15,
         'max_score'             => 10,
-        'status'                => 'ongoing',
+        'status'                => Constant::CLASS_EXAM_STATUS_ONGOING,
         'created_by_teacher_id' => $teacher->id,
     ]);
 
@@ -98,7 +100,7 @@ test('teacher can view grading index and filter by class', function () {
         'full_name'    => 'Trần Văn B',
         'email'        => 'student1@test.com',
         'password'     => 'password123',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -111,7 +113,7 @@ test('teacher can view grading index and filter by class', function () {
         'score'                   => 0,
         'total_correct'           => 0,
         'total_questions'         => 1,
-        'status'                  => 'submitted',
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
         'is_graded'               => false,
         'requires_manual_grading' => true,
         'answers'                 => [],
@@ -125,11 +127,12 @@ test('teacher can view grading index and filter by class', function () {
 
 test('teacher can grade essay and audio submission successfully', function () {
     $center = Center::create([
-        'code'   => 'CTR000000092',
-        'name'   => 'Trung Tâm Test 2',
-        'email'  => 'center2@test.com',
-        'phone'  => '0901234568',
-        'status' => 'active',
+        'code'       => 'CTR000000092',
+        'name'       => 'Trung Tâm Test 2',
+        'email'      => 'center2@test.com',
+        'phone'      => '0901234568',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => now()->addYear(),
     ]);
 
     $teacher = Teacher::create([
@@ -141,7 +144,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'full_name'    => 'Lê Văn C',
         'email'        => 'teacher2@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -151,7 +154,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -159,14 +162,14 @@ test('teacher can grade essay and audio submission successfully', function () {
         'code'         => 'C000000092',
         'name'         => 'Lớp Học Thuật 02',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -176,7 +179,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'name'             => 'Đề Thi Viết & Nói',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $section = ExamSection::create([
@@ -210,7 +213,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'exam_date'             => now()->format('Y-m-d'),
         'duration_minutes'      => 30,
         'max_score'             => 10,
-        'status'                => 'ongoing',
+        'status'                => Constant::CLASS_EXAM_STATUS_ONGOING,
         'created_by_teacher_id' => $teacher->id,
     ]);
 
@@ -223,7 +226,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'full_name'    => 'Phạm Văn D',
         'email'        => 'student2@test.com',
         'password'     => 'password123',
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -236,7 +239,7 @@ test('teacher can grade essay and audio submission successfully', function () {
         'score'                   => 0,
         'total_correct'           => 0,
         'total_questions'         => 2,
-        'status'                  => 'submitted',
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
         'is_graded'               => false,
         'requires_manual_grading' => true,
         'answers'                 => [
@@ -279,4 +282,144 @@ test('teacher can grade essay and audio submission successfully', function () {
         ->and($submission->teacher_feedback)->toBe('Học sinh tiến bộ nhiều, hoàn thành tốt phần thi!')
         ->and($submission->grading_details[$essayQuestion->id]['score_earned'])->toBe(4.5)
         ->and($submission->grading_details[$essayQuestion->id]['teacher_comment'])->toBe('Bài viết tốt, chú ý chia thì quá khứ.');
+});
+
+test('teacher can filter submissions by numeric status constants', function () {
+    $center = Center::create([
+        'code'       => 'CTR000000093',
+        'name'       => 'Trung Tâm Test 3',
+        'email'      => 'center3@test.com',
+        'phone'      => '0901234569',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => now()->addYear(),
+    ]);
+
+    $teacher = Teacher::create([
+        'center_id'    => $center->id,
+        'teacher_code' => 'GV000000093',
+        'username'     => 'teacher_test_3',
+        'first_name'   => 'C',
+        'last_name'    => 'Lê',
+        'full_name'    => 'Lê Văn C',
+        'email'        => 'teacher3@test.com',
+        'password'     => 'password123',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
+    ]);
+
+    $subject = Subject::create([
+        'center_id' => $center->id,
+        'code'      => 'S000000093',
+        'name'      => 'Tiếng Anh 12',
+        'status'    => Constant::SUBJECT_STATUS_ACTIVE,
+    ]);
+
+    $class = SchoolClass::create([
+        'center_id' => $center->id,
+        'code'      => 'C000000093',
+        'name'      => 'Lớp 12A3',
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
+    ]);
+
+    ClassSubject::create([
+        'class_id'   => $class->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacher->id,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+    ]);
+
+    $exam = Exam::create([
+        'center_id'             => $center->id,
+        'class_id'              => $class->id,
+        'subject_id'            => $subject->id,
+        'code'                  => 'EX000000093',
+        'name'                  => 'Đề Thi Test Filter',
+        'duration_minutes'      => 45,
+        'max_score'             => 10,
+        'pass_score'            => 5,
+        'status'                => Constant::EXAM_STATUS_PUBLISHED,
+        'created_by_teacher_id' => $teacher->id,
+    ]);
+
+    $classExam = ClassExam::create([
+        'code'                  => 'CE000000093',
+        'access_code'           => '123457',
+        'class_id'              => $class->id,
+        'exam_id'               => $exam->id,
+        'title'                 => 'Kiểm Tra 45 Phút',
+        'exam_date'             => now()->format('Y-m-d'),
+        'duration_minutes'      => 45,
+        'max_score'             => 10,
+        'status'                => Constant::CLASS_EXAM_STATUS_ONGOING,
+        'created_by_teacher_id' => $teacher->id,
+    ]);
+
+    $student1 = Student::create([
+        'center_id'    => $center->id,
+        'student_code' => 'HS000000093',
+        'username'     => 'student_filter_1',
+        'first_name'   => 'Một',
+        'last_name'    => 'Học Sinh',
+        'full_name'    => 'Học Sinh Đã Chấm',
+        'email'        => 'student_f1@test.com',
+        'password'     => 'password123',
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $student2 = Student::create([
+        'center_id'    => $center->id,
+        'student_code' => 'HS000000094',
+        'username'     => 'student_filter_2',
+        'first_name'   => 'Hai',
+        'last_name'    => 'Học Sinh',
+        'full_name'    => 'Học Sinh Chờ Chấm',
+        'email'        => 'student_f2@test.com',
+        'password'     => 'password123',
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    // Sub 1: Đã chấm
+    ClassExamSubmission::create([
+        'class_exam_id'           => $classExam->id,
+        'student_id'              => $student1->id,
+        'score'                   => 8.0,
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
+        'is_graded'               => true,
+        'requires_manual_grading' => false,
+        'answers'                 => [],
+    ]);
+
+    // Sub 2: Chờ chấm (Cần chấm tự luận)
+    ClassExamSubmission::create([
+        'class_exam_id'           => $classExam->id,
+        'student_id'              => $student2->id,
+        'score'                   => 0,
+        'status'                  => Constant::SUBMISSION_STATUS_SUBMITTED,
+        'is_graded'               => false,
+        'requires_manual_grading' => true,
+        'answers'                 => [],
+    ]);
+
+    // Filter status = 1 (Graded)
+    $responseGraded = $this->actingAs($teacher, 'teacher')
+        ->get(route('grading.index', ['class_id' => $class->id, 'status' => Constant::GRADING_FILTER_GRADED]));
+    $responseGraded->assertOk();
+    $responseGraded->assertInertia(fn ($page) => $page->has('submissions.data', 1)->where('submissions.data.0.student_id', $student1->id));
+
+    // Filter status = 2 (Pending)
+    $responsePending = $this->actingAs($teacher, 'teacher')
+        ->get(route('grading.index', ['class_id' => $class->id, 'status' => Constant::GRADING_FILTER_PENDING]));
+    $responsePending->assertOk();
+    $responsePending->assertInertia(fn ($page) => $page->has('submissions.data', 1)->where('submissions.data.0.student_id', $student2->id));
+
+    // Filter status = 3 (Manual Needed)
+    $responseManual = $this->actingAs($teacher, 'teacher')
+        ->get(route('grading.index', ['class_id' => $class->id, 'status' => Constant::GRADING_FILTER_MANUAL_NEEDED]));
+    $responseManual->assertOk();
+    $responseManual->assertInertia(fn ($page) => $page->has('submissions.data', 1)->where('submissions.data.0.student_id', $student2->id));
+
+    // Filter status = 0 (All)
+    $responseAll = $this->actingAs($teacher, 'teacher')
+        ->get(route('grading.index', ['class_id' => $class->id, 'status' => Constant::GRADING_FILTER_ALL]));
+    $responseAll->assertOk();
+    $responseAll->assertInertia(fn ($page) => $page->has('submissions.data', 2));
 });

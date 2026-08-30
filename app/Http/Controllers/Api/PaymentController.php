@@ -4,15 +4,43 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payment\CreateZaloOrderRequest;
+use App\Http\Requests\Payment\RequestSubscriptionRenewalRequest;
 use App\Http\Requests\Payment\ZaloCallbackRequest;
+use App\Models\Admin;
 use App\Services\Payment\PaymentServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
     public function __construct(
         protected PaymentServiceInterface $paymentService
     ) {
+    }
+
+    /**
+     * Send email request to system admin for center subscription renewal (Admin only).
+     * @param RequestSubscriptionRenewalRequest $request
+     */
+    public function requestRenewal(RequestSubscriptionRenewalRequest $request): JsonResponse
+    {
+        /** @var Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
+
+        if (! $admin || ((int) $admin->role !== \App\Enums\Constant::ROLE_ADMIN && $admin->role !== 'admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ Quản trị viên trung tâm mới có quyền gửi yêu cầu gia hạn dịch vụ.',
+            ], 403);
+        }
+
+        $result = $this->paymentService->requestRenewal($request->validated(), $admin);
+
+        if (! empty($result['success'])) {
+            return response()->json($result);
+        }
+
+        return response()->json($result, 400);
     }
 
     /**

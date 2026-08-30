@@ -1,5 +1,5 @@
-import { Head, router } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head,router } from '@inertiajs/react';
+import React,{ useState } from 'react';
 import CenterForm from '../../../components/Center/CenterForm';
 import AppLayout from '../../../layouts/AppLayout';
 

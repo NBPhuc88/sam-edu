@@ -46,7 +46,8 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
-            'status'         => \App\Enums\EntityStatus::class,
+            'status'         => 'integer',
+            'gender'         => 'integer',
             'last_login_at'  => 'datetime:d-m-Y H:i',
             'date_of_birth'  => 'date:d-m-Y',
             'admission_date' => 'date:d-m-Y',
@@ -79,8 +80,7 @@ class Student extends Authenticatable
     {
         return $this->belongsToMany(SchoolClass::class, 'class_students', 'student_id', 'class_id')
             ->withPivot('enrolled_at', 'left_at', 'status', 'note')
-            ->withTimestamps()
-            ->withTrashed();
+            ->withTimestamps();
     }
 
     /**

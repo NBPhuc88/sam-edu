@@ -36,7 +36,6 @@ const { can } = usePermission();
   - [x] `Admin/Classes/Index.tsx` (`classes.create`, `classes.edit`, `classes.delete`)
   - [x] `Admin/Holidays/Index.tsx` (`holidays.create`, `holidays.edit`, `holidays.delete`)
   - [x] `Admin/Exams/Index.tsx` (`exams.create`, `exams.edit`, `exams.delete`)
-  - [x] `Admin/ExamTypes/Index.tsx` (`exam-types.create`, `exam-types.edit`, `exam-types.delete`)
   - [x] `Admin/ClassExams/Index.tsx` (`class-exams.create`, `class-exams.edit`, `class-exams.delete`)
   - [x] `Admin/Tuitions/Index.tsx` (`tuitions.create`, `tuitions.edit`, `tuitions.delete`)
   - [x] `Admin/Sessions/Index.tsx` (`sessions.edit`)
@@ -112,15 +111,7 @@ const { can } = usePermission();
   - Nút "Sửa" -> `exams.edit`
   - Nút "Xóa" -> `exams.delete`
 
-### 9. Loại Đề Thi (`Admin/ExamTypes/Index.tsx`)
-- **Quyền sử dụng**: `exam-types.create`, `exam-types.edit`, `exam-types.delete`
-- **Vị trí cần bọc**:
-  - Nút "Thêm Loại Đề Thi Mới" -> `exam-types.create`
-  - Thẻ `<th>Thao Tác</th>` -> `can('exam-types.edit') || can('exam-types.delete')`
-  - Nút "Sửa" -> `exam-types.edit`
-  - Nút "Xóa" -> `exam-types.delete`
-
-### 10. Kỳ Thi Lớp Học (`Admin/ClassExams/Index.tsx`)
+### 9. Kỳ Thi Lớp Học (`Admin/ClassExams/Index.tsx`)
 - **Quyền sử dụng**: `class-exams.create`, `class-exams.edit`, `class-exams.delete`
 - **Vị trí cần bọc**:
   - Nút "Giao Đề Thi Cho Lớp" -> `class-exams.create`

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSchedule;
@@ -9,6 +10,14 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\Schedule\ClassScheduleServiceInterface;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+});
 
 test('creates schedule, generates 60 sessions immediately, and calculates end date', function () {
     $center = Center::create([
@@ -16,7 +25,7 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'name'   => 'Trung Tâm Test',
         'email'  => 'center@test.com',
         'phone'  => '0901234567',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -24,7 +33,8 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin2@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000002',
     ]);
 
@@ -37,7 +47,7 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'full_name'    => 'Nguyễn Văn B',
         'email'        => 'teacher2@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -47,7 +57,7 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'total_sessions'   => 60,
         'duration_minutes' => 90,
         'tuition_fee'      => 4000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -55,14 +65,14 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'code'         => 'C000000002',
         'name'         => 'Lớp IELTS C1 - Test',
         'max_students' => 25,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -81,7 +91,7 @@ test('creates schedule, generates 60 sessions immediately, and calculates end da
         'off_days' => [
             ['date' => '2026-09-02', 'start_time' => null, 'end_time' => null],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ];
 
     $schedule = $service->createSchedule($data, $admin);
@@ -105,7 +115,7 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'name'   => 'Trung Tâm Test 2',
         'email'  => 'center2@test.com',
         'phone'  => '0901234568',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -113,7 +123,8 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'full_name'  => 'Super Admin Test 3',
         'email'      => 'superadmin3@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000003',
     ]);
 
@@ -126,7 +137,7 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'full_name'    => 'Nguyễn Văn C',
         'email'        => 'teacher3@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -136,7 +147,7 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'total_sessions'   => 60,
         'duration_minutes' => 90,
         'tuition_fee'      => 4000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -144,14 +155,14 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'code'         => 'C000000003',
         'name'         => 'Lớp IELTS C1 - Test 2',
         'max_students' => 25,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -165,7 +176,7 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
         'weeks'      => [
             '1' => [['18:00', '20:00']],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
@@ -180,7 +191,7 @@ test('updates schedule and resyncs 60 sessions with new weekly times', function 
             '2' => [['18:00', '20:00']],
             '4' => [['18:00', '20:00']],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     expect($updatedSchedule)->toBeInstanceOf(ClassSchedule::class);
@@ -195,7 +206,7 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'name'   => 'Trung Tâm Test Multi Slot',
         'email'  => 'center5@test.com',
         'phone'  => '0901234571',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -203,7 +214,8 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'full_name'  => 'Super Admin Test 6',
         'email'      => 'superadmin6@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000006',
     ]);
 
@@ -216,7 +228,7 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'full_name'    => 'Nguyễn Văn F',
         'email'        => 'teacher6@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -226,7 +238,7 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'total_sessions'   => 4,
         'duration_minutes' => 90,
         'tuition_fee'      => 4000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -234,14 +246,14 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'code'         => 'C000000006',
         'name'         => 'Lớp Cấp Tốc - Test',
         'max_students' => 25,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -260,7 +272,7 @@ test('handles 2 slots on the same day and partial off-day properly', function ()
         'off_days' => [
             ['date' => '2026-09-07', 'start_time' => '08:00', 'end_time' => '10:00'],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
@@ -280,7 +292,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'name'   => 'Trung Tâm Test 3',
         'email'  => 'center3@test.com',
         'phone'  => '0901234569',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -288,7 +300,8 @@ test('does not recreate sessions when only teacher or room changes without date 
         'full_name'  => 'Super Admin Test 4',
         'email'      => 'superadmin4@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000004',
     ]);
 
@@ -301,7 +314,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'full_name'    => 'Nguyễn Văn D',
         'email'        => 'teacher4@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $teacher2 = Teacher::create([
@@ -313,7 +326,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'full_name'    => 'Nguyễn Văn E',
         'email'        => 'teacher5@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -323,7 +336,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'total_sessions'   => 10,
         'duration_minutes' => 90,
         'tuition_fee'      => 4000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -331,14 +344,14 @@ test('does not recreate sessions when only teacher or room changes without date 
         'code'         => 'C000000004',
         'name'         => 'Lớp IELTS C1 - Test 3',
         'max_students' => 25,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher1->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -352,7 +365,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'weeks'      => [
             '1' => [['18:00', '20:00']],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $classSubject    = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
@@ -365,7 +378,7 @@ test('does not recreate sessions when only teacher or room changes without date 
         'weeks'      => [
             '1' => [['18:00', '20:00']],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $afterSessionIds = ClassSession::where('class_subject_id', $classSubject->id)->pluck('id')->toArray();
@@ -384,7 +397,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'name'   => 'Trung Tâm Test Diff Sync',
         'email'  => 'diffsync@test.com',
         'phone'  => '0901234599',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -392,7 +405,8 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'full_name'  => 'Super Admin Diff',
         'email'      => 'diff1@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000009',
     ]);
 
@@ -405,7 +419,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'full_name'    => 'Nguyễn Diff',
         'email'        => 'teacherdiff@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -415,7 +429,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'total_sessions'   => 10,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -423,14 +437,14 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         'code'         => 'C000000099',
         'name'         => 'Lớp Diff Test',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -446,7 +460,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
             '1' => [['18:00', '20:00']], // Thứ 2
             '3' => [['18:00', '20:00']], // Thứ 4
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
@@ -460,14 +474,14 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
         ->get();
 
     foreach ($first3Sessions as $s) {
-        $s->update(['status' => 'completed']);
+        $s->update(['status' => Constant::SESSION_STATUS_COMPLETED]);
     }
 
     $pastIds = $first3Sessions->pluck('id')->toArray();
 
     // Giả sử có một ca tương lai vào Thứ 2 (ví dụ trùng lịch)
     $futureMonSession = ClassSession::where('class_subject_id', $classSubject->id)
-        ->where('status', 'scheduled')
+        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
         ->whereRaw("strftime('%w', session_date) = '1'") // Thứ 2 (SQLite %w: 0=Sun, 1=Mon)
         ->first();
 
@@ -482,7 +496,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
             '1' => [['18:00', '20:00']], // Thứ 2 (vẫn giữ)
             '5' => [['18:00', '20:00']], // Thứ 6 (mới, thay cho Thứ 4)
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     // 3. Kiểm tra kết quả:
@@ -492,7 +506,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
 
     // B. 3 buổi quá khứ (completed) vẫn giữ nguyên 100% ID
     $currentPastIds = ClassSession::where('class_subject_id', $classSubject->id)
-        ->where('status', 'completed')
+        ->where('status', Constant::SESSION_STATUS_COMPLETED)
         ->pluck('id')
         ->toArray();
     expect($currentPastIds)->toEqual($pastIds);
@@ -506,7 +520,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
     // D. Không còn ca Thứ 4 nào trong tương lai (session_date >= today)
     $wedFutureCount = ClassSession::where('class_subject_id', $classSubject->id)
         ->where('session_date', '>=', now()->toDateString())
-        ->where('status', 'scheduled')
+        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
         ->whereRaw("strftime('%w', session_date) = '3'") // Thứ 4
         ->count();
     expect($wedFutureCount)->toBe(0);
@@ -514,7 +528,7 @@ test('updates schedule: keeps past sessions, diff-syncs future sessions (keeps m
     // E. Có các ca Thứ 6 mới được tạo trong tương lai (session_date >= today)
     $friFutureCount = ClassSession::where('class_subject_id', $classSubject->id)
         ->where('session_date', '>=', now()->toDateString())
-        ->where('status', 'scheduled')
+        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
         ->whereRaw("strftime('%w', session_date) = '5'") // Thứ 6
         ->count();
     expect($friFutureCount)->toBeGreaterThan(0);
@@ -526,7 +540,7 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'name'   => 'Trung Tâm Test Extra Day',
         'email'  => 'center99@test.com',
         'phone'  => '0901234599',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -534,7 +548,8 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'full_name'  => 'Super Admin Test 99',
         'email'      => 'superadmin99@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000099',
     ]);
 
@@ -547,7 +562,7 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'full_name'    => 'Teacher Extra',
         'email'        => 'teacher99@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -557,7 +572,7 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'total_sessions'   => 60,
         'duration_minutes' => 90,
         'tuition_fee'      => 4000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -565,14 +580,14 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'code'         => 'C000000099',
         'name'         => 'Lớp Test Extra 60 Buổi',
         'max_students' => 25,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $service = app(ClassScheduleServiceInterface::class);
@@ -591,7 +606,7 @@ test('generates exactly total_sessions when extra_days (makeup days) are added',
         'extra_days' => [
             ['date' => '2026-09-06', 'start_time' => '08:00', 'end_time' => '10:00'], // Chủ nhật học bù
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $classSubject = ClassSubject::where('class_id', $class->id)->where('subject_id', $subject->id)->first();
@@ -614,7 +629,7 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'name'   => 'Trung Tâm Test Repo',
         'email'  => 'center88@test.com',
         'phone'  => '0901234588',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $teacher = Teacher::create([
@@ -626,7 +641,7 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'full_name'    => 'Teacher Repo',
         'email'        => 'teacher88@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $subject = Subject::create([
@@ -636,7 +651,7 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'total_sessions'   => 10,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -644,14 +659,14 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'code'         => 'C000000088',
         'name'         => 'Lớp Test Repo',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -659,7 +674,8 @@ test('repositories correctly retrieve schedules and sessions with updated schema
         'full_name'  => 'Super Admin Test 88',
         'email'      => 'superadmin88@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000088',
     ]);
 
@@ -674,7 +690,7 @@ test('repositories correctly retrieve schedules and sessions with updated schema
             '2' => [['18:00', '19:30'], ['19:30', '21:00']],
             '4' => [['18:00', '19:30']],
         ],
-        'status' => 'active',
+        'status' => Constant::SCHEDULE_STATUS_ACTIVE,
     ], $admin);
 
     $firstSession = ClassSession::where('class_schedule_id', $schedule->id)->first();

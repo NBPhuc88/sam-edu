@@ -1,19 +1,25 @@
-export type ExamSkill = 'listening' | 'reading' | 'writing' | 'speaking';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING
+} from '@/constants/enums';
 
-export type QuestionType =
-    | 'single_choice'
-    | 'multiple_choice'
-    | 'true_false_not_given'
-    | 'fill_in_blank'
-    | 'drag_drop_cloze'
-    | 'matching'
-    | 'matching_image'
-    | 'matching_sentences'
-    | 'ordering'
-    | 'diagram_labelling'
-    | 'find_mistake'
-    | 'essay'
-    | 'audio_record';
+export type ExamSkill = number;
+export type QuestionType = number;
 
 export interface QuestionTypeMeta {
     type: QuestionType;
@@ -38,7 +44,7 @@ export interface ExamSkillMeta {
 
 export const EXAM_SKILLS: ExamSkillMeta[] = [
     {
-        skill: 'listening',
+        skill: SKILL_LISTENING,
         label: 'Kỹ Năng Nghe',
         englishLabel: 'Listening',
         iconName: 'Headphones',
@@ -46,18 +52,18 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
         description: 'Bài thi Nghe hiểu qua file Audio MP3, bao gồm trắc nghiệm bài nghe, điền từ vào chỗ trống, kéo thả từ, gán nhãn sơ đồ, ghép câu với hình',
         supportedQuestionTypes: [
-            'single_choice',
-            'multiple_choice',
-            'true_false_not_given',
-            'fill_in_blank',
-            'drag_drop_cloze',
-            'matching',
-            'matching_image',
-            'diagram_labelling',
+            QUESTION_TYPE_SINGLE_CHOICE,
+            QUESTION_TYPE_MULTIPLE_CHOICE,
+            QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+            QUESTION_TYPE_FILL_IN_BLANK,
+            QUESTION_TYPE_DRAG_DROP_CLOZE,
+            QUESTION_TYPE_MATCHING,
+            QUESTION_TYPE_MATCHING_IMAGE,
+            QUESTION_TYPE_DIAGRAM_LABELLING,
         ],
     },
     {
-        skill: 'reading',
+        skill: SKILL_READING,
         label: 'Kỹ Năng Đọc',
         englishLabel: 'Reading',
         iconName: 'BookOpen',
@@ -65,20 +71,20 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         description: 'Đọc hiểu đoạn văn bản, trắc nghiệm đọc, True/False/Not Given, nối tiêu đề, kéo thả từ vào chỗ trống, ghép câu với hình, ghép vế câu, tìm lỗi sai',
         supportedQuestionTypes: [
-            'single_choice',
-            'multiple_choice',
-            'true_false_not_given',
-            'drag_drop_cloze',
-            'matching',
-            'matching_image',
-            'matching_sentences',
-            'fill_in_blank',
-            'ordering',
-            'find_mistake',
+            QUESTION_TYPE_SINGLE_CHOICE,
+            QUESTION_TYPE_MULTIPLE_CHOICE,
+            QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+            QUESTION_TYPE_DRAG_DROP_CLOZE,
+            QUESTION_TYPE_MATCHING,
+            QUESTION_TYPE_MATCHING_IMAGE,
+            QUESTION_TYPE_MATCHING_SENTENCES,
+            QUESTION_TYPE_FILL_IN_BLANK,
+            QUESTION_TYPE_ORDERING,
+            QUESTION_TYPE_FIND_MISTAKE,
         ],
     },
     {
-        skill: 'writing',
+        skill: SKILL_WRITING,
         label: 'Kỹ Năng Viết',
         englishLabel: 'Writing',
         iconName: 'PenTool',
@@ -86,16 +92,16 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
         description: 'Tự luận viết bài văn dài, sắp xếp từ xáo trộn thành câu hoàn chỉnh, ghép câu, kéo thả từ, điền từ hoặc viết lại câu',
         supportedQuestionTypes: [
-            'essay',
-            'ordering',
-            'drag_drop_cloze',
-            'matching_sentences',
-            'fill_in_blank',
-            'find_mistake',
+            QUESTION_TYPE_ESSAY,
+            QUESTION_TYPE_ORDERING,
+            QUESTION_TYPE_DRAG_DROP_CLOZE,
+            QUESTION_TYPE_MATCHING_SENTENCES,
+            QUESTION_TYPE_FILL_IN_BLANK,
+            QUESTION_TYPE_FIND_MISTAKE,
         ],
     },
     {
-        skill: 'speaking',
+        skill: SKILL_SPEAKING,
         label: 'Kỹ Năng Nói',
         englishLabel: 'Speaking',
         iconName: 'Mic',
@@ -103,128 +109,128 @@ export const EXAM_SKILLS: ExamSkillMeta[] = [
         badgeColor: 'bg-pink-50 text-pink-700 border-pink-200',
         description: 'Ghi âm trực tiếp câu trả lời qua micro trình duyệt, trả lời các chủ đề khẩu ngữ IELTS / HSKK',
         supportedQuestionTypes: [
-            'audio_record',
+            QUESTION_TYPE_AUDIO_RECORD,
         ],
     },
 ];
 
 export const QUESTION_TYPES: QuestionTypeMeta[] = [
     {
-        type: 'single_choice',
+        type: QUESTION_TYPE_SINGLE_CHOICE,
         label: 'Trắc nghiệm 1 đáp án',
         description: 'Chọn 1 đáp án đúng duy nhất trong danh sách lựa chọn A, B, C, D',
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
         iconName: 'CheckCircle2',
         autoGraded: true,
-        skills: ['listening', 'reading'],
+        skills: [SKILL_LISTENING, SKILL_READING],
     },
     {
-        type: 'multiple_choice',
+        type: QUESTION_TYPE_MULTIPLE_CHOICE,
         label: 'Trắc nghiệm nhiều đáp án',
         description: 'Chọn từ 2 hoặc nhiều đáp án đúng (Pick 2 out of 5...)',
         badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
         iconName: 'ListChecks',
         autoGraded: true,
-        skills: ['listening', 'reading'],
+        skills: [SKILL_LISTENING, SKILL_READING],
     },
     {
-        type: 'true_false_not_given',
+        type: QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
         label: 'Đúng / Sai / Không đề cập',
         description: 'Dạng IELTS True/False/Not Given, Yes/No/Not Given, HSK Đúng/Sai',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         iconName: 'HelpCircle',
         autoGraded: true,
-        skills: ['listening', 'reading'],
+        skills: [SKILL_LISTENING, SKILL_READING],
     },
     {
-        type: 'fill_in_blank',
+        type: QUESTION_TYPE_FILL_IN_BLANK,
         label: 'Điền vào chỗ trống',
         description: 'Điền từ vào các vị trí [blank_1], [blank_2] trong đoạn văn',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
         iconName: 'FileText',
         autoGraded: true,
-        skills: ['listening', 'reading', 'writing'],
+        skills: [SKILL_LISTENING, SKILL_READING, SKILL_WRITING],
     },
     {
-        type: 'drag_drop_cloze',
+        type: QUESTION_TYPE_DRAG_DROP_CLOZE,
         label: 'Kéo - Thả từ vào chỗ trống',
         description: 'Kéo thả các từ khóa từ kho từ cho sẵn vào các vị trí [blank_1], [blank_2] trong đoạn văn',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         iconName: 'Move',
         autoGraded: true,
-        skills: ['listening', 'reading', 'writing'],
+        skills: [SKILL_LISTENING, SKILL_READING, SKILL_WRITING],
     },
     {
-        type: 'matching',
+        type: QUESTION_TYPE_MATCHING,
         label: 'Nối cặp / Ghép tiêu đề',
         description: 'Ghép nối thông tin giữa 2 cột (Ghép tiêu đề đoạn văn, nối từ vựng)',
         badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
         iconName: 'GitMerge',
         autoGraded: true,
-        skills: ['listening', 'reading'],
+        skills: [SKILL_LISTENING, SKILL_READING],
     },
     {
-        type: 'matching_image',
+        type: QUESTION_TYPE_MATCHING_IMAGE,
         label: 'Ghép câu với hình ảnh',
         description: 'Ghép các câu mô tả (A, B, C...) tương ứng với các bức hình minh họa (1, 2, 3...)',
         badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
         iconName: 'ImageIcon',
         autoGraded: true,
-        skills: ['reading', 'listening'],
+        skills: [SKILL_READING, SKILL_LISTENING],
     },
     {
-        type: 'matching_sentences',
+        type: QUESTION_TYPE_MATCHING_SENTENCES,
         label: 'Ghép câu với nhau / Ghép vế câu',
         description: 'Ghép nửa đầu của câu (1, 2, 3...) với nửa sau phù hợp (A, B, C...) để tạo câu hoàn chỉnh',
         badgeColor: 'bg-violet-50 text-violet-700 border-violet-200',
         iconName: 'GitMerge',
         autoGraded: true,
-        skills: ['reading', 'writing'],
+        skills: [SKILL_READING, SKILL_WRITING],
     },
     {
-        type: 'ordering',
+        type: QUESTION_TYPE_ORDERING,
         label: 'Sắp xếp thứ tự / Ghép câu',
         description: 'Sắp xếp các cụm từ xáo trộn thành câu hoàn chỉnh hoặc sắp xếp đoạn',
         badgeColor: 'bg-cyan-50 text-cyan-700 border-cyan-200',
         iconName: 'ArrowUpDown',
         autoGraded: true,
-        skills: ['reading', 'writing'],
+        skills: [SKILL_READING, SKILL_WRITING],
     },
     {
-        type: 'diagram_labelling',
+        type: QUESTION_TYPE_DIAGRAM_LABELLING,
         label: 'Gán nhãn sơ đồ / Bản đồ',
         description: 'Gán các địa danh / bộ phận vào các vị trí ghim A, B, C... trên sơ đồ',
         badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
         iconName: 'MapPin',
         autoGraded: true,
-        skills: ['listening'],
+        skills: [SKILL_LISTENING],
     },
     {
-        type: 'find_mistake',
+        type: QUESTION_TYPE_FIND_MISTAKE,
         label: 'Tìm lỗi sai trong câu',
         description: 'Chọn 1 trong các phần gạch chân A, B, C, D bị sai ngữ pháp',
         badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
         iconName: 'AlertTriangle',
         autoGraded: true,
-        skills: ['reading', 'writing'],
+        skills: [SKILL_READING, SKILL_WRITING],
     },
     {
-        type: 'essay',
+        type: QUESTION_TYPE_ESSAY,
         label: 'Tự luận / Viết bài văn',
         description: 'Học sinh viết đoạn văn / bài văn dài, giáo viên chấm theo Rubrics',
         badgeColor: 'bg-orange-50 text-orange-700 border-orange-200',
         iconName: 'PenTool',
         autoGraded: false,
-        skills: ['writing'],
+        skills: [SKILL_WRITING],
     },
     {
-        type: 'audio_record',
+        type: QUESTION_TYPE_AUDIO_RECORD,
         label: 'Ghi âm trả lời / Speaking',
         description: 'Học sinh thu âm câu trả lời trực tiếp từ micro trình duyệt',
         badgeColor: 'bg-pink-50 text-pink-700 border-pink-200',
         iconName: 'Mic',
         autoGraded: false,
-        skills: ['speaking'],
+        skills: [SKILL_SPEAKING],
     },
 ];
 
@@ -236,7 +242,7 @@ export interface ExamQuestionData {
     skill?: ExamSkill;
     question_type: QuestionType;
     content: string;
-    score: number | string;
+    score: number;
     image_url?: string | null;
     audio_url?: string | null;
     options?: any;
@@ -285,8 +291,8 @@ export interface Exam {
     code: string;
     name: string;
     duration_minutes: number | null;
-    max_score: number | string;
-    pass_score: number | string | null;
+    max_score: number;
+    pass_score: number | null;
     shuffle_questions: boolean;
     shuffle_options: boolean;
     max_attempts: number;
@@ -295,7 +301,7 @@ export interface Exam {
     exam_date: string | null;
     start_time: string | null;
     end_time: string | null;
-    status: 'draft' | 'published' | 'completed' | 'cancelled';
+    status: number;
     created_at?: string;
     center?: Center;
     school_class?: SchoolClass;

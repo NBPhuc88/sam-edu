@@ -145,6 +145,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\Holiday\HolidayRepositoryInterface::class, \App\Repositories\Holiday\HolidayRepository::class);
         $this->app->bind(\App\Repositories\Grading\GradingRepositoryInterface::class, \App\Repositories\Grading\GradingRepository::class);
         $this->app->bind(\App\Repositories\Permission\PermissionRepositoryInterface::class, \App\Repositories\Permission\PermissionRepository::class);
+        $this->app->bind(\App\Repositories\Notification\NotificationRepositoryInterface::class, \App\Repositories\Notification\NotificationRepository::class);
+        $this->app->bind(\App\Services\Notification\NotificationServiceInterface::class, \App\Services\Notification\NotificationService::class);
     }
 
     /**
@@ -226,8 +228,7 @@ class AppServiceProvider extends ServiceProvider
                 $items = $model->newCollection();
             } else {
                 // 3. Deferred Join: Lấy dữ liệu và eager load quan hệ cho đúng các ID đã lấy
-                $items = $this->clone()
-                    ->setQuery($model->newQueryWithoutScopes()->getQuery())
+                $items = (clone $this)
                     ->whereIn($keyName, $ids)
                     ->get($columns);
 

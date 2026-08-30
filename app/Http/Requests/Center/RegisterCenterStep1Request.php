@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Center;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterCenterStep1Request extends FormRequest
 {
@@ -23,12 +25,12 @@ class RegisterCenterStep1Request extends FormRequest
     public function rules(): array
     {
         return [
-            'name'              => ['required', 'string', 'max:100'],
-            'phone'             => ['required', new VietnamesePhoneNumber()],
-            'email'             => ['required', 'email', 'max:100'],
-            'address'           => ['nullable', 'string', 'max:255'],
-            'subscription_plan' => ['required', 'string', 'exists:subscription_plans,code'],
-            'payment_method'    => ['nullable', 'string', 'in:zalopay,bank_transfer,momo,vnpay'],
+            'name'                 => ['required', 'string', 'max:100'],
+            'phone'                => ['required', new VietnamesePhoneNumber()],
+            'email'                => ['required', 'email', 'max:100'],
+            'address'              => ['nullable', 'string', 'max:255'],
+            'subscription_plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
+            'payment_method'       => ['nullable', 'integer', Rule::in(Constant::PAYMENT_METHODS)],
         ];
     }
 
@@ -38,14 +40,14 @@ class RegisterCenterStep1Request extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'              => 'Vui lòng nhập tên trung tâm.',
-            'name.max'                   => 'Tên trung tâm không được vượt quá 100 ký tự.',
-            'phone.required'             => 'Vui lòng nhập số điện thoại liên hệ.',
-            'email.required'             => 'Vui lòng nhập địa chỉ email.',
-            'email.email'                => 'Địa chỉ email không đúng định dạng.',
-            'email.max'                  => 'Địa chỉ email không được vượt quá 100 ký tự.',
-            'subscription_plan.required' => 'Vui lòng chọn gói dịch vụ.',
-            'subscription_plan.exists'   => 'Gói dịch vụ không tồn tại trên hệ thống.',
+            'name.required'                 => 'Vui lòng nhập tên trung tâm.',
+            'name.max'                      => 'Tên trung tâm không được vượt quá 100 ký tự.',
+            'phone.required'                => 'Vui lòng nhập số điện thoại liên hệ.',
+            'email.required'                => 'Vui lòng nhập địa chỉ email.',
+            'email.email'                   => 'Địa chỉ email không đúng định dạng.',
+            'email.max'                     => 'Địa chỉ email không được vượt quá 100 ký tự.',
+            'subscription_plan_id.required' => 'Vui lòng chọn gói dịch vụ.',
+            'subscription_plan_id.exists'   => 'Gói dịch vụ không tồn tại trên hệ thống.',
         ];
     }
 }

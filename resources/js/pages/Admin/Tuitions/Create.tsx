@@ -1,17 +1,19 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import { PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_METHOD_OPTIONS } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    Save,
-    DollarSign,
-    Receipt,
+DollarSign,
+Receipt,
+Save,
 } from 'lucide-react';
-import React, { useState } from 'react';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import ScrollableSelect from '../../../components/ui/ScrollableSelect';
-import AppLayout from '../../../layouts/AppLayout';
+import React,{ useState } from 'react';
 
 interface CenterItem {
     id: number;
@@ -50,8 +52,8 @@ export const Create: React.FC<CreateProps> = ({
     selectedCenterId,
     errors = {},
 }) => {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(
@@ -68,17 +70,17 @@ export const Create: React.FC<CreateProps> = ({
     const [hasInitialPayment, setHasInitialPayment] = useState<boolean>(false);
     const [initialAmount, setInitialAmount] = useState<string>('');
     const [initialDate, setInitialDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [initialMethod, setInitialMethod] = useState<string>('bank_transfer');
+    const [initialMethod, setInitialMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [initialCode, setInitialCode] = useState<string>('');
     const [initialNote, setInitialNote] = useState<string>('Đóng đợt 1');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const isInitialAmountExceeded =
@@ -155,11 +157,7 @@ export const Create: React.FC<CreateProps> = ({
                 {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Tạo Khoản Thu Học Phí Mới</h1>
                             <p className="text-sm text-gray-500">
@@ -364,7 +362,7 @@ export const Create: React.FC<CreateProps> = ({
                                     />
                                     {isInitialAmountExceeded && (
                                         <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                            Số tiền đóng đợt 1 ({formatCurrency(initialAmount)}) không được vượt quá tổng học phí ({formatCurrency(totalAmount)}).
+                                            Số tiền đóng đợt 1 ({formatCurrency(Number(initialAmount))}) không được vượt quá tổng học phí ({formatCurrency(Number(totalAmount))}).
                                         </p>
                                     )}
                                     {errors.initial_payment_amount && (
@@ -390,15 +388,14 @@ export const Create: React.FC<CreateProps> = ({
                                     </label>
                                     <select
                                         value={initialMethod}
-                                        onChange={(e) => setInitialMethod(e.target.value)}
+                                        onChange={(e) => setInitialMethod(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                                        <option value="cash">Tiền mặt</option>
-                                        <option value="momo">Ví MoMo</option>
-                                        <option value="zalopay">Ví ZaloPay</option>
-                                        <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                                        <option value="other">Khác</option>
+                                        {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -431,11 +428,7 @@ export const Create: React.FC<CreateProps> = ({
 
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="success"

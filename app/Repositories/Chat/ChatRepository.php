@@ -128,7 +128,10 @@ class ChatRepository implements ChatRepositoryInterface
             'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
         ]);
 
-        return $targetMessage->fresh();
+        return $targetMessage->fresh([
+            'replyTo:id,class_id,sender_type,sender_id,sender_name,message',
+            'reactions:id,message_id,class_id,sender_type,sender_id,sender_name,emoji',
+        ]);
     }
 
     /**
@@ -273,15 +276,15 @@ class ChatRepository implements ChatRepositoryInterface
         }
 
         if ($status === null || $status === '') {
-            $query->where('status', 1);
-        } elseif ($status !== 'all') {
+            $query->where('status', Constant::CLASS_STATUS_ACTIVE);
+        } elseif ($status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {
                 $statusMap = [
-                    'inactive'  => 0,
-                    'active'    => 1,
-                    'completed' => 2,
+                    'inactive'  => Constant::CLASS_STATUS_INACTIVE,
+                    'active'    => Constant::CLASS_STATUS_ACTIVE,
+                    'completed' => Constant::CLASS_STATUS_COMPLETED,
                 ];
 
                 if (isset($statusMap[$status])) {
@@ -328,7 +331,7 @@ class ChatRepository implements ChatRepositoryInterface
     ): Collection {
         $query = SchoolClass::query()
             ->select('id', 'name', 'code', 'center_id', 'status')
-            ->where('status', 1);
+            ->where('status', Constant::CLASS_STATUS_ACTIVE);
 
         if ($studentId !== null) {
             $query->whereHas('students', function ($q) use ($studentId) {

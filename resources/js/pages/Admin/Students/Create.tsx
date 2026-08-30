@@ -1,12 +1,14 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User, HeartHandshake, Calendar, GraduationCap, Check } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import BackButton from '@/components/ui/BackButton';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
+import { Calendar,Check,GraduationCap,HeartHandshake,Save,User } from 'lucide-react';
+import React,{ useMemo,useState } from 'react';
 
 interface Center {
     id: number;
@@ -28,8 +30,8 @@ interface CreateProps {
 }
 
 export default function StudentCreate({ centers = [], classes = [], errors = {} }: CreateProps) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(
@@ -41,7 +43,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     const [password, setPassword] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
-    const [gender, setGender] = useState<string>('male');
+    const [gender, setGender] = useState<number>(1);
     const [address, setAddress] = useState<string>('');
     const [parentName, setParentName] = useState<string>('');
     const [parentPhone, setParentPhone] = useState<string>('');
@@ -106,11 +108,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                 {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/students">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/students" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Thêm Học Sinh Mới</h1>
                             <p className="text-sm text-gray-500">
@@ -273,12 +271,12 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 </label>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
+                                    onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
+                                    <option value={1}>Nam</option>
+                                    <option value={2}>Nữ</option>
+                                    <option value={3}>Khác</option>
                                 </select>
                             </div>
 
@@ -471,11 +469,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
 
                     {/* Submit Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-2">
-                        <Link href="/students">
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/students" size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="success"

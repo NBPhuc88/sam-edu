@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
 import { clsx } from 'clsx';
-import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { AlertCircle,AlertTriangle,CheckCircle2,Info,X } from 'lucide-react';
+import React,{ useEffect } from 'react';
 
 export interface ToastProps {
     message: string;

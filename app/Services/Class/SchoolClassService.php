@@ -8,6 +8,7 @@ use App\Models\ClassSession;
 use App\Models\SchoolClass;
 use App\Models\SessionReschedule;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -16,6 +17,8 @@ use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -253,13 +256,13 @@ class SchoolClassService implements SchoolClassServiceInterface
             } elseif ($data['status'] === 'completed') {
                 $status = Constant::CLASS_STATUS_COMPLETED;
             } elseif ($data['status'] === 'closed') {
-                $status = Constant::CLASS_STATUS_CANCELLED;
+                $status = Constant::CLASS_STATUS_CLOSED;
             } else {
                 $status = Constant::CLASS_STATUS_ACTIVE;
             }
         }
 
-        // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng (status 0, 1) không vượt quá max_classes
+        // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng không vượt quá max_classes
         if (in_array($status, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
@@ -269,7 +272,9 @@ class SchoolClassService implements SchoolClassServiceInterface
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để tạo thêm.");
+                    throw ValidationException::withMessages([
+                        'name' => "Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để tạo thêm.",
+                    ]);
                 }
             }
         }
@@ -319,37 +324,39 @@ class SchoolClassService implements SchoolClassServiceInterface
             if (is_numeric($data['status'])) {
                 $newStatus = (int) $data['status'];
             } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = 0;
+                $newStatus = Constant::CLASS_STATUS_INACTIVE;
             } elseif ($data['status'] === 'completed') {
-                $newStatus = 2;
+                $newStatus = Constant::CLASS_STATUS_COMPLETED;
             } elseif ($data['status'] === 'closed') {
-                $newStatus = 3;
+                $newStatus = Constant::CLASS_STATUS_CLOSED;
             } else {
-                $newStatus = 1;
+                $newStatus = Constant::CLASS_STATUS_ACTIVE;
             }
         }
 
-        // Lớp học đã hoàn thành (2) hoặc đã đóng (3) không thể chuyển sang trạng thái khác (trừ Super Admin)
-        if (in_array($currentStatusInt, [2, 3], true) && $newStatus !== $currentStatusInt) {
+        // Lớp học đã hoàn thành hoặc đã đóng không thể chuyển sang trạng thái khác (trừ Super Admin)
+        if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && $newStatus !== $currentStatusInt) {
             if (! ($admin && $admin->isSuperAdmin())) {
                 throw new AccessDeniedHttpException('Lớp học đã hoàn thành hoặc đã đóng chỉ có Super Admin mới có quyền mở lại.');
             }
         }
 
-        // Nếu chuyển từ Hoàn thành/Đóng (2, 3) sang Hoạt động/Tạm dừng (0, 1), kiểm tra giới hạn max_classes
+        // Nếu chuyển từ Hoàn thành/Đóng sang Hoạt động/Tạm dừng, kiểm tra giới hạn max_classes
         $centerId = (int) ($data['center_id'] ?? $schoolClass->center_id);
 
-        if (in_array($currentStatusInt, [2, 3], true) && in_array($newStatus, [0, 1], true)) {
+        if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && in_array($newStatus, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
                 $activePausedClassesCount = SchoolClass::where('center_id', $centerId)
                     ->where('id', '!=', $schoolClass->id)
-                    ->whereIn('status', [0, 1])
+                    ->whereIn('status', [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE])
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để mở lại lớp này.");
+                    throw ValidationException::withMessages([
+                        'status' => "Số lớp học đang hoạt động và tạm dừng ({$activePausedClassesCount}) đã đạt tối đa giới hạn ({$center->max_classes}) của gói dịch vụ. Vui lòng hoàn thành hoặc đóng lớp cũ để mở lại lớp này.",
+                    ]);
                 }
             }
         }
@@ -405,7 +412,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             ->whereIn('cs.student_id', $studentIdsInClass)
             ->where('c.id', '!=', $classId)
             ->where('c.center_id', $centerId)
-            ->where('c.status', 1)
+            ->where('c.status', Constant::CLASS_STATUS_ACTIVE)
             ->whereNull('c.deleted_at')
             ->pluck('cs.student_id')
             ->unique()
@@ -419,21 +426,21 @@ class SchoolClassService implements SchoolClassServiceInterface
         }
 
         // 1 câu lệnh SQL duy nhất cập nhật trạng thái học sinh tương ứng
-        if ($newClassStatus === 0 || $newClassStatus === 3) {
-            \Illuminate\Support\Facades\DB::table('students')
+        if ($newClassStatus === Constant::CLASS_STATUS_INACTIVE || $newClassStatus === Constant::CLASS_STATUS_CLOSED) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->where('status', 1)
-                ->update(['status' => 0]);
-        } elseif ($newClassStatus === 2) {
-            \Illuminate\Support\Facades\DB::table('students')
+                ->where('status', Constant::STUDENT_STATUS_ACTIVE)
+                ->update(['status' => Constant::STUDENT_STATUS_INACTIVE]);
+        } elseif ($newClassStatus === Constant::CLASS_STATUS_COMPLETED) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->where('status', 1)
-                ->update(['status' => 2]);
-        } elseif ($newClassStatus === 1) {
-            \Illuminate\Support\Facades\DB::table('students')
+                ->where('status', Constant::STUDENT_STATUS_ACTIVE)
+                ->update(['status' => Constant::STUDENT_STATUS_GRADUATED]);
+        } elseif ($newClassStatus === Constant::CLASS_STATUS_ACTIVE) {
+            DB::table('students')
                 ->whereIn('id', $isolatedStudentIds)
-                ->whereIn('status', [0, 2])
-                ->update(['status' => 1]);
+                ->whereIn('status', [Constant::STUDENT_STATUS_INACTIVE, Constant::STUDENT_STATUS_GRADUATED])
+                ->update(['status' => Constant::STUDENT_STATUS_ACTIVE]);
         }
     }
 
@@ -717,7 +724,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->getAvailableStudentsForClass($classId, (int) $schoolClass->center_id, $search);
     }
 
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null): int
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false, ?array $tuitionStudentIds = null): int
     {
         $schoolClass = $this->findClass($classId, $admin, $teacher);
 
@@ -727,7 +734,40 @@ class SchoolClassService implements SchoolClassServiceInterface
             ->pluck('id')
             ->toArray();
 
-        return $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
+        $added = $this->schoolClassRepository->attachStudents($classId, $validStudentIds);
+
+        if ($createTuition) {
+            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                ? $schoolClass->total_tuition_fee
+                : $schoolClass->classSubjects()->sum('tuition_fee'));
+
+            $targetStudentIds = $tuitionStudentIds !== null
+                ? array_values(array_intersect($validStudentIds, array_map('intval', $tuitionStudentIds)))
+                : $validStudentIds;
+
+            if ($totalTuitionFee > 0 && ! empty($targetStudentIds)) {
+                foreach ($targetStudentIds as $studentId) {
+                    StudentTuition::firstOrCreate(
+                        [
+                            'center_id'  => $schoolClass->center_id,
+                            'student_id' => $studentId,
+                            'class_id'   => $schoolClass->id,
+                        ],
+                        [
+                            'title'            => 'Học phí ' . $schoolClass->name,
+                            'total_amount'     => $totalTuitionFee,
+                            'paid_amount'      => 0,
+                            'remaining_amount' => $totalTuitionFee,
+                            'status'           => Constant::TUITION_STATUS_PENDING,
+                            'due_date'         => $schoolClass->end_date ?: null,
+                            'created_by'       => $admin?->id,
+                        ]
+                    );
+                }
+            }
+        }
+
+        return $added;
     }
 
     public function removeStudentFromClass(int $classId, int $studentId, ?Admin $admin = null, ?Teacher $teacher = null): bool
@@ -735,5 +775,12 @@ class SchoolClassService implements SchoolClassServiceInterface
         $this->findClass($classId, $admin, $teacher);
 
         return $this->schoolClassRepository->detachStudent($classId, $studentId);
+    }
+
+    public function updateClassStudentStatus(int $classId, int $studentId, int|string $status, ?string $note = null, ?Admin $admin = null, ?Teacher $teacher = null): bool
+    {
+        $this->findClass($classId, $admin, $teacher);
+
+        return $this->schoolClassRepository->updateClassStudentStatus($classId, $studentId, $status, $note);
     }
 }

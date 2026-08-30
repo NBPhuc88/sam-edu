@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { ArrowDown,ArrowUp,Plus,Sparkles,Trash2 } from 'lucide-react';
 
 interface FragmentItem {
     id: string;

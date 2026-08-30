@@ -1,6 +1,5 @@
-import React from 'react';
-import { Clock, Pause, Play, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { Clock,Pause,Play,Send } from 'lucide-react';
 
 interface Props {
     title: string;

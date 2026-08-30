@@ -1,22 +1,22 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
-    Award,
-    Calendar,
-    CheckCircle2,
-    FileCheck2,
-    Heart,
-    Layers,
-    Lock,
-    MessageSquare,
-    ShieldCheck,
-    Sliders,
-    Sparkles,
-    Target,
-    XCircle,
-    Zap,
+ArrowRight,
+Award,
+Calendar,
+CheckCircle2,
+FileCheck2,
+Heart,
+Layers,
+Lock,
+MessageSquare,
+ShieldCheck,
+Sliders,
+Sparkles,
+Target,
+XCircle,
+Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import PublicLayout from '../../layouts/PublicLayout';
@@ -103,7 +103,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
         {
             id: 3,
             icon: <ShieldCheck className="h-5 w-5" />,
-            title: 'Bảo Mật & Quản Trị Đa Trung Tâm',
+            title: 'Bảo Mật & Quản Trị Trung Tâm Giáo Dục',
             subtitle: 'Đăng Nhập 1 Thiết Bị & Phân Quyền Chi Tiết',
             badge: 'BẢO MẬT DOANH NGHIỆP',
             description:
@@ -154,7 +154,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
     return (
         <PublicLayout
             title="Về Chúng Tôi - SAM Digital"
-            description="Tìm hiểu tầm nhìn, sứ mệnh và nền tảng công nghệ quản lý giáo dục đa trung tâm đột phá của SAM Digital. Hệ sinh thái toàn diện từ học vụ, khảo thí 9 dạng câu hỏi đến chat thời gian thực."
+            description="Tìm hiểu tầm nhìn, sứ mệnh và nền tảng công nghệ quản lý trung tâm giáo dục đột phá của SAM Digital. Hệ sinh thái toàn diện từ học vụ, khảo thí 9 dạng câu hỏi đến chat thời gian thực."
             keywords="Về SAM Digital, SAM Digital, phần mềm quản lý trung tâm, giải pháp giáo dục 2026, khảo thí trực tuyến"
         >
             {/* ─── Hero Section ────────────────────────────────────────── */}
@@ -213,7 +213,7 @@ export const About: React.FC<AboutProps> = ({ company }) => {
                                 Tầm Nhìn 2026 - 2030
                             </h3>
                             <p className="text-xs leading-relaxed text-gray-600">
-                                Trở thành hệ thống quản lý giáo dục đa trung tâm được tin cậy nhất tại Việt Nam, đồng hành cùng hơn 1.000 cơ sở đào tạo chuẩn hóa quy trình vận hành.
+                                Trở thành hệ thống quản lý trung tâm giáo dục được tin cậy nhất tại Việt Nam, đồng hành cùng hơn 1.000 cơ sở đào tạo chuẩn hóa quy trình vận hành.
                             </p>
                         </Card>
 

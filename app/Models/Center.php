@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -17,8 +18,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property string|null $address
  * @property string      $status
- * @property string      $subscription_plan
- * @property string      $plan_type
+ * @property int|null    $subscription_plan_id
+ * @property int         $plan_type
  * @property Carbon|null $expires_at
  * @property Carbon|null $trial_ends_at
  * @property int|null    $max_students
@@ -39,7 +40,7 @@ class Center extends Model
         'email',
         'address',
         'status',
-        'subscription_plan',
+        'subscription_plan_id',
         'plan_type',
         'expires_at',
         'trial_ends_at',
@@ -50,23 +51,52 @@ class Center extends Model
     protected function casts(): array
     {
         return [
-            'expires_at'    => 'datetime:d-m-Y H:i',
-            'trial_ends_at' => 'datetime:d-m-Y H:i',
-            'max_students'  => 'integer',
-            'max_classes'   => 'integer',
-            'created_at'    => 'datetime:d-m-Y H:i',
-            'updated_at'    => 'datetime:d-m-Y H:i',
+            'status'               => 'integer',
+            'subscription_plan_id' => 'integer',
+            'plan_type'            => 'integer',
+            'expires_at'           => 'datetime:d-m-Y H:i',
+            'trial_ends_at'        => 'datetime:d-m-Y H:i',
+            'max_students'         => 'integer',
+            'max_classes'          => 'integer',
+            'created_at'           => 'datetime:d-m-Y H:i',
+            'updated_at'           => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    /**
+     * @return BelongsTo<SubscriptionPlan, $this>
+     */
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }
 
     public function currentPlan(): ?SubscriptionPlan
     {
-        return SubscriptionPlan::where('code', $this->subscription_plan)->first();
+        if ($this->relationLoaded('subscriptionPlan') && $this->subscriptionPlan) {
+            return $this->subscriptionPlan;
+        }
+
+        if ($this->subscription_plan_id) {
+            return SubscriptionPlan::find($this->subscription_plan_id);
+        }
+
+        return null;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return \App\Enums\Constant::CENTER_STATUS_LABELS[(int) $this->status] ?? 'Đang hoạt động';
+    }
+
+    public function getPlanNameAttribute(): string
+    {
+        return $this->currentPlan()?->name ?? 'Gói Dùng Thử';
     }
 
     public function hasFeature(string $featureCode): bool
     {
-        if ($this->plan_type === 'trial' || $this->subscription_plan === 'trial') {
+        if ((int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Tuition;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStudentTuitionRequest extends FormRequest
 {
@@ -27,7 +29,7 @@ class StoreStudentTuitionRequest extends FormRequest
             // First installment (optional)
             'initial_payment_amount'   => ['nullable', 'numeric', 'min:0', 'max:1000000000', 'lte:total_amount'],
             'initial_payment_date'     => ['nullable', 'date'],
-            'initial_payment_method'   => ['nullable', 'string', 'in:cash,bank_transfer,momo,zalopay,credit_card,other'],
+            'initial_payment_method'   => ['nullable', 'integer', Rule::in(Constant::PAYMENT_METHODS)],
             'initial_transaction_code' => ['nullable', 'string', 'max:100'],
             'initial_payment_note'     => ['nullable', 'string', 'max:255'],
         ];

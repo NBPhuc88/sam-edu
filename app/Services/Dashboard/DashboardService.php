@@ -2,20 +2,24 @@
 
 namespace App\Services\Dashboard;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
 use App\Models\ClassStudent;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamResultRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
 use App\Repositories\Schedule\ClassScheduleRepositoryInterface;
-use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Student\StudentRepositoryInterface;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use App\Repositories\Tuition\TuitionPaymentRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardService implements DashboardServiceInterface
@@ -76,12 +80,9 @@ class DashboardService implements DashboardServiceInterface
             return $data;
         }
 
-        // 2. ADMIN CENTER DASHBOARD (Multi-Center Admin)
+        // 2. ADMIN CENTER DASHBOARD (Multi-Center Admin / Center Admin)
         if ($role === 'admin' && $user instanceof Admin) {
-            $assignedCenterIds          = $user->centers()->pluck('centers.id')->toArray();
-            $data['teachers_bar_chart'] = $this->getMonthlyNewTeachersBarChart($assignedCenterIds);
-            $data['students_bar_chart'] = $this->getMonthlyNewStudentsBarChart($assignedCenterIds);
-            $data['classes_bar_chart']  = $this->getMonthlyNewClassesBarChart($assignedCenterIds);
+            $assignedCenterIds = $user->centers()->pluck('centers.id')->toArray();
 
             $lastMonthStart = now()->startOfMonth()->subMonth()->toDateString();
             $lastMonthEnd   = now()->startOfMonth()->subMonth()->endOfMonth()->toDateString();
@@ -89,15 +90,23 @@ class DashboardService implements DashboardServiceInterface
             $today          = now()->toDateString();
 
             $data['stats'] = [
-                'centers'                => count($assignedCenterIds),
-                'students'               => $this->studentRepository->countByCenterIds($assignedCenterIds),
-                'teachers'               => $this->teacherRepository->countByCenterIds($assignedCenterIds),
-                'classes'                => $this->schoolClassRepository->countByCenterIds($assignedCenterIds),
-                'last_month_paid_amount' => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $lastMonthStart, $lastMonthEnd),
-                'this_month_paid_amount' => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $thisMonthStart, $today),
-                'last_month_name'        => 'Tháng ' . now()->startOfMonth()->subMonth()->format('m/Y'),
-                'this_month_name'        => 'Tháng ' . now()->format('m/Y') . ' (Đến nay)',
+                'students'                => $this->studentRepository->countByCenterIds($assignedCenterIds),
+                'new_students_this_month' => $this->studentRepository->countInYearMonthAndCenterIds(now()->year, now()->month, $assignedCenterIds),
+                'teachers'                => $this->teacherRepository->countByCenterIds($assignedCenterIds),
+                'active_classes'          => $this->schoolClassRepository->countActiveByCenterIds($assignedCenterIds),
+                'last_month_paid_amount'  => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $lastMonthStart, $lastMonthEnd),
+                'this_month_paid_amount'  => $this->tuitionPaymentRepository->getSumBetweenDates($assignedCenterIds, $thisMonthStart, $today),
+                'last_month_name'         => 'Tháng ' . now()->startOfMonth()->subMonth()->format('m/Y'),
+                'this_month_name'         => 'Tháng ' . now()->format('m/Y') . ' (Đến nay)',
             ];
+
+            $data['today_sessions']     = $this->getAdminTodaySessions($assignedCenterIds);
+            $data['alert_stats']        = $this->getAdminAlertStats($assignedCenterIds);
+            $data['tuition_bar_chart']  = $this->tuitionPaymentRepository->getMonthlySumsByCenterIds($assignedCenterIds, 6);
+            $data['class_status_pie']   = $this->getClassStatusPieChart($assignedCenterIds);
+            $data['teachers_bar_chart'] = $this->getMonthlyNewTeachersBarChart($assignedCenterIds);
+            $data['students_bar_chart'] = $this->getMonthlyNewStudentsBarChart($assignedCenterIds);
+            $data['classes_bar_chart']  = $this->getMonthlyNewClassesBarChart($assignedCenterIds);
 
             return $data;
         }
@@ -151,9 +160,9 @@ class DashboardService implements DashboardServiceInterface
 
         $allCenters = $newCenters->concat($renewedCenters)->unique('id');
 
-        $trialCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'trial' || $c->subscription_plan === 'trial')->count();
-        $basicCount    = $allCenters->filter(fn ($c) => $c->plan_type === 'basic' || str_starts_with($c->subscription_plan ?? '', 'basic'))->count();
-        $advancedCount = $allCenters->filter(fn ($c) => $c->plan_type === 'advanced' || str_starts_with($c->subscription_plan ?? '', 'advanced'))->count();
+        $trialCount    = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_FREE)->count();
+        $basicCount    = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_STANDARD)->count();
+        $advancedCount = $allCenters->filter(fn ($c) => (int) $c->plan_type === Constant::PLAN_TYPE_PREMIUM)->count();
 
         // Mặc định cho hiển thị nếu chưa có dữ liệu thực tế
         if ($trialCount === 0 && $basicCount === 0 && $advancedCount === 0) {
@@ -728,17 +737,154 @@ class DashboardService implements DashboardServiceInterface
         $currentPlan = $center->currentPlan();
 
         return [
-            'id'                => $center->id,
-            'code'              => $center->code,
-            'name'              => $center->name,
-            'subscription_plan' => $center->subscription_plan,
-            'plan_type'         => $center->plan_type,
-            'allowed_features'  => $currentPlan?->allowed_features ?? [],
-            'expires_at'        => $expiresAt ? $expiresAt->toIso8601String() : null,
-            'is_expired'        => $isExpired,
-            'expiring_soon'     => $expiringSoon,
-            'expiring_1day'     => $expiring1DayAlert,
-            'days_remaining'    => $daysRemaining,
+            'id'                   => $center->id,
+            'code'                 => $center->code,
+            'name'                 => $center->name,
+            'subscription_plan_id' => $center->subscription_plan_id,
+            'plan_type'            => $center->plan_type,
+            'allowed_features'     => $currentPlan?->allowed_features ?? [],
+            'expires_at'           => $expiresAt ? $expiresAt->toIso8601String() : null,
+            'is_expired'           => $isExpired,
+            'expiring_soon'        => $expiringSoon,
+            'expiring_1day'        => $expiring1DayAlert,
+            'days_remaining'       => $daysRemaining,
         ];
+    }
+
+    /**
+     * Danh sách ca học hôm nay của trung tâm
+     * @param  array<int, int>                  $centerIds
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getAdminTodaySessions(array $centerIds): array
+    {
+        $todayStr = now()->toDateString();
+
+        $sessions = ClassSession::query()
+            ->with([
+                'classSubject.schoolClass:id,name,code,center_id',
+                'classSubject.subject:id,name,code',
+                'teacher:id,full_name,phone',
+                'classSubject.teacher:id,full_name,phone',
+                'room:id,name',
+                'attendances:id,session_id,status',
+            ])
+            ->whereHas('classSubject.schoolClass', function ($q) use ($centerIds) {
+                $q->whereIn('center_id', $centerIds);
+            })
+            ->whereDate('session_date', $todayStr)
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        $mapped = [];
+
+        foreach ($sessions as $sess) {
+            $startTimeStr = $sess->start_time ? (is_string($sess->start_time) ? substr($sess->start_time, 0, 5) : $sess->start_time->format('H:i')) : '08:00';
+            $endTimeStr   = $sess->end_time ? (is_string($sess->end_time) ? substr($sess->end_time, 0, 5) : $sess->end_time->format('H:i')) : '09:30';
+            $teacherName  = $sess->teacher?->full_name ?? ($sess->classSubject?->teacher?->full_name ?? 'Chưa phân công');
+            $isAttended   = $sess->attendances->isNotEmpty();
+
+            $mapped[] = [
+                'id'               => $sess->id,
+                'session_id'       => $sess->id,
+                'session_date'     => $todayStr,
+                'time'             => "{$startTimeStr} - {$endTimeStr}",
+                'start_time'       => $startTimeStr,
+                'end_time'         => $endTimeStr,
+                'class_id'         => $sess->classSubject?->schoolClass?->id,
+                'class_name'       => $sess->classSubject?->schoolClass?->name ?? 'Lớp học',
+                'class_code'       => $sess->classSubject?->schoolClass?->code,
+                'subject_name'     => $sess->classSubject?->subject?->name ?? 'Môn học',
+                'teacher_name'     => $teacherName,
+                'room_name'        => $sess->room?->name ?? 'Chưa xếp phòng',
+                'status'           => $sess->status ?? 'scheduled',
+                'is_attended'      => $isAttended,
+                'attendance_count' => $sess->attendances->count(),
+            ];
+        }
+
+        return $mapped;
+    }
+
+    /**
+     * Cảnh báo nhanh cho Admin trung tâm
+     * @param  array<int, int>      $centerIds
+     * @return array<string, mixed>
+     */
+    protected function getAdminAlertStats(array $centerIds): array
+    {
+        $todayStr = now()->toDateString();
+        $in7Days  = now()->addDays(7)->toDateString();
+
+        // 1. Ca học hôm nay chưa điểm danh
+        $unattendedTodayCount = ClassSession::query()
+            ->whereHas('classSubject.schoolClass', function ($q) use ($centerIds) {
+                $q->whereIn('center_id', $centerIds);
+            })
+            ->whereDate('session_date', $todayStr)
+            ->doesntHave('attendances')
+            ->count();
+
+        // 2. Lớp học sắp khai giảng trong 7 ngày tới (start_date between today and today+7 days, status = active)
+        $upcomingClassesCount = SchoolClass::query()
+            ->whereIn('center_id', $centerIds)
+            ->where('status', Constant::CLASS_STATUS_ACTIVE)
+            ->whereBetween('start_date', [$todayStr, $in7Days])
+            ->count();
+
+        // 3. Học phí quá hạn chưa thanh toán (due_date < today AND remaining_amount > 0)
+        $overdueQuery = StudentTuition::query()
+            ->whereIn('center_id', $centerIds)
+            ->whereDate('due_date', '<', $todayStr)
+            ->where('remaining_amount', '>', 0);
+
+        $overdueTuitionsCount  = (clone $overdueQuery)->count();
+        $overdueTuitionsAmount = (float) (clone $overdueQuery)->sum('remaining_amount');
+
+        return [
+            'unattended_today_count'  => $unattendedTodayCount,
+            'upcoming_classes_count'  => $upcomingClassesCount,
+            'overdue_tuitions_count'  => $overdueTuitionsCount,
+            'overdue_tuitions_amount' => $overdueTuitionsAmount,
+        ];
+    }
+
+    /**
+     * Biểu đồ tròn phân bố trạng thái lớp học của trung tâm
+     * @param  array<int, int>                                            $centerIds
+     * @return array<int, array{name: string, value: int, color: string}>
+     */
+    protected function getClassStatusPieChart(array $centerIds): array
+    {
+        $classes = SchoolClass::query()
+            ->whereIn('center_id', $centerIds)
+            ->select('status')
+            ->get();
+
+        $activeCount    = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 1)->count();
+        $inactiveCount  = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 0)->count();
+        $completedCount = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 2)->count();
+
+        if ($activeCount === 0 && $inactiveCount === 0 && $completedCount === 0) {
+            return [
+                ['name' => 'Đang hoạt động', 'value' => 1, 'color' => '#10b981'],
+            ];
+        }
+
+        $result = [];
+
+        if ($activeCount > 0) {
+            $result[] = ['name' => 'Đang hoạt động', 'value' => $activeCount, 'color' => '#10b981'];
+        }
+
+        if ($inactiveCount > 0) {
+            $result[] = ['name' => 'Tạm dừng', 'value' => $inactiveCount, 'color' => '#f59e0b'];
+        }
+
+        if ($completedCount > 0) {
+            $result[] = ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'color' => '#3b82f6'];
+        }
+
+        return $result;
     }
 }

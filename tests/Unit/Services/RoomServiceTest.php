@@ -1,24 +1,27 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Room;
 use App\Services\Room\RoomService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->service = app(RoomService::class);
     $this->center  = Center::create([
         'code'        => 'CTR' . random_int(1000000, 9999999),
         'name'        => 'Center Test RoomService',
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
         'max_classes' => 10,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_room_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Room',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 });
@@ -42,7 +45,7 @@ test('createRoom throws exception when max_classes limit is exceeded for room co
     $limitedCenter = Center::create([
         'code'        => 'CTR' . random_int(1000000, 9999999),
         'name'        => 'Limited Center Room',
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
         'max_classes' => 1,
     ]);
 
@@ -50,17 +53,17 @@ test('createRoom throws exception when max_classes limit is exceeded for room co
         'center_id' => $limitedCenter->id,
         'name'      => 'Phong Cu',
         'code'      => 'R' . random_int(1000000, 9999999),
-        'status'    => 'active',
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
     ]);
 
     $data = [
         'name'      => 'Phong 102',
         'center_id' => $limitedCenter->id,
-        'status'    => 'active',
+        'status'    => Constant::ROOM_STATUS_ACTIVE,
     ];
 
     expect(fn () => $this->service->createRoom($data, $this->superAdmin))
-        ->toThrow(\InvalidArgumentException::class, 'đã đạt tối đa');
+        ->toThrow(ValidationException::class, 'đã đạt tối đa');
 });
 
 test('updateRoom updates capacity and location', function () {

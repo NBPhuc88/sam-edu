@@ -18,8 +18,16 @@ class ClassExam extends Model
     {
         static::creating(function (ClassExam $classExam) {
             if (empty($classExam->code)) {
-                $maxId           = (int) (static::withTrashed()->max('id') ?? 0);
-                $classExam->code = sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxId + 1);
+                $maxId   = (int) (static::withTrashed()->max('id') ?? 0);
+                $nextNum = $maxId + 1;
+                $code    = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
+
+                while (static::withTrashed()->where('code', $code)->exists()) {
+                    $nextNum++;
+                    $code = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
+                }
+
+                $classExam->code = $code;
             }
 
             if (empty($classExam->access_code)) {
@@ -50,6 +58,7 @@ class ClassExam extends Model
     protected function casts(): array
     {
         return [
+            'status'           => 'integer',
             'exam_date'        => 'date:d-m-Y',
             'valid_from'       => 'datetime:d-m-Y H:i',
             'valid_to'         => 'datetime:d-m-Y H:i',

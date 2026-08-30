@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -16,13 +17,13 @@ test('sub-admin cannot access chat of a class in a different center', function (
     $centerA = Center::create([
         'code'   => 'CTR000000010',
         'name'   => 'Trung Tâm A',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $centerB = Center::create([
         'code'   => 'CTR000000020',
         'name'   => 'Trung Tâm B',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $adminA = Admin::create([
@@ -30,7 +31,8 @@ test('sub-admin cannot access chat of a class in a different center', function (
         'full_name'  => 'Admin Center A',
         'email'      => 'admin_a@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000010',
     ]);
     $adminA->centers()->attach($centerA->id);
@@ -65,7 +67,7 @@ test('sub-admin can access chat of a class in their assigned center', function (
     $centerA = Center::create([
         'code'   => 'CTR000000011',
         'name'   => 'Trung Tâm A',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $adminA = Admin::create([
@@ -73,7 +75,8 @@ test('sub-admin can access chat of a class in their assigned center', function (
         'full_name'  => 'Admin Center A OK',
         'email'      => 'admin_a_ok@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000011',
     ]);
     $adminA->centers()->attach($centerA->id);
@@ -93,7 +96,7 @@ test('super admin can access chat of any center', function () {
     $centerB = Center::create([
         'code'   => 'CTR000000022',
         'name'   => 'Trung Tâm B',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -101,7 +104,8 @@ test('super admin can access chat of any center', function () {
         'full_name'  => 'Super Admin Chat',
         'email'      => 'super_chat@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000022',
     ]);
 

@@ -1,21 +1,3 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    DollarSign,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    CheckCircle2,
-    Sparkles,
-    Shield,
-    Users,
-    Layers,
-    Calendar,
-    Tag,
-    Clock,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -23,6 +5,25 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    DollarSign,
+    Edit2,
+    Filter,
+    Layers,
+    Plus,
+    Search,
+    Shield,
+    Sparkles,
+    Tag,
+    Trash2,
+    Users,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface SubscriptionPlan {
@@ -69,7 +70,7 @@ interface Props {
 export default function PlanIndex({ plans, stats, filters }: Props) {
     const { can } = usePermission();
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedType, setSelectedType] = useState<string>(filters.type || 'all');
+    const [selectedType, setSelectedType] = useState<string>(filters.type || '');
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -86,7 +87,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
             '/plans',
             {
                 search: search || undefined,
-                type: selectedType !== 'all' ? selectedType : undefined,
+                type: selectedType || undefined,
             },
             {
                 preserveState: true,
@@ -101,7 +102,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
             '/plans',
             {
                 search: search || undefined,
-                type: type !== 'all' ? type : undefined,
+                type: type || undefined,
             },
             {
                 preserveState: true,
@@ -112,7 +113,7 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
 
     const handleReset = () => {
         setSearch('');
-        setSelectedType('all');
+        setSelectedType('');
         router.get('/plans');
     };
 
@@ -123,8 +124,8 @@ export default function PlanIndex({ plans, stats, filters }: Props) {
 
     const confirmDelete = () => {
         if (!deletingPlan) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/plans/${deletingPlan.id}`, {
@@ -143,8 +144,8 @@ return;
 
     const formatCurrency = (val: number | null | undefined) => {
         if (val === null || val === undefined || val === 0) {
-return 'Miễn phí (0đ)';
-}
+            return 'Miễn phí (0đ)';
+        }
 
         return `${val.toLocaleString('vi-VN')}đ`;
     };
@@ -258,7 +259,7 @@ return 'Miễn phí (0đ)';
                                     aria-label="Lọc theo loại gói cước"
                                     className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả loại gói</option>
+                                    <option value="">Tất cả loại gói</option>
                                     <option value="free">Gói Miễn Phí (Trial)</option>
                                     <option value="paid">Gói Trả Phí</option>
                                     <option value="featured">Gói Nổi Bật</option>
@@ -267,10 +268,15 @@ return 'Miễn phí (0đ)';
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button type="submit" variant="success" size="sm" icon={<Search className="h-3.5 w-3.5" />}>
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
                                 Tìm kiếm
                             </Button>
-                            {(search || selectedType !== 'all') && (
+                            {(search || selectedType) && (
                                 <Button type="button" variant="secondary" size="sm" onClick={handleReset}>
                                     Đặt lại
                                 </Button>
@@ -317,13 +323,12 @@ return 'Miễn phí (0đ)';
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-start gap-2.5">
                                                     <div
-                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-bold text-xs ${
-                                                            plan.is_featured
+                                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-bold text-xs ${plan.is_featured
                                                                 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300'
                                                                 : plan.price === 0
-                                                                  ? 'bg-blue-100 text-blue-800'
-                                                                  : 'bg-emerald-100 text-emerald-800'
-                                                        }`}
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-emerald-100 text-emerald-800'
+                                                            }`}
                                                     >
                                                         {plan.is_featured ? <Sparkles className="h-4 w-4" /> : <DollarSign className="h-4 w-4" />}
                                                     </div>
@@ -363,8 +368,8 @@ return 'Miễn phí (0đ)';
                                                         <div className="text-[11px] text-emerald-600 font-medium">
                                                             {plan.price > 0
                                                                 ? `Tiết kiệm ~${Math.round(
-                                                                      (1 - plan.yearly_price / (plan.price * 12)) * 100,
-                                                                  )}%/năm`
+                                                                    (1 - plan.yearly_price / (plan.price * 12)) * 100,
+                                                                )}%/năm`
                                                                 : '/năm'}
                                                         </div>
                                                     </div>
@@ -470,7 +475,7 @@ return 'Miễn phí (0đ)';
                                 perPage={filters.per_page ?? 20}
                                 currentParams={{
                                     search: search || undefined,
-                                    type: selectedType !== 'all' ? selectedType : undefined,
+                                    type: selectedType !== '' ? selectedType : undefined,
                                 }}
                             />
                         </div>

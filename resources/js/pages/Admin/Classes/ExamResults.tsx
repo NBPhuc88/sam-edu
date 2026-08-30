@@ -1,26 +1,23 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    Award,
-    ArrowLeft,
-    Download,
-    Search,
-    BookOpen,
-    GraduationCap,
-    Users,
-    CheckCircle2,
-    Calendar,
-    Filter,
-    BarChart3,
-    FileSpreadsheet,
-    FileCheck,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    Award,
+    BarChart3,
+    CheckCircle2,
+    FileCheck,
+    FileSpreadsheet,
+    Filter,
+    GraduationCap,
+    Search,
+    Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface SchoolClass {
     id: number;
@@ -112,8 +109,8 @@ export default function ClassExamResultsPage({
     isStudent = false,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedExamId, setSelectedExamId] = useState<string>(
-        filters.class_exam_id ? String(filters.class_exam_id) : '',
+    const [selectedExamId, setSelectedExamId] = useState<number>(
+        filters.class_exam_id ? Number(filters.class_exam_id) : 0,
     );
 
     const handleFilter = (e?: React.FormEvent) => {
@@ -122,7 +119,7 @@ export default function ClassExamResultsPage({
             `/classes/${schoolClass.id}/exam-results`,
             {
                 search: search || undefined,
-                class_exam_id: selectedExamId || undefined,
+                class_exam_id: selectedExamId ? Number(selectedExamId) : undefined,
             },
             { preserveState: true },
         );
@@ -130,7 +127,7 @@ export default function ClassExamResultsPage({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedExamId('');
+        setSelectedExamId(0);
         router.get(`/classes/${schoolClass.id}/exam-results`, {}, { preserveState: true });
     };
 
@@ -290,11 +287,11 @@ export default function ClassExamResultsPage({
                             <select
                                 value={selectedExamId}
                                 onChange={(e) => {
-                                    setSelectedExamId(e.target.value);
+                                    setSelectedExamId(Number(e.target.value));
                                 }}
                                 className="rounded-xl border border-gray-200 bg-slate-50/50 py-2 px-3 text-xs sm:text-sm text-gray-700 focus:border-emerald-500 focus:bg-white focus:outline-hidden max-w-[200px]"
                             >
-                                <option value="">Tất cả bài thi của lớp</option>
+                                <option value="0">Tất cả bài thi của lớp</option>
                                 {classExams.map((ex) => (
                                     <option key={ex.id} value={ex.id}>
                                         {ex.title}
@@ -302,8 +299,13 @@ export default function ClassExamResultsPage({
                                 ))}
                             </select>
 
-                            <Button variant="success" size="sm" type="submit">
-                                Lọc
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
+                                Tìm kiếm
                             </Button>
                             {(search || selectedExamId) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>

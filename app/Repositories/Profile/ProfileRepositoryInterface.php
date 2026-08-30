@@ -8,7 +8,7 @@ interface ProfileRepositoryInterface
      * @param string                $userType
      * @param int                   $userId
      * @param string                $email
-     * @param string                $action
+     * @param int|string            $action
      * @param string                $otpHash
      * @param ?array<string, mixed> $payload
      */
@@ -16,7 +16,7 @@ interface ProfileRepositoryInterface
         string $userType,
         int $userId,
         string $email,
-        string $action,
+        int|string $action,
         string $otpHash,
         ?array $payload = null
     ): void;
@@ -25,24 +25,24 @@ interface ProfileRepositoryInterface
      * @param  string      $userType
      * @param  int         $userId
      * @param  string      $email
-     * @param  string      $action
+     * @param  int|string  $action
      * @return object|null
      */
     public function getLatestVerificationOtp(
         string $userType,
         int $userId,
         string $email,
-        string $action
+        int|string $action
     ): ?object;
 
     /**
-     * @param string $userType
-     * @param int    $userId
-     * @param string $action
+     * @param string     $userType
+     * @param int        $userId
+     * @param int|string $action
      */
     public function deleteVerificationOtp(
         string $userType,
         int $userId,
-        string $action
+        int|string $action
     ): void;
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -8,9 +9,15 @@ use App\Models\Exam;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+});
 
 test('student can autosave progress during exam', function () {
     $center = Center::create([
@@ -18,7 +25,7 @@ test('student can autosave progress during exam', function () {
         'name'   => 'Trung Tâm Test Autosave',
         'email'  => 'autosave@test.com',
         'phone'  => '0901234568',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $student = Student::create([
@@ -40,7 +47,7 @@ test('student can autosave progress during exam', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -48,14 +55,14 @@ test('student can autosave progress during exam', function () {
         'code'         => 'C000000088',
         'name'         => 'Lớp HSK 01',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     ClassStudent::create([
         'class_id'    => $class->id,
         'student_id'  => $student->id,
         'enrolled_at' => now()->toDateString(),
-        'status'      => 'active',
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -65,7 +72,7 @@ test('student can autosave progress during exam', function () {
         'name'             => 'Đề Thi Autosave',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $classExam = ClassExam::create([
@@ -77,7 +84,7 @@ test('student can autosave progress during exam', function () {
         'exam_date'        => now()->format('Y-m-d'),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'ongoing',
+        'status'           => Constant::CLASS_EXAM_STATUS_ONGOING,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -90,7 +97,7 @@ test('student can autosave progress during exam', function () {
         'score'                 => 0,
         'total_correct'         => 0,
         'total_questions'       => 5,
-        'status'                => 'in_progress',
+        'status'                => Constant::SUBMISSION_STATUS_IN_PROGRESS,
         'answers'               => [],
         'grading_details'       => [],
     ]);
@@ -116,8 +123,8 @@ test('student can autosave progress during exam', function () {
 
     // Verify Redis Cache stores the draft answers immediately with 0 DB overhead
     $cacheKey = "exam_draft:submission:{$submission->id}";
-    expect(\Illuminate\Support\Facades\Cache::has($cacheKey))->toBeTrue();
-    expect(\Illuminate\Support\Facades\Cache::get($cacheKey))->toEqual($draftAnswers);
+    expect(Cache::has($cacheKey))->toBeTrue();
+    expect(Cache::get($cacheKey))->toEqual($draftAnswers);
 
     // Verify submitting the exam persists draft answers to DB and cleans Redis
     $submitResponse = $this->actingAs($student, 'student')
@@ -131,8 +138,8 @@ test('student can autosave progress during exam', function () {
     $submitResponse->assertRedirect();
     $submission->refresh();
     expect($submission->answers)->toEqual($draftAnswers);
-    expect($submission->status)->toBe('submitted');
-    expect(\Illuminate\Support\Facades\Cache::has($cacheKey))->toBeFalse();
+    expect($submission->status)->toBe(Constant::SUBMISSION_STATUS_SUBMITTED);
+    expect(Cache::has($cacheKey))->toBeFalse();
 });
 
 test('student cannot autosave on another students submission', function () {
@@ -141,7 +148,7 @@ test('student cannot autosave on another students submission', function () {
         'name'   => 'Trung Tâm Test 2',
         'email'  => 'autosave2@test.com',
         'phone'  => '0901234569',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $student1 = Student::create([
@@ -175,7 +182,7 @@ test('student cannot autosave on another students submission', function () {
         'total_sessions'   => 30,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $class = SchoolClass::create([
@@ -183,7 +190,7 @@ test('student cannot autosave on another students submission', function () {
         'code'         => 'C000000089',
         'name'         => 'Lớp HSK 02',
         'max_students' => 20,
-        'status'       => \App\Enums\EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     $exam = Exam::create([
@@ -193,7 +200,7 @@ test('student cannot autosave on another students submission', function () {
         'name'             => 'Đề Thi Autosave 2',
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $classExam = ClassExam::create([
@@ -205,7 +212,7 @@ test('student cannot autosave on another students submission', function () {
         'exam_date'        => now()->format('Y-m-d'),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'ongoing',
+        'status'           => Constant::CLASS_EXAM_STATUS_ONGOING,
     ]);
 
     $submission = ClassExamSubmission::create([
@@ -218,7 +225,7 @@ test('student cannot autosave on another students submission', function () {
         'score'                 => 0,
         'total_correct'         => 0,
         'total_questions'       => 5,
-        'status'                => 'in_progress',
+        'status'                => Constant::SUBMISSION_STATUS_IN_PROGRESS,
         'answers'               => [],
         'grading_details'       => [],
     ]);

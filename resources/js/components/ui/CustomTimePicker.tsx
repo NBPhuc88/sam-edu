@@ -1,5 +1,5 @@
-import { Clock, Check, X } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import { Check,Clock,X } from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 import Button from './Button';
 
 export interface CustomTimePickerProps {

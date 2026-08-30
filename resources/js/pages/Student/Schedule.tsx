@@ -1,27 +1,30 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    CalendarDays,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    DoorOpen,
-    GraduationCap,
-    Info,
-    Printer,
-    Users,
-    BookOpen,
-    Layers,
-    UserCheck,
-    MessageSquare,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Modal from '@/components/ui/Modal';
+import {
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import { toISODateString, formatTime } from '@/lib/date';
+import { toISODateString } from '@/lib/date';
+import { Head,router,usePage } from '@inertiajs/react';
+import {
+BookOpen,
+Calendar,
+CalendarDays,
+ChevronLeft,
+ChevronRight,
+Clock,
+DoorOpen,
+GraduationCap,
+Info,
+Layers,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -35,8 +38,8 @@ interface Student {
     student_code: string;
     phone?: string | null;
     email?: string | null;
-    gender?: string | null;
-    status?: string | number;
+    gender?: number | null;
+    status?: number;
     center?: Center;
 }
 
@@ -72,7 +75,7 @@ interface StudentSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     change_type?: string;
     topic?: string | null;
     note?: string | null;
@@ -118,7 +121,7 @@ interface RecurringSchedule {
     start_time: string;
     end_time: string;
     room_id: number | null;
-    status: string;
+    status: number;
     class_subject?: {
         school_class?: {
             id: number;
@@ -195,10 +198,6 @@ export default function StudentSchedulePage({
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     const handleOpenDetailModal = (session: StudentSession) => {
         setSelectedSession(session);
         setIsDetailModalOpen(true);
@@ -237,7 +236,7 @@ export default function StudentSchedulePage({
         });
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string, changeType?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return (
                 <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
@@ -250,37 +249,25 @@ export default function StudentSchedulePage({
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
                         Đã học
                     </span>
                 );
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
-                        Chưa điểm danh
-                    </span>
-                );
-            case 'cancelled':
+            case SESSION_STATUS_CANCELLED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
                         Báo nghỉ
                     </span>
                 );
-            case 'rescheduled':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
-                        Đã đổi lịch
-                    </span>
-                );
-            case 'scheduled':
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return (
@@ -363,16 +350,6 @@ export default function StudentSchedulePage({
                                 <span>Lịch Học Cố Định</span>
                             </button>
                         </div>
-
-                        {/* <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Printer className="h-4 w-4 text-gray-600" />}
-                            onClick={handlePrint}
-                            className="hidden sm:inline-flex"
-                        >
-                            In Lịch Học
-                        </Button> */}
                     </div>
                 </div>
 

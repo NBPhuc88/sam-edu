@@ -1,25 +1,3 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Calendar,
-    CalendarDays,
-    CheckCircle,
-    Clock,
-    Download,
-    Edit2,
-    GraduationCap,
-    Mail,
-    MapPin,
-    Phone,
-    User,
-    Users,
-    XCircle,
-    BookOpen,
-    DoorOpen,
-    HelpCircle,
-    AlertCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import PageHeader from '@/components/common/PageHeader';
 import StatMetricCard from '@/components/common/StatMetricCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -27,9 +5,38 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
+import {
+ATTENDANCE_STATUS_ABSENT,
+ATTENDANCE_STATUS_EXCUSED,
+ATTENDANCE_STATUS_LATE,
+ATTENDANCE_STATUS_PRESENT,
+GENDER_LABELS
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+BookOpen,
+Calendar,
+CalendarDays,
+CheckCircle,
+Clock,
+DoorOpen,
+Download,
+Edit2,
+GraduationCap,
+HelpCircle,
+Mail,
+MapPin,
+Phone,
+User,
+Users,
+XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -44,21 +51,21 @@ interface Student {
     full_name: string;
     email: string | null;
     phone: string | null;
-    address: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
+    address: string | null;
     admission_date: string | null;
     parent_name: string | null;
     parent_phone: string | null;
     parent_relationship: string | null;
-    status: number | string;
+    status: number;
     note: string | null;
     center_id: number;
     center?: Center;
 }
 
 interface StudentSessionItem {
-    id: number | string;
+    id: number;
     session_date: string;
     start_time: string;
     end_time: string;
@@ -68,13 +75,13 @@ interface StudentSessionItem {
     subject_code?: string | null;
     teacher_name?: string | null;
     room_name?: string | null;
-    attendance_status: string;
+    attendance_status: number;
     attendance_note?: string | null;
     check_in_at?: string | null;
 }
 
 interface FilterData {
-    type: 'month' | 'all' | 'select_month';
+    type?: string;
     month: number;
     year: number;
     start_date: string | null;
@@ -129,16 +136,18 @@ export default function StudentShow({
     const canExportPlan = useCanExportCsv();
     const canExport = canExportPermission && canExportPlan;
 
-    const [filterType, setFilterType] = useState<'month' | 'all' | 'select_month'>(filters.type || 'month');
+    const [filterType, setFilterType] = useState<string>(
+        filters.type ?? 'month'
+    );
     const [selectedMonth, setSelectedMonth] = useState<number>(filters.month || new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState<number>(filters.year || currentYear);
 
-    const handleFilterChange = (type: 'month' | 'all' | 'select_month', m = selectedMonth, y = selectedYear) => {
+    const handleFilterChange = (type: string, m = selectedMonth, y = selectedYear) => {
         setFilterType(type);
         router.get(
             `/students/${student.id}/show`,
             {
-                type,
+                type: type || undefined,
                 month: type === 'select_month' ? m : undefined,
                 year: type === 'select_month' ? y : undefined,
                 per_page: sessions.per_page !== 20 ? sessions.per_page : undefined,
@@ -152,7 +161,9 @@ export default function StudentShow({
 
     const handleExport = () => {
         const params = new URLSearchParams();
-        params.set('type', filterType);
+        if (filterType) {
+            params.set('type', filterType);
+        }
         if (filterType === 'select_month') {
             params.set('month', String(selectedMonth));
             params.set('year', String(selectedYear));
@@ -160,27 +171,24 @@ export default function StudentShow({
         window.location.href = `/students/${student.id}/export-attendances?${params.toString()}`;
     };
 
-    const getAttendanceBadge = (status: string) => {
+    const getAttendanceBadge = (status: number) => {
         switch (status) {
-            case 'present':
+            case ATTENDANCE_STATUS_PRESENT:
                 return <Badge variant="active">Có mặt</Badge>;
-            case 'absent':
+            case ATTENDANCE_STATUS_ABSENT:
                 return <Badge variant="danger">Vắng</Badge>;
-            case 'late':
+            case ATTENDANCE_STATUS_LATE:
                 return <Badge variant="pending">Đi trễ</Badge>;
-            case 'excused':
-            case 'leave':
+            case ATTENDANCE_STATUS_EXCUSED:
                 return <Badge variant="expired">Có phép</Badge>;
             default:
                 return <Badge variant="info">Chưa điểm danh</Badge>;
         }
     };
 
-    const formatGender = (gender: string | null) => {
+    const formatGender = (gender: number | null) => {
         if (!gender) return '—';
-        if (gender === 'male') return 'Nam';
-        if (gender === 'female') return 'Nữ';
-        return 'Khác';
+        return GENDER_LABELS[gender] || '—';
     };
 
     const formatRelationship = (rel: string | null) => {
@@ -202,7 +210,7 @@ export default function StudentShow({
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
 
     const getFilterLabel = () => {
-        if (filters.type === 'all') return 'Từ trước đến nay';
+        if (!filters.type || filters.type === '') return 'Từ trước đến nay';
         if (filters.type === 'select_month') return `Tháng ${filters.month}/${filters.year}`;
         return `Tháng ${filters.month}/${filters.year} (Tháng này)`;
     };
@@ -372,8 +380,8 @@ export default function StudentShow({
 
                         <button
                             type="button"
-                            onClick={() => handleFilterChange('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'all'
+                            onClick={() => handleFilterChange('')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterType || filterType === ''
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                                 }`}

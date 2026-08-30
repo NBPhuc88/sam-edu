@@ -205,7 +205,7 @@ class ChatService implements ChatServiceInterface
         $created = $this->chatRepository->createMessage([
             'class_id'      => $classId,
             'reply_to_id'   => $replyToId,
-            'sender_type'   => $senderInfo['sender_type'] ?? 'student',
+            'sender_type'   => $senderInfo['sender_type'] ?? Constant::SENDER_TYPE_STUDENT,
             'sender_id'     => $senderInfo['sender_id'] ?? 0,
             'sender_name'   => $senderInfo['sender_name'] ?? 'Thành viên',
             'sender_avatar' => $senderInfo['sender_avatar'] ?? null,
@@ -238,6 +238,12 @@ class ChatService implements ChatServiceInterface
     {
         $updated        = $this->chatRepository->togglePinMessage($classId, $messageId, $pinnedByName);
         $redisPinnedKey = "chat:class:{$classId}:pinned";
+
+        try {
+            Redis::del("chat:class:{$classId}:messages");
+        } catch (\Throwable $e) {
+            // Fallback
+        }
 
         if (! $updated || ! $updated->is_pinned) {
             try {

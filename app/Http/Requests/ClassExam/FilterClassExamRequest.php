@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\ClassExam;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FilterClassExamRequest extends FormRequest
 {
@@ -18,10 +20,10 @@ class FilterClassExamRequest extends FormRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
-            'class_id'  => ['nullable', 'integer', 'exists:classes,id'],
-            'exam_id'   => ['nullable', 'integer', 'exists:exams,id'],
-            'status'    => ['nullable', 'string', 'in:all,scheduled,ongoing,completed,cancelled'],
+            'center_id' => ['nullable', 'integer'],
+            'class_id'  => ['nullable', 'integer'],
+            'exam_id'   => ['nullable', 'integer'],
+            'status'    => ['nullable', 'integer', Rule::in(Constant::CLASS_EXAM_STATUSES)],
             'page'      => ['nullable', 'integer', 'min:1'],
             'per_page'  => ['nullable', 'integer', 'min:5', 'max:100'],
         ];

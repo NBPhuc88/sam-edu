@@ -1,15 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, usePage } from '@inertiajs/react';
+import { router,usePage } from '@inertiajs/react';
 import {
-    Building,
-    CheckCircle2,
-    Mail,
-    MapPin,
-    Phone,
-    Send,
-    User,
+Building,
+CheckCircle2,
+Mail,
+MapPin,
+Phone,
+Send,
+User,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import Button from '../../components/ui/Button';
@@ -27,7 +27,7 @@ const contactSchema = z.object({
     phone: z
         .string()
         .min(1, 'Vui lòng nhập số điện thoại')
-        .regex(VIETNAMESE_PHONE_REGEX, 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678)'),
+        .regex(VIETNAMESE_PHONE_REGEX, 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678 hoặc 02863337777)'),
     email: z
         .string()
         .email('Email không đúng định dạng')

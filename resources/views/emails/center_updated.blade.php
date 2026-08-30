@@ -8,13 +8,12 @@ Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** xin thông báo: 
 <x-mail::table>
 | Thông tin Trung tâm | Chi tiết mới nhất |
 | :--- | :--- |
-| **Mã trung tâm** | `{{ $center->code }}` |
 | **Tên trung tâm** | **{{ $center->name }}** |
 | **Email nhận thông báo** | {{ $center->email ?? 'Chưa cập nhật' }} |
 | **Số điện thoại** | {{ $center->phone ?? 'Chưa cập nhật' }} |
 | **Địa chỉ** | {{ $center->address ?? 'Chưa cập nhật' }} |
-| **Trạng thái** | {{ $center->status === 'active' ? 'Đang hoạt động' : ($center->status === 'expired' ? 'Đã hết hạn' : $center->status) }} |
-| **Gói dịch vụ** | **{{ strtoupper($center->subscription_plan ?? 'N/A') }}** |
+| **Trạng thái** | {{ $center->status_label }} |
+| **Gói dịch vụ** | **{{ $center->plan_name }}** |
 | **Thời gian cập nhật** | {{ now()->format('d-m-Y H:i:s') }} |
 </x-mail::table>
 

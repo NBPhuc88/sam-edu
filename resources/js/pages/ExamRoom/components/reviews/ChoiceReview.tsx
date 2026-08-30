@@ -1,5 +1,8 @@
-import React from 'react';
-import { Check, X } from 'lucide-react';
+import {
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+} from '@/constants/enums';
+import { Check,X } from 'lucide-react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
@@ -9,7 +12,7 @@ interface Props {
 export default function ChoiceReview({ question }: Props) {
     const { question_type, options, correct_answer, user_answer } = question;
 
-    if (question_type === 'true_false_not_given') {
+    if (question_type === QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN) {
         let tfOptions: Array<{ id: string; label: string }> = [];
 
         if (Array.isArray(options) && options.length > 0) {
@@ -83,7 +86,7 @@ export default function ChoiceReview({ question }: Props) {
     }
 
     // Single / Multiple Choice
-    const isMulti = question_type === 'multiple_choice';
+    const isMulti = question_type === QUESTION_TYPE_MULTIPLE_CHOICE;
     const optsList: Array<{ key: string; text: string }> = Array.isArray(options)
         ? options.map((opt: any, idx: number) => {
               if (typeof opt === 'string') {

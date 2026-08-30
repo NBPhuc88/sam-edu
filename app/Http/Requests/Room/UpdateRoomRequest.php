@@ -33,14 +33,14 @@ class UpdateRoomRequest extends FormRequest
             ],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status'   => ['sometimes', 'required', 'string', Rule::in(array_merge(Constant::ROOM_STATUSES, [Constant::STATUS_INACTIVE]))],
+            'status'   => ['sometimes', 'required', 'integer', Rule::in(array_merge(Constant::ROOM_STATUSES, [Constant::STATUS_INACTIVE]))],
 
             'equipments'            => ['nullable', 'array'],
             'equipments.*.id'       => ['nullable', 'integer'],
             'equipments.*.name'     => ['required_with:equipments', 'string', 'max:255'],
             'equipments.*.quantity' => ['required_with:equipments', 'integer', 'min:1'],
             'equipments.*.unit'     => ['nullable', 'string', 'max:50'],
-            'equipments.*.status'   => ['nullable', 'string', 'in:good,maintenance,broken'],
+            'equipments.*.status'   => ['nullable', 'integer', Rule::in(Constant::ROOM_EQUIPMENT_STATUSES)],
             'equipments.*.note'     => ['nullable', 'string', 'max:500'],
         ];
     }

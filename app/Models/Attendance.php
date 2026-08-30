@@ -25,6 +25,7 @@ class Attendance extends Model
     protected function casts(): array
     {
         return [
+            'status'       => 'integer',
             'check_in_at'  => 'datetime:d-m-Y H:i',
             'check_out_at' => 'datetime:d-m-Y H:i',
             'marked_at'    => 'datetime:d-m-Y H:i',

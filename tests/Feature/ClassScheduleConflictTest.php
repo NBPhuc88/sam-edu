@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\EntityStatus;
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -9,14 +9,20 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\Session\ClassSessionServiceInterface;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+
     $this->center = Center::create([
         'code'   => 'CTR_TEST_001',
         'name'   => 'Trung Tâm Test Conflict',
         'email'  => 'conflict_center@test.com',
         'phone'  => '0901234567',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $this->admin = Admin::create([
@@ -24,7 +30,8 @@ beforeEach(function () {
         'full_name'  => 'Admin Conflict Test',
         'email'      => 'admin_conflict@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM_CONF_001',
     ]);
 
@@ -37,7 +44,7 @@ beforeEach(function () {
         'full_name'    => 'Nguyễn Văn A',
         'email'        => 'teacher_conf1@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->teacher2 = Teacher::create([
@@ -49,7 +56,7 @@ beforeEach(function () {
         'full_name'    => 'Trần Thị B',
         'email'        => 'teacher_conf2@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->class = SchoolClass::create([
@@ -57,7 +64,7 @@ beforeEach(function () {
         'code'         => 'CLS_CONF_001',
         'name'         => 'Lớp 10A1 Đa Môn',
         'max_students' => 30,
-        'status'       => EntityStatus::ACTIVE,
+        'status'       => 1,
     ]);
 
     $this->subjectMath = Subject::create([
@@ -67,7 +74,7 @@ beforeEach(function () {
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->subjectPhysics = Subject::create([
@@ -77,7 +84,7 @@ beforeEach(function () {
         'total_sessions'   => 20,
         'duration_minutes' => 90,
         'tuition_fee'      => 3000000,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     // Assign subjects to class
@@ -87,7 +94,7 @@ beforeEach(function () {
         'teacher_id' => $this->teacher1->id,
         'start_date' => '2026-09-01',
         'end_date'   => '2026-11-30',
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->csPhysics = ClassSubject::create([
@@ -96,7 +103,7 @@ beforeEach(function () {
         'teacher_id' => $this->teacher2->id,
         'start_date' => '2026-09-01',
         'end_date'   => '2026-11-30',
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 });
 
@@ -199,7 +206,7 @@ test('blocks rescheduling a session when it conflicts with another subject sessi
         'session_date'     => '2026-09-07',
         'start_time'       => '18:00',
         'end_time'         => '20:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // 2. Physics session on 2026-09-08 (Thứ 3) from 18:00 - 20:00
@@ -210,7 +217,7 @@ test('blocks rescheduling a session when it conflicts with another subject sessi
         'session_date'     => '2026-09-08',
         'start_time'       => '18:00',
         'end_time'         => '20:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // 3. Try to reschedule Physics session to 2026-09-07 from 19:00 - 21:00 (overlapping Math session)

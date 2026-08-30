@@ -9,11 +9,11 @@
  * Xem: .agents/AGENTS.md - Mục 6.1
  */
 
-import { Head, usePage } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import { Head,router,usePage } from '@inertiajs/react';
+import React,{ useEffect,useState } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
-import Toast from '../components/ui/Toast';
 import ScrollToTop from '../components/ui/ScrollToTop';
+import Toast from '../components/ui/Toast';
 import apiClient from '../lib/axios';
 
 interface AppLayoutProps {
@@ -32,78 +32,137 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     const user = auth?.user ?? null;
     const role = auth?.role ?? null;
 
-    const [toast, setToast] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' }>({
+    const [toast, setToast] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: 'success' | 'error' | 'warning' | 'info';
+        key: number;
+    }>({
         isOpen: false,
         message: '',
         type: 'info',
+        key: 0,
     });
 
+    const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+        if (!message) {
+            return;
+        }
+        setToast({
+            isOpen: true,
+            message,
+            type,
+            key: Date.now() + Math.random(),
+        });
+    };
+
+    // Lắng nghe sự kiện toàn cục từ Inertia router và custom app events
+    useEffect(() => {
+        // 1. Lắng nghe lỗi validation khi submit form (kích hoạt mỗi lần có lỗi 422 kể cả trùng lặp)
+        const removeErrorListener = router.on('error', (errorsPayload: any) => {
+            const errorObj = errorsPayload?.detail?.errors || errorsPayload;
+            if (errorObj && typeof errorObj === 'object') {
+                const errorValues = Object.values(errorObj);
+                if (errorValues.length > 0) {
+                    const firstError = Array.isArray(errorValues[0]) ? errorValues[0][0] : errorValues[0];
+                    if (typeof firstError === 'string') {
+                        showToast(firstError, 'error');
+                    }
+                }
+            }
+        });
+
+        // 2. Lắng nghe lỗi HTTP exception / network error
+        const removeExceptionListener = router.on('httpException', (event: any) => {
+            const response = event?.detail?.response;
+            const message = response?.data?.message || 'Có lỗi xảy ra trong quá trình xử lý.';
+            showToast(message, 'error');
+        });
+
+        // 3. Lắng nghe thông báo flash khi request thành công
+        const removeSuccessListener = router.on('success', (event: any) => {
+            const pageFlash = event?.detail?.page?.props?.flash;
+            if (pageFlash?.success) {
+                showToast(pageFlash.success, 'success');
+            } else if (pageFlash?.error) {
+                showToast(pageFlash.error, 'error');
+            } else if (pageFlash?.warning) {
+                showToast(pageFlash.warning, 'warning');
+            } else if (pageFlash?.info) {
+                showToast(pageFlash.info, 'info');
+            }
+        });
+
+        // 4. Lắng nghe custom event từ các component con (vd: client-side validation)
+        const handleCustomToast = (event: Event) => {
+            const customEvent = event as CustomEvent<{ message: string; type?: 'success' | 'error' | 'warning' | 'info' }>;
+            if (customEvent.detail?.message) {
+                showToast(customEvent.detail.message, customEvent.detail.type || 'info');
+            }
+        };
+
+        window.addEventListener('app:toast', handleCustomToast);
+
+        return () => {
+            removeErrorListener();
+            removeExceptionListener();
+            removeSuccessListener();
+            window.removeEventListener('app:toast', handleCustomToast);
+        };
+    }, []);
+
+    // Hiển thị flash hoặc errors khi tải trang lần đầu
     useEffect(() => {
         if (flash?.success) {
-            setToast({
-                isOpen: true,
-                message: flash.success,
-                type: 'success',
-            });
+            showToast(flash.success, 'success');
         } else if (flash?.error) {
-            setToast({
-                isOpen: true,
-                message: flash.error,
-                type: 'error',
-            });
+            showToast(flash.error, 'error');
         } else if (flash?.warning) {
-            setToast({
-                isOpen: true,
-                message: flash.warning,
-                type: 'warning',
-            });
+            showToast(flash.warning, 'warning');
         } else if (flash?.info) {
-            setToast({
-                isOpen: true,
-                message: flash.info,
-                type: 'info',
-            });
+            showToast(flash.info, 'info');
         } else if (errors && Object.keys(errors).length > 0) {
             const firstError = Object.values(errors)[0];
             if (typeof firstError === 'string') {
-                setToast({
-                    isOpen: true,
-                    message: firstError,
-                    type: 'error',
-                });
+                showToast(firstError, 'error');
             }
         }
     }, [flash, errors]);
 
-    /** Handle ZaloPay renewal */
-    const handleZaloPayRenew = async (planCode: string): Promise<void> => {
+    /** Handle subscription renewal email request */
+    const handleZaloPayRenew = async (
+        planCode: string,
+        durationType: 'monthly' | 'yearly' = 'yearly',
+    ): Promise<void> => {
         const plans: any[] = subscription_plans ?? [];
         const targetPlan = plans.find((p: any) => p.code === planCode) ?? plans[0];
 
         try {
-            const response = await apiClient.post('/api/payments/zalopay/create', {
-                center_id: center?.id ?? 1,
+            const response = await apiClient.post('/api/payments/request-renewal', {
+                center_id: center?.id,
                 plan_code: targetPlan?.code ?? 'yearly',
-                plan_name: targetPlan?.name ?? 'Gói Theo Năm (Tiết kiệm 20%)',
-                amount: targetPlan?.price ?? 4800000,
-                duration_days: targetPlan?.duration_days ?? 365,
+                duration_type: durationType,
             });
 
-            if (response.data?.order_url) {
-                window.location.assign(response.data.order_url);
+            if (response.data?.success) {
+                showToast(
+                    response.data.message ||
+                        'Đã gửi yêu cầu gia hạn tới Quản trị viên hệ thống thành công!',
+                    'success',
+                );
             } else {
-                setToast({
-                    isOpen: true,
-                    message: 'Tạo đơn hàng ZaloPay thất bại. Vui lòng thử lại!',
-                    type: 'error',
-                });
+                showToast(
+                    response.data?.message ||
+                        'Không thể gửi yêu cầu gia hạn. Vui lòng thử lại!',
+                    'error',
+                );
             }
-        } catch {
-            setToast({
-                isOpen: true,
-                message: 'Có lỗi xảy ra khi tạo đơn hàng ZaloPay.',
-                type: 'error',
-            });
+        } catch (err: any) {
+            showToast(
+                err?.response?.data?.message ||
+                    'Có lỗi xảy ra khi gửi yêu cầu gia hạn.',
+                'error',
+            );
         }
     };
 
@@ -111,6 +170,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <>
             <Head title={title} />
             <Toast
+                key={toast.key}
                 isOpen={toast.isOpen}
                 message={toast.message}
                 type={toast.type}
@@ -121,7 +181,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 role={role}
                 center={center ?? null}
                 subscriptionPlans={subscription_plans ?? []}
-                onZaloPayRenew={center ? handleZaloPayRenew : undefined}
+                onZaloPayRenew={
+                    role === 'admin' && center ? handleZaloPayRenew : undefined
+                }
                 headerExtra={headerExtra}
             >
                 {children}

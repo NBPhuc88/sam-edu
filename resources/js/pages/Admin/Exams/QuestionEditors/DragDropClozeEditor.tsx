@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import { Plus, Trash2, Info, Sparkles, Check, HelpCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { Check,HelpCircle,Info,Plus,Sparkles,Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
 import { ExamQuestionData } from '../types';
 
 interface WordItem {
@@ -170,7 +170,6 @@ export default function DragDropClozeEditor({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {detectedBlankKeys.map((blankKey, idx) => {
                             const selectedWordId = correctAnswer[blankKey] || '';
-                            const selectedWord = wordsList.find((w) => w.id === selectedWordId);
 
                             return (
                                 <div

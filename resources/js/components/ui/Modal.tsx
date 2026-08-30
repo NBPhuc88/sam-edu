@@ -1,12 +1,12 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import React from 'react';
 
 export interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    title?: string;
+    title?: React.ReactNode;
     children: React.ReactNode;
     footer?: React.ReactNode;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | string;
@@ -41,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({
         'max-w-5xl': 'max-w-5xl',
     };
 
-    const resolvedMaxWidth = maxWidthClasses[maxWidth] || (maxWidth.startsWith('max-w-') ? maxWidth : 'max-w-lg');
+    const resolvedMaxWidth = maxWidthClasses[maxWidth] || (typeof maxWidth === 'string' && maxWidth.startsWith('max-w-') ? maxWidth : 'max-w-lg');
 
     return (
         <AnimatePresence>

@@ -6,13 +6,12 @@ Hệ thống Quản lý Trung Tâm Giáo Dục **SAM Digital** vừa nhận đư
 <x-mail::table>
 | Thông tin | Chi tiết |
 | :--- | :--- |
-| **Mã trung tâm** | `{{ $center->code }}` |
 | **Tên trung tâm** | **{{ $center->name }}** |
 | **Số điện thoại** | {{ $center->phone ?? 'N/A' }} |
 | **Email liên hệ** | {{ $center->email ?? 'N/A' }} |
 | **Địa chỉ** | {{ $center->address ?? 'Chưa cập nhật' }} |
-| **Gói dịch vụ** | **{{ strtoupper($center->subscription_plan) }}** |
-| **Trạng thái** | {{ $center->status }} |
+| **Gói dịch vụ** | **{{ $center->plan_name }}** |
+| **Trạng thái** | {{ $center->status_label }} |
 | **Thời gian đăng ký** | {{ $center->created_at ? $center->created_at->format('d-m-Y H:i:s') : now()->format('d-m-Y H:i:s') }} |
 </x-mail::table>
 

@@ -41,9 +41,10 @@ class Subject extends Model
     protected function casts(): array
     {
         return [
+            'status'           => 'integer',
             'total_sessions'   => 'integer',
             'duration_minutes' => 'integer',
-            'tuition_fee'      => 'decimal:2',
+            'tuition_fee'      => 'decimal:0',
             'created_at'       => 'datetime:d-m-Y H:i',
             'updated_at'       => 'datetime:d-m-Y H:i',
             'deleted_at'       => 'datetime:d-m-Y H:i',

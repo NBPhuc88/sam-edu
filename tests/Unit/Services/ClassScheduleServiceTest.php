@@ -49,7 +49,8 @@ beforeEach(function () {
         'username'   => 'super_admin_sched_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Sched',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
+        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -57,7 +58,7 @@ beforeEach(function () {
         'class_id'   => $this->schoolClass->id,
         'subject_id' => $this->subject->id,
         'teacher_id' => $this->teacher->id,
-        'status'     => 'active',
+        'status'     => \App\Enums\Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 });
 

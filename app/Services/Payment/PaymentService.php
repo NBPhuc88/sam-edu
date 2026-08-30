@@ -2,14 +2,23 @@
 
 namespace App\Services\Payment;
 
+use App\Enums\Constant;
+use App\Events\CenterSubscriptionRenewalRequestedEvent;
+use App\Mail\CenterSubscriptionRenewalRequestedMail;
+use App\Models\Admin;
+use App\Models\Notification;
+use App\Models\NotificationRecipient;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Payment\PaymentTransactionRepositoryInterface;
+use App\Repositories\Setting\SystemSettingRepositoryInterface;
 use App\Repositories\Subscription\CenterSubscriptionRepositoryInterface;
 use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use App\Services\Zalo\ZaloServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentService implements PaymentServiceInterface
 {
@@ -18,13 +27,139 @@ class PaymentService implements PaymentServiceInterface
         protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository,
         protected CenterRepositoryInterface $centerRepository,
         protected PaymentTransactionRepositoryInterface $paymentTransactionRepository,
-        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository
+        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository,
+        protected SystemSettingRepositoryInterface $systemSettingRepository
     ) {
     }
 
     public function getSubscriptionPlans(): Collection
     {
         return $this->subscriptionPlanRepository->getAllOrderedByPrice();
+    }
+
+    /**
+     * @param  array<string, mixed> $data
+     * @param  Admin|null           $requestingUser
+     * @return array<string, mixed>
+     */
+    public function requestRenewal(array $data, ?Admin $requestingUser = null): array
+    {
+        $center = $this->centerRepository->find((int) $data['center_id']);
+
+        if (! $center) {
+            return [
+                'success' => false,
+                'message' => 'Không tìm thấy thông tin trung tâm.',
+            ];
+        }
+
+        $plan = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
+
+        if (! $plan) {
+            return [
+                'success' => false,
+                'message' => 'Gói dịch vụ không hợp lệ.',
+            ];
+        }
+
+        $durationType = (string) ($data['duration_type'] ?? 'yearly');
+
+        if (! in_array($durationType, ['monthly', 'yearly'], true)) {
+            $durationType = 'yearly';
+        }
+
+        if ($durationType === 'monthly') {
+            $amount       = (int) $plan->price;
+            $durationDays = 30;
+        } else {
+            $amount       = (int) ($plan->yearly_price ?? ($plan->price * 12));
+            $durationDays = 365;
+        }
+
+        $note = isset($data['note']) ? (string) $data['note'] : null;
+
+        $contactEmail = $this->systemSettingRepository->getByKey(
+            'contact_email',
+            (string) config('mail.from.address', 'phucstt01@gmail.com')
+        );
+
+        $superAdminEmails = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->pluck('email')->filter()->toArray();
+        $recipientEmails  = array_unique(array_filter(array_merge([$contactEmail], $superAdminEmails)));
+
+        foreach ($recipientEmails as $email) {
+            try {
+                Mail::to($email)->queue(
+                    new CenterSubscriptionRenewalRequestedMail($center, $plan, $note, $requestingUser, $durationType, $amount)
+                );
+            } catch (\Throwable $e) {
+                Log::error("Lỗi khi gửi email yêu cầu gia hạn trung tâm {$center->id} tới {$email}: " . $e->getMessage());
+            }
+        }
+
+        $appTransId = date('ymd') . '_REQ_' . time() . rand(100, 999);
+        $this->paymentTransactionRepository->create([
+            'center_id'      => $center->id,
+            'app_trans_id'   => $appTransId,
+            'payment_method' => Constant::PAYMENT_METHOD_OTHER,
+            'amount'         => $amount,
+            'status'         => Constant::PAYMENT_STATUS_PENDING,
+            'metadata'       => [
+                'app_trans_id'    => $appTransId,
+                'plan_id'         => $plan->id,
+                'plan_name'       => $plan->name,
+                'duration_type'   => $durationType,
+                'duration_days'   => $durationDays,
+                'note'            => $note,
+                'requested_by_id' => $requestingUser?->id,
+            ],
+        ]);
+
+        // Create in-app Notification record & dispatch real-time WebSocket event
+        $notifTitle    = "Yêu cầu gia hạn gói dịch vụ từ Trung tâm '{$center->name}'";
+        $durationLabel = $durationType === 'yearly' ? '1 Năm' : '1 Tháng';
+        $formattedAmt  = number_format($amount, 0, ',', '.') . 'đ';
+        $notifContent  = "Trung tâm {$center->name} ({$center->code}) vừa gửi yêu cầu gia hạn gói {$plan->name} ({$durationLabel} - {$formattedAmt}).";
+
+        $notification = Notification::create([
+            'center_id'           => $center->id,
+            'title'               => $notifTitle,
+            'content'             => $notifContent,
+            'type'                => Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+            'created_by_admin_id' => $requestingUser?->id,
+        ]);
+
+        $superAdminIds = Admin::where('role', Constant::ROLE_SUPER_ADMIN)->pluck('id')->toArray();
+
+        foreach ($superAdminIds as $sAdminId) {
+            NotificationRecipient::create([
+                'notification_id' => $notification->id,
+                'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
+                'recipient_id'    => $sAdminId,
+                'read_at'         => null,
+            ]);
+        }
+
+        try {
+            event(new CenterSubscriptionRenewalRequestedEvent([
+                'id'              => $notification->id,
+                'notification_id' => $notification->id,
+                'center_id'       => $center->id,
+                'center_name'     => $center->name,
+                'title'           => $notifTitle,
+                'content'         => $notifContent,
+                'type'            => Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+                'duration_type'   => $durationType,
+                'amount'          => $amount,
+                'created_at'      => now()->diffForHumans(),
+            ]));
+        } catch (\Throwable $e) {
+            Log::error("Lỗi khi broadcast WebSocket sự kiện gia hạn trung tâm {$center->id}: " . $e->getMessage());
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Yêu cầu gia hạn gói dịch vụ đã được gửi thành công đến Quản trị viên hệ thống. Bộ phận hỗ trợ sẽ liên hệ xử lý cho bạn trong thời gian sớm nhất!',
+        ];
     }
 
     /**
@@ -44,25 +179,25 @@ class PaymentService implements PaymentServiceInterface
         $transaction = $this->paymentTransactionRepository->create([
             'center_id'      => $center->id,
             'app_trans_id'   => $appTransId,
-            'payment_method' => 'zalopay',
+            'payment_method' => Constant::PAYMENT_METHOD_ZALOPAY,
             'amount'         => $amount,
-            'status'         => 'pending',
+            'status'         => Constant::PAYMENT_STATUS_PENDING,
             'metadata'       => [
                 'app_trans_id' => $appTransId,
-                'plan_code'    => $validated['plan_code'],
+                'plan_id'      => (int) $validated['plan_id'],
             ],
         ]);
 
         $embedData = [
             'redirecturl'   => $validated['redirect_url'] ?? config('app.url'),
             'center_id'     => $center->id,
-            'plan_code'     => $validated['plan_code'],
+            'plan_id'       => (int) $validated['plan_id'],
             'duration_days' => $durationDays,
         ];
 
         $items = [
             [
-                'itemid'       => $validated['plan_code'],
+                'itemid'       => (string) $validated['plan_id'],
                 'itemname'     => $validated['plan_name'],
                 'itemprice'    => $amount,
                 'itemquantity' => 1,
@@ -95,7 +230,7 @@ class PaymentService implements PaymentServiceInterface
         }
 
         $this->paymentTransactionRepository->update($transaction->id, [
-            'status'   => 'failed',
+            'status'   => Constant::PAYMENT_STATUS_FAILED,
             'metadata' => array_merge($transaction->metadata ?? [], ['payload' => $result]),
         ]);
 
@@ -137,7 +272,7 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
-        if ($transaction->status === 'success') {
+        if ((int) $transaction->status === Constant::PAYMENT_STATUS_SUCCESS) {
             return [
                 'return_code'    => 1,
                 'return_message' => 'success (already processed)',
@@ -147,11 +282,11 @@ class PaymentService implements PaymentServiceInterface
         /** @var array<string, mixed> $embedData */
         $embedData    = json_decode((string) ($dataJson['embed_data'] ?? '{}'), true) ?: [];
         $durationDays = (int) ($embedData['duration_days'] ?? (($embedData['duration_months'] ?? 1) * 30));
-        $planCode     = (string) ($embedData['plan_code'] ?? 'standard');
+        $planId       = (int) ($embedData['plan_id'] ?? 1);
 
-        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planCode) {
+        DB::transaction(function () use ($transaction, $zpTransId, $dataJson, $durationDays, $planId) {
             $this->paymentTransactionRepository->update($transaction->id, [
-                'status'   => 'success',
+                'status'   => Constant::PAYMENT_STATUS_SUCCESS,
                 'paid_at'  => now(),
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'zp_trans_id' => $zpTransId,
@@ -169,15 +304,17 @@ class PaymentService implements PaymentServiceInterface
 
             $endsAt = $startsAt->copy()->addDays($durationDays);
 
+            $planObj = $this->subscriptionPlanRepository->findById($planId);
+
             $subscription = $this->centerSubscriptionRepository->create([
                 'center_id'     => $center->id,
-                'plan_code'     => $planCode,
-                'plan_name'     => "Goi subscription {$planCode}",
+                'plan_id'       => $planObj ? $planObj->id : 1,
+                'plan_name'     => $planObj ? $planObj->name : "Gói dịch vụ #{$planId}",
                 'price'         => $transaction->amount,
                 'duration_days' => $durationDays,
                 'starts_at'     => $startsAt,
                 'ends_at'       => $endsAt,
-                'status'        => 'active',
+                'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
             ]);
 
             $this->paymentTransactionRepository->update($transaction->id, [
@@ -188,9 +325,10 @@ class PaymentService implements PaymentServiceInterface
 
             // Extend center expiration
             $this->centerRepository->update($center->id, [
-                'status'            => 'active',
-                'subscription_plan' => $planCode,
-                'expires_at'        => $endsAt,
+                'status'               => Constant::CENTER_STATUS_ACTIVE,
+                'subscription_plan_id' => $planObj ? $planObj->id : 1,
+                'plan_type'            => $planObj?->plan_type ?? Constant::PLAN_TYPE_STANDARD,
+                'expires_at'           => $endsAt,
             ]);
         });
 
@@ -215,10 +353,10 @@ class PaymentService implements PaymentServiceInterface
             ];
         }
 
-        if ($transaction->status === 'success') {
+        if ((int) $transaction->status === Constant::PAYMENT_STATUS_SUCCESS) {
             return [
                 'success'     => true,
-                'status'      => 'success',
+                'status'      => Constant::PAYMENT_STATUS_SUCCESS,
                 'transaction' => $transaction,
             ];
         }
@@ -227,7 +365,7 @@ class PaymentService implements PaymentServiceInterface
 
         if (isset($result['return_code']) && (int) $result['return_code'] === 1) {
             $this->paymentTransactionRepository->update($transaction->id, [
-                'status'   => 'success',
+                'status'   => Constant::PAYMENT_STATUS_SUCCESS,
                 'paid_at'  => now(),
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'zp_trans_id' => (string) ($result['zp_trans_id'] ?? ''),

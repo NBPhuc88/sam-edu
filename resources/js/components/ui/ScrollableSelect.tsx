@@ -1,5 +1,5 @@
-import { ChevronDown, Check, Search, X } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import { Check,ChevronDown,Search,X } from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 export interface SelectOption {
     value: string | number;
@@ -72,8 +72,35 @@ export const ScrollableSelect: React.FC<ScrollableSelectProps> = ({
             } else {
                 const rect = containerRef.current.getBoundingClientRect();
                 const spaceBelow = window.innerHeight - rect.bottom;
-                // If limited space below (less than 260px), flip upwards
-                if (spaceBelow < 260 && rect.top > 260) {
+
+                // Check distance to nearest modal or overflow container bottom
+                let spaceContainerBelow = spaceBelow;
+                let parent: HTMLElement | null = containerRef.current.parentElement;
+                while (parent && parent !== document.body) {
+                    const style = window.getComputedStyle(parent);
+                    if (
+                        style.overflowY === 'auto' ||
+                        style.overflowY === 'hidden' ||
+                        style.overflowY === 'scroll' ||
+                        parent.getAttribute('role') === 'dialog' ||
+                        parent.classList.contains('overflow-hidden') ||
+                        parent.classList.contains('overflow-y-auto')
+                    ) {
+                        const parentRect = parent.getBoundingClientRect();
+                        spaceContainerBelow = Math.min(
+                            spaceContainerBelow,
+                            parentRect.bottom - rect.bottom
+                        );
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+
+                // If limited space below in viewport (< 260px) OR inside modal/container (< 220px), flip upwards if top has room
+                if (
+                    (spaceBelow < 260 || spaceContainerBelow < 220) &&
+                    rect.top > 160
+                ) {
                     setActualPlacement('top');
                 } else {
                     setActualPlacement('bottom');

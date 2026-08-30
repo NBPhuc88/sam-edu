@@ -1,25 +1,24 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    MessageSquare,
-    Search,
-    Users,
-    ArrowRight,
-    Sparkles,
-    Calendar,
-    GraduationCap,
-    BookOpen,
-    Filter,
-    Clock,
-    Building2,
-    Smile,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    ArrowRight,
+    BookOpen,
+    Building2,
+    Clock,
+    Filter,
+    GraduationCap,
+    MessageSquare,
+    Search,
+    Smile,
+    Sparkles,
+    Users
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 interface Center {
     id: number;
@@ -57,7 +56,7 @@ interface ClassSubject {
 interface LatestChatMessage {
     id: number;
     class_id: number;
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     message: string;
@@ -74,7 +73,7 @@ interface SchoolClassChatGroup {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: number | string;
+    status: number;
     students_count?: number;
     chat_messages_count?: number;
     center?: Center;
@@ -102,7 +101,7 @@ interface Props {
         search?: string;
         center_id?: number | null;
         class_id?: number | null;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
     isSuperAdmin?: boolean;
@@ -116,14 +115,14 @@ export default function ChatGroupIndex({
     isSuperAdmin = false,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || '1',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 1,
     );
 
     const handleSearch = (e: React.FormEvent) => {
@@ -132,9 +131,9 @@ export default function ChatGroupIndex({
             '/chats',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus || undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             {
                 preserveState: true,
@@ -145,12 +144,12 @@ export default function ChatGroupIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('1');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         router.get(
             '/chats',
-            { status: '1' },
+            {},
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -158,17 +157,18 @@ export default function ChatGroupIndex({
         );
     };
 
-    const renderStatusBadge = (status: number | string) => {
-        const numStatus = Number(status);
-        switch (numStatus) {
+    const renderStatusBadge = (status: number) => {
+        switch (status) {
             case 1:
                 return <Badge variant="active">Đang học</Badge>;
-            case 0:
-                return <Badge variant="pending">Tạm ngưng</Badge>;
             case 2:
+                return <Badge variant="pending">Tạm ngưng</Badge>;
+            case 3:
                 return <Badge variant="expired">Hoàn thành</Badge>;
-            default:
+            case 4:
                 return <Badge variant="info">Đã đóng</Badge>;
+            default:
+                return <Badge variant="info">Khác</Badge>;
         }
     };
 
@@ -244,10 +244,10 @@ export default function ChatGroupIndex({
                             <div>
                                 <select
                                     value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    onChange={(e) => setSelectedClassId(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">Tất cả Lớp học</option>
+                                    <option value="0">Tất cả Lớp học</option>
                                     {classes.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name} ({c.code})
@@ -261,10 +261,10 @@ export default function ChatGroupIndex({
                                 <div>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                        onChange={(e) => setSelectedCenterId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Trung tâm</option>
+                                        <option value="0">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -278,13 +278,14 @@ export default function ChatGroupIndex({
                             <div>
                                 <select
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả Trạng thái</option>
+                                    <option value="0">Tất cả Trạng thái</option>
                                     <option value="1">Đang học</option>
-                                    <option value="0">Tạm ngưng</option>
-                                    <option value="2">Đã hoàn thành</option>
+                                    <option value="2">Tạm ngưng</option>
+                                    <option value="3">Đã hoàn thành</option>
+                                    <option value="4">Đã đóng</option>
                                 </select>
                             </div>
                         </div>
@@ -308,7 +309,7 @@ export default function ChatGroupIndex({
                                     size="md"
                                     icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Lọc dữ liệu
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>

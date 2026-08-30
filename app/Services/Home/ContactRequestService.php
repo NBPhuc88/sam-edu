@@ -2,6 +2,7 @@
 
 namespace App\Services\Home;
 
+use App\Enums\Constant;
 use App\Mail\ContactRequestSubmittedMail;
 use App\Models\ContactRequest;
 use App\Repositories\Home\ContactRequestRepositoryInterface;
@@ -27,7 +28,7 @@ class ContactRequestService implements ContactRequestServiceInterface
             'email'       => $data['email'] ?? null,
             'center_name' => $data['center_name'] ?? null,
             'message'     => $data['message'] ?? null,
-            'status'      => 'pending',
+            'status'      => Constant::CONTACT_STATUS_PENDING,
         ]);
 
         $this->sendAdminNotificationMail($contactRequest);

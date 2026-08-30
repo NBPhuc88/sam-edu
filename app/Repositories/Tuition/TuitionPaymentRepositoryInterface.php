@@ -38,4 +38,11 @@ interface TuitionPaymentRepositoryInterface
      * @return float
      */
     public function getSumBetweenDates(?array $allowedCenterIds, string $startDate, string $endDate): float;
+
+    /**
+     * @param  array<int>|null                                 $allowedCenterIds
+     * @param  int                                             $months
+     * @return array<int, array{month: string, amount: float}>
+     */
+    public function getMonthlySumsByCenterIds(?array $allowedCenterIds, int $months = 6): array;
 }

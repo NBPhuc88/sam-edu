@@ -1,33 +1,36 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    DollarSign,
-    Plus,
-    Search,
-    Eye,
-    Edit2,
-    Trash2,
-    CreditCard,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Filter,
-    Calendar,
-    Wallet,
-    Download,
-    BarChart3,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Calendar,
+CheckCircle2,
+Clock,
+CreditCard,
+DollarSign,
+Download,
+Edit2,
+Eye,
+Filter,
+Plus,
+Search,
+Trash2,
+Wallet
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
-import Modal from '../../../components/ui/Modal';
 import ScrollableSelect from '../../../components/ui/ScrollableSelect';
 import Tooltip, { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
-import TuitionChartSection, { TuitionChartStatsData } from './components/TuitionChartSection';
+import TuitionChartSection,{ TuitionChartStatsData } from './components/TuitionChartSection';
 
+import {
+    TUITION_STATUS_OVERDUE,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_PENDING,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 interface StudentTuitionItem {
     id: number;
@@ -35,10 +38,10 @@ interface StudentTuitionItem {
     student_id: number;
     class_id: number;
     title: string | null;
-    total_amount: number | string;
-    paid_amount: number | string;
-    remaining_amount: number | string;
-    status: 'pending' | 'partial' | 'completed' | 'overdue';
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
     due_date: string | null;
     note: string | null;
     payments_count: number;
@@ -64,6 +67,15 @@ interface StudentTuitionItem {
         name: string;
         code: string;
     };
+    classes?: Array<{
+        id: number;
+        name: string;
+        code: string;
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
+        status: number;
+    }>;
 }
 
 interface IndexProps {
@@ -108,27 +120,25 @@ export const Index: React.FC<IndexProps> = ({
     classes,
     filters,
 }) => {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters?.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters?.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters?.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters?.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters?.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters?.status !== undefined && filters?.status !== null ? Number(filters.status) : 0,
     );
     const [selectedMonth, setSelectedMonth] = useState<string>(
-        filters?.month || 'all',
+        filters?.month || '',
     );
 
     // Filter classes by selected center
     const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
 
     // Delete modal state
@@ -136,11 +146,11 @@ export const Index: React.FC<IndexProps> = ({
     const [deletingTuition, setDeletingTuition] = useState<StudentTuitionItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -149,10 +159,10 @@ export const Index: React.FC<IndexProps> = ({
             '/tuitions',
             {
                 search: searchTerm || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
-                month: selectedMonth !== 'all' ? selectedMonth : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
+                month: selectedMonth || undefined,
             },
             { preserveState: true },
         );
@@ -161,20 +171,20 @@ export const Index: React.FC<IndexProps> = ({
     const handleExport = () => {
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
-        if (selectedCenterId) params.append('center_id', selectedCenterId);
-        if (selectedClassId) params.append('class_id', selectedClassId);
-        if (selectedStatus && selectedStatus !== 'all') params.append('status', selectedStatus);
-        if (selectedMonth && selectedMonth !== 'all') params.append('month', selectedMonth);
+        if (selectedCenterId) params.append('center_id', String(selectedCenterId));
+        if (selectedClassId) params.append('class_id', String(selectedClassId));
+        if (selectedStatus) params.append('status', String(selectedStatus));
+        if (selectedMonth) params.append('month', selectedMonth);
 
         window.location.href = `/tuitions/export?${params.toString()}`;
     };
 
     const handleResetFilter = () => {
         setSearchTerm('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('all');
-        setSelectedMonth('all');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
+        setSelectedMonth('');
         router.get('/tuitions', {}, { preserveState: true });
     };
 
@@ -198,18 +208,17 @@ export const Index: React.FC<IndexProps> = ({
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'partial':
-                return <Badge variant="pending">Còn nợ</Badge>;
-            case 'overdue':
-                return <Badge variant="danger">Quá hạn</Badge>;
-            case 'pending':
-            default:
-                return <Badge variant="expired">Chưa đóng</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === TUITION_STATUS_PAID) {
+            return <Badge variant="active">Đã hoàn thành</Badge>;
         }
+        if (status === TUITION_STATUS_PARTIAL) {
+            return <Badge variant="pending">Còn nợ</Badge>;
+        }
+        if (status === TUITION_STATUS_OVERDUE) {
+            return <Badge variant="danger">Quá hạn</Badge>;
+        }
+        return <Badge variant="expired">Chưa đóng</Badge>;
     };
 
     return (
@@ -364,13 +373,13 @@ export const Index: React.FC<IndexProps> = ({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: c.name,
                                             })),
                                         ]}
@@ -383,11 +392,11 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     options={[
-                                        { value: '', label: 'Tất cả Lớp học' },
+                                        { value: 0, label: 'Tất cả Lớp học' },
                                         ...filteredClasses.map((cl) => ({
-                                            value: String(cl.id),
+                                            value: cl.id,
                                             label: cl.name,
                                         })),
                                     ]}
@@ -399,8 +408,8 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <input
                                     type="month"
-                                    value={selectedMonth === 'all' ? '' : selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value || 'all')}
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
                                     title="Lọc theo tháng phát sinh/hạn nộp (Để trống để xem tổng tất cả)"
                                     placeholder="Tất cả các tháng"
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -410,13 +419,13 @@ export const Index: React.FC<IndexProps> = ({
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'pending', label: 'Chưa đóng' },
-                                        { value: 'partial', label: 'Đang đóng (Còn nợ)' },
-                                        { value: 'completed', label: 'Đã hoàn thành' },
-                                        { value: 'overdue', label: 'Quá hạn' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: TUITION_STATUS_PENDING, label: 'Chờ thanh toán' },
+                                        { value: TUITION_STATUS_PAID, label: 'Đã hoàn thành' },
+                                        { value: TUITION_STATUS_PARTIAL, label: 'Thanh toán 1 phần' },
+                                        { value: TUITION_STATUS_OVERDUE, label: 'Quá hạn' },
                                     ]}
                                     placeholder="Tất cả Trạng thái"
                                     searchable={false}
@@ -450,7 +459,7 @@ export const Index: React.FC<IndexProps> = ({
                                     size="md"
                                     icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Lọc Dữ Liệu
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>
@@ -510,22 +519,56 @@ export const Index: React.FC<IndexProps> = ({
                                                 </td>
 
                                                 <td className="px-6 py-4">
-                                                    <div className="max-w-[220px]">
-                                                        <TruncatedText
-                                                            text={item.school_class?.name ?? 'Chưa gán lớp'}
-                                                            maxLines={1}
-                                                            className="font-semibold text-gray-800"
-                                                        />
-                                                        <div className="mt-0.5 text-xs text-gray-500">
-                                                            <TruncatedText
-                                                                text={`${item.title || item.school_class?.code || ''}${item.center ? ` (${item.center.name})` : ''}`}
-                                                                maxLines={1}
-                                                                className="text-xs text-gray-500"
-                                                            />
-                                                        </div>
-                                                        {item.creator && (
-                                                            <div className="mt-0.5 text-[11px] text-gray-400">
-                                                                Tạo bởi: <span className="font-medium text-gray-600">{item.creator.full_name || item.creator.username}</span>
+                                                    <div className="flex flex-col gap-1.5 max-w-[220px]">
+                                                        {item.classes && item.classes.length > 0 ? (
+                                                            item.classes.map((cls, cIdx) => (
+                                                                <Tooltip
+                                                                    key={cIdx}
+                                                                    content={
+                                                                        <div className="space-y-1 py-0.5">
+                                                                            <div className="font-bold text-white text-xs">{cls.name}</div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{cls.code || 'N/A'}</span>
+                                                                            </div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Học phí: <span className="font-semibold text-amber-300">{formatCurrency(cls.total_amount)}</span>
+                                                                            </div>
+                                                                            <div className="text-[11px] text-gray-300">
+                                                                                Đã đóng: <span className="font-semibold text-emerald-400">{formatCurrency(cls.paid_amount)}</span>
+                                                                                {cls.remaining_amount > 0 && (
+                                                                                    <span> • Còn nợ: <span className="text-rose-300 font-semibold">{formatCurrency(cls.remaining_amount)}</span></span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+                                                                >
+                                                                    <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
+                                                                        <span>{cls.code || cls.name}</span>
+                                                                    </div>
+                                                                </Tooltip>
+                                                            ))
+                                                        ) : (
+                                                            <Tooltip
+                                                                content={
+                                                                    <div className="space-y-1 py-0.5">
+                                                                        <div className="font-bold text-white text-xs">{item.school_class?.name ?? 'Chưa gán lớp'}</div>
+                                                                        <div className="text-[11px] text-gray-300">
+                                                                            Mã lớp: <span className="font-mono text-emerald-400 font-semibold">{item.school_class?.code ?? 'N/A'}</span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-gray-300">
+                                                                            Học phí: <span className="font-semibold text-amber-300">{formatCurrency(total)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            >
+                                                                <div className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 transition-colors shadow-2xs cursor-pointer">
+                                                                    <span>{item.school_class?.code || item.school_class?.name || 'Chưa gán lớp'}</span>
+                                                                </div>
+                                                            </Tooltip>
+                                                        )}
+                                                        {item.center && (
+                                                            <div className="text-[11px] text-gray-400">
+                                                                {item.center.name}
                                                             </div>
                                                         )}
                                                     </div>

@@ -27,6 +27,7 @@ class ClassChatMessage extends Model
     protected function casts(): array
     {
         return [
+            'sender_type' => 'integer',
             'reply_to_id' => 'integer',
             'is_pinned'   => 'boolean',
             'pinned_at'   => 'datetime',

@@ -1,35 +1,53 @@
-import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
-import {
-    AlertCircle,
-    ArrowLeft,
-    Award,
-    CheckCircle2,
-    Clock,
-    FileText,
-    Flag,
-    HelpCircle,
-    Home,
-    Layers,
-    Pause,
-    Play,
-    RotateCcw,
-    Send,
-    Volume2,
-    XCircle,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { ExamSkill, QuestionType } from '../Admin/Exams/types';
-import SortableOrderingList from './components/SortableOrderingList';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
+} from '@/constants/enums';
+import { Head,Link } from '@inertiajs/react';
+import axios from 'axios';
+import {
+AlertCircle,
+ArrowLeft,
+Award,
+CheckCircle2,
+Clock,
+FileText,
+Flag,
+Home,
+Layers,
+Pause,
+Play,
+RotateCcw,
+Send,
+Volume2,
+XCircle
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { ExamSkill,QuestionType } from '../Admin/Exams/types';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
-import MatchingAnswerForm from './components/MatchingAnswerForm';
-import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
+import MatchingAnswerForm from './components/MatchingAnswerForm';
+import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import QuestionReviewDetail from './components/QuestionReviewDetail';
+import SortableOrderingList from './components/SortableOrderingList';
 
 interface QuestionItem {
     id: number;
@@ -134,7 +152,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
     } | null>(null);
 
     // Filter review questions
-    const [reviewFilter, setReviewFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all');
+    const [reviewFilter, setReviewFilter] = useState<'correct' | 'incorrect' | 'skipped' | ''>('');
     const [reviewSectionIndex, setReviewSectionIndex] = useState(0);
 
     // Countdown Timer
@@ -159,47 +177,6 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    };
-
-    const extractFillInBlankSlots = (content: string, options?: any, correctAnswer?: any) => {
-        const bracketRegex = /\[([^\]]+)\]/g;
-        const matches = Array.from((content || '').matchAll(bracketRegex));
-
-        if (matches.length > 0) {
-            return matches.map((m, idx) => {
-                const raw = m[1].trim();
-                const isBlankNumber = /^blank_(\d+)$/i.exec(raw);
-                const tagKey = isBlankNumber ? `blank_${isBlankNumber[1]}` : `blank_${idx + 1}`;
-                return {
-                    index: idx + 1,
-                    tagKey,
-                    fallbackKey: String(idx),
-                    label: `Vị trí (${idx + 1})`,
-                    originalWord: raw,
-                };
-            });
-        }
-
-        if (correctAnswer && typeof correctAnswer === 'object') {
-            const keys = Object.keys(correctAnswer);
-            if (keys.length > 0) {
-                return keys.map((k, idx) => ({
-                    index: idx + 1,
-                    tagKey: k,
-                    fallbackKey: String(idx),
-                    label: `Vị trí (${idx + 1})`,
-                }));
-            }
-        }
-
-        return [
-            {
-                index: 1,
-                tagKey: 'blank_1',
-                fallbackKey: '0',
-                label: 'Vị trí (1)',
-            },
-        ];
     };
 
     const renderFillInBlankContent = (content: string) => {
@@ -293,7 +270,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
         const currentVal = answers[q.id];
 
         switch (q.question_type) {
-            case 'single_choice': {
+            case QUESTION_TYPE_SINGLE_CHOICE: {
                 const optsList = Array.isArray(q.options) ? q.options : [];
                 return (
                     <div className="space-y-2.5">
@@ -329,7 +306,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'multiple_choice': {
+            case QUESTION_TYPE_MULTIPLE_CHOICE: {
                 const optsList = Array.isArray(q.options) ? q.options : [];
                 const selectedArr: string[] = Array.isArray(currentVal) ? currentVal.map(String) : [];
 
@@ -373,7 +350,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'true_false_not_given': {
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN: {
                 let tfOptions: Array<{ id: string; label: string }> = [];
 
                 if (Array.isArray(q.options) && q.options.length > 0) {
@@ -383,118 +360,59 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                         }
                         return {
                             id: String(opt.id ?? opt.key ?? opt.value ?? ''),
-                            label: String(opt.label ?? opt.text ?? opt.content ?? opt.id ?? ''),
+                            label: String(opt.text ?? opt.label ?? opt.content ?? opt.id ?? ''),
                         };
                     });
-                }
-
-                if (tfOptions.length === 0) {
+                } else {
                     tfOptions = [
-                        { id: 'TRUE', label: 'TRUE' },
-                        { id: 'FALSE', label: 'FALSE' },
-                        { id: 'NOT_GIVEN', label: 'NOT GIVEN' },
+                        { id: 'TRUE', label: 'TRUE / Đúng' },
+                        { id: 'FALSE', label: 'FALSE / Sai' },
+                        { id: 'NOT GIVEN', label: 'NOT GIVEN / Không có thông tin' },
                     ];
                 }
 
-                const currentValStr = currentVal !== null && currentVal !== undefined ? String(currentVal).trim().toUpperCase() : '';
-
                 return (
-                    <div className={`grid grid-cols-1 ${tfOptions.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {tfOptions.map((opt) => {
-                            const isSelected = currentValStr === opt.id.toUpperCase();
+                            const isSelected = String(currentVal) === opt.id;
                             return (
-                                <label
+                                <button
                                     key={opt.id}
-                                    className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl border cursor-pointer text-center transition-all ${isSelected
-                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold shadow-2xs'
+                                    type="button"
+                                    onClick={() => handleAnswerChange(q.id, opt.id)}
+                                    className={`flex items-center justify-center gap-2 p-3.5 rounded-xl border text-sm font-bold transition-all ${isSelected
+                                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
                                         : 'border-gray-200 bg-white hover:bg-slate-50 text-gray-800'
                                         }`}
                                 >
-                                    <input
-                                        type="radio"
-                                        name={`practice_tf_${q.id}`}
-                                        value={opt.id}
-                                        checked={isSelected}
-                                        onChange={() => handleAnswerChange(q.id, opt.id)}
-                                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
-                                    />
-                                    <span className="text-xs font-bold">{opt.label}</span>
-                                </label>
+                                    {opt.label}
+                                </button>
                             );
                         })}
                     </div>
                 );
             }
 
-            case 'fill_in_blank': {
-                const userObj: Record<string, string> = (currentVal && typeof currentVal === 'object') ? currentVal : {};
-                const slots = extractFillInBlankSlots(q.content, q.options, (q as any).correct_answer);
-
+            case QUESTION_TYPE_FILL_IN_BLANK: {
                 return (
-                    <div className="space-y-4 rounded-xl bg-slate-50 p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                            <div className="text-xs font-bold uppercase tracking-wider text-gray-700">
-                                Nhập từ cần điền vào các vị trí trống ({slots.length} vị trí):
-                            </div>
-                            {q.metadata?.word_limit && (
-                                <span className="text-2xs font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200">
-                                    {q.metadata.word_limit}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Word Bank if available */}
-                        {q.metadata?.word_bank && Array.isArray(q.metadata.word_bank) && q.metadata.word_bank.length > 0 && (
-                            <div className="rounded-lg bg-white p-3 border border-gray-200 space-y-1.5">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-gray-500">
-                                    Gợi ý từ vựng (Word Bank):
-                                </span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {q.metadata.word_bank.map((w: string, wIdx: number) => (
-                                        <span
-                                            key={wIdx}
-                                            className="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200"
-                                        >
-                                            {w}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {slots.map((slot) => {
-                                const currentAnswer = userObj[slot.tagKey] ?? userObj[slot.fallbackKey] ?? '';
-                                return (
-                                    <div
-                                        key={slot.tagKey}
-                                        className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-2.5 shadow-2xs focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all"
-                                    >
-                                        <span className="flex h-7 px-2.5 shrink-0 items-center justify-center rounded-lg bg-amber-100 font-mono text-xs font-bold text-amber-900 border border-amber-200">
-                                            ({slot.index})
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={currentAnswer}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                handleAnswerChange(q.id, {
-                                                    ...userObj,
-                                                    [slot.tagKey]: val,
-                                                });
-                                            }}
-                                            placeholder={`Nhập câu trả lời cho vị trí (${slot.index})...`}
-                                            className="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-hidden"
-                                        />
-                                    </div>
-                                );
-                            })}
+                    <div className="space-y-3">
+                        <div className="rounded-xl border border-gray-200 bg-slate-50/70 p-4">
+                            <p className="text-xs text-gray-500 mb-2 font-medium">
+                                Nhập đáp án cho các chỗ trống cần điền:
+                            </p>
+                            <input
+                                type="text"
+                                value={typeof currentVal === 'string' ? currentVal : (currentVal?.blank_1 || '')}
+                                onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                                placeholder="Gõ câu trả lời của bạn vào đây..."
+                                className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden shadow-2xs font-medium"
+                            />
                         </div>
                     </div>
                 );
             }
 
-            case 'find_mistake': {
+            case QUESTION_TYPE_FIND_MISTAKE: {
                 return (
                     <FindMistakeQuestion
                         content={q.content}
@@ -505,7 +423,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'drag_drop_cloze': {
+            case QUESTION_TYPE_DRAG_DROP_CLOZE: {
                 return (
                     <DragDropClozeQuestion
                         content={q.content}
@@ -516,8 +434,8 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'matching':
-            case 'matching_sentences': {
+            case QUESTION_TYPE_MATCHING:
+            case QUESTION_TYPE_MATCHING_SENTENCES: {
                 return (
                     <MatchingAnswerForm
                         options={q.options}
@@ -527,7 +445,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'matching_image': {
+            case QUESTION_TYPE_MATCHING_IMAGE: {
                 return (
                     <MatchingImageAnswerForm
                         options={q.options}
@@ -537,7 +455,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'ordering': {
+            case QUESTION_TYPE_ORDERING: {
                 return (
                     <SortableOrderingList
                         options={q.options}
@@ -547,7 +465,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'diagram_labelling': {
+            case QUESTION_TYPE_DIAGRAM_LABELLING: {
                 return (
                     <DiagramLabellingQuestion
                         imageUrl={q.image_url}
@@ -558,7 +476,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'essay': {
+            case QUESTION_TYPE_ESSAY: {
                 const textVal = String(currentVal || '');
                 const wordCount = textVal.trim().split(/\s+/).filter(Boolean).length;
                 return (
@@ -582,7 +500,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                 );
             }
 
-            case 'audio_record': {
+            case QUESTION_TYPE_AUDIO_RECORD: {
                 return (
                     <div className="space-y-3 rounded-2xl bg-pink-50/60 p-4 border border-pink-200">
                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-pink-900">
@@ -799,7 +717,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                             {activeSec.title}
                                         </h2>
                                         <span className="text-xs font-semibold text-gray-500">
-                                            Kỹ năng: {activeSec.skill === 'listening' ? 'Nghe hiểu' : activeSec.skill === 'reading' ? 'Đọc hiểu' : activeSec.skill === 'writing' ? 'Viết' : activeSec.skill === 'speaking' ? 'Nói' : 'Tổng hợp'} • {activeSec.correctCount}/{activeSec.totalQuestions} câu đúng ({activeSec.earnedScore}/{activeSec.maxScore} điểm)
+                                            Kỹ năng: {activeSec.skill === SKILL_LISTENING ? 'Nghe hiểu' : activeSec.skill === SKILL_READING ? 'Đọc hiểu' : activeSec.skill === SKILL_WRITING ? 'Viết' : activeSec.skill === SKILL_SPEAKING ? 'Nói' : 'Tổng hợp'} • {activeSec.correctCount}/{activeSec.totalQuestions} câu đúng ({activeSec.earnedScore}/{activeSec.maxScore} điểm)
                                         </span>
                                     </div>
                                 </div>
@@ -808,9 +726,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                 <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 border border-gray-200 shadow-2xs">
                                     <button
                                         type="button"
-                                        onClick={() => setReviewFilter('all')}
+                                        onClick={() => setReviewFilter('')}
                                         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                                            reviewFilter === 'all' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-200'
+                                            !reviewFilter ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-slate-200'
                                         }`}
                                     >
                                         Tất cả ({activeSec.totalQuestions})
@@ -903,7 +821,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         </div>
 
                                         {/* Content */}
-                                        {gq.question_type !== 'fill_in_blank' && gq.question_type !== 'drag_drop_cloze' && (
+                                        {gq.question_type !== QUESTION_TYPE_FILL_IN_BLANK && gq.question_type !== QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                             <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
                                                 {gq.content}
                                             </div>
@@ -1169,9 +1087,9 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
 
                             {/* Question Content */}
                             <div className="text-sm sm:text-base font-semibold text-gray-900 leading-relaxed whitespace-pre-wrap">
-                                {currentQuestion.question_type === 'fill_in_blank'
+                                {currentQuestion.question_type === QUESTION_TYPE_FILL_IN_BLANK
                                     ? renderFillInBlankContent(currentQuestion.content)
-                                    : currentQuestion.question_type === 'drag_drop_cloze'
+                                    : currentQuestion.question_type === QUESTION_TYPE_DRAG_DROP_CLOZE
                                     ? null
                                     : currentQuestion.content}
                             </div>

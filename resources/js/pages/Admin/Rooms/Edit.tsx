@@ -1,24 +1,36 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    DoorOpen,
-    Plus,
-    Trash2,
-    Armchair,
-    Monitor,
-    Tv,
-    Wind,
-    AlertCircle,
-    Building2,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import {
+EQUIPMENT_STATUS_BROKEN,
+EQUIPMENT_STATUS_GOOD,
+EQUIPMENT_STATUS_LABELS,
+EQUIPMENT_STATUS_MAINTENANCE,
+ROOM_STATUS_ACTIVE,
+ROOM_STATUS_CLOSED,
+ROOM_STATUS_LABELS,
+ROOM_STATUS_PAUSED,
+} from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Armchair,
+ArrowLeft,
+Building2,
+DoorOpen,
+Monitor,
+Plus,
+Save,
+Trash2,
+Tv,
+Wind,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;
@@ -30,9 +42,9 @@ interface RoomEquipment {
     id?: number;
     room_id?: number;
     name: string;
-    quantity: number | string;
+    quantity: number;
     unit?: string | null;
-    status: 'good' | 'maintenance' | 'broken';
+    status: number;
     note?: string | null;
 }
 
@@ -49,7 +61,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'paused' | 'closed' | 'inactive';
+    status: number;
     equipments?: RoomEquipment[];
     is_in_use?: boolean;
     schedules_count?: number;
@@ -71,17 +83,14 @@ const QUICK_PRESETS = [
 ];
 
 export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(room.center_id));
     const [name, setName] = useState(room.name || '');
     const [capacity, setCapacity] = useState(room.capacity ? String(room.capacity) : '');
     const [location, setLocation] = useState(room.location || '');
-    const [status, setStatus] = useState<'active' | 'paused' | 'closed'>(
-        room.status === 'closed' ? 'closed' : (room.status === 'paused' || room.status === 'inactive' ? 'paused' : 'active')
-    );
-    const [pendingStatus, setPendingStatus] = useState<'active' | 'paused' | 'closed' | null>(null);
+    const [status, setStatus] = useState<number>(room.status === ROOM_STATUS_CLOSED ? ROOM_STATUS_CLOSED : room.status === ROOM_STATUS_PAUSED ? ROOM_STATUS_PAUSED : ROOM_STATUS_ACTIVE);
+    const [pendingStatus, setPendingStatus] = useState<number | null>(null);
     const [showInUseWarningModal, setShowInUseWarningModal] = useState(false);
 
     // Equipment state
@@ -91,15 +100,15 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
             name: eq.name,
             quantity: eq.quantity,
             unit: eq.unit || '',
-            status: eq.status || 'good',
+            status: Number(eq.status) || EQUIPMENT_STATUS_GOOD,
             note: eq.note || '',
         })) || [],
     );
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleStatusChange = (newStatus: 'active' | 'paused' | 'closed') => {
-        if (newStatus !== room.status && room.is_in_use) {
+    const handleStatusChange = (newStatus: number) => {
+        if (newStatus !== Number(room.status) && room.is_in_use) {
             setPendingStatus(newStatus);
             setShowInUseWarningModal(true);
         } else {
@@ -108,7 +117,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
     };
 
     const confirmStatusChange = () => {
-        if (pendingStatus) {
+        if (pendingStatus !== null) {
             setStatus(pendingStatus);
             setPendingStatus(null);
         }
@@ -127,7 +136,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                 name: preset?.name || '',
                 quantity: preset?.quantity || 1,
                 unit: preset?.unit || 'bộ',
-                status: 'good',
+                status: EQUIPMENT_STATUS_GOOD,
                 note: '',
             },
         ]);
@@ -185,15 +194,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                 {/* Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/rooms">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<ArrowLeft className="h-4 w-4" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/rooms" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Phòng Học: {room.name}
@@ -300,16 +301,16 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 </label>
                                 <ScrollableSelect
                                     value={status}
-                                    onChange={(val) => handleStatusChange(val as 'active' | 'paused' | 'closed')}
-                                    disabled={room.status === 'closed' && !isSuperAdmin}
+                                    onChange={(val) => handleStatusChange(Number(val))}
+                                    disabled={room.status === ROOM_STATUS_CLOSED && !isSuperAdmin}
                                     options={[
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'paused', label: 'Tạm dừng' },
-                                        { value: 'closed', label: 'Đã đóng' },
+                                        { value: ROOM_STATUS_ACTIVE, label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
+                                        { value: ROOM_STATUS_PAUSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
+                                        { value: ROOM_STATUS_CLOSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
                                     ]}
                                     error={errors.status}
                                 />
-                                {room.status === 'closed' && !isSuperAdmin && (
+                                {room.status === ROOM_STATUS_CLOSED && !isSuperAdmin && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
                                         * Phòng học đã đóng. Chỉ Super Admin mới có quyền mở lại.
                                     </p>
@@ -441,12 +442,12 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                             </label>
                                             <select
                                                 value={item.status}
-                                                onChange={(e) => handleEquipmentChange(index, 'status', e.target.value as any)}
+                                                onChange={(e) => handleEquipmentChange(index, 'status', Number(e.target.value))}
                                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                             >
-                                                <option value="good">Hoạt động tốt</option>
-                                                <option value="maintenance">Đang bảo trì</option>
-                                                <option value="broken">Bị hỏng</option>
+                                                <option value={EQUIPMENT_STATUS_GOOD}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_GOOD]}</option>
+                                                <option value={EQUIPMENT_STATUS_MAINTENANCE}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_MAINTENANCE]}</option>
+                                                <option value={EQUIPMENT_STATUS_BROKEN}>{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_BROKEN]}</option>
                                             </select>
                                         </div>
 
@@ -489,15 +490,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
 
                     {/* Submit Action Buttons */}
                     <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-                        <Link href="/rooms">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowLeft className="h-5 w-5" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/rooms" size="lg" />
                         <Button
                             type="submit"
                             variant="edit"
@@ -547,7 +540,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 <p className="mt-1 text-xs text-amber-800">
                                     Việc chuyển trạng thái sang{' '}
                                     <span className="font-bold underline">
-                                        {pendingStatus === 'closed' ? 'Đã đóng' : (pendingStatus === 'paused' ? 'Tạm dừng' : 'Đang hoạt động')}
+                                        {pendingStatus === 2 ? 'Đã đóng' : (pendingStatus === 0 ? 'Tạm dừng' : 'Đang hoạt động')}
                                     </span>{' '}
                                     có thể ảnh hưởng đến các lớp học và ca học đã được phân công cho phòng học này.
                                 </p>

@@ -1,16 +1,16 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    Sparkles,
-    Building2,
-    GraduationCap,
-    CreditCard,
-    BarChart3,
-    Check,
-    ArrowRight,
-    Tag,
-    MessageSquare,
-    Search,
-    LayoutDashboard,
+ArrowRight,
+BarChart3,
+Building2,
+Check,
+CreditCard,
+GraduationCap,
+LayoutDashboard,
+MessageSquare,
+Search,
+Sparkles,
+Tag,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';
@@ -38,8 +38,8 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
 
     return (
         <PublicLayout
-            title="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital"
-            description="Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực."
+            title="Giải Pháp Quản Lý Trung Tâm Giáo Dục - SAM Digital"
+            description="Giải Pháp Quản Lý Trung Tâm Giáo Dục đột phá 2026. Tối ưu hóa quy trình quản lý học sinh, xếp lịch học, điểm danh thông minh, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực."
             keywords="Giải Pháp Quản Lý Giáo Dục, phần mềm quản lý trung tâm, quản lý học sinh, điểm danh thông minh, khảo thí trực tuyến, SAM Digital"
         >
             {/* Promotion Alert Banner */}
@@ -55,7 +55,7 @@ export const Index: React.FC<any> = ({ hero, promotionBanner, plans }) => {
                 <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6 px-4 text-center sm:px-6 lg:px-8">
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                         <Sparkles className="h-3.5 w-3.5" />
-                        <span>Nền tảng Quản lý Giáo dục Đa trung tâm 2026</span>
+                        <span>Nền tảng Quản lý Trung tâm Giáo dục 2026</span>
                     </div>
 
                     <h1 className="mx-auto max-w-4xl text-2xl leading-tight font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">

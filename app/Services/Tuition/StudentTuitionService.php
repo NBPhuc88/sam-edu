@@ -50,7 +50,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?int                 $centerId
      * @param  ?int                 $classId
      * @param  ?int                 $studentId
-     * @param  ?string              $status
+     * @param  ?int                 $status
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
@@ -62,21 +62,25 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?int $studentId = null,
-        ?string $status = null,
+        ?int $status = null,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
         ?string $month = null
     ): LengthAwarePaginator {
-        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        if ($admin !== null) {
+            $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
-        if ($allowedCenterIds !== null) {
-            if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
-                $centerIds = []; // No access
-            } elseif ($centerId !== null) {
-                $centerIds = [$centerId];
+            if ($allowedCenterIds !== null) {
+                if ($centerId !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+                    $centerIds = []; // No access
+                } elseif ($centerId !== null) {
+                    $centerIds = [$centerId];
+                } else {
+                    $centerIds = $allowedCenterIds;
+                }
             } else {
-                $centerIds = $allowedCenterIds;
+                $centerIds = $centerId;
             }
         } else {
             $centerIds = $centerId;
@@ -223,7 +227,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'total_amount'     => $totalAmount,
             'paid_amount'      => 0,
             'remaining_amount' => $totalAmount,
-            'status'           => 'pending',
+            'status'           => Constant::TUITION_STATUS_PENDING,
             'due_date'         => $data['due_date'] ?? null,
             'note'             => $data['note'] ?? null,
             'created_by'       => $admin?->id,
@@ -234,7 +238,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             $this->recordPayment($tuition->id, [
                 'amount'           => $initialPaymentAmount,
                 'payment_date'     => $data['initial_payment_date'] ?? now()->format('Y-m-d'),
-                'payment_method'   => $data['initial_payment_method'] ?? 'bank_transfer',
+                'payment_method'   => (int) ($data['initial_payment_method'] ?? Constant::PAYMENT_METHOD_BANK_TRANSFER),
                 'transaction_code' => $data['initial_transaction_code'] ?? null,
                 'note'             => $data['initial_payment_note'] ?? 'Đóng đợt 1 khi khởi tạo hồ sơ',
             ], $admin);
@@ -327,7 +331,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'student_tuition_id' => $tuition->id,
             'amount'             => $amount,
             'payment_date'       => $data['payment_date'] ?? now()->format('Y-m-d'),
-            'payment_method'     => $data['payment_method'] ?? 'bank_transfer',
+            'payment_method'     => (int) ($data['payment_method'] ?? Constant::PAYMENT_METHOD_BANK_TRANSFER),
             'transaction_code'   => $data['transaction_code'] ?? null,
             'note'               => $data['note'] ?? null,
             'received_by'        => $admin?->id,
@@ -376,7 +380,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $updatedPayment = $this->tuitionPaymentRepository->update($paymentId, [
             'amount'           => isset($data['amount']) ? (float) $data['amount'] : $payment->amount,
             'payment_date'     => $data['payment_date'] ?? $payment->payment_date,
-            'payment_method'   => $data['payment_method'] ?? $payment->payment_method,
+            'payment_method'   => isset($data['payment_method']) ? (int) $data['payment_method'] : (int) $payment->payment_method,
             'transaction_code' => array_key_exists('transaction_code', $data) ? $data['transaction_code'] : $payment->transaction_code,
             'note'             => array_key_exists('note', $data) ? $data['note'] : $payment->note,
         ]);
@@ -475,15 +479,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
-     * @param  ?string    $month
-     * @param  ?Admin     $admin
-     * @return \Generator
-    /**
-     * @param  ?string    $search
-     * @param  ?int       $centerId
-     * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -492,7 +488,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator {
@@ -558,18 +554,19 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $statusLabel = match ($item->status) {
-                'completed' => 'Đã hoàn thành',
-                'partial'   => 'Còn nợ (Đóng dở)',
-                'overdue'   => 'Quá hạn',
-                default     => 'Chưa đóng',
+            $st          = (int) $item->status;
+            $statusLabel = match ($st) {
+                Constant::TUITION_STATUS_COMPLETED => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL   => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE   => 'Quá hạn',
+                default                            => 'Chưa đóng',
             };
 
-            $statusClass = match ($item->status) {
-                'completed' => 'status-completed',
-                'partial'   => 'status-partial',
-                'overdue'   => 'status-overdue',
-                default     => 'status-pending',
+            $statusClass = match ($st) {
+                Constant::TUITION_STATUS_COMPLETED => 'status-completed',
+                Constant::TUITION_STATUS_PARTIAL   => 'status-partial',
+                Constant::TUITION_STATUS_OVERDUE   => 'status-overdue',
+                default                            => 'status-pending',
             };
 
             // Lấy danh sách lớp học của học sinh (nối bằng dấu phẩy)
@@ -600,16 +597,9 @@ class StudentTuitionService implements StudentTuitionServiceInterface
                     $installmentLabel       = 'Đợt ' . ($idx + 1);
                     $paymentAmountFormatted = number_format((float) $payment->amount, 0, ',', '.');
                     $paymentDateFormatted   = $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d/m/Y') : '—';
-                    $paymentMethodLabel     = match ($payment->payment_method) {
-                        'cash'          => 'Tiền mặt',
-                        'bank_transfer' => 'Chuyển khoản',
-                        'momo'          => 'Ví MoMo',
-                        'zalopay'       => 'Ví ZaloPay',
-                        'credit_card'   => 'Thẻ tín dụng',
-                        default         => $payment->payment_method ?? 'Khác',
-                    };
-                    $transactionCode = htmlspecialchars($payment->transaction_code ?? '—', ENT_QUOTES, 'UTF-8');
-                    $receiverName    = htmlspecialchars($payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—'), ENT_QUOTES, 'UTF-8');
+                    $paymentMethodLabel     = Constant::PAYMENT_METHOD_LABELS[(int) $payment->payment_method] ?? 'Khác';
+                    $transactionCode        = htmlspecialchars($payment->transaction_code ?? '—', ENT_QUOTES, 'UTF-8');
+                    $receiverName           = htmlspecialchars($payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—'), ENT_QUOTES, 'UTF-8');
 
                     yield '<tr>'
                         . "<td class=\"text-center\">{$stt}</td>"
@@ -669,7 +659,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -678,7 +668,7 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator {
@@ -729,11 +719,12 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         $stt = 1;
 
         foreach ($tuitions as $item) {
-            $statusLabel = match ($item->status) {
-                'completed' => 'Đã hoàn thành',
-                'partial'   => 'Còn nợ (Đóng dở)',
-                'overdue'   => 'Quá hạn',
-                default     => 'Chưa đóng',
+            $st          = (int) $item->status;
+            $statusLabel = match ($st) {
+                Constant::TUITION_STATUS_PAID    => 'Đã hoàn thành',
+                Constant::TUITION_STATUS_PARTIAL => 'Còn nợ (Đóng dở)',
+                Constant::TUITION_STATUS_OVERDUE => 'Quá hạn',
+                default                          => 'Chưa đóng',
             };
 
             $classNames = '';
@@ -750,15 +741,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             if ($payments->isNotEmpty()) {
                 foreach ($payments as $idx => $payment) {
                     $installmentLabel   = 'Đợt ' . ($idx + 1);
-                    $paymentMethodLabel = match ($payment->payment_method) {
-                        'cash'          => 'Tiền mặt',
-                        'bank_transfer' => 'Chuyển khoản',
-                        'momo'          => 'Ví MoMo',
-                        'zalopay'       => 'Ví ZaloPay',
-                        'credit_card'   => 'Thẻ tín dụng',
-                        default         => $payment->payment_method ?? 'Khác',
-                    };
-                    $receiverName = $payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—');
+                    $paymentMethodLabel = Constant::PAYMENT_METHOD_LABELS[(int) $payment->payment_method] ?? 'Khác';
+                    $receiverName       = $payment->receiver?->full_name ?? ($payment->receiver?->username ?? '—');
 
                     yield [
                         $stt++,

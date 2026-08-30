@@ -1,29 +1,34 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    GraduationCap,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Users,
-    MessageSquare,
-    AlertCircle,
-    Filter,
-    Calendar,
-    Award,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Award,
+Calendar,
+Edit2,
+Filter,
+GraduationCap,
+MessageSquare,
+Plus,
+Search,
+Trash2,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
+import {
+    CLASS_STATUS_ACTIVE,
+    CLASS_STATUS_CLOSED,
+    CLASS_STATUS_COMPLETED,
+    CLASS_STATUS_INACTIVE,
+    CLASS_STATUS_LABELS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanUseChat } from '@/hooks/usePlanFeature';
 interface Center {
@@ -61,7 +66,7 @@ interface SchoolClass {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: number | string;
+    status: number;
     students_count?: number;
     center?: Center;
     class_subjects?: ClassSubject[];
@@ -95,16 +100,14 @@ export default function ClassIndex({
     isTeacher = false,
     isStudent = false,
 }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -118,8 +121,8 @@ export default function ClassIndex({
             '/classes',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -127,8 +130,8 @@ export default function ClassIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/classes', {}, { preserveState: true });
     };
 
@@ -154,22 +157,20 @@ return;
 
     const canUseChat = useCanUseChat();
 
-    const getStatusBadge = (status: number | string) => {
-        const num = Number(status);
-
-        if (num === 1 || status === 'active') {
-            return <Badge variant="active">Đang hoạt động</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === CLASS_STATUS_ACTIVE) {
+            return <Badge variant="active">{CLASS_STATUS_LABELS[CLASS_STATUS_ACTIVE]}</Badge>;
         }
 
-        if (num === 2 || status === 'completed') {
-            return <Badge variant="pending">Đã hoàn thành</Badge>;
+        if (status === CLASS_STATUS_COMPLETED) {
+            return <Badge variant="pending">{CLASS_STATUS_LABELS[CLASS_STATUS_COMPLETED]}</Badge>;
         }
 
-        if (num === 3 || status === 'closed') {
-            return <Badge variant="danger">Đã đóng</Badge>;
+        if (status === CLASS_STATUS_CLOSED) {
+            return <Badge variant="danger">{CLASS_STATUS_LABELS[CLASS_STATUS_CLOSED]}</Badge>;
         }
 
-        return <Badge variant="expired">Tạm dừng</Badge>;
+        return <Badge variant="expired">{CLASS_STATUS_LABELS[CLASS_STATUS_INACTIVE]}</Badge>;
     };
 
     return (
@@ -222,12 +223,12 @@ return;
                                 <div>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -238,13 +239,13 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: '1', label: 'Đang hoạt động' },
-                                        { value: '0', label: 'Tạm dừng' },
-                                        { value: '2', label: 'Đã hoàn thành' },
-                                        { value: '3', label: 'Đã đóng' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: CLASS_STATUS_ACTIVE, label: CLASS_STATUS_LABELS[CLASS_STATUS_ACTIVE] },
+                                        { value: CLASS_STATUS_INACTIVE, label: CLASS_STATUS_LABELS[CLASS_STATUS_INACTIVE] },
+                                        { value: CLASS_STATUS_COMPLETED, label: CLASS_STATUS_LABELS[CLASS_STATUS_COMPLETED] },
+                                        { value: CLASS_STATUS_CLOSED, label: CLASS_STATUS_LABELS[CLASS_STATUS_CLOSED] },
                                     ]}
                                 />
                             </div>
@@ -265,7 +266,7 @@ return;
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

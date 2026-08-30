@@ -55,7 +55,7 @@ class CenterRepository implements CenterRepositoryInterface
                         'phone',
                         'address',
                         'status',
-                        'subscription_plan',
+                        'subscription_plan_id',
                         'expires_at',
                         'created_at'
                     )
@@ -75,7 +75,7 @@ class CenterRepository implements CenterRepositoryInterface
             'phone',
             'address',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'expires_at',
             'created_at'
         )
@@ -165,7 +165,7 @@ class CenterRepository implements CenterRepositoryInterface
             'phone',
             'status'
         )
-        ->where('status', 'active');
+        ->where('status', Constant::CENTER_STATUS_ACTIVE);
 
         if ($centerIds !== null) {
             $query->whereIn('id', $centerIds);
@@ -250,7 +250,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type',
             'created_at'
         )
@@ -272,7 +272,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type',
             'expires_at'
         )
@@ -293,7 +293,7 @@ class CenterRepository implements CenterRepositoryInterface
             'email',
             'phone',
             'status',
-            'subscription_plan',
+            'subscription_plan_id',
             'plan_type'
         )
         ->whereIn('id', $ids)
@@ -309,7 +309,7 @@ class CenterRepository implements CenterRepositoryInterface
 
     public function markExpiredCenters(): int
     {
-        return Center::whereIn('status', [Constant::CENTER_STATUS_ACTIVE, Constant::CENTER_STATUS_TRIAL])
+        return Center::where('status', Constant::CENTER_STATUS_ACTIVE)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
             ->update(['status' => Constant::CENTER_STATUS_EXPIRED]);

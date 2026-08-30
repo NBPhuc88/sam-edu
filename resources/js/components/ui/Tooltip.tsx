@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
+import { AnimatePresence,motion } from 'framer-motion';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 

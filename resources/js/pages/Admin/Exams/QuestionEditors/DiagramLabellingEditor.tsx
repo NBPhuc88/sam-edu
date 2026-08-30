@@ -1,7 +1,6 @@
-import React from 'react';
-import { Plus, Trash2, MapPin } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import MediaUploader from '@/components/ui/MediaUploader';
+import { MapPin,Plus,Trash2 } from 'lucide-react';
 
 interface LabelItem {
     id: string;

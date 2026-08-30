@@ -1,18 +1,3 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import {
-    Building2,
-    Globe,
-    Info,
-    LayoutTemplate,
-    Mail,
-    MapPin,
-    Megaphone,
-    Phone,
-    Save,
-    Search,
-    Sparkles,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import PageHeader from '@/components/common/PageHeader';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -21,6 +6,21 @@ import Input from '@/components/ui/Input';
 import { MediaUploader } from '@/components/ui/MediaUploader';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
+import { Head, router, useForm } from '@inertiajs/react';
+import {
+Building2,
+Globe,
+Info,
+LayoutTemplate,
+Mail,
+MapPin,
+Megaphone,
+Phone,
+Save,
+Search,
+Sparkles,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface SeoItem {
     id?: number;
@@ -61,7 +61,6 @@ const SEO_PAGES: { route: string; name: string; description: string }[] = [
 ];
 
 export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
-    const { flash } = usePage<any>().props;
     const [activeTab, setActiveTab] = useState<'company' | 'homepage' | 'seo'>('company');
     const [selectedSeoRoute, setSelectedSeoRoute] = useState<string>('home');
     const [isSaving, setIsSaving] = useState(false);
@@ -81,7 +80,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
         };
     });
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         settings: {
             company_name: settings.company_name ?? '',
             contact_address: settings.contact_address ?? '',
@@ -227,7 +226,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                         }`}
                     >
                         <Globe className="h-4 w-4" />
-                        Cấu Hình SEO Metadata
+                        Cấu Hình Thẻ SEO & Tìm Kiếm Google
                     </button>
                 </div>
 
@@ -324,27 +323,27 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     </div>
                                     <div>
                                         <h2 className="text-base font-bold text-gray-900">
-                                            Banner Giới Thiệu Chính (Hero Section)
+                                            Khung Banner Giới Thiệu Trang Chủ
                                         </h2>
                                         <p className="text-xs text-gray-500">
-                                            Nội dung khối mở đầu trên trang chủ marketing của hệ thống.
+                                            Nội dung khối mở đầu nổi bật trên trang chủ giới thiệu hệ thống.
                                         </p>
                                     </div>
                                 </div>
 
                                 <Input
-                                    label="Tiêu Đề Banner Chính (Hero Title)"
+                                    label="Tiêu Đề Banner Chính Trang Chủ"
                                     id="hero_title"
                                     name="hero_title"
                                     value={data.settings.hero_title}
                                     onChange={(e) => handleSettingChange('hero_title', e.target.value)}
-                                    placeholder="VD: SAM Digital - Hệ thống Quản lý Trung Tâm Giáo Dục"
+                                    placeholder="VD: SAM Digital - Nền Tảng Quản Lý Trung Tâm Giáo Dục"
                                     error={errors['settings.hero_title']}
                                 />
 
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="hero_subtitle" className="text-sm font-medium text-gray-900">
-                                        Mô Tả Chi Tiết Banner (Hero Subtitle)
+                                        Đoạn Mô Tả Giới Thiệu Banner
                                     </label>
                                     <textarea
                                         id="hero_subtitle"
@@ -370,10 +369,10 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     </div>
                                     <div>
                                         <h2 className="text-base font-bold text-gray-900">
-                                            Thanh Thông Báo Khuyến Mãi Đầu Trang (Announcement Banner)
+                                            Thanh Thông Báo Ưu Đãi Đầu Trang
                                         </h2>
                                         <p className="text-xs text-gray-500">
-                                            Dải thông báo ưu đãi hiển thị trên đầu toàn bộ trang landing page.
+                                            Dải thông báo ưu đãi hiển thị trên đầu toàn bộ các trang công khai.
                                         </p>
                                     </div>
                                 </div>
@@ -485,18 +484,18 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     </div>
 
                                     <Input
-                                        label="Tiêu Đề Trang (Meta Title)"
+                                        label="Tiêu Đề Hiển Thị Google (Meta Title)"
                                         id={`seo_${selectedSeoRoute}_title`}
                                         value={activeSeoItem.title ?? ''}
                                         onChange={(e) => handleSeoChange(selectedSeoRoute, 'title', e.target.value)}
-                                        placeholder="VD: Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm - SAM Digital"
+                                        placeholder="VD: Giải Pháp Quản Lý Trung Tâm Giáo Dục - SAM Digital"
                                         icon={<Globe className="h-4 w-4 text-gray-400" />}
                                     />
 
                                     <div className="flex flex-col gap-1.5">
                                         <div className="flex items-center justify-between">
                                             <label htmlFor={`seo_${selectedSeoRoute}_desc`} className="text-sm font-medium text-gray-900">
-                                                Thẻ Mô Tả (Meta Description)
+                                                Thẻ Mô Tả Tóm Tắt (Meta Description)
                                             </label>
                                             <span className="text-[11px] text-gray-400">
                                                 {(activeSeoItem.description ?? '').length} ký tự
@@ -513,7 +512,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     </div>
 
                                     <Input
-                                        label="Từ Khóa Tìm Kiếm (Meta Keywords - Phân cách bằng dấu phẩy)"
+                                        label="Từ Khóa Tìm Kiếm Google (Meta Keywords - Phân cách bằng dấu phẩy)"
                                         id={`seo_${selectedSeoRoute}_keywords`}
                                         value={activeSeoItem.keywords ?? ''}
                                         onChange={(e) => handleSeoChange(selectedSeoRoute, 'keywords', e.target.value)}
@@ -522,7 +521,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     />
 
                                     <MediaUploader
-                                        label="Ảnh Đại Diện Chia Sẻ Mạng Xã Hội (OG Image - Khuyên dùng 1200x630px)"
+                                        label="Ảnh Xem Trước Khi Chia Sẻ Link (Facebook/Zalo - OG Image)"
                                         value={activeSeoItem.og_image ?? ''}
                                         onChange={(url) => handleSeoChange(selectedSeoRoute, 'og_image', url)}
                                         objectType="seo"
@@ -533,7 +532,7 @@ export default function SettingsIndex({ settings = {}, seo = [] }: Props) {
                                     />
 
                                     <Input
-                                        label="Đường Dẫn Chuẩn Tối Ưu Tìm Kiếm (Canonical URL)"
+                                        label="Đường Dẫn Trang Chuẩn SEO (Canonical URL)"
                                         id={`seo_${selectedSeoRoute}_canonical`}
                                         value={activeSeoItem.canonical_url ?? ''}
                                         onChange={(e) => handleSeoChange(selectedSeoRoute, 'canonical_url', e.target.value)}

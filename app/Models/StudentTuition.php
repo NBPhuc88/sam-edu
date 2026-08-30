@@ -47,9 +47,10 @@ class StudentTuition extends Model
     ];
 
     protected $casts = [
-        'total_amount'     => 'decimal:2',
-        'paid_amount'      => 'decimal:2',
-        'remaining_amount' => 'decimal:2',
+        'status'           => 'integer',
+        'total_amount'     => 'decimal:0',
+        'paid_amount'      => 'decimal:0',
+        'remaining_amount' => 'decimal:0',
         'due_date'         => 'date:d-m-Y',
         'created_at'       => 'datetime:d-m-Y H:i',
         'updated_at'       => 'datetime:d-m-Y H:i',

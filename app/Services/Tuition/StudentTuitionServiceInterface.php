@@ -15,7 +15,7 @@ interface StudentTuitionServiceInterface
      * @param  ?int                 $centerId
      * @param  ?int                 $classId
      * @param  ?int                 $studentId
-     * @param  ?string              $status
+     * @param  ?int                 $status
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?Admin               $admin
@@ -27,7 +27,7 @@ interface StudentTuitionServiceInterface
         ?int $centerId = null,
         ?int $classId = null,
         ?int $studentId = null,
-        ?string $status = null,
+        ?int $status = null,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?Admin $admin = null,
@@ -123,7 +123,7 @@ interface StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -132,7 +132,7 @@ interface StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator;
@@ -141,7 +141,7 @@ interface StudentTuitionServiceInterface
      * @param  ?string    $search
      * @param  ?int       $centerId
      * @param  ?int       $classId
-     * @param  ?string    $status
+     * @param  ?int       $status
      * @param  ?string    $month
      * @param  ?Admin     $admin
      * @return \Generator
@@ -150,7 +150,7 @@ interface StudentTuitionServiceInterface
         ?string $search = null,
         ?int $centerId = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null,
         ?Admin $admin = null
     ): \Generator;

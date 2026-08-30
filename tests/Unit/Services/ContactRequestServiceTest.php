@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\ContactRequest;
 use App\Services\Home\ContactRequestService;
 use Illuminate\Support\Facades\Mail;
@@ -22,7 +23,7 @@ test('submitContact creates contact request and queues notification email', func
 
     expect($contact)->toBeInstanceOf(ContactRequest::class)
         ->and($contact->full_name)->toBe('Nguyen Van Tu')
-        ->and($contact->status)->toBe('pending');
+        ->and($contact->status)->toBe(Constant::CONTACT_STATUS_PENDING);
 
     Mail::assertQueued(\App\Mail\ContactRequestSubmittedMail::class);
 });

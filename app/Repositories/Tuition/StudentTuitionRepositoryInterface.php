@@ -13,7 +13,7 @@ interface StudentTuitionRepositoryInterface
      * @param  array<int>|int|null  $centerIds
      * @param  ?int                 $classId
      * @param  ?int                 $studentId
-     * @param  ?string              $status
+     * @param  ?int                 $status
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?string              $month
@@ -24,7 +24,7 @@ interface StudentTuitionRepositoryInterface
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?int $studentId = null,
-        ?string $status = null,
+        ?int $status = null,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?string $month = null
@@ -80,7 +80,7 @@ interface StudentTuitionRepositoryInterface
      * @param  ?string                                  $search
      * @param  array<int>|int|null                      $centerIds
      * @param  ?int                                     $classId
-     * @param  ?string                                  $status
+     * @param  ?int                                     $status
      * @param  ?string                                  $month
      * @return \Illuminate\Database\Eloquent\Collection
      */
@@ -88,7 +88,7 @@ interface StudentTuitionRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null
     ): \Illuminate\Database\Eloquent\Collection;
 

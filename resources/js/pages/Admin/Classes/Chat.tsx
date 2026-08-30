@@ -1,23 +1,24 @@
-import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
-import {
-    Pin,
-    PinOff,
-    Send,
-    ArrowLeft,
-    Smile,
-    Palette,
-    Check,
-    X,
-    Reply,
-} from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import { SENDER_TYPE_ADMIN,SENDER_TYPE_TEACHER } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
+import { Head,Link } from '@inertiajs/react';
+import axios from 'axios';
+import {
+ArrowLeft,
+Check,
+Palette,
+Pin,
+PinOff,
+Reply,
+Send,
+Smile,
+X,
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 import ChatEmojiPicker from './components/ChatEmojiPicker';
 import MessageReactionBar from './components/MessageReactionBar';
-import MessageReactionsDisplay, {
-    ReactionItem,
+import MessageReactionsDisplay,{
+ReactionItem,
 } from './components/MessageReactionsDisplay';
 
 interface SchoolClass {
@@ -28,7 +29,7 @@ interface SchoolClass {
 }
 
 interface CurrentUser {
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     sender_avatar: string | null;
@@ -38,7 +39,7 @@ interface CurrentUser {
 interface ReplyToData {
     id: number;
     class_id: number;
-    sender_type: string;
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     message: string;
@@ -50,7 +51,7 @@ interface ChatMessageData {
     reply_to_id?: number | null;
     reply_to?: ReplyToData | null;
     reactions?: ReactionItem[];
-    sender_type: 'admin' | 'teacher' | 'student';
+    sender_type: number;
     sender_id: number;
     sender_name: string;
     sender_avatar: string | null;
@@ -475,15 +476,15 @@ export default function ClassChatPage({
         }, 10);
     };
 
-    const renderRoleBadge = (type: string) => {
+    const renderRoleBadge = (type: number) => {
         switch (type) {
-            case 'admin':
+            case SENDER_TYPE_ADMIN:
                 return (
                     <span className="inline-flex items-center rounded-full bg-[#f3e8ff] px-2 py-0.5 text-[11px] font-medium text-[#7e22ce] shadow-2xs">
                         người sở hữu
                     </span>
                 );
-            case 'teacher':
+            case SENDER_TYPE_TEACHER:
                 return (
                     <span className="inline-flex items-center rounded-full bg-[#dbeafe] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8] shadow-2xs">
                         giáo viên
@@ -643,9 +644,10 @@ export default function ClassChatPage({
                         ) : (
                             messages.map((msg, index) => {
                                 const isSelf =
-                                    msg.sender_type ===
-                                        currentUser.sender_type &&
-                                    msg.sender_id === currentUser.sender_id;
+                                    Number(msg.sender_type) ===
+                                        Number(currentUser.sender_type) &&
+                                    Number(msg.sender_id) ===
+                                        Number(currentUser.sender_id);
 
                                 const isHovered =
                                     activeHoverMessageId === msg.id;
@@ -660,13 +662,17 @@ export default function ClassChatPage({
 
                                 const isSameSenderAsPrev =
                                     prevMsg !== null &&
-                                    prevMsg.sender_type === msg.sender_type &&
-                                    prevMsg.sender_id === msg.sender_id;
+                                    Number(prevMsg.sender_type) ===
+                                        Number(msg.sender_type) &&
+                                    Number(prevMsg.sender_id) ===
+                                        Number(msg.sender_id);
 
                                 const isSameSenderAsNext =
                                     nextMsg !== null &&
-                                    nextMsg.sender_type === msg.sender_type &&
-                                    nextMsg.sender_id === msg.sender_id;
+                                    Number(nextMsg.sender_type) ===
+                                        Number(msg.sender_type) &&
+                                    Number(nextMsg.sender_id) ===
+                                        Number(msg.sender_id);
 
                                 const isFirstInGroup = !isSameSenderAsPrev;
                                 const isLastInGroup = !isSameSenderAsNext;
@@ -681,6 +687,50 @@ export default function ClassChatPage({
                                 );
                                 const initials = getInitials(msg.sender_name);
                                 const isSticker = isImageOrSticker(msg.message);
+
+                                const actionButtons = (
+                                    <div className="flex items-center gap-1 shrink-0 self-center">
+                                        {/* Reply Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setReplyingTo(msg)
+                                            }
+                                            title="Trả lời tin nhắn này"
+                                            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:text-emerald-700 bg-white/80 hover:bg-emerald-50 border border-gray-200/90 shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            <Reply className="h-3.5 w-3.5" />
+                                        </button>
+
+                                        {/* Pin Button (Visible for Admin / Teacher) */}
+                                        {currentUser.can_pin && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleTogglePin(msg.id)
+                                                }
+                                                title={
+                                                    msg.is_pinned
+                                                        ? 'Bỏ ghim tin nhắn'
+                                                        : 'Ghim tin nhắn'
+                                                }
+                                                className={`flex h-7 w-7 items-center justify-center rounded-full border shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer ${
+                                                    msg.is_pinned
+                                                        ? 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
+                                                        : 'bg-white/80 border-gray-200/90 text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+                                                }`}
+                                            >
+                                                <Pin
+                                                    className={`h-3.5 w-3.5 ${
+                                                        msg.is_pinned
+                                                            ? 'fill-amber-500 text-amber-600'
+                                                            : ''
+                                                    }`}
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+                                );
 
                                 return (
                                     <div
@@ -735,6 +785,9 @@ export default function ClassChatPage({
                                             </div>
                                         )}
 
+                                        {/* Action buttons on left for self messages */}
+                                        {isSelf && actionButtons}
+
                                         {/* Message Bubble Container */}
                                         <div
                                             className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${
@@ -743,7 +796,7 @@ export default function ClassChatPage({
                                                     : 'items-start'
                                             }`}
                                         >
-                                            {/* Quick Reaction Floating Bar on Hover */}
+                                            {/* Quick Reaction Floating Bar on Hover (Displayed below the message) */}
                                             {isHovered && (
                                                 <MessageReactionBar
                                                     isSelf={isSelf}
@@ -753,14 +806,6 @@ export default function ClassChatPage({
                                                             emoji
                                                         )
                                                     }
-                                                    onReply={() =>
-                                                        setReplyingTo(msg)
-                                                    }
-                                                    onTogglePin={() =>
-                                                        handleTogglePin(msg.id)
-                                                    }
-                                                    isPinned={msg.is_pinned}
-                                                    canPin={currentUser.can_pin}
                                                 />
                                             )}
 
@@ -902,6 +947,9 @@ export default function ClassChatPage({
                                                     />
                                                 )}
                                         </div>
+
+                                        {/* Action buttons on right for other senders' messages */}
+                                        {!isSelf && actionButtons}
                                     </div>
                                 );
                             })

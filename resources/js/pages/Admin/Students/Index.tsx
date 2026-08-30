@@ -1,32 +1,37 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Download,
-    Upload,
-    Search,
-    FileSpreadsheet,
-    Users,
-    Plus,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    GraduationCap,
-    CheckSquare,
-    Square,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Download,
+Edit2,
+Eye,
+FileSpreadsheet,
+Filter,
+GraduationCap,
+Plus,
+Search,
+Trash2,
+Upload,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import AssignClassModal from './components/AssignClassModal';
 import BulkAssignClassModal from './components/BulkAssignClassModal';
 
+import {
+    GENDER_LABELS,
+    STUDENT_STATUS_ACTIVE,
+    STUDENT_STATUS_GRADUATED,
+    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_LABELS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import { formatDate } from '@/lib/date';
@@ -56,13 +61,13 @@ interface Student {
     full_name: string;
     email: string | null;
     phone: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     parent_name: string | null;
     parent_phone: string | null;
     parent_relationship: string | null;
     admission_date: string | null;
-    status: number | string;
+    status: number;
     center_id: number;
     center?: Center;
     classes?: StudentClassTag[];
@@ -97,39 +102,24 @@ export default function StudentIndex({
     filters,
     isTeacher = false,
 }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const canExportCsv = useCanExportCsv();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status !== undefined && filters.status !== null ? String(filters.status) : 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Filter available classes by selected center
     const availableClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
-
-    const handleCenterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCenterId = e.target.value;
-        setSelectedCenterId(newCenterId);
-
-        if (newCenterId && selectedClassId) {
-            const cls = classes.find((c) => String(c.id) === selectedClassId);
-
-            if (cls && String(cls.center_id) !== newCenterId) {
-                setSelectedClassId('');
-            }
-        }
-    };
 
     // Selection & Bulk Actions state
     const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
@@ -177,9 +167,9 @@ export default function StudentIndex({
             '/students',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -187,9 +177,9 @@ export default function StudentIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         router.get('/students', {}, { preserveState: true });
     };
 
@@ -197,11 +187,11 @@ export default function StudentIndex({
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-            queryParams.append('center_id', selectedCenterId);
+            queryParams.append('center_id', String(selectedCenterId));
         }
 
         if (selectedClassId) {
-            queryParams.append('class_id', selectedClassId);
+            queryParams.append('class_id', String(selectedClassId));
         }
 
         window.location.href = `/students/export?${queryParams.toString()}`;
@@ -232,7 +222,7 @@ export default function StudentIndex({
         formData.append('file', selectedFile);
 
         if (selectedCenterId) {
-            formData.append('center_id', selectedCenterId);
+            formData.append('center_id', String(selectedCenterId));
         }
 
         router.post('/students/import', formData, {
@@ -269,31 +259,21 @@ return;
         });
     };
 
-    const getStatusBadge = (status: number | string) => {
-        const num = Number(status);
-
-        if (num === 1 || status === 'active') {
-            return <Badge variant="active">Đang học</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === STUDENT_STATUS_ACTIVE) {
+            return <Badge variant="active">{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE]}</Badge>;
         }
 
-        if (num === 2 || status === 'graduated') {
-            return <Badge variant="pending">Đã tốt nghiệp</Badge>;
+        if (status === STUDENT_STATUS_GRADUATED) {
+            return <Badge variant="pending">{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED]}</Badge>;
         }
 
-        return <Badge variant="expired">Nghỉ học</Badge>;
+        return <Badge variant="expired">{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE]}</Badge>;
     };
 
-    const getGenderLabel = (gender: string | null) => {
-        switch (gender) {
-            case 'male':
-                return 'Nam';
-            case 'female':
-                return 'Nữ';
-            case 'other':
-                return 'Khác';
-            default:
-                return '-';
-        }
+    const getGenderLabel = (gender: number | null) => {
+        if (!gender) return '-';
+        return GENDER_LABELS[gender] || '-';
     };
 
     return (
@@ -393,14 +373,14 @@ return;
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -411,12 +391,12 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     placeholder="Tất cả Lớp học"
                                     options={[
-                                        { value: '', label: 'Tất cả Lớp học' },
+                                        { value: 0, label: 'Tất cả Lớp học' },
                                         ...availableClasses.map((cls) => ({
-                                            value: String(cls.id),
+                                            value: cls.id,
                                             label: cls.name,
                                         })),
                                     ]}
@@ -427,12 +407,12 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: '1', label: 'Đang học' },
-                                        { value: '0', label: 'Nghỉ học' },
-                                        { value: '2', label: 'Đã tốt nghiệp' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: STUDENT_STATUS_ACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] },
+                                        { value: STUDENT_STATUS_INACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] },
+                                        { value: STUDENT_STATUS_GRADUATED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] },
                                     ]}
                                 />
                             </div>
@@ -453,7 +433,7 @@ return;
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -823,6 +803,7 @@ return;
                     setSelectedStudentIds([]);
                 }}
                 selectedStudentIds={selectedStudentIds}
+                students={students.data}
                 allClasses={classes}
                 centers={centers}
                 selectedCenterId={selectedCenterId ? Number(selectedCenterId) : undefined}

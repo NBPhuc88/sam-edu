@@ -1,23 +1,33 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    FileCheck,
-    Clock,
-    Shuffle,
-    RotateCcw,
-    Calculator,
-    Award,
-    AlertCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import {
+EXAM_SKILL_LABELS,
+EXAM_STATUS_CANCELLED,
+EXAM_STATUS_COMPLETED,
+EXAM_STATUS_DRAFT,
+EXAM_STATUS_LABELS,
+EXAM_STATUS_PUBLISHED,
+SKILL_READING,
+} from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
+import { Head,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Award,
+Calculator,
+Clock,
+FileCheck,
+RotateCcw,
+Save,
+Shuffle,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import QuestionBuilder from './QuestionBuilder';
-import { Center, Exam, ExamQuestionData, ExamSectionData, Subject } from './types';
+import { Center,Exam,ExamQuestionData,ExamSectionData,Subject } from './types';
 
 interface Props {
     exam: Exam;
@@ -32,8 +42,7 @@ export default function ExamEdit({
     subjects = [],
     errors = {},
 }: Props) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     // Exam Metadata State
     const [centerId, setCenterId] = useState<string>(String(exam.center_id || ''));
@@ -47,7 +56,7 @@ export default function ExamEdit({
     const [maxAttempts, setMaxAttempts] = useState<number | string>(exam.max_attempts || 1);
     const [isPractice, setIsPractice] = useState(Boolean(exam.is_practice));
     const [description, setDescription] = useState(exam.description || '');
-    const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>(exam.status || 'draft');
+    const [status, setStatus] = useState<number>(exam.status ?? EXAM_STATUS_DRAFT);
 
     // Sections State (Initialize from exam.sections or fallback to grouping exam.questions)
     const [sections, setSections] = useState<ExamSectionData[]>(() => {
@@ -59,16 +68,16 @@ export default function ExamEdit({
         if (exam.questions && exam.questions.length > 0) {
             const skillMap: Record<string, ExamQuestionData[]> = {};
             exam.questions.forEach((q) => {
-                const sk = q.skill || 'reading';
+                const sk = q.skill ?? SKILL_READING;
                 if (!skillMap[sk]) skillMap[sk] = [];
                 skillMap[sk].push(q);
             });
 
             return Object.entries(skillMap).map(([sk, qs], idx) => ({
                 tempId: `sec_legacy_${idx}`,
-                title: `Phần ${idx + 1}: ${sk === 'listening' ? 'Kỹ Năng Nghe' : sk === 'writing' ? 'Kỹ Năng Viết' : sk === 'speaking' ? 'Kỹ Năng Nói' : 'Kỹ Năng Đọc'}`,
+                title: `Phần ${idx + 1}: ${EXAM_SKILL_LABELS[Number(sk)] || 'Kỹ Năng Đọc'}`,
                 description: null,
-                skill: sk as any,
+                skill: Number(sk),
                 order_index: idx,
                 questions: qs,
             }));
@@ -84,8 +93,7 @@ export default function ExamEdit({
         ? subjects.filter((s) => !s.center_id || String(s.center_id) === String(centerId))
         : subjects;
 
-    // Total questions & total score across sections
-    const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
+    // Total score across sections
     const totalScore = sections.reduce(
         (sum, sec) => sum + (sec.questions || []).reduce((qSum, q) => qSum + (Number(q.score) || 0), 0),
         0,
@@ -126,14 +134,14 @@ export default function ExamEdit({
                     id: sec.id || undefined,
                     title: (sec.title || '').trim(),
                     description: (sec.description || '').trim() || null,
-                    skill: sec.skill || 'reading',
+                    skill: sec.skill ?? SKILL_READING,
                     order_index: sIdx,
                     questions: (sec.questions || []).map((q, qIdx) => ({
                         id: q.id || undefined,
                         code: (q.code || '').trim() || null,
                         title: (q.title || '').trim() || null,
-                        question_type: q.question_type || 'single_choice',
-                        skill: sec.skill || 'reading',
+                        question_type: q.question_type,
+                        skill: sec.skill ?? SKILL_READING,
                         content: q.content || '',
                         image_url: q.image_url || null,
                         audio_url: q.audio_url || null,
@@ -227,15 +235,7 @@ export default function ExamEdit({
                 {/* Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<ArrowLeft className="h-4 w-4" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Đề Thi (Kho Đề Thi)
@@ -247,7 +247,7 @@ export default function ExamEdit({
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     {/* Error Alert Banner */}
                     {Object.keys(errors).length > 0 && (
                         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-xs">
@@ -449,14 +449,14 @@ export default function ExamEdit({
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as any)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="draft">Bản nháp</option>
-                                    <option value="published">Đã công bố</option>
-                                    <option value="completed">Đã kết thúc</option>
-                                    <option value="cancelled">Đã hủy</option>
+                                    <option value={EXAM_STATUS_DRAFT}>{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</option>
+                                    <option value={EXAM_STATUS_PUBLISHED}>{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</option>
+                                    <option value={EXAM_STATUS_COMPLETED}>{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</option>
+                                    <option value={EXAM_STATUS_CANCELLED}>{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</option>
                                 </select>
                             </div>
 
@@ -528,19 +528,12 @@ export default function ExamEdit({
                         sections={sections}
                         onChangeSections={setSections}
                         examMaxScore={calculatedMaxScore}
+                        errors={errors}
                     />
 
                     {/* Submit Actions */}
                     <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowLeft className="h-5 w-5" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" size="lg" />
                         <Button
                             type="submit"
                             variant="success"
@@ -549,7 +542,7 @@ export default function ExamEdit({
                             isLoading={isSubmitting || Boolean(uploadProgressText)}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            {uploadProgressText || 'Cập Nhật Đề Thi'}
+                            {uploadProgressText || 'Cập Nhật'}
                         </Button>
                     </div>
                 </form>

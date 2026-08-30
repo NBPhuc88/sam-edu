@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
-import { Search, UserPlus, AlertCircle, Check, Loader2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import { router } from '@inertiajs/react';
+import { AlertCircle, Check, HelpCircle, Loader2, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface AvailableStudent {
     id: number;
@@ -13,6 +13,7 @@ interface AvailableStudent {
     phone: string | null;
     email: string | null;
     status: number;
+    has_tuition?: boolean | number;
 }
 
 interface Props {
@@ -35,6 +36,7 @@ export default function AddStudentModal({
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showTuitionConfirm, setShowTuitionConfirm] = useState(false);
 
     // Fetch available students when modal opens
     useEffect(() => {
@@ -42,6 +44,7 @@ export default function AddStudentModal({
             setStudents([]);
             setSelectedStudentIds([]);
             setSearch('');
+            setShowTuitionConfirm(false);
             return;
         }
 
@@ -84,20 +87,60 @@ export default function AddStudentModal({
         }
     };
 
+    const selectedStudents = useMemo(() => {
+        return students.filter((s) => selectedStudentIds.includes(s.id));
+    }, [students, selectedStudentIds]);
+
+    // Lọc danh sách học sinh CHƯA ĐƯỢC TẠO HỌC PHÍ cho lớp học này
+    const studentsWithoutTuition = useMemo(() => {
+        return selectedStudents.filter((s) => !s.has_tuition);
+    }, [selectedStudents]);
+
+    const [selectedTuitionStudentIds, setSelectedTuitionStudentIds] = useState<number[]>([]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedStudentIds.length === 0) return;
 
+        if (studentsWithoutTuition.length > 0) {
+            setSelectedTuitionStudentIds(studentsWithoutTuition.map((s) => s.id));
+            setShowTuitionConfirm(true);
+        } else {
+            // Tất cả học sinh đã có học phí cho lớp này
+            executeSubmit(0, []);
+        }
+    };
+
+    const toggleTuitionStudent = (id: number) => {
+        setSelectedTuitionStudentIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAllTuitionStudents = () => {
+        if (selectedTuitionStudentIds.length === studentsWithoutTuition.length) {
+            setSelectedTuitionStudentIds([]);
+        } else {
+            setSelectedTuitionStudentIds(studentsWithoutTuition.map((s) => s.id));
+        }
+    };
+
+    const executeSubmit = (createTuition: number, tuitionStudentIds: number[] = []) => {
         setIsSubmitting(true);
 
         router.post(
             `/classes/${classId}/students/add`,
-            { student_ids: selectedStudentIds },
+            {
+                student_ids: selectedStudentIds,
+                create_tuition: createTuition,
+                tuition_student_ids: createTuition ? tuitionStudentIds : [],
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSubmitting(false);
                     setSelectedStudentIds([]);
+                    setShowTuitionConfirm(false);
                     onClose();
                 },
                 onError: () => {
@@ -204,9 +247,16 @@ export default function AddStudentModal({
                                             )}
                                         </div>
                                     </div>
-                                    <Badge variant={isSelected ? 'active' : 'info'} className="shrink-0 whitespace-nowrap">
-                                        {isSelected ? 'Đã chọn' : 'Chưa chọn'}
-                                    </Badge>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {student.has_tuition ? (
+                                            <span className="text-2xs font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                                                Đã có học phí
+                                            </span>
+                                        ) : null}
+                                        <Badge variant={isSelected ? 'active' : 'info'} className="whitespace-nowrap">
+                                            {isSelected ? 'Đã chọn' : 'Chưa chọn'}
+                                        </Badge>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -227,6 +277,121 @@ export default function AddStudentModal({
                     </Button>
                 </div>
             </form>
+
+            {showTuitionConfirm && (
+                <Modal
+                    isOpen={showTuitionConfirm}
+                    onClose={() => !isSubmitting && setShowTuitionConfirm(false)}
+                    title="Xác Nhận Tạo Học Phí Cho Học Sinh"
+                    maxWidth="lg"
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <HelpCircle className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1 text-sm">
+                                <p className="font-semibold text-gray-900">
+                                    Có tạo học phí cho các học sinh chưa có học phí?
+                                </p>
+                                <p className="text-gray-600 leading-relaxed text-xs">
+                                    Lớp <span className="font-semibold text-gray-900">{className}</span> có <span className="font-semibold text-emerald-800">{studentsWithoutTuition.length} học sinh</span> chưa được tạo học phí. Chọn các học sinh bạn muốn tự động sinh hồ sơ học phí:
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* List of students without tuition with checkboxes */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <button
+                                    type="button"
+                                    onClick={handleSelectAllTuitionStudents}
+                                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 cursor-pointer select-none"
+                                >
+                                    <div
+                                        className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                            selectedTuitionStudentIds.length === studentsWithoutTuition.length
+                                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                : 'border-gray-300 bg-white'
+                                        }`}
+                                    >
+                                        {selectedTuitionStudentIds.length === studentsWithoutTuition.length && (
+                                            <Check className="w-3 h-3 stroke-[3]" />
+                                        )}
+                                    </div>
+                                    Chọn tất cả học sinh ({selectedTuitionStudentIds.length}/{studentsWithoutTuition.length})
+                                </button>
+                            </div>
+
+                            <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-xl border border-gray-200">
+                                {studentsWithoutTuition.map((st) => {
+                                    const isChecked = selectedTuitionStudentIds.includes(st.id);
+                                    return (
+                                        <div
+                                            key={st.id}
+                                            onClick={() => toggleTuitionStudent(st.id)}
+                                            className={`cursor-pointer flex items-center justify-between gap-3 p-2.5 rounded-lg border transition-all select-none ${
+                                                isChecked
+                                                    ? 'bg-white border-emerald-400 ring-1 ring-emerald-400/40 shadow-2xs'
+                                                    : 'bg-white/60 border-gray-200 hover:bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <div
+                                                    className={`w-4.5 h-4.5 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                                        isChecked
+                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                            : 'border-gray-300 bg-white'
+                                                    }`}
+                                                >
+                                                    {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="font-semibold text-gray-900 text-xs">
+                                                        {st.full_name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="shrink-0 text-2xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono border border-gray-200">
+                                                {st.student_code}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2 border-t border-gray-100">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setShowTuitionConfirm(false)}
+                                disabled={isSubmitting}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => executeSubmit(0, [])}
+                                isLoading={isSubmitting}
+                            >
+                                Không tạo học phí
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="success"
+                                onClick={() => executeSubmit(selectedTuitionStudentIds.length > 0 ? 1 : 0, selectedTuitionStudentIds)}
+                                isLoading={isSubmitting}
+                            >
+                                {selectedTuitionStudentIds.length > 0
+                                    ? `Có, tạo học phí (${selectedTuitionStudentIds.length} HS)`
+                                    : 'Có, tạo học phí'}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </Modal>
     );
 }

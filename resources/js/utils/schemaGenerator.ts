@@ -32,7 +32,7 @@ export function generateOrganizationSchema(params: SchemaOrganizationParams = {}
     return {
         '@context': 'https://schema.org',
         '@type': 'EducationalOrganization',
-        'name': params.name || 'SAM EDU - Hệ Thống Quản Lý Giáo Dục Đa Trung Tâm',
+        'name': params.name || 'SAM EDU - Hệ Thống Quản Lý Trung Tâm Giáo Dục',
         'url': baseUrl,
         'logo': params.logo || `${baseUrl}/logo.png`,
         'contactPoint': {

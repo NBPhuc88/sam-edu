@@ -1,4 +1,4 @@
-# Sam Edu - Hệ thống Quản lý Giáo dục Đa Trung tâm (SaaS)
+# Sam Edu - Hệ thống Quản lý Trung tâm Giáo dục (SaaS)
 
 ![Laravel](https://img.shields.io/badge/Laravel-13.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -7,7 +7,7 @@
 ![Inertia.js](https://img.shields.io/badge/Inertia.js-v3.0-9553E9?style=for-the-badge&logo=inertia&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-**sam-edu** là hệ thống phần mềm quản lý giáo dục đa trung tâm đào tạo theo mô hình SaaS (Software as a Service). Hệ thống hỗ trợ dùng thử 14 ngày, tự động tính toán thời hạn hết hạn (`expires_at`), và tích hợp cổng thanh toán **ZaloPay QR Code v2** để tự động gia hạn gói dịch vụ.
+**sam-edu** là hệ thống phần mềm quản lý trung tâm giáo dục theo mô hình SaaS (Software as a Service). Hệ thống hỗ trợ dùng thử  30 ngày, tự động tính toán thời hạn hết hạn (`expires_at`).
 
 ---
 
@@ -44,7 +44,6 @@
   - Center Admin: Chỉ truy cập trung tâm được phân công trong `admin_centers`.
   - Teacher: Chỉ truy cập các lớp học phụ trách giảng dạy.
   - Student: Bị từ chối xem thống kê hệ thống (HTTP 403).
-- **Thanh toán & Đăng ký gói (SaaS)**: Tích hợp ZaloPay QR Code v2 tự động tạo đơn hàng, nhận Webhook callback và nâng cấp/gia hạn gói tự động cho trung tâm.
 
 ---
 

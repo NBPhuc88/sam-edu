@@ -1,6 +1,5 @@
-import React from 'react';
-import { Mic, Clock, Volume2 } from 'lucide-react';
 import MediaUploader from '@/components/ui/MediaUploader';
+import { Clock,Mic } from 'lucide-react';
 
 interface Props {
     metadata: {

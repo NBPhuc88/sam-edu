@@ -8,7 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface AdminServiceInterface
 {
-    public function getPaginatedAdmins(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator;
+    public function getPaginatedAdmins(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, int|string|null $role = null): LengthAwarePaginator;
 
     /**
      * @param array<string, mixed> $data

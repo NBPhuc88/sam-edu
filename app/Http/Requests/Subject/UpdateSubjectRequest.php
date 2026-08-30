@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Subject;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -34,7 +35,7 @@ class UpdateSubjectRequest extends FormRequest
             'total_sessions'   => ['nullable', 'integer', 'min:1', 'max:365'],
             'duration_minutes' => ['nullable', 'integer', 'min:15', 'max:1440'],
             'tuition_fee'      => ['nullable', 'numeric', 'min:0', 'max:1000000000'],
-            'status'           => ['sometimes', 'required', 'string', 'in:active,inactive'],
+            'status'           => ['sometimes', 'required', 'integer', Rule::in(Constant::SUBJECT_STATUSES)],
         ];
     }
 

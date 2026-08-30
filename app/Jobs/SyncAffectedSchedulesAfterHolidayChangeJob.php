@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Constant;
 use App\Models\ClassSchedule;
 use App\Repositories\Holiday\HolidayRepositoryInterface;
 use App\Services\Schedule\ClassScheduleServiceInterface;
@@ -57,7 +58,7 @@ class SyncAffectedSchedulesAfterHolidayChangeJob implements ShouldQueue
 
         // 1. Lấy tất cả lịch học đang hoạt động có ngày kết thúc chưa kết thúc hoặc trong tương lai
         $query = ClassSchedule::query()
-            ->where('status', 'active')
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->whereHas('classSubject', function ($q) use ($today) {
                 $q->where(function ($subQ) use ($today) {
                     $subQ->whereNull('end_date')

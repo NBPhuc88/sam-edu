@@ -66,13 +66,40 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >   - **Đề thi (`exams`)**: `EX0000001`
 > - **Xử lý Backend**: Trong Service/Repository, khi trường `code` rỗng hoặc null, tự động tính toán mã kế tiếp duy nhất theo tiền tố quy định và đảm bảo không bị trùng lặp.
 > [!IMPORTANT]
-> **7. QUY TẮC KIỂU DỮ LIỆU CỘT `status` (STATUS DATA TYPES)**:
+> **7. QUY TẮC GIÁ TRỊ SỐ NGUYÊN BẮT ĐẦU TỪ 1 VÀ GIÁ TRỊ 0 DÀNH CHO LỌC "TẤT CẢ" (1-BASED INTEGER CONSTANTS & 0 FOR ALL-FILTER)**:
 >
-> - **Bảng `classes` & `students` sử dụng kiểu số nguyên `tinyint`**:
->   - **`classes.status`**: `0` = Tạm ngưng (`inactive`), `1` = Đang học (`active`), `2` = Đã hoàn thành (`completed`).
->   - **`students.status`**: `0` = Tạm ngưng/Khóa (`inactive`), `1` = Đang học (`active`), `2` = Đã tốt nghiệp (`graduated`).
-> - **Khi viết truy vấn Backend**: Bắt buộc so sánh bằng số nguyên: `->where('status', 1)` hoặc `->whereIn('status', [1, 2])`. **Tuyệt đối không so sánh bằng chuỗi** `where('status', 'active')` để tránh lỗi so sánh kiểu MySQL làm mất dữ liệu.
+> - **Tất cả giá trị enum / status / role / type / gender / method lưu DB BẮT BUỘC là số nguyên bắt đầu từ 1 (`>= 1`)**:
+>   - **`classes.status`**: `1` = Đang học (`active`), `2` = Tạm ngưng (`inactive`), `3` = Đã hoàn thành (`completed`), `4` = Đã đóng (`closed`).
+>   - **`students.status`**: `1` = Đang học (`active`), `2` = Tạm ngưng/Khóa (`inactive`), `3` = Đã tốt nghiệp (`graduated`).
+>   - **`centers.status`**: `1` = Đang hoạt động (`active`), `2` = Tạm ngưng (`paused`), `3` = Đã hết hạn (`expired`).
+>   - **`admins.role`**: `1` = `super_admin`, `2` = `admin`.
+> - **Quy ước giá trị `0` dành riêng cho Filter "Tất cả"**: Tuyệt đối không dùng `all` hoặc `''` cho filter. Khi filter gửi `0` (hoặc rỗng), backend kiểm tra `if (! empty($status))` sẽ nhận `empty(0)` là `true` và bỏ qua điều kiện lọc.
+> - **Khi viết truy vấn Backend**: Bắt buộc so sánh bằng số nguyên: `->where('status', Constant::CLASS_STATUS_ACTIVE)`. **Tuyệt đối không so sánh bằng chuỗi** `where('status', 'active')`.
 > - Chi tiết toàn bộ các bảng xem tại: [`.agents/DATABASE_STATUS_CONVENTIONS.md`](file:///home/phuc/Desktop/web/projects/sam-edu/.agents/DATABASE_STATUS_CONVENTIONS.md).
+
+> [!IMPORTANT]
+> **8. QUY TẮC NHẤT QUÁN TÊN TRƯỜNG & TUYỆT ĐỐI KHÔNG DÙNG STRING MATCH / FALLBACK TRONG MODEL & BACKEND**:
+>
+> - **Chỉ sử dụng 1 tên trường và 1 kiểu dữ liệu số nguyên duy nhất**: Mỗi thực thể / quan hệ chỉ được phép sử dụng duy nhất một tên trường chuẩn xuyên suốt toàn bộ hệ thống (Database, Migration, Model, FormRequest, Service, Repository, Inertia Shared Props, Typescript Interfaces, Form components).
+> - **TUYỆT ĐỐI KHÔNG VIẾT STRING FALLBACK HOẶC STRING MATCH TRONG MODEL/BACKEND**:
+>   - Tuyệt đối **KHÔNG** viết mutator/match nhận chuỗi kiểu `$this->attributes['status'] = match ($value) { 'draft' => Constant::EXAM_STATUS_DRAFT, ... }`. Model chỉ cast integer `['status' => 'integer']` và nhận dữ liệu số nguyên chuẩn.
+>   - Mọi nơi trong Controller, Service, Seeder, Test, Frontend **BẮT BUỘC** truyền trực tiếp hằng số integer `Constant::*` (hoặc hằng số TypeScript `CONSTANT_*`).
+>   - Tuyệt đối **KHÔNG** khai báo kiểu `subscription_plan_id?: number; subscription_plan?: number;` trong TypeScript interface.
+>   - Tuyệt đối **KHÔNG** viết logic gộp/kiểm tra fallback kiểu `if ($this->has('plan_id') && ! $this->has('plan_code'))` hay `$data['plan_id'] ?? $data['plan_code']`.
+> - **Quy định cụ thể cho gói dịch vụ SaaS**:
+>   - Bảng `centers`: Bắt buộc chỉ dùng `subscription_plan_id` (`BIGINT UNSIGNED` khóa ngoại tham chiếu `subscription_plans.id`). Không dùng `subscription_plan`.
+>   - Bảng `center_subscriptions`: Bắt buộc chỉ dùng `plan_id` (`BIGINT UNSIGNED` khóa ngoại tham chiếu `subscription_plans.id`). Không dùng `plan_code`.
+
+> [!IMPORTANT]
+> **9. QUY TẮC GỬI DỮ LIỆU SỐ NGUYÊN TỪ PHÍA FRONTEND (INTEGER FIELD & FILTER PARAMS RULES)**:
+>
+> - **Bên gửi (Frontend) BẮT BUỘC gửi giá trị số nguyên (`number` / `integer`) & LÀM SẠCH PARAMS TRƯỚC KHI GỬI**:
+>   - Đối với tất cả các trường có kiểu dữ liệu là số nguyên trong cơ sở dữ liệu (`status`, `role`, `plan_id`, `subscription_plan_id`, `gender`, `plan_type`, `center_id`, `max_students`, `max_classes`, v.v.), phía Frontend (Form submissions, Select dropdowns, URL Filter query params) **BẮT BUỘC phải gửi giá trị kiểu số nguyên (`Number(...)` hoặc hằng số `ENUM`)**.
+>   - **Nghiêm cấm gửi chuỗi định danh thay cho số**: Tuyệt đối **KHÔNG** gửi chuỗi như `'active'`, `'inactive'`, `'scheduled'`, `'in_progress'`, `'completed'`, `'cancelled'`, `'admin'`, `'super_admin'`, `'paid'`, `'unpaid'` lên server.
+>   - **Xử lý lựa chọn "Tất cả" / Không lọc**: Khi người dùng chọn "Tất cả" (`''`) hoặc để trống (`''`), Frontend **BẮT BUỘC phải loại bỏ hoàn toàn trường đó khỏi request params** (`undefined` hoặc không đưa key đó vào object params gửi lên `router.get()`), tuyệt đối không gửi chuỗi rỗng `""` hay `''` lên server.
+> - **Xử lý Phía Backend (FormRequests & FilterRequests)**:
+>   - Các `FormRequest` và `FilterRequest` validate đúng kiểu `'nullable', 'integer'` (kèm `Rule::in(...)`).
+>   - **KHÔNG sử dụng `prepareForValidation()`** để can thiệp / biến đổi dữ liệu request. Phía Frontend có trách nhiệm đảm bảo dữ liệu gửi lên đúng chuẩn sạch sẽ.
 
 ---
 

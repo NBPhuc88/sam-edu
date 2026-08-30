@@ -1,20 +1,20 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
-    LayoutDashboard,
-    Mail,
-    MapPin,
-    Menu,
-    Phone,
-    Sparkles,
-    X,
+ArrowRight,
+LayoutDashboard,
+Mail,
+MapPin,
+Menu,
+Phone,
+Sparkles,
+X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import AppLogo from '../components/common/AppLogo';
 import SeoHead from '../components/common/SeoHead';
 import Button from '../components/ui/Button';
 import ScrollToTop from '../components/ui/ScrollToTop';
-import { generateOrganizationSchema, generateWebSiteSchema } from '../utils/schemaGenerator';
+import { generateOrganizationSchema,generateWebSiteSchema } from '../utils/schemaGenerator';
 
 interface PublicLayoutProps {
     children: React.ReactNode;
@@ -44,7 +44,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
     const pageDescription =
         seo?.description ||
         description ||
-        'Giải Pháp Quản Lý Giáo Dục Đa Trung Tâm toàn diện: tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực.';
+        'Giải Pháp Quản Lý Trung Tâm Giáo Dục toàn diện: tối ưu hóa quy trình quản lý học sinh, điểm danh thông minh, xếp lịch học, khảo thí 9 dạng câu hỏi và chat lớp học thời gian thực.';
     const pageKeywords =
         seo?.keywords ||
         keywords ||
@@ -240,7 +240,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                                 size="sm"
                             />
                             <p className="max-w-md text-xs leading-relaxed text-gray-400">
-                                Hệ sinh thái chuyển đổi số giáo dục đa trung tâm toàn diện: Chuẩn hóa vận hành học vụ, tự động xếp lịch &amp; điểm danh, tích hợp khảo thí trực tuyến 9 dạng câu hỏi, chat nhóm lớp học trực tuyến và quản trị phân quyền an toàn, hiệu quả.
+                                Hệ sinh thái chuyển đổi số trung tâm giáo dục toàn diện: Chuẩn hóa vận hành học vụ, tự động xếp lịch &amp; điểm danh, tích hợp khảo thí trực tuyến 9 dạng câu hỏi, chat nhóm lớp học trực tuyến và quản trị phân quyền an toàn, hiệu quả.
                             </p>
                             <div className="space-y-1.5 pt-2 text-xs text-gray-300">
                                 <div className="flex items-center gap-2">
@@ -315,11 +315,10 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
                         {/* Service Highlights */}
                         <div className="space-y-3">
                             <h4 className="text-sm font-semibold text-white">
-                                Cổng Thanh Toán
+                                Hỗ Trợ Gia Hạn
                             </h4>
                             <p className="text-xs text-gray-400">
-                                Tích hợp thanh toán gia hạn trung tâm tức thì
-                                bằng ứng dụng ZaloPay QR Code v2.
+                                Hệ thống sẽ tự động gửi email thông báo trước 7 ngày khi gói dịch vụ sắp hết hạn.
                             </p>
                             <div className="pt-2">
                                 <Link href="/login">

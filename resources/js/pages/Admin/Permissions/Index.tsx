@@ -1,6 +1,16 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Modal from '@/components/ui/Modal';
 import {
-    Check,
+    ROLE_ADMIN,
+    ROLE_STUDENT,
+    ROLE_SUPER_ADMIN,
+    ROLE_TEACHER,
+} from '@/constants/enums';
+import AppLayout from '@/layouts/AppLayout';
+import { Head, router } from '@inertiajs/react';
+import {
     CheckSquare,
     ChevronDown,
     ChevronRight,
@@ -20,11 +30,6 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
-import Modal from '@/components/ui/Modal';
-import AppLayout from '@/layouts/AppLayout';
 
 interface PermissionAction {
     id: number;
@@ -42,14 +47,14 @@ interface PermissionModule {
 }
 
 interface RoleInfo {
-    key: string;
+    key: number;
     name: string;
     description: string;
 }
 
 interface Props {
     modules: PermissionModule[];
-    roleGrants: Record<string, string[]>;
+    roleGrants: Record<number | string, string[]>;
     roles: RoleInfo[];
 }
 
@@ -62,17 +67,15 @@ const ACTION_BADGES: Record<string, { label: string; color: string }> = {
     grade:  { label: 'Chấm', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
 };
 
-const ROLE_ICONS: Record<string, React.ReactNode> = {
-    super_admin: <ShieldAlert className="h-5 w-5 text-purple-600" />,
-    admin:       <ShieldCheck className="h-5 w-5 text-emerald-600" />,
-    teacher:     <UserCheck className="h-5 w-5 text-blue-600" />,
-    student:     <User className="h-5 w-5 text-amber-600" />,
+const ROLE_ICONS: Record<number, React.ReactNode> = {
+    [ROLE_SUPER_ADMIN]: <ShieldAlert className="h-5 w-5 text-purple-600" />,
+    [ROLE_ADMIN]:       <ShieldCheck className="h-5 w-5 text-emerald-600" />,
+    [ROLE_TEACHER]:     <UserCheck className="h-5 w-5 text-blue-600" />,
+    [ROLE_STUDENT]:     <User className="h-5 w-5 text-amber-600" />,
 };
 
 export default function PermissionIndex({ modules = [], roleGrants = {}, roles = [] }: Props) {
-    const { flash } = usePage<any>().props;
-
-    const [selectedRole, setSelectedRole] = useState<string>('admin');
+    const [selectedRole, setSelectedRole] = useState<number>(ROLE_ADMIN);
     const [search, setSearch] = useState<string>('');
     const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
@@ -83,7 +86,7 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
     });
 
     // Quản lý state quyền của các role (đồng bộ hai chiều với props server)
-    const [currentGrants, setCurrentGrants] = useState<Record<string, string[]>>(roleGrants);
+    const [currentGrants, setCurrentGrants] = useState<Record<number | string, string[]>>(roleGrants);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isSyncing, setIsSyncing] = useState<boolean>(false);
     const [resetModalOpen, setResetModalOpen] = useState<boolean>(false);
@@ -107,7 +110,7 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
         });
     }, [modules]);
 
-    const isSuperAdminRole = selectedRole === 'super_admin';
+    const isSuperAdminRole = Number(selectedRole) === ROLE_SUPER_ADMIN;
 
     // Danh sách quyền hiện tại của role đang chọn
     const activeRolePermissions = currentGrants[selectedRole] || [];
@@ -352,7 +355,7 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                     {roles.map((role) => {
                         const isSelected = selectedRole === role.key;
                         const grantsCount =
-                            role.key === 'super_admin'
+                            role.key === ROLE_SUPER_ADMIN
                                 ? totalPermissionsCount
                                 : (currentGrants[role.key] || []).length;
 
@@ -376,7 +379,7 @@ export default function PermissionIndex({ modules = [], roleGrants = {}, roles =
                                     </div>
                                     <Badge
                                         variant={
-                                            role.key === 'super_admin'
+                                            role.key === ROLE_SUPER_ADMIN
                                                 ? 'active'
                                                 : grantsCount > 0
                                                 ? 'pending'

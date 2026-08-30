@@ -1,70 +1,91 @@
-import React, { useState } from 'react';
-import {
-    Plus,
-    Trash2,
-    Copy,
-    ChevronUp,
-    ChevronDown,
-    CheckCircle2,
-    ListChecks,
-    HelpCircle,
-    FileText,
-    GitMerge,
-    ArrowUpDown,
-    MapPin,
-    AlertTriangle,
-    PenTool,
-    Mic,
-    Sparkles,
-    Image as ImageIcon,
-    Volume2,
-    Headphones,
-    BookOpen,
-    Layers,
-    Edit3,
-    AlignLeft,
-    ChevronRight,
-} from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Modal from '@/components/ui/Modal';
-import MediaUploader from '@/components/ui/MediaUploader';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
-import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
-import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
-import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
+import MediaUploader from '@/components/ui/MediaUploader';
+import Modal from '@/components/ui/Modal';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
+} from '@/constants/enums';
+import {
+AlertCircle,
+AlertTriangle,
+AlignLeft,
+ArrowUpDown,
+BookOpen,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+ChevronUp,
+Copy,
+Edit3,
+FileText,
+GitMerge,
+Headphones,
+HelpCircle,
+Image as ImageIcon,
+Layers,
+ListChecks,
+MapPin,
+Mic,
+PenTool,
+Plus,
+Sparkles,
+Trash2
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
+import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
+import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
 import DragDropClozeEditor from './QuestionEditors/DragDropClozeEditor';
+import EssayEditor from './QuestionEditors/EssayEditor';
+import FillInBlankEditor from './QuestionEditors/FillInBlankEditor';
+import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
 import MatchingEditor from './QuestionEditors/MatchingEditor';
 import MatchingImageEditor from './QuestionEditors/MatchingImageEditor';
+import MultipleChoiceEditor from './QuestionEditors/MultipleChoiceEditor';
 import OrderingEditor from './QuestionEditors/OrderingEditor';
-import DiagramLabellingEditor from './QuestionEditors/DiagramLabellingEditor';
-import FindMistakeEditor from './QuestionEditors/FindMistakeEditor';
-import EssayEditor from './QuestionEditors/EssayEditor';
-import AudioRecordEditor from './QuestionEditors/AudioRecordEditor';
+import SingleChoiceEditor from './QuestionEditors/SingleChoiceEditor';
+import TrueFalseEditor from './QuestionEditors/TrueFalseEditor';
 import {
-    ExamQuestionData,
-    ExamSectionData,
-    ExamSkill,
-    EXAM_SKILLS,
-    QuestionType,
-    QUESTION_TYPES,
+EXAM_SKILLS,
+ExamQuestionData,
+ExamSectionData,
+ExamSkill,
+QUESTION_TYPES,
+QuestionType,
 } from './types';
 
 interface Props {
     sections: ExamSectionData[];
     onChangeSections: (sections: ExamSectionData[]) => void;
     examMaxScore: number | string;
+    errors?: Record<string, string>;
 }
 
 export default function QuestionBuilder({
     sections = [],
     onChangeSections,
     examMaxScore = 10,
+    errors = {},
 }: Props) {
     // Modal states
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
-    const [newSectionSkill, setNewSectionSkill] = useState<ExamSkill>('reading');
+    const [newSectionSkill, setNewSectionSkill] = useState<ExamSkill>(SKILL_READING);
     const [newSectionTitle, setNewSectionTitle] = useState('');
     const [newSectionDescription, setNewSectionDescription] = useState('');
 
@@ -91,6 +112,98 @@ export default function QuestionBuilder({
     const [expandedQuestionKeys, setExpandedQuestionKeys] = useState<string[]>(['0-0']);
     const [expandedImageKeys, setExpandedImageKeys] = useState<string[]>([]);
 
+    // --- Helper to extract section-level errors ---
+    const getSectionErrors = (secIdx: number) => {
+        if (!errors || Object.keys(errors).length === 0) return [];
+        const prefix = `sections.${secIdx}.`;
+        return Object.entries(errors)
+            .filter(([key]) => key.startsWith(prefix) && !key.startsWith(`sections.${secIdx}.questions.`))
+            .map(([key, message]) => ({
+                key,
+                field: key.replace(prefix, ''),
+                message,
+            }));
+    };
+
+    // --- Helper to extract all errors for a specific question ---
+    const getQuestionErrors = (secIdx: number, qIdx: number) => {
+        if (!errors || Object.keys(errors).length === 0) return [];
+        const prefix = `sections.${secIdx}.questions.${qIdx}.`;
+        const legacyPrefix = `questions.${qIdx}.`;
+        return Object.entries(errors)
+            .filter(([key]) => key.startsWith(prefix) || key.startsWith(legacyPrefix) || key === `sections.${secIdx}.questions.${qIdx}` || key === `questions.${qIdx}`)
+            .map(([key, message]) => {
+                let field = '';
+                if (key.startsWith(prefix)) {
+                    field = key.replace(prefix, '');
+                } else if (key.startsWith(legacyPrefix)) {
+                    field = key.replace(legacyPrefix, '');
+                } else {
+                    field = 'general';
+                }
+                return { key, field, message };
+            });
+    };
+
+    // --- Helper to get error message for a specific question field ---
+    const getQuestionFieldError = (secIdx: number, qIdx: number, field: string): string | undefined => {
+        if (!errors || Object.keys(errors).length === 0) return undefined;
+        const directKey = `sections.${secIdx}.questions.${qIdx}.${field}`;
+        if (errors[directKey]) return errors[directKey];
+        const legacyKey = `questions.${qIdx}.${field}`;
+        if (errors[legacyKey]) return errors[legacyKey];
+
+        const prefix = `sections.${secIdx}.questions.${qIdx}.${field}.`;
+        const found = Object.entries(errors).find(([k]) => k.startsWith(prefix));
+        if (found) return found[1];
+        return undefined;
+    };
+
+    // --- Auto-expand sections & questions containing validation errors and smooth scroll ---
+    useEffect(() => {
+        if (!errors || Object.keys(errors).length === 0) return;
+
+        const sectionsToExpand = new Set<number>(expandedSectionIndexes);
+        const questionsToExpand = new Set<string>(expandedQuestionKeys);
+        let firstErrorElementId: string | null = null;
+
+        sections.forEach((sec, sIdx) => {
+            const secErrors = getSectionErrors(sIdx);
+            let sectionHasError = secErrors.length > 0;
+
+            (sec.questions || []).forEach((_, qIdx) => {
+                const qErrors = getQuestionErrors(sIdx, qIdx);
+                if (qErrors.length > 0) {
+                    sectionHasError = true;
+                    const qKey = `${sIdx}-${qIdx}`;
+                    questionsToExpand.add(qKey);
+                    if (!firstErrorElementId) {
+                        firstErrorElementId = `question-card-${sIdx}-${qIdx}`;
+                    }
+                }
+            });
+
+            if (sectionHasError) {
+                sectionsToExpand.add(sIdx);
+                if (!firstErrorElementId && secErrors.length > 0) {
+                    firstErrorElementId = `section_block_${sec.tempId || sec.id || sIdx}`;
+                }
+            }
+        });
+
+        setExpandedSectionIndexes(Array.from(sectionsToExpand));
+        setExpandedQuestionKeys(Array.from(questionsToExpand));
+
+        if (firstErrorElementId) {
+            setTimeout(() => {
+                const el = document.getElementById(firstErrorElementId!);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 200);
+        }
+    }, [errors]);
+
     // Calculate total questions and total score across all sections
     const totalQuestionsCount = sections.reduce((sum, sec) => sum + (sec.questions?.length || 0), 0);
     const totalScore = sections.reduce(
@@ -101,7 +214,7 @@ export default function QuestionBuilder({
     // --- Section Management ---
     const handleOpenAddSectionModal = () => {
         const nextNum = sections.length + 1;
-        setNewSectionSkill('reading');
+        setNewSectionSkill(SKILL_READING);
         setNewSectionTitle(`Phần ${nextNum}: Đọc hiểu (Reading)`);
         setNewSectionDescription('');
         setIsAddSectionModalOpen(true);
@@ -236,7 +349,7 @@ export default function QuestionBuilder({
             content: '',
             score: 1.00,
             image_url: null,
-            audio_url: section.skill === 'listening' ? '' : null,
+            audio_url: section.skill === SKILL_LISTENING ? '' : null,
             options: getDefaultOptions(type),
             correct_answer: getDefaultCorrectAnswer(type),
             explanation: '',
@@ -328,14 +441,14 @@ export default function QuestionBuilder({
     // --- Defaults & Helpers ---
     const getDefaultOptions = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
+            case QUESTION_TYPE_SINGLE_CHOICE:
                 return [
                     { id: 'A', text: '' },
                     { id: 'B', text: '' },
                     { id: 'C', text: '' },
                     { id: 'D', text: '' },
                 ];
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return [
                     { id: 'A', text: '' },
                     { id: 'B', text: '' },
@@ -343,13 +456,13 @@ export default function QuestionBuilder({
                     { id: 'D', text: '' },
                     { id: 'E', text: '' },
                 ];
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return [
                     { id: 'TRUE', label: 'TRUE' },
                     { id: 'FALSE', label: 'FALSE' },
                     { id: 'NOT_GIVEN', label: 'NOT GIVEN (Không có thông tin)' },
                 ];
-            case 'drag_drop_cloze':
+            case QUESTION_TYPE_DRAG_DROP_CLOZE:
                 return {
                     words: [
                         { id: 'w1', text: 'destination' },
@@ -357,7 +470,7 @@ export default function QuestionBuilder({
                         { id: 'w3', text: 'mountain' },
                     ],
                 };
-            case 'matching':
+            case QUESTION_TYPE_MATCHING:
                 return {
                     left_items: [
                         { id: 'L1', label: 'Paragraph A' },
@@ -370,7 +483,7 @@ export default function QuestionBuilder({
                         { id: 'R3', text: 'iii. Tiêu đề mục 3' },
                     ],
                 };
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return {
                     sentences: [
                         { id: 'S1', text: 'The cat is sleeping under the tree.' },
@@ -384,7 +497,7 @@ export default function QuestionBuilder({
                         { id: 'IMG_D', image_url: '', label: 'Hình D (tùy chọn thừa)' },
                     ],
                 };
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return {
                     left_items: [
                         { id: 'L1', label: '1. Although it was raining heavily,' },
@@ -398,13 +511,13 @@ export default function QuestionBuilder({
                         { id: 'R4', text: 'D. she didn\'t attend the meeting.' },
                     ],
                 };
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return [
                     { id: 't1', text: 'Cụm từ 1' },
                     { id: 't2', text: 'Cụm từ 2' },
                     { id: 't3', text: 'Cụm từ 3' },
                 ];
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return {
                     labels: [
                         { id: 'loc_1', text: 'Vị trí 1' },
@@ -412,7 +525,7 @@ export default function QuestionBuilder({
                     ],
                     map_pins: ['A', 'B', 'C', 'D'],
                 };
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return {
                     sentence_segments: [
                         { id: 's1', text: 'Đoạn đầu câu ', underlined: false },
@@ -429,32 +542,30 @@ export default function QuestionBuilder({
 
     const getDefaultCorrectAnswer = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
-                return 'A';
-            case 'multiple_choice':
-                return ['A', 'B'];
-            case 'true_false_not_given':
-                return 'TRUE';
-            case 'fill_in_blank':
+            case QUESTION_TYPE_SINGLE_CHOICE:
+                return null;
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
+                return [];
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
+                return null;
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return {
-                    blank_1: { accepted_answers: [''], case_sensitive: false },
+                    blank_1: { accepted_answers: [], case_sensitive: false },
                 };
-            case 'drag_drop_cloze':
-                return {
-                    blank_1: 'w1',
-                };
-            case 'matching':
-                return { L1: 'R1', L2: 'R2', L3: 'R3' };
-            case 'matching_image':
-                return { S1: 'IMG_A', S2: 'IMG_B', S3: 'IMG_C' };
-            case 'matching_sentences':
-                return { L1: 'R1', L2: 'R2', L3: 'R3' };
-            case 'ordering':
-                return ['t1', 't2', 't3'];
-            case 'diagram_labelling':
-                return { loc_1: 'A', loc_2: 'B' };
-            case 'find_mistake':
-                return 'A';
+            case QUESTION_TYPE_DRAG_DROP_CLOZE:
+                return {};
+            case QUESTION_TYPE_MATCHING:
+                return {};
+            case QUESTION_TYPE_MATCHING_IMAGE:
+                return {};
+            case QUESTION_TYPE_MATCHING_SENTENCES:
+                return {};
+            case QUESTION_TYPE_ORDERING:
+                return [];
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
+                return {};
+            case QUESTION_TYPE_FIND_MISTAKE:
+                return null;
             default:
                 return null;
         }
@@ -462,13 +573,13 @@ export default function QuestionBuilder({
 
     const getDefaultMetadata = (type: QuestionType) => {
         switch (type) {
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return { max_select: 2 };
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return { variant: 'T_F_NG' };
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return { word_limit: '', word_bank: [] };
-            case 'essay':
+            case QUESTION_TYPE_ESSAY:
                 return {
                     min_words: 250,
                     rubrics: [
@@ -478,7 +589,7 @@ export default function QuestionBuilder({
                         { criteria: 'Grammatical Range', max_score: 2.5 },
                     ],
                 };
-            case 'audio_record':
+            case QUESTION_TYPE_AUDIO_RECORD:
                 return { prep_time_seconds: 60, max_record_duration_seconds: 120 };
             default:
                 return {};
@@ -487,29 +598,29 @@ export default function QuestionBuilder({
 
     const getTypeIcon = (type: QuestionType) => {
         switch (type) {
-            case 'single_choice':
+            case QUESTION_TYPE_SINGLE_CHOICE:
                 return <CheckCircle2 className="h-4 w-4 text-blue-600" />;
-            case 'multiple_choice':
+            case QUESTION_TYPE_MULTIPLE_CHOICE:
                 return <ListChecks className="h-4 w-4 text-indigo-600" />;
-            case 'true_false_not_given':
+            case QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN:
                 return <HelpCircle className="h-4 w-4 text-emerald-600" />;
-            case 'fill_in_blank':
+            case QUESTION_TYPE_FILL_IN_BLANK:
                 return <FileText className="h-4 w-4 text-amber-600" />;
-            case 'matching':
+            case QUESTION_TYPE_MATCHING:
                 return <GitMerge className="h-4 w-4 text-purple-600" />;
-            case 'matching_image':
+            case QUESTION_TYPE_MATCHING_IMAGE:
                 return <ImageIcon className="h-4 w-4 text-teal-600" />;
-            case 'matching_sentences':
+            case QUESTION_TYPE_MATCHING_SENTENCES:
                 return <GitMerge className="h-4 w-4 text-violet-600" />;
-            case 'ordering':
+            case QUESTION_TYPE_ORDERING:
                 return <ArrowUpDown className="h-4 w-4 text-cyan-600" />;
-            case 'diagram_labelling':
+            case QUESTION_TYPE_DIAGRAM_LABELLING:
                 return <MapPin className="h-4 w-4 text-teal-600" />;
-            case 'find_mistake':
+            case QUESTION_TYPE_FIND_MISTAKE:
                 return <AlertTriangle className="h-4 w-4 text-rose-600" />;
-            case 'essay':
+            case QUESTION_TYPE_ESSAY:
                 return <PenTool className="h-4 w-4 text-orange-600" />;
-            case 'audio_record':
+            case QUESTION_TYPE_AUDIO_RECORD:
                 return <Mic className="h-4 w-4 text-pink-600" />;
             default:
                 return <HelpCircle className="h-4 w-4 text-gray-500" />;
@@ -518,7 +629,7 @@ export default function QuestionBuilder({
 
     const getSkillConfig = (skill: ExamSkill) => {
         switch (skill) {
-            case 'listening':
+            case SKILL_LISTENING:
                 return {
                     headerBg: 'bg-blue-600',
                     border: 'border-blue-300',
@@ -528,7 +639,7 @@ export default function QuestionBuilder({
                     icon: <Headphones className="h-4 w-4 text-white" />,
                     name: 'Nghe (Listening)',
                 };
-            case 'writing':
+            case SKILL_WRITING:
                 return {
                     headerBg: 'bg-amber-500',
                     border: 'border-amber-300',
@@ -538,7 +649,7 @@ export default function QuestionBuilder({
                     icon: <PenTool className="h-4 w-4 text-white" />,
                     name: 'Viết (Writing)',
                 };
-            case 'speaking':
+            case SKILL_SPEAKING:
                 return {
                     headerBg: 'bg-pink-500',
                     border: 'border-pink-300',
@@ -548,7 +659,7 @@ export default function QuestionBuilder({
                     icon: <Mic className="h-4 w-4 text-white" />,
                     name: 'Nói (Speaking)',
                 };
-            case 'reading':
+            case SKILL_READING:
             default:
                 return {
                     headerBg: 'bg-emerald-600',
@@ -563,8 +674,8 @@ export default function QuestionBuilder({
     };
 
     const activeModalSkill = activeQuestionModalSectionIdx !== null
-        ? sections[activeQuestionModalSectionIdx]?.skill || 'reading'
-        : 'reading';
+        ? sections[activeQuestionModalSectionIdx]?.skill ?? SKILL_READING
+        : SKILL_READING;
 
     const compatibleQuestionTypes = QUESTION_TYPES.filter((t) => t.skills.includes(activeModalSkill));
 
@@ -636,12 +747,15 @@ export default function QuestionBuilder({
                         const secConfig = getSkillConfig(section.skill);
                         const secQuestions = section.questions || [];
                         const secScore = secQuestions.reduce((s, q) => s + (Number(q.score) || 0), 0);
+                        const secErrors = getSectionErrors(secIdx);
+                        const secHasErrors = secErrors.length > 0 || secQuestions.some((_, qIdx) => getQuestionErrors(secIdx, qIdx).length > 0);
+                        const secTitleError = secErrors.find((e) => e.field === 'title')?.message;
 
                         return (
                             <div
                                 key={section.tempId || section.id || secIdx}
                                 id={`section_block_${section.tempId || section.id || secIdx}`}
-                                className={`rounded-2xl border-2 ${secConfig.border} overflow-hidden shadow-xs scroll-mt-6`}
+                                className={`rounded-2xl border-2 ${secHasErrors ? 'border-red-500 ring-2 ring-red-500/20' : secConfig.border} overflow-hidden shadow-xs scroll-mt-6`}
                             >
                                 {/* ── Section Header Bar ── */}
                                 <div
@@ -668,6 +782,12 @@ export default function QuestionBuilder({
                                         <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${secConfig.badge}`}>
                                             {secConfig.name} • {secQuestions.length} câu • {secScore} điểm
                                         </span>
+                                        {secHasErrors && (
+                                            <span className="inline-flex items-center gap-1 text-2xs font-bold px-2 py-0.5 rounded-full bg-red-500 text-white shadow-2xs">
+                                                <AlertCircle className="h-3 w-3 text-white" />
+                                                Có lỗi trong phần này
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-1.5 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
@@ -717,7 +837,7 @@ export default function QuestionBuilder({
                                 {isSecExpanded && (
                                     <div className="bg-slate-50/60 p-4 space-y-4 border-t border-gray-100">
                                         {/* Section Metadata: Editable Title & Description */}
-                                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs space-y-3">
+                                        <div className={`bg-white p-4 rounded-xl border shadow-2xs space-y-3 ${secTitleError ? 'border-red-400 bg-red-50/10' : 'border-gray-200'}`}>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 <div className="sm:col-span-2">
                                                     <label className="mb-1 block text-2xs font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1">
@@ -729,8 +849,15 @@ export default function QuestionBuilder({
                                                         value={section.title}
                                                         onChange={(e) => handleUpdateSection(secIdx, { title: e.target.value })}
                                                         placeholder="VD: Phần 1: Đọc hiểu văn bản / Reading Passage 1..."
-                                                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-900 focus:border-emerald-500 focus:outline-hidden"
+                                                        className={`w-full rounded-lg px-3 py-1.5 text-xs font-bold text-gray-900 focus:outline-hidden ${
+                                                            secTitleError
+                                                                ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                : 'border border-gray-300 bg-white focus:border-emerald-500'
+                                                        }`}
                                                     />
+                                                    {secTitleError && (
+                                                        <p className="mt-1 text-xs text-red-600 font-semibold">{secTitleError}</p>
+                                                    )}
                                                 </div>
 
                                                 <div>
@@ -738,9 +865,9 @@ export default function QuestionBuilder({
                                                         Kỹ Năng Phần Thi:
                                                     </label>
                                                     <div className="flex items-center gap-2 pt-0.5">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${section.skill === 'listening' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                                                            section.skill === 'writing' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                                                                section.skill === 'speaking' ? 'bg-pink-100 text-pink-800 border border-pink-200' :
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${section.skill === SKILL_LISTENING ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                            section.skill === SKILL_WRITING ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                                                section.skill === SKILL_SPEAKING ? 'bg-pink-100 text-pink-800 border border-pink-200' :
                                                                     'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                             }`}>
                                                             {secConfig.icon}
@@ -787,17 +914,31 @@ export default function QuestionBuilder({
                                                 {secQuestions.map((q, qIndex) => {
                                                     const qKey = getQuestionKey(secIdx, qIndex);
                                                     const isExpanded = expandedQuestionKeys.includes(qKey);
-                                                    const normalizedType: QuestionType = (q.question_type as string) === 'true_false' ? 'true_false_not_given' : (q.question_type || 'single_choice');
+                                                    const normalizedType: QuestionType = q.question_type || QUESTION_TYPE_SINGLE_CHOICE;
                                                     const typeInfo = QUESTION_TYPES.find((t) => t.type === normalizedType) || QUESTION_TYPES[0];
-                                                    const isListening = section.skill === 'listening';
+                                                    const isListening = section.skill === SKILL_LISTENING;
+
+                                                    const qErrors = getQuestionErrors(secIdx, qIndex);
+                                                    const hasQError = qErrors.length > 0;
+                                                    const qTitleError = getQuestionFieldError(secIdx, qIndex, 'title');
+                                                    const qContentError = getQuestionFieldError(secIdx, qIndex, 'content');
+                                                    const qScoreError = getQuestionFieldError(secIdx, qIndex, 'score');
+                                                    const qAudioError = getQuestionFieldError(secIdx, qIndex, 'audio_url');
+                                                    const qAnswerError = getQuestionFieldError(secIdx, qIndex, 'correct_answer');
+                                                    const qOptionsError = getQuestionFieldError(secIdx, qIndex, 'options');
+                                                    const hasAnswerError = Boolean(qAnswerError || qOptionsError);
 
                                                     return (
                                                         <div
                                                             key={qKey}
-                                                            className={`rounded-xl border bg-white overflow-hidden transition-all duration-150 ${isExpanded
-                                                                ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20'
-                                                                : 'border-gray-200 hover:border-gray-300 hover:shadow-xs'
-                                                                }`}
+                                                            id={`question-card-${secIdx}-${qIndex}`}
+                                                            className={`rounded-xl border-2 overflow-hidden transition-all duration-150 scroll-mt-6 ${
+                                                                hasQError
+                                                                    ? 'border-red-500 bg-red-50/15 shadow-sm ring-2 ring-red-500/20'
+                                                                    : isExpanded
+                                                                        ? 'border-gray-300 shadow-sm ring-1 ring-emerald-400/20 bg-white'
+                                                                        : 'border-gray-200 hover:border-gray-300 hover:shadow-xs bg-white'
+                                                            }`}
                                                         >
                                                             {/* Question Row Header */}
                                                             <div
@@ -806,7 +947,7 @@ export default function QuestionBuilder({
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${secConfig.dot} font-mono text-2xs font-extrabold text-white`}>
+                                                                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${hasQError ? 'bg-red-600' : secConfig.dot} font-mono text-2xs font-extrabold text-white`}>
                                                                             {qIndex + 1}
                                                                         </span>
                                                                     </div>
@@ -824,20 +965,32 @@ export default function QuestionBuilder({
                                                                                 — {q.content}
                                                                             </span>
                                                                         )}
+                                                                        {hasQError && (
+                                                                            <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 border border-red-200">
+                                                                                <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                                                                                Có lỗi ({qErrors.length})
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
                                                                     {/* Score */}
-                                                                    <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-xs">
-                                                                        <span className="text-gray-500">Điểm:</span>
+                                                                    <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
+                                                                        qScoreError
+                                                                            ? 'border-red-500 bg-red-50 text-red-700 font-bold ring-1 ring-red-500/30'
+                                                                            : 'border-gray-200 bg-white'
+                                                                    }`}>
+                                                                        <span className={qScoreError ? 'text-red-700 font-bold' : 'text-gray-500'}>Điểm:</span>
                                                                         <input
                                                                             type="number"
                                                                             step="0.25"
                                                                             min={0}
                                                                             value={q.score}
-                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: e.target.value })}
-                                                                            className="w-12 text-center font-bold text-gray-900 border-none p-0 focus:ring-0 text-xs"
+                                                                            onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { score: Number(e.target.value) })}
+                                                                            className={`w-12 text-center font-bold border-none p-0 focus:ring-0 text-xs ${
+                                                                                qScoreError ? 'text-red-700 bg-transparent' : 'text-gray-900 bg-white'
+                                                                            }`}
                                                                             title="Điểm số câu hỏi"
                                                                         />
                                                                     </div>
@@ -896,6 +1049,21 @@ export default function QuestionBuilder({
                                                             {/* Expanded Question Editor */}
                                                             {isExpanded && (
                                                                 <div className="border-t border-gray-200 p-5 space-y-5 bg-white">
+                                                                    {/* Question Error Callout Banner */}
+                                                                    {hasQError && (
+                                                                        <div className="rounded-xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-800 space-y-1.5 shadow-2xs">
+                                                                            <div className="font-bold flex items-center gap-1.5 text-red-900">
+                                                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                                                                                <span>Vui lòng kiểm tra và sửa thông tin bị lỗi trong câu hỏi này:</span>
+                                                                            </div>
+                                                                            <ul className="list-disc list-inside space-y-0.5 text-red-700 pl-1 font-medium">
+                                                                                {qErrors.map((err, errIdx) => (
+                                                                                    <li key={errIdx}>{err.message}</li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+
                                                                     {/* Question Type Selector */}
                                                                     <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                                                                         <div className="flex items-center gap-2">
@@ -903,7 +1071,7 @@ export default function QuestionBuilder({
                                                                             <select
                                                                                 value={normalizedType}
                                                                                 onChange={(e) => {
-                                                                                    const newType = e.target.value as QuestionType;
+                                                                                    const newType = Number(e.target.value) as QuestionType;
                                                                                     handleUpdateQuestion(secIdx, qIndex, {
                                                                                         question_type: newType,
                                                                                         options: getDefaultOptions(newType),
@@ -924,14 +1092,19 @@ export default function QuestionBuilder({
 
                                                                     {/* Audio Section: ONLY FOR LISTENING */}
                                                                     {isListening && (
-                                                                        <MediaUploader
-                                                                            value={q.audio_url || ''}
-                                                                            onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url || null })}
-                                                                            accept="audio/*"
-                                                                            label="File Audio Nghe (Listening Track MP3) (*)"
-                                                                            placeholder="Dán đường dẫn URL file audio hoặc chọn tải lên từ máy..."
-                                                                            folder="exams/audio"
-                                                                        />
+                                                                        <div className={qAudioError ? 'p-2.5 rounded-xl border-2 border-red-500 bg-red-50/20' : ''}>
+                                                                            <MediaUploader
+                                                                                value={q.audio_url || ''}
+                                                                                onChange={(url) => handleUpdateQuestion(secIdx, qIndex, { audio_url: url || null })}
+                                                                                accept="audio/*"
+                                                                                label="File Audio Nghe (Listening Track MP3) (*)"
+                                                                                placeholder="Dán đường dẫn URL file audio hoặc chọn tải lên từ máy..."
+                                                                                folder="exams/audio"
+                                                                            />
+                                                                            {qAudioError && (
+                                                                                <p className="mt-1.5 text-xs text-red-600 font-semibold">{qAudioError}</p>
+                                                                            )}
+                                                                        </div>
                                                                     )}
 
                                                                     {/* Question Title */}
@@ -944,8 +1117,15 @@ export default function QuestionBuilder({
                                                                             value={q.title || ''}
                                                                             onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { title: e.target.value || null })}
                                                                             placeholder="VD: Questions 1-5, Section 1, Part 2..."
-                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                            className={`w-full rounded-xl px-3.5 py-2 text-sm text-gray-900 focus:outline-hidden ${
+                                                                                qTitleError
+                                                                                    ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                                    : 'border border-gray-300 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                                            }`}
                                                                         />
+                                                                        {qTitleError && (
+                                                                            <p className="mt-1 text-xs text-red-600 font-semibold">{qTitleError}</p>
+                                                                        )}
                                                                     </div>
 
                                                                     {/* Question Content */}
@@ -954,7 +1134,7 @@ export default function QuestionBuilder({
                                                                             <label className="text-xs font-bold uppercase tracking-wider text-gray-800">
                                                                                 Nội Dung Câu Hỏi / Đề Bài (*)
                                                                             </label>
-                                                                            {normalizedType !== 'diagram_labelling' && (
+                                                                            {normalizedType !== QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => toggleImageAttachment(secIdx, qIndex)}
@@ -972,13 +1152,20 @@ export default function QuestionBuilder({
                                                                             value={q.content}
                                                                             onChange={(e) => handleUpdateQuestion(secIdx, qIndex, { content: e.target.value })}
                                                                             placeholder="Nhập nội dung câu hỏi hoặc yêu cầu làm bài..."
-                                                                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                                                            className={`w-full rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-hidden ${
+                                                                                qContentError
+                                                                                    ? 'border-2 border-red-500 bg-red-50/20 focus:border-red-500 ring-1 ring-red-500'
+                                                                                    : 'border border-gray-300 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                                            }`}
                                                                             required
                                                                         />
+                                                                        {qContentError && (
+                                                                            <p className="mt-1 text-xs text-red-600 font-semibold">{qContentError}</p>
+                                                                        )}
                                                                     </div>
 
                                                                     {/* Image Attachment */}
-                                                                    {normalizedType !== 'diagram_labelling' && (q.image_url || expandedImageKeys.includes(qKey)) && (
+                                                                    {normalizedType !== QUESTION_TYPE_DIAGRAM_LABELLING && (q.image_url || expandedImageKeys.includes(qKey)) && (
                                                                         <div className="space-y-2">
                                                                             <MediaUploader
                                                                                 value={q.image_url}
@@ -992,8 +1179,18 @@ export default function QuestionBuilder({
                                                                     )}
 
                                                                     {/* Type Specific Editor */}
-                                                                    <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-200">
-                                                                        {normalizedType === 'single_choice' && (
+                                                                    <div className={`rounded-xl p-4 transition-all ${
+                                                                        hasAnswerError
+                                                                            ? 'bg-red-50/30 border-2 border-red-400 ring-2 ring-red-400/20'
+                                                                            : 'bg-slate-50/70 border border-slate-200'
+                                                                    }`}>
+                                                                        {hasAnswerError && (
+                                                                            <div className="mb-3 flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-100/80 px-3 py-2 rounded-lg border border-red-200">
+                                                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                                                                                <span>{qAnswerError || qOptionsError || 'Vui lòng kiểm tra phương án và đáp án đúng cho câu hỏi này.'}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {normalizedType === QUESTION_TYPE_SINGLE_CHOICE && (
                                                                             <SingleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer}
@@ -1002,7 +1199,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'multiple_choice' && (
+                                                                        {normalizedType === QUESTION_TYPE_MULTIPLE_CHOICE && (
                                                                             <MultipleChoiceEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1013,7 +1210,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'true_false_not_given' && (
+                                                                        {normalizedType === QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN && (
                                                                             <TrueFalseEditor
                                                                                 correctAnswer={q.correct_answer}
                                                                                 metadata={q.metadata || {}}
@@ -1023,7 +1220,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'fill_in_blank' && (
+                                                                        {normalizedType === QUESTION_TYPE_FILL_IN_BLANK && (
                                                                             <FillInBlankEditor
                                                                                 content={q.content}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1034,7 +1231,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'drag_drop_cloze' && (
+                                                                        {normalizedType === QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                                                             <DragDropClozeEditor
                                                                                 content={q.content || ''}
                                                                                 options={q.options || { words: [] }}
@@ -1046,7 +1243,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1056,7 +1253,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching_image' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING_IMAGE && (
                                                                             <MatchingImageEditor
                                                                                 options={q.options || { sentences: [], images: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1066,7 +1263,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'matching_sentences' && (
+                                                                        {normalizedType === QUESTION_TYPE_MATCHING_SENTENCES && (
                                                                             <MatchingEditor
                                                                                 options={q.options || { left_items: [], right_items: [] }}
                                                                                 correctAnswer={q.correct_answer || {}}
@@ -1076,7 +1273,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'ordering' && (
+                                                                        {normalizedType === QUESTION_TYPE_ORDERING && (
                                                                             <OrderingEditor
                                                                                 options={q.options || []}
                                                                                 correctAnswer={q.correct_answer || []}
@@ -1086,7 +1283,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'diagram_labelling' && (
+                                                                        {normalizedType === QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                                             <DiagramLabellingEditor
                                                                                 imageUrl={q.image_url || ''}
                                                                                 options={q.options || { labels: [], map_pins: [] }}
@@ -1098,7 +1295,7 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'find_mistake' && (
+                                                                        {normalizedType === QUESTION_TYPE_FIND_MISTAKE && (
                                                                             <FindMistakeEditor
                                                                                 options={q.options || { sentence_segments: [] }}
                                                                                 correctAnswer={q.correct_answer}
@@ -1107,14 +1304,14 @@ export default function QuestionBuilder({
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'essay' && (
+                                                                        {normalizedType === QUESTION_TYPE_ESSAY && (
                                                                             <EssayEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 onChangeMetadata={(meta) => handleUpdateQuestion(secIdx, qIndex, { metadata: meta })}
                                                                             />
                                                                         )}
 
-                                                                        {normalizedType === 'audio_record' && (
+                                                                        {normalizedType === QUESTION_TYPE_AUDIO_RECORD && (
                                                                             <AudioRecordEditor
                                                                                 metadata={q.metadata || {}}
                                                                                 audioUrl={q.audio_url}
@@ -1208,15 +1405,15 @@ export default function QuestionBuilder({
                                             : 'border-gray-200 bg-white hover:bg-gray-50'
                                             }`}
                                     >
-                                        <div className={`p-2 rounded-lg ${sk.skill === 'listening' ? 'bg-blue-100 text-blue-700' :
-                                            sk.skill === 'reading' ? 'bg-emerald-100 text-emerald-700' :
-                                                sk.skill === 'writing' ? 'bg-amber-100 text-amber-700' :
+                                        <div className={`p-2 rounded-lg ${sk.skill === SKILL_LISTENING ? 'bg-blue-100 text-blue-700' :
+                                            sk.skill === SKILL_READING ? 'bg-emerald-100 text-emerald-700' :
+                                                sk.skill === SKILL_WRITING ? 'bg-amber-100 text-amber-700' :
                                                     'bg-pink-100 text-pink-700'
                                             }`}>
-                                            {sk.skill === 'listening' && <Headphones className="h-4 w-4" />}
-                                            {sk.skill === 'reading' && <BookOpen className="h-4 w-4" />}
-                                            {sk.skill === 'writing' && <PenTool className="h-4 w-4" />}
-                                            {sk.skill === 'speaking' && <Mic className="h-4 w-4" />}
+                                            {sk.skill === SKILL_LISTENING && <Headphones className="h-4 w-4" />}
+                                            {sk.skill === SKILL_READING && <BookOpen className="h-4 w-4" />}
+                                            {sk.skill === SKILL_WRITING && <PenTool className="h-4 w-4" />}
+                                            {sk.skill === SKILL_SPEAKING && <Mic className="h-4 w-4" />}
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-gray-900">{sk.label}</p>

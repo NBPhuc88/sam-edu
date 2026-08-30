@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip,
-    Legend,
+Cell,
+Legend,
+Pie,
+PieChart,
+ResponsiveContainer,
+Tooltip,
 } from 'recharts';
 
 export interface PieChartItem {

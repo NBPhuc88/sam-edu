@@ -12,7 +12,7 @@ class SitemapController extends Controller
      */
     public function index(): Response
     {
-        $today   = now()->toIso8601String();
+        $today = now()->toIso8601String();
 
         $urls = [
             [

@@ -1,22 +1,22 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    Plus,
-    Trash2,
-    DollarSign,
-    CheckCircle2,
-    Layers,
-    Users,
-    Eye,
-    Shield,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+CheckCircle2,
+DollarSign,
+Eye,
+Layers,
+Plus,
+Save,
+Shield,
+Trash2,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Props {
     errors?: Record<string, string>;
@@ -26,7 +26,7 @@ const DEFAULT_FEATURE_SUGGESTIONS = [
     'Quản lý 1 trung tâm đào tạo',
     'Điểm danh & Quản lý lớp học thông minh',
     'Biểu đồ thống kê Recharts nâng cao',
-    'Cổng thanh toán ZaloPay QR Code v2',
+    'Thông báo gia hạn qua Email tự động',
     'Nhập xuất dữ liệu Excel/CSV',
     'Hỗ trợ kỹ thuật 24/7 qua Hotline/Email',
 ];

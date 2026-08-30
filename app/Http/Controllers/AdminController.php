@@ -32,10 +32,14 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền truy cập quản lý Quản trị viên hệ thống.');
         }
 
-        $search   = (string) $request->input('search', '');
-        $role     = (string) $request->input('role', '');
-        $perPage  = $request->integer('per_page', config('app.pagination_per_page', 20));
-        $admins   = $this->adminService->getPaginatedAdmins($perPage, $search ?: null, $role ?: 'admin');
+        $search  = (string) $request->input('search', '');
+        $role    = $request->input('role');
+        $perPage = $request->integer('per_page', config('app.pagination_per_page', 20));
+        $admins  = $this->adminService->getPaginatedAdmins(
+            $perPage,
+            $search ?: null,
+            $role !== null && $role !== '' ? (int) $role : null
+        );
         $formData = $this->adminService->getFormData();
 
         return Inertia::render('Admin/Admins/Index', [
@@ -44,7 +48,7 @@ class AdminController extends Controller
             'hasSuperAdmin' => $formData['hasSuperAdmin'],
             'filters'       => [
                 'search'   => $search,
-                'role'     => $role,
+                'role'     => $role !== null && $role !== '' ? (int) $role : '',
                 'per_page' => $perPage,
             ],
         ]);
@@ -63,11 +67,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền tạo mới Quản trị viên.');
         }
 
-        try {
-            $this->adminService->createAdmin($request->validated());
-        } catch (\InvalidArgumentException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+        $this->adminService->createAdmin($request->validated());
 
         return redirect()->back()->with('success', 'Tạo tài khoản Quản trị viên thành công!');
     }
@@ -86,11 +86,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền cập nhật Quản trị viên.');
         }
 
-        try {
-            $this->adminService->updateAdmin($id, $request->validated());
-        } catch (\InvalidArgumentException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+        $this->adminService->updateAdmin($id, $request->validated());
 
         return redirect()->back()->with('success', 'Cập nhật tài khoản Quản trị viên thành công!');
     }
@@ -108,11 +104,7 @@ class AdminController extends Controller
             abort(403, 'Bạn không có quyền xóa Quản trị viên.');
         }
 
-        try {
-            $this->adminService->deleteAdmin($id, $currentAdmin->id);
-        } catch (\InvalidArgumentException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+        $this->adminService->deleteAdmin($id, $currentAdmin->id);
 
         return redirect()->back()->with('success', 'Xóa tài khoản Quản trị viên thành công!');
     }

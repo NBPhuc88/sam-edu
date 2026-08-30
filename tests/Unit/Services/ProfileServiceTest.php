@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
@@ -15,7 +16,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test ProfileService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -49,7 +50,7 @@ test('sendPasswordChangeOtp returns error when user has no email', function () {
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
         'password'     => Hash::make('password123'),
         'email'        => null,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $result = $this->service->sendPasswordChangeOtp($teacher, 'teacher');
@@ -65,7 +66,8 @@ test('updatePassword fails when current password is incorrect', function () {
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
         'email'      => 'admin_prof@example.com',
         'password'   => Hash::make('correct_password'),
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $result = $this->service->updatePassword($admin, 'admin', 'wrong_pass', 'new_pass', '123456');
@@ -81,14 +83,15 @@ test('updatePassword succeeds with valid OTP and correct password', function () 
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
         'email'      => 'admin_change@example.com',
         'password'   => Hash::make('old_pass_123'),
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     DB::table('account_verification_otps')->insert([
         'user_type'  => 'admin',
         'user_id'    => $admin->id,
         'email'      => 'admin_change@example.com',
-        'action'     => 'change_password',
+        'action'     => Constant::OTP_ACTION_CHANGE_PASSWORD,
         'otp_hash'   => Hash::make('123456'),
         'expires_at' => now()->addMinutes(5),
         'created_at' => now(),

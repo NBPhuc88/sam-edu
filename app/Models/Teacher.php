@@ -47,6 +47,8 @@ class Teacher extends Authenticatable
             'date_of_birth' => 'date:d-m-Y',
             'hire_date'     => 'date:d-m-Y',
             'password'      => 'hashed',
+            'status'        => 'integer',
+            'gender'        => 'integer',
             'created_at'    => 'datetime:d-m-Y H:i',
             'updated_at'    => 'datetime:d-m-Y H:i',
         ];

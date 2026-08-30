@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Attendance;
 use App\Models\Center;
@@ -10,13 +11,19 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
+    $this->seed(PermissionSeeder::class);
+
     $this->center = Center::create([
         'name'       => 'Trung Tâm Test Attendance',
         'code'       => 'CTR_TEST_ATT',
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
         'expires_at' => now()->addYear(),
     ]);
 
@@ -25,7 +32,8 @@ beforeEach(function () {
         'full_name'  => 'Super Admin Attendance',
         'email'      => 'superadmin_att@example.com',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM_ATT_001',
     ]);
 
@@ -38,7 +46,7 @@ beforeEach(function () {
         'email'        => 'teacher_att@example.com',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'T_ATT_001',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->student = Student::create([
@@ -59,7 +67,7 @@ beforeEach(function () {
         'code'             => 'MATH_ATT',
         'total_sessions'   => 10,
         'duration_minutes' => 90,
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->schoolClass = SchoolClass::create([
@@ -73,7 +81,7 @@ beforeEach(function () {
     ]);
 
     $this->schoolClass->students()->attach($this->student->id, [
-        'status'      => 'active',
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
         'enrolled_at' => now(),
     ]);
 
@@ -81,7 +89,7 @@ beforeEach(function () {
         'class_id'   => $this->schoolClass->id,
         'subject_id' => $this->subject->id,
         'teacher_id' => $this->teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->room = Room::create([
@@ -98,7 +106,7 @@ beforeEach(function () {
         'session_date'     => now()->toDateString(),
         'start_time'       => '00:00:00',
         'end_time'         => '23:59:59',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 });
 
@@ -108,7 +116,7 @@ test('admin can save attendance and session status updates to completed', functi
             'attendances' => [
                 [
                     'student_id' => $this->student->id,
-                    'status'     => 'present',
+                    'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
                     'note'       => 'Có mặt đầy đủ',
                 ],
             ],
@@ -117,7 +125,7 @@ test('admin can save attendance and session status updates to completed', functi
     $response->assertRedirect();
 
     expect(Attendance::where('session_id', $this->session->id)->count())->toBe(1);
-    expect($this->session->fresh()->status)->toBe('completed');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
 });
 
 test('admin can reset attendance and session status reverts to scheduled', function () {
@@ -127,14 +135,14 @@ test('admin can reset attendance and session status reverts to scheduled', funct
             'attendances' => [
                 [
                     'student_id' => $this->student->id,
-                    'status'     => 'present',
+                    'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
                     'note'       => 'Điểm danh nhầm buổi',
                 ],
             ],
         ]);
 
     expect(Attendance::where('session_id', $this->session->id)->count())->toBe(1);
-    expect($this->session->fresh()->status)->toBe('completed');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
 
     // 2. Reset attendance
     $resetResponse = $this->actingAs($this->superAdmin, 'admin')
@@ -145,7 +153,7 @@ test('admin can reset attendance and session status reverts to scheduled', funct
 
     // Verify attendances were deleted and status reverted to scheduled (Chưa dạy)
     expect(Attendance::where('session_id', $this->session->id)->count())->toBe(0);
-    expect($this->session->fresh()->status)->toBe('scheduled');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_SCHEDULED);
 });
 
 test('assigned teacher can reset attendance of their class session', function () {
@@ -155,13 +163,13 @@ test('assigned teacher can reset attendance of their class session', function ()
             'attendances' => [
                 [
                     'student_id' => $this->student->id,
-                    'status'     => 'absent',
+                    'status'     => Constant::ATTENDANCE_STATUS_ABSENT,
                     'note'       => 'Vắng',
                 ],
             ],
         ]);
 
-    expect($this->session->fresh()->status)->toBe('completed');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
 
     // 2. Teacher resets attendance
     $resetResponse = $this->actingAs($this->teacher, 'teacher')
@@ -169,7 +177,7 @@ test('assigned teacher can reset attendance of their class session', function ()
 
     $resetResponse->assertRedirect();
     expect(Attendance::where('session_id', $this->session->id)->count())->toBe(0);
-    expect($this->session->fresh()->status)->toBe('scheduled');
+    expect($this->session->fresh()->status)->toBe(Constant::SESSION_STATUS_SCHEDULED);
 });
 
 test('resetting attendance of past session reverts status to unattended', function () {
@@ -180,13 +188,13 @@ test('resetting attendance of past session reverts status to unattended', functi
         'session_date'     => now()->subDays(2)->toDateString(),
         'start_time'       => '08:00:00',
         'end_time'         => '09:30:00',
-        'status'           => 'completed',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
     ]);
 
     Attendance::create([
         'session_id' => $pastSession->id,
         'student_id' => $this->student->id,
-        'status'     => 'present',
+        'status'     => Constant::ATTENDANCE_STATUS_PRESENT,
     ]);
 
     $resetResponse = $this->actingAs($this->superAdmin, 'admin')
@@ -194,5 +202,5 @@ test('resetting attendance of past session reverts status to unattended', functi
 
     $resetResponse->assertRedirect();
     expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(0);
-    expect($pastSession->fresh()->status)->toBe('unattended');
+    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
 });

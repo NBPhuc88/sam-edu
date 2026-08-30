@@ -10,7 +10,6 @@ Tài khoản **{{ $roleLabel }}** của bạn đã được khởi tạo thành 
 | :--- | :--- |
 | **Họ và tên** | **{{ $fullName }}** |
 | **Vai trò** | **{{ $roleLabel }}** |
-| **Mã định danh** | `{{ $userCode }}` |
 | **Tên đăng nhập** | **`{{ $username }}`** |
 @if(!empty($rawPassword))
 | **Mật khẩu khởi tạo** | **`{{ $rawPassword }}`** |

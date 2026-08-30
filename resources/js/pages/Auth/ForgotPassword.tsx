@@ -1,13 +1,13 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link,router,usePage } from '@inertiajs/react';
 import {
-    Mail,
-    ShieldCheck,
-    Users,
-    GraduationCap,
-    ArrowLeft,
-    KeyRound,
+ArrowLeft,
+GraduationCap,
+KeyRound,
+Mail,
+ShieldCheck,
+Users,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import AppLogo from '../../components/common/AppLogo';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';

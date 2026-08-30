@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSchedule;
@@ -24,7 +25,7 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm Test',
         'email'  => 'centertest@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -32,7 +33,8 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_del_teacher@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000092',
     ]);
 
@@ -45,7 +47,7 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'password'       => 'password123',
         'teacher_code'   => 'GV000000002',
         'center_id'      => $center->id,
-        'status'         => 'active',
+        'status'         => Constant::STATUS_ACTIVE,
         'specialization' => 'Toán học',
     ]);
 
@@ -72,14 +74,14 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     ClassSchedule::create([
         'class_subject_id' => $classSubject->id,
         'room_id'          => $room->id,
         'weeks'            => [1 => [['08:00', '10:00']]],
-        'status'           => 'active',
+        'status'           => Constant::SCHEDULE_STATUS_ACTIVE,
     ]);
 
     // Ca học trong quá khứ đã hoàn thành
@@ -90,7 +92,7 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'session_date'     => now()->subDays(3)->toDateString(),
         'start_time'       => '08:00',
         'end_time'         => '10:00',
-        'status'           => 'completed',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
     ]);
 
     $exam = Exam::create([
@@ -103,11 +105,11 @@ test('admin can delete a teacher who has class sessions and assignments without 
         'exam_date'             => now()->toDateString(),
         'duration_minutes'      => 45,
         'max_score'             => 10,
-        'status'                => 'published',
+        'status'                => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     // Gỡ phân công lớp đang hoạt động để cho phép xóa giáo viên
-    $classSubject->update(['status' => 'inactive']);
+    $classSubject->update(['status' => Constant::CLASS_SUBJECT_STATUS_INACTIVE]);
 
     $response = $this->actingAs($superAdmin, 'admin')
         ->delete(route('teachers.destroy', $teacher->id));

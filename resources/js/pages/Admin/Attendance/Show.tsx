@@ -1,22 +1,22 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    DoorOpen,
-    Save,
-    Users,
-    RotateCcw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
+import { Head,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+CheckCircle2,
+Clock,
+DoorOpen,
+RotateCcw,
+Save,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
-import { usePermission } from '@/hooks/usePermission';
 interface StudentAttendanceItem {
     id: number;
     full_name: string;
@@ -24,8 +24,8 @@ interface StudentAttendanceItem {
     phone: string | null;
     email: string | null;
     parent_phone: string | null;
-    gender: string | null;
-    status: 'present' | 'absent' | 'late' | 'excused' | 'leave';
+    gender: number | null;
+    status: number;
     note: string;
     check_in_at: string | null;
     marked_at: string | null;
@@ -62,7 +62,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
 }
@@ -96,7 +96,7 @@ export default function AttendanceShowPage({
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
 
-    const handleStatusChange = (studentId: number, status: 'present' | 'absent' | 'late' | 'excused') => {
+    const handleStatusChange = (studentId: number, status: number) => {
         setStudents((prev) =>
             prev.map((s) => (s.id === studentId ? { ...s, status } : s)),
         );
@@ -109,7 +109,7 @@ export default function AttendanceShowPage({
     };
 
     const handleMarkAllPresent = () => {
-        setStudents((prev) => prev.map((s) => ({ ...s, status: 'present' })));
+        setStudents((prev) => prev.map((s) => ({ ...s, status: 1 })));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -143,7 +143,7 @@ export default function AttendanceShowPage({
                     setStudents((prev) =>
                         prev.map((s) => ({
                             ...s,
-                            status: 'present',
+                            status: 1,
                             note: '',
                             check_in_at: null,
                             marked_at: null,
@@ -154,53 +154,51 @@ export default function AttendanceShowPage({
         );
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
-        switch (status) {
-            case 'completed':
-                return <Badge variant="active">Đã Hoàn Thành</Badge>;
-            case 'in_progress':
+        if (status === 3) {
+            return <Badge variant="active">Đã Hoàn Thành</Badge>;
+        }
+        if (status === 2) {
+            return (
+                <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                    Đang Diễn Ra
+                </span>
+            );
+        }
+        if (status === 4) {
+            return <Badge variant="danger">Chưa Điểm Danh / Đã Hủy</Badge>;
+        }
+        if (status === 5) {
+            return <Badge variant="expired">Đã Đổi Lịch</Badge>;
+        }
+        if (isPast) {
+            return <Badge variant="danger">Chưa Điểm Danh</Badge>;
+        }
+        if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
+            const now = new Date();
+            const [h, m] = startTime.split(':').map(Number);
+            const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+            const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
+            if (diffMin >= 0 && diffMin <= 10) {
                 return (
-                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
-                        Đang Diễn Ra
+                    <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                        Sắp Diễn Ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa Điểm Danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã Hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã Đổi Lịch</Badge>;
-            case 'scheduled':
-            default:
-                if (isPast) {
-                    return <Badge variant="danger">Chưa Điểm Danh</Badge>;
-                }
-                if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
-                    const now = new Date();
-                    const [h, m] = startTime.split(':').map(Number);
-                    const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
-                    const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
-                    if (diffMin >= 0 && diffMin <= 10) {
-                        return (
-                            <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
-                                Sắp Diễn Ra
-                            </span>
-                        );
-                    }
-                }
-                return <Badge variant="pending">Dự Kiến</Badge>;
+            }
         }
+        return <Badge variant="pending">Dự Kiến</Badge>;
     };
 
-    const presentCount = students.filter((s) => s.status === 'present').length;
-    const lateCount = students.filter((s) => s.status === 'late').length;
-    const excusedCount = students.filter((s) => s.status === 'excused').length;
-    const absentCount = students.filter((s) => s.status === 'absent').length;
+    const presentCount = students.filter((s) => s.status === 1).length;
+    const lateCount = students.filter((s) => s.status === 3).length;
+    const excusedCount = students.filter((s) => s.status === 4).length;
+    const absentCount = students.filter((s) => s.status === 2).length;
 
-    const isAttendanceAllowed = ['in_progress', 'completed', 'unattended'].includes(session.status);
+    const isAttendanceAllowed = [2, 3, 4].includes(Number(session.status));
 
     return (
         <AppLayout title={`Điểm Danh: ${subject?.name || 'Môn học'} - ${schoolClass?.name || 'Lớp học'}`}>
@@ -237,7 +235,7 @@ export default function AttendanceShowPage({
                                 <span className="rounded-md bg-emerald-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
                                     {schoolClass?.name} ({schoolClass?.code})
                                 </span>
-                                {getSessionStatusBadge(session.status, session.session_date, session.start_time)}
+                                {getSessionStatusBadge(Number(session.status), session.session_date, session.start_time)}
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
                                 <span className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-md border border-emerald-200">
@@ -379,11 +377,11 @@ export default function AttendanceShowPage({
                                             <tr
                                                 key={student.id}
                                                 className={`transition-colors hover:bg-slate-50 ${
-                                                    student.status === 'absent'
+                                                    student.status === 2
                                                         ? 'bg-red-50/20'
-                                                        : student.status === 'late'
-                                                          ? 'bg-amber-50/20'
-                                                          : ''
+                                                        : student.status === 3
+                                                           ? 'bg-amber-50/20'
+                                                           : ''
                                                 }`}
                                             >
                                                 <td className="px-4 py-3.5 text-center font-bold text-gray-400">
@@ -410,9 +408,9 @@ export default function AttendanceShowPage({
                                                         {/* Có mặt */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleStatusChange(student.id, 'present')}
+                                                            onClick={() => handleStatusChange(student.id, 1)}
                                                             className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
-                                                                student.status === 'present'
+                                                                student.status === 1
                                                                     ? 'bg-emerald-600 text-white shadow-xs'
                                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                             }`}
@@ -423,9 +421,9 @@ export default function AttendanceShowPage({
                                                         {/* Đi muộn */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleStatusChange(student.id, 'late')}
+                                                            onClick={() => handleStatusChange(student.id, 3)}
                                                             className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
-                                                                student.status === 'late'
+                                                                student.status === 3
                                                                     ? 'bg-amber-500 text-white shadow-xs'
                                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                             }`}
@@ -436,9 +434,9 @@ export default function AttendanceShowPage({
                                                         {/* Có phép */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleStatusChange(student.id, 'excused')}
+                                                            onClick={() => handleStatusChange(student.id, 4)}
                                                             className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
-                                                                student.status === 'excused'
+                                                                student.status === 4
                                                                     ? 'bg-blue-600 text-white shadow-xs'
                                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                             }`}
@@ -449,9 +447,9 @@ export default function AttendanceShowPage({
                                                         {/* Vắng */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleStatusChange(student.id, 'absent')}
+                                                            onClick={() => handleStatusChange(student.id, 2)}
                                                             className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
-                                                                student.status === 'absent'
+                                                                student.status === 2
                                                                     ? 'bg-red-600 text-white shadow-xs'
                                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                             }`}

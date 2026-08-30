@@ -4,6 +4,7 @@ namespace App\Services\Teacher;
 
 use App\Models\Center;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
+use Generator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -15,12 +16,13 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
     }
 
     /**
-     * @return \Generator<int, array<int, string>>
-     * @param  ?int                                $centerId
+     * @return Generator<int, array<int, string>>
+     * @param  ?int                               $centerId
+     * @param  bool                               $isSuperAdmin
      */
-    public function exportTeachersCsv(?int $centerId = null): \Generator
+    public function exportTeachersCsv(?int $centerId = null, bool $isSuperAdmin = false): Generator
     {
-        yield [
+        $headers = [
             'Mã giáo viên',
             'Tên đăng nhập',
             'Họ',
@@ -36,8 +38,14 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             'Trạng thái',
         ];
 
+        if ($isSuperAdmin) {
+            $headers[] = 'Mã trung tâm';
+        }
+
+        yield $headers;
+
         foreach ($this->teacherRepository->getTeachersCursor($centerId) as $teacher) {
-            yield [
+            $row = [
                 (string) $teacher->teacher_code,
                 (string) $teacher->username,
                 (string) $teacher->first_name,
@@ -52,14 +60,20 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 (string) $teacher->note,
                 (string) $teacher->status,
             ];
+
+            if ($isSuperAdmin) {
+                $row[] = (string) ($teacher->center?->code ?? $teacher->center_id ?? '');
+            }
+
+            yield $row;
         }
     }
 
     /**
-     * @return \Generator<int, array<string, string>>
-     * @param  string                                 $filePath
+     * @return Generator<int, array<string, string>>
+     * @param  string                                $filePath
      */
-    public function readCsvStream(string $filePath): \Generator
+    public function readCsvStream(string $filePath): Generator
     {
         if (($handle = fopen($filePath, 'r')) === false) {
             return;
@@ -104,18 +118,15 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
      * @return array{imported: int, updated: int, errors: array<int, string>}
      * @param  string                                                         $filePath
      * @param  ?int                                                           $centerId
+     * @param  bool                                                           $isSuperAdmin
      */
-    public function importTeachersCsv(string $filePath, ?int $centerId = null): array
+    public function importTeachersCsv(string $filePath, ?int $centerId = null, bool $isSuperAdmin = false): array
     {
-        if (! $centerId) {
-            $centerId = Center::first()?->id;
-        }
-
-        if (! $centerId) {
+        if (! $isSuperAdmin && ! $centerId) {
             return [
                 'imported' => 0,
                 'updated'  => 0,
-                'errors'   => ['Không tìm thấy thông tin trung tâm hợp lệ để thực hiện import.'],
+                'errors'   => ['Tài khoản quản trị chưa được gán trung tâm hợp lệ để thực hiện import.'],
             ];
         }
 
@@ -135,6 +146,35 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
             if (empty($username) && empty($teacherCode) && empty($email)) {
                 $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã giáo viên, Tên đăng nhập hoặc Email.";
+
+                continue;
+            }
+
+            // Xác định trung tâm cho dòng này
+            $targetCenterId = $centerId;
+
+            if ($isSuperAdmin) {
+                $centerCodeOrId = $row['mã trung tâm'] ?? $row['center_code'] ?? $row['mã tt'] ?? $row['center_id'] ?? $row['trung tâm'] ?? null;
+
+                if (! empty($centerCodeOrId)) {
+                    $center = Center::where('code', $centerCodeOrId)->orWhere('id', $centerCodeOrId)->first();
+
+                    if ($center) {
+                        $targetCenterId = $center->id;
+                    } else {
+                        $errors[] = "Dòng {$lineIndex}: Không tìm thấy trung tâm với mã \"{$centerCodeOrId}\".";
+
+                        continue;
+                    }
+                } elseif (! $targetCenterId) {
+                    $errors[] = "Dòng {$lineIndex}: Thiếu thông tin Mã trung tâm.";
+
+                    continue;
+                }
+            }
+
+            if (! $targetCenterId) {
+                $errors[] = "Dòng {$lineIndex}: Không xác định được trung tâm quản lý.";
 
                 continue;
             }
@@ -171,7 +211,7 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 'specialization' => $row['chuyên môn'] ?? $row['specialization'] ?? null,
                 'note'           => $row['ghi chú'] ?? $row['note'] ?? null,
                 'status'         => $row['trạng thái'] ?? $row['status'] ?? 'active',
-                'center_id'      => $centerId,
+                'center_id'      => $targetCenterId,
             ];
 
             if ($existingTeacher) {
@@ -193,55 +233,69 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
 
     /**
      * @return array<int, array<int, string>>
+     * @param  bool                           $isSuperAdmin
      */
-    public function getSampleCsvRows(): array
+    public function getSampleCsvRows(bool $isSuperAdmin = false): array
     {
+        $headers = [
+            'Mã giáo viên',
+            'Tên đăng nhập',
+            'Họ',
+            'Tên',
+            'Họ và tên',
+            'Email',
+            'Số điện thoại',
+            'Ngày sinh',
+            'Giới tính',
+            'Ngày vào làm',
+            'Chuyên môn',
+            'Ghi chú',
+            'Trạng thái',
+        ];
+
+        $row1 = [
+            'TCH001',
+            'lethic',
+            'Lê Thị',
+            'C',
+            'Lê Thị C',
+            'lethic@gmail.com',
+            '0934567890',
+            '1990-03-12',
+            'nu',
+            '2022-01-15',
+            'Tiếng Trung Sơ Cấp, Trung Cấp',
+            'Giáo viên dạy giỏi',
+            'active',
+        ];
+
+        $row2 = [
+            'TCH002',
+            'phamvand',
+            'Phạm Văn',
+            'D',
+            'Phạm Văn D',
+            'phamvand@gmail.com',
+            '0945678901',
+            '1988-11-25',
+            'nam',
+            '2021-09-01',
+            'Toán 12 Nâng Cao',
+            'Thạc sĩ Toán học',
+            'active',
+        ];
+
+        if ($isSuperAdmin) {
+            $sampleCenterCode = Center::value('code') ?? 'CTR0000001';
+            $headers[]        = 'Mã trung tâm';
+            $row1[]           = $sampleCenterCode;
+            $row2[]           = $sampleCenterCode;
+        }
+
         return [
-            [
-                'Mã giáo viên',
-                'Tên đăng nhập',
-                'Họ',
-                'Tên',
-                'Họ và tên',
-                'Email',
-                'Số điện thoại',
-                'Ngày sinh',
-                'Giới tính',
-                'Ngày vào làm',
-                'Chuyên môn',
-                'Ghi chú',
-                'Trạng thái',
-            ],
-            [
-                'TCH001',
-                'lethic',
-                'Lê Thị',
-                'C',
-                'Lê Thị C',
-                'lethic@gmail.com',
-                '0934567890',
-                '1990-03-12',
-                'nu',
-                '2022-01-15',
-                'Tiếng Trung Sơ Cấp, Trung Cấp',
-                'Giáo viên dạy giỏi',
-                'active',
-            ],
-            [
-                'TCH002',
-                'phamvand',
-                'Phạm Văn',
-                'D',
-                'Phạm Văn D',
-                'phamvand@gmail.com',
-                '0945678901',
-                '1988-11-25',
-                'nam',
-                '2021-09-01',
-                'Toán 12 Nâng Cao',
-                'Thạc sĩ Toán học',
-                'active',
-            ],
+            $headers,
+            $row1,
+            $row2,
         ];
     }
 }

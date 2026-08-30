@@ -34,7 +34,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     const cleanParams = (params: Record<string, any>) => {
         const cleaned: Record<string, any> = {};
         Object.entries(params).forEach(([key, val]) => {
-            if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+            if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
                 cleaned[key] = val;
             }
         });
@@ -75,7 +75,9 @@ export const Pagination: React.FC<PaginationProps> = ({
                 const currentSearch = new URLSearchParams(window.location.search);
                 currentSearch.forEach((value, key) => {
                     if (key !== 'page' && !parsed.searchParams.has(key) && !controlledKeys.has(key)) {
-                        parsed.searchParams.set(key, value);
+                        if (value !== '' && value !== '0' && value !== 'null' && value !== 'undefined') {
+                            parsed.searchParams.set(key, value);
+                        }
                     }
                 });
             }
@@ -84,7 +86,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             if (currentParams && typeof currentParams === 'object') {
                 Object.entries(currentParams).forEach(([key, val]) => {
                     if (key !== 'page') {
-                        if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+                        if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
                             parsed.searchParams.set(key, String(val));
                         } else {
                             // Explicitly remove params that currentParams says should not be present
@@ -96,7 +98,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
             const keysToDelete: string[] = [];
             parsed.searchParams.forEach((value, key) => {
-                if (value === '' || value === 'null' || value === 'undefined' || value === 'all') {
+                if (value === '' || value === 'null' || value === 'undefined' || (key !== 'page' && value === '0')) {
                     keysToDelete.push(key);
                 }
             });
@@ -142,11 +144,10 @@ export const Pagination: React.FC<PaginationProps> = ({
                             href={cleanedUrl}
                             preserveState
                             preserveScroll
-                            className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-                                link.active
+                            className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold transition-colors ${link.active
                                     ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                                     : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                            }`}
+                                }`}
                             dangerouslySetInnerHTML={{
                                 __html: link.label,
                             }}

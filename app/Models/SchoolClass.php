@@ -26,17 +26,19 @@ class SchoolClass extends Model
         'start_date',
         'end_date',
         'status',
+        'total_tuition_fee',
     ];
 
     protected function casts(): array
     {
         return [
-            'status'       => \App\Enums\EntityStatus::class,
-            'max_students' => 'integer',
-            'start_date'   => 'date:d-m-Y',
-            'end_date'     => 'date:d-m-Y',
-            'created_at'   => 'datetime:d-m-Y H:i',
-            'updated_at'   => 'datetime:d-m-Y H:i',
+            'status'            => 'integer',
+            'max_students'      => 'integer',
+            'total_tuition_fee' => 'decimal:0',
+            'start_date'        => 'date:d-m-Y',
+            'end_date'          => 'date:d-m-Y',
+            'created_at'        => 'datetime:d-m-Y H:i',
+            'updated_at'        => 'datetime:d-m-Y H:i',
         ];
     }
 
@@ -63,8 +65,7 @@ class SchoolClass extends Model
     {
         return $this->belongsToMany(Student::class, 'class_students', 'class_id', 'student_id')
             ->withPivot('enrolled_at', 'left_at', 'status', 'note')
-            ->withTimestamps()
-            ->withTrashed();
+            ->withTimestamps();
     }
 
     /**
@@ -105,5 +106,14 @@ class SchoolClass extends Model
     public function latestChatMessage(): HasOne
     {
         return $this->hasOne(ClassChatMessage::class, 'class_id')->latestOfMany();
+    }
+
+    public function getTotalTuitionFeeAttribute(): float
+    {
+        if (isset($this->attributes['total_tuition_fee']) && $this->attributes['total_tuition_fee'] !== null) {
+            return (float) $this->attributes['total_tuition_fee'];
+        }
+
+        return (float) ($this->classSubjects->sum('tuition_fee') ?: 0);
     }
 }

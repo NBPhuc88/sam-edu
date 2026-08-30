@@ -128,7 +128,8 @@ class ClassExamService implements ClassExamServiceInterface
 
             // Gửi email thông báo kỳ thi qua Queue cho học sinh và giáo viên phụ trách lớp
             $schoolClass = SchoolClass::with(['students' => function ($q) {
-                $q->wherePivot('status', 1)->where('students.status', 1);
+                $q->wherePivot('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                    ->where('students.status', Constant::STUDENT_STATUS_ACTIVE);
             }, 'classSubjects.teacher'])->find($data['class_id']);
 
             if ($schoolClass) {
@@ -145,8 +146,19 @@ class ClassExamService implements ClassExamServiceInterface
                     }
                 }
 
-                // 2. Gửi cho tất cả giáo viên phụ trách môn/lớp
-                $teachers = $schoolClass->classSubjects
+                // 2. Gửi cho giáo viên phụ trách môn học tương ứng của lớp
+                $subjectId     = $exam->subject_id;
+                $classSubjects = $schoolClass->classSubjects;
+
+                if ($subjectId) {
+                    $filteredSubjects = $classSubjects->where('subject_id', $subjectId);
+
+                    if ($filteredSubjects->isNotEmpty()) {
+                        $classSubjects = $filteredSubjects;
+                    }
+                }
+
+                $teachers = $classSubjects
                     ->pluck('teacher')
                     ->filter()
                     ->unique('id');

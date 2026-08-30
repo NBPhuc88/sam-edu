@@ -1,23 +1,3 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Download,
-    Edit2,
-    GraduationCap,
-    Mail,
-    MapPin,
-    Phone,
-    User,
-    XCircle,
-    CalendarDays,
-    BookOpen,
-    DoorOpen,
-    RefreshCw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import PageHeader from '@/components/common/PageHeader';
 import StatMetricCard from '@/components/common/StatMetricCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -25,10 +5,36 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
+import {
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+ArrowLeft,
+BookOpen,
+Calendar,
+CalendarDays,
+CheckCircle,
+Clock,
+DoorOpen,
+Download,
+Edit2,
+GraduationCap,
+Mail,
+MapPin,
+Phone,
+RefreshCw,
+User,
+XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -44,10 +50,10 @@ interface Teacher {
     email: string | null;
     phone: string | null;
     specialization: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     hire_date: string | null;
-    status: string;
+    status: number;
     note: string | null;
     center_id: number;
     center?: Center;
@@ -58,7 +64,7 @@ interface TeacherSessionItem {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
     class_name?: string | null;
@@ -69,7 +75,7 @@ interface TeacherSessionItem {
 }
 
 interface FilterData {
-    type: 'month' | 'all' | 'select_month';
+    type?: string;
     month: number;
     year: number;
     start_date: string | null;
@@ -121,16 +127,18 @@ export default function TeacherShow({
     const canExportPlan = useCanExportCsv();
     const canExport = canExportPermission && canExportPlan;
 
-    const [filterType, setFilterType] = useState<'month' | 'all' | 'select_month'>(filters.type || 'month');
+    const [filterType, setFilterType] = useState<string>(
+        filters.type ?? 'month'
+    );
     const [selectedMonth, setSelectedMonth] = useState<number>(filters.month || new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState<number>(filters.year || currentYear);
 
-    const handleFilterChange = (type: 'month' | 'all' | 'select_month', m = selectedMonth, y = selectedYear) => {
+    const handleFilterChange = (type: string, m = selectedMonth, y = selectedYear) => {
         setFilterType(type);
         router.get(
             `/teachers/${teacher.id}/show`,
             {
-                type,
+                type: type || undefined,
                 month: type === 'select_month' ? m : undefined,
                 year: type === 'select_month' ? y : undefined,
                 per_page: sessions.per_page !== 20 ? sessions.per_page : undefined,
@@ -144,7 +152,9 @@ export default function TeacherShow({
 
     const handleExport = () => {
         const params = new URLSearchParams();
-        params.set('type', filterType);
+        if (filterType) {
+            params.set('type', filterType);
+        }
         if (filterType === 'select_month') {
             params.set('month', String(selectedMonth));
             params.set('year', String(selectedYear));
@@ -152,26 +162,22 @@ export default function TeacherShow({
         window.location.href = `/teachers/${teacher.id}/export-sessions?${params.toString()}`;
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;
@@ -193,11 +199,12 @@ export default function TeacherShow({
         }
     };
 
-    const formatGender = (gender: string | null) => {
+    const formatGender = (gender: number | null) => {
         if (!gender) return '—';
-        if (gender === 'male') return 'Nam';
-        if (gender === 'female') return 'Nữ';
-        return 'Khác';
+        if (gender === 1) return 'Nam';
+        if (gender === 2) return 'Nữ';
+        if (gender === 3) return 'Khác';
+        return '—';
     };
 
     const yearOptions = [];
@@ -208,7 +215,7 @@ export default function TeacherShow({
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
 
     const getFilterLabel = () => {
-        if (filters.type === 'all') return 'Từ trước đến nay';
+        if (!filters.type || filters.type === '') return 'Từ trước đến nay';
         if (filters.type === 'select_month') return `Tháng ${filters.month}/${filters.year}`;
         return `Tháng ${filters.month}/${filters.year} (Tháng này)`;
     };
@@ -342,8 +349,8 @@ export default function TeacherShow({
 
                         <button
                             type="button"
-                            onClick={() => handleFilterChange('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filterType === 'all'
+                            onClick={() => handleFilterChange('')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterType || filterType === ''
                                     ? 'bg-emerald-600 text-white shadow-2xs'
                                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                                 }`}

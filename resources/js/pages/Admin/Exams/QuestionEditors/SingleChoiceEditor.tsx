@@ -1,6 +1,6 @@
-import React, { useId } from 'react';
-import { Plus, Trash2, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { CheckCircle,Plus,Trash2 } from 'lucide-react';
+import { useId } from 'react';
 
 interface Option {
     id: string;
@@ -175,9 +175,10 @@ export default function SingleChoiceEditor({
             </div>
 
             {!safeCorrectAnswer && (
-                <p className="text-xs text-amber-600 font-medium">
-                    ⚠️ Vui lòng tích chọn 1 phương án làm đáp án đúng.
-                </p>
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-bold text-red-700 border border-red-200">
+                    <span className="text-sm">⚠️</span>
+                    <span>Vui lòng tích chọn 1 phương án làm đáp án đúng cho câu hỏi này.</span>
+                </div>
             )}
         </div>
     );

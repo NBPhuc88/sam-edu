@@ -1,11 +1,19 @@
-import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Building2 } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_PAUSED,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_OPTIONS,
+} from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
+import { toISODateString } from '@/lib/date';
+import { notify } from '@/lib/toast';
+import { Link,usePage } from '@inertiajs/react';
+import { ArrowLeft,Building2,Save } from 'lucide-react';
+import React,{ useState } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import DatePicker from '../ui/DatePicker';
 import Input from '../ui/Input';
-import { toISODateString } from '@/lib/date';
 
 export interface CenterFormData {
     id?: number;
@@ -14,11 +22,11 @@ export interface CenterFormData {
     phone: string;
     email: string;
     address: string;
-    status: 'active' | 'inactive' | 'expired' | 'suspended';
-    subscription_plan: string;
+    status: number;
+    subscription_plan_id: number;
     expires_at: string;
-    max_students: number | string;
-    max_classes: number | string;
+    max_students: number;
+    max_classes: number;
 }
 
 interface CenterFormProps {
@@ -38,20 +46,17 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     isLoading = false,
     errors = {},
 }) => {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
     const backHref = isSuperAdmin ? '/centers' : '/dashboard';
 
-    const calculateExpirationDate = (planCode: string): string => {
+    const calculateExpirationDate = (planId: number): string => {
         const selectedPlan = subscriptionPlans.find(
-            (p: any) => p.code === planCode,
+            (p: any) => p.id === Number(planId),
         );
         const date = new Date();
 
         if (selectedPlan?.duration_days) {
             date.setDate(date.getDate() + Number(selectedPlan.duration_days));
-        } else if (planCode === 'trial') {
-            date.setDate(date.getDate() + 30);
         } else {
             date.setDate(date.getDate() + 30);
         }
@@ -61,12 +66,19 @@ export const CenterForm: React.FC<CenterFormProps> = ({
 
     // Form state initialized with initial values or defaults
     const [formData, setFormData] = useState<CenterFormData>(() => {
-        const defaultPlan = initialValues?.subscription_plan || 'basic_5';
+        const rawPlanId = initialValues?.subscription_plan_id;
+        const matchedPlan = subscriptionPlans.find(
+            (p: any) => p.id === Number(rawPlanId),
+        );
+        const defaultPlanId = matchedPlan?.id ?? (subscriptionPlans[0]?.id || 1);
         const defaultExpires = initialValues?.expires_at
             ? toISODateString(initialValues.expires_at)
             : mode === 'create'
-              ? calculateExpirationDate(defaultPlan)
+              ? calculateExpirationDate(defaultPlanId)
               : '';
+
+        const rawStatus = initialValues?.status;
+        const normalizedStatus = rawStatus === 2 ? CENTER_STATUS_PAUSED : rawStatus === 3 ? CENTER_STATUS_EXPIRED : CENTER_STATUS_ACTIVE;
 
         return {
             code: initialValues?.code || '',
@@ -74,13 +86,48 @@ export const CenterForm: React.FC<CenterFormProps> = ({
             phone: initialValues?.phone || '',
             email: initialValues?.email || '',
             address: initialValues?.address || '',
-            status: initialValues?.status || 'active',
-            subscription_plan: defaultPlan,
+            status: normalizedStatus,
+            subscription_plan_id: defaultPlanId,
             expires_at: defaultExpires,
             max_students: initialValues?.max_students ?? 200,
             max_classes: initialValues?.max_classes ?? 15,
         };
     });
+
+    const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+
+    const validate = (): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.name?.trim()) {
+            newErrors.name = 'Vui lòng nhập tên trung tâm.';
+        } else if (formData.name.length > 100) {
+            newErrors.name = 'Tên trung tâm không được vượt quá 100 ký tự.';
+        }
+
+        if (formData.phone && !/^(0|\+84)[0-9]{9,10}$/.test(formData.phone.replace(/\s+/g, ''))) {
+            newErrors.phone = 'Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678).';
+        }
+
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Địa chỉ email không hợp lệ.';
+        }
+
+        if (mode === 'create' && !formData.subscription_plan_id) {
+            newErrors.subscription_plan_id = 'Vui lòng chọn gói dịch vụ SaaS.';
+        }
+
+        setClientErrors(newErrors);
+        const hasErrors = Object.keys(newErrors).length > 0;
+        if (hasErrors) {
+            const firstError = Object.values(newErrors)[0];
+            if (typeof firstError === 'string') {
+                notify.error(firstError);
+            }
+        }
+
+        return !hasErrors;
+    };
 
     const handleChange = (
         e: React.ChangeEvent<
@@ -89,15 +136,24 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     ) => {
         const { name, value } = e.target;
 
-        if (name === 'subscription_plan') {
+        if (clientErrors[name]) {
+            setClientErrors((prev) => {
+                const updated = { ...prev };
+                delete updated[name];
+                return updated;
+            });
+        }
+
+        if (name === 'subscription_plan_id') {
+            const planId = Number(value);
             const selectedPlan = subscriptionPlans.find(
-                (p: any) => p.code === value,
+                (p: any) => p.id === planId,
             );
-            const autoExpiresAt = calculateExpirationDate(value);
+            const autoExpiresAt = calculateExpirationDate(planId);
 
             setFormData((prev) => ({
                 ...prev,
-                subscription_plan: value,
+                subscription_plan_id: planId,
                 expires_at: autoExpiresAt,
                 max_students: selectedPlan?.max_students ?? prev.max_students,
                 max_classes: selectedPlan?.max_classes ?? prev.max_classes,
@@ -115,37 +171,60 @@ export const CenterForm: React.FC<CenterFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!validate()) {
+            return;
+        }
+
         if (mode === 'create') {
             // Send full form payload on creation
             onSubmit(formData);
         } else {
-            // Mode EDIT: Send ONLY changed / dirty fields
+            // Mode EDIT: Send ONLY genuinely changed / dirty fields
             const changedPayload: Partial<CenterFormData> = {};
 
-            Object.keys(formData).forEach((key) => {
-                const k = key as keyof CenterFormData;
+            const numberFields: (keyof CenterFormData)[] = [
+                'status',
+                'subscription_plan_id',
+                'max_students',
+                'max_classes',
+            ];
+
+            (Object.keys(formData) as (keyof CenterFormData)[]).forEach((k) => {
+                if (k === 'id') return;
+
                 const currentValue = formData[k];
                 const originalValue = initialValues?.[k];
 
-                // Normalize date string for fair comparison if key is expires_at
                 if (k === 'expires_at') {
-                    const origDateStr = originalValue ? toISODateString(originalValue as string) : '';
+                    const currDate = currentValue ? toISODateString(currentValue as string) : '';
+                    const origDate = originalValue ? toISODateString(originalValue as string) : '';
 
-                    if (currentValue !== origDateStr) {
-                        changedPayload[k] = currentValue as any;
+                    if (currDate !== origDate) {
+                        changedPayload[k] = currDate as any;
                     }
-                } else if (
-                    currentValue !== originalValue &&
-                    currentValue !== (originalValue ?? '')
-                ) {
-                    changedPayload[k] = currentValue as any;
+                } else if (numberFields.includes(k)) {
+                    const currNum = Number(currentValue);
+                    const origNum = originalValue !== undefined && originalValue !== null ? Number(originalValue) : null;
+
+                    if (origNum === null || currNum !== origNum) {
+                        changedPayload[k] = currNum as any;
+                    }
+                } else {
+                    const currStr = String(currentValue ?? '').trim();
+                    const origStr = String(originalValue ?? '').trim();
+
+                    if (currStr !== origStr) {
+                        changedPayload[k] = (currentValue ?? '') as any;
+                    }
                 }
             });
 
-            // Always pass at least empty or dirty payload
+            // If nothing changed, pass empty object
             onSubmit(changedPayload);
         }
     };
+
+    const mergedErrors = { ...errors, ...clientErrors };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,9 +256,9 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             disabled={mode === 'edit'} // Code is readonly on edit
                             className="!py-3 !text-sm"
                         />
-                        {errors.code && (
+                        {mergedErrors.code && (
                             <p className="mt-1.5 text-sm text-red-600">
-                                {errors.code}
+                                {mergedErrors.code}
                             </p>
                         )}
                     </div>
@@ -197,9 +276,9 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             className="!py-3 !text-sm"
                             required
                         />
-                        {errors.name && (
+                        {mergedErrors.name && (
                             <p className="mt-1.5 text-sm text-red-600">
-                                {errors.name}
+                                {mergedErrors.name}
                             </p>
                         )}
                     </div>
@@ -216,9 +295,9 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             placeholder="0988.xxx.xxx"
                             className="!py-3 !text-sm"
                         />
-                        {errors.phone && (
+                        {mergedErrors.phone && (
                             <p className="mt-1.5 text-sm text-red-600">
-                                {errors.phone}
+                                {mergedErrors.phone}
                             </p>
                         )}
                     </div>
@@ -236,9 +315,9 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             placeholder="admin@trungtam.com"
                             className="!py-3 !text-sm"
                         />
-                        {errors.email && (
+                        {mergedErrors.email && (
                             <p className="mt-1.5 text-sm text-red-600">
-                                {errors.email}
+                                {mergedErrors.email}
                             </p>
                         )}
                     </div>
@@ -255,36 +334,61 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                             placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
                             className="!py-3 !text-sm"
                         />
-                        {errors.address && (
+                        {mergedErrors.address && (
                             <p className="mt-1.5 text-sm text-red-600">
-                                {errors.address}
+                                {mergedErrors.address}
                             </p>
                         )}
                     </div>
 
                     {/* Subscription Plan */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-800">
-                            Gói Dịch Vụ SaaS <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            name="subscription_plan"
-                            value={formData.subscription_plan}
-                            onChange={handleChange}
-                            disabled={!isSuperAdmin}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        >
-                            {subscriptionPlans.map((plan: any) => (
-                                <option key={plan.id} value={plan.code}>
-                                    {plan.name} (
-                                    {plan.price === 0
-                                        ? 'Miễn phí'
-                                        : `${plan.price.toLocaleString('vi-VN')}đ`}
-                                    )
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {mode === 'create' ? (
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                Gói Dịch Vụ SaaS <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="subscription_plan_id"
+                                value={formData.subscription_plan_id}
+                                onChange={handleChange}
+                                disabled={!isSuperAdmin}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            >
+                                {subscriptionPlans.map((plan: any) => (
+                                    <option key={plan.id} value={plan.id}>
+                                        {plan.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {mergedErrors.subscription_plan_id && (
+                                <p className="mt-1.5 text-sm text-red-600">
+                                    {mergedErrors.subscription_plan_id}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                Gói Dịch Vụ SaaS Hiện Tại
+                            </label>
+                            {(() => {
+                                const currentPlanObj = subscriptionPlans.find((p: any) => p.id === Number(formData.subscription_plan_id));
+                                const displayPlanText = currentPlanObj ? currentPlanObj.name : `Gói #${formData.subscription_plan_id}`;
+
+                                return (
+                                    <Input
+                                        value={displayPlanText}
+                                        disabled
+                                        readOnly
+                                        className="!py-3 !text-sm disabled:bg-gray-100 disabled:cursor-not-allowed font-medium text-gray-900"
+                                    />
+                                );
+                            })()}
+                            <p className="mt-1.5 text-xs text-gray-500">
+                                💡 Để đổi gói cước hoặc gia hạn, vui lòng sử dụng chức năng <strong>Gia Hạn / Đổi Gói Cước</strong>.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Status */}
                     <div>
@@ -294,22 +398,15 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <select
                             name="status"
                             value={formData.status}
-                            onChange={handleChange}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, status: Number(e.target.value) }))}
                             disabled={!isSuperAdmin}
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="active">
-                                Đang hoạt động
-                            </option>
-                            <option value="inactive">
-                                Tạm dừng
-                            </option>
-                            <option value="expired">
-                                Đã hết hạn
-                            </option>
-                            <option value="suspended">
-                                Tạm khóa
-                            </option>
+                            {CENTER_STATUS_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -321,9 +418,14 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <DatePicker
                             value={formData.expires_at}
                             onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
-                            disabled={!isSuperAdmin}
-                            className="!py-3 !text-sm w-full"
+                            disabled={!isSuperAdmin || mode === 'edit'}
+                            className="!py-3 !text-sm w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
+                        {mode === 'edit' && (
+                            <p className="mt-1.5 text-xs text-gray-500">
+                                💡 Ngày hết hạn được tự động cập nhật khi Gia hạn hoặc Đổi gói cước.
+                            </p>
+                        )}
                     </div>
 
                     {/* Capacity Limits */}

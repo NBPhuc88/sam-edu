@@ -1,11 +1,12 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, User, BookOpen } from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import { ArrowLeft,BookOpen,Save,User } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Center {
     id: number;
@@ -19,8 +20,8 @@ interface CreateProps {
 }
 
 export default function TeacherCreate({ centers = [], errors = {} }: CreateProps) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const userCenterId = auth?.user?.center_id;
 
     const [centerId, setCenterId] = useState<string>(
@@ -32,10 +33,10 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
     const [password, setPassword] = useState<string>('12345678');
     const [phone, setPhone] = useState<string>('');
     const [dateOfBirth, setDateOfBirth] = useState<string>('');
-    const [gender, setGender] = useState<string>('male');
+    const [gender, setGender] = useState<number>(1);
     const [hireDate, setHireDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [specialization, setSpecialization] = useState<string>('');
-    const [status, setStatus] = useState<string>('active');
+    const [status, setStatus] = useState<number>(1);
     const [note, setNote] = useState<string>('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -287,12 +288,12 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 </label>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
+                                    onChange={(e) => setGender(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
+                                    <option value={1}>Nam</option>
+                                    <option value={2}>Nữ</option>
+                                    <option value={3}>Khác</option>
                                 </select>
                             </div>
 
@@ -315,12 +316,12 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="active">Đang hoạt động</option>
-                                    <option value="inactive">Tạm dừng giảng dạy</option>
-                                    <option value="locked">Khóa tài khoản</option>
+                                    <option value={1}>Đang hoạt động</option>
+                                    <option value={0}>Tạm dừng giảng dạy</option>
+                                    <option value={2}>Khóa tài khoản</option>
                                 </select>
                             </div>
 

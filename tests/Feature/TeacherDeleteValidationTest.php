@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -22,7 +23,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm Test',
         'email'  => 'centertest@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -30,7 +31,8 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_del_val@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000095',
     ]);
 
@@ -43,7 +45,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'password'       => 'password123',
         'teacher_code'   => 'GV000000005',
         'center_id'      => $center->id,
-        'status'         => 'active',
+        'status'         => Constant::STATUS_ACTIVE,
         'specialization' => 'Toán học',
     ]);
 
@@ -70,7 +72,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     // Ca học trong tương lai
@@ -81,7 +83,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'session_date'     => now()->addDays(3)->toDateString(),
         'start_time'       => '08:00',
         'end_time'         => '10:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
     // 1. Cố gắng xóa giáo viên còn ca tương lai -> Bị từ chối
@@ -101,7 +103,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'password'     => 'password123',
         'teacher_code' => 'GV000000006',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $futureSession->update(['teacher_id' => $otherTeacher->id]);
@@ -115,7 +117,7 @@ test('teacher deletion is prevented when teacher has future sessions or active c
         'session_date'     => now()->subDays(5)->toDateString(),
         'start_time'       => '08:00',
         'end_time'         => '10:00',
-        'status'           => 'completed',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
     ]);
 
     // 4. Xóa giáo viên -> Thành công (Soft Delete)

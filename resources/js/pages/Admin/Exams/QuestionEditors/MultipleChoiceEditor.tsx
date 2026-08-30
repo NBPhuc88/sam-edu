@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, CheckSquare } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { CheckSquare,Plus,Trash2 } from 'lucide-react';
 
 interface Option {
     id: string;
@@ -209,9 +208,10 @@ export default function MultipleChoiceEditor({
             </div>
 
             {safeCorrectAnswer.length === 0 && (
-                <p className="text-xs text-amber-600 font-medium">
-                    ⚠️ Vui lòng chọn ít nhất 1 phương án làm đáp án đúng.
-                </p>
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-bold text-red-700 border border-red-200">
+                    <span className="text-sm">⚠️</span>
+                    <span>Vui lòng chọn ít nhất 1 phương án làm đáp án đúng cho câu hỏi này.</span>
+                </div>
             )}
         </div>
     );

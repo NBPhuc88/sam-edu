@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Room;
@@ -18,11 +19,11 @@ beforeEach(function () {
         'phone'             => '0901234568',
         'email'             => 'tuition_test@gmail.com',
         'address'           => '123 Test Street, TP.HCM',
-        'subscription_plan' => 'basic_5',
-        'plan_type'         => 'basic',
+        'subscription_plan' => 2,
+        'plan_type'         => 2,
         'max_classes'       => 10,
         'max_students'      => 50,
-        'status'            => 'active',
+        'status'            => Constant::STATUS_ACTIVE,
     ]);
 
     $this->superAdmin = Admin::create([
@@ -32,8 +33,8 @@ beforeEach(function () {
         'email'      => 'super_tuition@gmail.com',
         'phone'      => '0901111223',
         'password'   => bcrypt('password123'),
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $this->teacher = Teacher::create([
@@ -46,7 +47,7 @@ beforeEach(function () {
         'email'        => 'gv_tuition@gmail.com',
         'phone'        => '0903333445',
         'password'     => bcrypt('password123'),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->subject = Subject::create([
@@ -54,7 +55,7 @@ beforeEach(function () {
         'code'        => 'MH000000088',
         'name'        => 'Môn Toán Học Phí',
         'tuition_fee' => 5000000,
-        'status'      => 'active',
+        'status'      => Constant::STATUS_ACTIVE,
     ]);
 
     $this->room = Room::create([
@@ -100,7 +101,7 @@ test('không cho phép tạo hồ sơ học phí có tiền đợt 1 lớn hơn 
         'total_amount'           => 5000000,
         'initial_payment_amount' => 6000000, // Lớn hơn 5.000.000đ
         'initial_payment_date'   => now()->format('Y-m-d'),
-        'initial_payment_method' => 'cash',
+        'initial_payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('initial_payment_amount');
@@ -116,7 +117,7 @@ test('cho phép tạo hồ sơ học phí có tiền đợt 1 bằng hoặc nh�
         'total_amount'           => 5000000,
         'initial_payment_amount' => 3000000,
         'initial_payment_date'   => now()->format('Y-m-d'),
-        'initial_payment_method' => 'bank_transfer',
+        'initial_payment_method' => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -125,7 +126,7 @@ test('cho phép tạo hồ sơ học phí có tiền đợt 1 bằng hoặc nh�
         ->and((float) $tuition->total_amount)->toBe(5000000.0)
         ->and((float) $tuition->paid_amount)->toBe(3000000.0)
         ->and((float) $tuition->remaining_amount)->toBe(2000000.0)
-        ->and($tuition->status)->toBe('partial');
+        ->and($tuition->status)->toBe(Constant::TUITION_STATUS_PARTIAL);
 });
 
 test('không cho phép thu đợt mới vượt quá số tiền cần đóng còn lại', function () {
@@ -137,21 +138,21 @@ test('không cho phép thu đợt mới vượt quá số tiền cần đóng c�
         'total_amount'     => 5000000,
         'paid_amount'      => 3000000,
         'remaining_amount' => 2000000,
-        'status'           => 'partial',
+        'status'           => Constant::TUITION_STATUS_PARTIAL,
     ]);
 
     TuitionPayment::create([
         'student_tuition_id' => $tuition->id,
         'amount'             => 3000000,
         'payment_date'       => now()->format('Y-m-d'),
-        'payment_method'     => 'bank_transfer',
+        'payment_method'     => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ]);
 
     // Thử thu 2.500.000đ khi remaining_amount chỉ còn 2.000.000đ
     $response = $this->actingAs($this->superAdmin, 'admin')->post("/tuitions/{$tuition->id}/payments", [
         'amount'         => 2500000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('amount');
@@ -168,28 +169,28 @@ test('cho phép thu đợt mới bằng chính xác số tiền còn nợ và ch
         'total_amount'     => 5000000,
         'paid_amount'      => 3000000,
         'remaining_amount' => 2000000,
-        'status'           => 'partial',
+        'status'           => Constant::TUITION_STATUS_PARTIAL,
     ]);
 
     TuitionPayment::create([
         'student_tuition_id' => $tuition->id,
         'amount'             => 3000000,
         'payment_date'       => now()->format('Y-m-d'),
-        'payment_method'     => 'bank_transfer',
+        'payment_method'     => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ]);
 
     // Thu nốt 2.000.000đ
     $response = $this->actingAs($this->superAdmin, 'admin')->post("/tuitions/{$tuition->id}/payments", [
         'amount'         => 2000000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasNoErrors();
     $tuition->refresh();
     expect((float) $tuition->paid_amount)->toBe(5000000.0)
         ->and((float) $tuition->remaining_amount)->toBe(0.0)
-        ->and($tuition->status)->toBe('completed');
+        ->and($tuition->status)->toBe(Constant::TUITION_STATUS_PAID);
 });
 
 test('không cho phép sửa đợt thu khiến tổng tiền thu vượt quá tổng học phí', function () {
@@ -201,28 +202,28 @@ test('không cho phép sửa đợt thu khiến tổng tiền thu vượt quá t
         'total_amount'     => 5000000,
         'paid_amount'      => 4000000,
         'remaining_amount' => 1000000,
-        'status'           => 'partial',
+        'status'           => Constant::TUITION_STATUS_PARTIAL,
     ]);
 
     $payment1 = TuitionPayment::create([
         'student_tuition_id' => $tuition->id,
         'amount'             => 2000000,
         'payment_date'       => now()->format('Y-m-d'),
-        'payment_method'     => 'cash',
+        'payment_method'     => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $payment2 = TuitionPayment::create([
         'student_tuition_id' => $tuition->id,
         'amount'             => 2000000,
         'payment_date'       => now()->format('Y-m-d'),
-        'payment_method'     => 'cash',
+        'payment_method'     => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     // Sửa payment2 từ 2.000.000đ lên 3.500.000đ (tổng sẽ thành 2.000.000 + 3.500.000 = 5.500.000 > 5.000.000)
     $response = $this->actingAs($this->superAdmin, 'admin')->patch("/tuitions/payments/{$payment2->id}", [
         'amount'         => 3500000,
         'payment_date'   => now()->format('Y-m-d'),
-        'payment_method' => 'cash',
+        'payment_method' => Constant::PAYMENT_METHOD_CASH,
     ]);
 
     $response->assertSessionHasErrors('amount');
@@ -239,14 +240,14 @@ test('không cho phép cập nhật tổng học phí nhỏ hơn số tiền đ�
         'total_amount'     => 5000000,
         'paid_amount'      => 3000000,
         'remaining_amount' => 2000000,
-        'status'           => 'partial',
+        'status'           => Constant::TUITION_STATUS_PARTIAL,
     ]);
 
     TuitionPayment::create([
         'student_tuition_id' => $tuition->id,
         'amount'             => 3000000,
         'payment_date'       => now()->format('Y-m-d'),
-        'payment_method'     => 'bank_transfer',
+        'payment_method'     => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ]);
 
     // Sửa tổng học phí xuống 2.000.000đ (nhỏ hơn 3.000.000đ đã đóng)

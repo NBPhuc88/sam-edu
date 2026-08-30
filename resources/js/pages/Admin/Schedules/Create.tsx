@@ -1,33 +1,32 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    Clock,
-    GraduationCap,
-    Plus,
-    Trash2,
-    CheckSquare,
-    Square,
-    Coffee,
-    CalendarPlus,
-    CalendarDays,
-    Sparkles,
-    Calendar,
-    Check,
-    AlertCircle,
-    Edit3,
-    BookOpen,
-} from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import DatePicker from '@/components/ui/DatePicker';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import AppLayout from '@/layouts/AppLayout';
 import CustomTimePicker from '@/components/ui/CustomTimePicker';
+import DatePicker from '@/components/ui/DatePicker';
+import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { formatDate, parseDate, toISODateString } from '@/lib/date';
+import AppLayout from '@/layouts/AppLayout';
+import { formatDate,parseDate,toISODateString } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+BookOpen,
+CalendarDays,
+CalendarPlus,
+Check,
+CheckSquare,
+Clock,
+Coffee,
+Edit3,
+GraduationCap,
+Plus,
+Save,
+Sparkles,
+Square,
+Trash2,
+} from 'lucide-react';
+import { SCHEDULE_STATUS_ACTIVE } from '@/constants/enums';
+import React,{ useEffect,useState } from 'react';
 
 interface Center {
     id: number;
@@ -40,7 +39,7 @@ interface ClassSubjectSchedule {
     weeks?: Record<string, [string, string][]>;
     room_id?: number | null;
     room?: { id: number; name: string };
-    status?: string;
+    status?: number;
     off_days?: any[];
     extra_days?: any[];
 }
@@ -52,7 +51,7 @@ interface ClassSubjectItem {
     teacher?: { id: number; full_name: string; teacher_code: string };
     start_date?: string;
     end_date?: string;
-    status?: string;
+    status?: number;
     class_schedules?: ClassSubjectSchedule[];
     classSchedules?: ClassSubjectSchedule[];
 }
@@ -355,7 +354,7 @@ export default function ScheduleCreate({
     const [startDate, setStartDate] = useState<string>(
         initialClassStartDate && todayIso < initialClassStartDate ? initialClassStartDate : todayIso
     );
-    const [status] = useState<string>('active');
+    const [status] = useState<number>(SCHEDULE_STATUS_ACTIVE);
 
     // Weekly schedules: Map of weekday -> { enabled: boolean, slots: [{start_time, end_time}] }
     const [weeklyTimes, setWeeklyTimes] = useState<
@@ -660,32 +659,6 @@ export default function ScheduleCreate({
         }));
     };
 
-    const handleSlotChange = (day: number, slotIdx: number, field: 'start_time' | 'end_time', val: string) => {
-        setWeeklyTimes((prev) => {
-            const dayConf = prev[day];
-            const updatedSlots = [...dayConf.slots];
-            updatedSlots[slotIdx] = { ...updatedSlots[slotIdx], [field]: val };
-            return {
-                ...prev,
-                [day]: { ...dayConf, slots: updatedSlots },
-            };
-        });
-    };
-
-    const handleAddSlot = (day: number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setWeeklyTimes((prev) => {
-            const dayConf = prev[day];
-            return {
-                ...prev,
-                [day]: {
-                    ...dayConf,
-                    slots: [...dayConf.slots, { start_time: '08:00', end_time: '10:00' }],
-                },
-            };
-        });
-    };
-
     const handleRemoveSlot = (day: number, slotIdx: number, e: React.MouseEvent) => {
         e.stopPropagation();
         setWeeklyTimes((prev) => {
@@ -923,6 +896,42 @@ export default function ScheduleCreate({
         setSlotModalOpen(false);
     };
 
+    const scrollToFirstError = () => {
+        setTimeout(() => {
+            const errorSelectors = [
+                '.border-red-400',
+                '.border-red-500',
+                '.text-red-600',
+                '.text-red-800',
+                '.text-amber-900',
+                '#form-submit-error',
+                '#section-weekly-schedule-error',
+                'input:invalid',
+                'select:invalid',
+            ];
+
+            for (const selector of errorSelectors) {
+                const elements = document.querySelectorAll(selector);
+                for (let i = 0; i < elements.length; i++) {
+                    const el = elements[i] as HTMLElement;
+                    if (el && el.offsetParent !== null) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (typeof el.focus === 'function' && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'BUTTON')) {
+                            el.focus({ preventScroll: true });
+                        }
+                        return;
+                    }
+                }
+            }
+        }, 100);
+    };
+
+    useEffect(() => {
+        if (Object.keys(errors).length > 0 || formSubmitError) {
+            scrollToFirstError();
+        }
+    }, [errors, formSubmitError]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setFormSubmitError(null);
@@ -930,6 +939,7 @@ export default function ScheduleCreate({
         const slotErrors = validateWeeklyTimes(weeklyTimes);
         if (slotErrors.length > 0) {
             setFormSubmitError(`Không thể lưu lịch học: ${slotErrors[0].message}`);
+            scrollToFirstError();
             return;
         }
 
@@ -942,12 +952,14 @@ export default function ScheduleCreate({
                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
                     if (otherConflict) {
                         setFormSubmitError(`Trùng lịch học trong lớp: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với môn ${otherConflict.subjectName} (${otherConflict.timeRange})!`);
+                        scrollToFirstError();
                         return;
                     }
 
                     const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
                     if (teacherConflict) {
                         setFormSubmitError(`Trùng lịch dạy của giáo viên: Khung giờ ${day.label} (${slot.start_time?.slice(0, 5)} - ${slot.end_time?.slice(0, 5)}) bị trùng với lịch dạy lớp ${teacherConflict.className} (môn ${teacherConflict.subjectName}) của Giáo viên ${teacherConflict.teacherName}!`);
+                        scrollToFirstError();
                         return;
                     }
                 }
@@ -956,6 +968,7 @@ export default function ScheduleCreate({
 
         if (classStartDate && startDate < classStartDate) {
             setFormSubmitError(`Ngày bắt đầu lịch học không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+            scrollToFirstError();
             return;
         }
 
@@ -963,12 +976,14 @@ export default function ScheduleCreate({
             for (const off of offDays) {
                 if (off.date && toISODateString(off.date) < classStartDate) {
                     setFormSubmitError(`Ngày nghỉ (${formatDate(off.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    scrollToFirstError();
                     return;
                 }
             }
             for (const extra of extraDays) {
                 if (extra.date && toISODateString(extra.date) < classStartDate) {
                     setFormSubmitError(`Ngày học bù (${formatDate(extra.date)}) không được nhỏ hơn ngày bắt đầu của lớp (${formatDate(classStartDate)})!`);
+                    scrollToFirstError();
                     return;
                 }
             }
@@ -1011,6 +1026,7 @@ export default function ScheduleCreate({
                 status,
             },
             {
+                onError: () => scrollToFirstError(),
                 onFinish: () => setIsSubmitting(false),
             },
         );
@@ -1024,11 +1040,7 @@ export default function ScheduleCreate({
                 {/* Header Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/schedules">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-5 w-5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/schedules" size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Thiết Lập Lịch Học Mới
@@ -1138,8 +1150,14 @@ export default function ScheduleCreate({
                                     </div>
                                 )}
                                 <input type="hidden" name="teacher_id" value={selectedTeacherId} />
-                                {errors.teacher_id && (
+                                {errors.teacher_id && !errors.teacher_id.includes('Trùng lịch') && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.teacher_id}</p>
+                                )}
+                                {errors.teacher_id && errors.teacher_id.includes('Trùng lịch') && (
+                                    <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-amber-700">
+                                        <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                                        <span>Trùng lịch dạy trong tuần (xem chi tiết và điều chỉnh tại Mục 2 bên dưới).</span>
+                                    </p>
                                 )}
                             </div>
 
@@ -1285,6 +1303,16 @@ export default function ScheduleCreate({
                             </div>
                         )}
 
+                        {(errors.weeks || (errors.teacher_id && errors.teacher_id.includes('Trùng lịch'))) && (
+                            <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                                <div>
+                                    <p className="font-bold">Lỗi trùng lịch học / lịch dạy trong tuần:</p>
+                                    <p className="mt-1 font-normal text-red-700">{errors.weeks || errors.teacher_id}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {WEEKDAYS.map((day) => {
                                 const conf = weeklyTimes[day.id];
@@ -1319,16 +1347,41 @@ export default function ScheduleCreate({
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 {conf.slots.map((slot, sIdx) => {
+                                                    const sStart = slot.start_time ? String(slot.start_time).slice(0, 5) : '';
+                                                    const sEnd = slot.end_time ? String(slot.end_time).slice(0, 5) : '';
+                                                    const isInvalidTime = !!(sStart && sEnd && sStart >= sEnd);
+
+                                                    let sameDayConflictMsg: string | null = null;
+                                                    if (sStart && sEnd) {
+                                                        for (let oIdx = 0; oIdx < conf.slots.length; oIdx++) {
+                                                            if (oIdx === sIdx) continue;
+                                                            const otherSlot = conf.slots[oIdx];
+                                                            const oStart = otherSlot.start_time ? String(otherSlot.start_time).slice(0, 5) : '';
+                                                            const oEnd = otherSlot.end_time ? String(otherSlot.end_time).slice(0, 5) : '';
+                                                            if (oStart && oEnd && sStart < oEnd && oStart < sEnd) {
+                                                                sameDayConflictMsg = `Trùng giờ với Ca ${oIdx + 1} (${oStart} - ${oEnd})`;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+
                                                     const otherConflict = getSlotConflict(day.id, slot.start_time, slot.end_time);
                                                     const teacherConflict = getTeacherSlotConflict(day.id, slot.start_time, slot.end_time);
-                                                    const isConflicted = !!otherConflict || !!teacherConflict;
+                                                    const isConflicted = isInvalidTime || !!sameDayConflictMsg || !!otherConflict || !!teacherConflict;
 
                                                     return (
-                                                        <div key={sIdx} className={`rounded-lg bg-white p-2.5 shadow-xs border ${isConflicted ? 'border-red-400 bg-red-50/30' : 'border-emerald-200/80'}`}>
-                                                            <div className="flex items-center justify-between mb-1.5 text-[11px] font-semibold text-emerald-800">
+                                                        <div
+                                                            key={sIdx}
+                                                            className={`rounded-xl bg-white p-3 shadow-xs border transition-all ${
+                                                                isConflicted
+                                                                    ? 'border-red-400 bg-white'
+                                                                    : 'border-emerald-200/80 bg-white'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-2 text-xs font-semibold text-gray-800">
                                                                 <span className="flex items-center gap-1">
                                                                     <span>Ca {sIdx + 1}</span>
-                                                                    <span className="font-mono text-gray-500">({slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)})</span>
+                                                                    <span className="font-mono text-gray-500">({sStart || '--:--'} - {sEnd || '--:--'})</span>
                                                                 </span>
                                                                 <div className="flex items-center gap-1.5">
                                                                     <button
@@ -1337,7 +1390,7 @@ export default function ScheduleCreate({
                                                                         className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-0.5"
                                                                         title="Chỉnh sửa giờ trong popup có nút Lưu"
                                                                     >
-                                                                        <Edit3 className="h-3 w-3" />
+                                                                        <Edit3 className="h-3.5 w-3.5" />
                                                                         Sửa
                                                                     </button>
                                                                     {conf.slots.length > 1 && (
@@ -1355,41 +1408,55 @@ export default function ScheduleCreate({
 
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <div>
-                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Bắt đầu</label>
+                                                                    <label className="mb-1 block text-[11px] text-gray-500 font-medium">Bắt đầu</label>
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
                                                                         title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
                                                                     >
                                                                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                        <span>{slot.start_time?.slice(0, 5) || '18:00'}</span>
+                                                                        <span>{sStart || '18:00'}</span>
                                                                     </button>
                                                                 </div>
                                                                 <div>
-                                                                    <label className="mb-1 block text-[10px] text-gray-500 font-medium">Kết thúc</label>
+                                                                    <label className="mb-1 block text-[11px] text-gray-500 font-medium">Kết thúc</label>
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => openSlotModal(day.id, sIdx, e)}
-                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
+                                                                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 shadow-xs hover:border-emerald-500 hover:bg-emerald-50/40 transition-colors"
                                                                         title="Bấm để chỉnh sửa giờ ca học (Có nút Lưu)"
                                                                     >
                                                                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                                        <span>{slot.end_time?.slice(0, 5) || '20:00'}</span>
+                                                                        <span>{sEnd || '20:00'}</span>
                                                                     </button>
                                                                 </div>
                                                             </div>
 
+                                                            {isInvalidTime && (
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                                                                    <span>Giờ kết thúc ({sEnd}) phải sau giờ bắt đầu ({sStart})!</span>
+                                                                </div>
+                                                            )}
+
+                                                            {sameDayConflictMsg && (
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                                                                    <span>{sameDayConflictMsg}</span>
+                                                                </div>
+                                                            )}
+
                                                             {otherConflict && (
-                                                                <div className="mt-2 flex items-start gap-1 rounded bg-red-100 p-1.5 text-[11px] font-semibold text-red-800">
-                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 mt-0.5" />
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-900 border border-red-200">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
                                                                     <span>Trùng với môn <strong>{otherConflict.subjectName}</strong> ({otherConflict.timeRange})</span>
                                                                 </div>
                                                             )}
 
                                                             {teacherConflict && (
-                                                                <div className="mt-2 flex items-start gap-1 rounded bg-amber-100 p-1.5 text-[11px] font-semibold text-amber-900 border border-amber-300">
-                                                                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-700 mt-0.5" />
+                                                                <div className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-300">
+                                                                    <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                                                                     <span>Trùng lịch dạy GV <strong>{teacherConflict.teacherName}</strong> tại lớp <strong>{teacherConflict.className}</strong> ({teacherConflict.timeRange})</span>
                                                                 </div>
                                                             )}
@@ -1460,6 +1527,12 @@ export default function ScheduleCreate({
                         </div>
 
                         {/* Holiday toggle switch */}
+                        {errors.off_days && (
+                            <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                                <span>{errors.off_days}</span>
+                            </div>
+                        )}
                         <div className="mb-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
                             <div className="flex items-center gap-3">
                                 <CalendarDays className="h-5 w-5 text-emerald-600 shrink-0" />
@@ -1599,6 +1672,13 @@ export default function ScheduleCreate({
                                 Thêm Buổi Học Bù
                             </Button>
                         </div>
+
+                        {errors.extra_days && (
+                            <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                                <span>{errors.extra_days}</span>
+                            </div>
+                        )}
 
                         {extraDays.length > 0 ? (
                             <div className="space-y-3">

@@ -1,9 +1,9 @@
-import { Head, router } from '@inertiajs/react';
-import { FileCheck, KeyRound, ArrowRight, ShieldCheck } from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,router } from '@inertiajs/react';
+import { ArrowRight,FileCheck,KeyRound,ShieldCheck } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface Props {
     errors?: Record<string, string>;

@@ -8,7 +8,9 @@ use App\Mail\EmailChangedMail;
 use App\Mail\PasswordChangedMail;
 use App\Mail\UsernameChangedMail;
 use App\Models\Admin;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentTuition;
 use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
@@ -18,6 +20,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -241,7 +244,9 @@ class StudentService implements StudentServiceInterface
                 $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId);
 
                 if ($activeStudentsCount >= $center->max_students) {
-                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                    throw ValidationException::withMessages([
+                        'full_name' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                    ]);
                 }
             }
         }
@@ -326,24 +331,26 @@ class StudentService implements StudentServiceInterface
             if (is_numeric($data['status'])) {
                 $newStatus = (int) $data['status'];
             } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = 0;
+                $newStatus = Constant::STUDENT_STATUS_INACTIVE;
             } elseif ($data['status'] === 'graduated' || $data['status'] === 'completed') {
-                $newStatus = 2;
+                $newStatus = Constant::STUDENT_STATUS_GRADUATED;
             } else {
-                $newStatus = 1;
+                $newStatus = Constant::STUDENT_STATUS_ACTIVE;
             }
         }
 
         $centerId = (int) ($data['center_id'] ?? $student->center_id);
 
-        if ($currentStatusInt !== 1 && $newStatus === 1) {
+        if ($currentStatusInt !== Constant::STUDENT_STATUS_ACTIVE && $newStatus === Constant::STUDENT_STATUS_ACTIVE) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
                 $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId, $student->id);
 
                 if ($activeStudentsCount >= $center->max_students) {
-                    throw new \InvalidArgumentException("Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.");
+                    throw ValidationException::withMessages([
+                        'status' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                    ]);
                 }
             }
         }
@@ -417,7 +424,8 @@ class StudentService implements StudentServiceInterface
                     roleLabel: 'Học sinh',
                     centerName: $center?->name,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: url('/login')
+                    loginUrl: url('/login'),
+                    newPassword: $data['password']
                 )
             );
         }
@@ -487,17 +495,57 @@ class StudentService implements StudentServiceInterface
         return $this->studentRepository->delete($student->id);
     }
 
-    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null): void
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null, bool $createTuition = false, ?array $tuitionClassIds = null): void
     {
         $student  = $this->findStudent($studentId, $admin);
         $centerId = (int) $student->center_id;
 
-        $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $classIds);
+        $existingClassIds = $student->classes()->pluck('classes.id')->toArray();
+        $validClassIds    = $this->studentRepository->filterValidClassIds($centerId, $classIds);
+        $newClassIds      = array_values(array_diff($validClassIds, $existingClassIds));
 
         $this->studentRepository->syncClasses($student, $validClassIds);
+
+        if ($createTuition && ! empty($validClassIds)) {
+            $targetClassIds = $tuitionClassIds !== null
+                ? array_values(array_intersect($validClassIds, array_map('intval', $tuitionClassIds)))
+                : $validClassIds;
+
+            if (! empty($targetClassIds)) {
+                $classes = SchoolClass::query()
+                    ->whereIn('id', $targetClassIds)
+                    ->with('classSubjects')
+                    ->get();
+
+                foreach ($classes as $schoolClass) {
+                    $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                        ? $schoolClass->total_tuition_fee
+                        : $schoolClass->classSubjects->sum('tuition_fee'));
+
+                    if ($totalTuitionFee > 0) {
+                        StudentTuition::firstOrCreate(
+                            [
+                                'center_id'  => $schoolClass->center_id,
+                                'student_id' => $student->id,
+                                'class_id'   => $schoolClass->id,
+                            ],
+                            [
+                                'title'            => 'Học phí ' . $schoolClass->name,
+                                'total_amount'     => $totalTuitionFee,
+                                'paid_amount'      => 0,
+                                'remaining_amount' => $totalTuitionFee,
+                                'status'           => Constant::TUITION_STATUS_PENDING,
+                                'due_date'         => $schoolClass->end_date ?: null,
+                                'created_by'       => $admin?->id,
+                            ]
+                        );
+                    }
+                }
+            }
+        }
     }
 
-    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null): array
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, bool $createTuition = false, ?array $tuitionStudentIds = null): array
     {
         $class = $this->schoolClassRepository->find($classId);
 
@@ -514,11 +562,44 @@ class StudentService implements StudentServiceInterface
         $validStudents = $this->studentRepository->getActiveStudents([(int) $class->center_id])
             ->whereIn('id', $studentIds);
 
-        $successCount = 0;
+        $successCount       = 0;
+        $attachedStudentIds = [];
 
         foreach ($validStudents as $student) {
             $this->studentRepository->attachClasses($student, [$classId]);
+            $attachedStudentIds[] = $student->id;
             $successCount++;
+        }
+
+        if ($createTuition && ! empty($attachedStudentIds)) {
+            $totalTuitionFee = (float) ($class->total_tuition_fee > 0
+                ? $class->total_tuition_fee
+                : $class->classSubjects()->sum('tuition_fee'));
+
+            $targetStudentIds = $tuitionStudentIds !== null
+                ? array_values(array_intersect($attachedStudentIds, array_map('intval', $tuitionStudentIds)))
+                : $attachedStudentIds;
+
+            if ($totalTuitionFee > 0 && ! empty($targetStudentIds)) {
+                foreach ($targetStudentIds as $studentId) {
+                    StudentTuition::firstOrCreate(
+                        [
+                            'center_id'  => $class->center_id,
+                            'student_id' => $studentId,
+                            'class_id'   => $class->id,
+                        ],
+                        [
+                            'title'            => 'Học phí ' . $class->name,
+                            'total_amount'     => $totalTuitionFee,
+                            'paid_amount'      => 0,
+                            'remaining_amount' => $totalTuitionFee,
+                            'status'           => Constant::TUITION_STATUS_PENDING,
+                            'due_date'         => $class->end_date ?: null,
+                            'created_by'       => $admin?->id,
+                        ]
+                    );
+                }
+            }
         }
 
         return [
@@ -925,7 +1006,7 @@ class StudentService implements StudentServiceInterface
     {
         $now = CarbonImmutable::now();
 
-        if ($filterType === 'all') {
+        if ($filterType === '' || empty($filterType)) {
             return [null, $now->format('Y-m-d'), (int) $now->format('n'), (int) $now->format('Y')];
         }
 

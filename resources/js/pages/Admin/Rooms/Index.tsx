@@ -1,29 +1,39 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    DoorOpen,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    Users,
-    CheckCircle2,
-    XCircle,
-    Building2,
-    MapPin,
-    Armchair,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import { TruncatedText } from '@/components/ui/Tooltip';
+import {
+    EQUIPMENT_STATUS_BROKEN,
+    EQUIPMENT_STATUS_GOOD,
+    EQUIPMENT_STATUS_LABELS,
+    EQUIPMENT_STATUS_MAINTENANCE,
+    ROOM_STATUS_ACTIVE,
+    ROOM_STATUS_CLOSED,
+    ROOM_STATUS_LABELS,
+    ROOM_STATUS_PAUSED,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    AlertCircle,
+    Armchair,
+    Building2,
+    CheckCircle2,
+    DoorOpen,
+    Edit2,
+    Eye,
+    Filter,
+    MapPin,
+    Plus,
+    Search,
+    Trash2,
+    Users,
+    XCircle,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -38,7 +48,7 @@ interface RoomEquipment {
     name: string;
     quantity: number;
     unit: string | null;
-    status: 'good' | 'maintenance' | 'broken';
+    status: number;
     note: string | null;
 }
 
@@ -49,7 +59,7 @@ interface Room {
     name: string;
     capacity: number | null;
     location: string | null;
-    status: 'active' | 'paused' | 'closed' | 'inactive';
+    status: number;
     created_at?: string;
     center?: Center;
     equipments?: RoomEquipment[];
@@ -77,21 +87,19 @@ interface Props {
     filters: {
         search?: string;
         center_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
 export default function RoomIndex({ rooms, centers = [], stats, filters }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -109,8 +117,8 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
             '/rooms',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -118,8 +126,8 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/rooms', {}, { preserveState: true });
     };
 
@@ -148,30 +156,29 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang hoạt động</Badge>;
-            case 'paused':
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            case 'closed':
-                return <Badge variant="danger">Đã đóng</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === ROOM_STATUS_ACTIVE) {
+            return <Badge variant="active">{ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE]}</Badge>;
         }
+        if (status === ROOM_STATUS_PAUSED) {
+            return <Badge variant="expired">{ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED]}</Badge>;
+        }
+        if (status === ROOM_STATUS_CLOSED) {
+            return <Badge variant="danger">{ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED]}</Badge>;
+        }
+        return <Badge variant="info">Chưa rõ</Badge>;
     };
 
-    const getEquipmentStatusBadge = (status: string) => {
+    const getEquipmentStatusBadge = (status: number) => {
         switch (status) {
-            case 'good':
-                return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-semibold text-emerald-700 border border-emerald-200">Tốt</span>;
-            case 'maintenance':
-                return <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-700 border border-amber-200">Bảo trì</span>;
-            case 'broken':
-                return <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-2xs font-semibold text-red-700 border border-red-200">Hỏng</span>;
+            case EQUIPMENT_STATUS_GOOD:
+                return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-semibold text-emerald-700 border border-emerald-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_GOOD]}</span>;
+            case EQUIPMENT_STATUS_MAINTENANCE:
+                return <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-700 border border-amber-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_MAINTENANCE]}</span>;
+            case EQUIPMENT_STATUS_BROKEN:
+                return <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-2xs font-semibold text-red-700 border border-red-200">{EQUIPMENT_STATUS_LABELS[EQUIPMENT_STATUS_BROKEN]}</span>;
             default:
-                return <span className="text-xs text-gray-500">{status}</span>;
+                return <span className="text-xs text-gray-500">{EQUIPMENT_STATUS_LABELS[status] || status}</span>;
         }
     };
 
@@ -300,12 +307,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                     </label>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="-- Tất cả Trung Tâm --"
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((center) => ({
-                                                value: String(center.id),
+                                                value: center.id,
                                                 label: `${center.name} (${center.code})`,
                                             })),
                                         ]}
@@ -320,12 +327,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                 </label>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'paused', label: 'Tạm dừng' },
-                                        { value: 'closed', label: 'Đã đóng' },
+                                        { value: 0, label: 'Tất cả trạng thái' },
+                                        { value: ROOM_STATUS_ACTIVE, label: ROOM_STATUS_LABELS[ROOM_STATUS_ACTIVE] },
+                                        { value: ROOM_STATUS_PAUSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_PAUSED] },
+                                        { value: ROOM_STATUS_CLOSED, label: ROOM_STATUS_LABELS[ROOM_STATUS_CLOSED] },
                                     ]}
                                 />
                             </div>
@@ -343,10 +350,10 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
+                                size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Áp Dụng Lọc
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -520,13 +527,12 @@ export default function RoomIndex({ rooms, centers = [], stats, filters }: Props
                                         key={i}
                                         href={link.url || '#'}
                                         preserveState
-                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                            link.active
-                                                ? 'bg-emerald-600 text-white shadow-xs'
-                                                : link.url
-                                                  ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                  : 'cursor-not-allowed text-gray-300'
-                                        }`}
+                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${link.active
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : link.url
+                                                ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                : 'cursor-not-allowed text-gray-300'
+                                            }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
                                 ))}

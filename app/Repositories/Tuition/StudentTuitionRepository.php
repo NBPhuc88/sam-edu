@@ -13,7 +13,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
      * @param  array<int>|int|null  $centerIds
      * @param  ?int                 $classId
      * @param  ?int                 $studentId
-     * @param  ?string              $status
+     * @param  ?int                 $status
      * @param  int                  $perPage
      * @param  int                  $page
      * @param  ?string              $month
@@ -24,7 +24,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         array|int|null $centerIds = null,
         ?int $classId = null,
         ?int $studentId = null,
-        ?string $status = null,
+        ?int $status = null,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?string $month = null
@@ -82,11 +82,11 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('student_id', $studentId);
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status > 0) {
             $query->where('status', $status);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -115,7 +115,124 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             });
         }
 
-        return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
+        // Trường hợp 1: Có filter theo lớp học cụ thể ($classId !== null) HOẶC filter theo học sinh cụ thể ($studentId !== null)
+        if ($classId !== null || $studentId !== null) {
+            $paginator = $query->latest('id')->paginate($perPage, ['*'], 'page', $page)->withQueryString();
+
+            $paginator->getCollection()->transform(function ($item) {
+                $statusInt     = is_object($item->status) ? $item->status->value : (int) $item->status;
+                $item->classes = [
+                    [
+                        'id'               => $item->schoolClass?->id ?? $item->class_id,
+                        'name'             => $item->schoolClass?->name ?? 'Lớp học',
+                        'code'             => $item->schoolClass?->code ?? '',
+                        'total_amount'     => (float) $item->total_amount,
+                        'paid_amount'      => (float) $item->paid_amount,
+                        'remaining_amount' => (float) $item->remaining_amount,
+                        'status'           => $statusInt,
+                    ],
+                ];
+
+                return $item;
+            });
+
+            return $paginator;
+        }
+
+        // Trường hợp 2: Không filter theo lớp học -> Gom nhóm và tính tổng tiền theo từng học sinh
+        $studentIdsPaginator = (clone $query)
+            ->select('student_id')
+            ->distinct()
+            ->latest('student_id')
+            ->paginate($perPage, ['student_id'], 'page', $page)
+            ->withQueryString();
+
+        $studentIds = $studentIdsPaginator->pluck('student_id')->all();
+
+        if (empty($studentIds)) {
+            return $studentIdsPaginator;
+        }
+
+        // Nạp tất cả các khoản học phí của các học sinh trong trang hiện tại
+        $allTuitions = StudentTuition::query()
+            ->whereIn('student_id', $studentIds)
+            ->when($centerIds !== null, function ($q) use ($centerIds) {
+                if (is_array($centerIds)) {
+                    $q->whereIn('center_id', $centerIds);
+                } else {
+                    $q->where('center_id', $centerIds);
+                }
+            })
+            ->with([
+                'student:id,full_name,student_code,phone,deleted_at',
+                'schoolClass:id,name,code',
+                'center:id,name,code',
+                'creator:id,username,full_name',
+                'payments' => function ($q) {
+                    $q->select('id', 'student_tuition_id', 'amount', 'payment_date', 'payment_method', 'transaction_code');
+                },
+            ])
+            ->withCount('payments')
+            ->get();
+
+        $grouped = $allTuitions->groupBy('student_id');
+        $items   = collect();
+
+        foreach ($studentIds as $sId) {
+            $studentTuitions = $grouped->get($sId, collect());
+
+            if ($studentTuitions->isEmpty()) {
+                continue;
+            }
+
+            $primaryTuition  = $studentTuitions->sortByDesc('id')->first();
+            $totalAmount     = (float) $studentTuitions->sum('total_amount');
+            $paidAmount      = (float) $studentTuitions->sum('paid_amount');
+            $remainingAmount = (float) $studentTuitions->sum('remaining_amount');
+            $paymentsCount   = (int) $studentTuitions->sum('payments_count');
+
+            $classes = $studentTuitions->map(function ($t) {
+                return [
+                    'id'               => $t->schoolClass?->id ?? $t->class_id,
+                    'name'             => $t->schoolClass?->name ?? 'Lớp học',
+                    'code'             => $t->schoolClass?->code ?? '',
+                    'total_amount'     => (float) $t->total_amount,
+                    'paid_amount'      => (float) $t->paid_amount,
+                    'remaining_amount' => (float) $t->remaining_amount,
+                    'status'           => is_object($t->status) ? $t->status->value : (int) $t->status,
+                ];
+            })->values()->all();
+
+            $hasOverdue = $studentTuitions->contains(function ($t) {
+                $st = is_object($t->status) ? $t->status->value : (int) $t->status;
+
+                return $st === Constant::TUITION_STATUS_OVERDUE;
+            });
+
+            if ($remainingAmount <= 0 && $totalAmount > 0) {
+                $statusOverall = Constant::TUITION_STATUS_PAID;
+            } elseif ($hasOverdue) {
+                $statusOverall = Constant::TUITION_STATUS_OVERDUE;
+            } elseif ($paidAmount > 0) {
+                $statusOverall = Constant::TUITION_STATUS_PARTIAL;
+            } else {
+                $statusOverall = Constant::TUITION_STATUS_PENDING;
+            }
+
+            $item                   = clone $primaryTuition;
+            $item->total_amount     = $totalAmount;
+            $item->paid_amount      = $paidAmount;
+            $item->remaining_amount = $remainingAmount;
+            $item->status           = $statusOverall;
+            $item->payments_count   = $paymentsCount;
+            $item->classes          = $classes;
+
+            $items->push($item);
+        }
+
+        $studentIdsPaginator->setCollection($items);
+
+        return $studentIdsPaginator;
     }
 
     /**
@@ -142,7 +259,12 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'created_at'
             )
             ->with([
-                'student:id,full_name,student_code,email,phone,deleted_at',
+                'student:id,full_name,student_code,email,phone,parent_name,parent_phone,deleted_at',
+                'student.tuitions' => function ($q) {
+                    $q->select('id', 'center_id', 'student_id', 'class_id', 'title', 'total_amount', 'paid_amount', 'remaining_amount', 'status', 'due_date')
+                        ->with('schoolClass:id,name,code')
+                        ->withCount('payments');
+                },
                 'schoolClass:id,name,code',
                 'center:id,name,code',
                 'creator:id,username,full_name',
@@ -228,7 +350,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -241,9 +363,9 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         $paidAmount      = (float) (clone $query)->sum('paid_amount');
         $remainingAmount = (float) (clone $query)->sum('remaining_amount');
         $totalTuitions   = (int) (clone $query)->count();
-        $completedCount  = (int) (clone $query)->where('status', 'completed')->count();
-        $partialCount    = (int) (clone $query)->where('status', 'partial')->count();
-        $pendingCount    = (int) (clone $query)->where('status', 'pending')->count();
+        $completedCount  = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PAID)->count();
+        $partialCount    = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PARTIAL)->count();
+        $pendingCount    = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PENDING)->count();
 
         return [
             'total_amount'     => $totalAmount,
@@ -264,14 +386,25 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
     {
         $tuitions = StudentTuition::where('student_id', $studentId)->get();
 
+        $totalInvoiced  = (float) $tuitions->sum('total_amount');
+        $totalPaid      = (float) $tuitions->sum('paid_amount');
+        $totalRemaining = (float) $tuitions->sum('remaining_amount');
+        $paidCount      = $tuitions->where('status', Constant::TUITION_STATUS_PAID)->count();
+        $partialCount   = $tuitions->where('status', Constant::TUITION_STATUS_PARTIAL)->count();
+        $unpaidCount    = $tuitions->whereIn('status', [Constant::TUITION_STATUS_PENDING, Constant::TUITION_STATUS_OVERDUE])->count();
+
         return [
-            'total_amount'     => (float) $tuitions->sum('total_amount'),
-            'paid_amount'      => (float) $tuitions->sum('paid_amount'),
-            'remaining_amount' => (float) $tuitions->sum('remaining_amount'),
+            'total_invoiced'   => $totalInvoiced,
+            'total_paid'       => $totalPaid,
+            'total_remaining'  => $totalRemaining,
+            'paid_count'       => $paidCount,
+            'partial_count'    => $partialCount,
+            'unpaid_count'     => $unpaidCount,
+            'total_amount'     => $totalInvoiced,
+            'paid_amount'      => $totalPaid,
+            'remaining_amount' => $totalRemaining,
             'total_records'    => $tuitions->count(),
-            'completed_count'  => $tuitions->where('status', 'paid')->count(),
-            'partial_count'    => $tuitions->where('status', 'partial')->count(),
-            'unpaid_count'     => $tuitions->whereIn('status', ['unpaid', 'overdue'])->count(),
+            'completed_count'  => $paidCount,
         ];
     }
 
@@ -279,7 +412,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
      * @param  ?string                                  $search
      * @param  array<int>|int|null                      $centerIds
      * @param  ?int                                     $classId
-     * @param  ?string                                  $status
+     * @param  ?int                                     $status
      * @param  ?string                                  $month
      * @return \Illuminate\Database\Eloquent\Collection
      */
@@ -287,7 +420,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         ?string $search = null,
         array|int|null $centerIds = null,
         ?int $classId = null,
-        ?string $status = null,
+        ?int $status = null,
         ?string $month = null
     ): \Illuminate\Database\Eloquent\Collection {
         $query = StudentTuition::query()
@@ -330,11 +463,11 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status > 0) {
             $query->where('status', $status);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -391,7 +524,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             $query->where('class_id', $classId);
         }
 
-        if ($month !== null && $month !== '' && $month !== 'all') {
+        if ($month !== null && $month !== '' && $month !== '') {
             $startOfMonth = \Illuminate\Support\Carbon::parse($month . '-01')->startOfMonth()->toDateTimeString();
             $endOfMonth   = \Illuminate\Support\Carbon::parse($month . '-01')->endOfMonth()->toDateTimeString();
             $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
@@ -401,16 +534,16 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
         }
 
         // 1. Status distribution for Pie Chart
-        $completedCount = (int) (clone $query)->where('status', 'completed')->count();
-        $partialCount   = (int) (clone $query)->where('status', 'partial')->count();
-        $pendingCount   = (int) (clone $query)->where('status', 'pending')->count();
-        $overdueCount   = (int) (clone $query)->where('status', 'overdue')->count();
+        $completedCount = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PAID)->count();
+        $partialCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PARTIAL)->count();
+        $pendingCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_PENDING)->count();
+        $overdueCount   = (int) (clone $query)->where('status', Constant::TUITION_STATUS_OVERDUE)->count();
 
         $statusPie = [
-            ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'status' => 'completed', 'color' => '#10b981'],
-            ['name' => 'Còn nợ (Đóng dở)', 'value' => $partialCount, 'status' => 'partial', 'color' => '#f59e0b'],
-            ['name' => 'Chưa đóng', 'value' => $pendingCount, 'status' => 'pending', 'color' => '#6b7280'],
-            ['name' => 'Quá hạn', 'value' => $overdueCount, 'status' => 'overdue', 'color' => '#ef4444'],
+            ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'status' => Constant::TUITION_STATUS_PAID, 'color' => '#10b981'],
+            ['name' => 'Còn nợ (Đóng dở)', 'value' => $partialCount, 'status' => Constant::TUITION_STATUS_PARTIAL, 'color' => '#f59e0b'],
+            ['name' => 'Chưa đóng', 'value' => $pendingCount, 'status' => Constant::TUITION_STATUS_PENDING, 'color' => '#6b7280'],
+            ['name' => 'Quá hạn', 'value' => $overdueCount, 'status' => Constant::TUITION_STATUS_OVERDUE, 'color' => '#ef4444'],
         ];
 
         // Filter out items with 0 value if total records exist, or keep original
@@ -419,7 +552,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
 
         // 2. Monthly Trend (6 months recent)
         $monthlyTrend = [];
-        $baseDate     = ($month && $month !== 'all') ? \Illuminate\Support\Carbon::parse($month . '-01') : now();
+        $baseDate     = ($month && $month !== '') ? \Illuminate\Support\Carbon::parse($month . '-01') : now();
 
         for ($i = 5; $i >= 0; $i--) {
             $m          = (clone $baseDate)->subMonths($i);

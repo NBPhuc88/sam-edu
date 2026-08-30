@@ -20,8 +20,8 @@ class FilterRoomRequest extends FormRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'center_id' => ['nullable', 'integer', 'exists:centers,id'],
-            'status'    => ['nullable', 'string', Rule::in(array_merge(['all', Constant::STATUS_INACTIVE], Constant::ROOM_STATUSES))],
+            'center_id' => ['nullable', 'integer'],
+            'status'    => ['nullable', 'integer', Rule::in(array_merge(Constant::ROOM_STATUSES, [Constant::STATUS_INACTIVE]))],
             'page'      => ['nullable', 'integer', 'min:1'],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

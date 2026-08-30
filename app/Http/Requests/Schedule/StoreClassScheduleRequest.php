@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Schedule;
 
+use App\Enums\Constant;
 use App\Models\SchoolClass;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreClassScheduleRequest extends FormRequest
@@ -38,7 +40,7 @@ class StoreClassScheduleRequest extends FormRequest
             'extra_days.*.date'       => ['required_with:extra_days', 'date'],
             'extra_days.*.start_time' => ['required_with:extra_days', 'string'],
             'extra_days.*.end_time'   => ['required_with:extra_days', 'string'],
-            'status'                  => ['nullable', 'string', 'in:active,inactive'],
+            'status'                  => ['nullable', 'integer', Rule::in(Constant::SCHEDULE_STATUSES)],
         ];
     }
 

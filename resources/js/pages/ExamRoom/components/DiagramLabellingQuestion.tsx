@@ -1,5 +1,5 @@
+import { ArrowRight,MapPin } from 'lucide-react';
 import React from 'react';
-import { MapPin, ArrowRight } from 'lucide-react';
 
 interface Props {
     imageUrl?: string | null;

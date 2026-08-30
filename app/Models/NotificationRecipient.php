@@ -21,9 +21,10 @@ class NotificationRecipient extends Model
     protected function casts(): array
     {
         return [
-            'read_at'    => 'datetime:d-m-Y H:i',
-            'created_at' => 'datetime:d-m-Y H:i',
-            'updated_at' => 'datetime:d-m-Y H:i',
+            'recipient_type' => 'integer',
+            'read_at'        => 'datetime:d-m-Y H:i',
+            'created_at'     => 'datetime:d-m-Y H:i',
+            'updated_at'     => 'datetime:d-m-Y H:i',
         ];
     }
 

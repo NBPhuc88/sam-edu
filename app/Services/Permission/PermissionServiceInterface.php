@@ -14,16 +14,16 @@ interface PermissionServiceInterface
     /**
      * Cập nhật danh sách quyền cho một vai trò.
      *
+     * @param int|string         $role
      * @param array<int, string> $permissionCodes
-     * @param string             $role
      */
-    public function updateRolePermissions(string $role, array $permissionCodes): void;
+    public function updateRolePermissions(int|string $role, array $permissionCodes): void;
 
     /**
      * Khôi phục phân quyền về giá trị mặc định chuẩn.
-     * @param ?string $role
+     * @param int|string|null $role
      */
-    public function resetToDefault(?string $role = null): void;
+    public function resetToDefault(int|string|null $role = null): void;
 
     /**
      * Đồng bộ danh mục permissions từ file cấu hình và làm mới cache.
@@ -39,17 +39,17 @@ interface PermissionServiceInterface
      * Lấy danh sách mã quyền được cấp cho một người dùng dựa trên role và admin_role.
      *
      * @return array<int, string>
-     * @param  string             $role
-     * @param  ?string            $adminRole
+     * @param  int|string         $role
+     * @param  int|string|null    $adminRole
      */
-    public function getPermissionsForUser(string $role, ?string $adminRole = null): array;
+    public function getPermissionsForUser(int|string $role, int|string|null $adminRole = null): array;
 
     /**
      * Kiểm tra một effective role có quyền cụ thể hay không.
-     * @param string $effectiveRole
-     * @param string $permissionCode
+     * @param int|string $effectiveRole
+     * @param string     $permissionCode
      */
-    public function roleHasPermission(string $effectiveRole, string $permissionCode): bool;
+    public function roleHasPermission(int|string $effectiveRole, string $permissionCode): bool;
 
     /**
      * Kiểm tra một mã quyền có tồn tại trong hệ thống hay không.

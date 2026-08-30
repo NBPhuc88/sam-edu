@@ -25,4 +25,4 @@ Allow: /*.jpg$
 Allow: /*.webp$
 Allow: /*.svg$
 
-Sitemap: https://www.samedu.io.vn/sitemap.xml
+Sitemap: /sitemap.xml

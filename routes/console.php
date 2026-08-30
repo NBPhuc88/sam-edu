@@ -30,8 +30,17 @@ Schedule::command('class-exams:update-status')
     ->withoutOverlapping()
     ->appendOutputTo($classExamsLogDir . '/' . (int) date('j') . '.log');
 
+Schedule::command('class-exams:send-room-code')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->appendOutputTo($classExamsLogDir . '/' . (int) date('j') . '.log');
+
 Schedule::command('logs:clean-old')
-    ->monthlyOn(1, '00:00')
+    ->dailyAt('01:00')
+    ->withoutOverlapping();
+
+Schedule::command('centers:notify-expiring-subscription')
+    ->dailyAt('08:00')
     ->withoutOverlapping();
 
 $centersExpiredLogDir = storage_path('logs/centers-expired/' . date('Y-m'));

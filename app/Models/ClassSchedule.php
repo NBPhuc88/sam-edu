@@ -26,6 +26,7 @@ class ClassSchedule extends Model
     protected function casts(): array
     {
         return [
+            'status'               => 'integer',
             'auto_holidays'        => 'boolean',
             'excluded_holiday_ids' => 'array',
             'holidays'             => 'array',

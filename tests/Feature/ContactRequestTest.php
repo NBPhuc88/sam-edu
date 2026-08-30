@@ -17,7 +17,7 @@ test('submitting contact form creates request and queues notification mail to co
         'phone'       => '0912345678',
         'email'       => 'nguyenvana@gmail.com',
         'center_name' => 'Trung Tâm Tiếng Anh ABC',
-        'message'     => 'Tôi muốn tìm hiểu thêm về gói dịch vụ đa trung tâm.',
+        'message'     => 'Tôi muốn tìm hiểu thêm về gói dịch vụ quản lý trung tâm giáo dục.',
     ];
 
     $response = $this->post(route('contact.submit'), $payload);

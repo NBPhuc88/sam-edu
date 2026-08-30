@@ -1,24 +1,31 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Save,
-    FileCheck,
-    Clock,
-    Shuffle,
-    RotateCcw,
-    Layers,
-    Calculator,
-    Award,
-    AlertCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import {
+EXAM_STATUS_CANCELLED,
+EXAM_STATUS_COMPLETED,
+EXAM_STATUS_DRAFT,
+EXAM_STATUS_LABELS,
+EXAM_STATUS_PUBLISHED,
+SKILL_READING,
+} from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { uploadPendingMediaInObject } from '@/lib/uploadTracker';
+import { Head,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Award,
+Calculator,
+Clock,
+RotateCcw,
+Save,
+Shuffle
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import QuestionBuilder from './QuestionBuilder';
-import { Center, ExamSectionData, Subject } from './types';
+import { Center,ExamSectionData,Subject } from './types';
 
 interface Props {
     centers: Center[];
@@ -31,8 +38,8 @@ export default function ExamCreate({
     subjects = [],
     errors = {},
 }: Props) {
+    const { isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const initialCenterId = auth?.user?.center_id
         ? String(auth.user.center_id)
@@ -50,7 +57,7 @@ export default function ExamCreate({
     const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
     const [isPractice, setIsPractice] = useState(false);
     const [description, setDescription] = useState('');
-    const [status, setStatus] = useState<'draft' | 'published'>('draft');
+    const [status, setStatus] = useState<number>(EXAM_STATUS_DRAFT);
 
     // Sections State
     const [sections, setSections] = useState<ExamSectionData[]>([
@@ -58,7 +65,7 @@ export default function ExamCreate({
             tempId: 'sec_1',
             title: 'Phần 1: Kỹ Năng Đọc Hiểu',
             description: null,
-            skill: 'reading',
+            skill: SKILL_READING,
             order_index: 0,
             questions: [],
         },
@@ -214,15 +221,7 @@ export default function ExamCreate({
                 {/* Top Bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<ArrowLeft className="h-4 w-4" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Tạo Đề Thi Mới (Kho Đề Thi)
@@ -234,7 +233,7 @@ export default function ExamCreate({
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     {/* Error Alert Banner */}
                     {Object.keys(errors).length > 0 && (
                         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-xs">
@@ -425,14 +424,14 @@ export default function ExamCreate({
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as any)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     required
                                 >
-                                    <option value="draft">Bản nháp</option>
-                                    <option value="published">Đã công bố</option>
-                                    <option value="completed">Đã kết thúc</option>
-                                    <option value="cancelled">Đã hủy</option>
+                                    <option value={EXAM_STATUS_DRAFT}>{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</option>
+                                    <option value={EXAM_STATUS_PUBLISHED}>{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</option>
+                                    <option value={EXAM_STATUS_COMPLETED}>{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</option>
+                                    <option value={EXAM_STATUS_CANCELLED}>{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</option>
                                 </select>
                             </div>
 
@@ -504,19 +503,12 @@ export default function ExamCreate({
                         sections={sections}
                         onChangeSections={setSections}
                         examMaxScore={calculatedMaxScore}
+                        errors={errors}
                     />
 
                     {/* Submit Actions */}
                     <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
-                        <Link href="/exams">
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                icon={<ArrowLeft className="h-5 w-5" />}
-                            >
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/exams" size="lg" />
                         <Button
                             type="submit"
                             variant="success"
@@ -525,7 +517,7 @@ export default function ExamCreate({
                             isLoading={isSubmitting || Boolean(uploadProgressText)}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            {uploadProgressText || `Lưu Đề Thi Vào Kho (${sections.length} phần thi • ${totalQuestionsCount} câu • ${calculatedMaxScore} điểm)`}
+                            {uploadProgressText || 'Tạo Mới'}
                         </Button>
                     </div>
                 </form>

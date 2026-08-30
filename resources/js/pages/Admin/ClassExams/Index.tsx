@@ -1,30 +1,35 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Clock,
-    Award,
-    FileCheck,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Filter,
-    Users,
-    BookOpen,
-    PlayCircle,
-    CheckCircle2,
-    AlertCircle,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import {
+    CLASS_EXAM_STATUS_CANCELLED,
+    CLASS_EXAM_STATUS_COMPLETED,
+    CLASS_EXAM_STATUS_LABELS,
+    CLASS_EXAM_STATUS_ONGOING,
+    CLASS_EXAM_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    AlertCircle,
+    Award,
+    BookOpen,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    Edit2,
+    FileCheck,
+    Filter,
+    PlayCircle,
+    Plus,
+    Search,
+    Trash2,
+    Users
+} from 'lucide-react';
+import React, { useState } from 'react';
 import AssignExamModal from './AssignExamModal';
 import { Center, ClassExam, Exam, PaginatedData, SchoolClass } from './types';
 
@@ -45,7 +50,7 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         exam_id?: number | null;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
     isTeacher?: boolean;
@@ -60,19 +65,17 @@ export default function ClassExamIndex({
     filters,
     isTeacher = false,
 }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Modal state
@@ -85,7 +88,7 @@ export default function ClassExamIndex({
     const [isDeleting, setIsDeleting] = useState(false);
 
     const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -94,9 +97,9 @@ export default function ClassExamIndex({
             '/class-exams',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -104,9 +107,9 @@ export default function ClassExamIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedStatus(0);
         router.get('/class-exams', {}, { preserveState: true });
     };
 
@@ -125,8 +128,9 @@ export default function ClassExamIndex({
         setDeleteDialogOpen(true);
     };
 
-    const confirmDelete = () => {
+    const handleDelete = () => {
         if (!deletingExam) return;
+
         setIsDeleting(true);
         router.delete(`/class-exams/${deletingExam.id}`, {
             onFinish: () => {
@@ -137,35 +141,33 @@ export default function ClassExamIndex({
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'scheduled':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
-                        <Calendar className="h-3 w-3" /> Đã lên lịch
-                    </span>
-                );
-            case 'ongoing':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
-                        <PlayCircle className="h-3 w-3" /> Đang diễn ra
-                    </span>
-                );
-            case 'completed':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
-                        <CheckCircle2 className="h-3 w-3" /> Đã kết thúc
-                    </span>
-                );
-            case 'cancelled':
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
-                        <AlertCircle className="h-3 w-3" /> Đã hủy
-                    </span>
-                );
-            default:
-                return <Badge>{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === CLASS_EXAM_STATUS_ONGOING) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 animate-pulse">
+                    <PlayCircle className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING]}
+                </span>
+            );
         }
+        if (status === CLASS_EXAM_STATUS_COMPLETED) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 border border-gray-200">
+                    <CheckCircle2 className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED]}
+                </span>
+            );
+        }
+        if (status === CLASS_EXAM_STATUS_CANCELLED) {
+            return (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
+                    <AlertCircle className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED]}
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+                <Calendar className="h-3 w-3" /> {CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED]}
+            </span>
+        );
     };
 
     return (
@@ -303,13 +305,13 @@ export default function ClassExamIndex({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedClassId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedClassId(0);
                                         }}
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: c.name,
                                             })),
                                         ]}
@@ -326,11 +328,11 @@ export default function ClassExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedClassId}
-                                    onChange={(val) => setSelectedClassId(val)}
+                                    onChange={(val) => setSelectedClassId(Number(val))}
                                     options={[
-                                        { value: '', label: '-- Tất cả Lớp Học --' },
+                                        { value: 0, label: '-- Tất cả Lớp Học --' },
                                         ...filteredClasses.map((c) => ({
-                                            value: String(c.id),
+                                            value: c.id,
                                             label: c.name,
                                         })),
                                     ]}
@@ -346,13 +348,13 @@ export default function ClassExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: 'scheduled', label: 'Đã lên lịch' },
-                                        { value: 'ongoing', label: 'Đang diễn ra' },
-                                        { value: 'completed', label: 'Đã kết thúc' },
-                                        { value: 'cancelled', label: 'Đã hủy' },
+                                        { value: 0, label: 'Tất cả trạng thái' },
+                                        { value: CLASS_EXAM_STATUS_SCHEDULED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
+                                        { value: CLASS_EXAM_STATUS_ONGOING, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
+                                        { value: CLASS_EXAM_STATUS_COMPLETED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
+                                        { value: CLASS_EXAM_STATUS_CANCELLED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
                                     ]}
                                     placeholder="Tất cả trạng thái"
                                     searchable={false}
@@ -372,10 +374,10 @@ export default function ClassExamIndex({
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
+                                size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Áp Dụng Lọc
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -595,7 +597,7 @@ export default function ClassExamIndex({
                 cancelLabel="Giữ Lại"
                 variant="danger"
                 isLoading={isDeleting}
-                onConfirm={confirmDelete}
+                onConfirm={handleDelete}
                 onCancel={() => setDeleteDialogOpen(false)}
             />
         </AppLayout>

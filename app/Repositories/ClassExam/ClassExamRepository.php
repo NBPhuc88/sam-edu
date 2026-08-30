@@ -73,8 +73,14 @@ class ClassExamRepository implements ClassExamRepositoryInterface
             $query->where('exam_id', $examId);
         }
 
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
+        if ($status && $status !== '') {
+            $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
+                'scheduled' => Constant::CLASS_EXAM_STATUS_SCHEDULED,
+                'ongoing'   => Constant::CLASS_EXAM_STATUS_ONGOING,
+                'completed' => Constant::CLASS_EXAM_STATUS_COMPLETED,
+                'cancelled' => Constant::CLASS_EXAM_STATUS_CANCELLED,
+                default     => $status,
+            });
         }
 
         if ($search) {
@@ -176,9 +182,9 @@ class ClassExamRepository implements ClassExamRepositoryInterface
         }
 
         $total     = (clone $query)->count();
-        $scheduled = (clone $query)->where('status', 'scheduled')->count();
-        $ongoing   = (clone $query)->where('status', 'ongoing')->count();
-        $completed = (clone $query)->where('status', 'completed')->count();
+        $scheduled = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_SCHEDULED)->count();
+        $ongoing   = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_ONGOING)->count();
+        $completed = (clone $query)->where('status', Constant::CLASS_EXAM_STATUS_COMPLETED)->count();
 
         return [
             'total'     => $total,
@@ -232,9 +238,27 @@ class ClassExamRepository implements ClassExamRepositoryInterface
 
     public function getNextClassExamCode(): string
     {
-        $maxId = (int) (ClassExam::max('id') ?? 0);
+        $maxId   = (int) (ClassExam::withTrashed()->max('id') ?? 0);
+        $nextNum = $maxId + 1;
+        $code    = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
 
-        return sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxId + 1);
+        while ($this->codeExists($code)) {
+            $nextNum++;
+            $code = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextNum);
+        }
+
+        return $code;
+    }
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        $query = ClassExam::withTrashed()->where('code', $code);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
     }
 
     public function getStudentSubmission(int $classExamId, int $studentId): ?ClassExamSubmission

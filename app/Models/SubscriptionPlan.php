@@ -45,6 +45,7 @@ class SubscriptionPlan extends Model
     protected function casts(): array
     {
         return [
+            'plan_type'        => 'integer',
             'price'            => 'float',
             'yearly_price'     => 'float',
             'duration_days'    => 'integer',
@@ -58,7 +59,7 @@ class SubscriptionPlan extends Model
 
     public function hasFeature(string $featureCode): bool
     {
-        if ($this->plan_type === 'trial') {
+        if ((int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

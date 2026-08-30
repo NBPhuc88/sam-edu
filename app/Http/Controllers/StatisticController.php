@@ -22,10 +22,12 @@ class StatisticController extends Controller
     public function index(FilterStatisticRequest $request): Response
     {
         $selectedCenterId = $request->query('center_id') ? (int) $request->query('center_id') : null;
+        $month            = $request->query('month') ? (string) $request->query('month') : null;
+        $subjectId        = $request->query('subject_id') ? (int) $request->query('subject_id') : null;
         $perPage          = (int) ($request->query('per_page') ?: Constant::DEFAULT_PER_PAGE);
         $page             = (int) ($request->query('page') ?: Constant::DEFAULT_PAGE);
 
-        $data = $this->statisticService->getStatisticData($selectedCenterId, $perPage, $page);
+        $data = $this->statisticService->getStatisticData($selectedCenterId, $month, $subjectId, $perPage, $page);
 
         if (! empty($data['forbidden'])) {
             return Inertia::render('Error', [

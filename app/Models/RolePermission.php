@@ -15,6 +15,14 @@ class RolePermission extends Model
         'permission_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'role'          => 'integer',
+            'permission_id' => 'integer',
+        ];
+    }
+
     /**
      * @return BelongsTo<Permission, $this>
      */

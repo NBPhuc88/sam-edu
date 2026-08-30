@@ -1,15 +1,3 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    BookOpen,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    Calendar,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -17,7 +5,24 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
 import { TruncatedText } from '@/components/ui/Tooltip';
+import {
+SUBJECT_STATUS_ACTIVE,
+SUBJECT_STATUS_INACTIVE,
+SUBJECT_STATUS_LABELS,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+BookOpen,
+Calendar,
+Edit2,
+Filter,
+Plus,
+Search,
+Trash2,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 import { usePermission } from '@/hooks/usePermission';
 interface Center {
@@ -34,8 +39,8 @@ interface Subject {
     description: string | null;
     total_sessions: number | null;
     duration_minutes: number | null;
-    tuition_fee: number | string | null;
-    status: string;
+    tuition_fee: number | null;
+    status: number;
     center?: Center;
 }
 
@@ -53,21 +58,19 @@ interface Props {
     filters: {
         search?: string;
         center_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
 export default function SubjectIndex({ subjects, centers = [], filters }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -77,8 +80,8 @@ export default function SubjectIndex({ subjects, centers = [], filters }: Props)
 
     const formatCurrency = (amount: number | string | null) => {
         if (amount === null || amount === undefined) {
-return 'Chưa thiết lập';
-}
+            return 'Chưa thiết lập';
+        }
 
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -92,8 +95,8 @@ return 'Chưa thiết lập';
             '/subjects',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -101,23 +104,22 @@ return 'Chưa thiết lập';
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/subjects', {}, { preserveState: true });
     };
 
-    const openDeleteModal = (subject: Subject) => {
+    const handleDelete = (subject: Subject) => {
         setDeletingSubject(subject);
         setDeleteModalOpen(true);
     };
 
     const confirmDelete = () => {
-        if (!deletingSubject) {
-return;
-}
+        if (!deletingSubject) return;
 
         setIsDeleting(true);
         router.delete(`/subjects/${deletingSubject.id}`, {
+            preserveScroll: true,
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteModalOpen(false);
@@ -126,15 +128,11 @@ return;
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang mở dạy</Badge>;
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === SUBJECT_STATUS_ACTIVE) {
+            return <Badge variant="active">{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE]}</Badge>;
         }
+        return <Badge variant="expired">{SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE]}</Badge>;
     };
 
     return (
@@ -185,12 +183,12 @@ return;
                                 <div>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -201,11 +199,11 @@ return;
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'active', label: 'Đang mở dạy' },
-                                        { value: 'inactive', label: 'Tạm dừng' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: SUBJECT_STATUS_ACTIVE, label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_ACTIVE] },
+                                        { value: SUBJECT_STATUS_INACTIVE, label: SUBJECT_STATUS_LABELS[SUBJECT_STATUS_INACTIVE] },
                                     ]}
                                 />
                             </div>
@@ -226,7 +224,7 @@ return;
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -337,7 +335,7 @@ return;
                                                                 variant="danger"
                                                                 size="sm"
                                                                 icon={<Trash2 className="h-4 w-4" />}
-                                                                onClick={() => openDeleteModal(sub)}
+                                                                onClick={() => handleDelete(sub)}
                                                                 title="Xóa môn học"
                                                             >
                                                                 Xóa

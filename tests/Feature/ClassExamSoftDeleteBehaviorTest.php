@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassExam;
@@ -24,7 +25,7 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm Test',
         'email'  => 'centertest@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -32,7 +33,8 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_exam@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000097',
     ]);
 
@@ -82,14 +84,14 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'password'     => 'password123',
         'teacher_code' => 'GV000000008',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $classSubject = ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $exam = Exam::create([
@@ -101,7 +103,7 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'published',
+        'status'           => Constant::EXAM_STATUS_PUBLISHED,
     ]);
 
     $classExam = ClassExam::create([
@@ -113,7 +115,7 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'exam_date'        => now()->toDateString(),
         'duration_minutes' => 45,
         'max_score'        => 10,
-        'status'           => 'scheduled',
+        'status'           => Constant::CLASS_EXAM_STATUS_SCHEDULED,
         'valid_from'       => now()->subDays(1),
         'valid_to'         => now()->addDays(5),
     ]);
@@ -125,7 +127,7 @@ test('soft deleted exam retains past submissions and scores but blocks taking ex
         'answers'       => ['q1' => 'A', 'q2' => 'B'],
         'score'         => 8.5,
         'submitted_at'  => now()->subHours(2),
-        'status'        => 'completed',
+        'status'        => Constant::SUBMISSION_STATUS_SUBMITTED,
     ]);
 
     // 1. Xóa bài thi (ClassExam)

@@ -1,25 +1,33 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    AlertCircle,
-    Filter,
-    DoorOpen,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+AlertCircle,
+Calendar,
+DoorOpen,
+Edit2,
+Eye,
+Filter,
+Plus,
+Search,
+Trash2,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
+import {
+SCHEDULE_STATUS_ACTIVE,
+SCHEDULE_STATUS_INACTIVE,
+SCHEDULE_STATUS_LABELS,
+SESSION_STATUS_LABELS,
+SESSION_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate } from '@/lib/date';
+
 interface Center {
     id: number;
     name: string;
@@ -57,7 +65,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
 }
 
@@ -68,7 +76,7 @@ interface ClassSchedule {
     off_days?: { date: string; start_time?: string | null; end_time?: string | null }[] | null;
     extra_days?: { date: string; start_time: string; end_time: string }[] | null;
     room_id: number | null;
-    status: string;
+    status: number;
     class_sessions_count?: number;
     room?: Room;
     class_subject?: {
@@ -117,7 +125,7 @@ interface Props {
         class_id?: number | null;
         subject_id?: number | null;
         teacher_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -128,22 +136,20 @@ export default function ScheduleIndex({
     subjects = [],
     filters,
 }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
@@ -163,10 +169,10 @@ export default function ScheduleIndex({
             '/schedules',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -174,10 +180,10 @@ export default function ScheduleIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedSubjectId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedSubjectId(0);
+        setSelectedStatus(0);
         router.get('/schedules', {}, { preserveState: true });
     };
 
@@ -286,10 +292,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                        onChange={(e) => setSelectedCenterId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Trung tâm</option>
+                                        <option value="0">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -303,10 +309,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedClassId}
-                                        onChange={(e) => setSelectedClassId(e.target.value)}
+                                        onChange={(e) => setSelectedClassId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Lớp học</option>
+                                        <option value="0">Tất cả Lớp học</option>
                                         {classes.map((cls) => (
                                             <option key={cls.id} value={cls.id}>
                                                 {cls.name} ({cls.code})
@@ -320,10 +326,10 @@ export default function ScheduleIndex({
                                 <div>
                                     <select
                                         value={selectedSubjectId}
-                                        onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                        onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Môn học</option>
+                                        <option value="0">Tất cả Môn học</option>
                                         {subjects.map((sub) => (
                                             <option key={sub.id} value={sub.id}>
                                                 {sub.name} ({sub.code})
@@ -333,15 +339,15 @@ export default function ScheduleIndex({
                                 </div>
                             )}
 
-                            <div>
+                                <div>
                                 <select
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">Tất cả Trạng thái</option>
-                                    <option value="active">Đang áp dụng</option>
-                                    <option value="inactive">Tạm dừng</option>
+                                    <option value="0">Tất cả Trạng thái</option>
+                                    <option value={SCHEDULE_STATUS_ACTIVE}>Đang áp dụng</option>
+                                    <option value={SCHEDULE_STATUS_INACTIVE}>Tạm dừng</option>
                                 </select>
                             </div>
                         </div>
@@ -361,7 +367,7 @@ export default function ScheduleIndex({
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -478,10 +484,10 @@ export default function ScheduleIndex({
                                             </td>
 
                                             <td className="px-6 py-4">
-                                                {sch.status === 'active' ? (
-                                                    <Badge variant="active">Đang áp dụng</Badge>
+                                                {sch.status === SCHEDULE_STATUS_ACTIVE ? (
+                                                    <Badge variant="active">{SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_ACTIVE]}</Badge>
                                                 ) : (
-                                                    <Badge variant="expired">Tạm dừng</Badge>
+                                                    <Badge variant="expired">{SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_INACTIVE] || 'Tạm dừng'}</Badge>
                                                 )}
                                             </td>
 
@@ -631,8 +637,8 @@ export default function ScheduleIndex({
                                         <span className="font-mono text-gray-600">
                                             {ses.start_time ? String(ses.start_time).slice(0, 5) : '--:--'} - {ses.end_time ? String(ses.end_time).slice(0, 5) : '--:--'}
                                         </span>
-                                        <Badge variant={ses.status === 'scheduled' ? 'active' : 'info'}>
-                                            {ses.status === 'scheduled' ? 'Đã lên lịch' : ses.status}
+                                        <Badge variant={ses.status === SESSION_STATUS_SCHEDULED ? 'active' : 'info'}>
+                                            {SESSION_STATUS_LABELS[ses.status] || (ses.status === SESSION_STATUS_SCHEDULED ? 'Đã lên lịch' : ses.status)}
                                         </Badge>
                                     </div>
                                 </div>

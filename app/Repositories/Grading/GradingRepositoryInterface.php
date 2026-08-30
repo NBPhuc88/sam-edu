@@ -35,7 +35,7 @@ interface GradingRepositoryInterface
      *
      * @param  int|null             $classId
      * @param  int|null             $classExamId
-     * @param  string|null          $gradedStatus
+     * @param  int|null             $gradedStatus
      * @param  string|null          $search
      * @param  int                  $perPage
      * @param  int                  $page
@@ -46,7 +46,7 @@ interface GradingRepositoryInterface
     public function getPaginatedSubmissions(
         ?int $classId,
         ?int $classExamId,
-        ?string $gradedStatus,
+        ?int $gradedStatus,
         ?string $search,
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,

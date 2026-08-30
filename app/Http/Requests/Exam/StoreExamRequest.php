@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Exam;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -49,22 +50,21 @@ class StoreExamRequest extends FormRequest
             'description'       => ['nullable', 'string'],
             'exam_date'         => ['nullable', 'date'],
             'start_time'        => ['nullable', 'date_format:H:i,H:i:s'],
-            'end_time'          => ['nullable', 'date_format:H:i,H:i:s'],
-            'status'            => ['nullable', 'string', 'in:draft,published,completed,cancelled'],
+            'status'            => ['nullable', 'integer', Rule::in(Constant::EXAM_STATUSES)],
 
             // Danh sách các Phần thi (Dynamic Sections)
             'sections'                              => ['nullable', 'array'],
             'sections.*.id'                         => ['nullable', 'integer'],
             'sections.*.title'                      => ['required_with:sections', 'string', 'max:255'],
             'sections.*.description'                => ['nullable', 'string'],
-            'sections.*.skill'                      => ['required_with:sections', 'string', 'in:listening,reading,writing,speaking'],
+            'sections.*.skill'                      => ['required_with:sections', 'integer', Rule::in(Constant::EXAM_SKILLS)],
             'sections.*.order_index'                => ['nullable', 'integer'],
             'sections.*.questions'                  => ['nullable', 'array'],
             'sections.*.questions.*.id'             => ['nullable', 'integer'],
             'sections.*.questions.*.code'           => ['nullable', 'string', 'max:50'],
             'sections.*.questions.*.title'          => ['nullable', 'string', 'max:500'],
-            'sections.*.questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'sections.*.questions.*.skill'          => ['nullable', 'integer', Rule::in(Constant::EXAM_SKILLS)],
+            'sections.*.questions.*.question_type'  => ['required_with:sections.*.questions', 'integer', Rule::in(Constant::QUESTION_TYPES)],
             'sections.*.questions.*.content'        => ['nullable', 'string'],
             'sections.*.questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'sections.*.questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -80,8 +80,8 @@ class StoreExamRequest extends FormRequest
             'questions.*.id'             => ['nullable', 'integer'],
             'questions.*.code'           => ['nullable', 'string', 'max:50'],
             'questions.*.title'          => ['nullable', 'string', 'max:500'],
-            'questions.*.skill'          => ['nullable', 'string', 'in:listening,reading,writing,speaking'],
-            'questions.*.question_type'  => ['required_with:questions', 'string', 'in:single_choice,multiple_choice,true_false_not_given,fill_in_blank,drag_drop_cloze,matching,matching_image,matching_sentences,ordering,diagram_labelling,find_mistake,essay,audio_record,short_answer,oral,reading,writing,speaking,listening'],
+            'questions.*.skill'          => ['nullable', 'integer', Rule::in(Constant::EXAM_SKILLS)],
+            'questions.*.question_type'  => ['required_with:questions', 'integer', Rule::in(Constant::QUESTION_TYPES)],
             'questions.*.content'        => ['nullable', 'string'],
             'questions.*.score'          => ['nullable', 'numeric', 'min:0'],
             'questions.*.image_url'      => ['nullable', 'string', 'max:500'],
@@ -153,49 +153,150 @@ class StoreExamRequest extends FormRequest
                     if (is_array($questions)) {
                         foreach ($questions as $qIdx => $q) {
                             $qNum       = $qIdx + 1;
-                            $qType      = $q['question_type'] ?? '';
+                            $qTypeRaw   = $q['question_type'] ?? 0;
+                            $qType      = (int) $qTypeRaw;
                             $correctAns = $q['correct_answer'] ?? null;
 
-                            // Các câu hỏi Tự luận (Viết) và Ghi âm (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
-                            if (in_array($qType, ['essay', 'writing', 'audio_record', 'oral', 'speaking'], true)) {
+                            // Kiểm tra nội dung câu hỏi bắt buộc
+                            if (trim((string) ($q['content'] ?? '')) === '' && $qType !== Constant::QUESTION_TYPE_DIAGRAM_LABELLING) {
+                                $validator->errors()->add(
+                                    "sections.{$sIdx}.questions.{$qIdx}.content",
+                                    "Vui lòng nhập nội dung đề bài cho câu số {$qNum} phần {$secNum}."
+                                );
+                            }
+
+                            // Các câu hỏi Tự luận (Viết) và Ghi âm / Vấn đáp (Nói) do giáo viên chấm, không bắt buộc đáp án chuẩn trước
+                            if (in_array($qType, [Constant::QUESTION_TYPE_ESSAY, Constant::QUESTION_TYPE_AUDIO_RECORD, Constant::QUESTION_TYPE_ORAL], true)) {
                                 continue;
                             }
 
-                            // 1. Trắc nghiệm 1 đáp án, Đúng/Sai, Tìm lỗi sai
-                            if (in_array($qType, ['true_false_not_given', 'single_choice', 'find_mistake'], true)) {
-                                if ($correctAns === null || $correctAns === '' || (is_string($correctAns) && trim($correctAns) === '')) {
+                            // Kiểm tra nội dung các phương án trắc nghiệm
+                            if (in_array($qType, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_MULTIPLE_CHOICE], true) && is_array($q['options'] ?? null)) {
+                                foreach ($q['options'] as $opt) {
+                                    $optText = is_array($opt) ? ($opt['text'] ?? '') : (is_string($opt) ? $opt : '');
+
+                                    if (trim((string) $optText) === '') {
+                                        $validator->errors()->add(
+                                            "sections.{$sIdx}.questions.{$qIdx}.options",
+                                            "Vui lòng nhập đầy đủ nội dung các phương án cho câu số {$qNum} phần {$secNum}."
+                                        );
+
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 1. Trắc nghiệm 1 đáp án
+                            if ($qType === Constant::QUESTION_TYPE_SINGLE_CHOICE) {
+                                $optionIds = [];
+
+                                if (is_array($q['options'] ?? null)) {
+                                    foreach ($q['options'] as $opt) {
+                                        if (is_array($opt) && isset($opt['id'])) {
+                                            $optionIds[] = (string) $opt['id'];
+                                        } elseif (is_string($opt)) {
+                                            $optionIds[] = $opt;
+                                        }
+                                    }
+                                }
+
+                                if (empty($correctAns) || ! is_string($correctAns) || (! empty($optionIds) && ! in_array((string) $correctAns, $optionIds, true))) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
-                                        "Vui lòng chọn đáp án đúng cho câu số {$qNum} phần {$secNum}."
+                                        "Vui lòng chọn 1 đáp án đúng hợp lệ cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
                             }
-                            // 2. Trắc nghiệm nhiều đáp án
-                            elseif ($qType === 'multiple_choice') {
-                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                            // 2. Đúng / Sai / Không đề cập
+                            elseif ($qType === Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN) {
+                                $validTfAnswers = ['TRUE', 'FALSE', 'NOT_GIVEN', 'YES', 'NO', 'NOT'];
+
+                                if (empty($correctAns) || ! is_string($correctAns) || ! in_array(strtoupper(trim((string) $correctAns)), $validTfAnswers, true)) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn đáp án đúng (Đúng / Sai / Không đề cập) cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 3. Tìm lỗi sai
+                            elseif ($qType === Constant::QUESTION_TYPE_FIND_MISTAKE) {
+                                $underlinedIds = [];
+
+                                if (is_array($q['options']['sentence_segments'] ?? null)) {
+                                    foreach ($q['options']['sentence_segments'] as $seg) {
+                                        if (! empty($seg['underlined']) && isset($seg['id'])) {
+                                            $underlinedIds[] = (string) $seg['id'];
+                                        }
+                                    }
+                                }
+
+                                if (empty($correctAns) || ! is_string($correctAns) || (! empty($underlinedIds) && ! in_array((string) $correctAns, $underlinedIds, true))) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn phần gạch chân bị sai ngữ pháp cho câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 4. Trắc nghiệm nhiều đáp án
+                            elseif ($qType === Constant::QUESTION_TYPE_MULTIPLE_CHOICE) {
+                                $optionIds = [];
+
+                                if (is_array($q['options'] ?? null)) {
+                                    foreach ($q['options'] as $opt) {
+                                        if (is_array($opt) && isset($opt['id'])) {
+                                            $optionIds[] = (string) $opt['id'];
+                                        }
+                                    }
+                                }
+                                $filteredAns = is_array($correctAns) ? array_filter($correctAns, fn ($a) => is_string($a) && trim($a) !== '') : [];
+
+                                if (empty($filteredAns)) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                         "Vui lòng chọn ít nhất 1 đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
+                                } elseif (! empty($optionIds)) {
+                                    foreach ($filteredAns as $ansId) {
+                                        if (! in_array((string) $ansId, $optionIds, true)) {
+                                            $validator->errors()->add(
+                                                "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                                "Đáp án đã chọn không khớp với các phương án của câu số {$qNum} phần {$secNum}."
+                                            );
+
+                                            break;
+                                        }
+                                    }
                                 }
                             }
-                            // 3. Điền vào chỗ trống
-                            elseif (in_array($qType, ['fill_in_blank', 'short_answer'], true)) {
+                            // 5. Điền vào chỗ trống / Trả lời ngắn
+                            elseif (in_array($qType, [Constant::QUESTION_TYPE_FILL_IN_BLANK, Constant::QUESTION_TYPE_SHORT_ANSWER], true)) {
                                 $hasAnswers = false;
 
                                 if (is_array($correctAns)) {
                                     foreach ($correctAns as $blankConfig) {
-                                        if (is_array($blankConfig) && ! empty($blankConfig['accepted_answers'])) {
-                                            $nonEmpty = array_filter($blankConfig['accepted_answers'], fn ($a) => is_string($a) && trim($a) !== '');
+                                        if (is_array($blankConfig)) {
+                                            $accepted = $blankConfig['accepted_answers'] ?? $blankConfig;
 
-                                            if (! empty($nonEmpty)) {
+                                            if (is_array($accepted)) {
+                                                $nonEmpty = array_filter($accepted, fn ($a) => is_scalar($a) && trim((string) $a) !== '');
+
+                                                if (! empty($nonEmpty)) {
+                                                    $hasAnswers = true;
+
+                                                    break;
+                                                }
+                                            } elseif (is_scalar($accepted) && trim((string) $accepted) !== '') {
                                                 $hasAnswers = true;
 
                                                 break;
                                             }
+                                        } elseif (is_scalar($blankConfig) && trim((string) $blankConfig) !== '') {
+                                            $hasAnswers = true;
+
+                                            break;
                                         }
                                     }
-                                } elseif (is_string($correctAns) && trim($correctAns) !== '') {
+                                } elseif (is_scalar($correctAns) && trim((string) $correctAns) !== '') {
                                     $hasAnswers = true;
                                 }
 
@@ -206,17 +307,36 @@ class StoreExamRequest extends FormRequest
                                     );
                                 }
                             }
-                            // 4. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
-                            elseif (in_array($qType, ['matching', 'matching_sentences', 'matching_image', 'diagram_labelling'], true)) {
-                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
+                            // 6. Kéo thả từ vào chỗ trống (Drag & Drop Cloze)
+                            elseif ($qType === Constant::QUESTION_TYPE_DRAG_DROP_CLOZE) {
+                                $hasAnswers = false;
+
+                                if (is_array($correctAns)) {
+                                    $nonEmpty = array_filter($correctAns, fn ($w) => is_scalar($w) && trim((string) $w) !== '');
+
+                                    if (! empty($nonEmpty)) {
+                                        $hasAnswers = true;
+                                    }
+                                }
+
+                                if (! $hasAnswers) {
+                                    $validator->errors()->add(
+                                        "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
+                                        "Vui lòng chọn từ đúng cho các ô trống của câu số {$qNum} phần {$secNum}."
+                                    );
+                                }
+                            }
+                            // 7. Ghép nối (Matching, Nối hình, Ghép câu, Gán nhãn sơ đồ)
+                            elseif (in_array($qType, [Constant::QUESTION_TYPE_MATCHING, Constant::QUESTION_TYPE_MATCHING_IMAGE, Constant::QUESTION_TYPE_MATCHING_SENTENCES, Constant::QUESTION_TYPE_DIAGRAM_LABELLING], true)) {
+                                if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns, fn ($v) => is_scalar($v) && trim((string) $v) !== '')) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
                                         "Vui lòng ghép nối đáp án đúng cho câu số {$qNum} phần {$secNum}."
                                     );
                                 }
                             }
-                            // 5. Sắp xếp thứ tự (Ordering)
-                            elseif ($qType === 'ordering') {
+                            // 8. Sắp xếp thứ tự (Ordering)
+                            elseif ($qType === Constant::QUESTION_TYPE_ORDERING) {
                                 if (empty($correctAns) || ! is_array($correctAns) || count(array_filter($correctAns)) === 0) {
                                     $validator->errors()->add(
                                         "sections.{$sIdx}.questions.{$qIdx}.correct_answer",
@@ -224,7 +344,7 @@ class StoreExamRequest extends FormRequest
                                     );
                                 }
                             }
-                            // 6. Các dạng câu hỏi trắc nghiệm / tự động chấm khác
+                            // 9. Các dạng câu hỏi trắc nghiệm / tự động chấm khác
                             else {
                                 if ($correctAns === null || $correctAns === '' || (is_array($correctAns) && count($correctAns) === 0)) {
                                     $validator->errors()->add(

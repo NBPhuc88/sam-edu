@@ -2,6 +2,7 @@
 
 namespace App\Services\Impact;
 
+use App\Enums\Constant;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Exam\ExamRepositoryInterface;
@@ -164,21 +165,21 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 $futureSessionCount = DB::table('class_sessions')
                     ->where('teacher_id', $id)
                     ->where('session_date', '>=', $today)
-                    ->where('status', 'scheduled')
+                    ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                     ->whereNull('deleted_at')
                     ->count();
 
                 $activeClassCount = DB::table('class_subjects')
                     ->join('classes', 'class_subjects.class_id', '=', 'classes.id')
                     ->where('class_subjects.teacher_id', $id)
-                    ->where('class_subjects.status', 'active')
-                    ->where('classes.status', 1)
+                    ->where('class_subjects.status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+                    ->where('classes.status', Constant::CLASS_STATUS_ACTIVE)
                     ->whereNull('classes.deleted_at')
                     ->count();
 
                 $completedSessionCount = DB::table('class_sessions')
                     ->where('teacher_id', $id)
-                    ->where('status', 'completed')
+                    ->where('status', Constant::SESSION_STATUS_COMPLETED)
                     ->whereNull('deleted_at')
                     ->count();
 

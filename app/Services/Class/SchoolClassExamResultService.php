@@ -2,6 +2,7 @@
 
 namespace App\Services\Class;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
@@ -94,7 +95,11 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
                 'classSubjects.subject:id,name,code',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
-            ->withCount('students')
+            ->withCount([
+                'students' => function ($q) {
+                    $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
+                },
+            ])
             ->find($classId);
 
         if (! $class) {
@@ -106,9 +111,9 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
         // Lấy danh sách kỳ thi chính thức của lớp (loại trừ thi thử / practice)
         $classExamsQuery = ClassExam::query()
             ->where('class_id', $classId)
-            ->where('status', '!=', 'cancelled')
-            ->whereDoesntHave('exam', function ($q) {
-                $q->where('is_practice', true);
+            ->where('status', '!=', Constant::CLASS_EXAM_STATUS_CANCELLED)
+            ->whereDoesntHave('exam.examType', function ($q) {
+                $q->where('code', 'trial')->orWhere('code', 'practice');
             })
             ->with(['exam.subject:id,name,code'])
             ->orderBy('exam_date', 'desc')
@@ -120,7 +125,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
         // Lấy danh sách bài làm / nộp bài thi
         $submissionsQuery = ClassExamSubmission::query()
             ->whereIn('class_exam_id', $classExamIds)
-            ->where('status', '!=', 'in_progress') // Chỉ lấy bài đã nộp hoặc đã chấm
+            ->where('status', '!=', Constant::CLASS_EXAM_SUBMISSION_STATUS_IN_PROGRESS) // Chỉ lấy bài đã nộp hoặc đã chấm
             ->with([
                 'student:id,full_name,student_code,phone',
                 'classExam:id,class_id,exam_id,title,exam_date,max_score,pass_score',
@@ -159,7 +164,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
         // Thống kê tổng quan lớp học
         $allClassSubmissions = ClassExamSubmission::query()
             ->whereIn('class_exam_id', $classExamIds)
-            ->where('status', '!=', 'in_progress')
+            ->where('status', '!=', Constant::CLASS_EXAM_SUBMISSION_STATUS_IN_PROGRESS)
             ->get();
 
         $totalSubmissions = $allClassSubmissions->count();
@@ -255,9 +260,9 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
 
             $classExamsQuery = ClassExam::query()
                 ->where('class_id', $classId)
-                ->where('status', '!=', 'cancelled')
-                ->whereDoesntHave('exam', function ($q) {
-                    $q->where('is_practice', true);
+                ->where('status', '!=', Constant::CLASS_EXAM_STATUS_CANCELLED)
+                ->whereDoesntHave('exam.examType', function ($q) {
+                    $q->where('code', 'trial')->orWhere('code', 'practice');
                 });
 
             if ($classExamId !== null && $classExamId > 0) {
@@ -268,7 +273,7 @@ class SchoolClassExamResultService implements SchoolClassExamResultServiceInterf
 
             $submissions = ClassExamSubmission::query()
                 ->whereIn('class_exam_id', $classExamIds)
-                ->where('status', '!=', 'in_progress')
+                ->where('status', '!=', Constant::CLASS_EXAM_SUBMISSION_STATUS_IN_PROGRESS)
                 ->with([
                     'student:id,full_name,student_code,phone',
                     'classExam:id,class_id,exam_id,title,exam_date,max_score,pass_score',

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Attendance;
 
+use App\Enums\Constant;
 use App\Models\Attendance;
 use App\Models\ClassSession;
 use Carbon\Carbon;
@@ -50,13 +51,22 @@ class AttendanceRepository implements AttendanceRepositoryInterface
     {
         return DB::transaction(function () use ($sessionId, $attendances, $markedByTeacherId, $markedByAdminId) {
             foreach ($attendances as $item) {
+                $rawStatus = $item['status'] ?? Constant::ATTENDANCE_STATUS_PRESENT;
+                $statusInt = is_numeric($rawStatus) ? (int) $rawStatus : match ($rawStatus) {
+                    'present' => Constant::ATTENDANCE_STATUS_PRESENT,
+                    'absent'  => Constant::ATTENDANCE_STATUS_ABSENT,
+                    'late'    => Constant::ATTENDANCE_STATUS_LATE,
+                    'excused' => Constant::ATTENDANCE_STATUS_EXCUSED,
+                    default   => Constant::ATTENDANCE_STATUS_PRESENT,
+                };
+
                 Attendance::updateOrCreate(
                     [
                         'session_id' => $sessionId,
                         'student_id' => (int) $item['student_id'],
                     ],
                     [
-                        'status'               => $item['status'] ?? 'present',
+                        'status'               => $statusInt,
                         'note'                 => $item['note'] ?? null,
                         'marked_by_teacher_id' => $markedByTeacherId,
                         'marked_by_admin_id'   => $markedByAdminId,
@@ -80,7 +90,7 @@ class AttendanceRepository implements AttendanceRepositoryInterface
                 $sessionDate = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date->toDateString());
                 $sessionEnd  = Carbon::parse($sessionDate . ' ' . $session->end_time);
                 $isPast      = $sessionEnd->isPast();
-                $newStatus   = $isPast ? 'unattended' : 'scheduled';
+                $newStatus   = $isPast ? Constant::SESSION_STATUS_CANCELLED : Constant::SESSION_STATUS_SCHEDULED;
                 $session->update(['status' => $newStatus]);
             }
 

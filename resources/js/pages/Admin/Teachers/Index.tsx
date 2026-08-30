@@ -1,18 +1,3 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Download,
-    Upload,
-    Search,
-    FileSpreadsheet,
-    Plus,
-    Edit2,
-    Trash2,
-    GraduationCap,
-    Filter,
-    Calendar,
-    Eye,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -20,9 +5,31 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Calendar,
+Download,
+Edit2,
+Eye,
+FileSpreadsheet,
+Filter,
+GraduationCap,
+Plus,
+Search,
+Trash2,
+Upload,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
+import {
+    GENDER_LABELS,
+    TEACHER_STATUS_ACTIVE,
+    TEACHER_STATUS_INACTIVE,
+    TEACHER_STATUS_LABELS,
+    TEACHER_STATUS_LOCKED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
 import { formatDate } from '@/lib/date';
@@ -40,10 +47,10 @@ interface Teacher {
     email: string | null;
     phone: string | null;
     specialization: string | null;
-    gender: 'male' | 'female' | 'other' | null;
+    gender: number | null;
     date_of_birth: string | null;
     hire_date: string | null;
-    status: string;
+    status: number;
     center_id: number;
     center?: Center;
 }
@@ -67,17 +74,15 @@ interface Props {
 }
 
 export default function TeacherIndex({ teachers, centers = [], filters }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const canExportCsv = useCanExportCsv();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Import modal state
@@ -97,8 +102,8 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
             '/teachers',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
@@ -106,8 +111,8 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedStatus('all');
+        setSelectedCenterId(0);
+        setSelectedStatus(0);
         router.get('/teachers', {}, { preserveState: true });
     };
 
@@ -115,7 +120,11 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         const queryParams = new URLSearchParams();
 
         if (selectedCenterId) {
-            queryParams.append('center_id', selectedCenterId);
+            queryParams.append('center_id', String(selectedCenterId));
+        }
+
+        if (selectedStatus) {
+            queryParams.append('status', String(selectedStatus));
         }
 
         window.location.href = `/teachers/export?${queryParams.toString()}`;
@@ -146,7 +155,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         formData.append('file', selectedFile);
 
         if (selectedCenterId) {
-            formData.append('center_id', selectedCenterId);
+            formData.append('center_id', String(selectedCenterId));
         }
 
         router.post('/teachers/import', formData, {
@@ -183,30 +192,22 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'active':
-                return <Badge variant="active">Đang hoạt động</Badge>;
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng</Badge>;
-            case 'locked':
-                return <Badge variant="danger">Bị khóa</Badge>;
-            default:
-                return <Badge variant="info">{status}</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === TEACHER_STATUS_ACTIVE) {
+            return <Badge variant="active">{TEACHER_STATUS_LABELS[TEACHER_STATUS_ACTIVE]}</Badge>;
         }
+        if (status === TEACHER_STATUS_INACTIVE) {
+            return <Badge variant="expired">{TEACHER_STATUS_LABELS[TEACHER_STATUS_INACTIVE]}</Badge>;
+        }
+        if (status === TEACHER_STATUS_LOCKED) {
+            return <Badge variant="danger">{TEACHER_STATUS_LABELS[TEACHER_STATUS_LOCKED]}</Badge>;
+        }
+        return <Badge variant="info">Chưa rõ</Badge>;
     };
 
-    const getGenderLabel = (gender: string | null) => {
-        switch (gender) {
-            case 'male':
-                return 'Nam';
-            case 'female':
-                return 'Nữ';
-            case 'other':
-                return 'Khác';
-            default:
-                return '-';
-        }
+    const getGenderLabel = (gender: number | null) => {
+        if (!gender) return '-';
+        return GENDER_LABELS[gender] || '-';
     };
 
     return (
@@ -305,12 +306,12 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 <div>
                                     <ScrollableSelect
                                         value={selectedCenterId}
-                                        onChange={(val) => setSelectedCenterId(val)}
+                                        onChange={(val) => setSelectedCenterId(Number(val))}
                                         placeholder="Tất cả Trung tâm"
                                         options={[
-                                            { value: '', label: 'Tất cả Trung tâm' },
+                                            { value: 0, label: 'Tất cả Trung tâm' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -321,12 +322,12 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                             <div>
                                 <ScrollableSelect
                                     value={selectedStatus}
-                                    onChange={(val) => setSelectedStatus(val)}
+                                    onChange={(val) => setSelectedStatus(Number(val))}
                                     options={[
-                                        { value: 'all', label: 'Tất cả Trạng thái' },
-                                        { value: 'active', label: 'Đang hoạt động' },
-                                        { value: 'inactive', label: 'Tạm dừng' },
-                                        { value: 'locked', label: 'Bị khóa' },
+                                        { value: 0, label: 'Tất cả Trạng thái' },
+                                        { value: TEACHER_STATUS_ACTIVE, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_ACTIVE] },
+                                        { value: TEACHER_STATUS_INACTIVE, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_INACTIVE] },
+                                        { value: TEACHER_STATUS_LOCKED, label: TEACHER_STATUS_LABELS[TEACHER_STATUS_LOCKED] },
                                     ]}
                                 />
                             </div>
@@ -347,7 +348,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Lọc Dữ Liệu
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

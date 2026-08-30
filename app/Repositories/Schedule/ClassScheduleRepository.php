@@ -83,7 +83,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             });
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', $status);
         }
 
@@ -288,6 +288,14 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
 
     public function updateClassSubject(int $classSubjectId, array $attributes): bool
     {
+        if (isset($attributes['status']) && is_string($attributes['status'])) {
+            $attributes['status'] = match ($attributes['status']) {
+                'inactive', 'paused' => \App\Enums\Constant::CLASS_SUBJECT_STATUS_INACTIVE,
+                'completed'          => \App\Enums\Constant::CLASS_SUBJECT_STATUS_COMPLETED,
+                default              => \App\Enums\Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+            };
+        }
+
         return (bool) ClassSubject::where('id', $classSubjectId)->update($attributes);
     }
 

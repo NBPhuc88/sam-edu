@@ -13,6 +13,7 @@ use App\Repositories\Center\CenterRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class AdminService implements AdminServiceInterface
 {
@@ -22,7 +23,7 @@ class AdminService implements AdminServiceInterface
     ) {
     }
 
-    public function getPaginatedAdmins(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator
+    public function getPaginatedAdmins(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, int|string|null $role = null): LengthAwarePaginator
     {
         return $this->adminRepository->paginate($perPage, $search, $role);
     }
@@ -36,7 +37,9 @@ class AdminService implements AdminServiceInterface
             $hasSuperAdmin = $this->adminRepository->hasSuperAdmin();
 
             if ($hasSuperAdmin) {
-                throw new \InvalidArgumentException('Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).');
+                throw ValidationException::withMessages([
+                    'role' => 'Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).',
+                ]);
             }
         }
 
@@ -92,14 +95,18 @@ class AdminService implements AdminServiceInterface
         $targetAdmin = $this->adminRepository->find($id);
 
         if ($targetAdmin->isSuperAdmin() && $data['role'] !== Constant::ROLE_SUPER_ADMIN) {
-            throw new \InvalidArgumentException('Không thể hạ cấp tài khoản Quản trị viên tối cao (Super Admin). Hệ thống phải luôn duy trì 1 Super Admin.');
+            throw ValidationException::withMessages([
+                'role' => 'Không thể hạ cấp tài khoản Quản trị viên tối cao (Super Admin). Hệ thống phải luôn duy trì 1 Super Admin.',
+            ]);
         }
 
         if (! $targetAdmin->isSuperAdmin() && $data['role'] === Constant::ROLE_SUPER_ADMIN) {
             $hasOtherSuperAdmin = $this->adminRepository->hasOtherSuperAdmin($id);
 
             if ($hasOtherSuperAdmin) {
-                throw new \InvalidArgumentException('Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).');
+                throw ValidationException::withMessages([
+                    'role' => 'Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao (Super Admin).',
+                ]);
             }
         }
 
@@ -143,7 +150,8 @@ class AdminService implements AdminServiceInterface
                     roleLabel: $roleLabel,
                     centerName: $centerName,
                     changedAt: date('d/m/Y H:i:s'),
-                    loginUrl: url('/admins')
+                    loginUrl: url('/admins'),
+                    newPassword: $data['password']
                 )
             );
         }
@@ -185,11 +193,15 @@ class AdminService implements AdminServiceInterface
         $targetAdmin = $this->adminRepository->find($id);
 
         if ($targetAdmin->isSuperAdmin()) {
-            throw new \InvalidArgumentException('Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa.');
+            throw ValidationException::withMessages([
+                'admin' => 'Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa.',
+            ]);
         }
 
         if ($currentAdminId === $id) {
-            throw new \InvalidArgumentException('Bạn không thể tự xóa tài khoản Quản trị viên của chính mình.');
+            throw ValidationException::withMessages([
+                'admin' => 'Bạn không thể tự xóa tài khoản Quản trị viên của chính mình.',
+            ]);
         }
 
         return $this->adminRepository->delete($id);

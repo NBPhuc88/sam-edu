@@ -18,16 +18,19 @@ class ClassSubject extends Model
         'start_date',
         'end_date',
         'status',
+        'tuition_fee',
         'note',
     ];
 
     protected function casts(): array
     {
         return [
-            'start_date' => 'date:d-m-Y',
-            'end_date'   => 'date:d-m-Y',
-            'created_at' => 'datetime:d-m-Y H:i',
-            'updated_at' => 'datetime:d-m-Y H:i',
+            'status'      => 'integer',
+            'tuition_fee' => 'decimal:0',
+            'start_date'  => 'date:d-m-Y',
+            'end_date'    => 'date:d-m-Y',
+            'created_at'  => 'datetime:d-m-Y H:i',
+            'updated_at'  => 'datetime:d-m-Y H:i',
         ];
     }
 

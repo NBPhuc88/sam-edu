@@ -1,6 +1,18 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Building2, Plus, Search, Edit2, Trash2, Calendar, AlertCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+    CENTER_STATUS_ACTIVE,
+    CENTER_STATUS_PAUSED,
+    CENTER_STATUS_EXPIRED,
+    CENTER_STATUS_LABELS,
+    PLAN_TYPE_FREE,
+    PLAN_TYPE_LABELS,
+    PLAN_TYPE_PREMIUM
+} from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
+import { formatDate } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import { AlertCircle,Building2,Calendar,Edit2,Filter,Plus,RefreshCw,Search,Trash2 } from 'lucide-react';
+import React,{ useState } from 'react';
+import RenewSubscriptionModal from '../../../components/Center/RenewSubscriptionModal';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
@@ -9,8 +21,6 @@ import Modal from '../../../components/ui/Modal';
 import Pagination from '../../../components/ui/Pagination';
 import { TruncatedText } from '../../../components/ui/Tooltip';
 import AppLayout from '../../../layouts/AppLayout';
-import { formatDate } from '@/lib/date';
-import { usePermission } from '@/hooks/usePermission';
 
 interface Center {
     id: number;
@@ -19,8 +29,9 @@ interface Center {
     phone: string | null;
     email: string | null;
     address: string | null;
-    status: 'active' | 'inactive' | 'expired' | 'suspended';
-    subscription_plan: string;
+    status: number;
+    subscription_plan_id: number;
+    plan_type?: number;
     expires_at: string | null;
     students_count?: number;
     classes_count?: number;
@@ -35,19 +46,24 @@ interface IndexProps {
         to?: number | null;
         total: number;
     };
+    subscriptionPlans?: any[];
     filters: {
         search?: string;
         per_page?: number;
     };
 }
 
-export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
-    const { can } = usePermission();
+export const Index: React.FC<IndexProps> = ({ centers, subscriptionPlans = [], filters }) => {
+    const { can, isSuperAdmin } = usePermission();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [perPage, setPerPage] = useState<number>(filters?.per_page || 20);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deletingCenter, setDeletingCenter] = useState<Center | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Renew Modal State
+    const [renewModalOpen, setRenewModalOpen] = useState(false);
+    const [renewCenter, setRenewCenter] = useState<Center | null>(null);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,10 +75,15 @@ export const Index: React.FC<IndexProps> = ({ centers, filters }) => {
         setDeleteModalOpen(true);
     };
 
+    const openRenewModal = (center: Center) => {
+        setRenewCenter(center);
+        setRenewModalOpen(true);
+    };
+
     const confirmDelete = () => {
         if (!deletingCenter) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
         router.delete(`/centers/${deletingCenter.id}`, {
@@ -118,8 +139,13 @@ return;
                                 className="!py-2.5 !text-sm"
                             />
                         </div>
-                        <Button type="submit" variant="secondary" size="md" className="px-5">
-                            Tìm Kiếm
+                        <Button
+                            type="submit"
+                            variant="success"
+                            size="md"
+                            icon={<Filter className="h-4 w-4" />}
+                        >
+                            Tìm kiếm
                         </Button>
                     </form>
                 </Card>
@@ -138,7 +164,7 @@ return;
                                     <th className="px-6 py-4">Quy Mô</th>
                                     <th className="px-6 py-4">Hạn Sử Dụng</th>
                                     <th className="px-6 py-4">Trạng Thái</th>
-                                    {(can('centers.edit') || can('centers.delete')) && (
+                                    {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (
                                         <th className="px-6 py-4 text-right">
                                             Thao Tác
                                         </th>
@@ -177,15 +203,13 @@ return;
                                             </td>
                                             <td className="px-6 py-4">
                                                 {(() => {
-                                                    const planLabels: Record<string, string> = {
-                                                        trial: 'Dùng Thử',
-                                                        basic_5: 'Cơ Bản (5 Lớp)',
-                                                        basic_20: 'Cơ Bản (20 Lớp)',
-                                                        advanced_5: 'Nâng Cao (5 Lớp)',
-                                                        advanced_20: 'Nâng Cao (20 Lớp)',
-                                                    };
-                                                    const isAdv = center.subscription_plan?.startsWith('advanced');
-                                                    const isTr = center.subscription_plan === 'trial';
+                                                    const matchedPlan = subscriptionPlans?.find(
+                                                        (p: any) => p.id === center.subscription_plan_id
+                                                    );
+                                                    const planType = center.plan_type ?? matchedPlan?.plan_type;
+                                                    const isAdv = planType === PLAN_TYPE_PREMIUM;
+                                                    const isTr = planType === PLAN_TYPE_FREE;
+                                                    const displayLabel = matchedPlan?.name || PLAN_TYPE_LABELS[planType] || `Gói #${center.subscription_plan_id}`;
 
                                                     return (
                                                         <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
@@ -195,7 +219,7 @@ return;
                                                                   ? 'bg-blue-50 text-blue-800 border border-blue-200'
                                                                   : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                                         }`}>
-                                                            {planLabels[center.subscription_plan] || center.subscription_plan}
+                                                            {displayLabel}
                                                         </span>
                                                     );
                                                 })()}
@@ -232,23 +256,33 @@ return;
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <Badge
-                                                    variant={
-                                                        center.status ===
-                                                        'active'
-                                                            ? 'active'
-                                                            : center.status ===
-                                                                  'expired'
-                                                              ? 'danger'
-                                                              : 'info'
+                                                {(() => {
+                                                    switch (center.status) {
+                                                        case CENTER_STATUS_ACTIVE:
+                                                            return <Badge variant="active">{CENTER_STATUS_LABELS[CENTER_STATUS_ACTIVE] || 'Đang hoạt động'}</Badge>;
+                                                        case CENTER_STATUS_PAUSED:
+                                                            return <Badge variant="pending">{CENTER_STATUS_LABELS[CENTER_STATUS_PAUSED] || 'Tạm dừng'}</Badge>;
+                                                        case CENTER_STATUS_EXPIRED:
+                                                            return <Badge variant="danger">{CENTER_STATUS_LABELS[CENTER_STATUS_EXPIRED] || 'Đã hết hạn'}</Badge>;
+                                                        default:
+                                                            return <Badge variant="expired">Tạm dừng</Badge>;
                                                     }
-                                                >
-                                                    {center.status.toUpperCase()}
-                                                </Badge>
+                                                })()}
                                             </td>
-                                            {(can('centers.edit') || can('centers.delete')) && (
+                                            {(can('centers.edit') || can('centers.delete') || isSuperAdmin) && (
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        {isSuperAdmin && (
+                                                            <Button
+                                                                variant="success"
+                                                                size="sm"
+                                                                icon={<RefreshCw className="h-3.5 w-3.5" />}
+                                                                onClick={() => openRenewModal(center)}
+                                                                title="Gia hạn hoặc Đổi gói cước SaaS"
+                                                            >
+                                                                Gia Hạn/Đổi Gói
+                                                            </Button>
+                                                        )}
                                                         {can('centers.edit') && (
                                                             <Link
                                                                 href={`/centers/${center.id}/edit`}
@@ -313,6 +347,19 @@ return;
                 />
             </div>
 
+            {/* Renew Subscription Modal */}
+            {renewCenter && (
+                <RenewSubscriptionModal
+                    isOpen={renewModalOpen}
+                    onClose={() => {
+                        setRenewModalOpen(false);
+                        setRenewCenter(null);
+                    }}
+                    center={renewCenter}
+                    subscriptionPlans={subscriptionPlans}
+                />
+            )}
+
             {/* Delete Confirmation Modal */}
             <Modal
                 isOpen={deleteModalOpen}
@@ -357,3 +404,4 @@ return;
 };
 
 export default Index;
+

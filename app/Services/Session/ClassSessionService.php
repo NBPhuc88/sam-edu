@@ -2,6 +2,7 @@
 
 namespace App\Services\Session;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\ClassSession;
 use App\Models\SchoolClass;
@@ -213,7 +214,7 @@ class ClassSessionService implements ClassSessionServiceInterface
                 $conflictSession = ClassSession::query()
                     ->where('id', '!=', $session->id)
                     ->where('session_date', $newDate)
-                    ->where('status', '!=', 'cancelled')
+                    ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                     ->whereHas('classSubject', function ($q) use ($classId) {
                         $q->where('class_id', $classId);
                     })
@@ -242,7 +243,7 @@ class ClassSessionService implements ClassSessionServiceInterface
                     ->where('id', '!=', $session->id)
                     ->where('teacher_id', $effectiveTeacherId)
                     ->where('session_date', $newDate)
-                    ->where('status', '!=', 'cancelled')
+                    ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                     ->where('start_time', '<', $cleanNewEnd)
                     ->where('end_time', '>', $cleanNewStart)
                     ->with([
@@ -300,8 +301,8 @@ class ClassSessionService implements ClassSessionServiceInterface
 
         if (isset($data['status'])) {
             $updateData['status'] = $data['status'];
-        } elseif ($hasScheduleChanged && ($session->status === 'rescheduled' || $session->status === 'scheduled')) {
-            $updateData['status'] = 'scheduled';
+        } elseif ($hasScheduleChanged && ($session->status === Constant::SESSION_STATUS_CANCELLED || (int) $session->status === Constant::SESSION_STATUS_SCHEDULED)) {
+            $updateData['status'] = Constant::SESSION_STATUS_SCHEDULED;
         }
 
         if (array_key_exists('topic', $data)) {

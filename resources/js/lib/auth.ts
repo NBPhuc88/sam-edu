@@ -14,20 +14,21 @@
  * Xem: .agents/AGENTS.md - Mục 6.1 Auth Helper Functions
  */
 
+import { ROLE_ADMIN, ROLE_SUPER_ADMIN } from '@/constants/enums';
 import type { Account } from '@/types/auth';
 
 /**
  * Kiểm tra xem account có phải super_admin hay không
  */
 export const isSuperAdmin = (account: Account | null): boolean => {
-    return account?.account_type === 'admin' && account?.role === 'super_admin';
+    return account?.account_type === 'admin' && account?.role === ROLE_SUPER_ADMIN;
 };
 
 /**
  * Kiểm tra xem account có phải normal admin (role = admin) hay không
  */
 export const isNormalAdmin = (account: Account | null): boolean => {
-    return account?.account_type === 'admin' && account?.role === 'admin';
+    return account?.account_type === 'admin' && account?.role === ROLE_ADMIN;
 };
 
 /**

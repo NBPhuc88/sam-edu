@@ -8,20 +8,27 @@
  */
 
 import {
-    BarChart3,
-    Bell,
-    BookOpen,
-    DollarSign,
-    FileCheck,
-    LayoutDashboard,
-    Lock,
-    MessageSquare,
-    Settings,
-    Sliders,
-    User,
-    Zap,
-} from 'lucide-react';
+    GUARD_ADMIN,
+    GUARD_STUDENT,
+    GUARD_TEACHER,
+    PLAN_TYPE_FREE,
+    ROLE_SUPER_ADMIN,
+} from '@/constants/enums';
 import type { LucideIcon } from 'lucide-react';
+import {
+BarChart3,
+Bell,
+BookOpen,
+DollarSign,
+FileCheck,
+LayoutDashboard,
+Lock,
+MessageSquare,
+Settings,
+Sliders,
+User,
+Zap,
+} from 'lucide-react';
 
 export interface NavItem {
     label: string;
@@ -120,6 +127,11 @@ export const masterNavigation: NavItem[] = [
             { label: 'Cài Đặt Hệ Thống', path: '/settings', permission: 'settings.index' },
         ],
     },
+    {
+        label: 'Trang Cá Nhân',
+        path: '/profile',
+        icon: User,
+    },
 ];
 
 /**
@@ -181,31 +193,32 @@ function filterNavItemsByPermissionsAndPlan(
  */
 export function getNavigationItems(
     role: string | null,
-    adminRole?: string | null,
+    adminRole?: number | null,
     permissions: string[] = [],
     allowedFeatures: string[] = [],
-    planType?: string | null,
+    planType?: number | null,
 ): NavItem[] {
     if (!role) {
         return [];
     }
 
-    const isSuperAdmin = role === 'admin' && adminRole === 'super_admin';
-    const isTrial = planType === 'trial';
+    const isSuperAdmin = role === GUARD_ADMIN && Number(adminRole) === ROLE_SUPER_ADMIN;
+    const isTrial = Number(planType) === PLAN_TYPE_FREE;
 
     return filterNavItemsByPermissionsAndPlan(masterNavigation, permissions, isSuperAdmin, allowedFeatures, isTrial);
 }
 
-export function getAccountLabel(role: string | null, adminRole?: string | null): string {
+export function getAccountLabel(role: string | null, adminRole?: number | null): string {
     if (!role) {
         return 'Khách';
     }
 
+    const isSuper = Number(adminRole) === ROLE_SUPER_ADMIN;
+
     const labels: Record<string, string> = {
-        admin: adminRole === 'super_admin' ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',
-        super_admin: 'Super Admin',
-        teacher: 'Giáo Viên',
-        student: 'Học Sinh',
+        [GUARD_ADMIN]: isSuper ? 'Super Admin' : 'Admin Quản Lý Trung Tâm',
+        [GUARD_TEACHER]: 'Giáo Viên',
+        [GUARD_STUDENT]: 'Học Sinh',
     };
 
     return labels[role] ?? 'Người Dùng';
@@ -213,10 +226,9 @@ export function getAccountLabel(role: string | null, adminRole?: string | null):
 
 export function getAccountIcon(role: string | null): LucideIcon {
     const icons: Record<string, LucideIcon> = {
-        admin: Lock,
-        super_admin: Lock,
-        teacher: BookOpen,
-        student: User,
+        [GUARD_ADMIN]: Lock,
+        [GUARD_TEACHER]: BookOpen,
+        [GUARD_STUDENT]: User,
     };
 
     return icons[role ?? ''] ?? User;

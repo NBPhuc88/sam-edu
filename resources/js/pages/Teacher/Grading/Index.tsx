@@ -1,3 +1,8 @@
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import { Pagination } from '@/components/ui/Pagination';
+import { ScrollableSelect } from '@/components/ui/ScrollableSelect';
+import AppLayout from '@/layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Award,
@@ -13,11 +18,6 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
-import { Pagination } from '@/components/ui/Pagination';
-import { ScrollableSelect } from '@/components/ui/ScrollableSelect';
-import AppLayout from '@/layouts/AppLayout';
 
 interface SchoolClassItem {
     id: number;
@@ -42,7 +42,7 @@ interface SubmissionItem {
     score: number | null;
     total_correct: number;
     total_questions: number;
-    status: 'in_progress' | 'submitted' | 'timeout_submitted' | 'missed';
+    status: number;
     is_graded: boolean;
     requires_manual_grading: boolean;
     graded_at: string | null;
@@ -103,7 +103,7 @@ interface Props {
     filters: {
         class_id?: number | null;
         class_exam_id?: number | null;
-        status?: string;
+        status?: number | null;
         search?: string;
         per_page?: number;
     };
@@ -121,30 +121,39 @@ export default function GradingIndex({
     isAdmin,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedClassId, setSelectedClassId] = useState(filters.class_id ? String(filters.class_id) : '');
-    const [selectedExamId, setSelectedExamId] = useState(filters.class_exam_id ? String(filters.class_exam_id) : '');
-    const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
+    const [selectedClassId, setSelectedClassId] = useState<number>(filters.class_id ? Number(filters.class_id) : 0);
+    const [selectedExamId, setSelectedExamId] = useState<number>(filters.class_exam_id ? Number(filters.class_exam_id) : 0);
+    const [selectedStatus, setSelectedStatus] = useState<number>(filters.status ? Number(filters.status) : 0);
 
     // Available exams filtered by selected class
     const availableExams = selectedClassId
-        ? classExams.filter((e) => String(e.class_id) === selectedClassId)
+        ? classExams.filter((e) => Number(e.class_id) === selectedClassId)
         : classExams;
 
     const handleFilterChange = (override: Partial<typeof filters> = {}) => {
-        router.get(
-            '/grading',
-            {
-                search: override.search !== undefined ? override.search : search,
-                class_id: override.class_id !== undefined ? override.class_id : (selectedClassId ? Number(selectedClassId) : null),
-                class_exam_id: override.class_exam_id !== undefined ? override.class_exam_id : (selectedExamId ? Number(selectedExamId) : null),
-                status: override.status !== undefined ? override.status : selectedStatus,
-                page: 1,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            }
-        );
+        const nextClassId = override.class_id !== undefined ? Number(override.class_id) : selectedClassId;
+        const nextExamId = override.class_exam_id !== undefined ? Number(override.class_exam_id) : selectedExamId;
+        const nextStatus = override.status !== undefined ? Number(override.status) : selectedStatus;
+        const nextSearch = override.search !== undefined ? override.search : search;
+
+        const params: Record<string, any> = { page: 1 };
+        if (nextSearch && nextSearch.trim() !== '') {
+            params.search = nextSearch.trim();
+        }
+        if (nextClassId && nextClassId > 0) {
+            params.class_id = nextClassId;
+        }
+        if (nextExamId && nextExamId > 0) {
+            params.class_exam_id = nextExamId;
+        }
+        if (nextStatus && nextStatus > 0) {
+            params.status = nextStatus;
+        }
+
+        router.get('/grading', params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -154,9 +163,9 @@ export default function GradingIndex({
 
     const handleResetFilters = () => {
         setSearch('');
-        setSelectedClassId('');
-        setSelectedExamId('');
-        setSelectedStatus('all');
+        setSelectedClassId(0);
+        setSelectedExamId(0);
+        setSelectedStatus(0);
         router.get('/grading', {}, { preserveState: true });
     };
 
@@ -256,14 +265,15 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedClassId}
                                     onChange={(val) => {
-                                        setSelectedClassId(val);
-                                        setSelectedExamId('');
-                                        handleFilterChange({ class_id: val ? Number(val) : null, class_exam_id: null });
+                                        const num = Number(val);
+                                        setSelectedClassId(num);
+                                        setSelectedExamId(0);
+                                        handleFilterChange({ class_id: num, class_exam_id: 0 });
                                     }}
                                     options={[
-                                        { value: '', label: '-- Tất cả lớp học --' },
+                                        { value: 0, label: '-- Tất cả lớp học --' },
                                         ...classes.map((cls) => ({
-                                            value: String(cls.id),
+                                            value: cls.id,
                                             label: cls.name,
                                         })),
                                     ]}
@@ -278,13 +288,14 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedExamId}
                                     onChange={(val) => {
-                                        setSelectedExamId(val);
-                                        handleFilterChange({ class_exam_id: val ? Number(val) : null });
+                                        const num = Number(val);
+                                        setSelectedExamId(num);
+                                        handleFilterChange({ class_exam_id: num });
                                     }}
                                     options={[
-                                        { value: '', label: '-- Tất cả bài thi --' },
+                                        { value: 0, label: '-- Tất cả bài thi --' },
                                         ...availableExams.map((e) => ({
-                                            value: String(e.id),
+                                            value: e.id,
                                             label: e.title,
                                         })),
                                     ]}
@@ -299,14 +310,15 @@ export default function GradingIndex({
                                 <ScrollableSelect
                                     value={selectedStatus}
                                     onChange={(val) => {
-                                        setSelectedStatus(val);
-                                        handleFilterChange({ status: val });
+                                        const numVal = Number(val);
+                                        setSelectedStatus(numVal);
+                                        handleFilterChange({ status: numVal });
                                     }}
                                     options={[
-                                        { value: 'all', label: 'Tất cả trạng thái' },
-                                        { value: 'pending', label: '⏳ Chờ chấm điểm' },
-                                        { value: 'manual_needed', label: '✍️ Cần chấm tự luận / nói' },
-                                        { value: 'graded', label: '✅ Đã chấm xong' },
+                                        { value: 0, label: 'Tất cả trạng thái' },
+                                        { value: 1, label: '✅ Đã chấm xong' },
+                                        { value: 2, label: '⏳ Chờ chấm điểm' },
+                                        { value: 3, label: '✍️ Cần chấm tự luận / nói' },
                                     ]}
                                     placeholder="Chọn trạng thái"
                                 />
@@ -345,10 +357,10 @@ export default function GradingIndex({
                                 <Button
                                     type="submit"
                                     variant="success"
-                                    size="sm"
-                                    icon={<Filter className="h-3.5 w-3.5" />}
+                                    size="md"
+                                    icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Lọc Kết Quả
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>

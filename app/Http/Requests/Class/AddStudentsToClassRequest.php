@@ -17,8 +17,11 @@ class AddStudentsToClassRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_ids'   => ['required', 'array', 'min:1'],
-            'student_ids.*' => ['integer', 'exists:students,id'],
+            'student_ids'           => ['required', 'array', 'min:1'],
+            'student_ids.*'         => ['integer', 'exists:students,id'],
+            'create_tuition'        => ['nullable', 'boolean'],
+            'tuition_student_ids'   => ['nullable', 'array'],
+            'tuition_student_ids.*' => ['integer', 'exists:students,id'],
         ];
     }
 

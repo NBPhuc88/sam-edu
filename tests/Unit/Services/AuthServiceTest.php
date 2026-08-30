@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
@@ -15,7 +16,7 @@ beforeEach(function () {
     $this->center = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Trung Tâm Test Auth',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->authService = app(AuthService::class);
 });
@@ -25,7 +26,7 @@ test('authenticate authenticates admin successfully with correct credentials', f
         'username'   => 'admin_auth_test',
         'full_name'  => 'Admin Test',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -48,7 +49,7 @@ test('authenticate authenticates teacher successfully', function () {
         'full_name'    => 'Teacher Test',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $result = $this->authService->authenticate('teacher', 'teacher_auth_test', 'password123');
@@ -84,7 +85,7 @@ test('authenticate fails when user provides incorrect password', function () {
         'username'   => 'admin_pass_fail',
         'full_name'  => 'Admin Test Fail',
         'password'   => Hash::make('correct_password'),
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -106,14 +107,14 @@ test('authenticate fails when account status is inactive or locked', function ()
         'full_name'    => 'Inactive Teacher',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'inactive',
+        'status'       => Constant::STATUS_INACTIVE,
     ]);
 
     $result = $this->authService->authenticate('teacher', 'inactive_teacher', 'password123');
 
     expect($result['success'])->toBeFalse()
         ->and($result['account'])->toBeNull()
-        ->and($result['error'])->toBe('Tài khoản của bạn đã bị khóa, hết hạn hoặc chưa kích hoạt.');
+        ->and($result['error'])->toBe('Tài khoản của bạn đã bị khóa, tạm ngưng hoặc chưa kích hoạt.');
 });
 
 test('logout clears device session token and logs out all guards', function () {
@@ -121,7 +122,7 @@ test('logout clears device session token and logs out all guards', function () {
         'username'           => 'admin_logout_test',
         'full_name'          => 'Admin Logout Test',
         'password'           => Hash::make('password'),
-        'role'               => 'admin',
+        'role'               => Constant::ROLE_ADMIN,
         'admin_code'         => 'ADM' . random_int(1000000, 9999999),
         'current_session_id' => 'existing_token_123',
     ]);

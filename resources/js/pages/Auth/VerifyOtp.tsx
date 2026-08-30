@@ -1,6 +1,6 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react';
-import React, { useState } from 'react';
+import { Link,router,usePage } from '@inertiajs/react';
+import { ArrowLeft,RefreshCw,ShieldCheck } from 'lucide-react';
+import React,{ useState } from 'react';
 import AppLogo from '../../components/common/AppLogo';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';

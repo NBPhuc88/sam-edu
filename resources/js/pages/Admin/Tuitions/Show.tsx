@@ -1,29 +1,41 @@
-import { Head, Link, router } from '@inertiajs/react';
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
+import BackButton from '@/components/ui/BackButton';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router } from '@inertiajs/react';
 import {
-    ArrowLeft,
-    Plus,
-    Edit2,
-    Trash2,
-    Receipt,
-    CheckCircle2,
-    AlertCircle,
+AlertCircle,
+BookOpen,
+CheckCircle2,
+Edit2,
+Plus,
+Receipt,
+Trash2,
 } from 'lucide-react';
-import React, { useState } from 'react';
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import Modal from '../../../components/ui/Modal';
-import AppLayout from '../../../layouts/AppLayout';
+import React,{ useState } from 'react';
 
+import {
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_LABELS,
+    PAYMENT_METHOD_OPTIONS,
+    TUITION_STATUS_OVERDUE,
+    TUITION_STATUS_PAID,
+    TUITION_STATUS_PARTIAL,
+    TUITION_STATUS_PENDING,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
+
 interface TuitionPaymentItem {
     id: number;
     student_tuition_id: number;
-    amount: number | string;
+    amount: number;
     payment_date: string;
-    payment_method: string;
+    payment_method: number;
     transaction_code: string | null;
     note: string | null;
     received_by: number | null;
@@ -35,6 +47,25 @@ interface TuitionPaymentItem {
     created_at: string;
 }
 
+interface StudentClassTuitionItem {
+    id: number;
+    center_id: number;
+    student_id: number;
+    class_id: number;
+    title: string | null;
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
+    due_date: string | null;
+    payments_count?: number;
+    school_class?: {
+        id: number;
+        name: string;
+        code: string;
+    };
+}
+
 interface ShowProps {
     tuition: {
         id: number;
@@ -42,10 +73,10 @@ interface ShowProps {
         student_id: number;
         class_id: number;
         title: string | null;
-        total_amount: number | string;
-        paid_amount: number | string;
-        remaining_amount: number | string;
-        status: 'pending' | 'partial' | 'completed' | 'overdue';
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
+        status: number;
         due_date: string | null;
         note: string | null;
         created_at: string;
@@ -57,6 +88,7 @@ interface ShowProps {
             email: string | null;
             parent_name: string | null;
             parent_phone: string | null;
+            tuitions?: StudentClassTuitionItem[];
         };
         school_class?: {
             id: number;
@@ -73,7 +105,7 @@ interface ShowProps {
             username: string;
             full_name: string;
         };
-        payments: TuitionPaymentItem[];
+        payments?: TuitionPaymentItem[];
     };
     errors?: Record<string, string>;
 }
@@ -86,7 +118,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
         String(Math.max(0, Number(tuition.remaining_amount) || 0)),
     );
     const [addDate, setAddDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [addMethod, setAddMethod] = useState<string>('bank_transfer');
+    const [addMethod, setAddMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [addCode, setAddCode] = useState<string>('');
     const [addNote, setAddNote] = useState<string>('');
     const [isAdding, setIsAdding] = useState(false);
@@ -96,7 +128,7 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const [editingPayment, setEditingPayment] = useState<TuitionPaymentItem | null>(null);
     const [editAmount, setEditAmount] = useState<string>('');
     const [editDate, setEditDate] = useState<string>('');
-    const [editMethod, setEditMethod] = useState<string>('bank_transfer');
+    const [editMethod, setEditMethod] = useState<number>(PAYMENT_METHOD_BANK_TRANSFER);
     const [editCode, setEditCode] = useState<string>('');
     const [editNote, setEditNote] = useState<string>('');
     const [isEditing, setIsEditing] = useState(false);
@@ -106,49 +138,49 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     const [deletingPayment, setDeletingPayment] = useState<TuitionPaymentItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    // Delete Tuition Modal State
+    const [deleteTuitionModalOpen, setDeleteTuitionModalOpen] = useState(false);
+    const [deletingTuitionTarget, setDeletingTuitionTarget] = useState<StudentClassTuitionItem | null>(null);
+    const [isDeletingTuition, setIsDeletingTuition] = useState(false);
+
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
-    const getPaymentMethodLabel = (method: string) => {
-        switch (method) {
-            case 'cash':
-                return 'Tiền mặt';
-            case 'bank_transfer':
-                return 'Chuyển khoản NH';
-            case 'momo':
-                return 'Ví MoMo';
-            case 'zalopay':
-                return 'Ví ZaloPay';
-            case 'credit_card':
-                return 'Thẻ tín dụng';
-            case 'other':
-            default:
-                return 'Khác';
-        }
+    const getPaymentMethodLabel = (method: number) => {
+        return PAYMENT_METHOD_LABELS[method] || 'Khác';
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'partial':
-                return <Badge variant="pending">Còn nợ</Badge>;
-            case 'overdue':
-                return <Badge variant="danger">Quá hạn</Badge>;
-            case 'pending':
-            default:
-                return <Badge variant="expired">Chưa đóng</Badge>;
+    const getStatusBadge = (status: number) => {
+        if (status === TUITION_STATUS_PAID) {
+            return <Badge variant="active">Đã hoàn thành</Badge>;
         }
+        if (status === TUITION_STATUS_PARTIAL) {
+            return <Badge variant="pending">Còn nợ</Badge>;
+        }
+        if (status === TUITION_STATUS_OVERDUE) {
+            return <Badge variant="danger">Quá hạn</Badge>;
+        }
+        return <Badge variant="expired">Chưa đóng</Badge>;
     };
 
     const total = Number(tuition.total_amount) || 0;
     const paid = Number(tuition.paid_amount) || 0;
     const remaining = Number(tuition.remaining_amount) || 0;
     const percent = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
+
+    const allStudentTuitions: StudentClassTuitionItem[] =
+        tuition.student?.tuitions && tuition.student.tuitions.length > 0
+            ? tuition.student.tuitions
+            : [tuition];
+
+    const allTotalAmount = allStudentTuitions.reduce((sum, item) => sum + (Number(item.total_amount) || 0), 0);
+    const allPaidAmount = allStudentTuitions.reduce((sum, item) => sum + (Number(item.paid_amount) || 0), 0);
+    const allRemainingAmount = allStudentTuitions.reduce((sum, item) => sum + (Number(item.remaining_amount) || 0), 0);
+    const allPercent = allTotalAmount > 0 ? Math.min(100, Math.round((allPaidAmount / allTotalAmount) * 100)) : 0;
 
     const isAddAmountExceeded = remaining > 0 && Number(addAmount) > remaining;
     const isAddAmountInvalid = Number(addAmount) <= 0 || isAddAmountExceeded || remaining <= 0;
@@ -237,8 +269,8 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
     // Handle confirm Delete Payment
     const handleConfirmDeletePayment = () => {
         if (!deletingPayment) {
-return;
-}
+            return;
+        }
 
         setIsDeleting(true);
 
@@ -251,6 +283,29 @@ return;
         });
     };
 
+    // Open Delete Tuition Modal
+    const openDeleteTuitionModal = (item: StudentClassTuitionItem) => {
+        setDeletingTuitionTarget(item);
+        setDeleteTuitionModalOpen(true);
+    };
+
+    // Handle confirm Delete Tuition
+    const handleConfirmDeleteTuition = () => {
+        if (!deletingTuitionTarget) {
+            return;
+        }
+
+        setIsDeletingTuition(true);
+
+        router.delete(`/tuitions/${deletingTuitionTarget.id}`, {
+            onFinish: () => {
+                setIsDeletingTuition(false);
+                setDeleteTuitionModalOpen(false);
+                setDeletingTuitionTarget(null);
+            },
+        });
+    };
+
     return (
         <AppLayout title="Chi Tiết Hồ Sơ Học Phí - SAM Digital">
             <Head title="Chi Tiết Hồ Sơ Học Phí" />
@@ -259,11 +314,7 @@ return;
                 {/* Top Action Bar */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/tuitions">
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/tuitions" size="md" />
                         <div>
                             <div className="flex items-center gap-2.5">
                                 <h1 className="text-2xl font-bold text-gray-900">
@@ -272,19 +323,12 @@ return;
                                 {getStatusBadge(tuition.status)}
                             </div>
                             <p className="mt-1 text-sm text-gray-500">
-                                Lớp: <strong>{tuition.school_class?.name}</strong> • Trung tâm: <strong>{tuition.center?.name}</strong>
+                                Lớp đang xem: <strong className="text-blue-700">{tuition.school_class?.name}</strong> ({tuition.school_class?.code}) • Trung tâm: <strong>{tuition.center?.name}</strong>
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                        {can('tuitions.edit') && (
-                            <Link href={`/tuitions/${tuition.id}/edit`}>
-                                <Button variant="edit" size="md" icon={<Edit2 className="h-4 w-4" />}>
-                                    Chỉnh Sửa Hồ Sơ
-                                </Button>
-                            </Link>
-                        )}
                         {can('tuitions.payments') && (
                             <Button
                                 variant="success"
@@ -301,45 +345,150 @@ return;
                     </div>
                 </div>
 
-                {/* 3 Summary Money Cards */}
+                {/* 3 Summary Money Cards (Tổng tất cả các lớp của học sinh) */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                     <Card className="border-l-4 border-l-blue-500 bg-white p-6 shadow-xs">
                         <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-                            Tổng Học Phí Cần Đóng
+                            Tổng Học Phí (Tất Cả Các Lớp)
                         </p>
                         <h3 className="mt-1.5 text-2xl font-extrabold text-gray-900">
-                            {formatCurrency(total)}
+                            {formatCurrency(allTotalAmount)}
                         </h3>
                         <div className="mt-2 text-xs text-gray-400">
-                            Hạn đóng: <span className="font-mono font-medium text-gray-700">{tuition.due_date || 'Không có'}</span>
+                            Tổng cộng: <span className="font-mono font-medium text-gray-700">{allStudentTuitions.length} lớp học</span>
                         </div>
                     </Card>
 
                     <Card className="border-l-4 border-l-emerald-500 bg-white p-6 shadow-xs">
                         <p className="text-sm font-semibold uppercase tracking-wider text-emerald-700">
-                            Đã Đóng Thực Tế
+                            Đã Đóng Thực Tế (Tất Cả Lớp)
                         </p>
                         <h3 className="mt-1.5 text-2xl font-extrabold text-emerald-700">
-                            {formatCurrency(paid)}
+                            {formatCurrency(allPaidAmount)}
                         </h3>
                         <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                            <span>{tuition.payments.length} đợt đóng</span>
-                            <span className="font-bold text-emerald-800">{percent}%</span>
+                            <span>Tỉ lệ hoàn thành</span>
+                            <span className="font-bold text-emerald-800">{allPercent}%</span>
                         </div>
                     </Card>
 
                     <Card className="border-l-4 border-l-amber-500 bg-white p-6 shadow-xs">
                         <p className="text-sm font-semibold uppercase tracking-wider text-amber-700">
-                            Số Tiền Còn Nợ
+                            Tổng Còn Nợ (Tất Cả Lớp)
                         </p>
                         <h3 className="mt-1.5 text-2xl font-extrabold text-amber-700">
-                            {formatCurrency(remaining)}
+                            {formatCurrency(allRemainingAmount)}
                         </h3>
                         <div className="mt-2 text-xs text-gray-400">
-                            Trạng thái: <span className="font-medium text-gray-700">{remaining === 0 ? 'Đã hoàn thành' : 'Còn thiếu'}</span>
+                            Trạng thái: <span className="font-medium text-gray-700">{allRemainingAmount <= 0 ? 'Đã hoàn tất tất cả lớp' : 'Còn dư nợ'}</span>
                         </div>
                     </Card>
                 </div>
+
+                {/* Danh Sách Học Phí Theo Từng Lớp Của Học Sinh */}
+                {allStudentTuitions.length > 0 && (
+                    <Card className="overflow-hidden border-gray-200 bg-white shadow-xs">
+                        <div className="border-b border-gray-200 bg-slate-50 px-6 py-4">
+                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
+                                <BookOpen className="h-4.5 w-4.5 text-blue-600" />
+                                Danh Sách Học Phí Theo Từng Lớp ({allStudentTuitions.length} lớp)
+                            </h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-gray-600">
+                                <thead className="border-b border-gray-200 bg-gray-50/50 text-xs font-bold uppercase tracking-wider text-gray-700">
+                                    <tr>
+                                        <th className="px-6 py-3">Mã Lớp</th>
+                                        <th className="px-6 py-3">Tên Lớp Học</th>
+                                        <th className="px-6 py-3">Tổng Học Phí</th>
+                                        <th className="px-6 py-3">Đã Đóng</th>
+                                        <th className="px-6 py-3">Còn Nợ</th>
+                                        <th className="px-6 py-3">Trạng Thái</th>
+                                        <th className="px-6 py-3 text-right">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 bg-white">
+                                    {allStudentTuitions.map((st) => {
+                                        const isCurrent = Number(st.id) === Number(tuition.id);
+                                        const cTotal = Number(st.total_amount) || 0;
+                                        const cPaid = Number(st.paid_amount) || 0;
+                                        const cRemaining = Number(st.remaining_amount) || 0;
+
+                                        return (
+                                            <tr
+                                                key={st.id}
+                                                className={`transition-colors ${isCurrent ? 'bg-blue-50/60 font-medium' : 'hover:bg-slate-50/80'}`}
+                                            >
+                                                <td className="px-6 py-3.5">
+                                                    <span className="font-mono text-xs font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200">
+                                                        {st.school_class?.code || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-3.5 font-semibold text-gray-900">
+                                                    {st.school_class?.name || st.title || 'Lớp học'}
+                                                </td>
+                                                <td className="px-6 py-3.5 font-bold text-gray-900">
+                                                    {formatCurrency(cTotal)}
+                                                </td>
+                                                <td className="px-6 py-3.5 font-bold text-emerald-700">
+                                                    {formatCurrency(cPaid)}
+                                                </td>
+                                                <td className="px-6 py-3.5 font-bold text-amber-700">
+                                                    {cRemaining > 0 ? (
+                                                        formatCurrency(cRemaining)
+                                                    ) : (
+                                                        <span className="font-semibold text-emerald-600">Đã đủ</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-3.5">
+                                                    {getStatusBadge(Number(st.status))}
+                                                </td>
+                                                <td className="px-6 py-3.5 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {!isCurrent && (
+                                                            <Link href={`/tuitions/${st.id}`}>
+                                                                <Button
+                                                                    variant="success"
+                                                                    size="sm"
+                                                                    title="Xem lịch sử đóng tiền lớp này"
+                                                                >
+                                                                    Xem đợt thu
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('tuitions.edit') && (
+                                                            <Link href={`/tuitions/${st.id}/edit`}>
+                                                                <Button
+                                                                    variant="edit"
+                                                                    size="sm"
+                                                                    icon={<Edit2 className="h-3.5 w-3.5" />}
+                                                                    title={`Sửa học phí lớp ${st.school_class?.name || ''}`}
+                                                                >
+                                                                    Sửa
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                        {can('tuitions.delete') && (
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                title={`Xóa học phí lớp ${st.school_class?.name || ''}`}
+                                                                onClick={() => openDeleteTuitionModal(st)}
+                                                            >
+                                                                Xóa
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                )}
 
                 {/* Progress Bar & Profile Detail Grid */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -400,7 +549,7 @@ return;
                             <div>
                                 <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900">
                                     <Receipt className="h-4.5 w-4.5 text-emerald-600" />
-                                    Lịch Sử Các Đợt Thu Tiền ({tuition.payments.length} đợt)
+                                    Lịch Sử Các Đợt Thu Tiền ({tuition.payments?.length ?? 0} đợt)
                                 </h2>
                                 <p className="mt-0.5 text-xs text-gray-500">
                                     Danh sách các lần nộp tiền học phí của học sinh cho khóa học này.
@@ -442,7 +591,7 @@ return;
                                         tuition.payments.map((p, index) => (
                                             <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                                                 <td className="px-4 py-3.5 font-bold text-gray-900">
-                                                    Đợt {tuition.payments.length - index}
+                                                    Đợt {(tuition.payments?.length ?? 0) - index}
                                                 </td>
                                                 <td className="px-4 py-3.5 font-mono font-medium text-gray-700">
                                                     {p.payment_date}
@@ -562,7 +711,7 @@ return;
                             />
                             {isAddAmountExceeded ? (
                                 <p className="mt-1 text-xs font-semibold text-red-600">
-                                    Số tiền đóng ({formatCurrency(addAmount)}) không được vượt quá số tiền còn nợ ({formatCurrency(remaining)}).
+                                    Số tiền đóng ({formatCurrency(Number(addAmount))}) không được vượt quá số tiền còn nợ ({formatCurrency(remaining)}).
                                 </p>
                             ) : (
                                 <p className="mt-1 text-xs text-gray-500">
@@ -592,15 +741,14 @@ return;
                             </label>
                             <select
                                 value={addMethod}
-                                onChange={(e) => setAddMethod(e.target.value)}
+                                onChange={(e) => setAddMethod(Number(e.target.value))}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                             >
-                                <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                                <option value="cash">Tiền mặt</option>
-                                <option value="momo">Ví MoMo</option>
-                                <option value="zalopay">Ví ZaloPay</option>
-                                <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                                <option value="other">Khác</option>
+                                {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -676,7 +824,7 @@ return;
                         />
                         {isEditAmountExceeded ? (
                             <p className="mt-1 text-xs font-semibold text-red-600">
-                                Số tiền đóng ({formatCurrency(editAmount)}) vượt quá số tiền tối đa cho phép ({formatCurrency(maxEditAllowed)}).
+                                Số tiền đóng ({formatCurrency(Number(editAmount))}) vượt quá số tiền tối đa cho phép ({formatCurrency(maxEditAllowed)}).
                             </p>
                         ) : (
                             <p className="mt-1 text-xs text-gray-500">
@@ -706,15 +854,14 @@ return;
                         </label>
                         <select
                             value={editMethod}
-                            onChange={(e) => setEditMethod(e.target.value)}
+                            onChange={(e) => setEditMethod(Number(e.target.value))}
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                         >
-                            <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                            <option value="cash">Tiền mặt</option>
-                            <option value="momo">Ví MoMo</option>
-                            <option value="zalopay">Ví ZaloPay</option>
-                            <option value="credit_card">Thẻ tín dụng / Quẹt thẻ</option>
-                            <option value="other">Khác</option>
+                            {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -803,6 +950,17 @@ return;
                     </p>
                 </div>
             </Modal>
+
+            {/* Modal 4: Xác Nhận Xóa Hồ Sơ Học Phí Lớp Học */}
+            <DeleteConfirmModal
+                isOpen={deleteTuitionModalOpen}
+                onClose={() => setDeleteTuitionModalOpen(false)}
+                onConfirm={handleConfirmDeleteTuition}
+                entity="tuitions"
+                entityId={deletingTuitionTarget?.id || null}
+                entityName={`hồ sơ học phí lớp "${deletingTuitionTarget?.school_class?.name || deletingTuitionTarget?.title || ''}" của học sinh "${tuition.student?.full_name || ''}"`}
+                isDeleting={isDeletingTuition}
+            />
         </AppLayout>
     );
 };

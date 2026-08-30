@@ -337,12 +337,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $otherClassSubjects = ClassSubject::query()
             ->where('class_id', $classId)
             ->where('id', '!=', $excludeClassSubjectId)
-            ->where('status', 'active')
+            ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
             ->with([
                 'subject:id,name,code',
                 'schoolClass:id,name,code',
                 'classSchedules' => function ($q) {
-                    $q->where('status', 'active');
+                    $q->where('status', Constant::SCHEDULE_STATUS_ACTIVE);
                 },
             ])
             ->get();
@@ -539,13 +539,13 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $otherTeacherClassSubjects = ClassSubject::query()
             ->where('teacher_id', $teacherId)
             ->where('id', '!=', $excludeClassSubjectId)
-            ->where('status', 'active')
+            ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
             ->with([
                 'subject:id,name,code',
                 'schoolClass:id,name,code',
                 'teacher:id,full_name,teacher_code',
                 'classSchedules' => function ($q) {
-                    $q->where('status', 'active');
+                    $q->where('status', Constant::SCHEDULE_STATUS_ACTIVE);
                 },
             ])
             ->get();
@@ -791,7 +791,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'teacher_id' => $teacherId,
                     'start_date' => $data['start_date'] ?? null,
                     'end_date'   => $data['end_date'] ?? null,
-                    'status'     => 'active',
+                    'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
                 ]
             );
 
@@ -851,7 +851,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'off_days'             => $normalizedOffDays,
                     'extra_days'           => $normalizedExtraDays,
                     'room_id'              => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                    'status'               => $data['status'] ?? 'active',
+                    'status'               => isset($data['status']) ? (is_numeric($data['status']) ? (int) $data['status'] : ($data['status'] === 'inactive' ? Constant::SCHEDULE_STATUS_INACTIVE : Constant::SCHEDULE_STATUS_ACTIVE)) : Constant::SCHEDULE_STATUS_ACTIVE,
                 ]
             );
 
@@ -879,7 +879,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'teacher_id' => $teacherId,
                 'start_date' => $data['start_date'],
                 'end_date'   => $finalEndDate,
-                'status'     => 'active',
+                'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
             ]);
 
             // Cập nhật ngày bắt đầu / kết thúc của lớp học nếu cần
@@ -1021,7 +1021,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
                 ClassSession::where('class_subject_id', $classSubject->id)
                     ->where('session_date', '>=', now()->toDateString())
-                    ->where('status', 'scheduled')
+                    ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                     ->whereDoesntHave('attendances')
                     ->update([
                         'teacher_id' => $teacherId,
@@ -1119,7 +1119,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'teacher_id' => $teacherId,
                 'start_date' => $startDate,
                 'end_date'   => $finalEndDate,
-                'status'     => $data['status'] ?? 'active',
+                'status'     => isset($data['status']) ? (is_numeric($data['status']) ? (int) $data['status'] : ($data['status'] === 'inactive' ? Constant::CLASS_SUBJECT_STATUS_INACTIVE : Constant::CLASS_SUBJECT_STATUS_ACTIVE)) : Constant::CLASS_SUBJECT_STATUS_ACTIVE,
             ]);
 
             if ($classSubject->schoolClass) {
@@ -1453,7 +1453,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                             'session_date'      => $specDateStr,
                             'start_time'        => $specStart,
                             'end_time'          => $specEnd,
-                            'status'            => 'scheduled',
+                            'status'            => Constant::SESSION_STATUS_SCHEDULED,
                             'topic'             => 'Buổi học bổ sung / bù',
                             'note'              => null,
                             'created_at'        => $now,
@@ -1501,7 +1501,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                                 'session_date'      => $dateStr,
                                 'start_time'        => $startTime,
                                 'end_time'          => $endTime,
-                                'status'            => 'scheduled',
+                                'status'            => Constant::SESSION_STATUS_SCHEDULED,
                                 'topic'             => 'Buổi học bổ sung / bù',
                                 'note'              => null,
                                 'created_at'        => $now,
@@ -1531,7 +1531,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                                 'session_date'      => $dateStr,
                                 'start_time'        => $startTime,
                                 'end_time'          => $endTime,
-                                'status'            => 'scheduled',
+                                'status'            => Constant::SESSION_STATUS_SCHEDULED,
                                 'topic'             => null,
                                 'note'              => null,
                                 'created_at'        => $now,
@@ -1573,7 +1573,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                                 'session_date'      => $dateStr,
                                 'start_time'        => $startTime,
                                 'end_time'          => $endTime,
-                                'status'            => 'scheduled',
+                                'status'            => Constant::SESSION_STATUS_SCHEDULED,
                                 'topic'             => 'Buổi học bổ sung / bù',
                                 'note'              => null,
                                 'created_at'        => $now,
@@ -1599,7 +1599,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                                 'session_date'      => $dateStr,
                                 'start_time'        => $startTime,
                                 'end_time'          => $endTime,
-                                'status'            => 'scheduled',
+                                'status'            => Constant::SESSION_STATUS_SCHEDULED,
                                 'topic'             => null,
                                 'note'              => null,
                                 'created_at'        => $now,
@@ -1659,7 +1659,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
     {
         $classSubject = $schedule->classSubject;
 
-        if (! $classSubject || $schedule->status !== 'active') {
+        if (! $classSubject || (int) $schedule->status !== Constant::SCHEDULE_STATUS_ACTIVE) {
             return null;
         }
 

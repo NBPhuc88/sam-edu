@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\SchoolClass;
@@ -13,13 +14,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test TuitionService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_tuition_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Tuition',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
     $this->schoolClass = SchoolClass::create([
@@ -48,7 +50,7 @@ test('createTuition creates tuition record with initial payment', function () {
         'title'                  => 'Hoc phi Thang 9',
         'total_amount'           => 3000000,
         'initial_payment_amount' => 1000000,
-        'initial_payment_method' => 'cash',
+        'initial_payment_method' => Constant::PAYMENT_METHOD_CASH,
     ];
 
     $tuition = $this->service->createTuition($data, $this->superAdmin);
@@ -57,7 +59,7 @@ test('createTuition creates tuition record with initial payment', function () {
         ->and((float) $tuition->total_amount)->toBe(3000000.0)
         ->and((float) $tuition->paid_amount)->toBe(1000000.0)
         ->and((float) $tuition->remaining_amount)->toBe(2000000.0)
-        ->and($tuition->status)->toBe('partial');
+        ->and($tuition->status)->toBe(Constant::TUITION_STATUS_PARTIAL);
 });
 
 test('recordPayment adds installment payment and marks status completed when fully paid', function () {
@@ -69,19 +71,19 @@ test('recordPayment adds installment payment and marks status completed when ful
         'total_amount'     => 2000000,
         'paid_amount'      => 0,
         'remaining_amount' => 2000000,
-        'status'           => 'pending',
+        'status'           => Constant::TUITION_STATUS_PENDING,
     ]);
 
     $payment = $this->service->recordPayment($tuition->id, [
         'amount'         => 2000000,
-        'payment_method' => 'bank_transfer',
+        'payment_method' => Constant::PAYMENT_METHOD_BANK_TRANSFER,
     ], $this->superAdmin);
 
     $freshTuition = $tuition->fresh();
 
     expect((float) $freshTuition->paid_amount)->toBe(2000000.0)
         ->and((float) $freshTuition->remaining_amount)->toBe(0.0)
-        ->and($freshTuition->status)->toBe('completed');
+        ->and($freshTuition->status)->toBe(Constant::TUITION_STATUS_COMPLETED);
 });
 
 test('deleteTuition soft deletes tuition record', function () {
@@ -93,7 +95,7 @@ test('deleteTuition soft deletes tuition record', function () {
         'total_amount'     => 1000000,
         'paid_amount'      => 0,
         'remaining_amount' => 1000000,
-        'status'           => 'pending',
+        'status'           => Constant::TUITION_STATUS_PENDING,
     ]);
 
     $result = $this->service->deleteTuition($tuition->id, $this->superAdmin);

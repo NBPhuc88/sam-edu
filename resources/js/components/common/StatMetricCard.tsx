@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
 import Card from '@/components/ui/Card';
+import { ReactNode } from 'react';
 
 interface Props {
     title: string;

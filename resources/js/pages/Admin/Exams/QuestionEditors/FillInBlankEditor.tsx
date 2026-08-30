@@ -1,6 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, Tag, Info } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { Info,Plus,Tag,Trash2 } from 'lucide-react';
 
 interface BlankConfig {
     accepted_answers: string[];
@@ -34,17 +33,6 @@ export default function FillInBlankEditor({
     // Also include any keys in correctAnswer
     const allBlankKeys = Array.from(new Set([...blankKeysFromContent, ...Object.keys(correctAnswer || {})]));
     const displayKeys = allBlankKeys.length > 0 ? allBlankKeys : ['blank_1'];
-
-    const handleAddBlankConfig = (blankKey: string) => {
-        const current = { ...(correctAnswer || {}) };
-        if (!current[blankKey]) {
-            current[blankKey] = {
-                accepted_answers: [''],
-                case_sensitive: false,
-            };
-            onChangeCorrectAnswer(current);
-        }
-    };
 
     const handleAnswersTextChange = (blankKey: string, text: string) => {
         const current = { ...(correctAnswer || {}) };
@@ -141,11 +129,14 @@ export default function FillInBlankEditor({
                 {displayKeys.map((blankKey, idx) => {
                     const config = correctAnswer?.[blankKey] || { accepted_answers: [], case_sensitive: false };
                     const answersString = (config.accepted_answers || []).join(' | ');
+                    const isEmpty = !answersString.trim();
 
                     return (
                         <div
                             key={blankKey || idx}
-                            className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-2xs space-y-2"
+                            className={`rounded-xl border bg-white p-3.5 shadow-2xs space-y-2 transition-all ${
+                                isEmpty ? 'border-red-300 bg-red-50/10' : 'border-gray-200'
+                            }`}
                         >
                             <div className="flex items-center justify-between">
                                 <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2 py-0.5 font-mono text-xs font-bold text-amber-900">
@@ -183,7 +174,11 @@ export default function FillInBlankEditor({
                                     value={answersString}
                                     onChange={(e) => handleAnswersTextChange(blankKey, e.target.value)}
                                     placeholder="Nhập các đáp án đúng chấp nhận, cách nhau bằng dấu gạch đứng | (VD: London | Central London)"
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                                    className={`w-full rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-hidden ${
+                                        isEmpty
+                                            ? 'border-2 border-red-400 bg-red-50/10 focus:border-red-500 ring-1 ring-red-400/20'
+                                            : 'border border-gray-300 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+                                    }`}
                                     required
                                 />
                                 <p className="mt-1 text-2xs text-gray-400 italic">

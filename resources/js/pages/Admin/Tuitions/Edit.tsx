@@ -1,12 +1,14 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save } from 'lucide-react';
-import React, { useState } from 'react';
-import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
-import DatePicker from '../../../components/ui/DatePicker';
-import Input from '../../../components/ui/Input';
-import ScrollableSelect from '../../../components/ui/ScrollableSelect';
-import AppLayout from '../../../layouts/AppLayout';
+import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import { usePermission } from '@/hooks/usePermission';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,router,usePage } from '@inertiajs/react';
+import { Save } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface CenterItem {
     id: number;
@@ -37,9 +39,9 @@ interface EditProps {
         student_id: number;
         class_id: number;
         title: string | null;
-        total_amount: number | string;
-        paid_amount: number | string;
-        remaining_amount: number | string;
+        total_amount: number;
+        paid_amount: number;
+        remaining_amount: number;
         due_date: string | null;
         note: string | null;
         student?: {
@@ -71,8 +73,7 @@ export const Edit: React.FC<EditProps> = ({
     students,
     errors = {},
 }) => {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [centerId, setCenterId] = useState<string>(String(tuition.center_id));
     const [classId, setClassId] = useState<string>(String(tuition.class_id));
@@ -84,11 +85,11 @@ export const Edit: React.FC<EditProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const formatCurrency = (amount: number | string) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
-        }).format(Number(amount) || 0);
+        }).format(amount || 0);
     };
 
     const paidAmount = Number(tuition.paid_amount) || 0;
@@ -151,11 +152,7 @@ export const Edit: React.FC<EditProps> = ({
                 {/* Top bar */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="md" icon={<ArrowLeft className="h-4.5 w-4.5" />}>
-                                Quay Lại
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl={`/tuitions/${tuition.id}`} size="md" />
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
                                 Chỉnh Sửa Hồ Sơ Học Phí #{tuition.id}
@@ -260,7 +257,7 @@ export const Edit: React.FC<EditProps> = ({
                                 />
                                 {isTotalAmountBelowPaid ? (
                                     <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                        Tổng học phí ({formatCurrency(totalAmount)}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
+                                        Tổng học phí ({formatCurrency(Number(totalAmount))}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
                                     </p>
                                 ) : paidAmount > 0 ? (
                                     <p className="mt-1.5 text-xs text-gray-500">
@@ -301,11 +298,7 @@ export const Edit: React.FC<EditProps> = ({
 
                     {/* Submit Bar */}
                     <div className="flex items-center justify-end gap-3">
-                        <Link href={`/tuitions/${tuition.id}`}>
-                            <Button variant="secondary" size="lg">
-                                Hủy Bỏ
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl={`/tuitions/${tuition.id}`} size="lg" label="Hủy Bỏ" />
                         <Button
                             type="submit"
                             variant="edit"

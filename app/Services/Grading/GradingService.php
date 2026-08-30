@@ -29,7 +29,7 @@ class GradingService implements GradingServiceInterface
     {
         $classId      = ! empty($filters['class_id']) ? (int) $filters['class_id'] : null;
         $classExamId  = ! empty($filters['class_exam_id']) ? (int) $filters['class_exam_id'] : null;
-        $gradedStatus = ! empty($filters['status']) && $filters['status'] !== 'all' ? (string) $filters['status'] : null;
+        $gradedStatus = ! empty($filters['status']) ? (int) $filters['status'] : null;
         $search       = ! empty($filters['search']) ? (string) $filters['search'] : null;
         $page         = ! empty($filters['page']) ? (int) $filters['page'] : 1;
         $perPage      = ! empty($filters['per_page']) ? (int) $filters['per_page'] : (int) config('app.pagination_per_page', 15);
@@ -54,9 +54,9 @@ class GradingService implements GradingServiceInterface
             'classExams'  => $classExams,
             'stats'       => $stats,
             'filters'     => [
-                'class_id'      => $classId,
-                'class_exam_id' => $classExamId,
-                'status'        => $filters['status'] ?? 'all',
+                'class_id'      => $classId ?? 0,
+                'class_exam_id' => $classExamId ?? 0,
+                'status'        => $gradedStatus ?? 0,
                 'search'        => $search ?? '',
                 'per_page'      => $perPage,
             ],
@@ -239,7 +239,7 @@ class GradingService implements GradingServiceInterface
     {
         $classesQuery = SchoolClass::query()
             ->select('id', 'center_id', 'name', 'code', 'status')
-            ->whereIn('status', [1, 2])
+            ->whereIn('status', [Constant::CLASS_STATUS_ACTIVE, Constant::CLASS_STATUS_INACTIVE])
             ->with([
                 'center:id,name,code',
                 'classSubjects' => function ($q) use ($teacher) {
@@ -252,7 +252,7 @@ class GradingService implements GradingServiceInterface
                 },
                 'students' => function ($q) {
                     $q->select('students.id', 'students.student_code', 'students.full_name', 'students.phone', 'students.gender', 'students.avatar')
-                        ->where('students.status', 1)
+                        ->where('students.status', Constant::STUDENT_STATUS_ACTIVE)
                         ->orderBy('students.full_name');
                 },
             ]);
@@ -381,17 +381,24 @@ class GradingService implements GradingServiceInterface
                 'description'           => $data['description'] ?? null,
                 'max_score'             => $maxScore,
                 'pass_score'            => $passScore,
-                'status'                => 'published',
+                'status'                => Constant::EXAM_STATUS_PUBLISHED,
                 'is_practice'           => false,
                 'created_by_teacher_id' => $teacher?->id,
                 'created_by_admin_id'   => $admin?->id,
             ]);
 
             // 2. Tạo ClassExam
-            $examDate       = Carbon::parse($data['exam_date'])->format('Y-m-d');
-            $maxClassExamId = (int) (ClassExam::withTrashed()->max('id') ?? 0);
-            $classExamCode  = sprintf('CE%0' . Constant::CODE_PAD_LENGTH . 'd', $maxClassExamId + 1);
-            $accessCode     = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $examDate         = Carbon::parse($data['exam_date'])->format('Y-m-d');
+            $maxClassExamId   = (int) (ClassExam::withTrashed()->max('id') ?? 0);
+            $nextClassExamNum = $maxClassExamId + 1;
+            $classExamCode    = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextClassExamNum);
+
+            while (ClassExam::withTrashed()->where('code', $classExamCode)->exists()) {
+                $nextClassExamNum++;
+                $classExamCode = sprintf(Constant::PREFIX_CLASS_EXAM . '%0' . Constant::CODE_PAD_LENGTH . 'd', $nextClassExamNum);
+            }
+
+            $accessCode = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
 
             $classExam = ClassExam::create([
                 'code'                  => $classExamCode,
@@ -405,7 +412,7 @@ class GradingService implements GradingServiceInterface
                 'duration_minutes'      => (int) ($data['duration_minutes'] ?? Constant::DEFAULT_EXAM_DURATION_MINUTES),
                 'max_score'             => $maxScore,
                 'pass_score'            => $passScore,
-                'status'                => 'completed',
+                'status'                => Constant::CLASS_EXAM_STATUS_COMPLETED,
                 'created_by_teacher_id' => $teacher?->id,
                 'created_by_admin_id'   => $admin?->id,
             ]);

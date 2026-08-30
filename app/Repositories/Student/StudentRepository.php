@@ -38,7 +38,7 @@ class StudentRepository implements StudentRepositoryInterface
      */
     public function getStudentsCursor(?int $centerId = null, ?int $classId = null): \Generator
     {
-        $query = Student::query()->orderBy('id', 'asc');
+        $query = Student::with(['center', 'classes'])->orderBy('id', 'asc');
 
         if ($centerId !== null) {
             $query->where('center_id', $centerId);
@@ -116,7 +116,8 @@ class StudentRepository implements StudentRepositoryInterface
             )
             ->with([
                 'center:id,name,code',
-                'classes:id,name,code'
+                'classes:id,name,code',
+                'tuitions:id,student_id,class_id',
             ]);
 
         if ($centerIds !== null) {
@@ -139,7 +140,7 @@ class StudentRepository implements StudentRepositoryInterface
             });
         }
 
-        if ($status !== null && $status !== '' && $status !== 'all') {
+        if ($status !== null && $status !== '' && $status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } elseif ($status === 'active') {
@@ -186,6 +187,7 @@ class StudentRepository implements StudentRepositoryInterface
             ->with([
                 'center:id,name,code',
                 'classes:id,name,code,center_id',
+                'tuitions:id,student_id,class_id',
             ]);
 
         if ($allowedCenterIds !== null) {
@@ -270,7 +272,7 @@ class StudentRepository implements StudentRepositoryInterface
 
     public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection
     {
-        $query = Student::select($columns)->where('status', 1);
+        $query = Student::select($columns)->where('status', Constant::STUDENT_STATUS_ACTIVE);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);
@@ -283,7 +285,7 @@ class StudentRepository implements StudentRepositoryInterface
     {
         $syncData     = [];
         $defaultPivot = array_merge([
-            'status'      => 'active',
+            'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
             'enrolled_at' => now(),
         ], $pivotDefaults);
 
@@ -297,7 +299,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function attachClasses(Student $student, array $classIds, array $pivotDefaults = []): void
     {
         $defaultPivot = array_merge([
-            'status'      => 'active',
+            'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
             'enrolled_at' => now(),
         ], $pivotDefaults);
 
@@ -322,6 +324,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function getStudentSessionsBetweenDates(int $studentId, string $startDate, string $endDate): Collection
     {
         $classIds = ClassStudent::where('student_id', $studentId)
+            ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
             ->pluck('class_id')
             ->toArray();
 
@@ -353,7 +356,11 @@ class StudentRepository implements StudentRepositoryInterface
                         'center_id',
                         'name',
                         'code'
-                    )->withCount('students');
+                    )->withCount([
+                        'students' => function ($q) {
+                            $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
+                        },
+                    ]);
                 },
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'teacher:id,full_name,teacher_code,phone',
@@ -398,13 +405,17 @@ class StudentRepository implements StudentRepositoryInterface
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.schoolClass' => function ($cq) {
-                    $cq->select('id', 'center_id', 'name', 'code')->withCount('students');
+                    $cq->select('id', 'center_id', 'name', 'code')->withCount([
+                        'students' => function ($q) {
+                            $q->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
+                        },
+                    ]);
                 },
                 'classSubject.subject:id,name,code',
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name,code,capacity,location',
             ])
-            ->where('status', 'active')
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->get();
 
         $result = collect();
@@ -451,7 +462,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function countActiveByCenterId(int $centerId, ?int $excludeId = null): int
     {
         $query = Student::where('center_id', $centerId)
-            ->where('status', 1);
+            ->where('status', Constant::STUDENT_STATUS_ACTIVE);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);
@@ -521,12 +532,12 @@ class StudentRepository implements StudentRepositoryInterface
                 $join->on('class_sessions.id', '=', 'attendances.session_id')
                     ->where('attendances.student_id', '=', $studentId);
             })
-            ->selectRaw("
-                SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count,
-                SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN attendances.status IN ('excused', 'leave') THEN 1 ELSE 0 END) as excused_count
-            ")
+            ->selectRaw('
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_PRESENT . ' THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_ABSENT . ' THEN 1 ELSE 0 END) as absent_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_LATE . ' THEN 1 ELSE 0 END) as late_count,
+                SUM(CASE WHEN attendances.status = ' . Constant::ATTENDANCE_STATUS_EXCUSED . ' THEN 1 ELSE 0 END) as excused_count
+            ')
             ->first();
 
         $presentCount  = (int) ($attendanceCounts->present_count ?? 0);

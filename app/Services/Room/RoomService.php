@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Room\RoomRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -102,7 +103,9 @@ class RoomService implements RoomServiceInterface
                 $activePausedCount = $this->roomRepository->countActiveAndPaused($centerId);
 
                 if ($activePausedCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");
+                    throw ValidationException::withMessages([
+                        'name' => "Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.",
+                    ]);
                 }
             }
         }
@@ -157,7 +160,9 @@ class RoomService implements RoomServiceInterface
                 $activePausedCount = $this->roomRepository->countActiveAndPaused($centerId, $room->id);
 
                 if ($activePausedCount >= $center->max_classes) {
-                    throw new \InvalidArgumentException("Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.");
+                    throw ValidationException::withMessages([
+                        'status' => "Số phòng học đang hoạt động và tạm dừng ({$activePausedCount}) đã đạt tối đa bằng số lớp học cho phép ({$center->max_classes}) của trung tâm. Vui lòng đóng bớt phòng cũ hoặc nâng cấp gói dịch vụ.",
+                    ]);
                 }
             }
         }

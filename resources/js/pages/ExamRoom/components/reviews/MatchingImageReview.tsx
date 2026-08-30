@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Image as ImageIcon, Check, X } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
@@ -56,14 +56,17 @@ export default function MatchingImageReview({ question }: Props) {
     }>(() => {
         if (!options) return { sentences: [], images: [] };
 
-        if (Array.isArray(options.sentences) && Array.isArray(options.images)) {
+        const rawSentences = options.sentences || options.sentence_items || options.left || options.left_items;
+        const rawImages = options.images || options.image_items || options.right || options.right_items;
+
+        if (Array.isArray(rawSentences) && Array.isArray(rawImages)) {
             return {
-                sentences: options.sentences.map((s: any, idx: number) => ({
-                    id: String(s.id ?? idx + 1),
-                    text: String(s.text ?? s.content ?? ''),
+                sentences: rawSentences.map((s: any, idx: number) => ({
+                    id: String(s.id ?? s.key ?? idx + 1),
+                    text: String(s.text ?? s.content ?? s.label ?? (typeof s === 'string' ? s : '')),
                 })),
-                images: options.images.map((img: any, idx: number) => ({
-                    id: String(img.id ?? String.fromCharCode(65 + idx)),
+                images: rawImages.map((img: any, idx: number) => ({
+                    id: String(img.id ?? img.key ?? String.fromCharCode(65 + idx)),
                     label: String(img.label ?? `Hình ${String.fromCharCode(65 + idx)}`),
                     image_url: img.image_url ?? img.url ?? null,
                 })),
@@ -75,10 +78,11 @@ export default function MatchingImageReview({ question }: Props) {
             const imgList: ImageItem[] = [];
 
             options.forEach((item: any, idx: number) => {
-                const sText = item.sentence ?? item.text ?? '';
+                const sId = String(item.id ?? item.key ?? idx + 1);
+                const imgId = String(item.id ?? item.key ?? String.fromCharCode(65 + idx));
+                const sText = String(item.text ?? item.content ?? item.label ?? (typeof item === 'string' ? item : ''));
                 const imgUrl = item.image_url ?? item.url ?? null;
-                const sId = String(item.sentence_id ?? item.id ?? idx + 1);
-                const imgId = String(item.image_id ?? String.fromCharCode(65 + idx));
+                const label = item.label ?? `Hình ${String.fromCharCode(65 + idx)}`;
 
                 if (sText) sList.push({ id: sId, text: sText });
                 if (imgUrl) {

@@ -1,35 +1,38 @@
 <?php
 
+use App\Enums\Constant;
+use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassChatMessage;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\SubscriptionPlan;
 use App\Models\Teacher;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\PermissionSeeder::class);
+    $this->seed(PermissionSeeder::class);
 
     $this->plan = SubscriptionPlan::create([
         'code'             => 'advanced_monthly',
         'name'             => 'Gói Nâng Cao Test',
-        'plan_type'        => 'advanced',
+        'plan_type'        => Constant::PLAN_TYPE_PREMIUM,
         'allowed_features' => ['chat', 'grading'],
-        'status'           => 'active',
+        'status'           => Constant::STATUS_ACTIVE,
     ]);
 
     $this->center = Center::create([
-        'code'              => 'CTR000000099',
-        'name'              => 'Trung Tâm Chat Test',
-        'email'             => 'chatcenter@test.com',
-        'phone'             => '0901234567',
-        'subscription_plan' => 'advanced_monthly',
-        'plan_type'         => 'advanced',
-        'expires_at'        => now()->addYear(),
-        'status'            => 'active',
+        'code'                 => 'CTR000000099',
+        'name'                 => 'Trung Tâm Chat Test',
+        'email'                => 'chatcenter@test.com',
+        'phone'                => '0901234567',
+        'subscription_plan_id' => $this->plan->id,
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'expires_at'           => now()->addYear(),
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $this->teacher = Teacher::create([
@@ -41,7 +44,7 @@ beforeEach(function () {
         'full_name'    => 'Thầy Nguyễn Chat',
         'email'        => 'teacherchat@test.com',
         'password'     => 'password123',
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $this->student = Student::create([
@@ -64,14 +67,14 @@ beforeEach(function () {
         'status'       => 1,
     ]);
 
-    $this->schoolClass->students()->attach($this->student->id, ['enrolled_at' => now(), 'status' => 'active']);
+    $this->schoolClass->students()->attach($this->student->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
 });
 
 test('học sinh và giáo viên có thể gửi tin nhắn trả lời (reply) tin nhắn khác', function () {
     // Tạo tin nhắn gốc từ giáo viên
     $originalMessage = ClassChatMessage::create([
         'class_id'    => $this->schoolClass->id,
-        'sender_type' => 'teacher',
+        'sender_type' => Constant::ACCOUNT_TYPE_TEACHER,
         'sender_id'   => $this->teacher->id,
         'sender_name' => $this->teacher->full_name,
         'message'     => 'Chào các em, hôm nay chúng ta học bài 1.',
@@ -108,7 +111,7 @@ test('học sinh và giáo viên có thể gửi tin nhắn trả lời (reply) 
 test('thả và hủy biểu tượng cảm xúc (reaction) trên tin nhắn chat', function () {
     $message = ClassChatMessage::create([
         'class_id'    => $this->schoolClass->id,
-        'sender_type' => 'teacher',
+        'sender_type' => Constant::ACCOUNT_TYPE_TEACHER,
         'sender_id'   => $this->teacher->id,
         'sender_name' => $this->teacher->full_name,
         'message'     => 'Lớp chúng ta đạt điểm kiểm tra rất cao!',
@@ -134,7 +137,7 @@ test('thả và hủy biểu tượng cảm xúc (reaction) trên tin nhắn cha
     $this->assertDatabaseHas('class_chat_message_reactions', [
         'message_id'  => $message->id,
         'sender_id'   => $this->student->id,
-        'sender_type' => 'student',
+        'sender_type' => Constant::ACCOUNT_TYPE_STUDENT,
         'emoji'       => '❤️',
     ]);
 
@@ -159,7 +162,7 @@ test('thả và hủy biểu tượng cảm xúc (reaction) trên tin nhắn cha
 test('đổi biểu tượng cảm xúc sang emoji khác', function () {
     $message = ClassChatMessage::create([
         'class_id'    => $this->schoolClass->id,
-        'sender_type' => 'teacher',
+        'sender_type' => Constant::ACCOUNT_TYPE_TEACHER,
         'sender_id'   => $this->teacher->id,
         'sender_name' => $this->teacher->full_name,
         'message'     => 'Thầy vừa giao bài tập về nhà nhé!',
@@ -189,9 +192,10 @@ test('đổi biểu tượng cảm xúc sang emoji khác', function () {
         ]);
 
     $this->assertDatabaseHas('class_chat_message_reactions', [
-        'message_id' => $message->id,
-        'sender_id'  => $this->student->id,
-        'emoji'      => '👍',
+        'message_id'  => $message->id,
+        'sender_id'   => $this->student->id,
+        'sender_type' => Constant::ACCOUNT_TYPE_STUDENT,
+        'emoji'       => '👍',
     ]);
 
     $this->assertDatabaseMissing('class_chat_message_reactions', [
@@ -199,4 +203,90 @@ test('đổi biểu tượng cảm xúc sang emoji khác', function () {
         'sender_id'  => $this->student->id,
         'emoji'      => '😮',
     ]);
+});
+
+test('giáo viên và admin có thể ghim và bỏ ghim tin nhắn chat', function () {
+    $admin = Admin::create([
+        'username'   => 'admin_chat_pin_test',
+        'first_name' => 'Ad',
+        'last_name'  => 'Min',
+        'full_name'  => 'Quản trị viên Trung tâm',
+        'email'      => 'adminchatpin@test.com',
+        'password'   => 'password123',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM000000099',
+    ]);
+    $admin->centers()->attach($this->center->id);
+
+    $msg1 = ClassChatMessage::create([
+        'class_id'    => $this->schoolClass->id,
+        'sender_type' => Constant::ACCOUNT_TYPE_TEACHER,
+        'sender_id'   => $this->teacher->id,
+        'sender_name' => $this->teacher->full_name,
+        'message'     => 'Thông báo quan trọng số 1',
+    ]);
+
+    $msg2 = ClassChatMessage::create([
+        'class_id'    => $this->schoolClass->id,
+        'sender_type' => Constant::ACCOUNT_TYPE_STUDENT,
+        'sender_id'   => $this->student->id,
+        'sender_name' => $this->student->full_name,
+        'message'     => 'Tin nhắn số 2 của học sinh',
+    ]);
+
+    // 1. Học sinh không có quyền ghim tin nhắn (403)
+    $responseStudent = $this->actingAs($this->student, 'student')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg1->id}/pin");
+
+    $responseStudent->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Chỉ Giáo viên hoặc Admin mới có quyền ghim tin nhắn.',
+        ]);
+
+    // 2. Giáo viên ghim tin nhắn số 1
+    $responseTeacher = $this->actingAs($this->teacher, 'teacher')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg1->id}/pin");
+
+    $responseTeacher->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => [
+                'id'             => $msg1->id,
+                'is_pinned'      => true,
+                'pinned_by_name' => $this->teacher->full_name,
+            ],
+        ]);
+
+    expect($msg1->fresh()->is_pinned)->toBeTrue();
+
+    // 3. Admin ghim tin nhắn số 2 -> msg1 tự động bỏ ghim, msg2 được ghim
+    $responseAdmin = $this->actingAs($admin, 'admin')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg2->id}/pin");
+
+    $responseAdmin->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => [
+                'id'             => $msg2->id,
+                'is_pinned'      => true,
+                'pinned_by_name' => $admin->full_name,
+            ],
+        ]);
+
+    expect($msg1->fresh()->is_pinned)->toBeFalse();
+    expect($msg2->fresh()->is_pinned)->toBeTrue();
+
+    // 4. Admin bỏ ghim tin nhắn số 2 (gọi lại toggle pin)
+    $responseUnpin = $this->actingAs($admin, 'admin')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages/{$msg2->id}/pin");
+
+    $responseUnpin->assertOk()
+        ->assertJson([
+            'success'        => true,
+            'pinned_message' => null,
+        ]);
+
+    expect($msg2->fresh()->is_pinned)->toBeFalse();
 });

@@ -1,6 +1,6 @@
-import { router, usePage } from '@inertiajs/react';
-import { Lock, ShieldAlert, KeyRound } from 'lucide-react';
-import React, { useState } from 'react';
+import { router,usePage } from '@inertiajs/react';
+import { KeyRound,Lock,ShieldAlert } from 'lucide-react';
+import React,{ useState } from 'react';
 import AppLogo from '../../components/common/AppLogo';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';

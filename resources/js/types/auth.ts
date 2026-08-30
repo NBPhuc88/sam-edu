@@ -2,8 +2,8 @@
 // Trung tâm (Center) là thực thể tổ chức được quản lý bởi Admin
 export type AccountType = 'admin' | 'teacher' | 'student';
 
-// AdminRole chỉ áp dụng cho account_type = 'admin'
-export type AdminRole = 'super_admin' | 'admin';
+// AdminRole chỉ áp dụng cho account_type = 'admin' (1 = Super Admin, 2 = Admin Quản trị)
+export type AdminRole = 1 | 2;
 
 export interface Account {
     account_type: AccountType;

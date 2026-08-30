@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Session;
 
+use App\Enums\Constant;
 use App\Models\ClassSession;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateClassSessionRequest extends FormRequest
@@ -45,7 +47,7 @@ class UpdateClassSessionRequest extends FormRequest
             'end_time'     => ['sometimes', 'required', 'string', 'regex:/^\d{2}:\d{2}(:\d{2})?$/', 'after:start_time'],
             'teacher_id'   => ['sometimes', 'required', 'integer', 'exists:teachers,id'],
             'room_id'      => ['nullable', 'integer', 'exists:rooms,id'],
-            'status'       => ['sometimes', 'required', 'string', 'in:scheduled,in_progress,completed,cancelled'],
+            'status'       => ['sometimes', 'required', 'integer', Rule::in(Constant::SESSION_STATUSES)],
             'topic'        => ['nullable', 'string', 'max:255'],
             'note'         => ['nullable', 'string', 'max:1000'],
             'reason'       => ['nullable', 'string', 'max:500'],

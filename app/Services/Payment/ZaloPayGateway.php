@@ -17,7 +17,7 @@ class ZaloPayGateway implements PaymentGatewayInterface
         $amount     = (int) ($data['amount'] ?? 0);
         $appTransId = (string) ($data['app_trans_id'] ?? '');
         $centerId   = (int) ($data['center_id'] ?? 0);
-        $planCode   = (string) ($data['plan_code'] ?? '');
+        $planId     = (int) ($data['plan_id'] ?? 0);
         $centerName = (string) ($data['center_name'] ?? '');
         $planName   = (string) ($data['plan_name'] ?? '');
 
@@ -31,11 +31,11 @@ class ZaloPayGateway implements PaymentGatewayInterface
         $embedData = json_encode([
             'redirecturl' => config('app.url') . '/services',
             'center_id'   => $centerId,
-            'plan_code'   => $planCode,
+            'plan_id'     => $planId,
         ]);
         $items = json_encode([[
-            'itemid'       => $planCode,
-            'itemname'     => $planName ?: ('Gói dịch vụ ' . $planCode),
+            'itemid'       => (string) $planId,
+            'itemname'     => $planName ?: ('Gói dịch vụ #' . $planId),
             'itemprice'    => $amount,
             'itemquantity' => 1,
         ]]);
@@ -48,7 +48,7 @@ class ZaloPayGateway implements PaymentGatewayInterface
             'app_trans_id' => $appTransId,
             'embed_data'   => $embedData,
             'item'         => $items,
-            'description'  => "Thanh toan goi {$planCode} cho Trung tam {$centerName}",
+            'description'  => "Thanh toan goi {$planName} cho Trung tam {$centerName}",
             'bank_code'    => 'zalopayapp',
         ];
 

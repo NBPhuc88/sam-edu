@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\PaymentTransaction;
 use App\Services\Payment\PaymentService;
@@ -13,7 +14,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test PaymentService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -29,7 +30,7 @@ test('createZaloPayOrder creates pending transaction and order URL', function ()
     $data = [
         'center_id'       => $this->center->id,
         'amount'          => 5000000,
-        'plan_code'       => 'pro_yearly',
+        'plan_id'         => 1,
         'plan_name'       => 'Goi Pro 1 Nam',
         'duration_months' => 12,
     ];
@@ -42,7 +43,7 @@ test('createZaloPayOrder creates pending transaction and order URL', function ()
     $this->assertDatabaseHas('payment_transactions', [
         'center_id' => $this->center->id,
         'amount'    => 5000000,
-        'status'    => 'pending',
+        'status'    => Constant::PAYMENT_STATUS_PENDING,
     ]);
 });
 
@@ -50,9 +51,9 @@ test('handleZaloPayCallback updates transaction to success and extends center ex
     $transaction = PaymentTransaction::create([
         'center_id'      => $this->center->id,
         'app_trans_id'   => '260826_998877',
-        'payment_method' => 'zalopay',
+        'payment_method' => Constant::PAYMENT_METHOD_ZALOPAY,
         'amount'         => 1000000,
-        'status'         => 'pending',
+        'status'         => Constant::PAYMENT_STATUS_PENDING,
     ]);
 
     $callbackData = json_encode([
@@ -70,6 +71,6 @@ test('handleZaloPayCallback updates transaction to success and extends center ex
     $result = $this->service->handleZaloPayCallback($callbackData, $mac);
 
     expect($result['return_code'])->toBe(1);
-    expect($transaction->fresh()->status)->toBe('success');
+    expect($transaction->fresh()->status)->toBe(Constant::PAYMENT_STATUS_SUCCESS);
     expect($this->center->fresh()->expires_at)->not()->toBeNull();
 });

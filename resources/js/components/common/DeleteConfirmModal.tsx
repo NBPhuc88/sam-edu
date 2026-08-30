@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import apiClient from '@/lib/axios';
+import { AlertTriangle,Loader2,Trash2 } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 export interface DeleteConfirmModalProps {
     isOpen: boolean;
@@ -25,20 +25,17 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 }) => {
     const [loading, setLoading] = useState(false);
     const [impacts, setImpacts] = useState<string[]>([]);
-    const [impactTitle, setImpactTitle] = useState('');
 
     useEffect(() => {
         if (isOpen && entityId) {
             setLoading(true);
             setImpacts([]);
-            setImpactTitle('');
 
             apiClient
                 .get(`/api/${entity}/${entityId}/delete-impact`)
                 .then((res) => {
                     if (res.data?.impacts) {
                         setImpacts(res.data.impacts);
-                        setImpactTitle(res.data.title || '');
                     }
                 })
                 .catch(() => {

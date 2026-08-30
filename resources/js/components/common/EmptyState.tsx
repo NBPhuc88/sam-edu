@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface Props {
     title?: string;

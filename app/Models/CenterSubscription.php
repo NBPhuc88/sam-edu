@@ -15,7 +15,7 @@ class CenterSubscription extends Model
 
     protected $fillable = [
         'center_id',
-        'plan_code',
+        'plan_id',
         'plan_name',
         'price',
         'duration_days',
@@ -27,6 +27,8 @@ class CenterSubscription extends Model
     protected function casts(): array
     {
         return [
+            'plan_id'       => 'integer',
+            'status'        => 'integer',
             'price'         => 'decimal:2',
             'duration_days' => 'integer',
             'starts_at'     => 'datetime:d-m-Y H:i',
@@ -34,6 +36,14 @@ class CenterSubscription extends Model
             'created_at'    => 'datetime:d-m-Y H:i',
             'updated_at'    => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    /**
+     * @return BelongsTo<SubscriptionPlan, $this>
+     */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'plan_id');
     }
 
     /**

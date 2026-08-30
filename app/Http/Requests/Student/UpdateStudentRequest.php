@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Student;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -58,13 +59,13 @@ class UpdateStudentRequest extends FormRequest
                     ->ignore($studentId),
             ],
             'date_of_birth'       => ['nullable', 'date', 'before:today'],
-            'gender'              => ['nullable', 'string', 'in:male,female,other'],
+            'gender'              => ['nullable', 'integer', Rule::in(Constant::GENDERS)],
             'address'             => ['nullable', 'string', 'max:255'],
             'parent_name'         => ['nullable', 'string', 'max:50'],
             'parent_phone'        => ['nullable', new VietnamesePhoneNumber()],
             'parent_relationship' => ['nullable', 'string', 'max:50'],
             'admission_date'      => ['nullable', 'date'],
-            'status'              => ['sometimes', 'required', 'in:0,1,2,active,inactive,locked,graduated,suspended'],
+            'status'              => ['sometimes', 'required', 'integer', Rule::in(Constant::STUDENT_STATUSES)],
             'note'                => ['nullable', 'string'],
             'class_ids'           => ['nullable', 'array'],
             'class_ids.*'         => ['integer', 'exists:classes,id'],

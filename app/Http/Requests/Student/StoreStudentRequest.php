@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Student;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -50,13 +51,13 @@ class StoreStudentRequest extends FormRequest
                 Rule::unique('students', 'student_code')->whereNull('deleted_at'),
             ],
             'date_of_birth'       => ['nullable', 'date', 'before:today'],
-            'gender'              => ['nullable', 'string', 'in:male,female,other'],
+            'gender'              => ['nullable', 'integer', Rule::in(Constant::GENDERS)],
             'address'             => ['nullable', 'string', 'max:255'],
             'parent_name'         => ['nullable', 'string', 'max:50'],
             'parent_phone'        => ['nullable', new VietnamesePhoneNumber()],
             'parent_relationship' => ['nullable', 'string', 'max:50'],
             'admission_date'      => ['nullable', 'date'],
-            'status'              => ['nullable', 'in:0,1,2,active,inactive,locked,graduated,suspended'],
+            'status'              => ['nullable', 'integer', Rule::in(Constant::STUDENT_STATUSES)],
             'note'                => ['nullable', 'string'],
             'class_ids'           => ['nullable', 'array'],
             'class_ids.*'         => ['integer', 'exists:classes,id'],

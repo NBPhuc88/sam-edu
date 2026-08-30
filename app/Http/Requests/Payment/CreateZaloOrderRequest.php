@@ -24,7 +24,7 @@ class CreateZaloOrderRequest extends FormRequest
     {
         return [
             'center_id'       => 'required|exists:centers,id',
-            'plan_code'       => 'required|string',
+            'plan_id'         => 'required|integer|exists:subscription_plans,id',
             'plan_name'       => 'required|string',
             'amount'          => 'required|numeric|min:10000',
             'duration_days'   => 'nullable|integer|min:1',

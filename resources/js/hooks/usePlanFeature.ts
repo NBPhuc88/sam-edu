@@ -1,19 +1,14 @@
+import { PLAN_TYPE_FREE, ROLE_SUPER_ADMIN } from '@/constants/enums';
 import { usePage } from '@inertiajs/react';
 
 interface CenterSharedData {
     id: number;
-    code: string;
     name: string;
-    subscription_plan?: string | null;
-    plan_type?: 'trial' | 'basic' | 'advanced' | null;
-    allowed_features?: string[];
-    max_classes?: number | null;
-    max_students?: number | null;
-    expires_at?: string | null;
-    is_expired?: boolean;
-    expiring_soon?: boolean;
-    expiring_1day?: boolean;
-    days_remaining?: number;
+    subscription_plan_id?: number | null;
+    plan_type?: number | null;
+    plan_code?: string | null;
+    allowed_features?: string[] | null;
+    is_active?: boolean;
 }
 
 interface PageProps {
@@ -21,7 +16,7 @@ interface PageProps {
         user?: {
             id: number;
             role: string;
-            admin_role?: string | null;
+            admin_role?: number | null;
         } | null;
         role?: string | null;
     };
@@ -32,14 +27,17 @@ interface PageProps {
  * Custom hook kiểm tra xem trung tâm của người dùng hiện tại có được phép sử dụng tính năng này không.
  *
  * - Super Admin (hoặc người dùng không thuộc trung tâm nào) luôn có toàn quyền (true).
- * - Gói Dùng Thử (trial) luôn mở khóa toàn bộ tính năng (true).
- * - Gói trả phí (basic, advanced) sẽ kiểm tra theo danh sách `allowed_features`.
+ * - Gói Dùng Thử (PLAN_TYPE_FREE) luôn mở khóa toàn bộ tính năng (true).
+ * - Gói trả phí sẽ kiểm tra theo danh sách `allowed_features`.
  */
 export function usePlanFeature(featureCode: string): boolean {
     const { auth, center } = usePage().props as unknown as PageProps;
 
+    const isSuper = (auth?.role === 'admin' || auth?.user?.role === 'admin') &&
+        auth?.user?.admin_role === ROLE_SUPER_ADMIN;
+
     // Super Admin có toàn quyền truy cập
-    if (auth?.role === 'admin' && auth?.user?.admin_role === 'super_admin') {
+    if (isSuper) {
         return true;
     }
 
@@ -49,7 +47,7 @@ export function usePlanFeature(featureCode: string): boolean {
     }
 
     // Gói Dùng Thử mở khóa tất cả tính năng
-    if (center.plan_type === 'trial' || center.subscription_plan === 'trial') {
+    if (center.plan_type === PLAN_TYPE_FREE) {
         return true;
     }
 

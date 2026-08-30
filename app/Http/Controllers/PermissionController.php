@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Http\Requests\Permission\UpdateRolePermissionsRequest;
 use App\Services\Permission\PermissionServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,7 +41,7 @@ class PermissionController extends Controller
         $validated = $request->validated();
 
         $this->permissionService->updateRolePermissions(
-            $validated['role'],
+            (int) $validated['role'],
             $validated['permissions']
         );
 
@@ -52,9 +54,13 @@ class PermissionController extends Controller
      */
     public function reset(Request $request): RedirectResponse
     {
-        $role = $request->input('role');
+        $validated = $request->validate([
+            'role' => ['nullable', 'integer', Rule::in(Constant::ROLE_PERMISSION_ROLES)],
+        ]);
 
-        $this->permissionService->resetToDefault($role);
+        $role = $validated['role'] ?? null;
+
+        $this->permissionService->resetToDefault($role !== null ? (int) $role : null);
 
         return back()->with('success', 'Khôi phục phân quyền mặc định thành công.');
     }

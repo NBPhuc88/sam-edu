@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,9 +25,33 @@ class FilterAdminRequest extends FormRequest
     {
         return [
             'search'   => ['nullable', 'string', 'max:255'],
-            'role'     => ['nullable', 'string', Rule::in(['super_admin', 'admin'])],
+            'role'     => ['nullable', 'integer', Rule::in(Constant::ADMIN_ROLES)],
             'page'     => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'search'   => 'từ khóa tìm kiếm',
+            'role'     => 'vai trò quản trị',
+            'page'     => 'trang',
+            'per_page' => 'số lượng bản ghi',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'role.integer' => 'Vai trò quản trị phải là số nguyên hợp lệ.',
+            'role.in'      => 'Vai trò quản trị không hợp lệ.',
         ];
     }
 }

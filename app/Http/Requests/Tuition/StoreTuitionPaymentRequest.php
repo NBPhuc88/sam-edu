@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Tuition;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTuitionPaymentRequest extends FormRequest
 {
@@ -19,7 +21,7 @@ class StoreTuitionPaymentRequest extends FormRequest
         return [
             'amount'           => ['required', 'numeric', 'min:1000'],
             'payment_date'     => ['required', 'date'],
-            'payment_method'   => ['required', 'string', 'in:cash,bank_transfer,momo,zalopay,credit_card,other'],
+            'payment_method'   => ['required', 'integer', Rule::in(Constant::PAYMENT_METHODS)],
             'transaction_code' => ['nullable', 'string', 'max:100'],
             'note'             => ['nullable', 'string', 'max:255'],
         ];

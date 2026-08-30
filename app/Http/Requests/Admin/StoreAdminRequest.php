@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Constant;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,8 +30,8 @@ class StoreAdminRequest extends FormRequest
             'email'        => ['nullable', 'email', 'max:100', 'unique:admins,email'],
             'phone'        => ['nullable', new VietnamesePhoneNumber()],
             'password'     => ['required', 'string', 'min:5', 'max:20'],
-            'role'         => ['required', Rule::in(['super_admin', 'admin'])],
-            'center_id'    => ['nullable', 'required_if:role,admin', 'exists:centers,id'],
+            'role'         => ['required', 'integer', Rule::in(Constant::ADMIN_ROLES)],
+            'center_id'    => ['nullable', 'required_if:role,' . Constant::ROLE_ADMIN, 'exists:centers,id'],
             'center_ids'   => ['nullable', 'array'],
             'center_ids.*' => ['exists:centers,id'],
         ];
@@ -56,6 +57,8 @@ class StoreAdminRequest extends FormRequest
             'password.min'          => 'Mật khẩu phải từ 5 ký tự trở lên.',
             'password.max'          => 'Mật khẩu không được vượt quá 20 ký tự.',
             'role.required'         => 'Vui lòng chọn vai trò quản trị.',
+            'role.integer'          => 'Vai trò quản trị phải là số nguyên hợp lệ.',
+            'role.in'               => 'Vai trò quản trị không hợp lệ.',
             'center_id.required_if' => 'Quản trị viên cần được phân công vào 1 trung tâm.',
         ];
     }

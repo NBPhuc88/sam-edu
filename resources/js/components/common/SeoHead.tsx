@@ -7,6 +7,11 @@ export interface SeoHeadProps {
     keywords?: string;
     canonical?: string;
     ogImage?: string;
+    ogImageWidth?: number | string;
+    ogImageHeight?: number | string;
+    ogImageType?: string;
+    ogImageAlt?: string;
+    siteName?: string;
     ogType?: 'website' | 'article' | 'product';
     noindex?: boolean;
     schemaJson?: object | object[];
@@ -14,10 +19,15 @@ export interface SeoHeadProps {
 
 export const SeoHead: React.FC<SeoHeadProps> = ({
     title,
-    description = 'SAM EDU - Phần mềm Quản lý Đa Trung Tâm Giáo Dục chuyên nghiệp, quản lý học sinh, lớp học, điểm danh và học phí tối ưu.',
-    keywords = 'quản lý trung tâm giáo dục, phần mềm quản lý trung tâm tiếng anh, phần mềm điểm danh học sinh, quản lý học phí',
+    description = 'SAM EDU - Phần mềm Quản lý Trung Tâm Giáo Dục chuyên nghiệp, quản lý học sinh, lớp học, điểm danh và học phí tối ưu.',
+    keywords = 'quản lý trung tâm giáo dục, phần mềm quản lý trung tâm, phần mềm điểm danh học sinh, quản lý học phí',
     canonical,
     ogImage = 'https://www.samedu.io.vn/og-banner.png',
+    ogImageWidth = 1200,
+    ogImageHeight = 630,
+    ogImageType,
+    ogImageAlt,
+    siteName = 'SAM EDU',
     ogType = 'website',
     noindex = false,
     schemaJson,
@@ -48,8 +58,13 @@ export const SeoHead: React.FC<SeoHeadProps> = ({
             <meta property="og:description" content={description} />
             <meta property="og:url" content={canonicalUrl} />
             <meta property="og:image" content={ogImage} />
+            <meta property="og:image:secure_url" content={ogImage} />
+            <meta property="og:image:width" content={String(ogImageWidth)} />
+            <meta property="og:image:height" content={String(ogImageHeight)} />
+            {ogImageType && <meta property="og:image:type" content={ogImageType} />}
+            {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt || fullTitle} />}
             <meta property="og:type" content={ogType} />
-            <meta property="og:site_name" content="SAM EDU" />
+            <meta property="og:site_name" content={siteName} />
             <meta property="og:locale" content="vi_VN" />
 
             {/* Twitter Card Tags */}

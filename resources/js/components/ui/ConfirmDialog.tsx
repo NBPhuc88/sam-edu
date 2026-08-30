@@ -1,6 +1,6 @@
+import { AnimatePresence,motion } from 'framer-motion';
+import { AlertTriangle,CheckCircle2,Info,Trash2 } from 'lucide-react';
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, AlertCircle, Info, CheckCircle2, Trash2 } from 'lucide-react';
 import Button from './Button';
 
 export interface ConfirmDialogProps {

@@ -38,6 +38,8 @@ interface SchoolClassRepositoryInterface
 
     public function findById(int $classId): ?SchoolClass;
 
+    public function findByCode(string $code): ?SchoolClass;
+
     /**
      * @param  array<string, mixed> $data
      * @return SchoolClass
@@ -80,6 +82,11 @@ interface SchoolClassRepositoryInterface
      * @param array<int, int> $centerIds
      */
     public function countByCenterIds(array $centerIds): int;
+
+    /**
+     * @param array<int, int> $centerIds
+     */
+    public function countActiveByCenterIds(array $centerIds): int;
 
     public function codeExists(string $code): bool;
 
@@ -147,6 +154,8 @@ interface SchoolClassRepositoryInterface
     public function getClassesForScheduleForm(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
 
     public function detachStudent(int $classId, int $studentId): bool;
+
+    public function updateClassStudentStatus(int $classId, int $studentId, int|string $status, ?string $note = null): bool;
 
     /**
      * @param  int        $classId

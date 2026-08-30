@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { clsx } from 'clsx';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye,EyeOff } from 'lucide-react';
+import React,{ useState } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;

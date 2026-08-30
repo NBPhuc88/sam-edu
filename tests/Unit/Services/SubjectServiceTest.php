@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Subject;
@@ -11,13 +12,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test SubjectService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_subj_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin Subj',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 });

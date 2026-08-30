@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Permission;
 use App\Services\Permission\PermissionService;
 
@@ -17,13 +18,13 @@ test('getPermissionsForUser returns all permissions for super_admin', function (
         'action'       => 'manage',
     ]);
 
-    $permissions = $this->service->getPermissionsForUser('admin', 'super_admin');
+    $permissions = $this->service->getPermissionsForUser(Constant::ROLE_ADMIN, Constant::ROLE_SUPER_ADMIN);
 
     expect($permissions)->toContain('centers.manage');
 });
 
 test('roleHasPermission always returns true for super_admin', function () {
-    $hasPermission = $this->service->roleHasPermission('super_admin', 'any.random.permission');
+    $hasPermission = $this->service->roleHasPermission(Constant::ROLE_SUPER_ADMIN, 'any.random.permission');
 
     expect($hasPermission)->toBeTrue();
 });
@@ -38,7 +39,7 @@ test('updateRolePermissions updates grants and clears role cache', function () {
         'action'       => 'create',
     ]);
 
-    $this->service->updateRolePermissions('teacher', ['students.create']);
+    $this->service->updateRolePermissions(Constant::ROLE_TEACHER, ['students.create']);
 
-    expect($this->service->roleHasPermission('teacher', 'students.create'))->toBeTrue();
+    expect($this->service->roleHasPermission(Constant::ROLE_TEACHER, 'students.create'))->toBeTrue();
 });

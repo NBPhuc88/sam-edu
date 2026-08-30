@@ -71,6 +71,7 @@ class ClassExamSubmission extends Model
     protected function casts(): array
     {
         return [
+            'status'                  => 'integer',
             'started_at'              => 'datetime:d-m-Y H:i',
             'submitted_at'            => 'datetime:d-m-Y H:i',
             'graded_at'               => 'datetime:d-m-Y H:i',

@@ -35,6 +35,7 @@ class ContactRequest extends Model
     protected function casts(): array
     {
         return [
+            'status'     => 'integer',
             'created_at' => 'datetime:d-m-Y H:i',
             'updated_at' => 'datetime:d-m-Y H:i',
         ];

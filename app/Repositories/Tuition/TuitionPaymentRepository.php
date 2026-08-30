@@ -80,4 +80,28 @@ class TuitionPaymentRepository implements TuitionPaymentRepositoryInterface
 
         return (float) $query->sum('amount');
     }
+
+    /**
+     * @param  array<int>|null                                 $allowedCenterIds
+     * @param  int                                             $months
+     * @return array<int, array{month: string, amount: float}>
+     */
+    public function getMonthlySumsByCenterIds(?array $allowedCenterIds, int $months = 6): array
+    {
+        $chart = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date         = now()->subMonths($i);
+            $startOfMonth = $date->copy()->startOfMonth()->toDateString();
+            $endOfMonth   = $date->copy()->endOfMonth()->toDateString();
+            $amount       = $this->getSumBetweenDates($allowedCenterIds, $startOfMonth, $endOfMonth);
+
+            $chart[] = [
+                'month'  => 'Thg ' . $date->format('n/Y'),
+                'amount' => $amount,
+            ];
+        }
+
+        return $chart;
+    }
 }

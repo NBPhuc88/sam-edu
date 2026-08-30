@@ -1,11 +1,12 @@
-import { Link, usePage } from '@inertiajs/react';
+import { PLAN_TYPE_FREE, PLAN_TYPE_PREMIUM } from '@/constants/enums';
+import { Link,usePage } from '@inertiajs/react';
 import {
-    Check,
-    HelpCircle,
-    ShieldCheck,
-    Sparkles,
-    Tag,
-    Zap,
+Check,
+HelpCircle,
+ShieldCheck,
+Sparkles,
+Tag,
+Zap,
 } from 'lucide-react';
 import React from 'react';
 import Badge from '../../components/ui/Badge';
@@ -25,7 +26,7 @@ interface Plan {
     features: string[] | null;
     badge_text: string | null;
     is_featured: boolean;
-    plan_type?: string | null;
+    plan_type?: number | null;
 }
 
 interface ServicesProps {
@@ -37,10 +38,11 @@ export const Services: React.FC<ServicesProps> = ({ plans }) => {
     const user = auth?.user;
 
     const isAdvancedOrTrial = (plan: Plan) => {
-        if (plan.plan_type) {
-            return plan.plan_type === 'advanced' || plan.plan_type === 'trial';
+        if (plan.plan_type !== undefined && plan.plan_type !== null) {
+            const pt = Number(plan.plan_type);
+            return pt === PLAN_TYPE_PREMIUM || pt === PLAN_TYPE_FREE;
         }
-        return plan.code?.startsWith('advanced') || plan.code === 'trial';
+        return String(plan.code || '').startsWith('advanced') || plan.code === 'trial';
     };
 
     const faqs = [

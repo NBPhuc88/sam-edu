@@ -1,18 +1,3 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    FileCheck,
-    Plus,
-    Search,
-    Edit2,
-    Trash2,
-    Clock,
-    Award,
-    Eye,
-    HelpCircle,
-    CheckCircle2,
-    Users,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -20,10 +5,36 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import Tooltip,{ TruncatedText } from '@/components/ui/Tooltip';
+import {
+EXAM_STATUS_CANCELLED,
+EXAM_STATUS_COMPLETED,
+EXAM_STATUS_DRAFT,
+EXAM_STATUS_LABELS,
+EXAM_STATUS_PUBLISHED,
+SKILL_LISTENING,
+SKILL_SPEAKING,
+SKILL_WRITING
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+Award,
+CheckCircle2,
+Clock,
+Edit2,
+Eye,
+FileCheck,
+Filter,
+HelpCircle,
+Plus,
+Search,
+Trash2,
+Users,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import AssignExamModal from '../ClassExams/AssignExamModal';
-import { Center, Exam, PaginatedData, SchoolClass, Subject, QUESTION_TYPES } from './types';
+import { Center,Exam,PaginatedData,QUESTION_TYPES,SchoolClass,Subject } from './types';
 
 import { usePermission } from '@/hooks/usePermission';
 
@@ -44,7 +55,7 @@ interface Props {
         center_id?: number | null;
         class_id?: number | null;
         subject_id?: number | null;
-        status?: string;
+        status?: number;
     };
 }
 
@@ -57,27 +68,25 @@ export default function ExamIndex({
     stats,
     filters,
 }: Props) {
-    const { can } = usePermission();
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { can, isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [deletingExam, setDeletingExam] = useState<Exam | null>(null);
+    const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Quick View Questions Modal
@@ -99,13 +108,9 @@ export default function ExamIndex({
         return Array.from(map.values());
     }, [all_exams, exams]);
 
-    // Filter classes and subjects by selected center
-    const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === String(selectedCenterId))
-        : classes;
-
+    // Filter subjects by selected center
     const filteredSubjects = selectedCenterId
-        ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
+        ? subjects.filter((s) => Number(s.center_id) === selectedCenterId)
         : subjects;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -114,38 +119,39 @@ export default function ExamIndex({
             '/exams',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                class_id: selectedClassId || undefined,
-                subject_id: selectedSubjectId || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                class_id: selectedClassId ? Number(selectedClassId) : undefined,
+                subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+                status: selectedStatus ? Number(selectedStatus) : undefined,
             },
             { preserveState: true },
         );
     };
 
-    const handleResetFilter = () => {
+    const handleReset = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedSubjectId('');
-        setSelectedStatus('all');
-        router.get('/exams');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedSubjectId(0);
+        setSelectedStatus(0);
+        router.get('/exams', {}, { preserveState: true });
     };
 
     const openDeleteModal = (exam: Exam) => {
-        setDeletingExam(exam);
+        setExamToDelete(exam);
         setDeleteModalOpen(true);
     };
 
     const closeDeleteModal = () => {
-        setDeletingExam(null);
+        setExamToDelete(null);
         setDeleteModalOpen(false);
     };
 
-    const confirmDeleteExam = () => {
-        if (!deletingExam) return;
+    const handleDelete = () => {
+        if (!examToDelete) return;
+
         setIsDeleting(true);
-        router.delete(`/exams/${deletingExam.id}`, {
+        router.delete(`/exams/${examToDelete.id}`, {
             onSuccess: () => {
                 closeDeleteModal();
                 setIsDeleting(false);
@@ -166,18 +172,18 @@ export default function ExamIndex({
         setAssignModalOpen(true);
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: number) => {
         switch (status) {
-            case 'published':
-                return <Badge variant="active" className="whitespace-nowrap">Đã công bố</Badge>;
-            case 'draft':
-                return <Badge variant="pending" className="whitespace-nowrap">Bản nháp</Badge>;
-            case 'completed':
-                return <Badge variant="info" className="whitespace-nowrap">Hoàn thành</Badge>;
-            case 'cancelled':
-                return <Badge variant="expired" className="whitespace-nowrap">Đã hủy</Badge>;
+            case EXAM_STATUS_PUBLISHED:
+                return <Badge variant="active" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_PUBLISHED]}</Badge>;
+            case EXAM_STATUS_DRAFT:
+                return <Badge variant="pending" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_DRAFT]}</Badge>;
+            case EXAM_STATUS_COMPLETED:
+                return <Badge variant="info" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_COMPLETED]}</Badge>;
+            case EXAM_STATUS_CANCELLED:
+                return <Badge variant="expired" className="whitespace-nowrap">{EXAM_STATUS_LABELS[EXAM_STATUS_CANCELLED]}</Badge>;
             default:
-                return <Badge variant="info" className="whitespace-nowrap">{status}</Badge>;
+                return <Badge variant="info" className="whitespace-nowrap">{EXAM_STATUS_LABELS[status] || status}</Badge>;
         }
     };
 
@@ -319,14 +325,14 @@ export default function ExamIndex({
                                     <ScrollableSelect
                                         value={selectedCenterId}
                                         onChange={(val) => {
-                                            setSelectedCenterId(val);
-                                            setSelectedSubjectId('');
+                                            setSelectedCenterId(Number(val));
+                                            setSelectedSubjectId(0);
                                         }}
                                         placeholder="-- Tất cả Trung Tâm --"
                                         options={[
-                                            { value: '', label: '-- Tất cả Trung Tâm --' },
+                                            { value: 0, label: '-- Tất cả Trung Tâm --' },
                                             ...centers.map((c) => ({
-                                                value: String(c.id),
+                                                value: c.id,
                                                 label: `${c.name} (${c.code})`,
                                             })),
                                         ]}
@@ -341,12 +347,12 @@ export default function ExamIndex({
                                 </label>
                                 <ScrollableSelect
                                     value={selectedSubjectId}
-                                    onChange={(val) => setSelectedSubjectId(val)}
+                                    onChange={(val) => setSelectedSubjectId(Number(val))}
                                     placeholder="-- Tất cả Môn Học --"
                                     options={[
-                                        { value: '', label: '-- Tất cả Môn Học --' },
+                                        { value: 0, label: '-- Tất cả Môn Học --' },
                                         ...filteredSubjects.map((s) => ({
-                                            value: String(s.id),
+                                            value: s.id,
                                             label: `${s.name} (${s.code})`,
                                         })),
                                     ]}
@@ -359,17 +365,17 @@ export default function ExamIndex({
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                onClick={handleResetFilter}
+                                onClick={handleReset}
                             >
                                 Đặt Lại
                             </Button>
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
-                                icon={<Search className="h-4 w-4" />}
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
                             >
-                                Tìm Kiếm
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>
@@ -526,10 +532,7 @@ export default function ExamIndex({
                                                                 variant="success"
                                                                 size="sm"
                                                                 icon={<Users className="h-3.5 w-3.5" />}
-                                                                onClick={() => {
-                                                                    setAssigningExamId(exam.id);
-                                                                    setAssignModalOpen(true);
-                                                                }}
+                                                                onClick={() => openAssignModal(exam.id)}
                                                                 title="Gán đề thi này cho một lớp học"
                                                             >
                                                                 Gán Lớp
@@ -632,19 +635,19 @@ export default function ExamIndex({
                                                 <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-600 font-mono text-2xs font-bold text-white">
                                                     {idx + 1}
                                                 </span>
-                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${q.skill === 'listening'
+                                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-2xs font-bold ${q.skill === SKILL_LISTENING
                                                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                    : q.skill === 'writing'
+                                                    : q.skill === SKILL_WRITING
                                                         ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                        : q.skill === 'speaking'
+                                                        : q.skill === SKILL_SPEAKING
                                                             ? 'bg-pink-50 text-pink-700 border border-pink-200'
                                                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                     }`}>
-                                                    {q.skill === 'listening'
+                                                    {q.skill === SKILL_LISTENING
                                                         ? '🎧 Nghe'
-                                                        : q.skill === 'writing'
+                                                        : q.skill === SKILL_WRITING
                                                             ? '✍️ Viết'
-                                                            : q.skill === 'speaking'
+                                                            : q.skill === SKILL_SPEAKING
                                                                 ? '🗣️ Nói'
                                                                 : '📖 Đọc'}
                                                 </span>
@@ -687,11 +690,11 @@ export default function ExamIndex({
             {/* Delete Confirmation Modal */}
             <DeleteConfirmModal
                 isOpen={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                onConfirm={confirmDeleteExam}
+                onClose={closeDeleteModal}
+                onConfirm={handleDelete}
                 entity="exams"
-                entityId={deletingExam?.id || null}
-                entityName={`đề thi "${deletingExam?.name}" (${deletingExam?.code})`}
+                entityId={examToDelete?.id || null}
+                entityName={`đề thi "${examToDelete?.name}" (${examToDelete?.code})`}
                 isDeleting={isDeleting}
             />
         </AppLayout>

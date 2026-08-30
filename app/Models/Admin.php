@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -36,7 +37,8 @@ class Admin extends Authenticatable
         return [
             'last_login_at' => 'datetime:d-m-Y H:i',
             'password'      => 'hashed',
-            'role'          => 'string',
+            'role'          => 'integer',
+            'status'        => 'integer',
             'created_at'    => 'datetime:d-m-Y H:i',
             'updated_at'    => 'datetime:d-m-Y H:i',
         ];
@@ -47,7 +49,7 @@ class Admin extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'super_admin';
+        return (int) $this->role === Constant::ROLE_SUPER_ADMIN;
     }
 
     /**

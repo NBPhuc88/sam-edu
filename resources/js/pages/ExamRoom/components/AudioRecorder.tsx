@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, RotateCcw, Volume2, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { AlertCircle,CheckCircle2,Loader2,Mic,RotateCcw,Square } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface Props {
     classExamId: number;
@@ -20,7 +20,6 @@ export default function AudioRecorder({
     disabled = false,
 }: Props) {
     const [isRecording, setIsRecording] = useState(false);
-    const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [recordingTime, setRecordingTime] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
@@ -55,7 +54,6 @@ export default function AudioRecorder({
 
             recorder.onstop = () => {
                 const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                setRecordedBlob(blob);
                 const url = URL.createObjectURL(blob);
                 setAudioUrl(url);
 
@@ -129,7 +127,6 @@ export default function AudioRecorder({
     };
 
     const handleReRecord = () => {
-        setRecordedBlob(null);
         setAudioUrl(null);
         setUploadedPath(null);
         setRecordingTime(0);

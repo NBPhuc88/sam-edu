@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSession;
@@ -22,7 +23,7 @@ test('super admin can access teacher show page', function () {
         'code'   => 'CTR000000001',
         'name'   => 'Trung Tâm A',
         'email'  => 'centera@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -30,7 +31,8 @@ test('super admin can access teacher show page', function () {
         'full_name'  => 'Super Admin Test',
         'email'      => 'superadmin_teacher@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000091',
     ]);
 
@@ -43,7 +45,7 @@ test('super admin can access teacher show page', function () {
         'password'       => 'password123',
         'teacher_code'   => 'GV000000001',
         'center_id'      => $center->id,
-        'status'         => 'active',
+        'status'         => Constant::STATUS_ACTIVE,
         'specialization' => 'Toán học',
     ]);
 
@@ -57,14 +59,14 @@ test('super admin can access teacher show page', function () {
         'center_id' => $center->id,
         'code'      => 'CLS001',
         'name'      => 'Lớp 10A1',
-        'status'    => 1,
+        'status'    => Constant::STATUS_ACTIVE,
     ]);
 
     $classSubject = ClassSubject::create([
         'class_id'   => $class->id,
         'subject_id' => $subject->id,
         'teacher_id' => $teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::STATUS_ACTIVE,
     ]);
 
     $room = Room::create([
@@ -81,7 +83,7 @@ test('super admin can access teacher show page', function () {
         'session_date'     => now()->format('Y-m-d'),
         'start_time'       => '08:00:00',
         'end_time'         => '09:30:00',
-        'status'           => 'completed',
+        'status'           => Constant::SESSION_STATUS_COMPLETED,
         'topic'            => 'Hàm số bậc nhất',
     ]);
 
@@ -105,14 +107,14 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'code'   => 'CTR000000011',
         'name'   => 'Trung Tâm A',
         'email'  => 'centera11@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $centerB = Center::create([
         'code'   => 'CTR000000012',
         'name'   => 'Trung Tâm B',
         'email'  => 'centerb12@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $admin = Admin::create([
@@ -120,7 +122,8 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'full_name'  => 'Admin Chi Nhánh A',
         'email'      => 'admin_a@test.com',
         'password'   => 'password123',
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000092',
     ]);
     $admin->centers()->attach($centerA->id);
@@ -134,7 +137,7 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'password'     => 'password123',
         'teacher_code' => 'GV000000011',
         'center_id'    => $centerA->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $teacherB = Teacher::create([
@@ -146,7 +149,7 @@ test('admin can access teacher in their center but cannot access teacher in anot
         'password'     => 'password123',
         'teacher_code' => 'GV000000012',
         'center_id'    => $centerB->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     // Truy cập giáo viên thuộc trung tâm mình -> OK
@@ -163,7 +166,7 @@ test('teacher sessions export csv returns streamed csv', function () {
         'code'   => 'CTR000000021',
         'name'   => 'Trung Tâm Export Test',
         'email'  => 'centerexport@test.com',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 
     $superAdmin = Admin::create([
@@ -171,7 +174,8 @@ test('teacher sessions export csv returns streamed csv', function () {
         'full_name'  => 'Super Admin Export',
         'email'      => 'superadmin_exp@test.com',
         'password'   => 'password123',
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM000000093',
     ]);
 
@@ -184,11 +188,11 @@ test('teacher sessions export csv returns streamed csv', function () {
         'password'     => 'password123',
         'teacher_code' => 'GV000000021',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     $response = $this->actingAs($superAdmin, 'admin')
-        ->get(route('teachers.export-sessions', ['id' => $teacher->id, 'type' => 'all']));
+        ->get(route('teachers.export-sessions', ['id' => $teacher->id]));
 
     $response->assertOk();
     $response->assertHeader('content-type', 'text/csv; charset=UTF-8');

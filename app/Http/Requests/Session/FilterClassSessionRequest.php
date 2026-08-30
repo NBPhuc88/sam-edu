@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Session;
 
+use App\Enums\Constant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FilterClassSessionRequest extends FormRequest
 {
@@ -32,7 +34,7 @@ class FilterClassSessionRequest extends FormRequest
             'date_from'    => ['nullable', 'date_format:Y-m-d'],
             'date_to'      => ['nullable', 'date_format:Y-m-d'],
             'date_scope'   => ['nullable', 'string', 'in:all,from_today'],
-            'status'       => ['nullable', 'string', 'in:all,scheduled,in_progress,completed,cancelled'],
+            'status'       => ['nullable', 'integer', Rule::in(Constant::SESSION_STATUSES)],
             'page'         => ['nullable', 'integer', 'min:1'],
             'per_page'     => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
@@ -12,7 +13,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test StatisticService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -35,12 +36,13 @@ test('getStatisticData returns forbidden true when student accesses statistics',
     expect($data['forbidden'])->toBeTrue();
 });
 
-test('getStatisticData returns center and class stats for super admin', function () {
+test('getStatisticData returns center detail and class stats for super admin', function () {
     $superAdmin = Admin::create([
         'username'   => 'super_admin_stat',
         'full_name'  => 'Super Admin Stat',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -50,5 +52,14 @@ test('getStatisticData returns center and class stats for super admin', function
 
     expect($data['forbidden'])->toBeFalse()
         ->and($data['isSuperAdmin'])->toBeTrue()
-        ->and($data)->toHaveKeys(['centerStats', 'classStats', 'classChartStats']);
+        ->and($data)->toHaveKeys(['centerDetail', 'classStats', 'allowedCenters', 'selectedCenterId', 'selectedMonth'])
+        ->and($data['centerDetail'])->toHaveKeys([
+            'monthlyNewStudents',
+            'monthlyRevenue',
+            'monthlyTuitionCreated',
+            'topSubjectsByMonth',
+            'topSubjectsLast3Months',
+            'subjectTrend',
+            'centerSubjects',
+        ]);
 });

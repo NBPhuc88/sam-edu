@@ -12,7 +12,7 @@ interface AdminRepositoryInterface
 
     public function find(int $id): Admin;
 
-    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, ?string $role = null): LengthAwarePaginator;
+    public function paginate(int $perPage = Constant::DEFAULT_PER_PAGE, ?string $search = null, int|string|null $role = null): LengthAwarePaginator;
 
     /**
      * @param array<string, mixed> $data

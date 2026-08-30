@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Teacher;
@@ -12,7 +13,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test DashboardService',
-        'status' => 'active',
+        'status' => Constant::STATUS_ACTIVE,
     ]);
 });
 
@@ -21,7 +22,8 @@ test('getDashboardData returns super_admin stats and pie charts when logged in a
         'username'   => 'super_admin_dash',
         'full_name'  => 'Super Admin Dash',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
 
@@ -43,7 +45,7 @@ test('getDashboardData returns teacher weekly schedule when logged in as teacher
         'full_name'    => 'Teacher Dash',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => Constant::STATUS_ACTIVE,
     ]);
 
     Auth::guard('teacher')->login($teacher);

@@ -1,26 +1,26 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import { TruncatedText } from '@/components/ui/Tooltip';
+import { usePermission } from '@/hooks/usePermission';
+import AppLayout from '@/layouts/AppLayout';
+import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
     Award,
     BookOpen,
     CheckCircle2,
     Clock,
-    FileCheck,
     Filter,
+    GraduationCap,
     HelpCircle,
     Play,
     RotateCcw,
     Search,
     Sparkles,
 } from 'lucide-react';
-import React, { useState } from 'react';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
-import AppLayout from '@/layouts/AppLayout';
-import { Center, Exam, PaginatedData, Subject } from '../Admin/Exams/types';
+import React,{ useState } from 'react';
+import { Center,Exam,PaginatedData,Subject } from '../Admin/Exams/types';
 
 interface Props {
     exams: PaginatedData<Exam>;
@@ -39,15 +39,14 @@ export default function PracticeList({
     subjects = [],
     filters,
 }: Props) {
-    const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
+    const { isSuperAdmin } = usePermission();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
 
     // Confirm Start Modal
@@ -55,7 +54,7 @@ export default function PracticeList({
     const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
 
     const filteredSubjects = selectedCenterId
-        ? subjects.filter((s) => String(s.center_id) === String(selectedCenterId))
+        ? subjects.filter((s) => Number(s.center_id) === selectedCenterId)
         : subjects;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -64,8 +63,8 @@ export default function PracticeList({
             '/practice-exams',
             {
                 search: search || undefined,
-                center_id: selectedCenterId || undefined,
-                subject_id: selectedSubjectId || undefined,
+                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
             },
             { preserveState: true },
         );
@@ -73,8 +72,8 @@ export default function PracticeList({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedSubjectId('');
+        setSelectedCenterId(0);
+        setSelectedSubjectId(0);
         router.get('/practice-exams', {}, { preserveState: true });
     };
 
@@ -90,35 +89,34 @@ export default function PracticeList({
             <div className="mx-auto max-w-7xl space-y-6">
                 {/* Hero Banner */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 p-6 sm:p-8 text-white shadow-lg">
-                    <div className="relative z-10 max-w-3xl space-y-3">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-xs border border-emerald-400/30">
-                            <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
-                            Phòng Thi Thử & Luyện Tập Tự Do
+                    <div className="relative z-10 max-w-2xl">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                            <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
+                            Phòng Luyện Thi Trực Tuyến 24/7
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                            Kho Đề Thi Thử & Luyện Đề Tự Động Chấm Điểm
+                        <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl text-white">
+                            Luyện Tập & Đánh Giá Năng Lực
                         </h1>
-                        <p className="text-sm text-emerald-100/90 leading-relaxed">
-                            Luyện tập không giới hạn với kho đề thi đa kỹ năng (Nghe, Nói, Đọc, Viết). Hệ thống tự động chấm điểm và cung cấp lời giải thích chi tiết ngay sau khi nộp bài.
+                        <p className="mt-2 text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                            Tham gia các đề thi thử, kiểm tra trình độ với ngân hàng câu hỏi phong phú. Tự động chấm điểm Trắc nghiệm & lưu lại lịch sử làm bài.
                         </p>
                     </div>
 
-                    <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
-                        <Award className="h-80 w-80 text-white" />
+                    <div className="absolute right-0 top-0 -mt-8 -mr-8 hidden lg:block opacity-20">
+                        <GraduationCap className="h-72 w-72 text-white" />
                     </div>
                 </div>
 
                 {/* Filter & Search Bar */}
-                <Card className="border-gray-200 bg-white p-5 shadow-2xs">
-                    <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-                            {/* Search Keyword */}
-                            <div className="sm:col-span-2">
+                <Card className="border-gray-200 bg-white p-4 shadow-2xs">
+                    <form onSubmit={handleSearch} className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {/* Search Input */}
+                            <div className={isSuperAdmin ? '' : 'sm:col-span-2'}>
                                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-700">
                                     Tìm Kiếm Đề Thi
                                 </label>
                                 <Input
-                                    type="text"
                                     placeholder="Nhập tên đề thi, mã đề hoặc mô tả..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -135,10 +133,10 @@ export default function PracticeList({
                                     </label>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                        onChange={(e) => setSelectedCenterId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">Tất cả Trung tâm</option>
+                                        <option value="0">Tất cả Trung tâm</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name}
@@ -155,10 +153,10 @@ export default function PracticeList({
                                 </label>
                                 <select
                                     value={selectedSubjectId}
-                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                    onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">Tất cả Môn học</option>
+                                    <option value="0">Tất cả Môn học</option>
                                     {filteredSubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name}
@@ -180,10 +178,10 @@ export default function PracticeList({
                             <Button
                                 type="submit"
                                 variant="success"
-                                size="sm"
+                                size="md"
                                 icon={<Filter className="h-4 w-4" />}
                             >
-                                Áp Dụng
+                                Tìm kiếm
                             </Button>
                         </div>
                     </form>

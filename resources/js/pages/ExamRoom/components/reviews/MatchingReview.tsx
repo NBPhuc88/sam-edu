@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Check, X } from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
@@ -50,15 +49,18 @@ export default function MatchingReview({ question }: Props) {
     }>(() => {
         if (!options) return { leftItems: [], rightItems: [] };
 
-        if (Array.isArray(options.left_items) && Array.isArray(options.right_items)) {
+        const rawLeft = options.left_items || options.left || options.leftItems;
+        const rawRight = options.right_items || options.right || options.rightItems;
+
+        if (Array.isArray(rawLeft) && Array.isArray(rawRight)) {
             return {
-                leftItems: options.left_items.map((item: any, idx: number) => ({
-                    id: String(item.id ?? idx + 1),
-                    text: String(item.text ?? item.label ?? ''),
+                leftItems: rawLeft.map((item: any, idx: number) => ({
+                    id: String(item.id ?? item.key ?? idx + 1),
+                    text: String(item.text ?? item.label ?? item.content ?? (typeof item === 'string' ? item : '')),
                 })),
-                rightItems: options.right_items.map((item: any, idx: number) => ({
-                    id: String(item.id ?? String.fromCharCode(65 + idx)),
-                    text: String(item.text ?? item.label ?? ''),
+                rightItems: rawRight.map((item: any, idx: number) => ({
+                    id: String(item.id ?? item.key ?? String.fromCharCode(65 + idx)),
+                    text: String(item.text ?? item.label ?? item.content ?? (typeof item === 'string' ? item : '')),
                 })),
             };
         }
@@ -68,9 +70,9 @@ export default function MatchingReview({ question }: Props) {
             const rList: Item[] = [];
 
             options.forEach((item: any, idx: number) => {
-                const lText = item.left ?? item.left_text ?? item.text ?? '';
+                const lText = item.left ?? item.left_text ?? item.text ?? item.label ?? (typeof item === 'string' ? item : '');
                 const rText = item.right ?? item.right_text ?? item.match ?? '';
-                const lId = String(item.left_id ?? item.id ?? idx + 1);
+                const lId = String(item.left_id ?? item.id ?? item.key ?? idx + 1);
                 const rId = String(item.right_id ?? String.fromCharCode(65 + idx));
 
                 if (lText) lList.push({ id: lId, text: lText });

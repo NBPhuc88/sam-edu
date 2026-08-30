@@ -22,6 +22,7 @@ class ExamSection extends Model
     protected function casts(): array
     {
         return [
+            'skill'       => 'integer',
             'order_index' => 'integer',
         ];
     }

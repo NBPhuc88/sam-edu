@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Student;
@@ -26,8 +27,8 @@ test('admin login records current session device token', function () {
         'full_name'  => 'Admin Session Test',
         'email'      => 'admin_session@sam-edu.vn',
         'password'   => Hash::make('password123'),
-        'role'       => 'super_admin',
-        'status'     => 'active',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code' => 'ADM000000001',
     ]);
 
@@ -46,12 +47,12 @@ test('admin login records current session device token', function () {
 
 test('teacher login records current session device token', function () {
     $center = Center::create([
-        'name'              => 'Sam Edu Center',
-        'code'              => 'CTR000000001',
-        'status'            => 'active',
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addDays(14),
+        'name'                 => 'Sam Edu Center',
+        'code'                 => 'CTR000000001',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => 1,
+        'plan_type'            => Constant::PLAN_TYPE_FREE,
+        'expires_at'           => Carbon::now()->addDays(14),
     ]);
 
     $teacher = Teacher::create([
@@ -63,7 +64,7 @@ test('teacher login records current session device token', function () {
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV000000001',
         'center_id'    => $center->id,
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $response = $this->post('/login', [
@@ -81,12 +82,12 @@ test('teacher login records current session device token', function () {
 
 test('student login records current session device token', function () {
     $center = Center::create([
-        'name'              => 'Sam Edu Center',
-        'code'              => 'CTR000000001',
-        'status'            => 'active',
-        'subscription_plan' => 'trial',
-        'plan_type'         => 'trial',
-        'expires_at'        => Carbon::now()->addDays(14),
+        'name'                 => 'Sam Edu Center',
+        'code'                 => 'CTR000000001',
+        'status'               => Constant::CENTER_STATUS_ACTIVE,
+        'subscription_plan_id' => 1,
+        'plan_type'            => Constant::PLAN_TYPE_FREE,
+        'expires_at'           => Carbon::now()->addDays(14),
     ]);
 
     $student = Student::create([
@@ -98,7 +99,7 @@ test('student login records current session device token', function () {
         'password'     => Hash::make('password123'),
         'student_code' => 'HS000000001',
         'center_id'    => $center->id,
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
     $response = $this->post('/login', [
@@ -120,8 +121,8 @@ test('user with matching device token can access protected route', function () {
         'full_name'          => 'Admin Active Session',
         'email'              => 'admin_active@sam-edu.vn',
         'password'           => Hash::make('password123'),
-        'role'               => 'super_admin',
-        'status'             => 'active',
+        'role'               => Constant::ROLE_SUPER_ADMIN,
+        'status'             => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code'         => 'ADM000000004',
         'current_session_id' => 'valid_device_token_123',
     ]);
@@ -139,8 +140,8 @@ test('device with outdated token is kicked out to login with error message', fun
         'full_name'          => 'Admin Outdated Device',
         'email'              => 'admin_outdated@sam-edu.vn',
         'password'           => Hash::make('password123'),
-        'role'               => 'super_admin',
-        'status'             => 'active',
+        'role'               => Constant::ROLE_SUPER_ADMIN,
+        'status'             => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code'         => 'ADM000000002',
         'current_session_id' => 'new_device_token_999',
     ]);
@@ -160,8 +161,8 @@ test('logout clears current session id and device token', function () {
         'full_name'          => 'Admin Logout Test',
         'email'              => 'admin_logout@sam-edu.vn',
         'password'           => Hash::make('password123'),
-        'role'               => 'super_admin',
-        'status'             => 'active',
+        'role'               => Constant::ROLE_SUPER_ADMIN,
+        'status'             => Constant::ADMIN_STATUS_ACTIVE,
         'admin_code'         => 'ADM000000003',
         'current_session_id' => 'device_token_to_logout',
     ]);

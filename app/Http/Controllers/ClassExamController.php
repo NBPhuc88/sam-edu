@@ -66,7 +66,7 @@ class ClassExamController extends Controller
                 'center_id' => $centerId,
                 'class_id'  => $classId,
                 'exam_id'   => $examId,
-                'status'    => $status ?? 'all',
+                'status'    => $status ?? '',
                 'per_page'  => $perPage,
             ],
             'isTeacher' => (bool) $teacher,

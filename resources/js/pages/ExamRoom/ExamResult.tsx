@@ -1,25 +1,26 @@
-import { Head, Link } from '@inertiajs/react';
-import {
-    Award,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    FileCheck,
-    FileText,
-    ArrowLeft,
-    HelpCircle,
-    Volume2,
-    BookOpen,
-    AlertCircle,
-    Info,
-    RotateCcw,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
+import { Head,Link } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+CheckCircle2,
+FileCheck,
+FileText,
+Volume2,
+XCircle,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import QuestionReviewDetail from './components/QuestionReviewDetail';
-import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData } from './types';
+import { ClassExam,ClassExamSubmission,ExamSectionData } from './types';
 
 interface Props {
     submission: ClassExamSubmission;
@@ -42,7 +43,7 @@ export default function ExamResult({
 
     const isPassed = passScore !== null ? studentScore >= passScore : studentScore >= maxScore / 2;
 
-    const [activeFilter, setActiveFilter] = useState<'all' | 'correct' | 'incorrect'>('all');
+    const [activeFilter, setActiveFilter] = useState<'correct' | 'incorrect' | ''>('');
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
     const sectionStats = React.useMemo(() => {
@@ -153,7 +154,7 @@ export default function ExamResult({
                                 Thí sinh: <strong>{submission.student?.full_name}</strong> ({submission.student?.student_code || submission.student?.username})
                             </span>
                             <span>
-                                Trạng thái: {submission.status === 'timeout_submitted' ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
+                                Trạng thái: {submission.status === SUBMISSION_STATUS_TIMEOUT_SUBMITTED ? '⏱️ Tự động nộp khi hết giờ' : '✅ Đã nộp bài thành công'}
                             </span>
                         </div>
                     </div>
@@ -192,9 +193,9 @@ export default function ExamResult({
                     <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
-                            onClick={() => setActiveFilter('all')}
+                            onClick={() => setActiveFilter('')}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                                activeFilter === 'all'
+                                !activeFilter
                                     ? 'bg-slate-900 text-white'
                                     : 'bg-white text-gray-700 border border-gray-200 hover:bg-slate-50'
                             }`}
@@ -318,7 +319,7 @@ export default function ExamResult({
                     {(activeSection?.questions || []).map((q, qIdx) => {
                         const grade = gradingDetails[q.id!] || {};
                         const isCorrect = grade.is_correct === true;
-                        const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
+                        const isManual = q.question_type === QUESTION_TYPE_ESSAY || q.question_type === QUESTION_TYPE_AUDIO_RECORD;
                         const userAns = grade.user_answer;
                         const correctAns = grade.correct_answer;
 
@@ -375,7 +376,7 @@ export default function ExamResult({
                                 </div>
 
                                 {/* Question Content */}
-                                {q.question_type !== 'fill_in_blank' && q.question_type !== 'drag_drop_cloze' && (
+                                {q.question_type !== QUESTION_TYPE_FILL_IN_BLANK && q.question_type !== QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                     <p className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
                                         {q.content}
                                     </p>

@@ -1,28 +1,33 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    Calendar,
-    ChevronLeft,
-    ChevronRight,
-    Clock,
-    DoorOpen,
-    GraduationCap,
-    ArrowLeft,
-    Users,
-    MessageSquare,
-    Printer,
-    Plus,
-    UserCheck,
-    AlertCircle,
-    Info,
-    CalendarDays,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
+import {
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import { toISODateString, formatTime } from '@/lib/date';
+import { toISODateString } from '@/lib/date';
+import { Head,Link,router } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+Calendar,
+CalendarDays,
+ChevronLeft,
+ChevronRight,
+Clock,
+DoorOpen,
+GraduationCap,
+Info,
+MessageSquare,
+Plus,
+UserCheck,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Center {
     id: number;
@@ -68,7 +73,7 @@ interface SchoolClass {
     max_students: number | null;
     start_date: string | null;
     end_date: string | null;
-    status: string | number;
+    status: number;
     center?: Center;
     class_subjects?: ClassSubject[];
 }
@@ -111,7 +116,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     change_type?: string;
     topic: string | null;
     note: string | null;
@@ -131,7 +136,7 @@ interface RecurringSchedule {
     start_time: string;
     end_time: string;
     room_id: number | null;
-    status: string;
+    status: number;
     class_subject?: ClassSubject;
     room?: Room;
 }
@@ -181,29 +186,22 @@ export default function ClassSchedulePage({
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const getStatusBadge = (status: string | number) => {
-        const s = String(status);
-
-        switch (s) {
-            case '1':
-            case 'active':
-            case 'completed':
+    const getStatusBadge = (status: number) => {
+        switch (status) {
+            case 1:
                 return <Badge variant="active">Đang mở lớp</Badge>;
-            case '2':
+            case 2:
                 return <Badge variant="pending">Đã hoàn thành</Badge>;
-            case '0':
-            case 'inactive':
-                return <Badge variant="expired">Tạm dừng / Đóng</Badge>;
+            case 3:
+                return <Badge variant="danger">Đã đóng</Badge>;
+            case 0:
+                return <Badge variant="expired">Tạm dừng</Badge>;
             default:
-                return <Badge variant="info">{s}</Badge>;
+                return <Badge variant="info">Chưa rõ</Badge>;
         }
     };
 
-    const getSessionStatusBadge = (status: string, sessionDate?: string, startTime?: string, changeType?: string) => {
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return (
                 <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
@@ -216,37 +214,25 @@ export default function ClassSchedulePage({
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
                         Đã học
                     </span>
                 );
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
-                        Chưa điểm danh
-                    </span>
-                );
-            case 'cancelled':
+            case SESSION_STATUS_CANCELLED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
                         Nghỉ học
                     </span>
                 );
-            case 'rescheduled':
-                return (
-                    <span className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
-                        Đã đổi lịch
-                    </span>
-                );
-            case 'scheduled':
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return (
@@ -276,7 +262,7 @@ export default function ClassSchedulePage({
         }
     };
 
-    const getSessionCardStyle = (status: string, sessionDate?: string, isOldSlot?: boolean, changeType?: string) => {
+    const getSessionCardStyle = (status: number, sessionDate?: string, isOldSlot?: boolean, changeType?: string) => {
         if (changeType === 'teacher_only') {
             return {
                 container: 'border-purple-200 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs',
@@ -297,49 +283,37 @@ export default function ClassSchedulePage({
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return {
                     container: 'border-emerald-200 bg-emerald-50/80 hover:border-emerald-400 hover:bg-emerald-100/70 shadow-2xs',
                     teacherText: 'text-emerald-900',
                     teacherIcon: 'text-emerald-600',
                 };
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return {
                     container: 'border-purple-300 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs ring-1 ring-purple-300',
                     teacherText: 'text-purple-900',
                     teacherIcon: 'text-purple-600',
                 };
-            case 'unattended':
-                return {
-                    container: 'border-rose-200 bg-rose-50/80 hover:border-rose-300 hover:bg-rose-100/70 shadow-2xs',
-                    teacherText: 'text-rose-900',
-                    teacherIcon: 'text-rose-600',
-                };
-            case 'cancelled':
+            case SESSION_STATUS_CANCELLED:
                 return {
                     container: 'border-red-200 bg-red-50/80 hover:border-red-400 hover:bg-red-100/70 shadow-2xs',
                     teacherText: 'text-red-900',
                     teacherIcon: 'text-red-600',
                 };
-            case 'rescheduled':
-                return {
-                    container: 'border-amber-300 bg-amber-50/80 hover:border-amber-400 hover:bg-amber-100/70 shadow-2xs',
-                    teacherText: 'text-amber-900',
-                    teacherIcon: 'text-amber-600',
-                };
-            case 'scheduled':
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return {
-                        container: 'border-rose-200 bg-rose-50/80 hover:border-rose-300 hover:bg-rose-100/70 shadow-2xs',
+                        container: 'border-rose-200 bg-rose-50/80 hover:border-rose-400 hover:bg-rose-100/70 shadow-2xs',
                         teacherText: 'text-rose-900',
                         teacherIcon: 'text-rose-600',
                     };
                 }
                 return {
-                    container: 'border-blue-200 bg-blue-50/80 hover:border-blue-400 hover:bg-blue-100/70 shadow-2xs',
-                    teacherText: 'text-blue-900',
-                    teacherIcon: 'text-blue-600',
+                    container: 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-slate-50/80 shadow-2xs',
+                    teacherText: 'text-gray-800',
+                    teacherIcon: 'text-emerald-600',
                 };
         }
     };
@@ -446,15 +420,6 @@ export default function ClassSchedulePage({
                                 </Button>
                             </Link>
                         )}
-                        {/* <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Printer className="h-4 w-4" />}
-                            onClick={handlePrint}
-                            title="In thời khóa biểu"
-                        >
-                            In Lịch
-                        </Button> */}
                     </div>
                 </div>
 

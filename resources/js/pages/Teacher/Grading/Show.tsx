@@ -1,31 +1,39 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    AlertCircle,
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    FileText,
-    PenTool,
-    RotateCcw,
-    Save,
-    Sparkles,
-    XCircle,
-} from 'lucide-react';
-import { useState } from 'react';
+import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_ESSAY,
+SKILL_LISTENING,
+SKILL_READING,
+SKILL_SPEAKING,
+SKILL_WRITING,
+SUBMISSION_STATUS_TIMEOUT_SUBMITTED,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import QuestionReviewDetail, { QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
+import QuestionReviewDetail,{ QuestionReviewItem } from '@/pages/ExamRoom/components/QuestionReviewDetail';
 import ExamSectionPagination from '@/pages/ExamRoom/components/shared/ExamSectionPagination';
-import ExamSectionTabs, { ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
+import ExamSectionTabs,{ ExamSectionTabItem } from '@/pages/ExamRoom/components/shared/ExamSectionTabs';
+import { Head,router } from '@inertiajs/react';
+import {
+AlertCircle,
+CheckCircle2,
+Clock,
+FileText,
+PenTool,
+RotateCcw,
+Save,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ExamQuestion {
     id: number;
     code?: string;
     title?: string | null;
-    question_type: string;
-    skill?: string;
+    question_type: number;
+    skill?: number;
     content: string;
     score: number;
     image_url?: string | null;
@@ -41,7 +49,7 @@ interface ExamSection {
     id: number;
     title: string;
     description?: string | null;
-    skill?: string;
+    skill?: number;
     order_index?: number;
     questions: ExamQuestion[];
 }
@@ -69,7 +77,7 @@ interface ClassExamData {
 
 interface QuestionGradeDetail {
     question_id: number;
-    question_type: string;
+    question_type: number;
     user_answer: any;
     correct_answer: any;
     is_correct: boolean;
@@ -86,7 +94,7 @@ interface SubmissionData {
     score: number | null;
     total_correct: number;
     total_questions: number;
-    status: string;
+    status: number;
     is_graded: boolean;
     requires_manual_grading: boolean;
     graded_at?: string;
@@ -271,11 +279,7 @@ export default function GradingShow({
                 {/* Top Page Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                            <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
-                                Quay Lại Danh Sách
-                            </Button>
-                        </Link>
+                        <BackButton fallbackUrl="/grading" label="Quay Lại Danh Sách" />
                         <div>
                             <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <PenTool className="h-5 w-5 text-emerald-600" />
@@ -342,7 +346,7 @@ export default function GradingShow({
                                 <p className="flex justify-between">
                                     <span className="text-gray-500">Hình thức nộp:</span>
                                     <span className="font-semibold">
-                                        {submission.status === 'timeout_submitted' ? 'Hết giờ tự thu bài' : 'Chủ động nộp bài'}
+                                        {submission.status === SUBMISSION_STATUS_TIMEOUT_SUBMITTED ? 'Hết giờ tự thu bài' : 'Chủ động nộp bài'}
                                     </span>
                                 </p>
                             </div>
@@ -387,16 +391,16 @@ export default function GradingShow({
                                         {activeSection.title}
                                     </h2>
                                     <span className="text-xs font-semibold text-gray-500">
-                                        Kỹ năng: {activeSection.skill === 'listening' ? 'Nghe hiểu' : activeSection.skill === 'reading' ? 'Đọc hiểu' : activeSection.skill === 'writing' ? 'Viết' : activeSection.skill === 'speaking' ? 'Nói' : 'Tổng hợp'} • Điểm phần này: <strong className="text-emerald-700">{activeSecEarned.toFixed(2)}</strong> / {activeSecMax} điểm
+                                        Kỹ năng: {activeSection.skill === SKILL_LISTENING ? 'Nghe hiểu' : activeSection.skill === SKILL_READING ? 'Đọc hiểu' : activeSection.skill === SKILL_WRITING ? 'Viết' : activeSection.skill === SKILL_SPEAKING ? 'Nói' : 'Tổng hợp'} • Điểm phần này: <strong className="text-emerald-700">{activeSecEarned.toFixed(2)}</strong> / {activeSecMax} điểm
                                     </span>
                                 </div>
                             </div>
-                            <span className={`text-2xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${activeSection.skill === 'listening' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                activeSection.skill === 'writing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                    activeSection.skill === 'speaking' ? 'bg-pink-50 text-pink-700 border border-pink-200' :
+                            <span className={`text-2xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${activeSection.skill === SKILL_LISTENING ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                activeSection.skill === SKILL_WRITING ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                    activeSection.skill === SKILL_SPEAKING ? 'bg-pink-50 text-pink-700 border border-pink-200' :
                                         'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 }`}>
-                                {activeSection.skill === 'listening' ? '🎧 Listening' : activeSection.skill === 'writing' ? '✍️ Writing' : activeSection.skill === 'speaking' ? '🗣️ Speaking' : '📖 Reading'}
+                                {activeSection.skill === SKILL_LISTENING ? '🎧 Listening' : activeSection.skill === SKILL_WRITING ? '✍️ Writing' : activeSection.skill === SKILL_SPEAKING ? '🗣️ Speaking' : '📖 Reading'}
                             </span>
                         </div>
 
@@ -422,7 +426,7 @@ export default function GradingShow({
                         const qDetail = gradingDetails[q.id] || ({} as QuestionGradeDetail);
                         const currentGrade = questionGrades[q.id] || { score_earned: 0, comment: '' };
                         const userAns = submission.answers ? submission.answers[q.id] : qDetail.user_answer;
-                        const isManual = q.question_type === 'essay' || q.question_type === 'audio_record';
+                        const isManual = q.question_type === QUESTION_TYPE_ESSAY || q.question_type === QUESTION_TYPE_AUDIO_RECORD;
                         const isSkipped = userAns === null || userAns === undefined || userAns === '' || (Array.isArray(userAns) && userAns.length === 0) || (typeof userAns === 'object' && Object.keys(userAns).length === 0);
                         const isCorrect = qDetail.is_correct === true || (currentGrade.score_earned >= q.score && q.score > 0);
 
@@ -627,11 +631,7 @@ export default function GradingShow({
 
                 {/* Bottom Action Buttons (Static / In-flow at bottom of page) */}
                 <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-200">
-                    <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
-                        <Button variant="secondary" size="md" className="font-bold px-5">
-                            Hủy & Quay Lại
-                        </Button>
-                    </Link>
+                    <BackButton fallbackUrl="/grading" size="md" className="font-bold px-5" label="Hủy & Quay Lại" />
                     <Button
                         type="button"
                         variant="success"

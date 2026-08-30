@@ -1,28 +1,35 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Calendar,
-    Search,
-    Filter,
-    DoorOpen,
-    Eye,
-    CheckSquare,
-    UserCheck,
-    Clock,
-    BookOpen,
-    GraduationCap,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import Tooltip, { TruncatedText } from '@/components/ui/Tooltip';
+import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime, toISODateString } from '@/lib/date';
+import { formatDate,formatTime,toISODateString } from '@/lib/date';
+import { Head,Link,router,usePage } from '@inertiajs/react';
+import {
+BookOpen,
+Calendar,
+CheckSquare,
+Clock,
+DoorOpen,
+Eye,
+Filter,
+GraduationCap,
+Search,
+UserCheck,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
+import {
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
+
 interface Center {
     id: number;
     name: string;
@@ -61,7 +68,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status: number;
     topic: string | null;
     note: string | null;
     attendances_count?: number;
@@ -129,53 +136,52 @@ export default function SessionIndex({
     filters,
     isTeacher: isTeacherProp,
 }: Props) {
-    const { can } = usePermission();
+    const { can, isSuperAdmin } = usePermission();
     const { auth } = usePage<any>().props;
-    const isSuperAdmin = auth?.user?.admin_role === 'super_admin';
     const isTeacher = Boolean(isTeacherProp || auth?.user?.role === 'teacher');
 
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedCenterId, setSelectedCenterId] = useState<string>(
-        filters.center_id ? String(filters.center_id) : '',
+    const [selectedCenterId, setSelectedCenterId] = useState<number>(
+        filters.center_id ? Number(filters.center_id) : 0,
     );
-    const [selectedClassId, setSelectedClassId] = useState<string>(
-        filters.class_id ? String(filters.class_id) : '',
+    const [selectedClassId, setSelectedClassId] = useState<number>(
+        filters.class_id ? Number(filters.class_id) : 0,
     );
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-        filters.subject_id ? String(filters.subject_id) : '',
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number>(
+        filters.subject_id ? Number(filters.subject_id) : 0,
     );
-    const [selectedTeacherId, setSelectedTeacherId] = useState<string>(
-        filters.teacher_id ? String(filters.teacher_id) : '',
+    const [selectedTeacherId, setSelectedTeacherId] = useState<number>(
+        filters.teacher_id ? Number(filters.teacher_id) : 0,
     );
-    const [selectedRoomId, setSelectedRoomId] = useState<string>(
-        filters.room_id ? String(filters.room_id) : '',
+    const [selectedRoomId, setSelectedRoomId] = useState<number>(
+        filters.room_id ? Number(filters.room_id) : 0,
     );
     const [sessionDate, setSessionDate] = useState(filters.session_date || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
     const [dateScope, setDateScope] = useState<string>(filters.date_scope || 'from_today');
-    const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.status || 'all',
+    const [selectedStatus, setSelectedStatus] = useState<number>(
+        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0,
     );
 
     // Dynamic filtering for classes/subjects/teachers based on center selection
     const filteredClasses = selectedCenterId
-        ? classes.filter((c) => String(c.center_id) === selectedCenterId)
+        ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
     const filteredSubjects = selectedCenterId
-        ? subjects.filter((s) => String(s.center_id) === selectedCenterId)
+        ? subjects.filter((s) => Number(s.center_id) === selectedCenterId)
         : subjects;
     const filteredTeachers = selectedCenterId
-        ? teachers.filter((t) => String(t.center_id) === selectedCenterId)
+        ? teachers.filter((t) => Number(t.center_id) === selectedCenterId)
         : teachers;
     const filteredRooms = selectedCenterId
-        ? rooms.filter((r) => String(r.center_id) === selectedCenterId)
+        ? rooms.filter((r) => Number(r.center_id) === selectedCenterId)
         : rooms;
 
     const cleanParams = (raw: Record<string, any>) => {
         const cleaned: Record<string, any> = {};
         Object.entries(raw).forEach(([key, val]) => {
-            if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+            if (val !== undefined && val !== null && val !== '' && val !== 0) {
                 cleaned[key] = val;
             }
         });
@@ -186,16 +192,16 @@ export default function SessionIndex({
         e.preventDefault();
         const params = cleanParams({
             search,
-            center_id: selectedCenterId,
-            class_id: selectedClassId,
-            subject_id: selectedSubjectId,
-            teacher_id: !isTeacher ? selectedTeacherId : undefined,
-            room_id: !isTeacher ? selectedRoomId : undefined,
+            center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+            class_id: selectedClassId ? Number(selectedClassId) : undefined,
+            subject_id: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+            teacher_id: !isTeacher && selectedTeacherId ? Number(selectedTeacherId) : undefined,
+            room_id: !isTeacher && selectedRoomId ? Number(selectedRoomId) : undefined,
             session_date: sessionDate,
             date_from: dateFrom,
             date_to: dateTo,
             date_scope: dateScope,
-            status: selectedStatus,
+            status: selectedStatus ? Number(selectedStatus) : undefined,
             per_page: filters.per_page !== 20 ? filters.per_page : undefined,
         });
         router.get('/sessions', params, { preserveState: true });
@@ -203,16 +209,16 @@ export default function SessionIndex({
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedCenterId('');
-        setSelectedClassId('');
-        setSelectedSubjectId('');
-        setSelectedTeacherId('');
-        setSelectedRoomId('');
+        setSelectedCenterId(0);
+        setSelectedClassId(0);
+        setSelectedSubjectId(0);
+        setSelectedTeacherId(0);
+        setSelectedRoomId(0);
         setSessionDate('');
         setDateFrom('');
         setDateTo('');
         setDateScope('from_today');
-        setSelectedStatus('all');
+        setSelectedStatus(0);
         router.get('/sessions', { date_scope: 'from_today' }, { preserveState: true });
     };
 
@@ -233,26 +239,22 @@ export default function SessionIndex({
         router.get('/sessions', params, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;
@@ -331,15 +333,15 @@ export default function SessionIndex({
                                     <select
                                         value={selectedCenterId}
                                         onChange={(e) => {
-                                            setSelectedCenterId(e.target.value);
-                                            setSelectedClassId('');
-                                            setSelectedSubjectId('');
-                                            setSelectedTeacherId('');
-                                            setSelectedRoomId('');
+                                            setSelectedCenterId(Number(e.target.value));
+                                            setSelectedClassId(0);
+                                            setSelectedSubjectId(0);
+                                            setSelectedTeacherId(0);
+                                            setSelectedRoomId(0);
                                         }}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">-- Tất cả trung tâm --</option>
+                                        <option value="0">-- Tất cả trung tâm --</option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -356,10 +358,10 @@ export default function SessionIndex({
                                 </label>
                                 <select
                                     value={selectedSubjectId}
-                                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                                    onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Tất cả môn học --</option>
+                                    <option value="0">-- Tất cả môn học --</option>
                                     {filteredSubjects.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.code})
@@ -375,10 +377,10 @@ export default function SessionIndex({
                                 </label>
                                 <select
                                     value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    onChange={(e) => setSelectedClassId(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="">-- Tất cả lớp học --</option>
+                                    <option value="0">-- Tất cả lớp học --</option>
                                     {filteredClasses.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name} ({c.code})
@@ -395,10 +397,10 @@ export default function SessionIndex({
                                     </label>
                                     <select
                                         value={selectedTeacherId}
-                                        onChange={(e) => setSelectedTeacherId(e.target.value)}
+                                        onChange={(e) => setSelectedTeacherId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">-- Tất cả giáo viên --</option>
+                                        <option value="0">-- Tất cả giáo viên --</option>
                                         {filteredTeachers.map((t) => (
                                             <option key={t.id} value={t.id}>
                                                 {t.full_name} ({t.teacher_code})
@@ -416,10 +418,10 @@ export default function SessionIndex({
                                     </label>
                                     <select
                                         value={selectedRoomId}
-                                        onChange={(e) => setSelectedRoomId(e.target.value)}
+                                        onChange={(e) => setSelectedRoomId(Number(e.target.value))}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                     >
-                                        <option value="">-- Tất cả phòng học --</option>
+                                        <option value="0">-- Tất cả phòng học --</option>
                                         {filteredRooms.map((r) => (
                                             <option key={r.id} value={r.id}>
                                                 {r.name}
@@ -482,16 +484,14 @@ export default function SessionIndex({
                                 </label>
                                 <select
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="all">-- Tất cả trạng thái --</option>
-                                    <option value="scheduled">Dự kiến</option>
-                                    <option value="in_progress">Đang diễn ra</option>
-                                    <option value="completed">Đã hoàn thành</option>
-                                    <option value="unattended">Chưa điểm danh</option>
-                                    <option value="cancelled">Đã hủy</option>
-                                    <option value="rescheduled">Đã đổi lịch</option>
+                                    <option value="0">-- Tất cả trạng thái --</option>
+                                    <option value={SESSION_STATUS_SCHEDULED}>Dự kiến</option>
+                                    <option value={SESSION_STATUS_IN_PROGRESS}>Đang diễn ra</option>
+                                    <option value={SESSION_STATUS_COMPLETED}>Đã hoàn thành</option>
+                                    <option value={SESSION_STATUS_CANCELLED}>Đã hủy</option>
                                 </select>
                             </div>
                         </div>
@@ -519,10 +519,10 @@ export default function SessionIndex({
                                 <Button
                                     type="submit"
                                     variant="success"
-                                    size="sm"
+                                    size="md"
                                     icon={<Filter className="h-4 w-4" />}
                                 >
-                                    Áp Dụng Lọc
+                                    Tìm kiếm
                                 </Button>
                             </div>
                         </div>
@@ -676,7 +676,7 @@ export default function SessionIndex({
                                                 {/* Actions */}
                                                 <td className="px-4 py-3.5 text-right whitespace-nowrap">
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                                                        {session.status !== SESSION_STATUS_CANCELLED ? (
                                                             <Link href={`/attendance/session/${session.id}`}>
                                                                 <button
                                                                     type="button"

@@ -1,7 +1,6 @@
-import React from 'react';
-import { Plus, Trash2, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import MediaUploader from '@/components/ui/MediaUploader';
+import { ArrowRight,Image as ImageIcon,Plus,Trash2 } from 'lucide-react';
 
 interface LeftItem {
     id: string;
@@ -34,16 +33,26 @@ export default function MatchingImageEditor({
     onChangeCorrectAnswer,
     onChangeQuestion,
 }: Props) {
-    const sentences: LeftItem[] = options?.sentences?.length > 0
-        ? options.sentences
+    const rawSentences = (options as any)?.sentences || (options as any)?.sentence_items || (options as any)?.left || (options as any)?.left_items;
+    const rawImages = (options as any)?.images || (options as any)?.image_items || (options as any)?.right || (options as any)?.right_items;
+
+    const sentences: LeftItem[] = Array.isArray(rawSentences) && rawSentences.length > 0
+        ? rawSentences.map((item: any, idx: number) => ({
+            id: String(item?.id ?? item?.key ?? `S${idx + 1}`),
+            text: String(item?.text ?? item?.content ?? item?.label ?? ''),
+        }))
         : [
             { id: 'S1', text: 'The cat is sleeping under the tree.' },
             { id: 'S2', text: 'A boy is riding a bicycle in the park.' },
             { id: 'S3', text: 'They are having a picnic near the lake.' },
         ];
 
-    const images: ImageItem[] = options?.images?.length > 0
-        ? options.images
+    const images: ImageItem[] = Array.isArray(rawImages) && rawImages.length > 0
+        ? rawImages.map((item: any, idx: number) => ({
+            id: String(item?.id ?? item?.key ?? `IMG_${String.fromCharCode(65 + idx)}`),
+            image_url: String(item?.image_url ?? item?.url ?? ''),
+            label: String(item?.label ?? `Hình ${String.fromCharCode(65 + idx)}`),
+        }))
         : [
             { id: 'IMG_A', image_url: '', label: 'Hình A' },
             { id: 'IMG_B', image_url: '', label: 'Hình B' },

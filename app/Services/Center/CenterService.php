@@ -3,20 +3,27 @@
 namespace App\Services\Center;
 
 use App\Enums\Constant;
+use App\Mail\CenterSubscriptionRenewedMail;
 use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
+use App\Models\CenterSubscription;
 use App\Repositories\Center\CenterRepositoryInterface;
+use App\Repositories\Subscription\CenterSubscriptionRepositoryInterface;
 use App\Repositories\Subscription\SubscriptionPlanRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class CenterService implements CenterServiceInterface
 {
     public function __construct(
         protected CenterRepositoryInterface $centerRepository,
-        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository
+        protected SubscriptionPlanRepositoryInterface $subscriptionPlanRepository,
+        protected CenterSubscriptionRepositoryInterface $centerSubscriptionRepository
     ) {
     }
 
@@ -52,18 +59,19 @@ class CenterService implements CenterServiceInterface
         }
 
         // Tự động đồng bộ plan_type, max_classes, max_students từ gói được chọn
-        if (! empty($data['subscription_plan'])) {
-            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
+        if (! empty($data['subscription_plan_id'])) {
+            $plan = $this->subscriptionPlanRepository->findById((int) $data['subscription_plan_id']);
 
             if ($plan) {
-                $data['plan_type']    = $plan->plan_type;
-                $data['max_classes']  = $data['max_classes'] ?? $plan->max_classes;
-                $data['max_students'] = $data['max_students'] ?? $plan->max_students;
+                $data['subscription_plan_id'] = (int) $plan->id;
+                $data['plan_type']            = $plan->plan_type;
+                $data['max_classes']          = $data['max_classes'] ?? $plan->max_classes;
+                $data['max_students']         = $data['max_students'] ?? $plan->max_students;
             }
         }
 
         // Set default trial expiration if creating new trial plan
-        if (($data['subscription_plan'] ?? '') === Constant::CENTER_STATUS_TRIAL && empty($data['expires_at'])) {
+        if (isset($plan) && $plan->plan_type === Constant::PLAN_TYPE_FREE && empty($data['expires_at'])) {
             $data['expires_at']    = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
             $data['trial_ends_at'] = now()->addDays(Constant::DEFAULT_TRIAL_DAYS);
         }
@@ -80,13 +88,14 @@ class CenterService implements CenterServiceInterface
     public function updateCenter(int $id, array $data): Center
     {
         // Khi Super Admin cập nhật/nâng cấp gói dịch vụ của Trung tâm
-        if (! empty($data['subscription_plan'])) {
-            $plan = $this->subscriptionPlanRepository->findByCode($data['subscription_plan']);
+        if (! empty($data['subscription_plan_id'])) {
+            $plan = $this->subscriptionPlanRepository->findById((int) $data['subscription_plan_id']);
 
             if ($plan) {
-                $data['plan_type']    = $plan->plan_type;
-                $data['max_classes']  = $plan->max_classes;
-                $data['max_students'] = $plan->max_students;
+                $data['subscription_plan_id'] = (int) $plan->id;
+                $data['plan_type']            = $plan->plan_type;
+                $data['max_classes']          = $plan->max_classes;
+                $data['max_students']         = $plan->max_students;
             }
         }
 
@@ -119,6 +128,83 @@ class CenterService implements CenterServiceInterface
     public function getSubscriptionPlans(): Collection
     {
         return $this->subscriptionPlanRepository->getAllOrderedByPrice();
+    }
+
+    /**
+     * Super Admin thực hiện gia hạn hoặc thay đổi gói cước dịch vụ SaaS cho Trung tâm.
+     *
+     * @param  array<string, mixed> $data
+     * @param  int                  $centerId
+     * @return CenterSubscription
+     */
+    public function renewOrChangeSubscription(int $centerId, array $data): CenterSubscription
+    {
+        return DB::transaction(function () use ($centerId, $data) {
+            $center = $this->centerRepository->find($centerId);
+            $plan   = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
+
+            if (! $plan) {
+                throw ValidationException::withMessages([
+                    'plan_id' => "Gói cước không tồn tại: {$data['plan_id']}",
+                ]);
+            }
+
+            $isSamePlan = ((int) $center->subscription_plan_id === (int) $plan->id);
+            $actionType = $isSamePlan ? 'renew' : 'change';
+
+            $startsAt     = Carbon::parse($data['starts_at']);
+            $endsAt       = Carbon::parse($data['ends_at']);
+            $durationDays = (int) $data['duration_days'];
+            $price        = (float) $data['price'];
+
+            // 1. Tạo bản ghi lịch sử gói cước center_subscriptions
+            $subscription = $this->centerSubscriptionRepository->create([
+                'center_id'     => $center->id,
+                'plan_id'       => $plan->id,
+                'plan_name'     => $plan->name,
+                'price'         => $price,
+                'duration_days' => $durationDays,
+                'starts_at'     => $startsAt,
+                'ends_at'       => $endsAt,
+                'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
+            ]);
+
+            // 2. Cập nhật Trung tâm (Gói cước, hạn mức, ngày hết hạn và kích hoạt lại nếu hết hạn)
+            $updateCenterData = [
+                'subscription_plan_id' => $plan->id,
+                'plan_type'            => $plan->plan_type,
+                'max_students'         => $plan->max_students,
+                'max_classes'          => $plan->max_classes,
+                'expires_at'           => $endsAt,
+                'status'               => Constant::CENTER_STATUS_ACTIVE,
+            ];
+
+            $updatedCenter = $this->centerRepository->update($center->id, $updateCenterData);
+
+            // 3. Gửi email thông báo qua Queue
+            if (! empty($updatedCenter->email)) {
+                try {
+                    Mail::to($updatedCenter->email)->queue(
+                        new CenterSubscriptionRenewedMail($updatedCenter, $subscription, $actionType)
+                    );
+                } catch (\Throwable $e) {
+                    Log::error("Lỗi khi đưa mail thông báo gia hạn/đổi gói vào Queue cho Trung tâm (ID: {$center->id}): " . $e->getMessage());
+                }
+            }
+
+            return $subscription;
+        });
+    }
+
+    /**
+     * Get subscription history for a center.
+     *
+     * @param  int        $centerId
+     * @return Collection
+     */
+    public function getCenterSubscriptions(int $centerId): Collection
+    {
+        return $this->centerSubscriptionRepository->getByCenterId($centerId);
     }
 
     public function deactivateExpiredCenters(): int

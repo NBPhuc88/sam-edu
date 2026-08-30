@@ -75,7 +75,7 @@ class AttendanceController extends Controller
         $request->validate([
             'attendances'              => ['required', 'array'],
             'attendances.*.student_id' => ['required', 'integer'],
-            'attendances.*.status'     => ['required', 'string', 'in:present,absent,late,excused,leave'],
+            'attendances.*.status'     => ['required'],
             'attendances.*.note'       => ['nullable', 'string', 'max:500'],
         ]);
 

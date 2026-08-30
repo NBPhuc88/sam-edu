@@ -1,22 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import {
+CLASS_EXAM_STATUS_CANCELLED,
+CLASS_EXAM_STATUS_COMPLETED,
+CLASS_EXAM_STATUS_LABELS,
+CLASS_EXAM_STATUS_ONGOING,
+CLASS_EXAM_STATUS_SCHEDULED,
+} from '@/constants/enums';
 import { router } from '@inertiajs/react';
 import {
-    Calendar,
-    Clock,
-    Award,
-    FileCheck,
-    Save,
-    X,
-    BookOpen,
-    Users,
-    Sparkles,
+BookOpen,
+Calendar,
+Clock,
+FileCheck,
+Save,
+Users
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import DatePicker from '@/components/ui/DatePicker';
-import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { Center, ClassExam, Exam, SchoolClass } from './types';
+import React,{ useEffect,useState } from 'react';
+import { Center,ClassExam,Exam,SchoolClass } from './types';
 
 interface Props {
     isOpen: boolean;
@@ -49,7 +53,7 @@ export default function AssignExamModal({
     const [durationMinutes, setDurationMinutes] = useState<number | string>(45);
     const [maxScore, setMaxScore] = useState<number | string>(10);
     const [passScore, setPassScore] = useState<number | string>(5);
-    const [status, setStatus] = useState<'scheduled' | 'ongoing' | 'completed' | 'cancelled'>('scheduled');
+    const [status, setStatus] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,7 +73,8 @@ export default function AssignExamModal({
             setDurationMinutes(editingClassExam.duration_minutes || 45);
             setMaxScore(editingClassExam.max_score || 10);
             setPassScore(editingClassExam.pass_score || '');
-            setStatus(editingClassExam.status || 'scheduled');
+            const rawStatus = editingClassExam.status;
+            setStatus(rawStatus === 2 ? 2 : rawStatus === 3 ? 3 : rawStatus === 0 ? 0 : 1);
         } else {
             // New creation
             const defExam = initialExamId ? exams.find((e) => e.id === initialExamId) : null;
@@ -95,7 +100,7 @@ export default function AssignExamModal({
             setDurationMinutes(defExam?.duration_minutes || 45);
             setMaxScore(defExam?.max_score || 10);
             setPassScore(defExam?.pass_score || 5);
-            setStatus('scheduled');
+            setStatus(1);
         }
         setErrors({});
     }, [isOpen, editingClassExam, initialExamId, initialClassId]);
@@ -364,13 +369,14 @@ export default function AssignExamModal({
                         </label>
                         <ScrollableSelect
                             value={status}
-                            onChange={(val) => setStatus(val as any)}
+                            onChange={(val) => setStatus(Number(val))}
                             options={[
-                                { value: 'scheduled', label: 'Đã lên lịch' },
-                                { value: 'ongoing', label: 'Đang diễn ra' },
-                                { value: 'completed', label: 'Đã kết thúc' },
-                                { value: 'cancelled', label: 'Đã hủy' },
+                                { value: CLASS_EXAM_STATUS_SCHEDULED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_SCHEDULED] },
+                                { value: CLASS_EXAM_STATUS_ONGOING, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_ONGOING] },
+                                { value: CLASS_EXAM_STATUS_COMPLETED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_COMPLETED] },
+                                { value: CLASS_EXAM_STATUS_CANCELLED, label: CLASS_EXAM_STATUS_LABELS[CLASS_EXAM_STATUS_CANCELLED] },
                             ]}
+                            placement="top"
                             searchable={false}
                         />
                     </div>

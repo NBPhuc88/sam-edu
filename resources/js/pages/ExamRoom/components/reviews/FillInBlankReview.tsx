@@ -1,5 +1,5 @@
+import { Check,X } from 'lucide-react';
 import React from 'react';
-import { Check, X } from 'lucide-react';
 import { QuestionReviewItem } from '../QuestionReviewDetail';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function FillInBlankReview({ question }: Props) {
-    const { content, correct_answer, user_answer, options } = question;
+    const { content, correct_answer, user_answer } = question;
 
     const userAnsObj: Record<string, string> = React.useMemo(() => {
         if (typeof user_answer === 'object' && user_answer !== null) {

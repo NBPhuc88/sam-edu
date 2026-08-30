@@ -16,7 +16,7 @@ class SystemContentSeeder extends Seeder
         $settings = [
             [
                 'key'         => 'hero_title',
-                'value'       => 'Hệ Thống Quản Lý Giáo Dục Đa Trung Tâm SAM Digital',
+                'value'       => 'Hệ Thống Quản Lý Trung Tâm Giáo Dục SAM Digital',
                 'group'       => 'homepage',
                 'description' => 'Tiêu đề banner chính',
             ],

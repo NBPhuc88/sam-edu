@@ -37,6 +37,16 @@ export default defineConfig({
             // command: 'docker compose -f /home/phuc/Desktop/web/docker/docker-compose.yml exec -w /var/www/sam-edu php83 php artisan wayfinder:generate',
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        cors: true,
+        origin: 'http://localhost:5173',
+        hmr: {
+            host: 'localhost',
+        },
+    },
+
     build: {
         rollupOptions: {
             input: [

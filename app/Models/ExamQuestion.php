@@ -31,6 +31,8 @@ class ExamQuestion extends Model
     protected function casts(): array
     {
         return [
+            'question_type'  => 'integer',
+            'skill'          => 'integer',
             'score'          => 'decimal:2',
             'options'        => 'json',
             'correct_answer' => 'json',

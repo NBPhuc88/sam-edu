@@ -22,11 +22,12 @@ class ClassChatMessageReaction extends Model
     protected function casts(): array
     {
         return [
-            'message_id' => 'integer',
-            'class_id'   => 'integer',
-            'sender_id'  => 'integer',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
+            'sender_type' => 'integer',
+            'message_id'  => 'integer',
+            'class_id'    => 'integer',
+            'sender_id'   => 'integer',
+            'created_at'  => 'datetime',
+            'updated_at'  => 'datetime',
         ];
     }
 

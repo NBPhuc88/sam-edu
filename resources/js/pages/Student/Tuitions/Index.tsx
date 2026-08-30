@@ -1,32 +1,40 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    DollarSign,
-    Search,
-    CreditCard,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Receipt,
-    Calendar,
-    Eye,
-    BookOpen,
-    Wallet,
-    ArrowUpRight,
-} from 'lucide-react';
-import React, { useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
+import {
+PAYMENT_METHOD_BANK_TRANSFER,
+PAYMENT_METHOD_CASH,
+PAYMENT_METHOD_CREDIT_CARD,
+PAYMENT_METHOD_LABELS,
+PAYMENT_METHOD_MOMO,
+PAYMENT_METHOD_ZALOPAY,
+TUITION_STATUS_OVERDUE,
+TUITION_STATUS_PAID,
+TUITION_STATUS_PARTIAL,
+TUITION_STATUS_PENDING
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { formatDate } from '@/lib/date';
+import { Head,router } from '@inertiajs/react';
+import {
+    BookOpen,
+    CheckCircle2,
+    Clock,
+    Eye,
+    Filter,
+    Receipt,
+    Search,
+    Wallet,
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface TuitionPayment {
     id: number;
-    amount: number | string;
+    amount: number;
     payment_date: string;
-    payment_method: string;
+    payment_method: number;
     transaction_code?: string | null;
     received_by?: string | null;
     note?: string | null;
@@ -35,10 +43,10 @@ interface TuitionPayment {
 interface StudentTuitionItem {
     id: number;
     title: string;
-    total_amount: number | string;
-    paid_amount: number | string;
-    remaining_amount: number | string;
-    status: string;
+    total_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
     due_date?: string | null;
     created_at?: string | null;
     payments_count?: number;
@@ -72,17 +80,21 @@ interface Props {
     };
     tuitions: PaginatedData<StudentTuitionItem>;
     stats: {
-        total_amount: number;
-        paid_amount: number;
-        remaining_amount: number;
-        total_records: number;
-        completed_count: number;
-        partial_count: number;
-        unpaid_count: number;
+        total_invoiced?: number;
+        total_paid?: number;
+        total_remaining?: number;
+        paid_count?: number;
+        partial_count?: number;
+        unpaid_count?: number;
+        total_amount?: number;
+        paid_amount?: number;
+        remaining_amount?: number;
+        completed_count?: number;
+        total_records?: number;
     };
     filters: {
         search?: string;
-        status?: string;
+        status?: number;
         per_page?: number;
     };
 }
@@ -94,10 +106,10 @@ export default function StudentTuitionIndex({
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || 'all');
+    const [selectedStatus, setSelectedStatus] = useState<number>(filters.status !== undefined && filters.status !== null ? Number(filters.status) : 0);
     const [selectedTuition, setSelectedTuition] = useState<StudentTuitionItem | null>(null);
 
-    const formatCurrency = (val: number | string) => {
+    const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND',
@@ -106,45 +118,61 @@ export default function StudentTuitionIndex({
 
     const handleFilter = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
+        const params: Record<string, any> = {};
+        if (search && search.trim() !== '') {
+            params.search = search.trim();
+        }
+        if (selectedStatus && Number(selectedStatus) > 0) {
+            params.status = Number(selectedStatus);
+        }
         router.get(
             '/student/tuitions',
-            {
-                search: search || undefined,
-                status: selectedStatus !== 'all' ? selectedStatus : undefined,
-            },
+            params,
             { preserveState: true },
         );
     };
 
     const handleResetFilter = () => {
         setSearch('');
-        setSelectedStatus('all');
+        setSelectedStatus(0);
         router.get('/student/tuitions', {}, { preserveState: true });
     };
 
-    const getStatusBadge = (status: string) => {
+    const totalInvoiced = stats.total_invoiced ?? stats.total_amount ?? 0;
+    const totalPaid = stats.total_paid ?? stats.paid_amount ?? 0;
+    const totalRemaining = stats.total_remaining ?? stats.remaining_amount ?? 0;
+    const paidCount = stats.paid_count ?? stats.completed_count ?? 0;
+    const partialCount = stats.partial_count ?? 0;
+    const unpaidCount = stats.unpaid_count ?? 0;
+    const totalCount = stats.total_records ?? (paidCount + partialCount + unpaidCount);
+
+    const getStatusBadge = (status: number) => {
         switch (status) {
-            case 'paid':
+            case TUITION_STATUS_PAID:
                 return <Badge variant="active">Đã Hoàn Thành</Badge>;
-            case 'partial':
+            case TUITION_STATUS_PARTIAL:
                 return <Badge variant="pending">Đang Đóng Từng Phần</Badge>;
-            case 'overdue':
+            case TUITION_STATUS_OVERDUE:
                 return <Badge variant="expired">Quá Hạn</Badge>;
-            case 'unpaid':
+            case TUITION_STATUS_PENDING:
             default:
                 return <Badge variant="danger">Chưa Đóng</Badge>;
         }
     };
 
-    const getPaymentMethodBadge = (method: string) => {
+    const getPaymentMethodBadge = (method: number) => {
         switch (method) {
-            case 'bank_transfer':
+            case PAYMENT_METHOD_BANK_TRANSFER:
                 return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">Chuyển khoản</span>;
-            case 'zalopay':
-                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">ZaloPay QR</span>;
-            case 'cash':
+            case PAYMENT_METHOD_ZALOPAY:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">QR ZaloPay</span>;
+            case PAYMENT_METHOD_MOMO:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">Ví MoMo</span>;
+            case PAYMENT_METHOD_CREDIT_CARD:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">Thẻ tín dụng</span>;
+            case PAYMENT_METHOD_CASH:
             default:
-                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Tiền mặt</span>;
+                return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">{PAYMENT_METHOD_LABELS[method] || 'Tiền mặt'}</span>;
         }
     };
 
@@ -173,9 +201,9 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-gray-500 uppercase">Tổng Học Phí</p>
                                 <h3 className="mt-1 text-2xl font-black text-gray-900 font-mono">
-                                    {formatCurrency(stats.total_amount || 0)}
+                                    {formatCurrency(totalInvoiced)}
                                 </h3>
-                                <p className="text-2xs text-gray-400 mt-1">Tổng {stats.total_records || 0} khoản thu</p>
+                                <p className="text-2xs text-gray-400 mt-1">Tổng {totalCount} khoản thu</p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                 <Receipt className="h-6 w-6" />
@@ -188,10 +216,10 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-emerald-700 uppercase">Đã Thanh Toán</p>
                                 <h3 className="mt-1 text-2xl font-black text-emerald-600 font-mono">
-                                    {formatCurrency(stats.paid_amount || 0)}
+                                    {formatCurrency(totalPaid)}
                                 </h3>
                                 <p className="text-2xs text-emerald-600 font-semibold mt-1">
-                                    {stats.completed_count || 0} khoản đã hoàn tất
+                                    {paidCount} khoản đã hoàn tất
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -205,10 +233,10 @@ export default function StudentTuitionIndex({
                             <div>
                                 <p className="text-xs font-semibold text-amber-700 uppercase">Còn Lại Cần Nộp</p>
                                 <h3 className="mt-1 text-2xl font-black text-amber-600 font-mono">
-                                    {formatCurrency(stats.remaining_amount || 0)}
+                                    {formatCurrency(totalRemaining)}
                                 </h3>
                                 <p className="text-2xs text-amber-700 font-semibold mt-1">
-                                    {stats.partial_count + stats.unpaid_count} khoản đang chờ đóng
+                                    {partialCount + unpaidCount} khoản đang chờ đóng
                                 </p>
                             </div>
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
@@ -236,21 +264,26 @@ export default function StudentTuitionIndex({
                             <select
                                 value={selectedStatus}
                                 onChange={(e) => {
-                                    setSelectedStatus(e.target.value);
+                                    setSelectedStatus(Number(e.target.value));
                                 }}
                                 className="rounded-xl border border-gray-200 bg-slate-50/50 py-2 px-3 text-xs sm:text-sm text-gray-700 focus:border-emerald-500 focus:bg-white focus:outline-hidden"
                             >
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="paid">Đã hoàn thành</option>
-                                <option value="partial">Đang đóng từng phần</option>
-                                <option value="unpaid">Chưa đóng</option>
-                                <option value="overdue">Quá hạn</option>
+                                <option value="0">Tất cả trạng thái</option>
+                                <option value={TUITION_STATUS_PAID}>Đã hoàn thành</option>
+                                <option value={TUITION_STATUS_PARTIAL}>Đang đóng từng phần</option>
+                                <option value={TUITION_STATUS_PENDING}>Chưa đóng</option>
+                                <option value={TUITION_STATUS_OVERDUE}>Quá hạn</option>
                             </select>
 
-                            <Button variant="success" size="sm" type="submit">
-                                Lọc
+                            <Button
+                                type="submit"
+                                variant="success"
+                                size="md"
+                                icon={<Filter className="h-4 w-4" />}
+                            >
+                                Tìm kiếm
                             </Button>
-                            {(search || selectedStatus !== 'all') && (
+                            {(Boolean(search) || selectedStatus > 0) && (
                                 <Button variant="secondary" size="sm" type="button" onClick={handleResetFilter}>
                                     Đặt Lại
                                 </Button>

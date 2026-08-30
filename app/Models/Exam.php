@@ -39,6 +39,8 @@ class Exam extends Model
     protected function casts(): array
     {
         return [
+            'status'            => 'integer',
+            'skill'             => 'integer',
             'exam_date'         => 'date:d-m-Y',
             'max_score'         => 'decimal:2',
             'pass_score'        => 'decimal:2',

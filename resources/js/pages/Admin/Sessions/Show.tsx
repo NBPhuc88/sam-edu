@@ -1,31 +1,40 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import {
-    Calendar,
-    Clock,
-    DoorOpen,
-    User,
-    BookOpen,
-    ArrowLeft,
-    ArrowRight,
-    CheckSquare,
-    Edit3,
-    History,
-    UserCheck,
-    CheckCircle2,
-    XCircle,
-    HelpCircle,
-    AlertTriangle,
-    Save,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import {
+ATTENDANCE_STATUS_ABSENT,
+ATTENDANCE_STATUS_EXCUSED,
+ATTENDANCE_STATUS_LATE,
+ATTENDANCE_STATUS_PRESENT,
+SESSION_STATUS_CANCELLED,
+SESSION_STATUS_COMPLETED,
+SESSION_STATUS_IN_PROGRESS,
+SESSION_STATUS_SCHEDULED
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate, formatTime, formatDateTime, toISODateString } from '@/lib/date';
+import { formatDate,formatDateTime,formatTime,toISODateString } from '@/lib/date';
+import { Head,Link,useForm } from '@inertiajs/react';
+import {
+AlertCircle,
+ArrowLeft,
+ArrowRight,
+BookOpen,
+Calendar,
+CheckCircle2,
+CheckSquare,
+Clock,
+DoorOpen,
+Edit3,
+History,
+Save,
+User,
+UserCheck,
+XCircle
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface Center {
     id: number;
@@ -37,7 +46,7 @@ interface Student {
     id: number;
     student_code: string;
     full_name: string;
-    gender?: string | null;
+    gender?: number | null;
     phone?: string | null;
     parent_name?: string | null;
     parent_phone?: string | null;
@@ -62,7 +71,7 @@ interface Room {
 interface Attendance {
     id: number;
     student_id: number;
-    status: 'present' | 'absent' | 'late' | 'excused' | 'leave';
+    status: number;
     note: string | null;
     student?: Student;
 }
@@ -103,7 +112,7 @@ interface ClassSession {
     session_date: string;
     start_time: string;
     end_time: string;
-    status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    status: number;
     topic: string | null;
     note: string | null;
     teacher_id: number;
@@ -164,13 +173,13 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         : rooms;
 
     // Reschedule form state
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors, transform } = useForm({
         session_date: session.session_date ? toISODateString(String(session.session_date)) : '',
         start_time: session.start_time ? session.start_time.substring(0, 5) : '08:00',
         end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
         teacher_id: session.teacher_id ? String(session.teacher_id) : '',
         room_id: session.room_id ? String(session.room_id) : '',
-        status: session.status || 'scheduled',
+        status: session.status !== undefined && session.status !== null ? Number(session.status) : SESSION_STATUS_SCHEDULED,
         reason: '',
     });
 
@@ -181,7 +190,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
             end_time: session.end_time ? session.end_time.substring(0, 5) : '09:30',
             teacher_id: session.teacher_id ? String(session.teacher_id) : '',
             room_id: session.room_id ? String(session.room_id) : '',
-            status: session.status || 'scheduled',
+            status: session.status !== undefined && session.status !== null ? Number(session.status) : SESSION_STATUS_SCHEDULED,
             reason: '',
         });
         setIsRescheduleModalOpen(true);
@@ -189,6 +198,12 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
 
     const handleRescheduleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        transform((raw) => ({
+            ...raw,
+            teacher_id: raw.teacher_id ? Number(raw.teacher_id) : null,
+            room_id: raw.room_id ? Number(raw.room_id) : null,
+            status: Number(raw.status),
+        }));
         patch(`/sessions/${session.id}`, {
             onSuccess: () => {
                 setIsRescheduleModalOpen(false);
@@ -224,26 +239,22 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         });
     };
 
-    const getStatusBadge = (status: string, sessionDate?: string, startTime?: string) => {
+    const getStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
         const todayIso = new Date().toISOString().split('T')[0];
         const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
 
         switch (status) {
-            case 'completed':
+            case SESSION_STATUS_COMPLETED:
                 return <Badge variant="active">Đã hoàn thành</Badge>;
-            case 'in_progress':
+            case SESSION_STATUS_IN_PROGRESS:
                 return (
                     <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
                         Đang diễn ra
                     </span>
                 );
-            case 'unattended':
-                return <Badge variant="danger">Chưa điểm danh</Badge>;
-            case 'cancelled':
-                return <Badge variant="danger">Đã hủy</Badge>;
-            case 'rescheduled':
-                return <Badge variant="expired">Đã đổi lịch</Badge>;
-            case 'scheduled':
+            case SESSION_STATUS_CANCELLED:
+                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+            case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
                     return <Badge variant="danger">Chưa điểm danh</Badge>;
@@ -272,36 +283,36 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
         attendanceMap.set(att.student_id, att);
     });
 
-    const getAttendanceStatusBadge = (status?: string) => {
+    const getAttendanceStatusBadge = (status?: number) => {
         switch (status) {
-            case 'present':
+            case ATTENDANCE_STATUS_PRESENT:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Có mặt
                     </span>
                 );
-            case 'absent':
+            case ATTENDANCE_STATUS_ABSENT:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700">
                         <XCircle className="h-3.5 w-3.5" /> Vắng mặt
                     </span>
                 );
-            case 'late':
+            case ATTENDANCE_STATUS_LATE:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700">
                         <Clock className="h-3.5 w-3.5" /> Đi muộn
                     </span>
                 );
-            case 'excused':
+            case ATTENDANCE_STATUS_EXCUSED:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-                        <AlertTriangle className="h-3.5 w-3.5" /> Có phép
+                        <AlertCircle className="h-3.5 w-3.5" /> Có phép
                     </span>
                 );
             default:
                 return (
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-                        <HelpCircle className="h-3.5 w-3.5" /> Chưa điểm danh
+                        Chưa điểm danh
                     </span>
                 );
         }
@@ -355,7 +366,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             Đổi Lịch / Phân Công Lại
                         </Button>
 
-                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                        {session.status !== SESSION_STATUS_CANCELLED ? (
                             <Link href={`/attendance/session/${session.id}`}>
                                 <Button
                                     variant="success"
@@ -534,7 +545,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             </p>
                         </div>
 
-                        {['in_progress', 'completed', 'unattended'].includes(session.status) ? (
+                        {session.status !== SESSION_STATUS_CANCELLED ? (
                             <Link href={`/attendance/session/${session.id}`}>
                                 <button
                                     type="button"
@@ -768,16 +779,14 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                             </label>
                             <select
                                 value={data.status}
-                                onChange={(e) => setData('status', e.target.value as any)}
+                                onChange={(e) => setData('status', Number(e.target.value))}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-2xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 required
                             >
-                                <option value="scheduled">Dự kiến</option>
-                                <option value="in_progress">Đang diễn ra</option>
-                                <option value="completed">Đã hoàn thành</option>
-                                <option value="unattended">Chưa điểm danh</option>
-                                <option value="cancelled">Đã hủy</option>
-                                <option value="rescheduled">Đã đổi lịch</option>
+                                <option value={SESSION_STATUS_SCHEDULED}>Dự kiến</option>
+                                <option value={SESSION_STATUS_IN_PROGRESS}>Đang diễn ra</option>
+                                <option value={SESSION_STATUS_COMPLETED}>Đã hoàn thành</option>
+                                <option value={SESSION_STATUS_CANCELLED}>Đã hủy</option>
                             </select>
                             {errors.status && (
                                 <p className="mt-1 text-xs text-red-600">{errors.status}</p>

@@ -2,8 +2,8 @@
  * Validation patterns and utility functions for Sam-Edu frontend
  */
 
-// Vietnamese phone format regex (10 digits starting with 03, 05, 07, 08, 09 or +84 / 84)
-export const VIETNAMESE_PHONE_REGEX = /^(0|\+84|84)(3|5|7|8|9)[0-9]{8}$/;
+// Vietnamese phone format regex (mobile: 10 digits starting with 03, 05, 07, 08, 09 or landline: 11 digits starting with 02, with optional +84 / 84)
+export const VIETNAMESE_PHONE_REGEX = /^(0|\+84|84)(2[0-9]{9}|[35789][0-9]{8})$/;
 
 // Username regex: alphanumeric, dot, underscore, hyphen (6 to 19 characters)
 export const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;

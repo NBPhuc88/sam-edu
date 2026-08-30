@@ -18,6 +18,7 @@ use App\Http\Controllers\GradingController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MediaUploadController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PracticeExamController;
@@ -75,7 +76,7 @@ Route::get('/force-change-password', [PasswordResetController::class, 'showForce
 Route::post('/force-change-password', [PasswordResetController::class, 'updateForcedPassword'])->name('password.force_change.update')->middleware('throttle:10,1');
 
 // ─── Protected Routes (Bất kỳ guard nào: admin | center | teacher | student) ──
-Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttle:120,1'])->group(function () {
+Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.plan.feature', 'throttle:120,1'])->group(function () {
 
     // Dashboard & Statistics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -122,6 +123,13 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         ]);
     })->name('upgrade-plan');
 
+    // System Notifications Management Routes
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::patch('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark_all_read');
+    });
+
     // System Permissions Management Routes (Super Admin)
     Route::prefix('permissions')->name('permissions.')->group(function () {
         Route::get('/', [PermissionController::class, 'index'])->name('index');
@@ -137,6 +145,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
     });
 
     // SaaS Subscription Plans Configuration Routes (Super Admin)
+    // Subscription Plans Management (Super Admin)
     Route::prefix('plans')->name('plans.')->group(function () {
         Route::get('/', [SubscriptionPlanController::class, 'index'])->name('index');
         Route::get('/create', [SubscriptionPlanController::class, 'create'])->name('create');
@@ -162,6 +171,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::get('/{id}/edit', [CenterController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [CenterController::class, 'update'])->name('update');
         Route::delete('/{id}', [CenterController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/renew-subscription', [CenterController::class, 'renewSubscription'])->name('renew-subscription');
     });
 
     // Student Management Routes (CRUD, Export & Import)
@@ -249,6 +259,7 @@ Route::middleware(['auth.any', 'auto.permission', 'check.plan.feature', 'throttl
         Route::post('/{classId}/students/import', [SchoolClassStudentController::class, 'import'])->name('students.import');
         Route::get('/{classId}/students/available', [SchoolClassStudentController::class, 'availableStudents'])->name('students.available');
         Route::post('/{classId}/students/add', [SchoolClassStudentController::class, 'addStudents'])->name('students.add');
+        Route::patch('/{classId}/students/{studentId}/status', [SchoolClassStudentController::class, 'updateStudentStatus'])->name('students.update-status');
         Route::delete('/{classId}/students/{studentId}', [SchoolClassStudentController::class, 'removeStudent'])->name('students.remove');
 
         Route::get('/{classId}/exam-results', [SchoolClassExamResultController::class, 'index'])->name('exam-results.index');

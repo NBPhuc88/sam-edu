@@ -1,29 +1,47 @@
-import { Head, router } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    CheckCircle2,
-    Clock,
-    CloudUpload,
-    FileCheck,
-    FileText,
-    Send,
-    Volume2,
-    LayoutGrid,
-    X,
-} from 'lucide-react';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+QUESTION_TYPE_AUDIO_RECORD,
+QUESTION_TYPE_DIAGRAM_LABELLING,
+QUESTION_TYPE_DRAG_DROP_CLOZE,
+QUESTION_TYPE_ESSAY,
+QUESTION_TYPE_FILL_IN_BLANK,
+QUESTION_TYPE_FIND_MISTAKE,
+QUESTION_TYPE_MATCHING,
+QUESTION_TYPE_MATCHING_IMAGE,
+QUESTION_TYPE_MATCHING_SENTENCES,
+QUESTION_TYPE_MULTIPLE_CHOICE,
+QUESTION_TYPE_ORDERING,
+QUESTION_TYPE_SINGLE_CHOICE,
+QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+SKILL_LISTENING,
+SKILL_SPEAKING,
+SKILL_WRITING
+} from '@/constants/enums';
+import { parseDate } from '@/lib/date';
+import { Head,router } from '@inertiajs/react';
+import {
+AlertTriangle,
+CheckCircle2,
+Clock,
+CloudUpload,
+FileCheck,
+FileText,
+LayoutGrid,
+Send,
+Volume2,
+X,
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import AudioRecorder from './components/AudioRecorder';
-import SortableOrderingList from './components/SortableOrderingList';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
-import MatchingAnswerForm from './components/MatchingAnswerForm';
-import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
 import FindMistakeQuestion from './components/FindMistakeQuestion';
-import { parseDate } from '@/lib/date';
-import { ClassExam, ClassExamSubmission, ExamQuestionData, ExamSectionData, QuestionType, Student } from './types';
+import MatchingAnswerForm from './components/MatchingAnswerForm';
+import MatchingImageAnswerForm from './components/MatchingImageAnswerForm';
+import SortableOrderingList from './components/SortableOrderingList';
+import { ClassExam,ClassExamSubmission,ExamQuestionData,ExamSectionData,Student } from './types';
 
 interface Props {
     classExam: ClassExam;
@@ -319,9 +337,9 @@ export default function TakeExam({
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                                             <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-black ${
-                                                section.skill === 'listening' ? 'bg-blue-100 text-blue-800' :
-                                                section.skill === 'writing' ? 'bg-amber-100 text-amber-800' :
-                                                section.skill === 'speaking' ? 'bg-pink-100 text-pink-800' :
+                                                section.skill === SKILL_LISTENING ? 'bg-blue-100 text-blue-800' :
+                                                section.skill === SKILL_WRITING ? 'bg-amber-100 text-amber-800' :
+                                                section.skill === SKILL_SPEAKING ? 'bg-pink-100 text-pink-800' :
                                                 'bg-emerald-100 text-emerald-800'
                                             }`}>
                                                 {sIdx + 1}
@@ -329,12 +347,12 @@ export default function TakeExam({
                                             {section.title}
                                         </h2>
                                         <span className={`text-2xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                                            section.skill === 'listening' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                            section.skill === 'writing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                            section.skill === 'speaking' ? 'bg-pink-50 text-pink-700 border border-pink-200' :
+                                            section.skill === SKILL_LISTENING ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                            section.skill === SKILL_WRITING ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                            section.skill === SKILL_SPEAKING ? 'bg-pink-50 text-pink-700 border border-pink-200' :
                                             'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                         }`}>
-                                            {section.skill === 'listening' ? '🎧 Listening' : section.skill === 'writing' ? '✍️ Writing' : section.skill === 'speaking' ? '🗣️ Speaking' : '📖 Reading'}
+                                            {section.skill === SKILL_LISTENING ? '🎧 Listening' : section.skill === SKILL_WRITING ? '✍️ Writing' : section.skill === SKILL_SPEAKING ? '🗣️ Speaking' : '📖 Reading'}
                                         </span>
                                     </div>
 
@@ -379,13 +397,13 @@ export default function TakeExam({
 
                                             {/* Question Content */}
                                             <div className="text-sm font-semibold text-gray-900 whitespace-pre-wrap leading-relaxed">
-                                                {q.question_type === 'fill_in_blank' ? (
+                                                {q.question_type === QUESTION_TYPE_FILL_IN_BLANK ? (
                                                     <RenderFillInBlankQuestion
                                                         content={q.content}
                                                         userAnswers={currentVal || {}}
                                                         onChange={(newBlankAns) => handleAnswerChange(q.id!, newBlankAns)}
                                                     />
-                                                ) : q.question_type === 'drag_drop_cloze' ? null : (
+                                                ) : q.question_type === QUESTION_TYPE_DRAG_DROP_CLOZE ? null : (
                                                     q.content
                                                 )}
                                             </div>
@@ -398,7 +416,7 @@ export default function TakeExam({
                                                 </div>
                                             )}
 
-                                            {q.image_url && q.question_type !== 'diagram_labelling' && (
+                                            {q.image_url && q.question_type !== QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                 <div className="rounded-xl border border-gray-200 p-2 bg-slate-50 flex justify-center max-h-60 overflow-hidden">
                                                     <img
                                                         src={q.image_url}
@@ -414,7 +432,7 @@ export default function TakeExam({
                                             {/* Question Type Interactive Answer Form */}
                                             <div className="pt-2">
                                                 {/* 1. Single Choice */}
-                                                {q.question_type === 'single_choice' && (
+                                                {q.question_type === QUESTION_TYPE_SINGLE_CHOICE && (
                                                     <div className="space-y-2.5">
                                                         {(q.options || []).map((opt: any, idx: number) => {
                                                             const optId = String(opt?.id ?? opt?.key ?? opt?.value ?? String.fromCharCode(65 + idx));
@@ -450,7 +468,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 2. Multiple Choice */}
-                                                {q.question_type === 'multiple_choice' && (
+                                                {q.question_type === QUESTION_TYPE_MULTIPLE_CHOICE && (
                                                     <div className="space-y-2.5">
                                                         {(q.options || []).map((opt: any, idx: number) => {
                                                             const optId = String(opt?.id ?? opt?.key ?? opt?.value ?? String.fromCharCode(65 + idx));
@@ -494,7 +512,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 3. True / False / Not Given */}
-                                                {q.question_type === 'true_false_not_given' && (
+                                                {q.question_type === QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN && (
                                                     <div className={`grid grid-cols-1 ${
                                                         Array.isArray(q.options) && q.options.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
                                                     } gap-2.5`}>
@@ -536,7 +554,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 4. Drag Drop Cloze */}
-                                                {q.question_type === 'drag_drop_cloze' && (
+                                                {q.question_type === QUESTION_TYPE_DRAG_DROP_CLOZE && (
                                                     <DragDropClozeQuestion
                                                         content={q.content}
                                                         options={q.options}
@@ -546,7 +564,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 5. Matching */}
-                                                {(q.question_type === 'matching' || q.question_type === 'matching_sentences') && (
+                                                {(q.question_type === QUESTION_TYPE_MATCHING || q.question_type === QUESTION_TYPE_MATCHING_SENTENCES) && (
                                                     <MatchingAnswerForm
                                                         options={q.options}
                                                         userAnswers={currentVal || {}}
@@ -555,7 +573,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 5. Matching Image */}
-                                                {q.question_type === 'matching_image' && (
+                                                {q.question_type === QUESTION_TYPE_MATCHING_IMAGE && (
                                                     <MatchingImageAnswerForm
                                                         options={q.options}
                                                         userAnswers={currentVal || {}}
@@ -564,7 +582,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 6. Find Mistake */}
-                                                {q.question_type === 'find_mistake' && (
+                                                {q.question_type === QUESTION_TYPE_FIND_MISTAKE && (
                                                     <FindMistakeQuestion
                                                         content={q.content}
                                                         options={q.options}
@@ -574,7 +592,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 7. Ordering (Drag and Drop) */}
-                                                {q.question_type === 'ordering' && (
+                                                {q.question_type === QUESTION_TYPE_ORDERING && (
                                                     <SortableOrderingList
                                                         options={q.options}
                                                         value={Array.isArray(currentVal) ? currentVal : []}
@@ -583,7 +601,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 8. Diagram Labelling */}
-                                                {q.question_type === 'diagram_labelling' && (
+                                                {q.question_type === QUESTION_TYPE_DIAGRAM_LABELLING && (
                                                     <DiagramLabellingQuestion
                                                         imageUrl={q.image_url}
                                                         options={q.options}
@@ -593,7 +611,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 9. Essay Writing */}
-                                                {q.question_type === 'essay' && (
+                                                {q.question_type === QUESTION_TYPE_ESSAY && (
                                                     <div className="space-y-2">
                                                         <textarea
                                                             rows={6}
@@ -609,7 +627,7 @@ export default function TakeExam({
                                                 )}
 
                                                 {/* 10. Speaking Audio Recording */}
-                                                {q.question_type === 'audio_record' && (
+                                                {q.question_type === QUESTION_TYPE_AUDIO_RECORD && (
                                                     <AudioRecorder
                                                         classExamId={classExam.id}
                                                         questionId={q.id!}

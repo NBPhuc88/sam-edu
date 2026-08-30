@@ -87,7 +87,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             PermissionSeeder::class,
         ]);
 
-        $this->command->info('📦 [2/10] Khởi tạo dữ liệu liên kết đa trung tâm...');
+        $this->command->info('📦 [2/10] Khởi tạo dữ liệu liên kết trung tâm...');
 
         DB::transaction(function () {
             // 2. Lấy Super Admin
@@ -1168,7 +1168,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             // 7. Tin nhắn trao đổi lớp học (Class Chat) & Reactions
             $chatMessages = [
                 [
-                    'sender_type' => 'teacher',
+                    'sender_type' => Constant::SENDER_TYPE_TEACHER,
                     'sender_id'   => $teacher->id,
                     'sender_name' => $teacher->full_name,
                     'message'     => 'Chào mừng tất cả các em đến với khóa học ' . $subject->name . '! Thầy/Cô sẽ đồng hành cùng các bạn trong suốt quá trình học tập.',
@@ -1176,7 +1176,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'reply_to_id' => null,
                 ],
                 [
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[0]->id,
                     'sender_name' => $enrolledStudents[0]->full_name,
                     'message'     => 'Dạ em chào Thầy/Cô và các bạn trong lớp ạ!',
@@ -1184,7 +1184,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                     'reply_to_id' => null,
                 ],
                 [
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[1]->id,
                     'sender_name' => $enrolledStudents[1]->full_name,
                     'message'     => 'Thầy/Cô cho em hỏi tài liệu học phần tuần này đã tải lên chưa ạ?',
@@ -1215,7 +1215,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 $replyMsg = ClassChatMessage::create([
                     'class_id'       => $schoolClass->id,
                     'reply_to_id'    => $savedMessages[2]->id,
-                    'sender_type'    => 'teacher',
+                    'sender_type'    => Constant::SENDER_TYPE_TEACHER,
                     'sender_id'      => $teacher->id,
                     'sender_name'    => $teacher->full_name,
                     'message'        => 'Thầy đã đính kèm tài liệu trong mục Tài liệu của lớp, các em tải về ôn tập nhé!',
@@ -1227,7 +1227,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
                 ClassChatMessageReaction::create([
                     'message_id'  => $savedMessages[0]->id,
                     'class_id'    => $schoolClass->id,
-                    'sender_type' => 'student',
+                    'sender_type' => Constant::SENDER_TYPE_STUDENT,
                     'sender_id'   => $enrolledStudents[0]->id,
                     'sender_name' => $enrolledStudents[0]->full_name,
                     'emoji'       => '❤️',
@@ -1735,7 +1735,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
         $notification = Notification::create([
             'title'               => 'Thông Báo Lịch Nghỉ Lễ & Khai Giảng Khóa Học Mới',
             'content'             => 'Hệ thống Sam-Edu xin thông báo lịch nghỉ lễ và kế hoạch khai giảng các lớp học mới trong tháng tới. Quý thầy cô và học sinh vui lòng kiểm tra lịch học chi tiết trên ứng dụng.',
-            'type'                => 'system',
+            'type'                => Constant::NOTIFICATION_TYPE_GENERAL,
             'created_by_admin_id' => $superAdmin->id,
         ]);
 
@@ -1745,7 +1745,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             foreach ($adminIds as $aId) {
                 NotificationRecipient::create([
                     'notification_id' => $notification->id,
-                    'recipient_type'  => 'admin',
+                    'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
                     'recipient_id'    => $aId,
                     'read_at'         => null,
                 ]);
@@ -1768,7 +1768,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
         // 1. Password Reset OTP
         DB::table('password_reset_otps')->insert([
             'email'        => 'admin.caugiay@sam-edu.vn',
-            'account_type' => 'admin',
+            'account_type' => 1,
             'otp_hash'     => Hash::make('123456'),
             'expires_at'   => Carbon::now()->addMinutes(15),
             'created_at'   => $this->now,
@@ -1779,7 +1779,7 @@ class ComprehensiveSampleDataSeeder extends Seeder
             'user_type'  => 'admin',
             'user_id'    => 1,
             'email'      => 'admin.caugiay@sam-edu.vn',
-            'action'     => 'verify_email',
+            'action'     => Constant::OTP_ACTION_CHANGE_PASSWORD,
             'otp_hash'   => Hash::make('654321'),
             'payload'    => json_encode(['source' => 'system_seeder']),
             'expires_at' => Carbon::now()->addHours(24),

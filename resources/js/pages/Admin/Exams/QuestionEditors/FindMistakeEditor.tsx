@@ -1,6 +1,6 @@
-import React, { useId } from 'react';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { AlertTriangle,Plus,Trash2 } from 'lucide-react';
+import { useId } from 'react';
 
 interface SentenceSegment {
     id: string;
@@ -57,7 +57,7 @@ export default function FindMistakeEditor({
         onChangeOptions({ sentence_segments: updated });
 
         if (safeCorrectAnswer === removed.id) {
-            onChangeCorrectAnswer(updated.find((s) => s.underlined)?.id || '');
+            onChangeCorrectAnswer('');
         }
     };
 
@@ -223,6 +223,12 @@ export default function FindMistakeEditor({
                         );
                     })}
                 </div>
+                {!safeCorrectAnswer && (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 p-2.5 text-xs font-bold text-red-700 border border-red-200 mt-2">
+                        <span className="text-sm">⚠️</span>
+                        <span>Vui lòng chọn 1 phần gạch chân làm đáp án đúng (phần bị sai ngữ pháp).</span>
+                    </div>
+                )}
             </div>
         </div>
     );
