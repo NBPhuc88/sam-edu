@@ -255,13 +255,13 @@ class SchoolClassService implements SchoolClassServiceInterface
             } elseif ($data['status'] === 'completed') {
                 $status = Constant::CLASS_STATUS_COMPLETED;
             } elseif ($data['status'] === 'closed') {
-                $status = Constant::CLASS_STATUS_CANCELLED;
+                $status = Constant::CLASS_STATUS_CLOSED;
             } else {
                 $status = Constant::CLASS_STATUS_ACTIVE;
             }
         }
 
-        // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng (status 0, 1) không vượt quá max_classes
+        // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng không vượt quá max_classes
         if (in_array($status, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
@@ -321,33 +321,33 @@ class SchoolClassService implements SchoolClassServiceInterface
             if (is_numeric($data['status'])) {
                 $newStatus = (int) $data['status'];
             } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = 0;
+                $newStatus = Constant::CLASS_STATUS_INACTIVE;
             } elseif ($data['status'] === 'completed') {
-                $newStatus = 2;
+                $newStatus = Constant::CLASS_STATUS_COMPLETED;
             } elseif ($data['status'] === 'closed') {
-                $newStatus = 3;
+                $newStatus = Constant::CLASS_STATUS_CLOSED;
             } else {
-                $newStatus = 1;
+                $newStatus = Constant::CLASS_STATUS_ACTIVE;
             }
         }
 
-        // Lớp học đã hoàn thành (2) hoặc đã đóng (3) không thể chuyển sang trạng thái khác (trừ Super Admin)
-        if (in_array($currentStatusInt, [2, 3], true) && $newStatus !== $currentStatusInt) {
+        // Lớp học đã hoàn thành hoặc đã đóng không thể chuyển sang trạng thái khác (trừ Super Admin)
+        if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && $newStatus !== $currentStatusInt) {
             if (! ($admin && $admin->isSuperAdmin())) {
                 throw new AccessDeniedHttpException('Lớp học đã hoàn thành hoặc đã đóng chỉ có Super Admin mới có quyền mở lại.');
             }
         }
 
-        // Nếu chuyển từ Hoàn thành/Đóng (2, 3) sang Hoạt động/Tạm dừng (0, 1), kiểm tra giới hạn max_classes
+        // Nếu chuyển từ Hoàn thành/Đóng sang Hoạt động/Tạm dừng, kiểm tra giới hạn max_classes
         $centerId = (int) ($data['center_id'] ?? $schoolClass->center_id);
 
-        if (in_array($currentStatusInt, [2, 3], true) && in_array($newStatus, [0, 1], true)) {
+        if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && in_array($newStatus, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_classes !== null) {
                 $activePausedClassesCount = SchoolClass::where('center_id', $centerId)
                     ->where('id', '!=', $schoolClass->id)
-                    ->whereIn('status', [0, 1])
+                    ->whereIn('status', [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE])
                     ->count();
 
                 if ($activePausedClassesCount >= $center->max_classes) {
@@ -407,7 +407,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             ->whereIn('cs.student_id', $studentIdsInClass)
             ->where('c.id', '!=', $classId)
             ->where('c.center_id', $centerId)
-            ->where('c.status', 1)
+            ->where('c.status', Constant::CLASS_STATUS_ACTIVE)
             ->whereNull('c.deleted_at')
             ->pluck('cs.student_id')
             ->unique()

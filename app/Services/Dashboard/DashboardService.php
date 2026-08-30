@@ -825,10 +825,10 @@ class DashboardService implements DashboardServiceInterface
             ->doesntHave('attendances')
             ->count();
 
-        // 2. Lớp học sắp khai giảng trong 7 ngày tới (start_date between today and today+7 days, status = 1)
+        // 2. Lớp học sắp khai giảng trong 7 ngày tới (start_date between today and today+7 days, status = active)
         $upcomingClassesCount = SchoolClass::query()
             ->whereIn('center_id', $centerIds)
-            ->where('status', 1)
+            ->where('status', Constant::CLASS_STATUS_ACTIVE)
             ->whereBetween('start_date', [$todayStr, $in7Days])
             ->count();
 

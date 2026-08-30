@@ -328,17 +328,17 @@ class StudentService implements StudentServiceInterface
             if (is_numeric($data['status'])) {
                 $newStatus = (int) $data['status'];
             } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = 0;
+                $newStatus = Constant::STUDENT_STATUS_INACTIVE;
             } elseif ($data['status'] === 'graduated' || $data['status'] === 'completed') {
-                $newStatus = 2;
+                $newStatus = Constant::STUDENT_STATUS_GRADUATED;
             } else {
-                $newStatus = 1;
+                $newStatus = Constant::STUDENT_STATUS_ACTIVE;
             }
         }
 
         $centerId = (int) ($data['center_id'] ?? $student->center_id);
 
-        if ($currentStatusInt !== 1 && $newStatus === 1) {
+        if ($currentStatusInt !== Constant::STUDENT_STATUS_ACTIVE && $newStatus === Constant::STUDENT_STATUS_ACTIVE) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {

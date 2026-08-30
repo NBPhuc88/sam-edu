@@ -270,7 +270,7 @@ class StudentRepository implements StudentRepositoryInterface
 
     public function getActiveStudents(?array $allowedCenterIds = null, array $columns = ['id', 'full_name', 'student_code', 'phone', 'center_id']): \Illuminate\Database\Eloquent\Collection
     {
-        $query = Student::select($columns)->where('status', 1);
+        $query = Student::select($columns)->where('status', Constant::STUDENT_STATUS_ACTIVE);
 
         if ($allowedCenterIds !== null) {
             $query->whereIn('center_id', $allowedCenterIds);

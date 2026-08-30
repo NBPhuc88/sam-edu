@@ -84,10 +84,10 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 $query->where('status', (int) $status);
             } else {
                 $statusMap = [
-                    'inactive'  => 0,
-                    'active'    => 1,
-                    'completed' => 2,
-                    'closed'    => 3,
+                    'inactive'  => Constant::CLASS_STATUS_INACTIVE,
+                    'active'    => Constant::CLASS_STATUS_ACTIVE,
+                    'completed' => Constant::CLASS_STATUS_COMPLETED,
+                    'closed'    => Constant::CLASS_STATUS_CLOSED,
                 ];
 
                 if (isset($statusMap[$status])) {

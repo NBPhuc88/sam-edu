@@ -273,7 +273,7 @@ test('secondary admin cannot reopen completed or closed classes', function () {
         'center_id' => $this->center->id,
         'name'      => 'Lớp Đã Đóng',
         'code'      => 'CLS000000040',
-        'status'    => 2, // Completed/Closed
+        'status'    => Constant::CLASS_STATUS_CLOSED,
     ]);
 
     $response = $this->actingAs($this->subAdmin, 'admin')
@@ -281,7 +281,7 @@ test('secondary admin cannot reopen completed or closed classes', function () {
             'center_id' => $this->center->id,
             'name'      => 'Cố Mở Lại Lớp',
             'code'      => 'CLS000000040',
-            'status'    => 1,
+            'status'    => Constant::CLASS_STATUS_ACTIVE,
         ]);
 
     // Bị chặn 403 Forbidden

@@ -273,15 +273,15 @@ class ChatRepository implements ChatRepositoryInterface
         }
 
         if ($status === null || $status === '') {
-            $query->where('status', 1);
+            $query->where('status', Constant::CLASS_STATUS_ACTIVE);
         } elseif ($status !== '') {
             if (is_numeric($status)) {
                 $query->where('status', (int) $status);
             } else {
                 $statusMap = [
-                    'inactive'  => 0,
-                    'active'    => 1,
-                    'completed' => 2,
+                    'inactive'  => Constant::CLASS_STATUS_INACTIVE,
+                    'active'    => Constant::CLASS_STATUS_ACTIVE,
+                    'completed' => Constant::CLASS_STATUS_COMPLETED,
                 ];
 
                 if (isset($statusMap[$status])) {
