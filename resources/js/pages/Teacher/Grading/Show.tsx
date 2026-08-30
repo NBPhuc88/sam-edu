@@ -279,7 +279,7 @@ export default function GradingShow({
                 {/* Top Page Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
+                        <Link href="/grading">
                             <Button variant="secondary" size="sm" icon={<ArrowLeft className="h-4 w-4" />}>
                                 Quay Lại Danh Sách
                             </Button>
@@ -635,7 +635,7 @@ export default function GradingShow({
 
                 {/* Bottom Action Buttons (Static / In-flow at bottom of page) */}
                 <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-200">
-                    <Link href={`/grading?class_id=${classExam.schoolClass?.id || ''}&class_exam_id=${classExam.id}`}>
+                    <Link href="/grading">
                         <Button variant="secondary" size="md" className="font-bold px-5">
                             Hủy & Quay Lại
                         </Button>
