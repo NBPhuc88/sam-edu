@@ -11,6 +11,7 @@ use App\Repositories\Holiday\HolidayRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class HolidayService implements HolidayServiceInterface
 {
@@ -105,7 +106,7 @@ class HolidayService implements HolidayServiceInterface
         $holiday = $this->holidayRepository->find($id);
 
         if (! $holiday) {
-            throw new \InvalidArgumentException("Không tìm thấy ngày lễ ID {$id}");
+            throw new NotFoundHttpException("Không tìm thấy ngày lễ ID {$id}");
         }
 
         $oldDate = $holiday->date instanceof \DateTimeInterface ? $holiday->date->format('Y-m-d') : (string) $holiday->date;

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class CenterService implements CenterServiceInterface
 {
@@ -143,7 +144,9 @@ class CenterService implements CenterServiceInterface
             $plan   = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
 
             if (! $plan) {
-                throw new \InvalidArgumentException("Gói cước không tồn tại: {$data['plan_id']}");
+                throw ValidationException::withMessages([
+                    'plan_id' => "Gói cước không tồn tại: {$data['plan_id']}",
+                ]);
             }
 
             $isSamePlan = ((int) $center->subscription_plan_id === (int) $plan->id);

@@ -5,6 +5,7 @@ use App\Models\Admin;
 use App\Models\Center;
 use App\Services\Admin\AdminService;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     Mail::fake();
@@ -55,7 +56,7 @@ test('createAdmin throws exception when trying to create a second super_admin', 
     ];
 
     expect(fn () => $this->service->createAdmin($data))
-        ->toThrow(\InvalidArgumentException::class, 'Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao');
+        ->toThrow(ValidationException::class, 'Hệ thống chỉ cho phép duy nhất 1 tài khoản Quản trị viên tối cao');
 });
 
 test('updateAdmin throws exception when trying to demote super_admin', function () {
@@ -73,7 +74,7 @@ test('updateAdmin throws exception when trying to demote super_admin', function 
     ];
 
     expect(fn () => $this->service->updateAdmin($superAdmin->id, $data))
-        ->toThrow(\InvalidArgumentException::class, 'Không thể hạ cấp tài khoản Quản trị viên tối cao');
+        ->toThrow(ValidationException::class, 'Không thể hạ cấp tài khoản Quản trị viên tối cao');
 });
 
 test('deleteAdmin throws exception when trying to delete super_admin', function () {
@@ -94,7 +95,7 @@ test('deleteAdmin throws exception when trying to delete super_admin', function 
     ]);
 
     expect(fn () => $this->service->deleteAdmin($superAdmin->id, $otherAdmin->id))
-        ->toThrow(\InvalidArgumentException::class, 'Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa.');
+        ->toThrow(ValidationException::class, 'Tài khoản Quản trị viên tối cao (Super Admin) không thể bị xóa.');
 });
 
 test('deleteAdmin throws exception when admin tries to delete themselves', function () {
@@ -107,7 +108,7 @@ test('deleteAdmin throws exception when admin tries to delete themselves', funct
     ]);
 
     expect(fn () => $this->service->deleteAdmin($admin->id, $admin->id))
-        ->toThrow(\InvalidArgumentException::class, 'Bạn không thể tự xóa tài khoản Quản trị viên của chính mình.');
+        ->toThrow(ValidationException::class, 'Bạn không thể tự xóa tài khoản Quản trị viên của chính mình.');
 });
 
 test('deleteAdmin deletes regular admin successfully', function () {
