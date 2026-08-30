@@ -255,7 +255,7 @@ export default function ExamEdit({
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     {/* Error Alert Banner */}
                     {Object.keys(errors).length > 0 && (
                         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-xs">
@@ -558,7 +558,7 @@ export default function ExamEdit({
                             isLoading={isSubmitting || Boolean(uploadProgressText)}
                             icon={<Save className="h-5 w-5" />}
                         >
-                            {uploadProgressText || 'Cập Nhật Đề Thi'}
+                            {uploadProgressText || 'Cập Nhật'}
                         </Button>
                     </div>
                 </form>
