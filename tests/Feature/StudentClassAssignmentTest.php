@@ -388,3 +388,72 @@ test('bulkAssign creates tuition only when create_tuition is true', function () 
     expect($tuition)->not->toBeNull();
     expect((float) $tuition->total_amount)->toEqual(1800000.0);
 });
+
+test('assignClasses creates tuition only for selected tuition_class_ids', function () {
+    $this->class1->update(['total_tuition_fee' => 1000000]);
+    $this->class2->update(['total_tuition_fee' => 2000000]);
+
+    $student = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000014',
+        'first_name'     => 'Selective',
+        'last_name'      => 'Class',
+        'full_name'      => 'Selective Class',
+        'username'       => 'selectiveclass',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $this->actingAs($this->admin, 'admin')->post(
+        route('students.assign-classes', $student->id),
+        [
+            'class_ids'         => [$this->class1->id, $this->class2->id],
+            'create_tuition'    => 1,
+            'tuition_class_ids' => [$this->class1->id], // Only class 1
+        ]
+    )->assertSessionHas('success');
+
+    expect(StudentTuition::where('student_id', $student->id)->where('class_id', $this->class1->id)->exists())->toBeTrue();
+    expect(StudentTuition::where('student_id', $student->id)->where('class_id', $this->class2->id)->exists())->toBeFalse();
+});
+
+test('addStudents creates tuition only for selected tuition_student_ids', function () {
+    $this->class1->update(['total_tuition_fee' => 1500000]);
+
+    $student1 = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000015',
+        'first_name'     => 'Sel1',
+        'last_name'      => 'Student',
+        'full_name'      => 'Sel1 Student',
+        'username'       => 'selstudent1',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $student2 = Student::create([
+        'center_id'      => $this->center->id,
+        'student_code'   => 'STD000000016',
+        'first_name'     => 'Sel2',
+        'last_name'      => 'Student',
+        'full_name'      => 'Sel2 Student',
+        'username'       => 'selstudent2',
+        'password'       => Hash::make('12345678'),
+        'admission_date' => Carbon::now()->toDateString(),
+        'status'         => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    $this->actingAs($this->admin, 'admin')->post(
+        route('classes.students.add', $this->class1->id),
+        [
+            'student_ids'         => [$student1->id, $student2->id],
+            'create_tuition'      => 1,
+            'tuition_student_ids' => [$student1->id], // Only student 1
+        ]
+    )->assertSessionHas('success');
+
+    expect(StudentTuition::where('student_id', $student1->id)->where('class_id', $this->class1->id)->exists())->toBeTrue();
+    expect(StudentTuition::where('student_id', $student2->id)->where('class_id', $this->class1->id)->exists())->toBeFalse();
+});

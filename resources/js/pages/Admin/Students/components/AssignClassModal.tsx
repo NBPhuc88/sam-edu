@@ -85,18 +85,40 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
         }
     };
 
+    const newlyAddedClasses = useMemo(() => {
+        const newlyAddedIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
+        return centerClasses.filter((c) => newlyAddedIds.includes(c.id));
+    }, [selectedClassIds, initialSelectedIds, centerClasses]);
+
+    const [selectedTuitionClassIds, setSelectedTuitionClassIds] = useState<number[]>([]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const newlyAddedClassIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
+        const newlyAddedIds = selectedClassIds.filter((id) => !initialSelectedIds.includes(id));
 
-        if (newlyAddedClassIds.length > 0) {
+        if (newlyAddedIds.length > 0) {
+            setSelectedTuitionClassIds(newlyAddedIds);
             setShowTuitionConfirm(true);
         } else {
-            executeSubmit(0);
+            executeSubmit(0, []);
         }
     };
 
-    const executeSubmit = (createTuition: number) => {
+    const toggleTuitionClass = (classId: number) => {
+        setSelectedTuitionClassIds((prev) =>
+            prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
+        );
+    };
+
+    const handleSelectAllTuitionClasses = () => {
+        if (selectedTuitionClassIds.length === newlyAddedClasses.length) {
+            setSelectedTuitionClassIds([]);
+        } else {
+            setSelectedTuitionClassIds(newlyAddedClasses.map((c) => c.id));
+        }
+    };
+
+    const executeSubmit = (createTuition: number, tuitionClassIds: number[] = []) => {
         setIsSubmitting(true);
 
         router.post(
@@ -104,6 +126,7 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
             {
                 class_ids: selectedClassIds,
                 create_tuition: createTuition,
+                tuition_class_ids: createTuition ? tuitionClassIds : [],
             },
             {
                 preserveScroll: true,
@@ -237,8 +260,8 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                 <Modal
                     isOpen={showTuitionConfirm}
                     onClose={() => !isSubmitting && setShowTuitionConfirm(false)}
-                    title="Xác Nhận Tạo Học Phí"
-                    maxWidth="md"
+                    title="Xác Nhận Tạo Học Phí Cho Lớp Mới"
+                    maxWidth="lg"
                 >
                     <div className="space-y-4">
                         <div className="flex items-start gap-3.5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
@@ -247,15 +270,76 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                             </div>
                             <div className="space-y-1 text-sm">
                                 <p className="font-semibold text-gray-900">
-                                    Tạo học phí cho các lớp mới?
+                                    Có tạo học phí cho các lớp mới được thêm?
                                 </p>
                                 <p className="text-gray-600 leading-relaxed text-xs">
-                                    Học sinh <span className="font-medium text-gray-900">{student.full_name}</span> được phân vào lớp học mới. Bạn có muốn tự động tạo khoản thu học phí cho các lớp mới này không?
+                                    Học sinh <span className="font-medium text-gray-900">{student.full_name}</span> được phân vào <span className="font-semibold text-emerald-800">{newlyAddedClasses.length} lớp học mới</span>. Chọn các lớp bạn muốn tự động sinh hồ sơ học phí:
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2">
+                        {/* List of newly added classes with checkboxes */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <button
+                                    type="button"
+                                    onClick={handleSelectAllTuitionClasses}
+                                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 cursor-pointer select-none"
+                                >
+                                    <div
+                                        className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                            selectedTuitionClassIds.length === newlyAddedClasses.length
+                                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                : 'border-gray-300 bg-white'
+                                        }`}
+                                    >
+                                        {selectedTuitionClassIds.length === newlyAddedClasses.length && (
+                                            <Check className="w-3 h-3 stroke-[3]" />
+                                        )}
+                                    </div>
+                                    Chọn tất cả lớp mới ({selectedTuitionClassIds.length}/{newlyAddedClasses.length})
+                                </button>
+                            </div>
+
+                            <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-xl border border-gray-200">
+                                {newlyAddedClasses.map((cls) => {
+                                    const isChecked = selectedTuitionClassIds.includes(cls.id);
+                                    return (
+                                        <div
+                                            key={cls.id}
+                                            onClick={() => toggleTuitionClass(cls.id)}
+                                            className={`cursor-pointer flex items-center justify-between gap-3 p-2.5 rounded-lg border transition-all select-none ${
+                                                isChecked
+                                                    ? 'bg-white border-emerald-400 ring-1 ring-emerald-400/40 shadow-2xs'
+                                                    : 'bg-white/60 border-gray-200 hover:bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <div
+                                                    className={`w-4.5 h-4.5 rounded shrink-0 flex items-center justify-center border transition-colors ${
+                                                        isChecked
+                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                            : 'border-gray-300 bg-white'
+                                                    }`}
+                                                >
+                                                    {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="font-semibold text-gray-900 text-xs">
+                                                        {cls.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="shrink-0 text-2xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono border border-gray-200">
+                                                {cls.code}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-2 border-t border-gray-100">
                             <Button
                                 type="button"
                                 variant="secondary"
@@ -267,7 +351,7 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                             <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={() => executeSubmit(0)}
+                                onClick={() => executeSubmit(0, [])}
                                 isLoading={isSubmitting}
                             >
                                 Không tạo học phí
@@ -275,10 +359,12 @@ export default function AssignClassModal({ isOpen, onClose, student, allClasses 
                             <Button
                                 type="button"
                                 variant="success"
-                                onClick={() => executeSubmit(1)}
+                                onClick={() => executeSubmit(selectedTuitionClassIds.length > 0 ? 1 : 0, selectedTuitionClassIds)}
                                 isLoading={isSubmitting}
                             >
-                                Có, tạo học phí
+                                {selectedTuitionClassIds.length > 0
+                                    ? `Có, tạo học phí (${selectedTuitionClassIds.length} lớp)`
+                                    : 'Có, tạo học phí'}
                             </Button>
                         </div>
                     </div>

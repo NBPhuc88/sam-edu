@@ -17,10 +17,12 @@ class BulkAssignClassStudentsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_ids'    => ['required', 'array', 'min:1'],
-            'student_ids.*'  => ['integer', 'exists:students,id'],
-            'class_id'       => ['required', 'integer', 'exists:classes,id'],
-            'create_tuition' => ['nullable', 'boolean'],
+            'student_ids'           => ['required', 'array', 'min:1'],
+            'student_ids.*'         => ['integer', 'exists:students,id'],
+            'class_id'              => ['required', 'integer', 'exists:classes,id'],
+            'create_tuition'        => ['nullable', 'boolean'],
+            'tuition_student_ids'   => ['nullable', 'array'],
+            'tuition_student_ids.*' => ['integer', 'exists:students,id'],
         ];
     }
 

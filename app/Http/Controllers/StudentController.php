@@ -160,9 +160,16 @@ class StudentController extends Controller
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
-        $classIds      = $request->input('class_ids', []);
-        $createTuition = $request->boolean('create_tuition', false);
-        $this->studentService->assignClassesToStudent($id, is_array($classIds) ? $classIds : [], $admin, $createTuition);
+        $classIds        = $request->input('class_ids', []);
+        $createTuition   = $request->boolean('create_tuition', false);
+        $tuitionClassIds = $request->input('tuition_class_ids');
+        $this->studentService->assignClassesToStudent(
+            $id,
+            is_array($classIds) ? $classIds : [],
+            $admin,
+            $createTuition,
+            is_array($tuitionClassIds) ? $tuitionClassIds : null
+        );
 
         return back()->with('success', 'Cập nhật danh sách lớp học của học sinh thành công!');
     }
@@ -175,11 +182,18 @@ class StudentController extends Controller
             throw new NotFoundHttpException('Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.');
         }
 
-        $classId       = (int) $request->input('class_id');
-        $studentIds    = (array) $request->input('student_ids', []);
-        $createTuition = $request->boolean('create_tuition', false);
+        $classId           = (int) $request->input('class_id');
+        $studentIds        = (array) $request->input('student_ids', []);
+        $createTuition     = $request->boolean('create_tuition', false);
+        $tuitionStudentIds = $request->input('tuition_student_ids');
 
-        $result = $this->studentService->bulkAssignStudentsToClass($classId, $studentIds, $admin, $createTuition);
+        $result = $this->studentService->bulkAssignStudentsToClass(
+            $classId,
+            $studentIds,
+            $admin,
+            $createTuition,
+            is_array($tuitionStudentIds) ? $tuitionStudentIds : null
+        );
 
         return back()->with('success', $result['message']);
     }

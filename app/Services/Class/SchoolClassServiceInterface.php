@@ -94,14 +94,15 @@ interface SchoolClassServiceInterface
     public function getAvailableStudents(int $classId, ?string $search = null, ?Admin $admin = null, ?Teacher $teacher = null): \Illuminate\Database\Eloquent\Collection;
 
     /**
-     * @param  int        $classId
-     * @param  array<int> $studentIds
-     * @param  ?Admin     $admin
-     * @param  ?Teacher   $teacher
-     * @param  bool       $createTuition
+     * @param  int         $classId
+     * @param  array<int>  $studentIds
+     * @param  ?Admin      $admin
+     * @param  ?Teacher    $teacher
+     * @param  bool        $createTuition
+     * @param  ?array<int> $tuitionStudentIds
      * @return int
      */
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false): int;
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false, ?array $tuitionStudentIds = null): int;
 
     /**
      * @param  int      $classId

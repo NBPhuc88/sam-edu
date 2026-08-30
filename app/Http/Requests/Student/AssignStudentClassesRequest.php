@@ -17,9 +17,11 @@ class AssignStudentClassesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'class_ids'      => ['nullable', 'array'],
-            'class_ids.*'    => ['integer', 'exists:classes,id'],
-            'create_tuition' => ['nullable', 'boolean'],
+            'class_ids'           => ['nullable', 'array'],
+            'class_ids.*'         => ['integer', 'exists:classes,id'],
+            'create_tuition'      => ['nullable', 'boolean'],
+            'tuition_class_ids'   => ['nullable', 'array'],
+            'tuition_class_ids.*' => ['integer', 'exists:classes,id'],
         ];
     }
 

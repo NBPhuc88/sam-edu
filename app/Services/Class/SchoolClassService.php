@@ -719,7 +719,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         return $this->schoolClassRepository->getAvailableStudentsForClass($classId, (int) $schoolClass->center_id, $search);
     }
 
-    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false): int
+    public function addStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, ?Teacher $teacher = null, bool $createTuition = false, ?array $tuitionStudentIds = null): int
     {
         $schoolClass = $this->findClass($classId, $admin, $teacher);
 
@@ -736,8 +736,12 @@ class SchoolClassService implements SchoolClassServiceInterface
                 ? $schoolClass->total_tuition_fee
                 : $schoolClass->classSubjects()->sum('tuition_fee'));
 
-            if ($totalTuitionFee > 0 && ! empty($validStudentIds)) {
-                foreach ($validStudentIds as $studentId) {
+            $targetStudentIds = $tuitionStudentIds !== null
+                ? array_values(array_intersect($validStudentIds, array_map('intval', $tuitionStudentIds)))
+                : $validStudentIds;
+
+            if ($totalTuitionFee > 0 && ! empty($targetStudentIds)) {
+                foreach ($targetStudentIds as $studentId) {
                     StudentTuition::firstOrCreate(
                         [
                             'center_id'  => $schoolClass->center_id,

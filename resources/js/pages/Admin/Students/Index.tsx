@@ -803,6 +803,7 @@ return;
                     setSelectedStudentIds([]);
                 }}
                 selectedStudentIds={selectedStudentIds}
+                students={students.data}
                 allClasses={classes}
                 centers={centers}
                 selectedCenterId={selectedCenterId ? Number(selectedCenterId) : undefined}

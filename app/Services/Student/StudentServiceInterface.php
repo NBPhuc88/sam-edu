@@ -70,21 +70,23 @@ interface StudentServiceInterface
     public function deleteStudent(int $id, ?Admin $admin = null): bool;
 
     /**
-     * @param int        $studentId
-     * @param array<int> $classIds
-     * @param ?Admin     $admin
-     * @param bool       $createTuition
+     * @param int         $studentId
+     * @param array<int>  $classIds
+     * @param ?Admin      $admin
+     * @param bool        $createTuition
+     * @param ?array<int> $tuitionClassIds
      */
-    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null, bool $createTuition = false): void;
+    public function assignClassesToStudent(int $studentId, array $classIds, ?Admin $admin = null, bool $createTuition = false, ?array $tuitionClassIds = null): void;
 
     /**
      * @param  int                                        $classId
      * @param  array<int>                                 $studentIds
      * @param  ?Admin                                     $admin
      * @param  bool                                       $createTuition
+     * @param  ?array<int>                                $tuitionStudentIds
      * @return array{success_count: int, message: string}
      */
-    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, bool $createTuition = false): array;
+    public function bulkAssignStudentsToClass(int $classId, array $studentIds, ?Admin $admin = null, bool $createTuition = false, ?array $tuitionStudentIds = null): array;
 
     /**
      * @param int    $studentId
