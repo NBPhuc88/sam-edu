@@ -468,3 +468,30 @@ test('past cancelled sessions remain cancelled when schedule is updated or react
     // Verify it remains CANCELLED and is not converted to SCHEDULED
     expect($pastCancelledSession->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
 });
+
+test('cannot create duplicate active schedule for the same class and subject', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Schedule already exists and is active for this class and subject
+    expect($schedule->status)->toBe(Constant::SCHEDULE_STATUS_ACTIVE);
+
+    // Try to create another schedule for the same class and subject
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->post(route('schedules.store'), [
+            'class_id'   => $class->id,
+            'subject_id' => $this->subject->id,
+            'teacher_id' => $this->teacher->id,
+            'start_date' => now()->toDateString(),
+            'weeks'      => [
+                ['day_of_week' => (int) now()->dayOfWeekIso, 'start_time' => '14:00', 'end_time' => '16:00'],
+            ],
+            'status' => Constant::SCHEDULE_STATUS_ACTIVE,
+        ]);
+
+    $response->assertSessionHasErrors('subject_id');
+});

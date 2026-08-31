@@ -7,7 +7,9 @@ use App\Models\Admin;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\ClassSubject;
+use App\Models\Room;
 use App\Models\SchoolClass;
+use App\Models\Teacher;
 use App\Repositories\Center\CenterRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use App\Repositories\Holiday\HolidayRepositoryInterface;
@@ -743,11 +745,24 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             ]);
         }
 
+        $existingActiveSchedule = ClassSchedule::whereHas('classSubject', function ($q) use ($schoolClass, $subjectId) {
+            $q->where('class_id', $schoolClass->id)
+                ->where('subject_id', $subjectId);
+        })
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+            ->exists();
+
+        if ($existingActiveSchedule) {
+            throw ValidationException::withMessages([
+                'subject_id' => "Lớp '{$schoolClass->name}' đã có lịch học đang áp dụng cho môn '{$subject->name}'.",
+            ]);
+        }
+
         if ($existingClassSubject->teacher_id) {
             $teacherId = (int) $existingClassSubject->teacher_id;
         }
 
-        $teacher = \App\Models\Teacher::find($teacherId);
+        $teacher = Teacher::find($teacherId);
 
         if ($teacher && (int) $teacher->status !== Constant::TEACHER_STATUS_ACTIVE) {
             throw ValidationException::withMessages([
@@ -756,7 +771,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         }
 
         if (! empty($data['room_id'])) {
-            $room = \App\Models\Room::find((int) $data['room_id']);
+            $room = Room::find((int) $data['room_id']);
 
             if ($room && (int) $room->status !== Constant::ROOM_STATUS_ACTIVE) {
                 throw ValidationException::withMessages([

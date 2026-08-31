@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Schedule;
 
 use App\Enums\Constant;
+use App\Models\ClassSchedule;
 use App\Models\SchoolClass;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -62,7 +63,21 @@ class StoreClassScheduleRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $classId = $this->input('class_id');
+            $classId   = $this->input('class_id');
+            $subjectId = $this->input('subject_id');
+
+            if ($classId && $subjectId) {
+                $existingActiveSchedule = ClassSchedule::whereHas('classSubject', function ($q) use ($classId, $subjectId) {
+                    $q->where('class_id', $classId)
+                        ->where('subject_id', $subjectId);
+                })
+                    ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+                    ->exists();
+
+                if ($existingActiveSchedule) {
+                    $validator->errors()->add('subject_id', 'Lớp học này đã có lịch học đang áp dụng cho môn học đã chọn.');
+                }
+            }
 
             if (! $classId) {
                 return;

@@ -431,6 +431,13 @@ export default function ScheduleCreate({
         return list;
     }, [classSubjects, centerId, subjects]);
 
+    const isSubjectAlreadyActive = (subjectId: number) => {
+        const cs = classSubjects.find((item) => Number(item.subject_id || item.subject?.id) === Number(subjectId));
+        if (!cs) return false;
+        const schedules = cs.class_schedules || cs.classSchedules || [];
+        return schedules.some((sch) => Number(sch.status) === SCHEDULE_STATUS_ACTIVE);
+    };
+
     const matchedClassSubject = classSubjects.find(
         (cs) => String(cs.subject?.id) === String(selectedSubjectId)
     );
@@ -1103,12 +1110,22 @@ export default function ScheduleCreate({
                                               ? '-- Lớp học chưa được gán môn học nào --'
                                               : '-- Chọn môn học của lớp --'}
                                     </option>
-                                    {displaySubjects.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name}{s.total_sessions ? ` (${s.total_sessions} buổi)` : ''}
-                                        </option>
-                                    ))}
+                                    {displaySubjects.map((s) => {
+                                        const isAlreadyActive = isSubjectAlreadyActive(s.id);
+                                        return (
+                                            <option key={s.id} value={s.id} disabled={isAlreadyActive}>
+                                                {s.name}
+                                                {s.total_sessions ? ` (${s.total_sessions} buổi)` : ''}
+                                                {isAlreadyActive ? ' - [Đã có lịch đang áp dụng]' : ''}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
+                                {selectedSubjectId && isSubjectAlreadyActive(Number(selectedSubjectId)) && (
+                                    <p className="mt-1.5 text-xs text-red-600 font-medium">
+                                        Môn học này đã có lịch học đang áp dụng cho lớp học đã chọn.
+                                    </p>
+                                )}
                                 {selectedClassId && displaySubjects.length === 0 && (
                                     <p className="mt-1.5 text-xs text-amber-600">
                                         Lớp học này chưa được phân công môn học. Vui lòng vào chỉnh sửa Lớp học để gán môn học và giáo viên.
