@@ -5,6 +5,12 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import {
+    STUDENT_STATUS_ACTIVE,
+    STUDENT_STATUS_GRADUATED,
+    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_LABELS,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, router } from '@inertiajs/react';
 import { Calendar, Check, GraduationCap, HeartHandshake, HelpCircle, Save, User } from 'lucide-react';
@@ -506,9 +512,9 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value={1}>Đang học</option>
-                                    <option value={0}>Nghỉ học</option>
-                                    <option value={2}>Đã tốt nghiệp</option>
+                                    <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang theo học'}</option>
+                                    <option value={STUDENT_STATUS_INACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] || 'Tạm ngưng / Nghỉ học'}</option>
+                                    <option value={STUDENT_STATUS_GRADUATED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] || 'Đã tốt nghiệp'}</option>
                                 </select>
                             </div>
 

@@ -3,6 +3,13 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import {
+    CLASS_STATUS_ACTIVE,
+    CLASS_STATUS_CLOSED,
+    CLASS_STATUS_COMPLETED,
+    CLASS_STATUS_INACTIVE,
+    CLASS_STATUS_LABELS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
@@ -54,8 +61,8 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     const [name, setName] = useState<string>('');
     const [maxStudents, setMaxStudents] = useState<string>('30');
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState<string>('');
-    const [status, setStatus] = useState<string>('1');
+    const [endDate, setEndDate] = useState<string>('' );
+    const [status, setStatus] = useState<number>(CLASS_STATUS_ACTIVE);
     const [description, setDescription] = useState<string>('');
 
     // Dynamic list of subjects & assigned teachers & subject tuition fee
@@ -315,13 +322,13 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value="1">Đang hoạt động</option>
-                                    <option value="0">Tạm dừng</option>
-                                    <option value="2">Đã hoàn thành</option>
-                                    <option value="3">Đã đóng</option>
+                                    <option value={CLASS_STATUS_ACTIVE}>{CLASS_STATUS_LABELS[CLASS_STATUS_ACTIVE] || 'Đang hoạt động'}</option>
+                                    <option value={CLASS_STATUS_INACTIVE}>{CLASS_STATUS_LABELS[CLASS_STATUS_INACTIVE] || 'Tạm ngưng'}</option>
+                                    <option value={CLASS_STATUS_COMPLETED}>{CLASS_STATUS_LABELS[CLASS_STATUS_COMPLETED] || 'Đã hoàn thành'}</option>
+                                    <option value={CLASS_STATUS_CLOSED}>{CLASS_STATUS_LABELS[CLASS_STATUS_CLOSED] || 'Đã đóng'}</option>
                                 </select>
                             </div>
 

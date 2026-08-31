@@ -4,6 +4,13 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import {
+    CLASS_STATUS_ACTIVE,
+    CLASS_STATUS_CLOSED,
+    CLASS_STATUS_COMPLETED,
+    CLASS_STATUS_INACTIVE,
+    CLASS_STATUS_LABELS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
@@ -82,7 +89,7 @@ export default function ClassEdit({
     );
     const [startDate, setStartDate] = useState<string>(schoolClass.start_date || '');
     const [endDate, setEndDate] = useState<string>(schoolClass.end_date || '');
-    const [status, setStatus] = useState<number>(Number(schoolClass.status ?? 1));
+    const [status, setStatus] = useState<number>(Number(schoolClass.status ?? CLASS_STATUS_ACTIVE));
     const [description, setDescription] = useState<string>(schoolClass.description || '');
 
     // Pre-populate dynamic list of subjects & assigned teachers & tuition fees
@@ -209,7 +216,7 @@ export default function ClassEdit({
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const isClosedOrCompleted = Number(schoolClass.status) === 2 || Number(schoolClass.status) === 3;
+    const isClosedOrCompleted = Number(schoolClass.status) === CLASS_STATUS_COMPLETED || Number(schoolClass.status) === CLASS_STATUS_CLOSED;
     const canEditStatus = isSuperAdmin || !isClosedOrCompleted;
 
     const handleRowChange = (index: number, field: 'subject_id' | 'teacher_id' | 'tuition_fee', value: string) => {
@@ -298,11 +305,11 @@ export default function ClassEdit({
             return;
         }
 
-        // Nếu chuyển sang trạng thái Hoàn thành (2) hoặc Đã đóng (3) khác với ban đầu, yêu cầu xác nhận qua Modal
+        // Nếu chuyển sang trạng thái Hoàn thành (3) hoặc Đã đóng (4) khác với ban đầu, yêu cầu xác nhận qua Modal
         const selectedStatusNum = Number(status);
         const originalStatusNum = Number(schoolClass.status);
 
-        if ((selectedStatusNum === 2 || selectedStatusNum === 3) && selectedStatusNum !== originalStatusNum) {
+        if ((selectedStatusNum === CLASS_STATUS_COMPLETED || selectedStatusNum === CLASS_STATUS_CLOSED) && selectedStatusNum !== originalStatusNum) {
             setShowConfirmModal(true);
             return;
         }
@@ -439,10 +446,10 @@ export default function ClassEdit({
                                         !canEditStatus ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
                                     }`}
                                 >
-                                    <option value={1}>Đang hoạt động</option>
-                                    <option value={0}>Tạm dừng</option>
-                                    <option value={2}>Đã hoàn thành</option>
-                                    <option value={3}>Đã đóng</option>
+                                    <option value={CLASS_STATUS_ACTIVE}>{CLASS_STATUS_LABELS[CLASS_STATUS_ACTIVE] || 'Đang hoạt động'}</option>
+                                    <option value={CLASS_STATUS_INACTIVE}>{CLASS_STATUS_LABELS[CLASS_STATUS_INACTIVE] || 'Tạm ngưng'}</option>
+                                    <option value={CLASS_STATUS_COMPLETED}>{CLASS_STATUS_LABELS[CLASS_STATUS_COMPLETED] || 'Đã hoàn thành'}</option>
+                                    <option value={CLASS_STATUS_CLOSED}>{CLASS_STATUS_LABELS[CLASS_STATUS_CLOSED] || 'Đã đóng'}</option>
                                 </select>
                                 {!canEditStatus && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
@@ -712,7 +719,7 @@ export default function ClassEdit({
                                 <div className="mt-1 text-xs text-amber-800 leading-relaxed">
                                     Bạn đang chọn chuyển trạng thái lớp sang{' '}
                                     <strong className="font-bold text-amber-950">
-                                        {Number(status) === 2 ? 'ĐÃ HOÀN THÀNH' : 'ĐÃ ĐÓNG'}
+                                        {Number(status) === CLASS_STATUS_COMPLETED ? 'ĐÃ HOÀN THÀNH' : 'ĐÃ ĐÓNG'}
                                     </strong>
                                     . Khi hoàn tất, các tính năng lịch học, thi cử và chat nhóm của lớp sẽ bị khóa vĩnh viễn và chỉ có{' '}
                                     <strong className="underline">Super Admin</strong> mới có quyền mở lại lớp học này.

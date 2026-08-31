@@ -207,7 +207,7 @@ export default function TranscriptPrint({
                     <div>
                         <span className="text-gray-500 block font-medium">Trạng Thái:</span>
                         <span className="font-semibold text-emerald-700">
-                            {Number(student.status) === 2 ? 'Đã Tốt Nghiệp' : Number(student.status) === 0 ? 'Tạm Dừng' : 'Đang Theo Học'}
+                            {Number(student.status) === 3 ? 'Đã Tốt Nghiệp' : Number(student.status) === 2 ? 'Tạm Ngưng' : 'Đang Theo Học'}
                         </span>
                     </div>
                 </div>

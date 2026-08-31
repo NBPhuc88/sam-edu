@@ -540,7 +540,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 <p className="mt-1 text-xs text-amber-800">
                                     Việc chuyển trạng thái sang{' '}
                                     <span className="font-bold underline">
-                                        {pendingStatus === 2 ? 'Đã đóng' : (pendingStatus === 0 ? 'Tạm dừng' : 'Đang hoạt động')}
+                                        {pendingStatus === ROOM_STATUS_CLOSED ? 'Đã đóng' : (pendingStatus === ROOM_STATUS_PAUSED ? 'Tạm dừng' : 'Đang hoạt động')}
                                     </span>{' '}
                                     có thể ảnh hưởng đến các lớp học và ca học đã được phân công cho phòng học này.
                                 </p>

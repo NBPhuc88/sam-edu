@@ -2,6 +2,12 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
+import {
+    TEACHER_STATUS_ACTIVE,
+    TEACHER_STATUS_INACTIVE,
+    TEACHER_STATUS_LABELS,
+    TEACHER_STATUS_LOCKED,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
@@ -353,9 +359,9 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
                                     onChange={(e) => setStatus(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value={1}>Đang hoạt động</option>
-                                    <option value={0}>Tạm dừng giảng dạy</option>
-                                    <option value={2}>Khóa tài khoản</option>
+                                    <option value={TEACHER_STATUS_ACTIVE}>{TEACHER_STATUS_LABELS[TEACHER_STATUS_ACTIVE] || 'Đang hoạt động'}</option>
+                                    <option value={TEACHER_STATUS_INACTIVE}>{TEACHER_STATUS_LABELS[TEACHER_STATUS_INACTIVE] || 'Tạm nghỉ'}</option>
+                                    <option value={TEACHER_STATUS_LOCKED}>{TEACHER_STATUS_LABELS[TEACHER_STATUS_LOCKED] || 'Khóa tài khoản'}</option>
                                 </select>
                             </div>
 
