@@ -5,6 +5,7 @@ namespace App\Services\Teacher;
 use App\Models\Center;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Generator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -134,6 +135,28 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
         $updatedCount  = 0;
         $errors        = [];
         $lineIndex     = 1;
+        $batch         = [];
+
+        $processBatch = function () use (&$batch, &$importedCount, &$updatedCount) {
+            if (empty($batch)) {
+                return;
+            }
+
+            DB::transaction(function () use (&$batch, &$importedCount, &$updatedCount) {
+                foreach ($batch as $item) {
+                    if ($item['existing']) {
+                        $this->teacherRepository->updateOrCreateByCode($item['code'], $item['data']);
+                        $updatedCount++;
+                    } else {
+                        $item['data']['password'] = Hash::make('12345678');
+                        $this->teacherRepository->updateOrCreateByCode($item['code'], $item['data']);
+                        $importedCount++;
+                    }
+                }
+            });
+
+            $batch = [];
+        };
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
@@ -214,14 +237,19 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 'center_id'      => $targetCenterId,
             ];
 
-            if ($existingTeacher) {
-                $this->teacherRepository->updateOrCreateByCode($teacherCode, $data);
-                $updatedCount++;
-            } else {
-                $data['password'] = Hash::make('12345678');
-                $this->teacherRepository->updateOrCreateByCode($teacherCode, $data);
-                $importedCount++;
+            $batch[] = [
+                'code'     => $teacherCode,
+                'data'     => $data,
+                'existing' => (bool) $existingTeacher,
+            ];
+
+            if (count($batch) >= 1000) {
+                $processBatch();
             }
+        }
+
+        if (! empty($batch)) {
+            $processBatch();
         }
 
         return [

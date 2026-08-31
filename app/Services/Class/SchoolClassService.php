@@ -790,14 +790,24 @@ class SchoolClassService implements SchoolClassServiceInterface
                 : $validStudentIds;
 
             if ($totalTuitionFee > 0 && ! empty($targetStudentIds)) {
-                foreach ($targetStudentIds as $studentId) {
-                    StudentTuition::firstOrCreate(
-                        [
-                            'center_id'  => $schoolClass->center_id,
-                            'student_id' => $studentId,
-                            'class_id'   => $schoolClass->id,
-                        ],
-                        [
+                $existingStudentIds = StudentTuition::query()
+                    ->where('class_id', $schoolClass->id)
+                    ->whereIn('student_id', $targetStudentIds)
+                    ->pluck('student_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->toArray();
+
+                $missingStudentIds = array_values(array_diff($targetStudentIds, $existingStudentIds));
+
+                if (! empty($missingStudentIds)) {
+                    $now    = now();
+                    $buffer = [];
+
+                    foreach ($missingStudentIds as $studentId) {
+                        $buffer[] = [
+                            'center_id'        => $schoolClass->center_id,
+                            'student_id'       => $studentId,
+                            'class_id'         => $schoolClass->id,
                             'title'            => 'Học phí ' . $schoolClass->name,
                             'total_amount'     => $totalTuitionFee,
                             'paid_amount'      => 0,
@@ -805,8 +815,19 @@ class SchoolClassService implements SchoolClassServiceInterface
                             'status'           => Constant::TUITION_STATUS_PENDING,
                             'due_date'         => $schoolClass->end_date ?: null,
                             'created_by'       => $admin?->id,
-                        ]
-                    );
+                            'created_at'       => $now,
+                            'updated_at'       => $now,
+                        ];
+
+                        if (count($buffer) >= 1000) {
+                            StudentTuition::insert($buffer);
+                            $buffer = [];
+                        }
+                    }
+
+                    if (! empty($buffer)) {
+                        StudentTuition::insert($buffer);
+                    }
                 }
             }
         }
@@ -837,7 +858,17 @@ class SchoolClassService implements SchoolClassServiceInterface
     public function updateClassStudentsTuitions(SchoolClass $schoolClass): void
     {
         $newClassTotal = (float) $schoolClass->total_tuition_fee;
-        $tuitions      = StudentTuition::where('class_id', $schoolClass->id)->get();
+        $tuitions      = StudentTuition::query()
+            ->where('class_id', $schoolClass->id)
+            ->withSum('payments', 'amount')
+            ->get();
+
+        if ($tuitions->isEmpty()) {
+            return;
+        }
+
+        $now    = now();
+        $buffer = [];
 
         foreach ($tuitions as $tuition) {
             $discountType  = $tuition->discount_type ? (int) $tuition->discount_type : null;
@@ -851,7 +882,7 @@ class SchoolClassService implements SchoolClassServiceInterface
                 $newTotal = $newClassTotal;
             }
 
-            $paidAmount      = (float) $tuition->payments()->sum('amount');
+            $paidAmount      = (float) ($tuition->payments_sum_amount ?? 0);
             $remainingAmount = max(0.0, $newTotal - $paidAmount);
             $isOverdue       = $tuition->due_date && Carbon::parse($tuition->due_date)->isPast() && $remainingAmount > 0;
 
@@ -863,12 +894,41 @@ class SchoolClassService implements SchoolClassServiceInterface
                 $status = $isOverdue ? Constant::TUITION_STATUS_OVERDUE : Constant::TUITION_STATUS_PENDING;
             }
 
-            $tuition->update([
+            $buffer[] = [
+                'id'               => $tuition->id,
+                'center_id'        => $tuition->center_id,
+                'student_id'       => $tuition->student_id,
+                'class_id'         => $tuition->class_id,
+                'title'            => $tuition->title,
                 'total_amount'     => $newTotal,
+                'discount_type'    => $tuition->discount_type,
+                'discount_value'   => $tuition->discount_value,
                 'paid_amount'      => $paidAmount,
                 'remaining_amount' => $remainingAmount,
                 'status'           => $status,
-            ]);
+                'due_date'         => $tuition->due_date,
+                'note'             => $tuition->note,
+                'created_by'       => $tuition->created_by,
+                'created_at'       => $tuition->created_at,
+                'updated_at'       => $now,
+            ];
+
+            if (count($buffer) >= 1000) {
+                StudentTuition::upsert(
+                    $buffer,
+                    ['id'],
+                    ['total_amount', 'paid_amount', 'remaining_amount', 'status', 'updated_at']
+                );
+                $buffer = [];
+            }
+        }
+
+        if (! empty($buffer)) {
+            StudentTuition::upsert(
+                $buffer,
+                ['id'],
+                ['total_amount', 'paid_amount', 'remaining_amount', 'status', 'updated_at']
+            );
         }
     }
 }

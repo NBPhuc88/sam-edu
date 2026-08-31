@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\ClassExam;
 use App\Models\ClassExamSubmission;
 use App\Models\Exam;
+use App\Models\ExamResult;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Repositories\Exam\ExamResultRepositoryInterface;
@@ -418,8 +419,10 @@ class GradingService implements GradingServiceInterface
             ]);
 
             // 3. Tạo Submissions và cập nhật Exam Results
-            $scoresInput = $data['scores'] ?? [];
-            $now         = Carbon::now();
+            $scoresInput      = $data['scores'] ?? [];
+            $now              = Carbon::now();
+            $submissionBuffer = [];
+            $examResultBuffer = [];
 
             foreach ($scoresInput as $item) {
                 if (empty($item['student_id'])) {
@@ -431,11 +434,10 @@ class GradingService implements GradingServiceInterface
                 $score     = $hasScore ? (float) $item['score'] : null;
                 $comment   = ! empty($item['comment']) ? trim($item['comment']) : null;
 
-                $isPassed = $score !== null && $score >= $passScore;
                 $status   = Constant::SUBMISSION_STATUS_SUBMITTED;
                 $isGraded = $score !== null;
 
-                ClassExamSubmission::create([
+                $submissionBuffer[] = [
                     'class_exam_id'           => $classExam->id,
                     'student_id'              => $studentId,
                     'score'                   => $score,
@@ -448,24 +450,50 @@ class GradingService implements GradingServiceInterface
                     'graded_by_admin_id'      => $isGraded ? $admin?->id : null,
                     'teacher_feedback'        => $comment,
                     'submitted_at'            => $now,
-                ]);
+                    'created_at'              => $now,
+                    'updated_at'              => $now,
+                ];
+
+                if (count($submissionBuffer) >= 1000) {
+                    ClassExamSubmission::insert($submissionBuffer);
+                    $submissionBuffer = [];
+                }
 
                 if ($score !== null) {
-                    $this->examResultRepository->updateOrCreate(
-                        [
-                            'exam_id'    => $exam->id,
-                            'student_id' => $studentId,
-                        ],
-                        [
-                            'score'                 => $score,
-                            'grade'                 => $this->calculateGradeLabel($score, $maxScore),
-                            'comment'               => $comment,
-                            'entered_by_teacher_id' => $teacher?->id,
-                            'entered_by_admin_id'   => $admin?->id,
-                            'entered_at'            => $now,
-                        ]
-                    );
+                    $examResultBuffer[] = [
+                        'exam_id'               => $exam->id,
+                        'student_id'            => $studentId,
+                        'score'                 => $score,
+                        'grade'                 => $this->calculateGradeLabel($score, $maxScore),
+                        'comment'               => $comment,
+                        'entered_by_teacher_id' => $teacher?->id,
+                        'entered_by_admin_id'   => $admin?->id,
+                        'entered_at'            => $now,
+                        'created_at'            => $now,
+                        'updated_at'            => $now,
+                    ];
+
+                    if (count($examResultBuffer) >= 1000) {
+                        ExamResult::upsert(
+                            $examResultBuffer,
+                            ['exam_id', 'student_id'],
+                            ['score', 'grade', 'comment', 'entered_by_teacher_id', 'entered_by_admin_id', 'entered_at', 'updated_at']
+                        );
+                        $examResultBuffer = [];
+                    }
                 }
+            }
+
+            if (! empty($submissionBuffer)) {
+                ClassExamSubmission::insert($submissionBuffer);
+            }
+
+            if (! empty($examResultBuffer)) {
+                ExamResult::upsert(
+                    $examResultBuffer,
+                    ['exam_id', 'student_id'],
+                    ['score', 'grade', 'comment', 'entered_by_teacher_id', 'entered_by_admin_id', 'entered_at', 'updated_at']
+                );
             }
 
             return $classExam;

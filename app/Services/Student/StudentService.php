@@ -18,6 +18,7 @@ use App\Repositories\Student\StudentRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -293,35 +294,7 @@ class StudentService implements StudentServiceInterface
                         : $validClassIds;
 
                     if (! empty($tuitionClassIds)) {
-                        $classes = SchoolClass::query()
-                            ->whereIn('id', $tuitionClassIds)
-                            ->with('classSubjects')
-                            ->get();
-
-                        foreach ($classes as $schoolClass) {
-                            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
-                                ? $schoolClass->total_tuition_fee
-                                : $schoolClass->classSubjects->sum('tuition_fee'));
-
-                            if ($totalTuitionFee > 0) {
-                                StudentTuition::firstOrCreate(
-                                    [
-                                        'center_id'  => $schoolClass->center_id,
-                                        'student_id' => $student->id,
-                                        'class_id'   => $schoolClass->id,
-                                    ],
-                                    [
-                                        'title'            => 'Học phí ' . $schoolClass->name,
-                                        'total_amount'     => $totalTuitionFee,
-                                        'paid_amount'      => 0,
-                                        'remaining_amount' => $totalTuitionFee,
-                                        'status'           => Constant::TUITION_STATUS_PENDING,
-                                        'due_date'         => $schoolClass->end_date ?: null,
-                                        'created_by'       => $admin?->id,
-                                    ]
-                                );
-                            }
-                        }
+                        $this->bulkCreateTuitionsForStudent((int) $student->id, (int) $centerId, $tuitionClassIds, $admin?->id);
                     }
                 }
             }
@@ -471,35 +444,7 @@ class StudentService implements StudentServiceInterface
                     : $validClassIds;
 
                 if (! empty($tuitionClassIds)) {
-                    $classes = SchoolClass::query()
-                        ->whereIn('id', $tuitionClassIds)
-                        ->with('classSubjects')
-                        ->get();
-
-                    foreach ($classes as $schoolClass) {
-                        $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
-                            ? $schoolClass->total_tuition_fee
-                            : $schoolClass->classSubjects->sum('tuition_fee'));
-
-                        if ($totalTuitionFee > 0) {
-                            StudentTuition::firstOrCreate(
-                                [
-                                    'center_id'  => $schoolClass->center_id,
-                                    'student_id' => $updatedStudent->id,
-                                    'class_id'   => $schoolClass->id,
-                                ],
-                                [
-                                    'title'            => 'Học phí ' . $schoolClass->name,
-                                    'total_amount'     => $totalTuitionFee,
-                                    'paid_amount'      => 0,
-                                    'remaining_amount' => $totalTuitionFee,
-                                    'status'           => Constant::TUITION_STATUS_PENDING,
-                                    'due_date'         => $schoolClass->end_date ?: null,
-                                    'created_by'       => $admin?->id,
-                                ]
-                            );
-                        }
-                    }
+                    $this->bulkCreateTuitionsForStudent((int) $updatedStudent->id, (int) $updatedStudent->center_id, $tuitionClassIds, $admin?->id);
                 }
             }
         }
@@ -590,7 +535,6 @@ class StudentService implements StudentServiceInterface
 
         $existingClassIds = $student->classes()->pluck('classes.id')->toArray();
         $validClassIds    = $this->studentRepository->filterValidClassIds($centerId, $classIds);
-        $newClassIds      = array_values(array_diff($validClassIds, $existingClassIds));
 
         $this->studentRepository->syncClasses($student, $validClassIds);
 
@@ -600,35 +544,7 @@ class StudentService implements StudentServiceInterface
                 : $validClassIds;
 
             if (! empty($targetClassIds)) {
-                $classes = SchoolClass::query()
-                    ->whereIn('id', $targetClassIds)
-                    ->with('classSubjects')
-                    ->get();
-
-                foreach ($classes as $schoolClass) {
-                    $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
-                        ? $schoolClass->total_tuition_fee
-                        : $schoolClass->classSubjects->sum('tuition_fee'));
-
-                    if ($totalTuitionFee > 0) {
-                        StudentTuition::firstOrCreate(
-                            [
-                                'center_id'  => $schoolClass->center_id,
-                                'student_id' => $student->id,
-                                'class_id'   => $schoolClass->id,
-                            ],
-                            [
-                                'title'            => 'Học phí ' . $schoolClass->name,
-                                'total_amount'     => $totalTuitionFee,
-                                'paid_amount'      => 0,
-                                'remaining_amount' => $totalTuitionFee,
-                                'status'           => Constant::TUITION_STATUS_PENDING,
-                                'due_date'         => $schoolClass->end_date ?: null,
-                                'created_by'       => $admin?->id,
-                            ]
-                        );
-                    }
-                }
+                $this->bulkCreateTuitionsForStudent($student->id, $centerId, $targetClassIds, $admin?->id);
             }
         }
     }
@@ -650,33 +566,72 @@ class StudentService implements StudentServiceInterface
         $validStudents = $this->studentRepository->getActiveStudents([(int) $class->center_id])
             ->whereIn('id', $studentIds);
 
-        $successCount       = 0;
-        $attachedStudentIds = [];
+        $validStudentIds = $validStudents->pluck('id')->map(fn ($id) => (int) $id)->toArray();
 
-        foreach ($validStudents as $student) {
-            $this->studentRepository->attachClasses($student, [$classId]);
-            $attachedStudentIds[] = $student->id;
-            $successCount++;
+        $existingPivotStudentIds = DB::table('class_students')
+            ->where('class_id', $classId)
+            ->whereIn('student_id', $validStudentIds)
+            ->pluck('student_id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+
+        $toAttachStudentIds = array_values(array_diff($validStudentIds, $existingPivotStudentIds));
+
+        if (! empty($toAttachStudentIds)) {
+            $now         = now();
+            $pivotBuffer = [];
+
+            foreach ($toAttachStudentIds as $sid) {
+                $pivotBuffer[] = [
+                    'class_id'    => $classId,
+                    'student_id'  => $sid,
+                    'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+                    'enrolled_at' => $now,
+                    'created_at'  => $now,
+                    'updated_at'  => $now,
+                ];
+
+                if (count($pivotBuffer) >= 1000) {
+                    DB::table('class_students')->insert($pivotBuffer);
+                    $pivotBuffer = [];
+                }
+            }
+
+            if (! empty($pivotBuffer)) {
+                DB::table('class_students')->insert($pivotBuffer);
+            }
         }
 
-        if ($createTuition && ! empty($attachedStudentIds)) {
+        $successCount = count($validStudentIds);
+
+        if ($createTuition && ! empty($validStudentIds)) {
             $totalTuitionFee = (float) ($class->total_tuition_fee > 0
                 ? $class->total_tuition_fee
                 : $class->classSubjects()->sum('tuition_fee'));
 
             $targetStudentIds = $tuitionStudentIds !== null
-                ? array_values(array_intersect($attachedStudentIds, array_map('intval', $tuitionStudentIds)))
-                : $attachedStudentIds;
+                ? array_values(array_intersect($validStudentIds, array_map('intval', $tuitionStudentIds)))
+                : $validStudentIds;
 
             if ($totalTuitionFee > 0 && ! empty($targetStudentIds)) {
-                foreach ($targetStudentIds as $studentId) {
-                    StudentTuition::firstOrCreate(
-                        [
-                            'center_id'  => $class->center_id,
-                            'student_id' => $studentId,
-                            'class_id'   => $class->id,
-                        ],
-                        [
+                $existingTuitions = StudentTuition::query()
+                    ->where('class_id', $class->id)
+                    ->whereIn('student_id', $targetStudentIds)
+                    ->pluck('student_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->toArray();
+
+                $missingStudentIds = array_values(array_diff($targetStudentIds, $existingTuitions));
+
+                if (! empty($missingStudentIds)) {
+                    $now           = now();
+                    $tuitionBuffer = [];
+
+                    foreach ($missingStudentIds as $studentId) {
+                        $tuitionBuffer[] = [
+                            'center_id'        => $class->center_id,
+                            'student_id'       => $studentId,
+                            'class_id'         => $class->id,
                             'title'            => 'Học phí ' . $class->name,
                             'total_amount'     => $totalTuitionFee,
                             'paid_amount'      => 0,
@@ -684,8 +639,19 @@ class StudentService implements StudentServiceInterface
                             'status'           => Constant::TUITION_STATUS_PENDING,
                             'due_date'         => $class->end_date ?: null,
                             'created_by'       => $admin?->id,
-                        ]
-                    );
+                            'created_at'       => $now,
+                            'updated_at'       => $now,
+                        ];
+
+                        if (count($tuitionBuffer) >= 1000) {
+                            StudentTuition::insert($tuitionBuffer);
+                            $tuitionBuffer = [];
+                        }
+                    }
+
+                    if (! empty($tuitionBuffer)) {
+                        StudentTuition::insert($tuitionBuffer);
+                    }
                 }
             }
         }
@@ -694,6 +660,75 @@ class StudentService implements StudentServiceInterface
             'success_count' => $successCount,
             'message'       => "Đã phân {$successCount} học sinh vào lớp '{$class->name}'.",
         ];
+    }
+
+    /**
+     * Tạo hàng loạt hồ sơ học phí cho 1 học sinh theo danh sách lớp học (tối đa 1.000 items/lượt)
+     *
+     * @param  int       $studentId
+     * @param  int       $centerId
+     * @param  list<int> $classIds
+     * @param  ?int      $createdBy
+     * @return void
+     */
+    protected function bulkCreateTuitionsForStudent(int $studentId, int $centerId, array $classIds, ?int $createdBy = null): void
+    {
+        if (empty($classIds)) {
+            return;
+        }
+
+        $existingClassIds = StudentTuition::query()
+            ->where('student_id', $studentId)
+            ->whereIn('class_id', $classIds)
+            ->pluck('class_id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+
+        $missingClassIds = array_values(array_diff($classIds, $existingClassIds));
+
+        if (empty($missingClassIds)) {
+            return;
+        }
+
+        $classes = SchoolClass::query()
+            ->whereIn('id', $missingClassIds)
+            ->with('classSubjects')
+            ->get();
+
+        $now    = now();
+        $buffer = [];
+
+        foreach ($classes as $schoolClass) {
+            $totalTuitionFee = (float) ($schoolClass->total_tuition_fee > 0
+                ? $schoolClass->total_tuition_fee
+                : $schoolClass->classSubjects->sum('tuition_fee'));
+
+            if ($totalTuitionFee > 0) {
+                $buffer[] = [
+                    'center_id'        => $schoolClass->center_id,
+                    'student_id'       => $studentId,
+                    'class_id'         => $schoolClass->id,
+                    'title'            => 'Học phí ' . $schoolClass->name,
+                    'total_amount'     => $totalTuitionFee,
+                    'paid_amount'      => 0,
+                    'remaining_amount' => $totalTuitionFee,
+                    'status'           => Constant::TUITION_STATUS_PENDING,
+                    'due_date'         => $schoolClass->end_date ?: null,
+                    'created_by'       => $createdBy,
+                    'created_at'       => $now,
+                    'updated_at'       => $now,
+                ];
+
+                if (count($buffer) >= 1000) {
+                    StudentTuition::insert($buffer);
+                    $buffer = [];
+                }
+            }
+        }
+
+        if (! empty($buffer)) {
+            StudentTuition::insert($buffer);
+        }
     }
 
     public function removeStudentFromClass(int $studentId, int $classId, ?Admin $admin = null): bool

@@ -97,9 +97,22 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >   - Đối với tất cả các trường có kiểu dữ liệu là số nguyên trong cơ sở dữ liệu (`status`, `role`, `plan_id`, `subscription_plan_id`, `gender`, `plan_type`, `center_id`, `max_students`, `max_classes`, v.v.), phía Frontend (Form submissions, Select dropdowns, URL Filter query params) **BẮT BUỘC phải gửi giá trị kiểu số nguyên (`Number(...)` hoặc hằng số `ENUM`)**.
 >   - **Nghiêm cấm gửi chuỗi định danh thay cho số**: Tuyệt đối **KHÔNG** gửi chuỗi như `'active'`, `'inactive'`, `'scheduled'`, `'in_progress'`, `'completed'`, `'cancelled'`, `'admin'`, `'super_admin'`, `'paid'`, `'unpaid'` lên server.
 >   - **Xử lý lựa chọn "Tất cả" / Không lọc**: Khi người dùng chọn "Tất cả" (`''`) hoặc để trống (`''`), Frontend **BẮT BUỘC phải loại bỏ hoàn toàn trường đó khỏi request params** (`undefined` hoặc không đưa key đó vào object params gửi lên `router.get()`), tuyệt đối không gửi chuỗi rỗng `""` hay `''` lên server.
-> - **Xử lý Phía Backend (FormRequests & FilterRequests)**:
->   - Các `FormRequest` và `FilterRequest` validate đúng kiểu `'nullable', 'integer'` (kèm `Rule::in(...)`).
->   - **KHÔNG sử dụng `prepareForValidation()`** để can thiệp / biến đổi dữ liệu request. Phía Frontend có trách nhiệm đảm bảo dữ liệu gửi lên đúng chuẩn sạch sẽ.
+> [!IMPORTANT]
+> **10. QUY TẮC TUYỆT ĐỐI KHÔNG THỰC HIỆN QUERY / CREATE / UPDATE / DELETE ĐƠN LẺ TRONG VÒNG LẶP (BULK & CHUNKED BATCH OPERATIONS ONLY)**:
+>
+> - **Nghiêm cấm tuyệt đối**:
+>   - Không được gọi các hàm ghi DB đơn lẻ (`Model::create()`, `$model->update()`, `$model->save()`, `$model->delete()`, `firstOrCreate()`, `updateOrCreate()`) bên trong vòng lặp (`foreach`, `for`, `while`).
+>   - Không được chạy các câu truy vấn con (Sub-queries / Aggregates như `$model->payments()->sum('amount')`, `Model::where()->first()`, `Model::find()`) lặp đi lặp lại trong vòng lặp gây ra lỗi N+1 Query nghiêm trọng và làm suy giảm hiệu năng DB.
+> - **Quy tắc Thêm mới nhiều bản ghi (Bulk Insert)**:
+>   - Gom toàn bộ dữ liệu vào mảng đệm `$buffer = []` và sử dụng `insert($buffer)` hoặc `insertOrIgnore($buffer)`.
+>   - Đối với số lượng lớn dữ liệu: Giới hạn mảng tối đa 1.000 items. Khi `count($buffer) >= 1000`, thực thi 1 câu lệnh `insert` rồi gán `$buffer = []` để xử lý tiếp. Sau khi thoát vòng lặp, nếu `count($buffer) > 0` thì thực thi tiếp lượt insert cuối cùng.
+> - **Quy tắc Cập nhật nhiều bản ghi (Bulk Update / Upsert)**:
+>   - Cập nhật cùng giá trị: Dùng `Model::whereIn('id', $ids)->update($data)`.
+>   - Cập nhật nhiều bản ghi khác giá trị: Sử dụng `Model::upsert($records, $uniqueBy, $updateColumns)` hoặc gom mảng đệm (tối đa 100 - 1.000 items) thực thi cập nhật bên trong `DB::transaction()`, sau mỗi lượt gán mảng về rỗng để xử lý tiếp cho đến hết; cuối cùng flush nốt phần dư nếu `count($buffer) > 0`.
+> - **Quy tắc Xóa nhiều bản ghi (Bulk Delete)**:
+>   - Sử dụng `Model::whereIn('id', $ids)->delete()`.
+> - **Pre-fetching / Eager Aggregates trước vòng lặp**:
+>   - Bắt buộc sử dụng `withSum()`, `withCount()`, `with()`, `whereIn()->keyBy()` để tải trước toàn bộ dữ liệu cần thiết trước khi vào vòng lặp tính toán bộ nhớ (in-memory).
 
 ---
 

@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Repositories\Student\StudentRepositoryInterface;
 use Generator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -146,6 +147,57 @@ class StudentExportImportService implements StudentExportImportServiceInterface
         $updatedCount  = 0;
         $errors        = [];
         $lineIndex     = 1;
+        $batch         = [];
+
+        $processBatch = function () use (&$batch, &$importedCount, &$updatedCount) {
+            if (empty($batch)) {
+                return;
+            }
+
+            DB::transaction(function () use (&$batch, &$importedCount, &$updatedCount) {
+                $classStudentBuffer = [];
+                $now                = now();
+
+                foreach ($batch as $item) {
+                    $studentCode = $item['code'];
+                    $data        = $item['data'];
+
+                    if ($item['existing']) {
+                        $this->studentRepository->updateOrCreateByCode($studentCode, $data);
+                        $updatedCount++;
+                        $studentObj = $this->studentRepository->findByCode($studentCode);
+                    } else {
+                        $data['password'] = Hash::make('12345678');
+                        $studentObj       = $this->studentRepository->updateOrCreateByCode($studentCode, $data);
+                        $importedCount++;
+                    }
+
+                    if (! empty($item['class_ids']) && $studentObj) {
+                        foreach ($item['class_ids'] as $classId) {
+                            $classStudentBuffer[] = [
+                                'class_id'    => $classId,
+                                'student_id'  => $studentObj->id,
+                                'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+                                'enrolled_at' => $now,
+                                'note'        => "Import từ CSV dòng {$item['line_index']}",
+                                'created_at'  => $now,
+                                'updated_at'  => $now,
+                            ];
+                        }
+                    }
+                }
+
+                if (! empty($classStudentBuffer)) {
+                    ClassStudent::upsert(
+                        $classStudentBuffer,
+                        ['class_id', 'student_id'],
+                        ['status', 'enrolled_at', 'note', 'updated_at']
+                    );
+                }
+            });
+
+            $batch = [];
+        };
 
         foreach ($this->readCsvStream($filePath) as $row) {
             $lineIndex++;
@@ -229,13 +281,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'center_id'           => $targetCenterId,
             ];
 
-            $studentObj = $existingStudent;
-
-            if ($existingStudent) {
-                $this->studentRepository->updateOrCreateByCode($studentCode, $data);
-                $updatedCount++;
-                $studentObj = $this->studentRepository->findByCode($studentCode);
-            } else {
+            if (! $existingStudent) {
                 // Kiểm tra giới hạn số học sinh (đang học + tạm nghỉ) không vượt quá max_students
                 if ($targetCenterId && in_array($data['status'], [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
                     $center = Center::find($targetCenterId);
@@ -252,38 +298,40 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                         }
                     }
                 }
-
-                $data['password'] = Hash::make('12345678');
-                $studentObj       = $this->studentRepository->updateOrCreateByCode($studentCode, $data);
-                $importedCount++;
             }
 
             // Ghi danh vào lớp học nếu có cột Mã lớp trong CSV
-            $classCodesRaw = $row['mã lớp'] ?? $row['class_code'] ?? $row['mã lớp học'] ?? $row['lớp'] ?? '';
+            $classCodesRaw    = $row['mã lớp'] ?? $row['class_code'] ?? $row['mã lớp học'] ?? $row['lớp'] ?? '';
+            $enrolledClassIds = [];
 
-            if (! empty($classCodesRaw) && $studentObj) {
+            if (! empty($classCodesRaw)) {
                 $classCodes = array_filter(array_map('trim', explode(',', (string) $classCodesRaw)));
 
-                foreach ($classCodes as $cCode) {
-                    $foundClass = SchoolClass::where('code', $cCode)
+                if (! empty($classCodes)) {
+                    $enrolledClassIds = SchoolClass::query()
+                        ->whereIn('code', $classCodes)
                         ->where('center_id', $targetCenterId)
-                        ->first();
-
-                    if ($foundClass) {
-                        ClassStudent::updateOrCreate(
-                            [
-                                'class_id'   => $foundClass->id,
-                                'student_id' => $studentObj->id,
-                            ],
-                            [
-                                'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
-                                'enrolled_at' => now(),
-                                'note'        => "Import từ CSV dòng {$lineIndex}",
-                            ]
-                        );
-                    }
+                        ->pluck('id')
+                        ->map(fn ($id) => (int) $id)
+                        ->toArray();
                 }
             }
+
+            $batch[] = [
+                'code'       => $studentCode,
+                'data'       => $data,
+                'existing'   => (bool) $existingStudent,
+                'class_ids'  => $enrolledClassIds,
+                'line_index' => $lineIndex,
+            ];
+
+            if (count($batch) >= 1000) {
+                $processBatch();
+            }
+        }
+
+        if (! empty($batch)) {
+            $processBatch();
         }
 
         return [

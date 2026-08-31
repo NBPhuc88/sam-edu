@@ -49,7 +49,14 @@ class AttendanceRepository implements AttendanceRepositoryInterface
      */
     public function saveSessionAttendances(int $sessionId, array $attendances, ?int $markedByTeacherId = null, ?int $markedByAdminId = null): bool
     {
+        if (empty($attendances)) {
+            return true;
+        }
+
         return DB::transaction(function () use ($sessionId, $attendances, $markedByTeacherId, $markedByAdminId) {
+            $now    = now();
+            $buffer = [];
+
             foreach ($attendances as $item) {
                 $rawStatus = $item['status'] ?? Constant::ATTENDANCE_STATUS_PRESENT;
                 $statusInt = is_numeric($rawStatus) ? (int) $rawStatus : match ($rawStatus) {
@@ -60,18 +67,33 @@ class AttendanceRepository implements AttendanceRepositoryInterface
                     default   => Constant::ATTENDANCE_STATUS_PRESENT,
                 };
 
-                Attendance::updateOrCreate(
-                    [
-                        'session_id' => $sessionId,
-                        'student_id' => (int) $item['student_id'],
-                    ],
-                    [
-                        'status'               => $statusInt,
-                        'note'                 => $item['note'] ?? null,
-                        'marked_by_teacher_id' => $markedByTeacherId,
-                        'marked_by_admin_id'   => $markedByAdminId,
-                        'marked_at'            => now(),
-                    ]
+                $buffer[] = [
+                    'session_id'           => $sessionId,
+                    'student_id'           => (int) $item['student_id'],
+                    'status'               => $statusInt,
+                    'note'                 => $item['note'] ?? null,
+                    'marked_by_teacher_id' => $markedByTeacherId,
+                    'marked_by_admin_id'   => $markedByAdminId,
+                    'marked_at'            => $now,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ];
+
+                if (count($buffer) >= 1000) {
+                    Attendance::upsert(
+                        $buffer,
+                        ['session_id', 'student_id'],
+                        ['status', 'note', 'marked_by_teacher_id', 'marked_by_admin_id', 'marked_at', 'updated_at']
+                    );
+                    $buffer = [];
+                }
+            }
+
+            if (! empty($buffer)) {
+                Attendance::upsert(
+                    $buffer,
+                    ['session_id', 'student_id'],
+                    ['status', 'note', 'marked_by_teacher_id', 'marked_by_admin_id', 'marked_at', 'updated_at']
                 );
             }
 
