@@ -9,9 +9,9 @@ Hệ thống Quản lý Giáo Dục **SAM Digital** xin thông báo: Gói cướ
 | Thông tin chi tiết | Thông số gói cước mới |
 | :--- | :--- |
 | **Trung tâm** | **{{ $center->name }}** |
-| **Gói dịch vụ** | **{{ $subscription->plan_name }}** (`{{ $subscription->plan_code }}`) |
+| **Gói dịch vụ** | **{{ $subscription->plan_name ?? $subscription->plan?->name }}** |
 | **Hành động** | **{{ $actionType === 'change' ? 'Đổi Gói Cước Mới' : 'Gia Hạn Gói Cước' }}** |
-| **Giá thanh toán** | **{{ number_format($subscription->price, 0, ',', '.') }} VNĐ** |
+| **Giá thanh toán** | **{{ number_format((float) ($subscription->price ?? 0), 0, ',', '.') }} VNĐ** |
 | **Thời hạn đăng ký** | **{{ $subscription->duration_days }} ngày** |
 | **Ngày bắt đầu** | **{{ \Illuminate\Support\Carbon::parse($subscription->starts_at)->format('d/m/Y') }}** |
 | **Ngày kết thúc** | **{{ \Illuminate\Support\Carbon::parse($subscription->ends_at)->format('d/m/Y') }}** |
