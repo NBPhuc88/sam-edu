@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Exam;
@@ -91,8 +92,8 @@ class TestCenterSeeder extends Seeder
                 'password'   => Hash::make('password'),
                 'full_name'  => 'Ban Quản Trị Tối Cao',
                 'phone'      => '0900000000',
-                'role'       => 'super_admin',
-                'status'     => 'active',
+                'role'       => Constant::ADMIN_ROLE_SUPER_ADMIN,
+                'status'     => Constant::ADMIN_STATUS_ACTIVE,
             ]
         );
     }
@@ -304,16 +305,14 @@ class TestCenterSeeder extends Seeder
         $center = Center::updateOrCreate(
             ['code' => $config['code']],
             [
-                'name'              => $config['name'],
-                'phone'             => $config['phone'],
-                'email'             => $config['email'],
-                'address'           => $config['address'],
-                'status'            => 'active',
-                'subscription_plan' => $config['subscription_plan'],
-                'plan_type'         => $config['plan_type'],
-                'expires_at'        => Carbon::now()->addYear(),
-                'max_students'      => $config['max_students'],
-                'max_classes'       => $config['max_classes'],
+                'name'         => $config['name'],
+                'phone'        => $config['phone'],
+                'email'        => $config['email'],
+                'address'      => $config['address'],
+                'status'       => Constant::CENTER_STATUS_ACTIVE,
+                'expires_at'   => Carbon::now()->addYear(),
+                'max_students' => $config['max_students'],
+                'max_classes'  => $config['max_classes'],
             ]
         );
 
@@ -327,25 +326,30 @@ class TestCenterSeeder extends Seeder
                 'password'   => Hash::make('password'),
                 'full_name'  => $config['admin']['full_name'],
                 'phone'      => $config['admin']['phone'],
-                'role'       => 'admin',
-                'status'     => 'active',
+                'role'       => Constant::ADMIN_ROLE_ADMIN,
+                'status'     => Constant::ADMIN_STATUS_ACTIVE,
             ]
         );
         $subAdmin->centers()->sync([$center->id]);
 
         // C. Tạo Lịch sử gói dịch vụ (center_subscriptions)
+        $plan = \App\Models\SubscriptionPlan::where('code', $config['subscription_plan'])->first();
+
         DB::table('center_subscriptions')->insert([
             'center_id'     => $center->id,
-            'plan_code'     => $config['subscription_plan'],
+            'plan_id'       => $plan?->id ?? 1,
             'plan_name'     => $config['plan_name'],
-            'price'         => $config['subscription_plan'] === 'pro' ? 8640000 : 4800000,
+            'price'         => $config['subscription_plan'] === 'advanced_20' ? 9600000 : 4800000,
             'duration_days' => 365,
             'starts_at'     => Carbon::now()->subMonths(2)->toDateTimeString(),
             'ends_at'       => Carbon::now()->addMonths(10)->toDateTimeString(),
-            'status'        => 'active',
+            'status'        => Constant::SUBSCRIPTION_STATUS_ACTIVE,
             'created_at'    => $this->now,
             'updated_at'    => $this->now,
         ]);
+
+        // Cập nhật subscription_plan_id cho center
+        $center->update(['subscription_plan_id' => $plan?->id ?? 1]);
 
         // E. Tạo Phòng học & Thiết bị
         $rooms = $this->createRoomsForCenter($center, $config['rooms']);
@@ -403,22 +407,22 @@ class TestCenterSeeder extends Seeder
                 [
                     'code'     => $r['code'],
                     'capacity' => $r['capacity'],
-                    'status'   => 'active',
+                    'status'   => Constant::ROOM_STATUS_ACTIVE,
                 ]
             );
 
             // Gắn trang thiết bị phòng
             DB::table('room_equipments')->updateOrInsert(
                 ['room_id' => $room->id, 'name' => 'Máy chiếu Laser 4K Full HD'],
-                ['quantity' => 1, 'status' => 'good', 'updated_at' => $this->now]
+                ['quantity' => 1, 'status' => 1, 'updated_at' => $this->now]
             );
             DB::table('room_equipments')->updateOrInsert(
                 ['room_id' => $room->id, 'name' => 'Hệ thống Loa Bluetooth Audio Test'],
-                ['quantity' => 2, 'status' => 'good', 'updated_at' => $this->now]
+                ['quantity' => 2, 'status' => 1, 'updated_at' => $this->now]
             );
             DB::table('room_equipments')->updateOrInsert(
                 ['room_id' => $room->id, 'name' => 'Điều hòa 2 chiều Inverter 24000BTU'],
-                ['quantity' => 2, 'status' => 'good', 'updated_at' => $this->now]
+                ['quantity' => 2, 'status' => 1, 'updated_at' => $this->now]
             );
 
             $rooms[] = $room;
@@ -452,7 +456,7 @@ class TestCenterSeeder extends Seeder
                     'total_sessions'   => $s['sessions'],
                     'duration_minutes' => $s['duration'],
                     'description'      => "Chương trình đào tạo chuẩn hóa môn {$s['name']} với giảng viên chất lượng cao.",
-                    'status'           => 'active',
+                    'status'           => Constant::SUBJECT_STATUS_ACTIVE,
                 ]
             );
             $subjects[] = $subject;
@@ -500,7 +504,7 @@ class TestCenterSeeder extends Seeder
                     'password'       => Hash::make('password'),
                     'specialization' => $spec,
                     'hire_date'      => Carbon::now()->subMonths(12)->toDateString(),
-                    'status'         => 'active',
+                    'status'         => Constant::TEACHER_STATUS_ACTIVE,
                 ]
             );
             $teachers[] = $teacher;
@@ -536,10 +540,10 @@ class TestCenterSeeder extends Seeder
 
             $username = "{$prefix}_" . sprintf('%02d', $i);
             $code     = sprintf('STD%09d', ($center->id * 1000) + $i);
-            $gender   = $i % 2 === 0 ? 'female' : 'male';
+            $gender   = $i % 2 === 0 ? Constant::GENDER_FEMALE : Constant::GENDER_MALE;
             $dob      = Carbon::now()->subYears(15 + ($i % 6))->subDays($i * 12)->toDateString();
 
-            $parentName  = 'Phụ huynh ' . ($gender === 'female' ? 'Mẹ em ' : 'Bố em ') . $ln;
+            $parentName  = 'Phụ huynh ' . ($gender === Constant::GENDER_FEMALE ? 'Mẹ em ' : 'Bố em ') . $ln;
             $parentPhone = '098' . sprintf('%07d', ($center->id * 100000) + $i);
             $parentRel   = $relationships[$i % count($relationships)];
 
@@ -630,7 +634,7 @@ class TestCenterSeeder extends Seeder
                     ],
                     [
                         'enrolled_at' => $startDate->toDateTimeString(),
-                        'status'      => 'active',
+                        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
                         'created_at'  => $this->now,
                         'updated_at'  => $this->now,
                     ]
@@ -686,7 +690,7 @@ class TestCenterSeeder extends Seeder
                 if (in_array($dow, $daysOfWeek, true)) {
                     $sessionCount++;
                     $isPast        = $currentDate->lt(Carbon::now());
-                    $sessionStatus = $isPast ? 'completed' : 'scheduled';
+                    $sessionStatus = $isPast ? Constant::SESSION_STATUS_COMPLETED : Constant::SESSION_STATUS_SCHEDULED;
 
                     $sessionId = DB::table('class_sessions')->insertGetId([
                         'class_subject_id'  => $classSubjectId,
@@ -705,14 +709,14 @@ class TestCenterSeeder extends Seeder
                     // Nếu ca học đã hoàn thành -> Điểm danh cho học sinh
                     if ($isPast) {
                         foreach ($enrolledStudents as $sIdx => $std) {
-                            $attStatus = 'present';
+                            $attStatus = Constant::ATTENDANCE_STATUS_PRESENT;
                             $attNote   = 'Tham gia đầy đủ, làm bài tốt.';
 
                             if ($sIdx % 7 === 0) {
-                                $attStatus = 'late';
+                                $attStatus = Constant::ATTENDANCE_STATUS_LATE;
                                 $attNote   = 'Đến muộn 10 phút vì kẹt xe.';
                             } elseif ($sIdx % 9 === 0) {
-                                $attStatus = 'absent';
+                                $attStatus = Constant::ATTENDANCE_STATUS_ABSENT;
                                 $attNote   = 'Nghỉ học có phép (báo trước).';
                             }
 
@@ -789,7 +793,7 @@ class TestCenterSeeder extends Seeder
                 'shuffle_options'   => true,
                 'max_attempts'      => 3,
                 'is_practice'       => true,
-                'status'            => 'published',
+                'status'            => Constant::EXAM_STATUS_PUBLISHED,
                 'description'       => 'Bộ đề thi thử đánh giá toàn diện năng lực ngôn ngữ với đa dạng các phần thi kỹ năng đọc, nghe, viết và trắc nghiệm.',
             ]
         );
@@ -810,7 +814,7 @@ class TestCenterSeeder extends Seeder
                 'shuffle_options'   => true,
                 'max_attempts'      => 1,
                 'is_practice'       => false,
-                'status'            => 'published',
+                'status'            => Constant::EXAM_STATUS_PUBLISHED,
                 'description'       => 'Bài thi kiểm tra giữa kỳ bắt buộc cho học sinh trong lớp.',
             ]
         );
@@ -829,7 +833,7 @@ class TestCenterSeeder extends Seeder
             'max_score'           => 10,
             'pass_score'          => 5,
             'access_code'         => 'SAM' . sprintf('%04d', $classes[0]->id),
-            'status'              => 'completed',
+            'status'              => Constant::CLASS_EXAM_STATUS_COMPLETED,
             'created_by_admin_id' => $subAdmin->id,
             'created_at'          => $this->now,
             'updated_at'          => $this->now,
@@ -852,7 +856,7 @@ class TestCenterSeeder extends Seeder
                 'score'                 => $score,
                 'total_correct'         => 8,
                 'total_questions'       => 10,
-                'status'                => 'submitted',
+                'status'                => Constant::SUBMISSION_STATUS_SUBMITTED,
                 'is_graded'             => true,
                 'graded_at'             => Carbon::now()->subDays(1)->toDateTimeString(),
                 'graded_by_teacher_id'  => $teachers[0]->id,
@@ -1211,7 +1215,7 @@ class TestCenterSeeder extends Seeder
 
                 $paidAmount      = $isFullPaid ? $fee : ($isPartial ? $fee / 2 : 0);
                 $remainingAmount = $fee - $paidAmount;
-                $tuitionStatus   = $isFullPaid ? 'completed' : ($isPartial ? 'partial' : 'pending');
+                $tuitionStatus   = $isFullPaid ? Constant::TUITION_STATUS_PAID : ($isPartial ? Constant::TUITION_STATUS_PARTIAL : Constant::TUITION_STATUS_PENDING);
 
                 $tuitionId = DB::table('student_tuitions')->insertGetId([
                     'center_id'        => $center->id,
@@ -1234,7 +1238,7 @@ class TestCenterSeeder extends Seeder
                         'student_tuition_id' => $tuitionId,
                         'amount'             => $paidAmount,
                         'payment_date'       => Carbon::now()->subDays(5)->toDateString(),
-                        'payment_method'     => $isFullPaid ? 'bank_transfer' : 'cash',
+                        'payment_method'     => $isFullPaid ? Constant::PAYMENT_METHOD_BANK_TRANSFER : Constant::PAYMENT_METHOD_CASH,
                         'transaction_code'   => 'TXN' . sprintf('%08d', ($center->id * 10000) + ($cIdx * 100) + $sIdx),
                         'note'               => $isFullPaid ? 'Đóng đủ 100% học phí đầu khóa' : 'Đóng đợt 1 (50%) học phí',
                         'received_by'        => $subAdmin->id,
@@ -1301,7 +1305,7 @@ class TestCenterSeeder extends Seeder
                     'email'       => $email,
                     'center_name' => 'Trung tâm Ngoại ngữ Sam',
                     'message'     => $msg,
-                    'status'      => $idx % 2 === 0 ? 'contacted' : 'pending',
+                    'status'      => $idx % 2 === 0 ? Constant::CONTACT_STATUS_CONTACTED : Constant::CONTACT_STATUS_PENDING,
                     'created_at'  => $this->now,
                     'updated_at'  => $this->now,
                 ]
