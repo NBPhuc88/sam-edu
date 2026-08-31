@@ -1057,17 +1057,32 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
                 $schedule->update($scheduleUpdate);
 
+                $today       = now()->toDateString();
+                $currentTime = now()->format('H:i:s');
+
                 // Nếu trạng thái lịch đổi sang Đã dừng -> Hủy các ca học tương lai chưa diễn ra
                 if (isset($data['status']) && (int) $data['status'] === Constant::SCHEDULE_STATUS_INACTIVE) {
                     ClassSession::where('class_subject_id', $classSubject->id)
-                        ->where('session_date', '>=', now()->toDateString())
+                        ->where(function ($q) use ($today, $currentTime) {
+                            $q->where('session_date', '>', $today)
+                                ->orWhere(function ($sq) use ($today, $currentTime) {
+                                    $sq->where('session_date', '=', $today)
+                                        ->where('start_time', '>', $currentTime);
+                                });
+                        })
                         ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                         ->whereDoesntHave('attendances')
                         ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
                 } else {
                     // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
                     ClassSession::where('class_subject_id', $classSubject->id)
-                        ->where('session_date', '>=', now()->toDateString())
+                        ->where(function ($q) use ($today, $currentTime) {
+                            $q->where('session_date', '>', $today)
+                                ->orWhere(function ($sq) use ($today, $currentTime) {
+                                    $sq->where('session_date', '=', $today)
+                                        ->where('start_time', '>', $currentTime);
+                                });
+                        })
                         ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                         ->whereDoesntHave('attendances')
                         ->update([
@@ -1080,7 +1095,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
 
             // Khi có thay đổi về ngày bắt đầu, weeks, off_days hoặc extra_days:
-            $today = now()->toDateString();
+            $today       = now()->toDateString();
+            $currentTime = now()->format('H:i:s');
 
             // 1. Stream các buổi học trong quá khứ / đã điểm danh / hoàn thành bằng cursor() để tiết kiệm RAM
             $pastSessionsCursor = $this->sessionRepository->getPastSessionsCursor($classSubject->id, $today);
@@ -1088,7 +1104,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $pastSessionKeys    = [];
 
             foreach ($pastSessionsCursor as $ps) {
-                $pastSessionsCount++;
+                if ((int) $ps->status !== Constant::SESSION_STATUS_CANCELLED) {
+                    $pastSessionsCount++;
+                }
                 $pDate                                 = $ps->session_date instanceof \DateTimeInterface ? $ps->session_date->format('Y-m-d') : (string) $ps->session_date;
                 $pStart                                = substr((string) $ps->start_time, 0, 5);
                 $pastSessionKeys["{$pDate}_{$pStart}"] = true;
@@ -1176,8 +1194,17 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
             // Nếu trạng thái lịch đổi sang Đã dừng -> Hủy các ca học tương lai vừa đồng bộ
             if (isset($data['status']) && (int) $data['status'] === Constant::SCHEDULE_STATUS_INACTIVE) {
+                $today       = now()->toDateString();
+                $currentTime = now()->format('H:i:s');
+
                 ClassSession::where('class_subject_id', $classSubject->id)
-                    ->where('session_date', '>=', $scanStartDate)
+                    ->where(function ($q) use ($today, $currentTime) {
+                        $q->where('session_date', '>', $today)
+                            ->orWhere(function ($sq) use ($today, $currentTime) {
+                                $sq->where('session_date', '=', $today)
+                                    ->where('start_time', '>', $currentTime);
+                            });
+                    })
                     ->where('status', Constant::SESSION_STATUS_SCHEDULED)
                     ->whereDoesntHave('attendances')
                     ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
@@ -1216,6 +1243,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         $deletedCount    = 0;
         $createdCount    = 0;
 
+        $today       = now()->toDateString();
+        $currentTime = now()->format('H:i:s');
+
         // 2. Stream các ca học tương lai hiện có từ database bằng cursor() để tiết kiệm RAM
         $futureCursor = $this->sessionRepository->getFutureUnattendedSessionsCursor($classSubjectId, $fromDate);
 
@@ -1225,8 +1255,15 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $endTime   = substr((string) $existing->end_time, 0, 5);
             $key       = "{$dateStr}_{$startTime}_{$endTime}";
 
+            // Ca học trong quá khứ đã bị hủy tuyệt đối không được khôi phục hoặc thay đổi
+            $isPastSession = ($dateStr < $today) || ($dateStr === $today && $startTime <= $currentTime);
+
+            if ($isPastSession && (int) $existing->status === Constant::SESSION_STATUS_CANCELLED) {
+                continue;
+            }
+
             if (isset($newSlotMap[$key])) {
-                // TRÙNG LỊCH: Giữ nguyên session và đặt trạng thái về dự kiến
+                // TRÙNG LỊCH: Giữ nguyên session và đặt trạng thái về dự kiến (nếu không phải ca quá khứ đã hủy)
                 $matchedSlotKeys[$key] = true;
                 $slot                  = $newSlotMap[$key];
 
@@ -1239,13 +1276,15 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 ]);
                 $keptCount++;
             } else {
-                // KHÁC LỊCH: Gom vào batch xóa
-                $deleteBatch[] = $existing->id;
+                // KHÁC LỊCH: Gom vào batch xóa (chỉ xóa ca tương lai chưa diễn ra)
+                if (! $isPastSession) {
+                    $deleteBatch[] = $existing->id;
 
-                // Khi mảng xóa đủ 1000 ID -> gọi repository xóa
-                if (count($deleteBatch) >= 1000) {
-                    $deletedCount += $this->sessionRepository->deleteSessionsByIds($deleteBatch);
-                    $deleteBatch = [];
+                    // Khi mảng xóa đủ 1000 ID -> gọi repository xóa
+                    if (count($deleteBatch) >= 1000) {
+                        $deletedCount += $this->sessionRepository->deleteSessionsByIds($deleteBatch);
+                        $deleteBatch = [];
+                    }
                 }
             }
         }
@@ -1481,6 +1520,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
         }
 
         // 4. Nếu không chọn ngày học nào trong tuần (empty weeks), chỉ sinh ca học từ ngày học bù (extra_days)
+        $todayDate = now()->toDateString();
+        $nowTime   = now()->format('H:i:s');
+
         if (empty($weeks)) {
             $sortedExtraDays = $extraDays;
             usort($sortedExtraDays, function ($a, $b) {
@@ -1499,6 +1541,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 $specEnd     = ! empty($extra['end_time']) ? substr((string) $extra['end_time'], 0, 5) : null;
 
                 if ($specDateStr && $specStart && $specEnd && $specDateStr >= $actualScanStart) {
+                    $isPastSlot = ($scanStartDateStr !== null) && (($specDateStr < $todayDate) || ($specDateStr === $todayDate && $specStart <= $nowTime));
+
+                    if ($isPastSlot) {
+                        continue;
+                    }
+
                     $slotKey = "{$specDateStr}_{$specStart}";
 
                     if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
@@ -1547,7 +1595,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
                         $startTime = $extraSlot['start_time'];
                         $endTime   = $extraSlot['end_time'];
-                        $slotKey   = "{$dateStr}_{$startTime}";
+
+                        $isPastSlot = ($scanStartDateStr !== null) && (($dateStr < $todayDate) || ($dateStr === $todayDate && $startTime <= $nowTime));
+
+                        if ($isPastSlot) {
+                            continue;
+                        }
+
+                        $slotKey = "{$dateStr}_{$startTime}";
 
                         if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
                             $seenDateTime[$slotKey] = true;
@@ -1577,6 +1632,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 // 4.2 Thêm các ca học theo chu kỳ tuần nếu ngày này không phải ngày nghỉ
                 if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
                     foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                        $isPastSlot = ($scanStartDateStr !== null) && (($dateStr < $todayDate) || ($dateStr === $todayDate && $startTime <= $nowTime));
+
+                        if ($isPastSlot) {
+                            continue;
+                        }
+
                         $slotKey = "{$dateStr}_{$startTime}";
 
                         if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
@@ -1619,7 +1680,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     foreach ($extraDaysByDate[$dateStr] as $extraSlot) {
                         $startTime = $extraSlot['start_time'];
                         $endTime   = $extraSlot['end_time'];
-                        $slotKey   = "{$dateStr}_{$startTime}";
+
+                        $isPastSlot = ($scanStartDateStr !== null) && (($dateStr < $todayDate) || ($dateStr === $todayDate && $startTime <= $nowTime));
+
+                        if ($isPastSlot) {
+                            continue;
+                        }
+
+                        $slotKey = "{$dateStr}_{$startTime}";
 
                         if (! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
                             $seenDateTime[$slotKey] = true;
@@ -1645,6 +1713,12 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 // 4.2 Thêm các ca học theo chu kỳ tuần
                 if (isset($weeks[$dayKey]) && ! isset($fullOffDays[$dateStr])) {
                     foreach ($weeks[$dayKey] as [$startTime, $endTime]) {
+                        $isPastSlot = ($scanStartDateStr !== null) && (($dateStr < $todayDate) || ($dateStr === $todayDate && $startTime <= $nowTime));
+
+                        if ($isPastSlot) {
+                            continue;
+                        }
+
                         $slotKey = "{$dateStr}_{$startTime}";
 
                         if (! isset($slotOffDays[$slotKey]) && ! isset($seenDateTime[$slotKey]) && ! isset($existingPastKeys[$slotKey])) {
@@ -1733,7 +1807,9 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $pastSessionKeys    = [];
 
             foreach ($pastSessionsCursor as $ps) {
-                $pastSessionsCount++;
+                if ((int) $ps->status !== Constant::SESSION_STATUS_CANCELLED) {
+                    $pastSessionsCount++;
+                }
                 $pDate                                 = $ps->session_date instanceof \DateTimeInterface ? $ps->session_date->format('Y-m-d') : (string) $ps->session_date;
                 $pStart                                = substr((string) $ps->start_time, 0, 5);
                 $pastSessionKeys["{$pDate}_{$pStart}"] = true;

@@ -267,12 +267,20 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function getPastSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection
     {
+        $today       = now()->toDateString();
+        $currentTime = now()->format('H:i:s');
+
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
-            ->where(function ($q) use ($fromDate) {
+            ->where(function ($q) use ($fromDate, $today, $currentTime) {
                 $q->where('session_date', '<', $fromDate)
+                    ->orWhere(function ($sq) use ($today, $currentTime) {
+                        $sq->where('session_date', '=', $today)
+                            ->where('start_time', '<=', $currentTime);
+                    })
                     ->orWhere('status', Constant::SESSION_STATUS_COMPLETED)
                     ->orWhere('status', Constant::SESSION_STATUS_IN_PROGRESS)
+                    ->orWhere('status', Constant::SESSION_STATUS_UNATTENDED)
                     ->orWhereHas('attendances');
             })
             ->select(['id', 'session_date', 'start_time', 'end_time', 'status'])
@@ -290,8 +298,18 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
      */
     public function getFutureUnattendedSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection
     {
+        $today         = now()->toDateString();
+        $currentTime   = now()->format('H:i:s');
+        $effectiveFrom = ($fromDate > $today) ? $fromDate : $today;
+
         return ClassSession::where('class_subject_id', $classSubjectId)
-            ->where('session_date', '>=', $fromDate)
+            ->where(function ($q) use ($effectiveFrom, $today, $currentTime) {
+                $q->where('session_date', '>', $effectiveFrom)
+                    ->orWhere(function ($sq) use ($today, $currentTime) {
+                        $sq->where('session_date', '=', $today)
+                            ->where('start_time', '>', $currentTime);
+                    });
+            })
             ->whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_CANCELLED])
             ->whereDoesntHave('attendances')
             ->select([

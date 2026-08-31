@@ -429,3 +429,42 @@ test('cannot update or reschedule a cancelled session', function () {
 
     $response->assertSessionHasErrors('session');
 });
+
+test('past cancelled sessions remain cancelled when schedule is updated or reactivated', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Create a past cancelled session
+    $pastCancelledSession = \App\Models\ClassSession::create([
+        'class_subject_id'  => $classSubject->id,
+        'class_schedule_id' => $schedule->id,
+        'teacher_id'        => $this->teacher->id,
+        'room_id'           => null,
+        'session_date'      => now()->subDays(5)->toDateString(),
+        'start_time'        => '08:00:00',
+        'end_time'          => '10:00:00',
+        'status'            => Constant::SESSION_STATUS_CANCELLED,
+        'topic'             => 'Ca hoc qua khu da huy',
+    ]);
+
+    // Update schedule
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->patch(route('schedules.update', $schedule->id), [
+            'teacher_id' => $this->teacher->id,
+            'start_date' => now()->toDateString(),
+            'weeks'      => [
+                ['day_of_week' => (int) now()->dayOfWeekIso, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+            'status' => Constant::SCHEDULE_STATUS_ACTIVE,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $pastCancelledSession->refresh();
+
+    // Verify it remains CANCELLED and is not converted to SCHEDULED
+    expect($pastCancelledSession->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+});
