@@ -93,6 +93,46 @@ body {
     background-color: #f9fafb;
 }
 
+/* CSV Action Buttons */
+.btn-sample,
+.btn-csv-sample {
+    background-color: #f3f4f6;
+    color: #374151;
+    border-color: #374151;
+}
+.btn-sample:hover:not(:disabled),
+.btn-csv-sample:hover:not(:disabled) {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    border-color: #1f2937;
+}
+
+.btn-import,
+.btn-csv-import {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+.btn-import:hover:not(:disabled),
+.btn-csv-import:hover:not(:disabled) {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
+}
+
+.btn-export,
+.btn-csv-export {
+    background-color: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+.btn-export:hover:not(:disabled),
+.btn-csv-export:hover:not(:disabled) {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-color: #6ee7b7;
+}
+
 /* Form Inputs */
 .ui-input {
     width: 100%;

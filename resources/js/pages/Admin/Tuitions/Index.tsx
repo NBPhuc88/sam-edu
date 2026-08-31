@@ -436,7 +436,7 @@ export const Index: React.FC<IndexProps> = ({
                         <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
                             <Button
                                 type="button"
-                                variant="success"
+                                variant="export"
                                 size="md"
                                 icon={<Download className="h-4 w-4" />}
                                 onClick={handleExport}

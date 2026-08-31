@@ -141,6 +141,9 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
     - `variant="edit"` (Sửa / Cập nhật): **Nền cam chữ trắng** (`bg-amber-500 hover:bg-amber-600 text-white`).
     - `variant="danger"` (Xóa / Hủy): **Nền đỏ chữ trắng** (`bg-red-600 hover:bg-red-700 text-white`).
     - `variant="secondary"` (Đóng / Quay lại): **Nền trắng viền xám chữ đen** (`bg-white border-gray-300 text-gray-900 hover:bg-gray-50`).
+    - `variant="sample"` / `variant="csv-sample"` (Tải tệp mẫu CSV): **Nền xám nhạt viền/chữ xám đậm** (Nền: `#F3F4F6` | Chữ & Viền: `#374151`).
+    - `variant="import"` / `variant="csv-import"` (Tải lên / Nhập dữ liệu CSV): **Nền xanh dương nhạt viền & chữ xanh dương** (Nền: `#EFF6FF` | Chữ: `#1D4ED8` | Viền: `#BFDBFE`).
+    - `variant="export"` / `variant="csv-export"` (Xuất dữ liệu CSV): **Nền xanh lá nhạt viền & chữ xanh lá đậm / emerald** (Nền: `#ECFDF5` | Chữ: `#047857` | Viền: `#A7F3D0`).
 3. **Nghiêm cấm Browser Alert/Confirm Mặc định**:
     - Tuyệt đối KHÔNG dùng `alert()`, `confirm()`, `prompt()` mặc định.
     - Tất cả thông báo/xác nhận bắt buộc dùng UI Component thiết kế bằng Tailwind CSS (`<Toast />`, `<Modal />` hoặc Flash Banner).

@@ -191,9 +191,9 @@ export default function ClassExamResultsPage({
                                 rel="noreferrer"
                             >
                                 <Button
-                                    variant="success"
+                                    variant="export"
                                     size="sm"
-                                    icon={<FileSpreadsheet className="h-4 w-4 text-white" />}
+                                    icon={<FileSpreadsheet className="h-4 w-4" />}
                                 >
                                     Xuất Điểm Thi (CSV)
                                 </Button>

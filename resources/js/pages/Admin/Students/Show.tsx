@@ -444,11 +444,11 @@ export default function StudentShow({
 
                     {canExport && (
                         <Button
-                            variant="secondary"
+                            variant="export"
                             onClick={handleExport}
                             className="gap-1.5 shrink-0 text-xs"
                         >
-                            <Download className="h-4 w-4 text-gray-600" />
+                            <Download className="h-4 w-4" />
                             Xuất CSV ({getFilterLabel()})
                         </Button>
                     )}

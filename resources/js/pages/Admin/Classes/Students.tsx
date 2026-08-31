@@ -352,7 +352,7 @@ export default function ClassStudentsPage({
                             </Button>
                         )}
                         <Button
-                            variant="secondary"
+                            variant="export"
                             size="md"
                             onClick={() => {
                                 if (!canExportCsv) {
@@ -364,12 +364,12 @@ export default function ClassStudentsPage({
                             className="flex items-center gap-2"
                             title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất danh sách học sinh lớp'}
                         >
-                            <Download className="h-4.5 w-4.5 text-gray-600" />
+                            <Download className="h-4.5 w-4.5" />
                             Export CSV Lớp {!canExportCsv && '🔒'}
                         </Button>
                         {!isTeacher && isClassActive && (
                             <Button
-                                variant="secondary"
+                                variant="import"
                                 size="md"
                                 onClick={() => {
                                     if (!canExportCsv) {
@@ -381,7 +381,7 @@ export default function ClassStudentsPage({
                                 className="flex items-center gap-2"
                                 title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Nhập danh sách học sinh vào lớp'}
                             >
-                                <Upload className="h-4.5 w-4.5 text-gray-600" />
+                                <Upload className="h-4.5 w-4.5" />
                                 Import CSV Lớp {!canExportCsv && '🔒'}
                             </Button>
                         )}
@@ -534,13 +534,13 @@ export default function ClassStudentsPage({
 
                     <div className="pt-2">
                         <Button
-                            variant="secondary"
+                            variant="sample"
                             size="md"
                             onClick={handleDownloadSample}
                             type="button"
                             className="flex w-full items-center justify-center gap-2 py-2.5 text-sm"
                         >
-                            <Download className="h-4.5 w-4.5 text-emerald-600" />
+                            <Download className="h-4.5 w-4.5" />
                             Tải tệp CSV mẫu cho lớp học (.csv)
                         </Button>
                     </div>

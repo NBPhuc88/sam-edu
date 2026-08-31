@@ -229,7 +229,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
 
                     <div className="flex flex-wrap items-center gap-2.5">
                         <Button
-                            variant="secondary"
+                            variant="sample"
                             size="md"
                             icon={<FileSpreadsheet className="h-4.5 w-4.5" />}
                             onClick={() => {
@@ -245,7 +245,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                         </Button>
                         {can('teachers.create') && (
                             <Button
-                                variant="secondary"
+                                variant="import"
                                 size="md"
                                 icon={<Upload className="h-4.5 w-4.5" />}
                                 onClick={() => {
@@ -260,7 +260,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                             </Button>
                         )}
                         <Button
-                            variant="secondary"
+                            variant="export"
                             size="md"
                             icon={<Download className="h-4.5 w-4.5" />}
                             onClick={() => {

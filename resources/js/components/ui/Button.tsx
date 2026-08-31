@@ -3,7 +3,18 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'success' | 'edit' | 'danger' | 'secondary' | 'outline';
+    variant?:
+        | 'success'
+        | 'edit'
+        | 'danger'
+        | 'secondary'
+        | 'outline'
+        | 'sample'
+        | 'import'
+        | 'export'
+        | 'csv-sample'
+        | 'csv-import'
+        | 'csv-export';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
     icon?: React.ReactNode;
@@ -32,6 +43,12 @@ export const Button: React.FC<ButtonProps> = ({
         danger: 'btn-danger',
         secondary: 'btn-secondary',
         outline: 'btn-outline',
+        sample: 'btn-sample',
+        import: 'btn-import',
+        export: 'btn-export',
+        'csv-sample': 'btn-csv-sample',
+        'csv-import': 'btn-csv-import',
+        'csv-export': 'btn-csv-export',
     };
 
     return (
