@@ -275,6 +275,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->whereHas('classSubject', function ($q) use ($classIds) {
                 $q->whereIn('class_id', $classIds);
             })
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
             ->get();
     }
 

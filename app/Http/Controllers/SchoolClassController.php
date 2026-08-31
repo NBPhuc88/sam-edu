@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Http\Requests\Class\FilterSchoolClassRequest;
 use App\Http\Requests\Class\StoreSchoolClassRequest;
 use App\Http\Requests\Class\UpdateSchoolClassRequest;
 use App\Models\Admin;
+use App\Models\ClassSession;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\Class\SchoolClassServiceInterface;
@@ -112,11 +114,17 @@ class SchoolClassController extends Controller
         $schoolClass = $this->schoolClassService->findClass($id, $admin);
         $formData    = $this->schoolClassService->getFormData($admin);
 
+        $futureSessionsCount = ClassSession::whereHas('classSubject', fn ($q) => $q->where('class_id', $id))
+            ->where('session_date', '>=', now()->toDateString())
+            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+            ->count();
+
         return Inertia::render('Admin/Classes/Edit', [
-            'schoolClass' => $schoolClass,
-            'centers'     => $formData['centers'],
-            'subjects'    => $formData['subjects'],
-            'teachers'    => $formData['teachers'],
+            'schoolClass'         => $schoolClass,
+            'centers'             => $formData['centers'],
+            'subjects'            => $formData['subjects'],
+            'teachers'            => $formData['teachers'],
+            'futureSessionsCount' => $futureSessionsCount,
         ]);
     }
 

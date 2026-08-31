@@ -434,6 +434,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     {
         return ClassSession::where('teacher_id', $teacherId)
             ->whereDate('session_date', today())
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->first();
     }
 

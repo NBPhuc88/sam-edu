@@ -25,6 +25,11 @@ Sparkles,
 Square,
 Trash2,
 } from 'lucide-react';
+import {
+    SCHEDULE_STATUS_ACTIVE,
+    SCHEDULE_STATUS_INACTIVE,
+    SCHEDULE_STATUS_LABELS,
+} from '@/constants/enums';
 import React, { useEffect, useState } from 'react';
 
 interface Center {
@@ -402,7 +407,7 @@ export default function ScheduleEdit({
     const [startDate, setStartDate] = useState<string>(
         toISODateString(classSubject?.start_date || classSubject?.school_class?.start_date)
     );
-    const [status] = useState<number>(schedule.status ?? 1);
+    const [status, setStatus] = useState<number>(Number(schedule.status ?? SCHEDULE_STATUS_ACTIVE));
 
     const initialWeeklyTimes = React.useMemo(() => {
         const base: Record<number, { enabled: boolean; slots: WeekDaySlot[] }> = {
@@ -1197,6 +1202,29 @@ export default function ScheduleEdit({
                                 <p className="mt-1.5 text-xs text-gray-500">
                                     Hệ thống tự động tính ngày kết thúc dựa trên ngày diễn ra ca học cuối cùng {totalSessions ? `(đủ ${totalSessions} buổi)` : ''}.
                                 </p>
+                            </div>
+
+                            {/* Trạng Thái Lịch Học */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                    Trạng Thái Lịch Học <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={status}
+                                    onChange={(e) => setStatus(Number(e.target.value))}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500"
+                                    required
+                                >
+                                    <option value={SCHEDULE_STATUS_ACTIVE}>
+                                        {SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_ACTIVE] || 'Đang áp dụng'}
+                                    </option>
+                                    <option value={SCHEDULE_STATUS_INACTIVE}>
+                                        {SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_INACTIVE] || 'Đã dừng'}
+                                    </option>
+                                </select>
+                                {errors.status && (
+                                    <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>
+                                )}
                             </div>
                         </div>
                     </Card>

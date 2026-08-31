@@ -327,6 +327,7 @@ class DashboardService implements DashboardServiceInterface
                 'classSubject.subject:id,name,code',
                 'room:id,name',
             ])
+            ->where('class_sessions.status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->where(function ($q) use ($teacherId) {
                 $q->where('class_sessions.teacher_id', $teacherId)
                     ->orWhere(function ($fallbackQ) use ($teacherId) {
@@ -443,6 +444,7 @@ class DashboardService implements DashboardServiceInterface
                 'classSubject.subject:id,name,code',
                 'room:id,name',
             ])
+            ->where('class_sessions.status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->where(function ($q) use ($teacherId) {
                 $q->where('class_sessions.teacher_id', $teacherId)
                     ->orWhere(function ($fallbackQ) use ($teacherId) {
@@ -552,6 +554,7 @@ class DashboardService implements DashboardServiceInterface
                     'classSubject.teacher:id,full_name',
                     'room:id,name',
                 ])
+                ->where('class_sessions.status', '!=', Constant::SESSION_STATUS_CANCELLED)
                 ->whereHas('classSubject', function ($csq) use ($classIds) {
                     $csq->whereIn('class_id', $classIds);
                 })
@@ -769,6 +772,7 @@ class DashboardService implements DashboardServiceInterface
                 'room:id,name',
                 'attendances:id,session_id,status',
             ])
+            ->where('class_sessions.status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->whereHas('classSubject.schoolClass', function ($q) use ($centerIds) {
                 $q->whereIn('center_id', $centerIds);
             })

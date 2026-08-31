@@ -1044,15 +1044,24 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
                 $schedule->update($scheduleUpdate);
 
-                // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
-                ClassSession::where('class_subject_id', $classSubject->id)
-                    ->where('session_date', '>=', now()->toDateString())
-                    ->where('status', Constant::SESSION_STATUS_SCHEDULED)
-                    ->whereDoesntHave('attendances')
-                    ->update([
-                        'teacher_id' => $teacherId,
-                        'room_id'    => $roomId,
-                    ]);
+                // Nếu trạng thái lịch đổi sang Đã dừng -> Hủy các ca học tương lai chưa diễn ra
+                if (isset($data['status']) && (int) $data['status'] === Constant::SCHEDULE_STATUS_INACTIVE) {
+                    ClassSession::where('class_subject_id', $classSubject->id)
+                        ->where('session_date', '>=', now()->toDateString())
+                        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+                        ->whereDoesntHave('attendances')
+                        ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+                } else {
+                    // Cập nhật teacher_id và room_id cho các ca học tương lai chưa điểm danh
+                    ClassSession::where('class_subject_id', $classSubject->id)
+                        ->where('session_date', '>=', now()->toDateString())
+                        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+                        ->whereDoesntHave('attendances')
+                        ->update([
+                            'teacher_id' => $teacherId,
+                            'room_id'    => $roomId,
+                        ]);
+                }
 
                 return $schedule->refresh();
             }
@@ -1150,6 +1159,15 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
             if ($classSubject->schoolClass) {
                 $this->syncSchoolClassDates($classSubject->schoolClass, $startDate, $finalEndDate);
+            }
+
+            // Nếu trạng thái lịch đổi sang Đã dừng -> Hủy các ca học tương lai vừa đồng bộ
+            if (isset($data['status']) && (int) $data['status'] === Constant::SCHEDULE_STATUS_INACTIVE) {
+                ClassSession::where('class_subject_id', $classSubject->id)
+                    ->where('session_date', '>=', $scanStartDate)
+                    ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+                    ->whereDoesntHave('attendances')
+                    ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
             }
 
             return $schedule->refresh();

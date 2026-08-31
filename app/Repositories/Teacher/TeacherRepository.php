@@ -264,6 +264,7 @@ class TeacherRepository implements TeacherRepositoryInterface
                 'status',
                 'note'
             )
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->where(function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId)
                     ->orWhereHas('classSubject', function ($csq) use ($teacherId) {

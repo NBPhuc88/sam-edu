@@ -68,6 +68,7 @@ interface EditProps {
     centers: Center[];
     subjects: Subject[];
     teachers: Teacher[];
+    futureSessionsCount?: number;
     errors?: Record<string, string>;
 }
 
@@ -84,6 +85,7 @@ export default function ClassEdit({
     centers = [],
     subjects = [],
     teachers = [],
+    futureSessionsCount = 0,
     errors = {},
 }: EditProps) {
     const { isSuperAdmin } = usePermission();
@@ -383,11 +385,17 @@ export default function ClassEdit({
             return;
         }
 
-        // Nếu chuyển sang trạng thái Hoàn thành (3) hoặc Đã đóng (4) khác với ban đầu, yêu cầu xác nhận qua Modal
+        // Nếu thay đổi trạng thái từ Active sang Tạm ngưng (2), Hoàn thành (3), Đã đóng (4)
+        // hoặc khi có buổi học trong tương lai -> Yêu cầu xác nhận qua Modal cảnh báo
         const selectedStatusNum = Number(status);
         const originalStatusNum = Number(schoolClass.status);
 
-        if ((selectedStatusNum === CLASS_STATUS_COMPLETED || selectedStatusNum === CLASS_STATUS_CLOSED) && selectedStatusNum !== originalStatusNum) {
+        if (
+            selectedStatusNum !== originalStatusNum &&
+            (selectedStatusNum === CLASS_STATUS_INACTIVE ||
+                selectedStatusNum === CLASS_STATUS_COMPLETED ||
+                selectedStatusNum === CLASS_STATUS_CLOSED)
+        ) {
             setShowConfirmModal(true);
             return;
         }
@@ -893,7 +901,7 @@ export default function ClassEdit({
                     </div>
                 </Modal>
 
-                {/* Modal Xác Nhận Hoàn Thành / Đóng Lớp */}
+                {/* Modal Xác Nhận Thay Đổi Trạng Thái Lớp Học */}
                 <Modal
                     isOpen={showConfirmModal}
                     onClose={() => setShowConfirmModal(false)}
@@ -909,7 +917,7 @@ export default function ClassEdit({
                                 Hủy Bỏ
                             </Button>
                             <Button
-                                variant="danger"
+                                variant={Number(status) === CLASS_STATUS_INACTIVE ? 'edit' : 'danger'}
                                 size="md"
                                 isLoading={isSubmitting}
                                 onClick={() => executeSubmit(false)}
@@ -923,20 +931,42 @@ export default function ClassEdit({
                         <div className="flex items-start gap-3 p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
                             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
-                                <div className="font-bold">Cảnh báo hành động không thể đảo ngược!</div>
-                                <div className="mt-1 text-xs text-amber-800 leading-relaxed">
-                                    Bạn đang chọn chuyển trạng thái lớp sang{' '}
-                                    <strong className="font-bold text-amber-950">
-                                        {Number(status) === CLASS_STATUS_COMPLETED ? 'ĐÃ HOÀN THÀNH' : 'ĐÃ ĐÓNG'}
-                                    </strong>
-                                    . Khi hoàn tất, các tính năng lịch học, thi cử và chat nhóm của lớp sẽ bị khóa vĩnh viễn và chỉ có{' '}
-                                    <strong className="underline">Admin hệ thống</strong> mới có quyền mở lại lớp học này.
+                                <div className="font-bold">
+                                    Cảnh báo thay đổi trạng thái sang {CLASS_STATUS_LABELS[Number(status)] || 'mới'}!
+                                </div>
+                                <div className="mt-1 text-xs text-amber-800 leading-relaxed space-y-1.5">
+                                    <p>
+                                        Bạn đang chọn chuyển trạng thái lớp <strong className="font-bold">{schoolClass.name}</strong> sang{' '}
+                                        <strong className="font-bold text-amber-950 uppercase">
+                                            {CLASS_STATUS_LABELS[Number(status)] || 'Trạng thái mới'}
+                                        </strong>.
+                                    </p>
+                                    {futureSessionsCount > 0 ? (
+                                        <div className="font-medium text-red-700 bg-red-50 p-2.5 rounded-lg border border-red-200 space-y-1">
+                                            <div className="font-bold">⚠️ Lưu ý quan trọng:</div>
+                                            <div>
+                                                Lớp học này hiện có <strong className="font-bold text-red-800">{futureSessionsCount} buổi học dự kiến trong tương lai</strong>.
+                                            </div>
+                                            <div>
+                                                Khi đồng ý chuyển trạng thái, toàn bộ lịch học đang áp dụng sẽ chuyển thành <u>Đã dừng</u> và tất cả <strong>{futureSessionsCount} buổi học dự kiến</strong> này sẽ bị <u>Đã hủy</u>.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p>
+                                            Toàn bộ lịch học đang áp dụng của lớp sẽ được tự động chuyển sang trạng thái <u>Đã dừng</u>.
+                                        </p>
+                                    )}
+                                    {(Number(status) === CLASS_STATUS_COMPLETED || Number(status) === CLASS_STATUS_CLOSED) && (
+                                        <p className="text-gray-600 italic">
+                                            * Lớp học khi đã hoàn thành hoặc đã đóng chỉ có <strong className="underline">Super Admin</strong> mới có quyền mở lại.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         <p className="text-xs text-gray-500">
-                            Hệ thống cũng sẽ tự động chuyển trạng thái của các học sinh chỉ tham gia duy nhất lớp này sang trạng thái tương ứng (Đã tốt nghiệp / Tạm dừng).
+                            Hệ thống cũng sẽ tự động đồng bộ trạng thái của các học sinh chỉ tham gia duy nhất lớp này.
                         </p>
                     </div>
                 </Modal>

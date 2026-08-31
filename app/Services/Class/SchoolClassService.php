@@ -4,7 +4,9 @@ namespace App\Services\Class;
 
 use App\Enums\Constant;
 use App\Models\Admin;
+use App\Models\ClassSchedule;
 use App\Models\ClassSession;
+use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\SessionReschedule;
 use App\Models\Student;
@@ -418,6 +420,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             // Tự động đồng bộ trạng thái học sinh nếu trạng thái lớp thay đổi
             if ($newStatus !== $currentStatusInt) {
                 $this->cascadeClassStatusToStudents($id, $centerId, $newStatus);
+                $this->cascadeClassStatusToSchedulesAndSessions($id, $newStatus);
             }
 
             return $updated;
@@ -434,7 +437,7 @@ class SchoolClassService implements SchoolClassServiceInterface
      */
     protected function cascadeClassStatusToStudents(int $classId, int $centerId, int $newClassStatus): void
     {
-        $studentIdsInClass = \Illuminate\Support\Facades\DB::table('class_students')
+        $studentIdsInClass = DB::table('class_students')
             ->where('class_id', $classId)
             ->pluck('student_id')
             ->toArray();
@@ -444,7 +447,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         }
 
         // Tìm các học sinh CÒN đang học ở lớp khác ĐANG HOẠT ĐỘNG (status = 1)
-        $multiActiveStudentIds = \Illuminate\Support\Facades\DB::table('class_students as cs')
+        $multiActiveStudentIds = DB::table('class_students as cs')
             ->join('classes as c', 'c.id', '=', 'cs.class_id')
             ->whereIn('cs.student_id', $studentIdsInClass)
             ->where('c.id', '!=', $classId)
@@ -482,6 +485,49 @@ class SchoolClassService implements SchoolClassServiceInterface
     }
 
     /**
+     * Đồng bộ trạng thái lịch học, buổi học và môn học của lớp khi lớp tạm dừng, hoàn thành, đóng hoặc xóa.
+     * Áp dụng quy tắc bulk/chunked batch update không query/update trong vòng lặp.
+     *
+     * @param int $classId
+     * @param int $newClassStatus
+     */
+    protected function cascadeClassStatusToSchedulesAndSessions(int $classId, int $newClassStatus): void
+    {
+        if (! in_array($newClassStatus, [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true)) {
+            return;
+        }
+
+        $classSubjectIds = ClassSubject::where('class_id', $classId)->pluck('id')->toArray();
+
+        if (empty($classSubjectIds)) {
+            return;
+        }
+
+        // 1. Cập nhật lịch học (class_schedules) đang áp dụng -> đã dừng
+        ClassSchedule::whereIn('class_subject_id', $classSubjectIds)
+            ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+            ->update(['status' => Constant::SCHEDULE_STATUS_INACTIVE]);
+
+        // 2. Cập nhật buổi học (class_sessions) đang là dự kiến / sắp diễn ra -> đã hủy (chunked batch update)
+        do {
+            $affected = ClassSession::whereIn('class_subject_id', $classSubjectIds)
+                ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+                ->limit(1000)
+                ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+        } while ($affected >= 1000);
+
+        // 3. Cập nhật trạng thái phân công môn học (class_subjects)
+        $subjectTargetStatus = match ($newClassStatus) {
+            Constant::CLASS_STATUS_COMPLETED => Constant::CLASS_SUBJECT_STATUS_COMPLETED,
+            default                          => Constant::CLASS_SUBJECT_STATUS_INACTIVE,
+        };
+
+        ClassSubject::whereIn('id', $classSubjectIds)
+            ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+            ->update(['status' => $subjectTargetStatus]);
+    }
+
+    /**
      * @param  int    $id
      * @param  ?Admin $admin
      * @return bool
@@ -490,7 +536,11 @@ class SchoolClassService implements SchoolClassServiceInterface
     {
         $schoolClass = $this->findClass($id, $admin);
 
-        return $this->schoolClassRepository->delete($schoolClass->id);
+        return DB::transaction(function () use ($schoolClass) {
+            $this->cascadeClassStatusToSchedulesAndSessions($schoolClass->id, Constant::CLASS_STATUS_INACTIVE);
+
+            return $this->schoolClassRepository->delete($schoolClass->id);
+        });
     }
 
     public function getClassWithCenter(int $classId, ?Admin $admin = null, ?Teacher $teacher = null): SchoolClass

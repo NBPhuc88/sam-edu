@@ -352,6 +352,7 @@ class StudentRepository implements StudentRepositoryInterface
                 'status',
                 'note'
             )
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->whereHas('classSubject', function ($csq) use ($classIds) {
                 $csq->whereIn('class_id', $classIds);
             })
