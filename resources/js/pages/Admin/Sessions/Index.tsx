@@ -6,21 +6,21 @@ import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import { TruncatedText } from '@/components/ui/Tooltip';
 import AppLayout from '@/layouts/AppLayout';
-import { formatDate,formatTime,toISODateString } from '@/lib/date';
-import { Head,Link,router,usePage } from '@inertiajs/react';
+import { formatDate, formatTime, toISODateString } from '@/lib/date';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-BookOpen,
-Calendar,
-CheckSquare,
-Clock,
-DoorOpen,
-Eye,
-Filter,
-GraduationCap,
-Search,
-UserCheck,
+    BookOpen,
+    Calendar,
+    CheckSquare,
+    Clock,
+    DoorOpen,
+    Eye,
+    Filter,
+    GraduationCap,
+    Search,
+    UserCheck,
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 
 import {
     SESSION_STATUS_CANCELLED,
@@ -711,7 +711,7 @@ export default function SessionIndex({
                                                                     className="flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100"
                                                                 >
                                                                     <Eye className="h-3.5 w-3.5" />
-                                                                    <span>{session.status !== SESSION_STATUS_CANCELLED ? 'Chi Tiết / Đổi Lịch' : 'Chi Tiết'}</span>
+                                                                    <span>Chi Tiết</span>
                                                                 </button>
                                                             </Link>
                                                         )}
