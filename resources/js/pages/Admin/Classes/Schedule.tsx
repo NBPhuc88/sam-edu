@@ -8,6 +8,7 @@ import {
     SESSION_STATUS_COMPLETED,
     SESSION_STATUS_IN_PROGRESS,
     SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_UNATTENDED,
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
@@ -227,10 +228,16 @@ export default function ClassSchedulePage({
                         Đang diễn ra
                     </span>
                 );
+            case SESSION_STATUS_UNATTENDED:
+                return (
+                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                        Chưa điểm danh
+                    </span>
+                );
             case SESSION_STATUS_CANCELLED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
-                        Nghỉ học
+                        Đã hủy
                     </span>
                 );
             case SESSION_STATUS_SCHEDULED:
@@ -295,6 +302,12 @@ export default function ClassSchedulePage({
                     container: 'border-purple-300 bg-purple-50/80 hover:border-purple-400 hover:bg-purple-100/70 shadow-2xs ring-1 ring-purple-300',
                     teacherText: 'text-purple-900',
                     teacherIcon: 'text-purple-600',
+                };
+            case SESSION_STATUS_UNATTENDED:
+                return {
+                    container: 'border-rose-200 bg-rose-50/80 hover:border-rose-400 hover:bg-rose-100/70 shadow-2xs',
+                    teacherText: 'text-rose-900',
+                    teacherIcon: 'text-rose-600',
                 };
             case SESSION_STATUS_CANCELLED:
                 return {

@@ -820,12 +820,13 @@ class DashboardService implements DashboardServiceInterface
         $todayStr = now()->toDateString();
         $in7Days  = now()->addDays(7)->toDateString();
 
-        // 1. Ca học hôm nay chưa điểm danh
+        // 1. Ca học hôm nay chưa điểm danh (không tính ca đã hủy)
         $unattendedTodayCount = ClassSession::query()
             ->whereHas('classSubject.schoolClass', function ($q) use ($centerIds) {
                 $q->whereIn('center_id', $centerIds);
             })
             ->whereDate('session_date', $todayStr)
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->doesntHave('attendances')
             ->count();
 

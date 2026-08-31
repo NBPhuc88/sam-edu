@@ -3,10 +3,11 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Modal from '@/components/ui/Modal';
 import {
-SESSION_STATUS_CANCELLED,
-SESSION_STATUS_COMPLETED,
-SESSION_STATUS_IN_PROGRESS,
-SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_COMPLETED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_UNATTENDED,
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
@@ -261,10 +262,16 @@ export default function StudentSchedulePage({
                         Đang diễn ra
                     </span>
                 );
+            case SESSION_STATUS_UNATTENDED:
+                return (
+                    <span className="inline-flex items-center rounded-sm bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800 border border-rose-200">
+                        Chưa điểm danh
+                    </span>
+                );
             case SESSION_STATUS_CANCELLED:
                 return (
                     <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800 border border-red-200">
-                        Báo nghỉ
+                        Đã hủy
                     </span>
                 );
             case SESSION_STATUS_SCHEDULED:

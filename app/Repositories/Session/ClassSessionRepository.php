@@ -112,11 +112,12 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
 
         if ($status !== null && $status !== '' && $status !== '') {
             $query->where('status', is_numeric($status) ? (int) $status : match ($status) {
-                'scheduled'               => Constant::SESSION_STATUS_SCHEDULED,
-                'in_progress'             => Constant::SESSION_STATUS_IN_PROGRESS,
-                'completed'               => Constant::SESSION_STATUS_COMPLETED,
-                'cancelled', 'unattended' => Constant::SESSION_STATUS_CANCELLED,
-                default                   => $status,
+                'scheduled'   => Constant::SESSION_STATUS_SCHEDULED,
+                'in_progress' => Constant::SESSION_STATUS_IN_PROGRESS,
+                'completed'   => Constant::SESSION_STATUS_COMPLETED,
+                'cancelled'   => Constant::SESSION_STATUS_CANCELLED,
+                'unattended'  => Constant::SESSION_STATUS_UNATTENDED,
+                default       => $status,
             });
         }
 
@@ -490,7 +491,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
         $totalUpdated = 0;
 
         do {
-            $sessionIds = ClassSession::whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_IN_PROGRESS, Constant::SESSION_STATUS_CANCELLED])
+            $sessionIds = ClassSession::whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_IN_PROGRESS, Constant::SESSION_STATUS_UNATTENDED])
                 ->where(function ($query) use ($date, $currentTime) {
                     $query->where('session_date', '<', $date)
                         ->orWhere(function ($q) use ($date, $currentTime) {
@@ -550,7 +551,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
             }
 
             $affected = ClassSession::whereIn('id', $sessionIds)
-                ->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+                ->update(['status' => Constant::SESSION_STATUS_UNATTENDED]);
 
             $totalUpdated += $affected;
 

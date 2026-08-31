@@ -202,5 +202,5 @@ test('resetting attendance of past session reverts status to unattended', functi
 
     $resetResponse->assertRedirect();
     expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(0);
-    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_UNATTENDED);
 });

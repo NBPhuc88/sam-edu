@@ -190,16 +190,18 @@ export const SCHEDULE_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng class_sessions
-export const SESSION_STATUS_SCHEDULED = 1; // Sắp diễn ra
+export const SESSION_STATUS_SCHEDULED = 1; // Dự kiến / Sắp diễn ra
 export const SESSION_STATUS_IN_PROGRESS = 2; // Đang diễn ra
 export const SESSION_STATUS_COMPLETED = 3; // Đã hoàn thành
-export const SESSION_STATUS_CANCELLED = 4; // Đã hủy / Nghỉ
+export const SESSION_STATUS_CANCELLED = 4; // Đã hủy
+export const SESSION_STATUS_UNATTENDED = 5; // Chưa điểm danh
 
 export const SESSION_STATUS_LABELS: Record<number, string> = {
-    [SESSION_STATUS_SCHEDULED]: 'Sắp diễn ra',
+    [SESSION_STATUS_SCHEDULED]: 'Dự kiến',
     [SESSION_STATUS_IN_PROGRESS]: 'Đang diễn ra',
     [SESSION_STATUS_COMPLETED]: 'Đã hoàn thành',
-    [SESSION_STATUS_CANCELLED]: 'Đã hủy / Nghỉ',
+    [SESSION_STATUS_CANCELLED]: 'Đã hủy',
+    [SESSION_STATUS_UNATTENDED]: 'Chưa điểm danh',
 };
 
 // Bảng session_reschedules

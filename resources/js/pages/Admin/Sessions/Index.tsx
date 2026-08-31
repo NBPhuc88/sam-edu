@@ -23,10 +23,11 @@ UserCheck,
 import React,{ useState } from 'react';
 
 import {
-SESSION_STATUS_CANCELLED,
-SESSION_STATUS_COMPLETED,
-SESSION_STATUS_IN_PROGRESS,
-SESSION_STATUS_SCHEDULED
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_COMPLETED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_UNATTENDED,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 
@@ -252,8 +253,10 @@ export default function SessionIndex({
                         Đang diễn ra
                     </span>
                 );
+            case SESSION_STATUS_UNATTENDED:
+                return <Badge variant="danger">Chưa điểm danh</Badge>;
             case SESSION_STATUS_CANCELLED:
-                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+                return <Badge variant="danger">Đã hủy</Badge>;
             case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {
@@ -491,6 +494,7 @@ export default function SessionIndex({
                                     <option value={SESSION_STATUS_SCHEDULED}>Dự kiến</option>
                                     <option value={SESSION_STATUS_IN_PROGRESS}>Đang diễn ra</option>
                                     <option value={SESSION_STATUS_COMPLETED}>Đã hoàn thành</option>
+                                    <option value={SESSION_STATUS_UNATTENDED}>Chưa điểm danh</option>
                                     <option value={SESSION_STATUS_CANCELLED}>Đã hủy</option>
                                 </select>
                             </div>

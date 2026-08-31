@@ -5,7 +5,6 @@ namespace App\Repositories\Attendance;
 use App\Enums\Constant;
 use App\Models\Attendance;
 use App\Models\ClassSession;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceRepository implements AttendanceRepositoryInterface
@@ -110,9 +109,8 @@ class AttendanceRepository implements AttendanceRepositoryInterface
 
             if ($session) {
                 $sessionDate = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date->toDateString());
-                $sessionEnd  = Carbon::parse($sessionDate . ' ' . $session->end_time);
-                $isPast      = $sessionEnd->isPast();
-                $newStatus   = $isPast ? Constant::SESSION_STATUS_CANCELLED : Constant::SESSION_STATUS_SCHEDULED;
+                $sessionEnd  = \Carbon\Carbon::parse($sessionDate . ' ' . $session->end_time);
+                $newStatus   = $sessionEnd->isPast() ? Constant::SESSION_STATUS_UNATTENDED : Constant::SESSION_STATUS_SCHEDULED;
                 $session->update(['status' => $newStatus]);
             }
 

@@ -6,10 +6,11 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
 import {
-SESSION_STATUS_CANCELLED,
-SESSION_STATUS_COMPLETED,
-SESSION_STATUS_IN_PROGRESS,
-SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_COMPLETED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_SCHEDULED,
+    SESSION_STATUS_UNATTENDED,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import { useCanExportCsv } from '@/hooks/usePlanFeature';
@@ -175,8 +176,10 @@ export default function TeacherShow({
                         Đang diễn ra
                     </span>
                 );
+            case SESSION_STATUS_UNATTENDED:
+                return <Badge variant="danger">Chưa điểm danh</Badge>;
             case SESSION_STATUS_CANCELLED:
-                return <Badge variant="danger">Đã hủy / Nghỉ</Badge>;
+                return <Badge variant="danger">Đã hủy</Badge>;
             case SESSION_STATUS_SCHEDULED:
             default:
                 if (isPast) {

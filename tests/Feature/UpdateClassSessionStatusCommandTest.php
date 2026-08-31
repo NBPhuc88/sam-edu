@@ -91,7 +91,7 @@ beforeEach(function () {
     ]);
 });
 
-test('command sessions:update-status updates running sessions to in_progress and ended sessions to unattended or completed', function () {
+test('command sessions:update-status updates running sessions to in_progress, ended sessions with attendance to completed, and ended without attendance to unattended', function () {
     // Freeze time at 10:00 AM today
     Carbon::setTestNow(Carbon::parse('2026-08-25 10:00:00'));
 
@@ -106,7 +106,7 @@ test('command sessions:update-status updates running sessions to in_progress and
         'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 
-    // 2. Session ended in the past today without attendance (08:00 - 09:30) -> should become unattended (0)
+    // 2. Session ended in the past today without attendance (08:00 - 09:30) -> should become unattended (5)
     $pastUnattendedSession = ClassSession::create([
         'class_subject_id' => $this->classSubject->id,
         'teacher_id'       => $this->teacher->id,
@@ -150,7 +150,7 @@ test('command sessions:update-status updates running sessions to in_progress and
 
     // Verify statuses
     expect($ongoingSession->fresh()->status)->toBe(Constant::SESSION_STATUS_IN_PROGRESS);
-    expect($pastUnattendedSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+    expect($pastUnattendedSession->fresh()->status)->toBe(Constant::SESSION_STATUS_UNATTENDED);
     expect($pastAttendedSession->fresh()->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
     expect($futureSession->fresh()->status)->toBe(Constant::SESSION_STATUS_SCHEDULED);
 
@@ -167,7 +167,7 @@ test('saving attendance on unattended session changes status to completed, and r
         'session_date'     => '2026-08-25',
         'start_time'       => '08:00:00',
         'end_time'         => '09:30:00',
-        'status'           => Constant::SESSION_STATUS_CANCELLED,
+        'status'           => Constant::SESSION_STATUS_UNATTENDED,
     ]);
 
     $attendanceService = app(AttendanceServiceInterface::class);
@@ -187,7 +187,7 @@ test('saving attendance on unattended session changes status to completed, and r
     // Reset attendance
     $attendanceService->resetAttendance($pastSession->id, $this->superAdmin);
 
-    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+    expect($pastSession->fresh()->status)->toBe(Constant::SESSION_STATUS_UNATTENDED);
     expect(Attendance::where('session_id', $pastSession->id)->count())->toBe(0);
 
     Carbon::setTestNow();

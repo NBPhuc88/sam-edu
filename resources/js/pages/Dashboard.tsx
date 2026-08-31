@@ -5,7 +5,8 @@ import {
     CENTER_STATUS_LABELS,
     PLAN_TYPE_FREE,
     PLAN_TYPE_LABELS,
-    PLAN_TYPE_PREMIUM
+    PLAN_TYPE_PREMIUM,
+    SESSION_STATUS_CANCELLED,
 } from '@/constants/enums';
 import { Link,router } from '@inertiajs/react';
 import {
@@ -812,7 +813,7 @@ export const Dashboard: React.FC<any> = (props) => {
                                     </Link>
                                 )}
                                 {selectedSession?.session_id && (
-                                    (!selectedSession.status || ['in_progress', 'completed', 'unattended'].includes(selectedSession.status)) ? (
+                                    (!selectedSession.status || Number(selectedSession.status) !== SESSION_STATUS_CANCELLED) ? (
                                         <Link href={`/attendance/session/${selectedSession.session_id}`}>
                                             <Button
                                                 variant="success"

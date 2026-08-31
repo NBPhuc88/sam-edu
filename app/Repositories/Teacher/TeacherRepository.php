@@ -424,6 +424,7 @@ class TeacherRepository implements TeacherRepositoryInterface
             'scheduled'   => (int) ($statusCounts->get(Constant::SESSION_STATUS_SCHEDULED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_SCHEDULED) ?? $statusCounts->get('scheduled') ?? 0),
             'cancelled'   => (int) ($statusCounts->get(Constant::SESSION_STATUS_CANCELLED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_CANCELLED) ?? $statusCounts->get('cancelled') ?? 0),
             'in_progress' => (int) ($statusCounts->get(Constant::SESSION_STATUS_IN_PROGRESS) ?? $statusCounts->get((string) Constant::SESSION_STATUS_IN_PROGRESS) ?? $statusCounts->get('in_progress') ?? 0),
+            'unattended'  => (int) ($statusCounts->get(Constant::SESSION_STATUS_UNATTENDED) ?? $statusCounts->get((string) Constant::SESSION_STATUS_UNATTENDED) ?? $statusCounts->get('unattended') ?? 0),
         ];
 
         $sessionsQuery = $query

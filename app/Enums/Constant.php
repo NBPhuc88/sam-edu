@@ -295,23 +295,26 @@ class Constant
     ];
 
     // Bảng class_sessions
-    public const int SESSION_STATUS_SCHEDULED   = 1; // Sắp diễn ra
+    public const int SESSION_STATUS_SCHEDULED   = 1; // Dự kiến / Sắp diễn ra
     public const int SESSION_STATUS_IN_PROGRESS = 2; // Đang diễn ra
     public const int SESSION_STATUS_COMPLETED   = 3; // Đã hoàn thành
-    public const int SESSION_STATUS_CANCELLED   = 4; // Đã hủy / Nghỉ
+    public const int SESSION_STATUS_CANCELLED   = 4; // Đã hủy
+    public const int SESSION_STATUS_UNATTENDED  = 5; // Chưa điểm danh
 
     public const array SESSION_STATUSES = [
         self::SESSION_STATUS_SCHEDULED,
         self::SESSION_STATUS_IN_PROGRESS,
         self::SESSION_STATUS_COMPLETED,
         self::SESSION_STATUS_CANCELLED,
+        self::SESSION_STATUS_UNATTENDED,
     ];
 
     public const array SESSION_STATUS_LABELS = [
-        self::SESSION_STATUS_SCHEDULED   => 'Sắp diễn ra',
+        self::SESSION_STATUS_SCHEDULED   => 'Dự kiến',
         self::SESSION_STATUS_IN_PROGRESS => 'Đang diễn ra',
         self::SESSION_STATUS_COMPLETED   => 'Đã hoàn thành',
-        self::SESSION_STATUS_CANCELLED   => 'Đã hủy / Nghỉ',
+        self::SESSION_STATUS_CANCELLED   => 'Đã hủy',
+        self::SESSION_STATUS_UNATTENDED  => 'Chưa điểm danh',
     ];
 
     // Bảng session_reschedules
