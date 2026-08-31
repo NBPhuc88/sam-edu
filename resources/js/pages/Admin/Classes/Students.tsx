@@ -1,3 +1,4 @@
+import BackButton from '@/components/ui/BackButton';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -6,6 +7,7 @@ import DataTable from '@/components/ui/DataTable';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import {
+    CLASS_STATUS_ACTIVE,
     CLASS_STUDENT_STATUS_ACTIVE,
     CLASS_STUDENT_STATUS_COMPLETED,
     CLASS_STUDENT_STATUS_LEFT,
@@ -36,6 +38,7 @@ interface SchoolClass {
     name: string;
     max_students: number;
     students_count?: number;
+    status?: number;
     center?: { id: number; name: string };
 }
 
@@ -309,48 +312,62 @@ export default function ClassStudentsPage({
         });
     };
 
+    const isClassActive =
+        schoolClass.status === undefined ||
+        schoolClass.status === null ||
+        Number(schoolClass.status) === CLASS_STATUS_ACTIVE;
+
     return (
-        <AppLayout title={`Học sinh lớp ${schoolClass.name}`}>
+        <AppLayout title={`Học sinh lớp: ${schoolClass.name}`}>
             <Head title={`Học sinh lớp ${schoolClass.name}`} />
 
             <div className="space-y-6">
                 {/* Back Link & Header */}
-                <div>
-                    <button
-                        onClick={() => window.history.back()}
-                        className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Quay lại danh sách lớp học
-                    </button>
+                {/* Header Actions */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <BackButton fallbackUrl="/classes" label="Quay lại danh sách lớp" className="mb-2" />
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <GraduationCap className="h-7 w-7 text-emerald-600" />
+                            Học sinh Lớp: {schoolClass.name} ({schoolClass.code})
+                        </h1>
+                        <p className="mt-1 text-sm text-gray-600">
+                            Sĩ số hiện tại:{' '}
+                            <span className="font-semibold text-gray-900">
+                                {schoolClass.students_count ?? 0}
+                            </span>{' '}
+                            {schoolClass.max_students ? `/ ${schoolClass.max_students} học sinh` : 'học sinh'}
+                        </p>
+                    </div>
 
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h1 className="flex items-center gap-2.5 text-2xl font-bold text-gray-900">
-                                <GraduationCap className="h-7 w-7 text-emerald-600" />
-                                Học sinh Lớp: {schoolClass.name} (
-                                {schoolClass.code})
-                            </h1>
-                            <p className="mt-1 text-sm text-gray-600">
-                                Sĩ số hiện tại:{' '}
-                                <span className="font-semibold text-gray-900">
-                                    {schoolClass.students_count ?? 0}
-                                </span>{' '}
-                                {schoolClass.max_students ? `/ ${schoolClass.max_students} học sinh` : 'học sinh'}
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            {!isTeacher && (
-                                <Button
-                                    variant="success"
-                                    size="md"
-                                    onClick={() => setIsAddModalOpen(true)}
-                                    icon={<UserPlus className="h-4.5 w-4.5" />}
-                                >
-                                    Thêm Học Sinh
-                                </Button>
-                            )}
+                    <div className="flex items-center gap-3">
+                        {!isTeacher && isClassActive && (
+                            <Button
+                                variant="success"
+                                size="md"
+                                onClick={() => setIsAddModalOpen(true)}
+                                icon={<UserPlus className="h-4.5 w-4.5" />}
+                            >
+                                Thêm Học Sinh
+                            </Button>
+                        )}
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={() => {
+                                if (!canExportCsv) {
+                                    router.visit('/upgrade-plan?feature=export_csv');
+                                } else {
+                                    handleExport();
+                                }
+                            }}
+                            className="flex items-center gap-2"
+                            title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất danh sách học sinh lớp'}
+                        >
+                            <Download className="h-4.5 w-4.5 text-gray-600" />
+                            Export CSV Lớp {!canExportCsv && '🔒'}
+                        </Button>
+                        {!isTeacher && isClassActive && (
                             <Button
                                 variant="secondary"
                                 size="md"
@@ -358,36 +375,26 @@ export default function ClassStudentsPage({
                                     if (!canExportCsv) {
                                         router.visit('/upgrade-plan?feature=export_csv');
                                     } else {
-                                        handleExport();
+                                        setIsImportModalOpen(true);
                                     }
                                 }}
                                 className="flex items-center gap-2"
-                                title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất danh sách học sinh lớp'}
+                                title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Nhập danh sách học sinh vào lớp'}
                             >
-                                <Download className="h-4.5 w-4.5 text-gray-600" />
-                                Export CSV Lớp {!canExportCsv && '🔒'}
+                                <Upload className="h-4.5 w-4.5 text-gray-600" />
+                                Import CSV Lớp {!canExportCsv && '🔒'}
                             </Button>
-                            {!isTeacher && (
-                                <Button
-                                    variant="secondary"
-                                    size="md"
-                                    onClick={() => {
-                                        if (!canExportCsv) {
-                                            router.visit('/upgrade-plan?feature=export_csv');
-                                        } else {
-                                            setIsImportModalOpen(true);
-                                        }
-                                    }}
-                                    className="flex items-center gap-2"
-                                    title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Nhập danh sách học sinh vào lớp'}
-                                >
-                                    <Upload className="h-4.5 w-4.5 text-gray-600" />
-                                    Import CSV Lớp {!canExportCsv && '🔒'}
-                                </Button>
-                            )}
-                        </div>
+                        )}
                     </div>
                 </div>
+
+                {/* Inactive Class Alert */}
+                {!isClassActive && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 flex items-center gap-3 shadow-xs">
+                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <span>Lớp học này hiện không ở trạng thái đang hoạt động (Tạm ngưng, Hoàn thành hoặc Đã đóng). Không thể thêm mới hoặc import thêm học sinh vào lớp.</span>
+                    </div>
+                )}
 
                 {/* Flash Messages */}
                 {flash.success && (

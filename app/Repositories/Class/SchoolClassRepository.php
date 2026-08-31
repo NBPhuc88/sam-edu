@@ -434,7 +434,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
      */
     public function getClassesByCenterIds(array|int|null $centerIds = null, array $columns = ['id', 'name', 'code', 'center_id']): \Illuminate\Database\Eloquent\Collection
     {
-        $query = SchoolClass::query()->whereIn('status', [1, 2]);
+        $query = SchoolClass::query()->where('status', Constant::CLASS_STATUS_ACTIVE);
 
         if ($centerIds !== null) {
             if (is_array($centerIds)) {

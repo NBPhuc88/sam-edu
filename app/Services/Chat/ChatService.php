@@ -198,8 +198,18 @@ class ChatService implements ChatServiceInterface
         $schoolClass    = $this->authorizeAccess($classId);
         $classStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
 
-        if ($classStatusInt !== 1) {
+        if ($classStatusInt !== Constant::CLASS_STATUS_ACTIVE) {
             abort(403, 'Lớp học đã tạm dừng, hoàn thành hoặc đã đóng. Không thể gửi thêm tin nhắn.');
+        }
+
+        $senderType = (int) ($senderInfo['sender_type'] ?? 0);
+
+        if ($senderType === Constant::SENDER_TYPE_TEACHER) {
+            $teacher = Auth::guard('teacher')->user();
+
+            if ($teacher && (int) $teacher->status === Constant::TEACHER_STATUS_INACTIVE) {
+                abort(403, 'Tài khoản giáo viên đang ở trạng thái Tạm nghỉ. Không thể gửi tin nhắn.');
+            }
         }
 
         $created = $this->chatRepository->createMessage([

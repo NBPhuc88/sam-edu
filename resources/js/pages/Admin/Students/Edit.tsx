@@ -11,6 +11,7 @@ import {
     STUDENT_STATUS_INACTIVE,
     STUDENT_STATUS_LABELS,
 } from '@/constants/enums';
+import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head, router } from '@inertiajs/react';
 import { Calendar, Check, GraduationCap, HeartHandshake, HelpCircle, Save, User } from 'lucide-react';
@@ -70,6 +71,10 @@ interface EditProps {
 }
 
 export default function StudentEdit({ student, centers = [], classes = [], errors = {} }: EditProps) {
+    const { isSuperAdmin } = usePermission();
+    const isGraduated = Number(student.status) === STUDENT_STATUS_GRADUATED;
+    const canEditStatus = isSuperAdmin || !isGraduated;
+
     const [centerId, setCenterId] = useState<string>(String(student.center_id));
     const [fullName, setFullName] = useState<string>(student.full_name || '');
     const [username, setUsername] = useState<string>(student.username || '');
@@ -503,12 +508,20 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    disabled={!canEditStatus}
+                                    className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
+                                        !canEditStatus ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
+                                    }`}
                                 >
                                     <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang theo học'}</option>
                                     <option value={STUDENT_STATUS_INACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] || 'Tạm ngưng / Nghỉ học'}</option>
                                     <option value={STUDENT_STATUS_GRADUATED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] || 'Đã tốt nghiệp'}</option>
                                 </select>
+                                {!canEditStatus && (
+                                    <p className="mt-1.5 text-xs font-medium text-amber-700">
+                                        * Học sinh đã tốt nghiệp. Chỉ Admin hệ thống mới có quyền thay đổi trạng thái này.
+                                    </p>
+                                )}
                             </div>
 
                             {/* Note */}

@@ -1,30 +1,31 @@
-import { SENDER_TYPE_ADMIN,SENDER_TYPE_TEACHER } from '@/constants/enums';
+import { CLASS_STATUS_ACTIVE, SENDER_TYPE_ADMIN, SENDER_TYPE_TEACHER } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
-import { Head,Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {
-ArrowLeft,
-Check,
-Palette,
-Pin,
-PinOff,
-Reply,
-Send,
-Smile,
-X,
+    ArrowLeft,
+    Check,
+    Palette,
+    Pin,
+    PinOff,
+    Reply,
+    Send,
+    Smile,
+    X,
 } from 'lucide-react';
-import React,{ useEffect,useRef,useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ChatEmojiPicker from './components/ChatEmojiPicker';
 import MessageReactionBar from './components/MessageReactionBar';
-import MessageReactionsDisplay,{
-ReactionItem,
+import MessageReactionsDisplay, {
+    ReactionItem,
 } from './components/MessageReactionsDisplay';
 
 interface SchoolClass {
     id: number;
     code: string;
     name: string;
+    status?: number;
     center?: { id: number; name: string };
 }
 
@@ -228,6 +229,15 @@ export default function ClassChatPage({
     initialMessages,
     initialPinnedMessage,
 }: Props) {
+    const { auth } = usePage<any>().props;
+    const isTeacherInactive =
+        auth?.role === 'teacher' && Number(auth?.user?.status) === 2;
+
+    const isClassActive =
+        schoolClass.status === undefined ||
+        schoolClass.status === null ||
+        Number(schoolClass.status) === CLASS_STATUS_ACTIVE;
+
     const [messages, setMessages] = useState<ChatMessageData[]>(
         initialMessages || []
     );
@@ -993,51 +1003,61 @@ export default function ClassChatPage({
                         />
 
                         {/* Input Controls */}
-                        <form
-                            onSubmit={handleSendMessage}
-                            className="flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3"
-                        >
-                            {/* Emoji Picker Toggle Button */}
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowEmojiPicker((prev) => !prev)
-                                }
-                                title="Bảng chọn biểu tượng cảm xúc (Emoji)"
-                                className={`p-2 rounded-full transition-colors shrink-0 cursor-pointer ${
-                                    showEmojiPicker
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'text-gray-500 hover:text-emerald-700 hover:bg-gray-100'
-                                }`}
+                        {!isClassActive ? (
+                            <div className="flex items-center justify-center p-3 text-xs sm:text-sm font-medium text-amber-800 bg-amber-50/90 border border-amber-200 rounded-xl text-center m-2">
+                                Lớp học đã tạm ngưng, hoàn thành hoặc đã đóng. Bạn chỉ có thể xem lại lịch sử trò chuyện.
+                            </div>
+                        ) : isTeacherInactive ? (
+                            <div className="flex items-center justify-center p-3 text-xs sm:text-sm font-medium text-amber-800 bg-amber-50/90 border border-amber-200 rounded-xl text-center m-2">
+                                Tài khoản giáo viên đang ở trạng thái Tạm nghỉ (Chỉ xem). Bạn không thể gửi tin nhắn.
+                            </div>
+                        ) : (
+                            <form
+                                onSubmit={handleSendMessage}
+                                className="flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3"
                             >
-                                <Smile className="h-5 w-5" />
-                            </button>
+                                {/* Emoji Picker Toggle Button */}
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowEmojiPicker((prev) => !prev)
+                                    }
+                                    title="Bảng chọn biểu tượng cảm xúc (Emoji)"
+                                    className={`p-2 rounded-full transition-colors shrink-0 cursor-pointer ${
+                                        showEmojiPicker
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'text-gray-500 hover:text-emerald-700 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    <Smile className="h-5 w-5" />
+                                </button>
 
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                placeholder={
-                                    replyingTo
-                                        ? `Trả lời ${replyingTo.sender_name}...`
-                                        : 'Viết tin nhắn...'
-                                }
-                                value={inputMessage}
-                                onChange={(e) =>
-                                    setInputMessage(e.target.value)
-                                }
-                                disabled={isSending}
-                                className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                            />
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    placeholder={
+                                        replyingTo
+                                            ? `Trả lời ${replyingTo.sender_name}...`
+                                            : 'Viết tin nhắn...'
+                                    }
+                                    value={inputMessage}
+                                    onChange={(e) =>
+                                        setInputMessage(e.target.value)
+                                    }
+                                    disabled={isSending}
+                                    className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                                />
 
-                            <button
-                                type="submit"
-                                disabled={isSending || !inputMessage.trim()}
-                                className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0 cursor-pointer"
-                                title="Gửi tin nhắn"
-                            >
-                                <Send className="h-4 w-4 ml-0.5" />
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={isSending || !inputMessage.trim()}
+                                    className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0 cursor-pointer"
+                                    title="Gửi tin nhắn"
+                                >
+                                    <Send className="h-4 w-4 ml-0.5" />
+                                </button>
+                            </form>
+                        )}
                     </div>
                 </div>
             </div>

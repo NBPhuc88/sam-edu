@@ -103,6 +103,28 @@ class AutoCheckPermission
             return $next($request);
         }
 
+        // Giáo viên ở trạng thái Tạm nghỉ (TEACHER_STATUS_INACTIVE) chỉ có quyền Xem (View-only)
+        if ($effectiveRole === Constant::ROLE_TEACHER) {
+            $teacher = Auth::guard('teacher')->user();
+
+            if ($teacher && (int) $teacher->status === Constant::TEACHER_STATUS_INACTIVE) {
+                $isSafeMethod = $request->isMethod('GET') || $request->isMethod('HEAD') || $request->isMethod('OPTIONS');
+
+                if (! $isSafeMethod && ! $request->routeIs('logout')) {
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'message' => 'Tài khoản giáo viên đang ở trạng thái Tạm nghỉ (Chỉ xem). Bạn không thể thực hiện thêm, sửa, xóa, điểm danh hoặc gửi tin nhắn.',
+                        ], 403);
+                    }
+
+                    return Inertia::render('Error', [
+                        'status'  => 403,
+                        'message' => 'Tài khoản giáo viên đang ở trạng thái Tạm nghỉ (Chỉ xem). Bạn không thể thực hiện thêm, sửa, xóa, điểm danh hoặc gửi tin nhắn.',
+                    ])->toResponse($request)->setStatusCode(403);
+                }
+            }
+        }
+
         // Kiểm tra quyền của role
         if ($this->permissionService->roleHasPermission($effectiveRole, $permissionCode)) {
             return $next($request);

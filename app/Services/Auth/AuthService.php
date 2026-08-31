@@ -58,11 +58,27 @@ class AuthService implements AuthServiceInterface
             ];
         }
 
-        if (isset($account->status) && (int) $account->status !== Constant::STATUS_ACTIVE) {
+        if ($account instanceof Admin && (int) $account->status !== Constant::STATUS_ACTIVE) {
             return [
                 'success' => false,
                 'account' => null,
-                'error'   => 'Tài khoản của bạn đã bị khóa, tạm ngưng hoặc chưa kích hoạt.',
+                'error'   => 'Tài khoản Quản trị viên của bạn đã bị khóa hoặc chưa kích hoạt.',
+            ];
+        }
+
+        if ($account instanceof Teacher && (int) $account->status === Constant::TEACHER_STATUS_LOCKED) {
+            return [
+                'success' => false,
+                'account' => null,
+                'error'   => 'Tài khoản Giáo viên của bạn đã bị khóa. Vui lòng liên hệ Admin hệ thống.',
+            ];
+        }
+
+        if ($account instanceof Student && (int) $account->status !== Constant::STUDENT_STATUS_ACTIVE) {
+            return [
+                'success' => false,
+                'account' => null,
+                'error'   => 'Tài khoản Học sinh đã nghỉ học hoặc đã tốt nghiệp. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
             ];
         }
 
@@ -126,14 +142,20 @@ class AuthService implements AuthServiceInterface
 
         // Login with specified guard
         Auth::guard($role)->login($account);
-        request()->session()->regenerate();
+
+        if (request()->hasSession()) {
+            request()->session()->regenerate();
+        }
 
         // Single device login enforcement: generate new device session token
         $deviceToken = \Illuminate\Support\Str::random(40);
         $account->update([
             'current_session_id' => $deviceToken,
         ]);
-        request()->session()->put('auth_device_token_' . $role, $deviceToken);
+
+        if (request()->hasSession()) {
+            request()->session()->put('auth_device_token_' . $role, $deviceToken);
+        }
 
         return [
             'success' => true,
@@ -159,7 +181,9 @@ class AuthService implements AuthServiceInterface
         Auth::guard('teacher')->logout();
         Auth::guard('student')->logout();
 
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
+        if (request()->hasSession()) {
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+        }
     }
 }

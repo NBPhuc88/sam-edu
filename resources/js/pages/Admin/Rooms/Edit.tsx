@@ -312,7 +312,7 @@ export default function RoomEdit({ room, centers = [], errors = {} }: Props) {
                                 />
                                 {room.status === ROOM_STATUS_CLOSED && !isSuperAdmin && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
-                                        * Phòng học đã đóng. Chỉ Super Admin mới có quyền mở lại.
+                                        * Phòng học đã đóng. Chỉ Admin hệ thống mới có quyền mở lại.
                                     </p>
                                 )}
                             </div>

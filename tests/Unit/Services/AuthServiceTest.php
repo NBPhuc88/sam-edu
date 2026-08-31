@@ -98,8 +98,25 @@ test('authenticate fails when user provides incorrect password', function () {
     expect(Auth::guard('admin')->check())->toBeFalse();
 });
 
-test('authenticate fails when account status is inactive or locked', function () {
-    $teacher = Teacher::create([
+test('authenticate fails when account status is locked or inactive for admin/student', function () {
+    $lockedTeacher = Teacher::create([
+        'center_id'    => $this->center->id,
+        'username'     => 'locked_teacher',
+        'first_name'   => 'Locked',
+        'last_name'    => 'Teacher',
+        'full_name'    => 'Locked Teacher',
+        'password'     => Hash::make('password123'),
+        'teacher_code' => 'GV' . random_int(1000000, 9999999),
+        'status'       => Constant::TEACHER_STATUS_LOCKED,
+    ]);
+
+    $result = $this->authService->authenticate('teacher', 'locked_teacher', 'password123');
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['account'])->toBeNull()
+        ->and($result['error'])->toBe('Tài khoản Giáo viên của bạn đã bị khóa. Vui lòng liên hệ Admin hệ thống.');
+
+    $inactiveTeacher = Teacher::create([
         'center_id'    => $this->center->id,
         'username'     => 'inactive_teacher',
         'first_name'   => 'Inactive',
@@ -107,14 +124,11 @@ test('authenticate fails when account status is inactive or locked', function ()
         'full_name'    => 'Inactive Teacher',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => Constant::STATUS_INACTIVE,
+        'status'       => Constant::TEACHER_STATUS_INACTIVE,
     ]);
 
-    $result = $this->authService->authenticate('teacher', 'inactive_teacher', 'password123');
-
-    expect($result['success'])->toBeFalse()
-        ->and($result['account'])->toBeNull()
-        ->and($result['error'])->toBe('Tài khoản của bạn đã bị khóa, tạm ngưng hoặc chưa kích hoạt.');
+    $resultInactive = $this->authService->authenticate('teacher', 'inactive_teacher', 'password123');
+    expect($resultInactive['success'])->toBeTrue();
 });
 
 test('logout clears device session token and logs out all guards', function () {

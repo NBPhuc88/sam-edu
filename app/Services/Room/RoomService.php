@@ -145,7 +145,7 @@ class RoomService implements RoomServiceInterface
         // Phòng học đã đóng (closed) không thể đổi trạng thái khác (trừ Super Admin)
         if ($room->status === Constant::ROOM_STATUS_CLOSED && isset($data['status']) && $data['status'] !== Constant::ROOM_STATUS_CLOSED) {
             if (! ($admin && $admin->isSuperAdmin())) {
-                throw new AccessDeniedHttpException('Phòng học đã đóng chỉ có Super Admin mới có quyền mở lại.');
+                throw new AccessDeniedHttpException('Phòng học đã đóng chỉ có Admin hệ thống mới có quyền mở lại.');
             }
         }
 

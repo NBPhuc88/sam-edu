@@ -71,7 +71,7 @@ test('createStudent throws exception when max_students limit reached for active 
     ];
 
     expect(fn () => $this->service->createStudent($data, $this->superAdmin))
-        ->toThrow(ValidationException::class, 'Số học sinh đang hoạt động');
+        ->toThrow(ValidationException::class, 'Số học sinh đang theo học và tạm nghỉ');
 });
 
 test('updateStudent updates student information and changes status successfully', function () {
@@ -94,6 +94,40 @@ test('updateStudent updates student information and changes status successfully'
 
     expect($updated->full_name)->toBe('New Name')
         ->and($updated->parent_name)->toBe('Nguyen Van Parent');
+});
+
+test('updateStudent denies regular admin from changing graduated student status', function () {
+    $admin = Admin::create([
+        'username'   => 'branch_admin_' . random_int(1000, 9999),
+        'full_name'  => 'Branch Admin',
+        'password'   => Hash::make('password123'),
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM' . random_int(1000000, 9999999),
+    ]);
+    $admin->centers()->attach($this->center->id);
+
+    $graduatedStudent = Student::create([
+        'center_id'    => $this->center->id,
+        'username'     => 'grad_std_' . random_int(1000, 9999),
+        'first_name'   => 'Grad',
+        'last_name'    => 'Student',
+        'full_name'    => 'Grad Student',
+        'student_code' => 'HS' . random_int(1000000, 9999999),
+        'password'     => Hash::make('password123'),
+        'status'       => Constant::STUDENT_STATUS_GRADUATED,
+    ]);
+
+    expect(fn () => $this->service->updateStudent($graduatedStudent->id, [
+        'status' => Constant::STUDENT_STATUS_ACTIVE,
+    ], $admin))->toThrow(\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException::class);
+
+    // Super Admin can change it
+    $updated = $this->service->updateStudent($graduatedStudent->id, [
+        'status' => Constant::STUDENT_STATUS_ACTIVE,
+    ], $this->superAdmin);
+
+    expect($updated->status->value ?? (int) $updated->status)->toBe(Constant::STUDENT_STATUS_ACTIVE);
 });
 
 test('bulkAssignStudentsToClass assigns valid active students to specified class', function () {

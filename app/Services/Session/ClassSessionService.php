@@ -188,6 +188,26 @@ class ClassSessionService implements ClassSessionServiceInterface
             || ($oldRoomId !== $newRoomId)
             || ($oldTeacherId !== $newTeacherId);
 
+        if ($newTeacherId) {
+            $newTeacherModel = \App\Models\Teacher::find($newTeacherId);
+
+            if ($newTeacherModel && (int) $newTeacherModel->status !== Constant::TEACHER_STATUS_ACTIVE) {
+                throw ValidationException::withMessages([
+                    'teacher_id' => 'Giáo viên được chọn không ở trạng thái đang làm việc.',
+                ]);
+            }
+        }
+
+        if ($newRoomId) {
+            $newRoomModel = \App\Models\Room::find($newRoomId);
+
+            if ($newRoomModel && (int) $newRoomModel->status !== Constant::ROOM_STATUS_ACTIVE) {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Phòng học được chọn không ở trạng thái đang hoạt động.',
+                ]);
+            }
+        }
+
         // Kiểm tra trùng lịch với các môn học khác trong cùng lớp hoặc trùng lịch dạy của giáo viên nếu thay đổi ngày / giờ / giáo viên
         if ($hasScheduleChanged && $newDate && $newStartTime && $newEndTime) {
             $cleanNewStart = substr((string) $newStartTime, 0, 5);

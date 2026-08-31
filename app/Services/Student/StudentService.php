@@ -236,16 +236,16 @@ class StudentService implements StudentServiceInterface
             $statusInt = Constant::STUDENT_STATUS_GRADUATED;
         }
 
-        // Kiểm tra giới hạn số học sinh đang hoạt động không vượt quá max_students
-        if ($statusInt === Constant::STUDENT_STATUS_ACTIVE) {
+        // Kiểm tra giới hạn số học sinh đang học và tạm nghỉ không vượt quá max_students
+        if (in_array($statusInt, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
-                $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId);
+                $activeAndInactiveStudentsCount = $this->studentRepository->countActiveAndInactiveByCenterId($centerId);
 
-                if ($activeStudentsCount >= $center->max_students) {
+                if ($activeAndInactiveStudentsCount >= $center->max_students) {
                     throw ValidationException::withMessages([
-                        'full_name' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                        'full_name' => "Số học sinh đang theo học và tạm nghỉ ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc hoàn tất/chuyển trạng thái tốt nghiệp cho học sinh cũ.",
                     ]);
                 }
             }
@@ -379,17 +379,25 @@ class StudentService implements StudentServiceInterface
             }
         }
 
+        // Học sinh đã tốt nghiệp không thể chuyển sang trạng thái khác (trừ Super Admin)
+        if ($currentStatusInt === Constant::STUDENT_STATUS_GRADUATED && $newStatus !== $currentStatusInt) {
+            if (! ($admin && $admin->isSuperAdmin())) {
+                throw new AccessDeniedHttpException('Học sinh đã tốt nghiệp chỉ có Admin hệ thống mới có quyền thay đổi trạng thái.');
+            }
+        }
+
         $centerId = (int) ($data['center_id'] ?? $student->center_id);
 
-        if ($currentStatusInt !== Constant::STUDENT_STATUS_ACTIVE && $newStatus === Constant::STUDENT_STATUS_ACTIVE) {
+        // Nếu chuyển từ Đã tốt nghiệp sang Đang học/Tạm nghỉ, kiểm tra giới hạn max_students
+        if ($currentStatusInt === Constant::STUDENT_STATUS_GRADUATED && in_array($newStatus, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
-                $activeStudentsCount = $this->studentRepository->countActiveByCenterId($centerId, $student->id);
+                $activeAndInactiveStudentsCount = $this->studentRepository->countActiveAndInactiveByCenterId($centerId, $student->id);
 
-                if ($activeStudentsCount >= $center->max_students) {
+                if ($activeAndInactiveStudentsCount >= $center->max_students) {
                     throw ValidationException::withMessages([
-                        'status' => "Số học sinh đang hoạt động ({$activeStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái học sinh cũ.",
+                        'status' => "Số học sinh đang theo học và tạm nghỉ ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói trước khi mở lại học sinh này.",
                     ]);
                 }
             }

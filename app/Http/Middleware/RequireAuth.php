@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Constant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,44 @@ class RequireAuth
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                $user         = Auth::guard($guard)->user();
+                $user = Auth::guard($guard)->user();
+
+                // Kiểm tra trạng thái tài khoản có bị khóa hoặc dừng truy cập hay không
+                $isStatusInvalid = false;
+                $statusMessage   = '';
+
+                if ($guard === 'admin') {
+                    $isAdminActive = method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()
+                        ? true
+                        : (! isset($user->status) || $user->status === null || (int) $user->status === Constant::STATUS_ACTIVE);
+
+                    if (! $isAdminActive) {
+                        $isStatusInvalid = true;
+                        $statusMessage   = 'Tài khoản Quản trị viên của bạn đã bị khóa hoặc chưa kích hoạt. Phiên làm việc đã kết thúc.';
+                    }
+                } elseif ($guard === 'teacher' && isset($user->status) && (int) $user->status === Constant::TEACHER_STATUS_LOCKED) {
+                    $isStatusInvalid = true;
+                    $statusMessage   = 'Tài khoản Giáo viên của bạn đã bị khóa. Phiên làm việc đã kết thúc.';
+                } elseif ($guard === 'student' && isset($user->status) && (int) $user->status !== Constant::STUDENT_STATUS_ACTIVE) {
+                    $isStatusInvalid = true;
+                    $statusMessage   = 'Tài khoản Học sinh đã nghỉ học hoặc đã tốt nghiệp. Phiên làm việc đã kết thúc.';
+                }
+
+                if ($isStatusInvalid) {
+                    Auth::guard($guard)->logout();
+
+                    if ($request->hasSession()) {
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                    }
+
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => $statusMessage], 401);
+                    }
+
+                    return redirect()->route('login')->withErrors(['username' => $statusMessage]);
+                }
+
                 $sessionToken = $request->session()->get('auth_device_token_' . $guard);
                 $dbToken      = $user?->current_session_id;
 

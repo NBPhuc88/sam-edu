@@ -160,7 +160,7 @@ class CenterController extends Controller
         $currentAdmin = Auth::guard('admin')->user();
 
         if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
-            abort(403, 'Chỉ Super Admin mới có quyền gia hạn hoặc đổi gói cước cho trung tâm.');
+            abort(403, 'Chỉ Admin hệ thống mới có quyền gia hạn hoặc đổi gói cước cho trung tâm.');
         }
 
         $validated = $request->validated();

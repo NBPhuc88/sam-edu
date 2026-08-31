@@ -156,6 +156,15 @@ interface StudentRepositoryInterface
     public function countActiveByCenterId(int $centerId, ?int $excludeId = null): int;
 
     /**
+     * Đếm số học sinh đang hoạt động (status = 1) và tạm nghỉ (status = 2) của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveAndInactiveByCenterId(int $centerId, ?int $excludeId = null): int;
+
+    /**
      * Lọc danh sách ID lớp học hợp lệ thuộc trung tâm.
      *
      * @param  int        $centerId

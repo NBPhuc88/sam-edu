@@ -453,7 +453,7 @@ export default function ClassEdit({
                                 </select>
                                 {!canEditStatus && (
                                     <p className="mt-1.5 text-xs text-amber-700 font-medium">
-                                        * Lớp học đã hoàn thành hoặc đã đóng. Chỉ Super Admin mới có quyền mở lại.
+                                        * Lớp học đã hoàn thành hoặc đã đóng. Chỉ Admin hệ thống mới có quyền mở lại.
                                     </p>
                                 )}
                             </div>
@@ -722,7 +722,7 @@ export default function ClassEdit({
                                         {Number(status) === CLASS_STATUS_COMPLETED ? 'ĐÃ HOÀN THÀNH' : 'ĐÃ ĐÓNG'}
                                     </strong>
                                     . Khi hoàn tất, các tính năng lịch học, thi cử và chat nhóm của lớp sẽ bị khóa vĩnh viễn và chỉ có{' '}
-                                    <strong className="underline">Super Admin</strong> mới có quyền mở lại lớp học này.
+                                    <strong className="underline">Admin hệ thống</strong> mới có quyền mở lại lớp học này.
                                 </div>
                             </div>
                         </div>

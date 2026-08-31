@@ -36,7 +36,7 @@ beforeEach(function () {
         'full_name'    => 'Teacher Sess Test',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => 'active',
+        'status'       => \App\Enums\Constant::TEACHER_STATUS_ACTIVE,
     ]);
     $this->room = Room::create([
         'center_id' => $this->center->id,

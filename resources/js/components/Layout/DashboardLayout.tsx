@@ -23,6 +23,7 @@ interface AuthUser {
     username: string;
     email: string | null;
     role: string;
+    status?: number;
     admin_role?: number | null;
     avatar?: string | null;
 }
@@ -196,6 +197,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         >
                             Gia hạn dịch vụ
                         </Button>
+                    </div>
+                )}
+
+                {/* Teacher Inactive (View-Only) Banner */}
+                {role === 'teacher' && Number(user?.status) === 2 && (
+                    <div className="flex items-center gap-2 bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-xs">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <span>
+                            Tài khoản của bạn hiện đang ở trạng thái <strong>Tạm nghỉ (Chỉ xem)</strong>. Bạn chỉ có quyền tra cứu dữ liệu; các tính năng thêm mới, chỉnh sửa, điểm danh, chấm điểm và gửi tin nhắn chat tạm thời bị vô hiệu hóa.
+                        </span>
                     </div>
                 )}
 

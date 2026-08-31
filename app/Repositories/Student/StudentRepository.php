@@ -472,6 +472,25 @@ class StudentRepository implements StudentRepositoryInterface
     }
 
     /**
+     * Đếm số học sinh đang hoạt động (status = 1) và tạm nghỉ (status = 2) của trung tâm.
+     *
+     * @param  int  $centerId
+     * @param  ?int $excludeId
+     * @return int
+     */
+    public function countActiveAndInactiveByCenterId(int $centerId, ?int $excludeId = null): int
+    {
+        $query = Student::where('center_id', $centerId)
+            ->whereIn('status', [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE]);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->count();
+    }
+
+    /**
      * Lọc danh sách ID lớp học hợp lệ thuộc trung tâm.
      *
      * @param  int        $centerId

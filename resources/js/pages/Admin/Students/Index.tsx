@@ -21,7 +21,7 @@ Trash2,
 Upload,
 Users
 } from 'lucide-react';
-import React,{ useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AssignClassModal from './components/AssignClassModal';
 import BulkAssignClassModal from './components/BulkAssignClassModal';
 
@@ -120,6 +120,14 @@ export default function StudentIndex({
     const availableClasses = selectedCenterId
         ? classes.filter((c) => Number(c.center_id) === selectedCenterId)
         : classes;
+
+    const { center } = usePage<{ center?: { max_students?: number | null; active_students_count?: number } }>().props;
+
+    const isStudentLimitReached = useMemo(() => {
+        if (isSuperAdmin) return false;
+        if (!center || center.max_students === null || center.max_students === undefined) return false;
+        return Number(center.active_students_count || 0) >= Number(center.max_students);
+    }, [isSuperAdmin, center]);
 
     // Selection & Bulk Actions state
     const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
@@ -341,15 +349,31 @@ return;
                             Export CSV {!canExportCsv && '🔒'}
                         </Button>
                         {can('students.create') && (
-                            <Link href="/students/create">
-                                <Button
-                                    variant="success"
-                                    size="md"
-                                    icon={<Plus className="h-4.5 w-4.5" />}
-                                >
-                                    Thêm Học Sinh Mới
-                                </Button>
-                            </Link>
+                            isStudentLimitReached ? (
+                                <Tooltip content={`Trung tâm đã đạt giới hạn tối đa (${center?.active_students_count}/${center?.max_students}) học sinh của gói dịch vụ.`}>
+                                    <div>
+                                        <Button
+                                            variant="success"
+                                            size="md"
+                                            icon={<Plus className="h-4.5 w-4.5" />}
+                                            disabled
+                                            className="opacity-60 cursor-not-allowed"
+                                        >
+                                            Thêm Học Sinh Mới
+                                        </Button>
+                                    </div>
+                                </Tooltip>
+                            ) : (
+                                <Link href="/students/create">
+                                    <Button
+                                        variant="success"
+                                        size="md"
+                                        icon={<Plus className="h-4.5 w-4.5" />}
+                                    >
+                                        Thêm Học Sinh Mới
+                                    </Button>
+                                </Link>
+                            )
                         )}
                     </div>
                 </div>
@@ -586,7 +610,7 @@ return;
                                                                 </Button>
                                                             </Link>
                                                         )}
-                                                        {can('students.edit') && (
+                                                        {can('students.edit') && Number(student.status) === STUDENT_STATUS_ACTIVE && (
                                                             <Button
                                                                 type="button"
                                                                 variant="secondary"

@@ -717,6 +717,14 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             throw new NotFoundHttpException("Không tìm thấy lớp học với ID #{$classId}");
         }
 
+        $classStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
+
+        if ($classStatusInt !== Constant::CLASS_STATUS_ACTIVE) {
+            throw ValidationException::withMessages([
+                'class_id' => 'Lớp học không ở trạng thái đang hoạt động. Không thể tạo thêm thời khóa biểu.',
+            ]);
+        }
+
         $allowedCenterIds = $this->getAllowedCenterIds($admin);
 
         if ($allowedCenterIds !== null && ! in_array($schoolClass->center_id, $allowedCenterIds, true)) {
@@ -737,6 +745,24 @@ class ClassScheduleService implements ClassScheduleServiceInterface
 
         if ($existingClassSubject->teacher_id) {
             $teacherId = (int) $existingClassSubject->teacher_id;
+        }
+
+        $teacher = \App\Models\Teacher::find($teacherId);
+
+        if ($teacher && (int) $teacher->status !== Constant::TEACHER_STATUS_ACTIVE) {
+            throw ValidationException::withMessages([
+                'teacher_id' => 'Giáo viên được chọn không ở trạng thái đang làm việc.',
+            ]);
+        }
+
+        if (! empty($data['room_id'])) {
+            $room = \App\Models\Room::find((int) $data['room_id']);
+
+            if ($room && (int) $room->status !== Constant::ROOM_STATUS_ACTIVE) {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Phòng học được chọn không ở trạng thái đang hoạt động.',
+                ]);
+            }
         }
 
         if ($schoolClass && $schoolClass->start_date) {

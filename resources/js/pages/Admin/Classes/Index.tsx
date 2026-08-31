@@ -101,6 +101,13 @@ export default function ClassIndex({
     isStudent = false,
 }: Props) {
     const { can, isSuperAdmin } = usePermission();
+    const { center } = usePage<{ center?: { max_classes?: number | null; active_classes_count?: number } }>().props;
+
+    const isClassLimitReached = React.useMemo(() => {
+        if (isSuperAdmin) return false;
+        if (!center || center.max_classes === null || center.max_classes === undefined) return false;
+        return Number(center.active_classes_count || 0) >= Number(center.max_classes);
+    }, [isSuperAdmin, center]);
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<number>(
@@ -193,15 +200,31 @@ return;
                     </div>
 
                     {!isStudent && can('classes.create') && (
-                        <Link href="/classes/create">
-                            <Button
-                                variant="success"
-                                size="md"
-                                icon={<Plus className="h-4.5 w-4.5" />}
-                            >
-                                Thêm Lớp Học Mới
-                            </Button>
-                        </Link>
+                        isClassLimitReached ? (
+                            <Tooltip content={`Trung tâm đã đạt giới hạn tối đa (${center?.active_classes_count}/${center?.max_classes}) lớp học đang hoạt động và tạm ngưng.`}>
+                                <div>
+                                    <Button
+                                        variant="success"
+                                        size="md"
+                                        icon={<Plus className="h-4.5 w-4.5" />}
+                                        disabled
+                                        className="opacity-60 cursor-not-allowed"
+                                    >
+                                        Thêm Lớp Học Mới
+                                    </Button>
+                                </div>
+                            </Tooltip>
+                        ) : (
+                            <Link href="/classes/create">
+                                <Button
+                                    variant="success"
+                                    size="md"
+                                    icon={<Plus className="h-4.5 w-4.5" />}
+                                >
+                                    Thêm Lớp Học Mới
+                                </Button>
+                            </Link>
+                        )
                     )}
                 </div>
 

@@ -3,10 +3,11 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import {
-SESSION_STATUS_CANCELLED,
-SESSION_STATUS_COMPLETED,
-SESSION_STATUS_IN_PROGRESS,
-SESSION_STATUS_SCHEDULED
+    CLASS_STATUS_ACTIVE,
+    SESSION_STATUS_CANCELLED,
+    SESSION_STATUS_COMPLETED,
+    SESSION_STATUS_IN_PROGRESS,
+    SESSION_STATUS_SCHEDULED,
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
@@ -408,7 +409,7 @@ export default function ClassSchedulePage({
                                 Chat
                             </Button>
                         </Link>
-                        {!isTeacher && (
+                        {!isTeacher && Number(schoolClass.status) === CLASS_STATUS_ACTIVE && (
                             <Link href={`/schedules/create`}>
                                 <Button
                                     variant="success"

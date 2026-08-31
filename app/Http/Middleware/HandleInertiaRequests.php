@@ -89,6 +89,7 @@ class HandleInertiaRequests extends Middleware
                 'email'      => $user->email ?? null,
                 'full_name'  => $fullName,
                 'role'       => $role,
+                'status'     => isset($user->status) ? (int) $user->status : 1,
                 'admin_role' => $numericAdminRole,
                 'center_id'  => ($role === 'admin' && method_exists($user, 'assignedCenterId')) ? $user->assignedCenterId() : null,
             ];
@@ -132,7 +133,7 @@ class HandleInertiaRequests extends Middleware
                     'max_classes'           => $centerModel->max_classes,
                     'max_students'          => $centerModel->max_students,
                     'active_classes_count'  => $centerModel->classes()->whereIn('status', [Constant::CLASS_STATUS_INACTIVE, Constant::CLASS_STATUS_ACTIVE])->count(),
-                    'active_students_count' => $centerModel->students()->where('status', Constant::STUDENT_STATUS_ACTIVE)->count(),
+                    'active_students_count' => $centerModel->students()->whereIn('status', [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE])->count(),
                     'active_rooms_count'    => $centerModel->rooms()->whereIn('status', [Constant::ROOM_STATUS_PAUSED, Constant::ROOM_STATUS_ACTIVE])->count(),
                     'expires_at'            => $expiresAt ? $expiresAt->toIso8601String() : null,
                     'is_expired'            => $isExpired,

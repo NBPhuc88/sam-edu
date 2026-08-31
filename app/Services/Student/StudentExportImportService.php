@@ -236,14 +236,16 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 $updatedCount++;
                 $studentObj = $this->studentRepository->findByCode($studentCode);
             } else {
-                // Kiểm tra giới hạn số học sinh active
-                if ($targetCenterId && $data['status'] === Constant::STUDENT_STATUS_ACTIVE) {
+                // Kiểm tra giới hạn số học sinh (đang học + tạm nghỉ) không vượt quá max_students
+                if ($targetCenterId && in_array($data['status'], [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
                     $center = Center::find($targetCenterId);
 
                     if ($center && $center->max_students !== null) {
-                        $activeCount = Student::where('center_id', $targetCenterId)->where('status', Constant::STUDENT_STATUS_ACTIVE)->count();
+                        $activeAndInactiveCount = Student::where('center_id', $targetCenterId)
+                            ->whereIn('status', [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE])
+                            ->count();
 
-                        if ($activeCount >= $center->max_students) {
+                        if ($activeAndInactiveCount >= $center->max_students) {
                             $errors[] = "Dòng {$lineIndex}: Không thể thêm học sinh mới do trung tâm ({$center->name}) đã đạt giới hạn tối đa ({$center->max_students}) học sinh của gói dịch vụ.";
 
                             continue;

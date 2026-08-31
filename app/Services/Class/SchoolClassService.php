@@ -337,7 +337,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         // Lớp học đã hoàn thành hoặc đã đóng không thể chuyển sang trạng thái khác (trừ Super Admin)
         if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && $newStatus !== $currentStatusInt) {
             if (! ($admin && $admin->isSuperAdmin())) {
-                throw new AccessDeniedHttpException('Lớp học đã hoàn thành hoặc đã đóng chỉ có Super Admin mới có quyền mở lại.');
+                throw new AccessDeniedHttpException('Lớp học đã hoàn thành hoặc đã đóng chỉ có Admin hệ thống mới có quyền mở lại.');
             }
         }
 
@@ -728,8 +728,15 @@ class SchoolClassService implements SchoolClassServiceInterface
     {
         $schoolClass = $this->findClass($classId, $admin, $teacher);
 
-        // Lọc danh sách học sinh chỉ thuộc cùng trung tâm của lớp
+        $classStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
+
+        if ($classStatusInt !== Constant::CLASS_STATUS_ACTIVE) {
+            throw new AccessDeniedHttpException('Lớp học không ở trạng thái đang hoạt động. Không thể thêm học sinh vào lớp.');
+        }
+
+        // Lọc danh sách học sinh chỉ thuộc cùng trung tâm của lớp và đang ở trạng thái Đang theo học (ACTIVE)
         $validStudentIds = Student::where('center_id', $schoolClass->center_id)
+            ->where('status', Constant::STUDENT_STATUS_ACTIVE)
             ->whereIn('id', $studentIds)
             ->pluck('id')
             ->toArray();

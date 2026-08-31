@@ -304,15 +304,15 @@ test('inactive or paused student cannot enter online exam room or practice exam'
         'status'       => Constant::STUDENT_STATUS_INACTIVE,
     ]);
 
-    // Thử truy cập thi thử -> 403 Forbidden
+    // Thử truy cập thi thử -> RequireAuth chặn đăng xuất và chuyển hướng về /login (302)
     $practiceResponse = $this->actingAs($inactiveStudent, 'student')
         ->get('/practice-exams');
-    $practiceResponse->assertStatus(403);
+    $practiceResponse->assertStatus(302)->assertRedirect(route('login'));
 
-    // Thử vào phòng thi online -> 403 Forbidden
+    // Thử vào phòng thi online -> Chuyển hướng về /login (302)
     $onlineResponse = $this->actingAs($inactiveStudent, 'student')
         ->get('/exam-room');
-    $onlineResponse->assertStatus(403);
+    $onlineResponse->assertStatus(302)->assertRedirect(route('login'));
 });
 
 test('student can view printable transcript PDF page', function () {
