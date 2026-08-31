@@ -703,11 +703,11 @@ export default function SessionIndex({
                                                             <Link href={`/sessions/${session.id}`}>
                                                                 <button
                                                                     type="button"
-                                                                    title="Chi tiết & Đổi lịch"
+                                                                    title={session.status !== SESSION_STATUS_CANCELLED ? 'Chi tiết & Đổi lịch' : 'Chi tiết buổi học'}
                                                                     className="flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100"
                                                                 >
                                                                     <Eye className="h-3.5 w-3.5" />
-                                                                    <span>Chi Tiết / Đổi Lịch</span>
+                                                                    <span>{session.status !== SESSION_STATUS_CANCELLED ? 'Chi Tiết / Đổi Lịch' : 'Chi Tiết'}</span>
                                                                 </button>
                                                             </Link>
                                                         )}

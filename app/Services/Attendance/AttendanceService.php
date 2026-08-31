@@ -82,20 +82,28 @@ class AttendanceService implements AttendanceServiceInterface
             $session->start_time
         );
 
+        $sessionDate              = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date?->toDateString());
+        $sessionStart             = Carbon::parse($sessionDate . ' ' . $session->start_time);
+        $isStartedOrPast          = ! $sessionStart->isFuture();
+        $isCancelledOrRescheduled = in_array((int) $session->status, [Constant::SESSION_STATUS_CANCELLED, Constant::SESSION_STATUS_RESCHEDULED], true);
+        $canTakeAttendance        = $isStartedOrPast && ! $isCancelledOrRescheduled;
+
         return [
-            'session'       => $session,
-            'schoolClass'   => $session->classSubject?->schoolClass,
-            'subject'       => $session->classSubject?->subject,
-            'teacher'       => $session->teacher ?? $session->classSubject?->teacher,
-            'room'          => $session->room,
-            'sessionOrder'  => $sessionOrder,
-            'totalSessions' => $session->classSubject?->subject?->total_sessions,
-            'students'      => $studentAttendanceList,
-            'totalStudents' => $students->count(),
-            'presentCount'  => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_PRESENT)->count(),
-            'absentCount'   => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_ABSENT)->count(),
-            'lateCount'     => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_LATE)->count(),
-            'excusedCount'  => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_EXCUSED)->count(),
+            'session'           => $session,
+            'canTakeAttendance' => $canTakeAttendance,
+            'isStartedOrPast'   => $isStartedOrPast,
+            'schoolClass'       => $session->classSubject?->schoolClass,
+            'subject'           => $session->classSubject?->subject,
+            'teacher'           => $session->teacher ?? $session->classSubject?->teacher,
+            'room'              => $session->room,
+            'sessionOrder'      => $sessionOrder,
+            'totalSessions'     => $session->classSubject?->subject?->total_sessions,
+            'students'          => $studentAttendanceList,
+            'totalStudents'     => $students->count(),
+            'presentCount'      => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_PRESENT)->count(),
+            'absentCount'       => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_ABSENT)->count(),
+            'lateCount'         => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_LATE)->count(),
+            'excusedCount'      => $studentAttendanceList->where('status', Constant::ATTENDANCE_STATUS_EXCUSED)->count(),
         ];
     }
 

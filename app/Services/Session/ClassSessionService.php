@@ -169,6 +169,12 @@ class ClassSessionService implements ClassSessionServiceInterface
 
         $this->authorizeSessionAccess($session, $user);
 
+        if ((int) $session->status === Constant::SESSION_STATUS_CANCELLED) {
+            throw ValidationException::withMessages([
+                'session' => 'Buổi học đã bị hủy, không thể thay đổi thông tin, đổi lịch hoặc cập nhật ghi chú.',
+            ]);
+        }
+
         // Store old values for reschedule comparison
         $oldDate      = $session->session_date ? Carbon::parse($session->session_date)->format('Y-m-d') : null;
         $oldStartTime = $session->start_time;

@@ -81,7 +81,18 @@ class UpdateClassSessionRequest extends FormRequest
                 return;
             }
 
-            $session     = ClassSession::with('classSubject.schoolClass')->find($sessionId);
+            $session = ClassSession::with('classSubject.schoolClass')->find($sessionId);
+
+            if ($session && (int) $session->status === Constant::SESSION_STATUS_CANCELLED) {
+                $validator->errors()->add('session', 'Buổi học đã bị hủy, không thể thay đổi thông tin, đổi lịch hoặc cập nhật ghi chú.');
+
+                return;
+            }
+
+            if (! $this->input('session_date')) {
+                return;
+            }
+
             $schoolClass = $session?->classSubject?->schoolClass;
 
             if (! $schoolClass || ! $schoolClass->start_date) {

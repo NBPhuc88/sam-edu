@@ -406,3 +406,26 @@ test('cancelled sessions are not counted towards schedule sessions count or past
     expect($sessionIdsInJson)->not->toContain($scheduledSession->id);
     expect($sessionIdsInJson)->toContain($completedSession->id);
 });
+
+test('cannot update or reschedule a cancelled session', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Cancel the session
+    $scheduledSession->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+
+    // Try to update/reschedule the cancelled session
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->patch(route('sessions.update', $scheduledSession->id), [
+            'session_date' => now()->addDays(2)->toDateString(),
+            'start_time'   => '09:00',
+            'end_time'     => '11:00',
+            'note'         => 'Cập nhật ghi chú cho ca học đã hủy',
+        ]);
+
+    $response->assertSessionHasErrors('session');
+});

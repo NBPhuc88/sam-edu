@@ -77,6 +77,8 @@ interface Props {
     totalSessions: number | null;
     students: StudentAttendanceItem[];
     totalStudents: number;
+    canTakeAttendance?: boolean;
+    isStartedOrPast?: boolean;
 }
 
 export default function AttendanceShowPage({
@@ -89,6 +91,8 @@ export default function AttendanceShowPage({
     totalSessions,
     students: initialStudents = [],
     totalStudents,
+    canTakeAttendance,
+    isStartedOrPast: initialIsStartedOrPast,
 }: Props) {
     const { can } = usePermission();
     const [students, setStudents] = useState<StudentAttendanceItem[]>(initialStudents);
@@ -154,12 +158,20 @@ export default function AttendanceShowPage({
         );
     };
 
-    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
-        const todayIso = new Date().toISOString().split('T')[0];
-        const isPast = sessionDate && toISODateString(sessionDate) < todayIso;
+    const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string, endTime?: string) => {
+        const now = new Date();
+        const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const sessionDateIso = sessionDate ? toISODateString(sessionDate) : '';
+        const isPast = sessionDateIso && sessionDateIso < todayIso;
 
         if (status === 3) {
             return <Badge variant="active">Đã Hoàn Thành</Badge>;
+        }
+        if (status === 4) {
+            return <Badge variant="danger">Đã Hủy</Badge>;
+        }
+        if (status === 5) {
+            return <Badge variant="expired">Đã Đổi Lịch</Badge>;
         }
         if (status === 2) {
             return (
@@ -168,21 +180,31 @@ export default function AttendanceShowPage({
                 </span>
             );
         }
-        if (status === 4) {
-            return <Badge variant="danger">Chưa Điểm Danh / Đã Hủy</Badge>;
-        }
-        if (status === 5) {
-            return <Badge variant="expired">Đã Đổi Lịch</Badge>;
-        }
         if (isPast) {
             return <Badge variant="danger">Chưa Điểm Danh</Badge>;
         }
-        if (sessionDate && toISODateString(sessionDate) === todayIso && startTime) {
-            const now = new Date();
-            const [h, m] = startTime.split(':').map(Number);
-            const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
-            const diffMin = (sessionStart.getTime() - now.getTime()) / (1000 * 60);
-            if (diffMin >= 0 && diffMin <= 10) {
+        if (sessionDateIso === todayIso && startTime) {
+            const [sh, sm] = startTime.split(':').map(Number);
+            const startMin = (sh || 0) * 60 + (sm || 0);
+            const currentMin = now.getHours() * 60 + now.getMinutes();
+
+            let endMin = startMin + 90;
+            if (endTime) {
+                const [eh, em] = endTime.split(':').map(Number);
+                endMin = (eh || 0) * 60 + (em || 0);
+            }
+
+            if (currentMin >= startMin && currentMin <= endMin) {
+                return (
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800 border border-purple-200">
+                        Đang Diễn Ra
+                    </span>
+                );
+            }
+            if (currentMin > endMin) {
+                return <Badge variant="danger">Chưa Điểm Danh</Badge>;
+            }
+            if (startMin - currentMin <= 15 && startMin - currentMin > 0) {
                 return (
                     <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
                         Sắp Diễn Ra
@@ -198,7 +220,27 @@ export default function AttendanceShowPage({
     const excusedCount = students.filter((s) => s.status === 4).length;
     const absentCount = students.filter((s) => s.status === 2).length;
 
-    const isAttendanceAllowed = [2, 3, 4].includes(Number(session.status));
+    const isSessionStarted = React.useMemo(() => {
+        if (typeof initialIsStartedOrPast === 'boolean') {
+            return initialIsStartedOrPast;
+        }
+        const now = new Date();
+        const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const sessionDateIso = session.session_date ? toISODateString(session.session_date) : '';
+        if (!sessionDateIso) return false;
+        if (sessionDateIso < todayIso) return true;
+        if (sessionDateIso === todayIso && session.start_time) {
+            const [h, m] = session.start_time.split(':').map(Number);
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const startMinutes = (h || 0) * 60 + (m || 0);
+            return currentMinutes >= startMinutes;
+        }
+        return false;
+    }, [initialIsStartedOrPast, session.session_date, session.start_time]);
+
+    const isCancelled = Number(session.status) === 4;
+    const isRescheduled = Number(session.status) === 5;
+    const isAttendanceAllowed = canTakeAttendance ?? (!isCancelled && !isRescheduled && (isSessionStarted || [2, 3].includes(Number(session.status))));
 
     return (
         <AppLayout title={`Điểm Danh: ${subject?.name || 'Môn học'} - ${schoolClass?.name || 'Lớp học'}`}>
@@ -209,7 +251,19 @@ export default function AttendanceShowPage({
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-xs flex items-center gap-3">
                         <Clock className="h-5 w-5 text-amber-600 shrink-0" />
                         <div className="text-sm">
-                            <strong className="font-semibold">Buổi học chưa bắt đầu:</strong> Bạn chỉ có thể thực hiện điểm danh khi buổi học đang diễn ra (<span className="font-semibold text-amber-800">Đang diễn ra</span>), đã hoàn thành hoặc chưa điểm danh.
+                            {isCancelled ? (
+                                <>
+                                    <strong className="font-semibold">Buổi học đã bị hủy:</strong> Không thể thực hiện điểm danh cho buổi học đã hủy.
+                                </>
+                            ) : isRescheduled ? (
+                                <>
+                                    <strong className="font-semibold">Buổi học đã đổi lịch:</strong> Không thể thực hiện điểm danh cho buổi học đã đổi lịch.
+                                </>
+                            ) : (
+                                <>
+                                    <strong className="font-semibold">Buổi học chưa bắt đầu:</strong> Bạn chỉ có thể thực hiện điểm danh khi buổi học đến giờ bắt đầu, đang diễn ra hoặc đã hoàn thành.
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
@@ -235,7 +289,7 @@ export default function AttendanceShowPage({
                                 <span className="rounded-md bg-emerald-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
                                     {schoolClass?.name} ({schoolClass?.code})
                                 </span>
-                                {getSessionStatusBadge(Number(session.status), session.session_date, session.start_time)}
+                                {getSessionStatusBadge(Number(session.status), session.session_date, session.start_time, session.end_time)}
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
                                 <span className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-md border border-emerald-200">

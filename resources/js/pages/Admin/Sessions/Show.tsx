@@ -348,23 +348,27 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            icon={<BookOpen className="h-4.5 w-4.5 text-emerald-600" />}
-                            onClick={() => setIsContentModalOpen(true)}
-                        >
-                            Chủ Đề & Ghi Chú
-                        </Button>
+                        {session.status !== SESSION_STATUS_CANCELLED && (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    size="md"
+                                    icon={<BookOpen className="h-4.5 w-4.5 text-emerald-600" />}
+                                    onClick={() => setIsContentModalOpen(true)}
+                                >
+                                    Chủ Đề & Ghi Chú
+                                </Button>
 
-                        <Button
-                            variant="edit"
-                            size="md"
-                            icon={<Edit3 className="h-4.5 w-4.5" />}
-                            onClick={openRescheduleModal}
-                        >
-                            Đổi Lịch / Phân Công Lại
-                        </Button>
+                                <Button
+                                    variant="edit"
+                                    size="md"
+                                    icon={<Edit3 className="h-4.5 w-4.5" />}
+                                    onClick={openRescheduleModal}
+                                >
+                                    Đổi Lịch / Phân Công Lại
+                                </Button>
+                            </>
+                        )}
 
                         {session.status !== SESSION_STATUS_CANCELLED ? (
                             <Link href={`/attendance/session/${session.id}`}>
@@ -381,7 +385,7 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                 variant="secondary"
                                 size="md"
                                 disabled
-                                title="Chỉ có thể điểm danh khi buổi học đang diễn ra hoặc đã kết thúc"
+                                title="Buổi học đã hủy không thể điểm danh"
                                 icon={<CheckSquare className="h-4.5 w-4.5 text-gray-400" />}
                                 className="opacity-60 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-400"
                             >
@@ -390,6 +394,15 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                         )}
                     </div>
                 </div>
+
+                {session.status === SESSION_STATUS_CANCELLED && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-900 shadow-xs flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                        <div className="text-sm font-medium">
+                            <strong className="font-semibold">Buổi học đã bị hủy:</strong> Buổi học này đã bị hủy do lịch học tạm ngưng hoặc hủy bỏ. Bạn không thể thực hiện đổi lịch, chỉnh sửa thông tin hoặc cập nhật ghi chú.
+                        </div>
+                    </div>
+                )}
 
                 {/* Session Key Info Grid */}
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -487,13 +500,15 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                 <BookOpen className="h-4 w-4 text-emerald-600" />
                                 Nội Dung & Ghi Chú Buổi Học
                             </h3>
-                            <button
-                                type="button"
-                                onClick={() => setIsContentModalOpen(true)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
-                            >
-                                <Edit3 className="h-3.5 w-3.5" /> Chỉnh sửa
-                            </button>
+                            {session.status !== SESSION_STATUS_CANCELLED && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsContentModalOpen(true)}
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+                                >
+                                    <Edit3 className="h-3.5 w-3.5" /> Chỉnh sửa
+                                </button>
+                            )}
                         </div>
                         {session.topic && (
                             <p className="text-sm text-gray-800 font-medium mb-2">
@@ -522,14 +537,16 @@ export default function SessionShow({ session, teachers = [], rooms = [] }: Prop
                                 <p className="text-[11px] text-gray-500">Thêm chủ đề bài giảng hoặc dặn dò để học sinh chuẩn bị bài trước khi đến lớp.</p>
                             </div>
                         </div>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<Edit3 className="h-3.5 w-3.5 text-emerald-600" />}
-                            onClick={() => setIsContentModalOpen(true)}
-                        >
-                            Thêm Chủ Đề / Ghi Chú
-                        </Button>
+                        {session.status !== SESSION_STATUS_CANCELLED && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                icon={<Edit3 className="h-3.5 w-3.5 text-emerald-600" />}
+                                onClick={() => setIsContentModalOpen(true)}
+                            >
+                                Thêm Chủ Đề / Ghi Chú
+                            </Button>
+                        )}
                     </Card>
                 )}
 
