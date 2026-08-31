@@ -227,6 +227,13 @@ class StudentRepository implements StudentRepositoryInterface
     {
         $student = Student::findOrFail($id);
 
+        ClassStudent::where('student_id', $id)
+            ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+            ->update([
+                'status'  => Constant::CLASS_STUDENT_STATUS_LEFT,
+                'left_at' => now(),
+            ]);
+
         return (bool) $student->delete();
     }
 

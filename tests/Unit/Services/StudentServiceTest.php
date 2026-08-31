@@ -3,6 +3,7 @@
 use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\ClassStudent;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\Student\StudentService;
@@ -188,4 +189,60 @@ test('removeStudentFromClass detaches student from class', function () {
     $this->service->removeStudentFromClass($student->id, $class->id, $this->superAdmin);
 
     expect($class->students()->count())->toBe(0);
+});
+
+test('deleteStudent updates active class_student status to left and sets left_at', function () {
+    $class1 = SchoolClass::create([
+        'center_id' => $this->center->id,
+        'code'      => 'CLS' . random_int(1000000, 9999999),
+        'name'      => 'Lop Test 1',
+        'status'    => 1,
+    ]);
+
+    $class2 = SchoolClass::create([
+        'center_id' => $this->center->id,
+        'code'      => 'CLS' . random_int(1000000, 9999999),
+        'name'      => 'Lop Test 2',
+        'status'    => 1,
+    ]);
+
+    $student = Student::create([
+        'center_id'    => $this->center->id,
+        'username'     => 'delete_std_test',
+        'first_name'   => 'Delete',
+        'last_name'    => 'Student',
+        'full_name'    => 'Delete Student',
+        'student_code' => 'HS' . random_int(1000000, 9999999),
+        'password'     => Hash::make('password123'),
+        'status'       => 1,
+    ]);
+
+    // Attach active to class1
+    $class1->students()->attach($student->id, [
+        'enrolled_at' => now()->subMonths(2),
+        'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+    ]);
+
+    // Attach already completed to class2
+    $class2->students()->attach($student->id, [
+        'enrolled_at' => now()->subMonths(6),
+        'left_at'     => now()->subMonths(1),
+        'status'      => Constant::CLASS_STUDENT_STATUS_COMPLETED,
+    ]);
+
+    $result = $this->service->deleteStudent($student->id, $this->superAdmin);
+
+    expect($result)->toBeTrue();
+    $this->assertSoftDeleted('students', ['id' => $student->id]);
+
+    // Verify class1 enrollment status changed to LEFT (4) and left_at is set
+    $cs1 = ClassStudent::where('class_id', $class1->id)->where('student_id', $student->id)->first();
+    expect($cs1)->not->toBeNull();
+    expect((int) $cs1->status)->toBe(Constant::CLASS_STUDENT_STATUS_LEFT);
+    expect($cs1->left_at)->not->toBeNull();
+
+    // Verify class2 enrollment status remains COMPLETED (2)
+    $cs2 = ClassStudent::where('class_id', $class2->id)->where('student_id', $student->id)->first();
+    expect($cs2)->not->toBeNull();
+    expect((int) $cs2->status)->toBe(Constant::CLASS_STUDENT_STATUS_COMPLETED);
 });

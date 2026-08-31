@@ -221,21 +221,24 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 }
                 $title = "Học sinh: {$student->full_name} ({$student->student_code})";
 
-                $classCount      = DB::table('class_students')->where('student_id', $id)->whereNull('deleted_at')->count();
+                $activeClassCount = DB::table('class_students')
+                    ->where('student_id', $id)
+                    ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                    ->count();
                 $attendanceCount = DB::table('attendances')->where('student_id', $id)->count();
                 $submissionCount = DB::table('class_exam_submissions')->where('student_id', $id)->count();
                 $tuitionCount    = DB::table('student_tuitions')->where('student_id', $id)->whereNull('deleted_at')->count();
 
-                if ($classCount > 0) {
-                    $impacts[] = "Ngắt ghi danh tại {$classCount} lớp học";
+                if ($activeClassCount > 0) {
+                    $impacts[] = "Tự động chuyển trạng thái sang 'Đã thôi học' tại {$activeClassCount} lớp đang tham gia";
                 }
 
                 if ($attendanceCount > 0) {
-                    $impacts[] = "Ẩn dữ liệu {$attendanceCount} lượt điểm danh chuyên cần";
+                    $impacts[] = "Bảo toàn dữ liệu {$attendanceCount} lượt điểm danh chuyên cần";
                 }
 
                 if ($submissionCount > 0) {
-                    $impacts[] = "Ẩn {$submissionCount} bài làm và bảng điểm thi";
+                    $impacts[] = "Bảo toàn {$submissionCount} bài làm và bảng điểm thi";
                 }
 
                 if ($tuitionCount > 0) {
