@@ -42,7 +42,7 @@ export default function TeacherCreate({ centers = [], errors = {} }: CreateProps
     const [gender, setGender] = useState<number>(1);
     const [hireDate, setHireDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [specialization, setSpecialization] = useState<string>('');
-    const [status, setStatus] = useState<number>(1);
+    const [status, setStatus] = useState<number>(TEACHER_STATUS_ACTIVE);
     const [note, setNote] = useState<string>('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);

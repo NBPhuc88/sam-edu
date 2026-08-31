@@ -54,10 +54,10 @@ export default function TeacherEdit({ teacher, centers = [], errors = {} }: Edit
     const [email, setEmail] = useState<string>(teacher.email || '');
     const [phone, setPhone] = useState<string>(teacher.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(teacher.date_of_birth || '');
-    const [gender, setGender] = useState<number>(Number(teacher.gender) === 2 ? 2 : (Number(teacher.gender) === 3 ? 3 : 1));
+    const [gender, setGender] = useState<number>(teacher.gender ? Number(teacher.gender) : 1);
     const [hireDate, setHireDate] = useState<string>(teacher.hire_date || '');
     const [specialization, setSpecialization] = useState<string>(teacher.specialization || '');
-    const [status, setStatus] = useState<number>(Number(teacher.status) === 0 ? 0 : (Number(teacher.status) === 2 ? 2 : 1));
+    const [status, setStatus] = useState<number>(Number(teacher.status ?? TEACHER_STATUS_ACTIVE));
     const [note, setNote] = useState<string>(teacher.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);

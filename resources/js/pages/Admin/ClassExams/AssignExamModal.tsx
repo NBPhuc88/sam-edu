@@ -74,7 +74,7 @@ export default function AssignExamModal({
             setMaxScore(editingClassExam.max_score || 10);
             setPassScore(editingClassExam.pass_score || '');
             const rawStatus = editingClassExam.status;
-            setStatus(rawStatus === 2 ? 2 : rawStatus === 3 ? 3 : rawStatus === 0 ? 0 : 1);
+            setStatus(rawStatus !== undefined && rawStatus !== null ? Number(rawStatus) : CLASS_EXAM_STATUS_SCHEDULED);
         } else {
             // New creation
             const defExam = initialExamId ? exams.find((e) => e.id === initialExamId) : null;
@@ -100,7 +100,7 @@ export default function AssignExamModal({
             setDurationMinutes(defExam?.duration_minutes || 45);
             setMaxScore(defExam?.max_score || 10);
             setPassScore(defExam?.pass_score || 5);
-            setStatus(1);
+            setStatus(CLASS_EXAM_STATUS_SCHEDULED);
         }
         setErrors({});
     }, [isOpen, editingClassExam, initialExamId, initialClassId]);

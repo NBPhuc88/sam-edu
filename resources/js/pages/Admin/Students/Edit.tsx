@@ -78,7 +78,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     const studentCode = student.student_code || '';
     const [phone, setPhone] = useState<string>(student.phone || '');
     const [dateOfBirth, setDateOfBirth] = useState<string>(student.date_of_birth || '');
-    const [gender, setGender] = useState<number>(student.gender === 2 ? 2 : student.gender === 3 ? 3 : 1);
+    const [gender, setGender] = useState<number>(student.gender ? Number(student.gender) : 1);
     const [address, setAddress] = useState<string>(student.address || '');
     const [parentName, setParentName] = useState<string>(student.parent_name || '');
     const [parentPhone, setParentPhone] = useState<string>(student.parent_phone || '');
@@ -125,15 +125,8 @@ export default function StudentEdit({ student, centers = [], classes = [], error
         }
     };
 
-    const normalizeStatus = (val: any): number => {
-        if (val === 1 || val === '1' || val === 'active') return 1;
-        if (val === 0 || val === '0' || val === 'inactive' || val === 'paused' || val === 'suspended' || val === 'locked') return 0;
-        if (val === 2 || val === '2' || val === 'graduated' || val === 'completed') return 2;
-        return 1;
-    };
-
     const [admissionDate, setAdmissionDate] = useState<string>(student.admission_date || '');
-    const [status, setStatus] = useState<number>(() => normalizeStatus(student.status));
+    const [status, setStatus] = useState<number>(Number(student.status ?? STUDENT_STATUS_ACTIVE));
     const [note, setNote] = useState<string>(student.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);

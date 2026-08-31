@@ -56,7 +56,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     const [parentPhone, setParentPhone] = useState<string>('');
     const [parentRelationship, setParentRelationship] = useState<string>('Bố/Mẹ');
     const [admissionDate, setAdmissionDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [status, setStatus] = useState<number>(1);
+    const [status, setStatus] = useState<number>(STUDENT_STATUS_ACTIVE);
     const [note, setNote] = useState<string>('');
     const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
     const [selectedTuitionClassIds, setSelectedTuitionClassIds] = useState<number[]>([]);
