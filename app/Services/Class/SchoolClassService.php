@@ -537,7 +537,38 @@ class SchoolClassService implements SchoolClassServiceInterface
         $schoolClass = $this->findClass($id, $admin);
 
         return DB::transaction(function () use ($schoolClass) {
-            $this->cascadeClassStatusToSchedulesAndSessions($schoolClass->id, Constant::CLASS_STATUS_INACTIVE);
+            $classSubjectIds = ClassSubject::where('class_id', $schoolClass->id)->pluck('id')->toArray();
+
+            if (! empty($classSubjectIds)) {
+                // 1. Cập nhật lịch học (class_schedules) đang áp dụng -> đã dừng
+                ClassSchedule::whereIn('class_subject_id', $classSubjectIds)
+                    ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+                    ->update(['status' => Constant::SCHEDULE_STATUS_INACTIVE]);
+
+                // 2. Xóa vĩnh viễn các ca học trong tương lai / dự kiến chưa điểm danh (xử lý chunk 1000)
+                do {
+                    $futureSessionIds = ClassSession::whereIn('class_subject_id', $classSubjectIds)
+                        ->where(function ($q) {
+                            $q->where('session_date', '>=', now()->toDateString())
+                                ->orWhere('status', Constant::SESSION_STATUS_SCHEDULED);
+                        })
+                        ->whereDoesntHave('attendances')
+                        ->limit(1000)
+                        ->pluck('id')
+                        ->toArray();
+
+                    if (empty($futureSessionIds)) {
+                        break;
+                    }
+
+                    ClassSession::whereIn('id', $futureSessionIds)->delete();
+                } while (count($futureSessionIds) >= 1000);
+
+                // 3. Cập nhật trạng thái phân công môn học -> inactive
+                ClassSubject::whereIn('id', $classSubjectIds)
+                    ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+                    ->update(['status' => Constant::CLASS_SUBJECT_STATUS_INACTIVE]);
+            }
 
             return $this->schoolClassRepository->delete($schoolClass->id);
         });

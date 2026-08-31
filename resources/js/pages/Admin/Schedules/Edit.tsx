@@ -26,6 +26,7 @@ Square,
 Trash2,
 } from 'lucide-react';
 import {
+    CLASS_STATUS_ACTIVE,
     SCHEDULE_STATUS_ACTIVE,
     SCHEDULE_STATUS_INACTIVE,
     SCHEDULE_STATUS_LABELS,
@@ -396,6 +397,7 @@ export default function ScheduleEdit({
         return found || classSubject?.school_class;
     }, [classes, classSubject]);
 
+    const isClassActive = Number(currentClass?.status ?? classSubject?.school_class?.status) === CLASS_STATUS_ACTIVE;
     const classStartDate = currentClass?.start_date ? toISODateString(currentClass.start_date) : '';
 
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>(
@@ -1212,7 +1214,10 @@ export default function ScheduleEdit({
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500"
+                                    disabled={!isClassActive}
+                                    className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 ${
+                                        !isClassActive ? 'bg-slate-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
+                                    }`}
                                     required
                                 >
                                     <option value={SCHEDULE_STATUS_ACTIVE}>
@@ -1222,6 +1227,11 @@ export default function ScheduleEdit({
                                         {SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_INACTIVE] || 'Đã dừng'}
                                     </option>
                                 </select>
+                                {!isClassActive && (
+                                    <p className="mt-1.5 text-xs font-medium text-amber-700">
+                                        * Chỉ có thể thay đổi trạng thái lịch khi lớp học ở trạng thái Đang hoạt động.
+                                    </p>
+                                )}
                                 {errors.status && (
                                     <p className="mt-1.5 text-sm text-red-600">{errors.status}</p>
                                 )}

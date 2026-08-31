@@ -45,15 +45,15 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->with([
                 'classSubject' => function ($q) {
                     $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
-                      ->withCount('classSessions');
+                      ->withCount(['classSessions' => fn ($sq) => $sq->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)]);
                 },
-                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date',
+                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date,status',
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
                 'room:id,name,code',
             ])
-            ->withCount('classSessions');
+            ->withCount(['classSessions' => fn ($sq) => $sq->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)]);
 
         if ($centerIds !== null) {
             $query->whereHas('classSubject.schoolClass', function ($q) use ($centerIds) {
@@ -135,9 +135,9 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             ->with([
                 'classSubject' => function ($q) {
                     $q->select('id', 'class_id', 'subject_id', 'teacher_id', 'start_date', 'end_date', 'status')
-                      ->withCount('classSessions');
+                      ->withCount(['classSessions' => fn ($sq) => $sq->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)]);
                 },
-                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date',
+                'classSubject.schoolClass:id,center_id,name,code,start_date,end_date,status',
                 'classSubject.schoolClass.center:id,name,code',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'classSubject.teacher:id,full_name,teacher_code',
@@ -156,11 +156,12 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
                         'status',
                         'note'
                     )
+                    ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
                     ->orderBy('session_date', 'asc')
                     ->orderBy('start_time', 'asc');
                 },
             ])
-            ->withCount('classSessions');
+            ->withCount(['classSessions' => fn ($sq) => $sq->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)]);
 
         if ($allowedCenterIds !== null) {
             $query->whereHas('classSubject.schoolClass', function ($q) use ($allowedCenterIds) {
@@ -240,7 +241,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             )
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
-                'classSubject.schoolClass:id,name,code,start_date,end_date',
+                'classSubject.schoolClass:id,name,code,start_date,end_date,status',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])
@@ -268,7 +269,7 @@ class ClassScheduleRepository implements ClassScheduleRepositoryInterface
             )
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id,start_date,end_date',
-                'classSubject.schoolClass:id,name,code,start_date,end_date',
+                'classSubject.schoolClass:id,name,code,start_date,end_date,status',
                 'classSubject.subject:id,name,code,total_sessions,duration_minutes',
                 'room:id,name,code',
             ])

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Constant;
 use App\Http\Requests\Schedule\FilterClassScheduleRequest;
 use App\Http\Requests\Schedule\StoreClassScheduleRequest;
 use App\Http\Requests\Schedule\UpdateClassScheduleRequest;
@@ -145,8 +146,8 @@ class ClassScheduleController extends Controller
         $schedule = $this->scheduleService->findSchedule($id, $admin);
 
         $sessions = $schedule->classSubject
-            ? $schedule->classSubject->classSessions()->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get()
-            : $schedule->classSessions()->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get();
+            ? $schedule->classSubject->classSessions()->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get()
+            : $schedule->classSessions()->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)->orderBy('session_date', 'asc')->orderBy('start_time', 'asc')->get();
 
         return response()->json([
             'schedule' => $schedule,

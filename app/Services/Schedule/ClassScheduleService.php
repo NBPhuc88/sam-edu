@@ -976,7 +976,19 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             }
         }
 
-        return DB::transaction(function () use ($schedule, $data) {
+        $newScheduleStatus = isset($data['status']) ? (int) $data['status'] : (int) $schedule->status;
+        $oldScheduleStatus = (int) $schedule->status;
+
+        // Chỉ cho phép thay đổi trạng thái lịch học khi lớp học ở trạng thái Đang hoạt động
+        if ($newScheduleStatus !== $oldScheduleStatus) {
+            if ($schoolClass && (int) $schoolClass->status !== Constant::CLASS_STATUS_ACTIVE) {
+                throw ValidationException::withMessages([
+                    'status' => 'Chỉ có thể thay đổi trạng thái lịch học khi lớp học ở trạng thái Đang hoạt động.',
+                ]);
+            }
+        }
+
+        return DB::transaction(function () use ($schedule, $data, $oldScheduleStatus, $newScheduleStatus) {
             $classSubject = $schedule->classSubject;
             $teacherId    = ! empty($data['teacher_id']) ? (int) $data['teacher_id'] : $classSubject->teacher_id;
             $roomId       = array_key_exists('room_id', $data) ? (! empty($data['room_id']) ? (int) $data['room_id'] : null) : $schedule->room_id;
@@ -1020,7 +1032,8 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 );
             }
 
-            $scheduleChanged = $this->hasScheduleOrDateChanged($classSubject, $schedule, $data);
+            $isReactivating  = ($oldScheduleStatus === Constant::SCHEDULE_STATUS_INACTIVE && $newScheduleStatus === Constant::SCHEDULE_STATUS_ACTIVE);
+            $scheduleChanged = $this->hasScheduleOrDateChanged($classSubject, $schedule, $data) || $isReactivating;
 
             if (! $scheduleChanged) {
                 // Chỉ cập nhật thông tin chung (teacher_id, room_id, status) mà không xóa và sinh lại buổi học
@@ -1213,7 +1226,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
             $key       = "{$dateStr}_{$startTime}_{$endTime}";
 
             if (isset($newSlotMap[$key])) {
-                // TRÙNG LỊCH: Giữ nguyên session
+                // TRÙNG LỊCH: Giữ nguyên session và đặt trạng thái về dự kiến
                 $matchedSlotKeys[$key] = true;
                 $slot                  = $newSlotMap[$key];
 
@@ -1221,6 +1234,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'teacher_id'        => $slot['teacher_id'] ?? $existing->teacher_id,
                     'room_id'           => array_key_exists('room_id', $slot) ? $slot['room_id'] : $existing->room_id,
                     'class_schedule_id' => $slot['class_schedule_id'] ?? $existing->class_schedule_id,
+                    'status'            => Constant::SESSION_STATUS_SCHEDULED,
                     'topic'             => $slot['topic'] ?? $existing->topic,
                 ]);
                 $keptCount++;

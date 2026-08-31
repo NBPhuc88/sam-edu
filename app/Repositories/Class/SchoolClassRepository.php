@@ -478,6 +478,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             ->whereHas('classSubject', function ($q) use ($classId) {
                 $q->where('class_id', $classId);
             })
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->with([
                 'classSubject:id,class_id,subject_id,teacher_id',
                 'classSubject.subject:id,name,code',

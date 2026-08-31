@@ -267,9 +267,11 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     public function getPastSessionsCursor(int $classSubjectId, string $fromDate): \Illuminate\Support\LazyCollection
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
+            ->where('status', '!=', Constant::SESSION_STATUS_CANCELLED)
             ->where(function ($q) use ($fromDate) {
                 $q->where('session_date', '<', $fromDate)
-                    ->orWhere('status', '!=', Constant::SESSION_STATUS_SCHEDULED)
+                    ->orWhere('status', Constant::SESSION_STATUS_COMPLETED)
+                    ->orWhere('status', Constant::SESSION_STATUS_IN_PROGRESS)
                     ->orWhereHas('attendances');
             })
             ->select(['id', 'session_date', 'start_time', 'end_time', 'status'])
@@ -289,7 +291,7 @@ class ClassSessionRepository implements ClassSessionRepositoryInterface
     {
         return ClassSession::where('class_subject_id', $classSubjectId)
             ->where('session_date', '>=', $fromDate)
-            ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+            ->whereIn('status', [Constant::SESSION_STATUS_SCHEDULED, Constant::SESSION_STATUS_CANCELLED])
             ->whereDoesntHave('attendances')
             ->select([
                 'id',

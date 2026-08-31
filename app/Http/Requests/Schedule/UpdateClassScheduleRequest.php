@@ -66,6 +66,15 @@ class UpdateClassScheduleRequest extends FormRequest
             $schedule    = ClassSchedule::with('classSubject.schoolClass')->find($scheduleId);
             $schoolClass = $schedule?->classSubject?->schoolClass;
 
+            if ($schoolClass && $this->has('status')) {
+                $newStatus = (int) $this->input('status');
+                $oldStatus = (int) $schedule->status;
+
+                if ($newStatus !== $oldStatus && (int) $schoolClass->status !== Constant::CLASS_STATUS_ACTIVE) {
+                    $validator->errors()->add('status', 'Chỉ có thể thay đổi trạng thái lịch học khi lớp học ở trạng thái Đang hoạt động.');
+                }
+            }
+
             if (! $schoolClass || ! $schoolClass->start_date) {
                 return;
             }

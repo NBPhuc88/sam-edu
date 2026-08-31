@@ -212,7 +212,7 @@ test('updating class status to closed pauses schedules and cancels scheduled ses
     expect($completedSession->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
 });
 
-test('deleting class pauses schedules and cancels scheduled sessions', function () {
+test('deleting class pauses schedules and permanently deletes future sessions', function () {
     [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
         $this->center,
         $this->teacher,
@@ -226,12 +226,13 @@ test('deleting class pauses schedules and cancels scheduled sessions', function 
     $response->assertRedirect();
 
     $schedule->refresh();
-    $scheduledSession->refresh();
     $completedSession->refresh();
 
     expect(SchoolClass::find($class->id))->toBeNull();
     expect($schedule->status)->toBe(Constant::SCHEDULE_STATUS_INACTIVE);
-    expect($scheduledSession->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
+    // Future scheduled session must be deleted permanently
+    expect(ClassSession::find($scheduledSession->id))->toBeNull();
+    // Past completed session is retained
     expect($completedSession->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
 });
 
@@ -298,6 +299,7 @@ test('updating schedule status to inactive cancels future scheduled sessions', f
             'status'     => Constant::SCHEDULE_STATUS_INACTIVE,
         ]);
 
+    $response->assertSessionHasNoErrors();
     $response->assertRedirect();
 
     $schedule->refresh();
@@ -307,4 +309,100 @@ test('updating schedule status to inactive cancels future scheduled sessions', f
     expect($schedule->status)->toBe(Constant::SCHEDULE_STATUS_INACTIVE);
     expect($scheduledSession->status)->toBe(Constant::SESSION_STATUS_CANCELLED);
     expect($completedSession->status)->toBe(Constant::SESSION_STATUS_COMPLETED);
+});
+
+test('updating schedule status from inactive to active regenerates future sessions when class is active', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Set schedule to inactive first
+    $schedule->update(['status' => Constant::SCHEDULE_STATUS_INACTIVE]);
+    $scheduledSession->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+
+    // Now update schedule back to active
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->patch(route('schedules.update', $schedule->id), [
+            'teacher_id' => $this->teacher->id,
+            'start_date' => now()->toDateString(),
+            'weeks'      => ['1' => [['08:00', '10:00']]],
+            'status'     => Constant::SCHEDULE_STATUS_ACTIVE,
+        ]);
+
+    $response->assertRedirect();
+
+    $schedule->refresh();
+    expect($schedule->status)->toBe(Constant::SCHEDULE_STATUS_ACTIVE);
+
+    // Check that scheduled sessions are generated/restored
+    $futureActiveSessionsCount = ClassSession::where('class_subject_id', $classSubject->id)
+        ->where('session_date', '>=', now()->toDateString())
+        ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+        ->count();
+
+    expect($futureActiveSessionsCount)->toBeGreaterThan(0);
+});
+
+test('cannot update schedule status if class is not active', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Set class to inactive
+    $class->update(['status' => Constant::CLASS_STATUS_INACTIVE]);
+
+    // Try to update schedule status
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->patch(route('schedules.update', $schedule->id), [
+            'teacher_id' => $this->teacher->id,
+            'start_date' => now()->toDateString(),
+            'status'     => Constant::SCHEDULE_STATUS_INACTIVE,
+        ]);
+
+    $response->assertSessionHasErrors('status');
+});
+
+test('cancelled sessions are not counted towards schedule sessions count or past sessions', function () {
+    [$class, $classSubject, $schedule, $scheduledSession, $completedSession] = createClassWithSchedulesAndSessions(
+        $this->center,
+        $this->teacher,
+        $this->student,
+        $this->subject
+    );
+
+    // Cancel the scheduled session
+    $scheduledSession->update(['status' => Constant::SESSION_STATUS_CANCELLED]);
+
+    $scheduleRepo = app(\App\Repositories\Schedule\ClassScheduleRepository::class);
+    $sessionRepo  = app(\App\Repositories\Session\ClassSessionRepository::class);
+
+    // 1. Check scheduleRepo find withCount classSessions excludes cancelled sessions
+    $foundSchedule = $scheduleRepo->find($schedule->id);
+    expect($foundSchedule->class_sessions_count)->toBe(1); // Only the completed session
+    expect($foundSchedule->classSubject->class_sessions_count)->toBe(1);
+
+    // 2. Check getPastSessionsCursor excludes cancelled sessions
+    $pastCursor     = $sessionRepo->getPastSessionsCursor($classSubject->id, now()->addDays(10)->toDateString());
+    $pastSessionIds = [];
+
+    foreach ($pastCursor as $s) {
+        $pastSessionIds[] = $s->id;
+    }
+    expect($pastSessionIds)->not->toContain($scheduledSession->id);
+    expect($pastSessionIds)->toContain($completedSession->id);
+
+    // 3. Check schedules.sessions API excludes cancelled sessions
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('schedules.sessions', $schedule->id));
+
+    $response->assertOk();
+    $sessionIdsInJson = collect($response->json('sessions'))->pluck('id')->toArray();
+    expect($sessionIdsInJson)->not->toContain($scheduledSession->id);
+    expect($sessionIdsInJson)->toContain($completedSession->id);
 });
