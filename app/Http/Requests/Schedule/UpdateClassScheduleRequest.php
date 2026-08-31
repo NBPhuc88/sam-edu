@@ -63,15 +63,30 @@ class UpdateClassScheduleRequest extends FormRequest
                 return;
             }
 
-            $schedule    = ClassSchedule::with('classSubject.schoolClass')->find($scheduleId);
-            $schoolClass = $schedule?->classSubject?->schoolClass;
+            $schedule     = ClassSchedule::with('classSubject.schoolClass')->find($scheduleId);
+            $schoolClass  = $schedule?->classSubject?->schoolClass;
+            $classSubject = $schedule?->classSubject;
 
-            if ($schoolClass && $this->has('status')) {
+            if ($schedule && $this->has('status')) {
                 $newStatus = (int) $this->input('status');
                 $oldStatus = (int) $schedule->status;
 
-                if ($newStatus !== $oldStatus && (int) $schoolClass->status !== Constant::CLASS_STATUS_ACTIVE) {
+                if ($newStatus !== $oldStatus && $schoolClass && (int) $schoolClass->status !== Constant::CLASS_STATUS_ACTIVE) {
                     $validator->errors()->add('status', 'Chỉ có thể thay đổi trạng thái lịch học khi lớp học ở trạng thái Đang hoạt động.');
+                }
+
+                if ($newStatus === Constant::SCHEDULE_STATUS_ACTIVE && $newStatus !== $oldStatus && $classSubject) {
+                    $hasOtherActiveSchedule = ClassSchedule::where('id', '!=', $schedule->id)
+                        ->whereHas('classSubject', function ($q) use ($classSubject) {
+                            $q->where('class_id', $classSubject->class_id)
+                                ->where('subject_id', $classSubject->subject_id);
+                        })
+                        ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+                        ->exists();
+
+                    if ($hasOtherActiveSchedule) {
+                        $validator->errors()->add('status', 'Lớp học này đã có một lịch học khác đang áp dụng cho môn học này.');
+                    }
                 }
             }
 

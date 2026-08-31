@@ -411,6 +411,16 @@ export default function ScheduleEdit({
     );
     const [status, setStatus] = useState<number>(Number(schedule.status ?? SCHEDULE_STATUS_ACTIVE));
 
+    const hasOtherActiveScheduleForSubject = React.useMemo(() => {
+        if (!currentClass) return false;
+        const currentClassSubjects = currentClass.class_subjects || currentClass.classSubjects || [];
+        const currentSubjectId = schedule.class_subject?.subject_id || schedule.classSubject?.subject_id;
+        const matchedCs = currentClassSubjects.find((cs) => Number(cs.subject_id || cs.subject?.id) === Number(currentSubjectId));
+        if (!matchedCs) return false;
+        const schedules = matchedCs.class_schedules || matchedCs.classSchedules || [];
+        return schedules.some((sch) => Number(sch.id) !== Number(schedule.id) && Number(sch.status) === SCHEDULE_STATUS_ACTIVE);
+    }, [currentClass, schedule]);
+
     const initialWeeklyTimes = React.useMemo(() => {
         const base: Record<number, { enabled: boolean; slots: WeekDaySlot[] }> = {
             1: { enabled: false, slots: [{ start_time: '18:00', end_time: '20:00' }] },
@@ -1220,13 +1230,24 @@ export default function ScheduleEdit({
                                     }`}
                                     required
                                 >
-                                    <option value={SCHEDULE_STATUS_ACTIVE}>
+                                    <option
+                                        value={SCHEDULE_STATUS_ACTIVE}
+                                        disabled={hasOtherActiveScheduleForSubject && Number(schedule.status) !== SCHEDULE_STATUS_ACTIVE}
+                                    >
                                         {SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_ACTIVE] || 'Đang áp dụng'}
+                                        {hasOtherActiveScheduleForSubject && Number(schedule.status) !== SCHEDULE_STATUS_ACTIVE
+                                            ? ' - [Đã có lịch khác đang áp dụng]'
+                                            : ''}
                                     </option>
                                     <option value={SCHEDULE_STATUS_INACTIVE}>
                                         {SCHEDULE_STATUS_LABELS[SCHEDULE_STATUS_INACTIVE] || 'Đã dừng'}
                                     </option>
                                 </select>
+                                {hasOtherActiveScheduleForSubject && Number(schedule.status) !== SCHEDULE_STATUS_ACTIVE && (
+                                    <p className="mt-1.5 text-xs font-medium text-red-600">
+                                        * Lớp học này đã có một lịch học khác đang áp dụng cho môn học này.
+                                    </p>
+                                )}
                                 {!isClassActive && (
                                     <p className="mt-1.5 text-xs font-medium text-amber-700">
                                         * Chỉ có thể thay đổi trạng thái lịch khi lớp học ở trạng thái Đang hoạt động.

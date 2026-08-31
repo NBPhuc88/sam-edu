@@ -1001,6 +1001,23 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'status' => 'Chỉ có thể thay đổi trạng thái lịch học khi lớp học ở trạng thái Đang hoạt động.',
                 ]);
             }
+
+            if ($newScheduleStatus === Constant::SCHEDULE_STATUS_ACTIVE && $schedule->classSubject) {
+                $classSubject           = $schedule->classSubject;
+                $hasOtherActiveSchedule = ClassSchedule::where('id', '!=', $schedule->id)
+                    ->whereHas('classSubject', function ($q) use ($classSubject) {
+                        $q->where('class_id', $classSubject->class_id)
+                            ->where('subject_id', $classSubject->subject_id);
+                    })
+                    ->where('status', Constant::SCHEDULE_STATUS_ACTIVE)
+                    ->exists();
+
+                if ($hasOtherActiveSchedule) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Lớp học này đã có một lịch học khác đang áp dụng cho môn học này.',
+                    ]);
+                }
+            }
         }
 
         return DB::transaction(function () use ($schedule, $data, $oldScheduleStatus, $newScheduleStatus) {
