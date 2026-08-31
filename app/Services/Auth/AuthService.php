@@ -95,6 +95,11 @@ class AuthService implements AuthServiceInterface
                     ];
                 }
 
+                // Tự động chuyển trạng thái nếu đã quá ngày hết hạn
+                if ($center->expires_at && $center->expires_at->isPast() && (int) $center->status === Constant::CENTER_STATUS_ACTIVE) {
+                    $center->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+                }
+
                 if ((int) $center->status !== Constant::CENTER_STATUS_ACTIVE) {
                     $errorMessage = (int) $center->status === Constant::CENTER_STATUS_PAUSED
                         ? 'Trung tâm của bạn hiện đang tạm dừng hoạt động. Vui lòng liên hệ Quản trị viên hệ thống.'
@@ -118,6 +123,11 @@ class AuthService implements AuthServiceInterface
                     'account' => null,
                     'error'   => 'Tài khoản chưa được liên kết với bất kỳ trung tâm nào.',
                 ];
+            }
+
+            // Tự động chuyển trạng thái nếu đã quá ngày hết hạn
+            if ($center->expires_at && $center->expires_at->isPast() && (int) $center->status === Constant::CENTER_STATUS_ACTIVE) {
+                $center->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
             }
 
             if ((int) $center->status !== Constant::CENTER_STATUS_ACTIVE) {

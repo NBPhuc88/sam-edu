@@ -33,6 +33,15 @@ class PasswordResetService implements PasswordResetServiceInterface
             ];
         }
 
+        $centerError = $this->checkAccountCenterStatus($account);
+
+        if ($centerError !== null) {
+            return [
+                'success' => false,
+                'error'   => $centerError,
+            ];
+        }
+
         // Generate 6-digit OTP
         $maxNum = (10 ** Constant::OTP_DIGITS) - 1;
         $otp    = str_pad((string) random_int(0, $maxNum), Constant::OTP_DIGITS, Constant::CODE_PAD_CHAR, STR_PAD_LEFT);
@@ -80,6 +89,15 @@ class PasswordResetService implements PasswordResetServiceInterface
             ];
         }
 
+        $centerError = $this->checkAccountCenterStatus($account);
+
+        if ($centerError !== null) {
+            return [
+                'success' => false,
+                'error'   => $centerError,
+            ];
+        }
+
         $this->repository->deleteOtp($email, $accountType);
 
         // Login user
@@ -98,6 +116,41 @@ class PasswordResetService implements PasswordResetServiceInterface
             'success' => true,
             'error'   => null,
         ];
+    }
+
+    /**
+     * Kiểm tra trạng thái Trung tâm của tài khoản (nếu không phải Super Admin).
+     * @param mixed $account
+     */
+    private function checkAccountCenterStatus(mixed $account): ?string
+    {
+        if ($account instanceof Admin) {
+            if ((int) $account->role === Constant::ROLE_SUPER_ADMIN) {
+                return null;
+            }
+            $center = $account->centers()->first();
+        } elseif ($account instanceof Teacher || $account instanceof Student) {
+            $center = $account->center;
+        } else {
+            return null;
+        }
+
+        if (! $center) {
+            return 'Tài khoản chưa được liên kết hoặc phân công quản lý trung tâm nào.';
+        }
+
+        // Tự động chuyển trạng thái nếu đã quá ngày hết hạn
+        if ($center->expires_at && $center->expires_at->isPast() && (int) $center->status === Constant::CENTER_STATUS_ACTIVE) {
+            $center->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+        }
+
+        if ((int) $center->status !== Constant::CENTER_STATUS_ACTIVE) {
+            return (int) $center->status === Constant::CENTER_STATUS_PAUSED
+                ? 'Trung tâm của bạn hiện đang tạm dừng hoạt động. Không thể thực hiện đặt lại mật khẩu.'
+                : 'Gói dịch vụ của Trung tâm đã hết hạn. Không thể thực hiện đặt lại mật khẩu.';
+        }
+
+        return null;
     }
 
     public function updateForcedPassword(string $newPassword): array

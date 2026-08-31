@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Mail\PasswordResetOtpMail;
 use App\Models\Admin;
 use App\Models\Center;
@@ -19,7 +20,7 @@ beforeEach(function () {
     $this->center = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test PwdReset',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->service = app(PasswordResetService::class);
 });
@@ -29,7 +30,7 @@ test('sendOtp successfully generates OTP and queues mail for valid email', funct
         'username'   => 'admin_pwd_reset',
         'full_name'  => 'Admin Pwd Reset',
         'password'   => Hash::make('password'),
-        'role'       => 'admin',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
         'email'      => 'admin_reset@example.com',
     ]);

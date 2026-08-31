@@ -1,6 +1,12 @@
 <?php
 
+use App\Http\Middleware\AutoCheckPermission;
+use App\Http\Middleware\CheckCenterSubscription;
+use App\Http\Middleware\CheckPlanFeature;
+use App\Http\Middleware\EnforceSingleSession;
+use App\Http\Middleware\EnsurePasswordChange;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireAuth;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,18 +22,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\EnforceSingleSession::class,
+            EnforceSingleSession::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            \App\Http\Middleware\EnsurePasswordChange::class,
+            EnsurePasswordChange::class,
+            CheckCenterSubscription::class,
         ]);
 
         // Alias cho middleware kiểm tra đăng nhập bất kỳ guard (admin|center|teacher|student)
         $middleware->alias([
-            'auth.any'            => \App\Http\Middleware\RequireAuth::class,
-            'check.center.status' => \App\Http\Middleware\CheckCenterSubscription::class,
-            'auto.permission'     => \App\Http\Middleware\AutoCheckPermission::class,
-            'check.plan.feature'  => \App\Http\Middleware\CheckPlanFeature::class,
+            'auth.any'            => RequireAuth::class,
+            'check.center.status' => CheckCenterSubscription::class,
+            'auto.permission'     => AutoCheckPermission::class,
+            'check.plan.feature'  => CheckPlanFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
