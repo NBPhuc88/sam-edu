@@ -88,9 +88,24 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     const [parentName, setParentName] = useState<string>(student.parent_name || '');
     const [parentPhone, setParentPhone] = useState<string>(student.parent_phone || '');
     const [parentRelationship, setParentRelationship] = useState<string>(student.parent_relationship || 'Bố/Mẹ');
-    const [selectedClassIds, setSelectedClassIds] = useState<number[]>(
-        student.classes?.map((c) => c.id) || []
-    );
+    const initialClassIds = useMemo(() => {
+        return (student.classes || []).map((c) => Number(c.id));
+    }, [student.classes]);
+
+    const [selectedClassIds, setSelectedClassIds] = useState<number[]>(initialClassIds);
+
+    const [admissionDate, setAdmissionDate] = useState<string>(student.admission_date || '');
+    const [status, setStatus] = useState<number>(Number(student.status ?? STUDENT_STATUS_ACTIVE));
+    const [note, setNote] = useState<string>(student.note || '');
+
+    const isStatusDisabledClasses = status === STUDENT_STATUS_INACTIVE || status === STUDENT_STATUS_GRADUATED;
+
+    const handleStatusChange = (newStatus: number) => {
+        setStatus(newStatus);
+        if (newStatus === STUDENT_STATUS_INACTIVE || newStatus === STUDENT_STATUS_GRADUATED) {
+            setSelectedClassIds(initialClassIds);
+        }
+    };
 
     // Filter classes for currently selected center
     const availableClasses = useMemo(() => {
@@ -111,6 +126,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     const [showTuitionConfirm, setShowTuitionConfirm] = useState(false);
 
     const toggleClass = (classId: number) => {
+        if (isStatusDisabledClasses) return;
         setSelectedClassIds((prev) =>
             prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
         );
@@ -129,10 +145,6 @@ export default function StudentEdit({ student, centers = [], classes = [], error
             setSelectedTuitionClassIds(classesWithoutTuition.map((c) => c.id));
         }
     };
-
-    const [admissionDate, setAdmissionDate] = useState<string>(student.admission_date || '');
-    const [status, setStatus] = useState<number>(Number(student.status ?? STUDENT_STATUS_ACTIVE));
-    const [note, setNote] = useState<string>(student.note || '');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -507,7 +519,7 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(Number(e.target.value))}
+                                    onChange={(e) => handleStatusChange(Number(e.target.value))}
                                     disabled={!canEditStatus}
                                     className={`w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${
                                         !canEditStatus ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
@@ -547,13 +559,15 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                 4. Lớp Học Tham Gia
                             </h2>
                             {selectedClassIds.length > 0 && (
-                                <Badge variant="active">
-                                    Đang tham gia {selectedClassIds.length} lớp
+                                <Badge variant={isStatusDisabledClasses ? 'info' : 'active'}>
+                                    {isStatusDisabledClasses ? `Lớp gốc: ${selectedClassIds.length} lớp` : `Đang tham gia ${selectedClassIds.length} lớp`}
                                 </Badge>
                             )}
                         </div>
                         <p className="text-xs text-gray-500 mb-4">
-                            Tích chọn các lớp học mà học sinh này đang theo học tại trung tâm.
+                            {isStatusDisabledClasses
+                                ? 'Học sinh ở trạng thái Nghỉ học / Tạm ngưng hoặc Đã tốt nghiệp không thể thay đổi lớp học. Hệ thống hiển thị và giữ nguyên danh sách lớp gốc.'
+                                : 'Tích chọn các lớp học mà học sinh này đang theo học tại trung tâm.'}
                         </p>
 
                         {availableClasses.length === 0 ? (
@@ -567,25 +581,33 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                     return (
                                         <div
                                             key={cls.id}
-                                            onClick={() => toggleClass(cls.id)}
-                                            className={`cursor-pointer rounded-xl border p-3.5 flex items-center justify-between transition-all select-none ${
-                                                isSelected
-                                                    ? 'bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
-                                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
+                                            onClick={() => !isStatusDisabledClasses && toggleClass(cls.id)}
+                                            className={`rounded-xl border p-3.5 flex items-center justify-between transition-all select-none ${
+                                                isStatusDisabledClasses
+                                                    ? isSelected
+                                                        ? 'cursor-not-allowed bg-gray-100/90 border-gray-300 opacity-80'
+                                                        : 'cursor-not-allowed bg-gray-50/50 border-gray-200 opacity-50'
+                                                    : isSelected
+                                                        ? 'cursor-pointer bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
+                                                        : 'cursor-pointer bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
                                             }`}
                                         >
                                             <div className="flex items-center gap-2.5 overflow-hidden">
                                                 <div
                                                     className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border transition-colors ${
-                                                        isSelected
-                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
-                                                            : 'border-gray-300 bg-white'
+                                                        isStatusDisabledClasses
+                                                            ? isSelected
+                                                                ? 'bg-gray-400 border-gray-400 text-white'
+                                                                : 'border-gray-300 bg-gray-100'
+                                                            : isSelected
+                                                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                                : 'border-gray-300 bg-white'
                                                     }`}
                                                 >
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
                                                 <div className="truncate">
-                                                    <p className="font-semibold text-gray-900 text-sm truncate">
+                                                    <p className={`font-semibold text-sm truncate ${isStatusDisabledClasses ? 'text-gray-600' : 'text-gray-900'}`}>
                                                         {cls.name}
                                                     </p>
                                                     <p className="text-xs text-gray-500 font-mono">

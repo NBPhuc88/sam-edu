@@ -64,6 +64,15 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const isStatusDisabledClasses = status === STUDENT_STATUS_INACTIVE || status === STUDENT_STATUS_GRADUATED;
+
+    const handleStatusChange = (newStatus: number) => {
+        setStatus(newStatus);
+        if (newStatus === STUDENT_STATUS_INACTIVE || newStatus === STUDENT_STATUS_GRADUATED) {
+            setSelectedClassIds([]);
+        }
+    };
+
     // Filter classes for currently selected center
     const availableClasses = useMemo(() => {
         return classes.filter((c) => !centerId || Number(c.center_id) === Number(centerId));
@@ -74,6 +83,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
     }, [availableClasses, selectedClassIds]);
 
     const toggleClass = (classId: number) => {
+        if (isStatusDisabledClasses) return;
         setSelectedClassIds((prev) =>
             prev.includes(classId) ? prev.filter((id) => id !== classId) : [...prev, classId]
         );
@@ -472,7 +482,7 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 </label>
                                 <select
                                     value={status}
-                                    onChange={(e) => setStatus(Number(e.target.value))}
+                                    onChange={(e) => handleStatusChange(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang theo học'}</option>
@@ -505,13 +515,15 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                 4. Ghi Danh Vào Lớp Học (Tùy Chọn)
                             </h2>
                             {selectedClassIds.length > 0 && (
-                                <Badge variant="active">
+                                <Badge variant={isStatusDisabledClasses ? 'info' : 'active'}>
                                     Đã chọn {selectedClassIds.length} lớp học
                                 </Badge>
                             )}
                         </div>
                         <p className="text-xs text-gray-500 mb-4">
-                            Chọn các lớp học mà học sinh sẽ tham gia ngay sau khi được tạo hồ sơ.
+                            {isStatusDisabledClasses
+                                ? 'Học sinh ở trạng thái Nghỉ học / Tạm ngưng hoặc Đã tốt nghiệp không thể ghi danh vào lớp học.'
+                                : 'Chọn các lớp học mà học sinh sẽ tham gia ngay sau khi được tạo hồ sơ.'}
                         </p>
 
                         {availableClasses.length === 0 ? (
@@ -525,25 +537,29 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     return (
                                         <div
                                             key={cls.id}
-                                            onClick={() => toggleClass(cls.id)}
-                                            className={`cursor-pointer rounded-xl border p-3.5 flex items-center justify-between transition-all select-none ${
-                                                isSelected
-                                                    ? 'bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
-                                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
+                                            onClick={() => !isStatusDisabledClasses && toggleClass(cls.id)}
+                                            className={`rounded-xl border p-3.5 flex items-center justify-between transition-all select-none ${
+                                                isStatusDisabledClasses
+                                                    ? 'cursor-not-allowed bg-gray-50/50 border-gray-200 opacity-50'
+                                                    : isSelected
+                                                        ? 'cursor-pointer bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-500 shadow-xs'
+                                                        : 'cursor-pointer bg-white border-gray-200 hover:border-gray-300 hover:bg-slate-50'
                                             }`}
                                         >
                                             <div className="flex items-center gap-2.5 overflow-hidden">
                                                 <div
                                                     className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border transition-colors ${
-                                                        isSelected
-                                                            ? 'bg-emerald-600 border-emerald-600 text-white'
-                                                            : 'border-gray-300 bg-white'
+                                                        isStatusDisabledClasses
+                                                            ? 'border-gray-300 bg-gray-100'
+                                                            : isSelected
+                                                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                                                : 'border-gray-300 bg-white'
                                                     }`}
                                                 >
                                                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                                 </div>
                                                 <div className="truncate">
-                                                    <p className="font-semibold text-gray-900 text-sm truncate">
+                                                    <p className={`font-semibold text-sm truncate ${isStatusDisabledClasses ? 'text-gray-600' : 'text-gray-900'}`}>
                                                         {cls.name}
                                                     </p>
                                                     <p className="text-xs text-gray-500 font-mono">
