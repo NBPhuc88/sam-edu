@@ -4,6 +4,10 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
+import {
+    DISCOUNT_TYPE_DIRECT,
+    DISCOUNT_TYPE_PERCENTAGE,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,router,usePage } from '@inertiajs/react';
@@ -21,6 +25,7 @@ interface ClassItem {
     name: string;
     code: string;
     center_id: number;
+    total_tuition_fee?: number | string | null;
     students?: StudentItem[];
 }
 
@@ -40,6 +45,8 @@ interface EditProps {
         class_id: number;
         title: string | null;
         total_amount: number;
+        discount_type?: number | null;
+        discount_value?: number | string | null;
         paid_amount: number;
         remaining_amount: number;
         due_date: string | null;
@@ -53,6 +60,7 @@ interface EditProps {
             id: number;
             name: string;
             code: string;
+            total_tuition_fee?: number | null;
         };
         center?: {
             id: number;
@@ -79,7 +87,29 @@ export const Edit: React.FC<EditProps> = ({
     const [classId, setClassId] = useState<string>(String(tuition.class_id));
     const [studentId, setStudentId] = useState<string>(String(tuition.student_id));
     const [title, setTitle] = useState<string>(tuition.title || '');
-    const [totalAmount, setTotalAmount] = useState<string>(String(tuition.total_amount || 0));
+
+    // Calculate initial base amount
+    const initialBase = React.useMemo(() => {
+        const total = Number(tuition.total_amount) || 0;
+        const type = Number(tuition.discount_type);
+        const val = Number(tuition.discount_value) || 0;
+        if (type === DISCOUNT_TYPE_DIRECT && val > 0) {
+            return String(total + val);
+        }
+        if (type === DISCOUNT_TYPE_PERCENTAGE && val > 0 && val < 100) {
+            return String(Math.round(total / (1 - val / 100)));
+        }
+        if (tuition.school_class?.total_tuition_fee) {
+            return String(Number(tuition.school_class.total_tuition_fee));
+        }
+        return String(total);
+    }, [tuition]);
+
+    const [baseAmount, setBaseAmount] = useState<string>(initialBase);
+    const [discountType, setDiscountType] = useState<string>(tuition.discount_type ? String(tuition.discount_type) : '');
+    const [discountValue, setDiscountValue] = useState<string>(
+        tuition.discount_value !== undefined && tuition.discount_value !== null ? String(Number(tuition.discount_value)) : ''
+    );
     const [dueDate, setDueDate] = useState<string>(tuition.due_date || '');
     const [note, setNote] = useState<string>(tuition.note || '');
 
@@ -92,8 +122,22 @@ export const Edit: React.FC<EditProps> = ({
         }).format(amount || 0);
     };
 
+    const computedTotalAmount = React.useMemo(() => {
+        const base = Number(baseAmount) || 0;
+        if (base <= 0) return 0;
+        const type = Number(discountType);
+        const val = Number(discountValue) || 0;
+        if (type === DISCOUNT_TYPE_DIRECT) {
+            return Math.max(0, base - val);
+        }
+        if (type === DISCOUNT_TYPE_PERCENTAGE) {
+            return Math.max(0, Math.round(base * (1 - val / 100)));
+        }
+        return base;
+    }, [baseAmount, discountType, discountValue]);
+
     const paidAmount = Number(tuition.paid_amount) || 0;
-    const isTotalAmountBelowPaid = Number(totalAmount) < paidAmount;
+    const isTotalAmountBelowPaid = computedTotalAmount < paidAmount;
 
     const filteredClasses = classes.filter((c) => String(c.center_id) === String(centerId));
     const selectedClass = classes.find((c) => String(c.id) === String(classId));
@@ -105,15 +149,21 @@ export const Edit: React.FC<EditProps> = ({
         setCenterId(newCenterId);
         setClassId('');
         setStudentId('');
+        setBaseAmount('');
     };
 
     const handleClassChange = (newClassId: string) => {
         setClassId(newClassId);
         const newSelectedClass = classes.find((c) => String(c.id) === String(newClassId));
-        if (newSelectedClass && newSelectedClass.students) {
-            const isCurrentStudentInClass = newSelectedClass.students.some((s) => String(s.id) === String(studentId));
-            if (!isCurrentStudentInClass) {
-                setStudentId('');
+        if (newSelectedClass) {
+            if (newSelectedClass.total_tuition_fee !== undefined && newSelectedClass.total_tuition_fee !== null) {
+                setBaseAmount(String(Number(newSelectedClass.total_tuition_fee)));
+            }
+            if (newSelectedClass.students) {
+                const isCurrentStudentInClass = newSelectedClass.students.some((s) => String(s.id) === String(studentId));
+                if (!isCurrentStudentInClass) {
+                    setStudentId('');
+                }
             }
         }
     };
@@ -134,7 +184,9 @@ export const Edit: React.FC<EditProps> = ({
                 class_id: Number(classId),
                 student_id: Number(studentId),
                 title: title || undefined,
-                total_amount: Number(totalAmount),
+                total_amount: computedTotalAmount,
+                discount_type: discountType ? Number(discountType) : undefined,
+                discount_value: discountValue !== '' ? Number(discountValue) : undefined,
                 due_date: dueDate || null,
                 note: note || null,
             },
@@ -241,23 +293,75 @@ export const Edit: React.FC<EditProps> = ({
                                 />
                             </div>
 
-                            {/* Total Amount */}
+                            {/* Base Tuition Fee */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
-                                    Tổng Số Tiền Học Phí Phải Đóng (VNĐ) (*)
+                                    Học Phí Gốc Của Lớp (VNĐ) (*)
                                 </label>
                                 <Input
                                     type="number"
-                                    min={paidAmount}
+                                    min="0"
                                     step="1000"
-                                    value={totalAmount}
-                                    onChange={(e) => setTotalAmount(e.target.value)}
-                                    className={`!py-3 !text-sm ${isTotalAmountBelowPaid ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                                    value={baseAmount}
+                                    onChange={(e) => setBaseAmount(e.target.value)}
+                                    placeholder="Ví dụ: 10000000"
+                                    className="!py-3 !text-sm"
                                     required
                                 />
+                            </div>
+
+                            {/* Discount Type */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Kiểu Giảm Giá
+                                </label>
+                                <select
+                                    value={discountType}
+                                    onChange={(e) => {
+                                        setDiscountType(e.target.value);
+                                        if (!e.target.value) setDiscountValue('');
+                                    }}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="">Không giảm giá</option>
+                                    <option value={DISCOUNT_TYPE_DIRECT}>Giảm trực tiếp (VNĐ)</option>
+                                    <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo phần trăm (%)</option>
+                                </select>
+                            </div>
+
+                            {/* Discount Value */}
+                            {discountType && (
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                        Mức Giảm Giá {Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'} (*)
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '100' : (baseAmount ? Number(baseAmount) : undefined)}
+                                        step={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
+                                        value={discountValue}
+                                        onChange={(e) => setDiscountValue(e.target.value)}
+                                        placeholder={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? 'Ví dụ: 10' : 'Ví dụ: 500000'}
+                                        className="!py-3 !text-sm"
+                                    />
+                                    {errors.discount_value && (
+                                        <p className="mt-1.5 text-xs text-red-600">{errors.discount_value}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Final Total Amount */}
+                            <div className={discountType ? '' : 'md:col-span-1'}>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Tổng Học Phí Sau Giảm Trừ (VNĐ) (*)
+                                </label>
+                                <div className="flex h-[46px] items-center px-4 rounded-lg bg-emerald-50 border border-emerald-200 text-base font-bold text-emerald-800">
+                                    {formatCurrency(computedTotalAmount)}
+                                </div>
                                 {isTotalAmountBelowPaid ? (
                                     <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                        Tổng học phí ({formatCurrency(Number(totalAmount))}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
+                                        Tổng học phí ({formatCurrency(computedTotalAmount)}) không được nhỏ hơn số tiền học sinh đã đóng ({formatCurrency(paidAmount)}).
                                     </p>
                                 ) : paidAmount > 0 ? (
                                     <p className="mt-1.5 text-xs text-gray-500">

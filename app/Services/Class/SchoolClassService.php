@@ -279,6 +279,24 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
+        if ($status !== Constant::CLASS_STATUS_ACTIVE && isset($data['subjects']) && is_array($data['subjects'])) {
+            $hasSubject = false;
+
+            foreach ($data['subjects'] as $row) {
+                if (! empty($row['subject_id'])) {
+                    $hasSubject = true;
+
+                    break;
+                }
+            }
+
+            if ($hasSubject) {
+                throw ValidationException::withMessages([
+                    'subjects' => 'Chỉ lớp học ở trạng thái Đang hoạt động mới có thể thêm môn học.',
+                ]);
+            }
+        }
+
         $schoolClass = $this->schoolClassRepository->create([
             'center_id'    => $centerId,
             'code'         => $code,
@@ -291,7 +309,7 @@ class SchoolClassService implements SchoolClassServiceInterface
         ]);
 
         // Gán danh sách môn học và giáo viên phụ trách
-        if (isset($data['subjects']) && is_array($data['subjects'])) {
+        if ($status === Constant::CLASS_STATUS_ACTIVE && isset($data['subjects']) && is_array($data['subjects'])) {
             $this->schoolClassRepository->syncClassSubjects($schoolClass, $data['subjects']);
         }
 
@@ -334,6 +352,20 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
+        // Kiểm tra không cho sửa môn khi lớp không ở trạng thái hoạt động
+        if ($currentStatusInt !== Constant::CLASS_STATUS_ACTIVE && isset($data['subjects']) && is_array($data['subjects'])) {
+            $existingSubjectIds = $schoolClass->classSubjects()->pluck('subject_id')->toArray();
+            $newSubjectIds      = array_filter(array_map('intval', array_column($data['subjects'], 'subject_id')));
+            sort($existingSubjectIds);
+            sort($newSubjectIds);
+
+            if ($existingSubjectIds !== $newSubjectIds) {
+                throw ValidationException::withMessages([
+                    'subjects' => 'Chỉ lớp học ở trạng thái Đang hoạt động mới có thể thêm hoặc thay đổi môn học.',
+                ]);
+            }
+        }
+
         // Lớp học đã hoàn thành hoặc đã đóng không thể chuyển sang trạng thái khác (trừ Super Admin)
         if (in_array($currentStatusInt, [Constant::CLASS_STATUS_COMPLETED, Constant::CLASS_STATUS_CLOSED], true) && $newStatus !== $currentStatusInt) {
             if (! ($admin && $admin->isSuperAdmin())) {
@@ -361,7 +393,7 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
-        $updatedClass = \Illuminate\Support\Facades\DB::transaction(function () use ($id, $data, $schoolClass, $newStatus, $currentStatusInt, $centerId) {
+        $updatedClass = DB::transaction(function () use ($id, $data, $schoolClass, $newStatus, $currentStatusInt, $centerId) {
             $updated = $this->schoolClassRepository->update($id, [
                 'center_id'    => $data['center_id'] ?? $schoolClass->center_id,
                 'code'         => isset($data['code']) ? trim($data['code']) : $schoolClass->code,
@@ -376,6 +408,11 @@ class SchoolClassService implements SchoolClassServiceInterface
             // Cập nhật danh sách môn học và giáo viên phụ trách
             if (isset($data['subjects']) && is_array($data['subjects'])) {
                 $this->schoolClassRepository->syncClassSubjects($updated, $data['subjects']);
+            }
+
+            // Đồng bộ học phí cho học sinh nếu được yêu cầu
+            if (! empty($data['update_student_tuitions'])) {
+                $this->updateClassStudentsTuitions($updated->fresh());
             }
 
             // Tự động đồng bộ trạng thái học sinh nếu trạng thái lớp thay đổi
@@ -789,5 +826,49 @@ class SchoolClassService implements SchoolClassServiceInterface
         $this->findClass($classId, $admin, $teacher);
 
         return $this->schoolClassRepository->updateClassStudentStatus($classId, $studentId, $status, $note);
+    }
+
+    /**
+     * Đồng bộ và cập nhật lại học phí cho tất cả học sinh đang có hồ sơ học phí trong lớp
+     *
+     * @param  SchoolClass $schoolClass
+     * @return void
+     */
+    public function updateClassStudentsTuitions(SchoolClass $schoolClass): void
+    {
+        $newClassTotal = (float) $schoolClass->total_tuition_fee;
+        $tuitions      = StudentTuition::where('class_id', $schoolClass->id)->get();
+
+        foreach ($tuitions as $tuition) {
+            $discountType  = $tuition->discount_type ? (int) $tuition->discount_type : null;
+            $discountValue = (float) ($tuition->discount_value ?? 0);
+
+            if ($discountType === Constant::DISCOUNT_TYPE_DIRECT) {
+                $newTotal = max(0.0, $newClassTotal - $discountValue);
+            } elseif ($discountType === Constant::DISCOUNT_TYPE_PERCENTAGE) {
+                $newTotal = max(0.0, round($newClassTotal * (1 - ($discountValue / 100)), 2));
+            } else {
+                $newTotal = $newClassTotal;
+            }
+
+            $paidAmount      = (float) $tuition->payments()->sum('amount');
+            $remainingAmount = max(0.0, $newTotal - $paidAmount);
+            $isOverdue       = $tuition->due_date && Carbon::parse($tuition->due_date)->isPast() && $remainingAmount > 0;
+
+            if ($remainingAmount <= 0 && $newTotal > 0) {
+                $status = Constant::TUITION_STATUS_COMPLETED;
+            } elseif ($paidAmount > 0) {
+                $status = $isOverdue ? Constant::TUITION_STATUS_OVERDUE : Constant::TUITION_STATUS_PARTIAL;
+            } else {
+                $status = $isOverdue ? Constant::TUITION_STATUS_OVERDUE : Constant::TUITION_STATUS_PENDING;
+            }
+
+            $tuition->update([
+                'total_amount'     => $newTotal,
+                'paid_amount'      => $paidAmount,
+                'remaining_amount' => $remainingAmount,
+                'status'           => $status,
+            ]);
+        }
     }
 }

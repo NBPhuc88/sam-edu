@@ -10,11 +10,13 @@ import {
     CLASS_STATUS_COMPLETED,
     CLASS_STATUS_INACTIVE,
     CLASS_STATUS_LABELS,
+    DISCOUNT_TYPE_DIRECT,
+    DISCOUNT_TYPE_PERCENTAGE,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
-import { AlertTriangle,BookOpen,Calendar,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
+import { AlertCircle,AlertTriangle,BookOpen,Calendar,DollarSign,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
 import React,{ useState } from 'react';
 
 interface Center {
@@ -43,6 +45,8 @@ interface ClassSubject {
     subject_id: number;
     teacher_id: number;
     tuition_fee?: number | string | null;
+    discount_type?: number | null;
+    discount_value?: number | string | null;
 }
 
 interface SchoolClass {
@@ -55,6 +59,7 @@ interface SchoolClass {
     start_date: string | null;
     end_date: string | null;
     status: number;
+    total_tuition_fee?: number | null;
     class_subjects?: ClassSubject[];
 }
 
@@ -70,6 +75,8 @@ interface SubjectTeacherRow {
     subject_id: string;
     teacher_id: string;
     tuition_fee: string;
+    discount_type: string;
+    discount_value: string;
 }
 
 export default function ClassEdit({
@@ -92,21 +99,26 @@ export default function ClassEdit({
     const [status, setStatus] = useState<number>(Number(schoolClass.status ?? CLASS_STATUS_ACTIVE));
     const [description, setDescription] = useState<string>(schoolClass.description || '');
 
-    // Pre-populate dynamic list of subjects & assigned teachers & tuition fees
+    // Pre-populate dynamic list of subjects & assigned teachers & tuition fees & discounts
     const initialRows: SubjectTeacherRow[] =
         schoolClass.class_subjects && schoolClass.class_subjects.length > 0
-            ? schoolClass.class_subjects.map((cs) => ({
+            ? schoolClass.class_subjects.map((cs: any) => ({
                   subject_id: String(cs.subject_id),
                   teacher_id: String(cs.teacher_id),
                   tuition_fee:
                       cs.tuition_fee !== undefined && cs.tuition_fee !== null
                           ? String(Number(cs.tuition_fee))
                           : '',
+                  discount_type: cs.discount_type ? String(cs.discount_type) : '',
+                  discount_value: cs.discount_value !== undefined && cs.discount_value !== null ? String(Number(cs.discount_value)) : '',
               }))
-            : [{ subject_id: '', teacher_id: '', tuition_fee: '' }];
+            : [{ subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }];
 
     const [subjectRows, setSubjectRows] = useState<SubjectTeacherRow[]>(initialRows);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const isActiveStatus = Number(status) === CLASS_STATUS_ACTIVE;
+    const isOriginalActive = Number(schoolClass.status) === CLASS_STATUS_ACTIVE;
 
     // Filter available subjects and teachers by selected center with fallback & including current class subjects
     const availableSubjects = React.useMemo(() => {
@@ -181,10 +193,40 @@ export default function ClassEdit({
         return list;
     }, [schoolClass, centerId, teachers]);
 
+    const calculateRowFinalFee = (row: SubjectTeacherRow): number => {
+        const baseFee = Number(row.tuition_fee) || 0;
+        if (baseFee <= 0) return 0;
+        const type = Number(row.discount_type);
+        const val = Number(row.discount_value) || 0;
+        if (type === DISCOUNT_TYPE_DIRECT) {
+            return Math.max(0, baseFee - val);
+        }
+        if (type === DISCOUNT_TYPE_PERCENTAGE) {
+            return Math.max(0, Math.round(baseFee * (1 - val / 100)));
+        }
+        return baseFee;
+    };
+
+    const originalTotalTuitionFee = React.useMemo(() => {
+        if (!schoolClass.class_subjects || schoolClass.class_subjects.length === 0) return 0;
+        return schoolClass.class_subjects.reduce((sum, cs: any) => {
+            const baseFee = Number(cs.tuition_fee) || 0;
+            const type = Number(cs.discount_type);
+            const val = Number(cs.discount_value) || 0;
+            if (type === DISCOUNT_TYPE_DIRECT) {
+                return sum + Math.max(0, baseFee - val);
+            }
+            if (type === DISCOUNT_TYPE_PERCENTAGE) {
+                return sum + Math.max(0, Math.round(baseFee * (1 - val / 100)));
+            }
+            return sum + baseFee;
+        }, 0);
+    }, [schoolClass]);
+
     const totalTuitionFee = React.useMemo(() => {
         return subjectRows.reduce((sum, r) => {
             if (r.subject_id) {
-                return sum + (Number(r.tuition_fee) || 0);
+                return sum + calculateRowFinalFee(r);
             }
             return sum;
         }, 0);
@@ -198,12 +240,13 @@ export default function ClassEdit({
     };
 
     const handleAddSubjectRow = () => {
-        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '', tuition_fee: '' }]);
+        if (!isActiveStatus || !isOriginalActive) return;
+        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }]);
     };
 
     const handleRemoveSubjectRow = (index: number) => {
         if (subjectRows.length === 1) {
-            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '' }]);
+            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }]);
 
             return;
         }
@@ -215,11 +258,12 @@ export default function ClassEdit({
     const currentErrors = { ...errors, ...clientErrors };
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showTuitionUpdateModal, setShowTuitionUpdateModal] = useState(false);
 
     const isClosedOrCompleted = Number(schoolClass.status) === CLASS_STATUS_COMPLETED || Number(schoolClass.status) === CLASS_STATUS_CLOSED;
     const canEditStatus = isSuperAdmin || !isClosedOrCompleted;
 
-    const handleRowChange = (index: number, field: 'subject_id' | 'teacher_id' | 'tuition_fee', value: string) => {
+    const handleRowChange = (index: number, field: keyof SubjectTeacherRow, value: string) => {
         const updated = [...subjectRows];
         updated[index][field] = value;
 
@@ -229,6 +273,11 @@ export default function ClassEdit({
             if (foundSubject && foundSubject.tuition_fee !== undefined && foundSubject.tuition_fee !== null) {
                 updated[index].tuition_fee = String(Number(foundSubject.tuition_fee));
             }
+        }
+
+        // Khi đổi kiểu giảm giá về rỗng -> reset discount_value
+        if (field === 'discount_type' && !value) {
+            updated[index].discount_value = '';
         }
 
         setSubjectRows(updated);
@@ -252,14 +301,32 @@ export default function ClassEdit({
             newErrors['name'] = 'Vui lòng nhập tên lớp học.';
         }
 
+        if (!isOriginalActive) {
+            // Kiểm tra xem có thay đổi danh sách môn học không
+            const existingSubjectIds = (schoolClass.class_subjects || []).map((cs) => cs.subject_id).sort();
+            const currentSubjectIds = subjectRows.filter((r) => r.subject_id).map((r) => Number(r.subject_id)).sort();
+            if (JSON.stringify(existingSubjectIds) !== JSON.stringify(currentSubjectIds)) {
+                newErrors['subjects'] = 'Chỉ lớp học ở trạng thái Đang hoạt động mới có thể thêm hoặc thay đổi môn học.';
+            }
+        }
+
         subjectRows.forEach((row, index) => {
             const hasSubject = Boolean(row.subject_id);
             const hasTeacher = Boolean(row.teacher_id);
+            const baseFee = Number(row.tuition_fee) || 0;
+            const discountType = Number(row.discount_type);
+            const discountVal = Number(row.discount_value) || 0;
 
             if (hasSubject && !hasTeacher) {
                 newErrors[`subjects.${index}.teacher_id`] = `Vui lòng chọn giáo viên phụ trách cho môn học (dòng ${index + 1}).`;
             } else if (!hasSubject && hasTeacher) {
                 newErrors[`subjects.${index}.subject_id`] = `Vui lòng chọn môn học tương ứng cho giáo viên (dòng ${index + 1}).`;
+            }
+
+            if (discountType === DISCOUNT_TYPE_DIRECT && discountVal > baseFee) {
+                newErrors[`subjects.${index}.discount_value`] = `Mức giảm trực tiếp (${formatCurrency(discountVal)}) không được vượt quá học phí môn (${formatCurrency(baseFee)}).`;
+            } else if (discountType === DISCOUNT_TYPE_PERCENTAGE && discountVal > 100) {
+                newErrors[`subjects.${index}.discount_value`] = `Mức giảm phần trăm (${discountVal}%) không được vượt quá 100%.`;
             }
         });
 
@@ -267,9 +334,10 @@ export default function ClassEdit({
         return Object.keys(newErrors).length === 0;
     };
 
-    const executeSubmit = () => {
+    const executeSubmit = (updateStudentTuitions: boolean = false) => {
         setIsSubmitting(true);
         setShowConfirmModal(false);
+        setShowTuitionUpdateModal(false);
 
         const payloadSubjects = subjectRows
             .filter((r) => r.subject_id || r.teacher_id || (r.tuition_fee !== '' && r.tuition_fee !== null))
@@ -277,6 +345,8 @@ export default function ClassEdit({
                 subject_id: r.subject_id ? Number(r.subject_id) : null,
                 teacher_id: r.teacher_id ? Number(r.teacher_id) : null,
                 tuition_fee: r.tuition_fee !== '' && r.tuition_fee !== null ? Number(r.tuition_fee) : null,
+                discount_type: r.discount_type ? Number(r.discount_type) : null,
+                discount_value: r.discount_value !== '' && r.discount_value !== null ? Number(r.discount_value) : 0,
             }));
 
         router.patch(
@@ -291,6 +361,7 @@ export default function ClassEdit({
                 status: Number(status),
                 description: description || null,
                 subjects: payloadSubjects,
+                update_student_tuitions: updateStudentTuitions,
             },
             {
                 onFinish: () => setIsSubmitting(false),
@@ -305,6 +376,13 @@ export default function ClassEdit({
             return;
         }
 
+        // Kiểm tra nếu tổng học phí thay đổi -> Hiển thị Modal hỏi cập nhật học phí học sinh
+        const isTuitionChanged = totalTuitionFee !== originalTotalTuitionFee;
+        if (isTuitionChanged) {
+            setShowTuitionUpdateModal(true);
+            return;
+        }
+
         // Nếu chuyển sang trạng thái Hoàn thành (3) hoặc Đã đóng (4) khác với ban đầu, yêu cầu xác nhận qua Modal
         const selectedStatusNum = Number(status);
         const originalStatusNum = Number(schoolClass.status);
@@ -314,7 +392,7 @@ export default function ClassEdit({
             return;
         }
 
-        executeSubmit();
+        executeSubmit(false);
     };
 
     return (
@@ -509,7 +587,7 @@ export default function ClassEdit({
                                     2. Danh Sách Môn Học & Giáo Viên Phụ Trách
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    1 lớp học có thể chọn nhiều môn học, mỗi môn học chọn 1 giáo viên giảng dạy và số tiền học tương ứng.
+                                    1 lớp học có thể chọn nhiều môn học, thiết lập giáo viên và mức chiết khấu/giảm giá cho từng môn.
                                 </p>
                             </div>
 
@@ -522,20 +600,39 @@ export default function ClassEdit({
                                     type="button"
                                     variant="secondary"
                                     size="md"
+                                    disabled={!isActiveStatus || !isOriginalActive}
                                     icon={<Plus className="h-4 w-4 text-emerald-600" />}
                                     onClick={handleAddSubjectRow}
+                                    title={!isActiveStatus || !isOriginalActive ? 'Chỉ lớp đang hoạt động mới có thể thêm môn' : 'Thêm môn học'}
                                 >
                                     Thêm Môn Học
                                 </Button>
                             </div>
                         </div>
 
+                        {(!isActiveStatus || !isOriginalActive) && (
+                            <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800">
+                                <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                                <span>
+                                    <strong>Lưu ý:</strong> Lớp học không ở trạng thái <strong>Đang hoạt động</strong> nên không thể thêm hoặc thay đổi danh sách môn học.
+                                </span>
+                            </div>
+                        )}
+
+                        {currentErrors.subjects && (
+                            <div className="mb-4 rounded-lg bg-red-50 p-3 text-xs font-medium text-red-600 border border-red-200">
+                                {currentErrors.subjects}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {subjectRows.map((row, index) => {
                                 const subjectError = currentErrors[`subjects.${index}.subject_id`];
                                 const teacherError = currentErrors[`subjects.${index}.teacher_id`];
                                 const tuitionError = currentErrors[`subjects.${index}.tuition_fee`];
-                                const hasRowError = Boolean(subjectError || teacherError || tuitionError);
+                                const discountValueError = currentErrors[`subjects.${index}.discount_value`];
+                                const hasRowError = Boolean(subjectError || teacherError || tuitionError || discountValueError);
+                                const finalFee = calculateRowFinalFee(row);
 
                                 return (
                                     <div
@@ -561,14 +658,15 @@ export default function ClassEdit({
                                         </div>
 
                                         {/* Subject Select */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-[180px]">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                                 Môn Học <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={row.subject_id}
+                                                disabled={!isActiveStatus || !isOriginalActive}
                                                 onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                                     subjectError
                                                         ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
                                                         : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
@@ -597,14 +695,15 @@ export default function ClassEdit({
                                         </div>
 
                                         {/* Teacher Select */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-[180px]">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                                 Giáo Viên Phụ Trách <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={row.teacher_id}
+                                                disabled={!isActiveStatus || !isOriginalActive}
                                                 onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                                     teacherError
                                                         ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
                                                         : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
@@ -633,20 +732,67 @@ export default function ClassEdit({
                                         </div>
 
                                         {/* Subject Tuition Fee */}
-                                        <div className="w-full sm:w-44">
+                                        <div className="w-full sm:w-36">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Học Phí Môn (VNĐ)
+                                                Học Phí Gốc (VNĐ)
                                             </label>
                                             <Input
                                                 type="number"
                                                 min="0"
                                                 step="1000"
+                                                disabled={!isActiveStatus || !isOriginalActive}
                                                 value={row.tuition_fee}
                                                 onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
                                                 placeholder="0"
                                                 error={tuitionError}
                                                 className="!py-2.5 !text-sm"
                                             />
+                                        </div>
+
+                                        {/* Discount Type */}
+                                        <div className="w-full sm:w-36">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Kiểu Giảm Giá
+                                            </label>
+                                            <select
+                                                value={row.discount_type}
+                                                disabled={!isActiveStatus || !isOriginalActive}
+                                                onChange={(e) => handleRowChange(index, 'discount_type', e.target.value)}
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">Không giảm</option>
+                                                <option value={DISCOUNT_TYPE_DIRECT}>Giảm tiền (VNĐ)</option>
+                                                <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo %</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Discount Value */}
+                                        <div className="w-full sm:w-32">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Mức Giảm {Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'}
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '100' : undefined}
+                                                step={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
+                                                disabled={!isActiveStatus || !isOriginalActive || !row.discount_type}
+                                                value={row.discount_value}
+                                                onChange={(e) => handleRowChange(index, 'discount_value', e.target.value)}
+                                                placeholder="0"
+                                                error={discountValueError}
+                                                className="!py-2.5 !text-sm"
+                                            />
+                                        </div>
+
+                                        {/* Final Fee Column */}
+                                        <div className="w-full sm:w-32 flex flex-col justify-between">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Thành Tiền
+                                            </label>
+                                            <div className="flex h-[42px] items-center px-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs font-bold text-emerald-800 truncate">
+                                                {formatCurrency(finalFee)}
+                                            </div>
                                         </div>
 
                                         {/* Remove Row Button */}
@@ -658,6 +804,7 @@ export default function ClassEdit({
                                                 type="button"
                                                 variant="danger"
                                                 size="sm"
+                                                disabled={!isActiveStatus || !isOriginalActive}
                                                 icon={<Trash2 className="h-4 w-4" />}
                                                 onClick={() => handleRemoveSubjectRow(index)}
                                                 title="Xóa dòng môn học này"
@@ -685,6 +832,59 @@ export default function ClassEdit({
                     </div>
                 </form>
 
+                {/* Modal Xác Nhận Cập Nhật Học Phí Cho Học Sinh Trong Lớp */}
+                <Modal
+                    isOpen={showTuitionUpdateModal}
+                    onClose={() => setShowTuitionUpdateModal(false)}
+                    title="Xác Nhận Cập Nhật Học Phí Học Sinh"
+                    maxWidth="md"
+                    footer={
+                        <div className="flex items-center justify-end gap-2.5 w-full">
+                            <Button
+                                variant="secondary"
+                                size="md"
+                                onClick={() => executeSubmit(false)}
+                                title="Chỉ cập nhật thông tin lớp, không thay đổi số tiền học phí hiện tại của học sinh"
+                            >
+                                Không, chỉ lưu lớp học
+                            </Button>
+                            <Button
+                                variant="success"
+                                size="md"
+                                isLoading={isSubmitting}
+                                onClick={() => executeSubmit(true)}
+                                title="Đồng bộ và tính lại số tiền học phí cho tất cả học sinh đang có hồ sơ học phí trong lớp"
+                            >
+                                Có, cập nhật học phí học sinh
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="space-y-4 text-sm text-gray-700">
+                        <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200 text-blue-950">
+                            <DollarSign className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                            <div>
+                                <div className="font-bold">Tổng học phí của lớp học đã thay đổi:</div>
+                                <div className="mt-2 flex items-center gap-3 text-xs">
+                                    <span className="line-through text-gray-500 font-medium">
+                                        Cũ: {formatCurrency(originalTotalTuitionFee)}
+                                    </span>
+                                    <span className="text-emerald-700 font-bold text-sm">
+                                        Mới: {formatCurrency(totalTuitionFee)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                            Bạn có muốn tự động cập nhật lại tổng số tiền và số tiền còn lại cho các học sinh đang có hồ sơ học phí trong lớp học này không?
+                        </p>
+                        <p className="text-[11px] text-gray-500 italic">
+                            * Lưu ý: Mức giảm giá riêng của từng học sinh (nếu có) vẫn sẽ được áp dụng tự động trên tổng học phí mới của lớp.
+                        </p>
+                    </div>
+                </Modal>
+
                 {/* Modal Xác Nhận Hoàn Thành / Đóng Lớp */}
                 <Modal
                     isOpen={showConfirmModal}
@@ -704,7 +904,7 @@ export default function ClassEdit({
                                 variant="danger"
                                 size="md"
                                 isLoading={isSubmitting}
-                                onClick={executeSubmit}
+                                onClick={() => executeSubmit(false)}
                             >
                                 Xác Nhận Chuyển Trạng Thái
                             </Button>

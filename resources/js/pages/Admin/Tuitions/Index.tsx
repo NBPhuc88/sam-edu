@@ -39,6 +39,8 @@ interface StudentTuitionItem {
     class_id: number;
     title: string | null;
     total_amount: number;
+    discount_type?: number | null;
+    discount_value?: number | string | null;
     paid_amount: number;
     remaining_amount: number;
     status: number;

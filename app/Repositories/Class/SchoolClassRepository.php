@@ -48,7 +48,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             )
             ->with([
                 'center:id,name,code',
-                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee',
+                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee,discount_type,discount_value',
                 'classSubjects.subject:id,name,code,tuition_fee',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
@@ -138,7 +138,7 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
             )
             ->with([
                 'center:id,name,code',
-                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee',
+                'classSubjects:id,class_id,subject_id,teacher_id,status,tuition_fee,discount_type,discount_value',
                 'classSubjects.subject:id,name,code,tuition_fee',
                 'classSubjects.teacher:id,full_name,teacher_code',
             ])
@@ -206,8 +206,8 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
     }
 
     /**
-     * @param  SchoolClass                                                                              $schoolClass
-     * @param  array<int, array{subject_id: int, teacher_id: int, tuition_fee?: float|int|string|null}> $subjectsWithTeachers
+     * @param  SchoolClass                                                                                                                                         $schoolClass
+     * @param  array<int, array{subject_id: int, teacher_id: int, tuition_fee?: float|int|string|null, discount_type?: int|null, discount_value?: float|int|null}> $subjectsWithTeachers
      * @return void
      */
     public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void
@@ -220,9 +220,13 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                 $subjectId                  = (int) $item['subject_id'];
                 $teacherId                  = (int) $item['teacher_id'];
                 $tuitionFee                 = isset($item['tuition_fee']) && $item['tuition_fee'] !== '' ? (float) $item['tuition_fee'] : null;
+                $discountType               = ! empty($item['discount_type']) ? (int) $item['discount_type'] : null;
+                $discountValue              = isset($item['discount_value']) && $item['discount_value'] !== '' ? (float) $item['discount_value'] : 0;
                 $uniqueSubjects[$subjectId] = [
-                    'teacher_id'  => $teacherId,
-                    'tuition_fee' => $tuitionFee,
+                    'teacher_id'     => $teacherId,
+                    'tuition_fee'    => $tuitionFee,
+                    'discount_type'  => $discountType,
+                    'discount_value' => $discountValue,
                 ];
             }
         }
@@ -246,15 +250,18 @@ class SchoolClassRepository implements SchoolClassRepositoryInterface
                     'subject_id' => $subjectId,
                 ],
                 [
-                    'teacher_id'  => $data['teacher_id'],
-                    'tuition_fee' => $data['tuition_fee'],
-                    'status'      => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+                    'teacher_id'     => $data['teacher_id'],
+                    'tuition_fee'    => $data['tuition_fee'],
+                    'discount_type'  => $data['discount_type'],
+                    'discount_value' => $data['discount_value'],
+                    'status'         => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
                 ]
             );
         }
 
-        // 4. Tự động tính và cập nhật cột total_tuition_fee của lớp
-        $totalTuitionFee = (float) ClassSubject::where('class_id', $schoolClass->id)->sum('tuition_fee');
+        // 4. Tự động tính và cập nhật cột total_tuition_fee của lớp sau khi tính chiết khấu của từng môn
+        $classSubjects   = ClassSubject::where('class_id', $schoolClass->id)->get();
+        $totalTuitionFee = (float) $classSubjects->sum(fn ($cs) => $cs->final_tuition_fee);
         $schoolClass->update(['total_tuition_fee' => $totalTuitionFee]);
     }
 

@@ -367,6 +367,20 @@ export const TUITION_STATUS_LABELS: Record<number, string> = {
     [TUITION_STATUS_OVERDUE]: 'Quá hạn',
 };
 
+// Kiểu giảm giá (Discount Types)
+export const DISCOUNT_TYPE_DIRECT = 1; // Giảm trực tiếp (VNĐ)
+export const DISCOUNT_TYPE_PERCENTAGE = 2; // Giảm phần trăm (%)
+
+export const DISCOUNT_TYPE_LABELS: Record<number, string> = {
+    [DISCOUNT_TYPE_DIRECT]: 'Giảm trực tiếp (VNĐ)',
+    [DISCOUNT_TYPE_PERCENTAGE]: 'Giảm theo phần trăm (%)',
+};
+
+export const DISCOUNT_TYPE_OPTIONS = [
+    { value: DISCOUNT_TYPE_DIRECT, label: 'Giảm trực tiếp (VNĐ)' },
+    { value: DISCOUNT_TYPE_PERCENTAGE, label: 'Giảm theo phần trăm (%)' },
+];
+
 // Phương thức thanh toán (Payment Methods)
 export const PAYMENT_METHOD_CASH = 1; // Tiền mặt
 export const PAYMENT_METHOD_BANK_TRANSFER = 2; // Chuyển khoản ngân hàng

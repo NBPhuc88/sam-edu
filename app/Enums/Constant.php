@@ -590,6 +590,20 @@ class Constant
         self::TUITION_STATUS_OVERDUE   => 'Quá hạn',
     ];
 
+    // Kiểu giảm giá (Discount Types)
+    public const int DISCOUNT_TYPE_DIRECT     = 1; // Giảm giá trực tiếp (số tiền cố định VNĐ)
+    public const int DISCOUNT_TYPE_PERCENTAGE = 2; // Giảm giá theo phần trăm (%)
+
+    public const array DISCOUNT_TYPES = [
+        self::DISCOUNT_TYPE_DIRECT,
+        self::DISCOUNT_TYPE_PERCENTAGE,
+    ];
+
+    public const array DISCOUNT_TYPE_LABELS = [
+        self::DISCOUNT_TYPE_DIRECT     => 'Giảm trực tiếp (VNĐ)',
+        self::DISCOUNT_TYPE_PERCENTAGE => 'Giảm theo phần trăm (%)',
+    ];
+
     // Phương thức thanh toán (Payment Methods)
     public const int PAYMENT_METHOD_CASH          = 1; // Tiền mặt
     public const int PAYMENT_METHOD_BANK_TRANSFER = 2; // Chuyển khoản ngân hàng

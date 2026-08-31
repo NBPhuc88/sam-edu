@@ -38,6 +38,8 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'created_by',
                 'title',
                 'total_amount',
+                'discount_type',
+                'discount_value',
                 'paid_amount',
                 'remaining_amount',
                 'status',
@@ -252,6 +254,8 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
                 'title',
                 'note',
                 'total_amount',
+                'discount_type',
+                'discount_value',
                 'paid_amount',
                 'remaining_amount',
                 'status',
@@ -261,7 +265,7 @@ class StudentTuitionRepository implements StudentTuitionRepositoryInterface
             ->with([
                 'student:id,full_name,student_code,email,phone,parent_name,parent_phone,deleted_at',
                 'student.tuitions' => function ($q) {
-                    $q->select('id', 'center_id', 'student_id', 'class_id', 'title', 'total_amount', 'paid_amount', 'remaining_amount', 'status', 'due_date')
+                    $q->select('id', 'center_id', 'student_id', 'class_id', 'title', 'total_amount', 'discount_type', 'discount_value', 'paid_amount', 'remaining_amount', 'status', 'due_date')
                         ->with('schoolClass:id,name,code')
                         ->withCount('payments');
                 },

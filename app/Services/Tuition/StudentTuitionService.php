@@ -225,6 +225,8 @@ class StudentTuitionService implements StudentTuitionServiceInterface
             'class_id'         => (int) $data['class_id'],
             'title'            => $title,
             'total_amount'     => $totalAmount,
+            'discount_type'    => ! empty($data['discount_type']) ? (int) $data['discount_type'] : null,
+            'discount_value'   => isset($data['discount_value']) && $data['discount_value'] !== '' ? (float) $data['discount_value'] : 0,
             'paid_amount'      => 0,
             'remaining_amount' => $totalAmount,
             'status'           => Constant::TUITION_STATUS_PENDING,
@@ -278,13 +280,15 @@ class StudentTuitionService implements StudentTuitionServiceInterface
         }
 
         $this->studentTuitionRepository->update($id, [
-            'center_id'    => $data['center_id'] ?? $tuition->center_id,
-            'student_id'   => $data['student_id'] ?? $tuition->student_id,
-            'class_id'     => $data['class_id'] ?? $tuition->class_id,
-            'title'        => $data['title'] ?? $tuition->title,
-            'total_amount' => (float) ($data['total_amount'] ?? $tuition->total_amount),
-            'due_date'     => array_key_exists('due_date', $data) ? $data['due_date'] : $tuition->due_date,
-            'note'         => array_key_exists('note', $data) ? $data['note'] : $tuition->note,
+            'center_id'      => $data['center_id'] ?? $tuition->center_id,
+            'student_id'     => $data['student_id'] ?? $tuition->student_id,
+            'class_id'       => $data['class_id'] ?? $tuition->class_id,
+            'title'          => $data['title'] ?? $tuition->title,
+            'total_amount'   => (float) ($data['total_amount'] ?? $tuition->total_amount),
+            'discount_type'  => array_key_exists('discount_type', $data) ? (! empty($data['discount_type']) ? (int) $data['discount_type'] : null) : $tuition->discount_type,
+            'discount_value' => array_key_exists('discount_value', $data) ? (isset($data['discount_value']) && $data['discount_value'] !== '' ? (float) $data['discount_value'] : 0) : $tuition->discount_value,
+            'due_date'       => array_key_exists('due_date', $data) ? $data['due_date'] : $tuition->due_date,
+            'note'           => array_key_exists('note', $data) ? $data['note'] : $tuition->note,
         ]);
 
         $this->recalculateSummary($id);

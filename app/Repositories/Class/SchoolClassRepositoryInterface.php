@@ -60,8 +60,8 @@ interface SchoolClassRepositoryInterface
     public function delete(int $id): bool;
 
     /**
-     * @param  SchoolClass                                         $schoolClass
-     * @param  array<int, array{subject_id: int, teacher_id: int}> $subjectsWithTeachers
+     * @param  SchoolClass                                                                                                                                           $schoolClass
+     * @param  array<int, array{subject_id: int, teacher_id: int, tuition_fee?: float|int|string|null, discount_type?: int|null, discount_value?: float|int|null}> $subjectsWithTeachers
      * @return void
      */
     public function syncClassSubjects(SchoolClass $schoolClass, array $subjectsWithTeachers): void;

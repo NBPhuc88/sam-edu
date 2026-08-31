@@ -114,6 +114,6 @@ class SchoolClass extends Model
             return (float) $this->attributes['total_tuition_fee'];
         }
 
-        return (float) ($this->classSubjects->sum('tuition_fee') ?: 0);
+        return (float) ($this->classSubjects->sum(fn ($cs) => $cs->final_tuition_fee) ?: 0);
     }
 }

@@ -9,11 +9,14 @@ import {
     CLASS_STATUS_COMPLETED,
     CLASS_STATUS_INACTIVE,
     CLASS_STATUS_LABELS,
+    DISCOUNT_TYPE_DIRECT,
+    DISCOUNT_TYPE_OPTIONS,
+    DISCOUNT_TYPE_PERCENTAGE,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
-import { BookOpen,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
+import { AlertCircle,BookOpen,GraduationCap,Plus,Save,Trash2 } from 'lucide-react';
 import React,{ useState } from 'react';
 
 interface Center {
@@ -48,6 +51,8 @@ interface SubjectTeacherRow {
     subject_id: string;
     teacher_id: string;
     tuition_fee: string;
+    discount_type: string;
+    discount_value: string;
 }
 
 export default function ClassCreate({ centers = [], subjects = [], teachers = [], errors = {} }: CreateProps) {
@@ -65,14 +70,16 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     const [status, setStatus] = useState<number>(CLASS_STATUS_ACTIVE);
     const [description, setDescription] = useState<string>('');
 
-    // Dynamic list of subjects & assigned teachers & subject tuition fee
+    // Dynamic list of subjects & assigned teachers & subject tuition fee & discounts
     const [subjectRows, setSubjectRows] = useState<SubjectTeacherRow[]>([
-        { subject_id: '', teacher_id: '', tuition_fee: '' },
+        { subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' },
     ]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
     const currentErrors = { ...errors, ...clientErrors };
+
+    const isActiveStatus = Number(status) === CLASS_STATUS_ACTIVE;
 
     // Filter available subjects and teachers by selected center with fallback to all items
     const availableSubjects = React.useMemo(() => {
@@ -95,14 +102,29 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         return teachers; // Fallback to all teachers if none match this center
     }, [centerId, teachers]);
 
+    const calculateRowFinalFee = (row: SubjectTeacherRow): number => {
+        const baseFee = Number(row.tuition_fee) || 0;
+        if (baseFee <= 0) return 0;
+        const type = Number(row.discount_type);
+        const val = Number(row.discount_value) || 0;
+        if (type === DISCOUNT_TYPE_DIRECT) {
+            return Math.max(0, baseFee - val);
+        }
+        if (type === DISCOUNT_TYPE_PERCENTAGE) {
+            return Math.max(0, Math.round(baseFee * (1 - val / 100)));
+        }
+        return baseFee;
+    };
+
     const totalTuitionFee = React.useMemo(() => {
+        if (!isActiveStatus) return 0;
         return subjectRows.reduce((sum, r) => {
             if (r.subject_id) {
-                return sum + (Number(r.tuition_fee) || 0);
+                return sum + calculateRowFinalFee(r);
             }
             return sum;
         }, 0);
-    }, [subjectRows]);
+    }, [subjectRows, isActiveStatus]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -112,12 +134,13 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
     };
 
     const handleAddSubjectRow = () => {
-        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '', tuition_fee: '' }]);
+        if (!isActiveStatus) return;
+        setSubjectRows([...subjectRows, { subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }]);
     };
 
     const handleRemoveSubjectRow = (index: number) => {
         if (subjectRows.length === 1) {
-            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '' }]);
+            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }]);
 
             return;
         }
@@ -125,7 +148,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
         setSubjectRows(subjectRows.filter((_, idx) => idx !== index));
     };
 
-    const handleRowChange = (index: number, field: 'subject_id' | 'teacher_id' | 'tuition_fee', value: string) => {
+    const handleRowChange = (index: number, field: keyof SubjectTeacherRow, value: string) => {
         const updated = [...subjectRows];
         updated[index][field] = value;
 
@@ -135,6 +158,11 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
             if (foundSubject && foundSubject.tuition_fee !== undefined && foundSubject.tuition_fee !== null) {
                 updated[index].tuition_fee = String(Number(foundSubject.tuition_fee));
             }
+        }
+
+        // Khi đổi kiểu giảm giá về rỗng -> reset discount_value
+        if (field === 'discount_type' && !value) {
+            updated[index].discount_value = '';
         }
 
         setSubjectRows(updated);
@@ -158,16 +186,32 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
             newErrors['name'] = 'Vui lòng nhập tên lớp học.';
         }
 
-        subjectRows.forEach((row, index) => {
-            const hasSubject = Boolean(row.subject_id);
-            const hasTeacher = Boolean(row.teacher_id);
-
-            if (hasSubject && !hasTeacher) {
-                newErrors[`subjects.${index}.teacher_id`] = `Vui lòng chọn giáo viên phụ trách cho môn học (dòng ${index + 1}).`;
-            } else if (!hasSubject && hasTeacher) {
-                newErrors[`subjects.${index}.subject_id`] = `Vui lòng chọn môn học tương ứng cho giáo viên (dòng ${index + 1}).`;
+        if (!isActiveStatus) {
+            const hasAnySubject = subjectRows.some((r) => Boolean(r.subject_id));
+            if (hasAnySubject) {
+                newErrors['subjects'] = 'Chỉ lớp học ở trạng thái Đang hoạt động mới có thể thêm môn học.';
             }
-        });
+        } else {
+            subjectRows.forEach((row, index) => {
+                const hasSubject = Boolean(row.subject_id);
+                const hasTeacher = Boolean(row.teacher_id);
+                const baseFee = Number(row.tuition_fee) || 0;
+                const discountType = Number(row.discount_type);
+                const discountVal = Number(row.discount_value) || 0;
+
+                if (hasSubject && !hasTeacher) {
+                    newErrors[`subjects.${index}.teacher_id`] = `Vui lòng chọn giáo viên phụ trách cho môn học (dòng ${index + 1}).`;
+                } else if (!hasSubject && hasTeacher) {
+                    newErrors[`subjects.${index}.subject_id`] = `Vui lòng chọn môn học tương ứng cho giáo viên (dòng ${index + 1}).`;
+                }
+
+                if (discountType === DISCOUNT_TYPE_DIRECT && discountVal > baseFee) {
+                    newErrors[`subjects.${index}.discount_value`] = `Mức giảm trực tiếp (${formatCurrency(discountVal)}) không được vượt quá học phí môn (${formatCurrency(baseFee)}).`;
+                } else if (discountType === DISCOUNT_TYPE_PERCENTAGE && discountVal > 100) {
+                    newErrors[`subjects.${index}.discount_value`] = `Mức giảm phần trăm (${discountVal}%) không được vượt quá 100%.`;
+                }
+            });
+        }
 
         setClientErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -182,13 +226,17 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
 
         setIsSubmitting(true);
 
-        const payloadSubjects = subjectRows
-            .filter((r) => r.subject_id || r.teacher_id || (r.tuition_fee !== '' && r.tuition_fee !== null))
-            .map((r) => ({
-                subject_id: r.subject_id ? Number(r.subject_id) : null,
-                teacher_id: r.teacher_id ? Number(r.teacher_id) : null,
-                tuition_fee: r.tuition_fee !== '' && r.tuition_fee !== null ? Number(r.tuition_fee) : null,
-            }));
+        const payloadSubjects = isActiveStatus
+            ? subjectRows
+                .filter((r) => r.subject_id || r.teacher_id || (r.tuition_fee !== '' && r.tuition_fee !== null))
+                .map((r) => ({
+                    subject_id: r.subject_id ? Number(r.subject_id) : null,
+                    teacher_id: r.teacher_id ? Number(r.teacher_id) : null,
+                    tuition_fee: r.tuition_fee !== '' && r.tuition_fee !== null ? Number(r.tuition_fee) : null,
+                    discount_type: r.discount_type ? Number(r.discount_type) : null,
+                    discount_value: r.discount_value !== '' && r.discount_value !== null ? Number(r.discount_value) : 0,
+                }))
+            : [];
 
         router.post(
             '/classes',
@@ -246,7 +294,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         onChange={(e) => {
                                             setCenterId(e.target.value);
                                             // Reset subject rows when center changes
-                                            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '' }]);
+                                            setSubjectRows([{ subject_id: '', teacher_id: '', tuition_fee: '', discount_type: '', discount_value: '' }]);
                                         }}
                                         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                         required
@@ -384,7 +432,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     2. Danh Sách Môn Học & Giáo Viên Phụ Trách
                                 </h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    1 lớp học có thể chọn nhiều môn học, mỗi môn học chọn 1 giáo viên giảng dạy và số tiền học tương ứng.
+                                    1 lớp học có thể chọn nhiều môn học, thiết lập giáo viên và mức chiết khấu/giảm giá cho từng môn.
                                 </p>
                             </div>
 
@@ -397,20 +445,39 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                     type="button"
                                     variant="secondary"
                                     size="md"
+                                    disabled={!isActiveStatus}
                                     icon={<Plus className="h-4 w-4 text-emerald-600" />}
                                     onClick={handleAddSubjectRow}
+                                    title={!isActiveStatus ? 'Chỉ lớp đang hoạt động mới có thể thêm môn' : 'Thêm môn học'}
                                 >
                                     Thêm Môn Học
                                 </Button>
                             </div>
                         </div>
 
+                        {!isActiveStatus && (
+                            <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800">
+                                <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                                <span>
+                                    <strong>Lưu ý:</strong> Lớp học không ở trạng thái <strong>Đang hoạt động</strong> nên không thể thêm hoặc cấu hình môn học. Vui lòng chuyển trạng thái sang Đang hoạt động nếu muốn thêm môn.
+                                </span>
+                            </div>
+                        )}
+
+                        {currentErrors.subjects && (
+                            <div className="mb-4 rounded-lg bg-red-50 p-3 text-xs font-medium text-red-600 border border-red-200">
+                                {currentErrors.subjects}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {subjectRows.map((row, index) => {
                                 const subjectError = currentErrors[`subjects.${index}.subject_id`];
                                 const teacherError = currentErrors[`subjects.${index}.teacher_id`];
                                 const tuitionError = currentErrors[`subjects.${index}.tuition_fee`];
-                                const hasRowError = Boolean(subjectError || teacherError || tuitionError);
+                                const discountValueError = currentErrors[`subjects.${index}.discount_value`];
+                                const hasRowError = Boolean(subjectError || teacherError || tuitionError || discountValueError);
+                                const finalFee = calculateRowFinalFee(row);
 
                                 return (
                                     <div
@@ -436,14 +503,15 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         </div>
 
                                         {/* Subject Select */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-[180px]">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                                 Môn Học <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={row.subject_id}
+                                                disabled={!isActiveStatus}
                                                 onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                                     subjectError
                                                         ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
                                                         : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
@@ -472,14 +540,15 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         </div>
 
                                         {/* Teacher Select */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-[180px]">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                                                 Giáo Viên Phụ Trách <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={row.teacher_id}
+                                                disabled={!isActiveStatus}
                                                 onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden ${
+                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                                     teacherError
                                                         ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
                                                         : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
@@ -508,20 +577,67 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                         </div>
 
                                         {/* Subject Tuition Fee */}
-                                        <div className="w-full sm:w-44">
+                                        <div className="w-full sm:w-36">
                                             <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Học Phí Môn (VNĐ)
+                                                Học Phí Gốc (VNĐ)
                                             </label>
                                             <Input
                                                 type="number"
                                                 min="0"
                                                 step="1000"
+                                                disabled={!isActiveStatus}
                                                 value={row.tuition_fee}
                                                 onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
                                                 placeholder="0"
                                                 error={tuitionError}
                                                 className="!py-2.5 !text-sm"
                                             />
+                                        </div>
+
+                                        {/* Discount Type */}
+                                        <div className="w-full sm:w-36">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Kiểu Giảm Giá
+                                            </label>
+                                            <select
+                                                value={row.discount_type}
+                                                disabled={!isActiveStatus}
+                                                onChange={(e) => handleRowChange(index, 'discount_type', e.target.value)}
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">Không giảm</option>
+                                                <option value={DISCOUNT_TYPE_DIRECT}>Giảm tiền (VNĐ)</option>
+                                                <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo %</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Discount Value */}
+                                        <div className="w-full sm:w-32">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Mức Giảm {Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'}
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '100' : undefined}
+                                                step={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
+                                                disabled={!isActiveStatus || !row.discount_type}
+                                                value={row.discount_value}
+                                                onChange={(e) => handleRowChange(index, 'discount_value', e.target.value)}
+                                                placeholder="0"
+                                                error={discountValueError}
+                                                className="!py-2.5 !text-sm"
+                                            />
+                                        </div>
+
+                                        {/* Final Fee Column */}
+                                        <div className="w-full sm:w-32 flex flex-col justify-between">
+                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                Thành Tiền
+                                            </label>
+                                            <div className="flex h-[42px] items-center px-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs font-bold text-emerald-800 truncate">
+                                                {formatCurrency(finalFee)}
+                                            </div>
                                         </div>
 
                                         {/* Remove Row Button */}
@@ -533,6 +649,7 @@ export default function ClassCreate({ centers = [], subjects = [], teachers = []
                                                 type="button"
                                                 variant="danger"
                                                 size="sm"
+                                                disabled={!isActiveStatus}
                                                 icon={<Trash2 className="h-4 w-4" />}
                                                 onClick={() => handleRemoveSubjectRow(index)}
                                                 title="Xóa dòng môn học này"

@@ -38,6 +38,8 @@ class StudentTuition extends Model
         'class_id',
         'title',
         'total_amount',
+        'discount_type',
+        'discount_value',
         'paid_amount',
         'remaining_amount',
         'status',
@@ -49,6 +51,8 @@ class StudentTuition extends Model
     protected $casts = [
         'status'           => 'integer',
         'total_amount'     => 'decimal:0',
+        'discount_type'    => 'integer',
+        'discount_value'   => 'decimal:2',
         'paid_amount'      => 'decimal:0',
         'remaining_amount' => 'decimal:0',
         'due_date'         => 'date:d-m-Y',

@@ -4,7 +4,12 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import Input from '@/components/ui/Input';
 import ScrollableSelect from '@/components/ui/ScrollableSelect';
-import { PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_METHOD_OPTIONS } from '@/constants/enums';
+import {
+    DISCOUNT_TYPE_DIRECT,
+    DISCOUNT_TYPE_PERCENTAGE,
+    PAYMENT_METHOD_BANK_TRANSFER,
+    PAYMENT_METHOD_OPTIONS,
+} from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { Head,router,usePage } from '@inertiajs/react';
@@ -26,6 +31,7 @@ interface ClassItem {
     name: string;
     code: string;
     center_id: number;
+    total_tuition_fee?: number | string | null;
     students?: StudentItem[];
 }
 
@@ -62,7 +68,9 @@ export const Create: React.FC<CreateProps> = ({
     const [classId, setClassId] = useState<string>('');
     const [studentId, setStudentId] = useState<string>('');
     const [title, setTitle] = useState<string>('');
-    const [totalAmount, setTotalAmount] = useState<string>('');
+    const [baseAmount, setBaseAmount] = useState<string>('');
+    const [discountType, setDiscountType] = useState<string>('');
+    const [discountValue, setDiscountValue] = useState<string>('');
     const [dueDate, setDueDate] = useState<string>('');
     const [note, setNote] = useState<string>('');
 
@@ -83,11 +91,25 @@ export const Create: React.FC<CreateProps> = ({
         }).format(amount || 0);
     };
 
+    const computedTotalAmount = React.useMemo(() => {
+        const base = Number(baseAmount) || 0;
+        if (base <= 0) return 0;
+        const type = Number(discountType);
+        const val = Number(discountValue) || 0;
+        if (type === DISCOUNT_TYPE_DIRECT) {
+            return Math.max(0, base - val);
+        }
+        if (type === DISCOUNT_TYPE_PERCENTAGE) {
+            return Math.max(0, Math.round(base * (1 - val / 100)));
+        }
+        return base;
+    }, [baseAmount, discountType, discountValue]);
+
     const isInitialAmountExceeded =
         hasInitialPayment &&
         Number(initialAmount) > 0 &&
-        Number(totalAmount) > 0 &&
-        Number(initialAmount) > Number(totalAmount);
+        computedTotalAmount > 0 &&
+        Number(initialAmount) > computedTotalAmount;
 
     // Filter classes and students by selected center and selected class
     const filteredClasses = centerId
@@ -104,16 +126,22 @@ export const Create: React.FC<CreateProps> = ({
         setCenterId(newCenterId);
         setClassId('');
         setStudentId('');
+        setBaseAmount('');
     };
 
-    // Auto update title when class is selected & reset student
+    // Auto update title and base amount when class is selected & reset student
     const handleClassChange = (newClassId: string) => {
         setClassId(newClassId);
         setStudentId('');
         const selectedCls = filteredClasses.find((c) => String(c.id) === String(newClassId));
 
-        if (selectedCls && !title) {
-            setTitle(`Học phí ${selectedCls.name}`);
+        if (selectedCls) {
+            if (!title) {
+                setTitle(`Học phí ${selectedCls.name}`);
+            }
+            if (selectedCls.total_tuition_fee !== undefined && selectedCls.total_tuition_fee !== null) {
+                setBaseAmount(String(Number(selectedCls.total_tuition_fee)));
+            }
         }
     };
 
@@ -131,7 +159,9 @@ export const Create: React.FC<CreateProps> = ({
             class_id: Number(classId),
             student_id: Number(studentId),
             title: title || undefined,
-            total_amount: Number(totalAmount),
+            total_amount: computedTotalAmount,
+            discount_type: discountType ? Number(discountType) : undefined,
+            discount_value: discountValue !== '' ? Number(discountValue) : undefined,
             due_date: dueDate || undefined,
             note: note || undefined,
         };
@@ -263,21 +293,72 @@ export const Create: React.FC<CreateProps> = ({
                                 )}
                             </div>
 
-                            {/* Total Amount */}
+                            {/* Base Tuition Fee */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
-                                    Tổng Số Tiền Học Phí Phải Đóng (VNĐ) (*)
+                                    Học Phí Gốc Của Lớp (VNĐ) (*)
                                 </label>
                                 <Input
                                     type="number"
                                     min="0"
                                     step="1000"
-                                    value={totalAmount}
-                                    onChange={(e) => setTotalAmount(e.target.value)}
+                                    value={baseAmount}
+                                    onChange={(e) => setBaseAmount(e.target.value)}
                                     placeholder="Ví dụ: 10000000"
                                     className="!py-3 !text-sm"
                                     required
                                 />
+                            </div>
+
+                            {/* Discount Type */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Kiểu Giảm Giá
+                                </label>
+                                <select
+                                    value={discountType}
+                                    onChange={(e) => {
+                                        setDiscountType(e.target.value);
+                                        if (!e.target.value) setDiscountValue('');
+                                    }}
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                >
+                                    <option value="">Không giảm giá</option>
+                                    <option value={DISCOUNT_TYPE_DIRECT}>Giảm trực tiếp (VNĐ)</option>
+                                    <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo phần trăm (%)</option>
+                                </select>
+                            </div>
+
+                            {/* Discount Value */}
+                            {discountType && (
+                                <div>
+                                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                        Mức Giảm Giá {Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'} (*)
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        max={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '100' : (baseAmount ? Number(baseAmount) : undefined)}
+                                        step={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
+                                        value={discountValue}
+                                        onChange={(e) => setDiscountValue(e.target.value)}
+                                        placeholder={Number(discountType) === DISCOUNT_TYPE_PERCENTAGE ? 'Ví dụ: 10' : 'Ví dụ: 500000'}
+                                        className="!py-3 !text-sm"
+                                    />
+                                    {errors.discount_value && (
+                                        <p className="mt-1.5 text-xs text-red-600">{errors.discount_value}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Final Total Amount (Calculated) */}
+                            <div className={discountType ? '' : 'md:col-span-1'}>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Tổng Học Phí Cần Đóng (Sau Giảm Trừ)
+                                </label>
+                                <div className="flex h-[46px] items-center px-4 rounded-lg bg-emerald-50 border border-emerald-200 text-base font-bold text-emerald-800">
+                                    {formatCurrency(computedTotalAmount)}
+                                </div>
                                 {errors.total_amount && (
                                     <p className="mt-1.5 text-xs text-red-600">{errors.total_amount}</p>
                                 )}
@@ -333,8 +414,8 @@ export const Create: React.FC<CreateProps> = ({
                                     onChange={(e) => {
                                         setHasInitialPayment(e.target.checked);
 
-                                        if (e.target.checked && !initialAmount && totalAmount) {
-                                            setInitialAmount(totalAmount);
+                                        if (e.target.checked && !initialAmount && computedTotalAmount > 0) {
+                                            setInitialAmount(String(computedTotalAmount));
                                         }
                                     }}
                                     className="peer sr-only"
@@ -352,7 +433,7 @@ export const Create: React.FC<CreateProps> = ({
                                     <Input
                                         type="number"
                                         min="1000"
-                                        max={totalAmount ? Number(totalAmount) : undefined}
+                                        max={computedTotalAmount ? computedTotalAmount : undefined}
                                         step="1000"
                                         value={initialAmount}
                                         onChange={(e) => setInitialAmount(e.target.value)}
@@ -362,7 +443,7 @@ export const Create: React.FC<CreateProps> = ({
                                     />
                                     {isInitialAmountExceeded && (
                                         <p className="mt-1.5 text-xs font-semibold text-red-600">
-                                            Số tiền đóng đợt 1 ({formatCurrency(Number(initialAmount))}) không được vượt quá tổng học phí ({formatCurrency(Number(totalAmount))}).
+                                            Số tiền đóng đợt 1 ({formatCurrency(Number(initialAmount))}) không được vượt quá tổng học phí ({formatCurrency(computedTotalAmount)}).
                                         </p>
                                     )}
                                     {errors.initial_payment_amount && (

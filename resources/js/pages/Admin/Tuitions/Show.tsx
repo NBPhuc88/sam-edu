@@ -20,6 +20,8 @@ Trash2,
 import React,{ useState } from 'react';
 
 import {
+    DISCOUNT_TYPE_DIRECT,
+    DISCOUNT_TYPE_PERCENTAGE,
     PAYMENT_METHOD_BANK_TRANSFER,
     PAYMENT_METHOD_LABELS,
     PAYMENT_METHOD_OPTIONS,
@@ -54,6 +56,8 @@ interface StudentClassTuitionItem {
     class_id: number;
     title: string | null;
     total_amount: number;
+    discount_type?: number | null;
+    discount_value?: number | string | null;
     paid_amount: number;
     remaining_amount: number;
     status: number;
@@ -74,6 +78,8 @@ interface ShowProps {
         class_id: number;
         title: string | null;
         total_amount: number;
+        discount_type?: number | null;
+        discount_value?: number | string | null;
         paid_amount: number;
         remaining_amount: number;
         status: number;
@@ -528,6 +534,16 @@ export const Show: React.FC<ShowProps> = ({ tuition, errors = {} }) => {
                                 <span className="text-gray-500">Tiêu đề khoản thu:</span>
                                 <span className="font-medium text-gray-900">{tuition.title || 'Học phí lớp học'}</span>
                             </div>
+                            {tuition.discount_type && (
+                                <div className="flex justify-between border-b border-gray-100 pb-2.5">
+                                    <span className="text-gray-500">Ưu đãi / Giảm giá:</span>
+                                    <span className="font-bold text-amber-700">
+                                        {Number(tuition.discount_type) === DISCOUNT_TYPE_DIRECT
+                                            ? `Giảm ${formatCurrency(Number(tuition.discount_value))}`
+                                            : `Giảm ${Number(tuition.discount_value)}%`}
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex justify-between border-b border-gray-100 pb-2.5">
                                 <span className="text-gray-500">Người tạo hồ sơ:</span>
                                 <span className="font-medium text-gray-900">{tuition.creator?.full_name || tuition.creator?.username || '—'}</span>

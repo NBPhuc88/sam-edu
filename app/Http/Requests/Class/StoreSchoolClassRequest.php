@@ -30,15 +30,17 @@ class StoreSchoolClassRequest extends FormRequest
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('classes', 'code')->whereNull('deleted_at'),
             ],
-            'description'            => ['nullable', 'string', 'max:1000'],
-            'max_students'           => ['nullable', 'integer', 'min:1', 'max:500'],
-            'start_date'             => ['nullable', 'date'],
-            'end_date'               => ['nullable', 'date', 'after_or_equal:start_date'],
-            'status'                 => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
-            'subjects'               => ['nullable', 'array'],
-            'subjects.*.subject_id'  => ['nullable', 'integer', 'exists:subjects,id'],
-            'subjects.*.teacher_id'  => ['nullable', 'integer', 'exists:teachers,id'],
-            'subjects.*.tuition_fee' => ['nullable', 'numeric', 'min:0'],
+            'description'               => ['nullable', 'string', 'max:1000'],
+            'max_students'              => ['nullable', 'integer', 'min:1', 'max:500'],
+            'start_date'                => ['nullable', 'date'],
+            'end_date'                  => ['nullable', 'date', 'after_or_equal:start_date'],
+            'status'                    => ['nullable', 'integer', Rule::in(Constant::CLASS_STATUSES)],
+            'subjects'                  => ['nullable', 'array'],
+            'subjects.*.subject_id'     => ['nullable', 'integer', 'exists:subjects,id'],
+            'subjects.*.teacher_id'     => ['nullable', 'integer', 'exists:teachers,id'],
+            'subjects.*.tuition_fee'    => ['nullable', 'numeric', 'min:0'],
+            'subjects.*.discount_type'  => ['nullable', 'integer', Rule::in(Constant::DISCOUNT_TYPES)],
+            'subjects.*.discount_value' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
@@ -48,13 +50,20 @@ class StoreSchoolClassRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            $status   = (int) ($this->input('status') ?? Constant::CLASS_STATUS_ACTIVE);
             $subjects = $this->input('subjects', []);
 
             if (is_array($subjects)) {
+                $hasValidSubject = false;
+
                 foreach ($subjects as $idx => $row) {
                     $rowNum = $idx + 1;
                     $subId  = $row['subject_id'] ?? null;
                     $tchId  = $row['teacher_id'] ?? null;
+
+                    if (! empty($subId)) {
+                        $hasValidSubject = true;
+                    }
 
                     if (! empty($subId) && empty($tchId)) {
                         $validator->errors()->add(
@@ -69,6 +78,31 @@ class StoreSchoolClassRequest extends FormRequest
                             "Vui lòng chọn môn học tương ứng cho giáo viên (dòng {$rowNum})."
                         );
                     }
+
+                    $discountType  = ! empty($row['discount_type']) ? (int) $row['discount_type'] : null;
+                    $discountValue = isset($row['discount_value']) && $row['discount_value'] !== '' ? (float) $row['discount_value'] : 0;
+                    $tuitionFee    = isset($row['tuition_fee']) && $row['tuition_fee'] !== '' ? (float) $row['tuition_fee'] : 0;
+
+                    if ($discountType === Constant::DISCOUNT_TYPE_DIRECT && $discountValue > $tuitionFee) {
+                        $validator->errors()->add(
+                            "subjects.{$idx}.discount_value",
+                            'Mức giảm giá trực tiếp (' . number_format($discountValue, 0, ',', '.') . 'đ) không được vượt quá học phí của môn học (' . number_format($tuitionFee, 0, ',', '.') . "đ) (dòng {$rowNum})."
+                        );
+                    }
+
+                    if ($discountType === Constant::DISCOUNT_TYPE_PERCENTAGE && $discountValue > 100) {
+                        $validator->errors()->add(
+                            "subjects.{$idx}.discount_value",
+                            "Mức giảm giá phần trăm ({$discountValue}%) không được vượt quá 100% (dòng {$rowNum})."
+                        );
+                    }
+                }
+
+                if ($status !== Constant::CLASS_STATUS_ACTIVE && $hasValidSubject) {
+                    $validator->errors()->add(
+                        'subjects',
+                        'Chỉ lớp học ở trạng thái Đang hoạt động mới có thể thêm môn học.'
+                    );
                 }
             }
         });
@@ -96,6 +130,7 @@ class StoreSchoolClassRequest extends FormRequest
             'subjects.*.teacher_id.exists'   => 'Giáo viên đã chọn không tồn tại.',
             'subjects.*.tuition_fee.numeric' => 'Học phí môn học phải là dạng số.',
             'subjects.*.tuition_fee.min'     => 'Học phí môn học không được nhỏ hơn 0.',
+            'subjects.*.discount_value.min'  => 'Mức giảm giá không được nhỏ hơn 0.',
         ];
     }
 }
