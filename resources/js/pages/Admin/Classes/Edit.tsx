@@ -637,179 +637,187 @@ export default function ClassEdit({
                                 return (
                                     <div
                                         key={index}
-                                        className={`flex flex-col gap-4 rounded-xl p-4 sm:flex-row sm:items-start transition-all ${
+                                        className={`rounded-2xl p-4 sm:p-5 transition-all space-y-3.5 ${
                                             hasRowError
                                                 ? 'border-2 border-red-400 bg-red-50/20 ring-1 ring-red-400/20 shadow-xs'
-                                                : 'border border-gray-200 bg-slate-50'
+                                                : 'border border-gray-200 bg-slate-50/90 shadow-2xs'
                                         }`}
                                     >
-                                        {/* Number Badge */}
-                                        <div className="flex flex-col items-center">
-                                            <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
-                                                &nbsp;
-                                            </span>
+                                        {/* Row Header: Badge, Subject Select, Teacher Select & Delete */}
+                                        <div className="flex items-start gap-3">
+                                            {/* Number Badge */}
                                             <div
-                                                className={`flex h-[42px] w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold mt-7 ${
                                                     hasRowError ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                                                 }`}
                                             >
                                                 {index + 1}
                                             </div>
-                                        </div>
 
-                                        {/* Subject Select */}
-                                        <div className="flex-1 min-w-[180px]">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Môn Học <span className="text-red-500">*</span>
-                                            </label>
-                                            <select
-                                                value={row.subject_id}
-                                                disabled={!isActiveStatus || !isOriginalActive}
-                                                onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                                                    subjectError
-                                                        ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
-                                                        : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                                                }`}
-                                            >
-                                                <option value="">-- Chọn Môn Học --</option>
-                                                {availableSubjects.map((s) => (
-                                                    <option key={s.id} value={s.id}>
-                                                        {s.name} {s.tuition_fee ? `(${formatCurrency(Number(s.tuition_fee))})` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {subjectError && (
-                                                <p className="mt-1 text-xs font-medium text-red-600">
-                                                    {subjectError}
-                                                </p>
-                                            )}
-                                            {availableSubjects.length === 0 && (
-                                                <p className="mt-1 text-xs text-amber-600">
-                                                    Chưa có môn học.{' '}
-                                                    <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
-                                                        Tạo môn học mới
-                                                    </Link>
-                                                </p>
-                                            )}
-                                        </div>
+                                            {/* Primary Info: Subject & Teacher */}
+                                            <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+                                                {/* Subject Select */}
+                                                <div>
+                                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                        Môn Học <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={row.subject_id}
+                                                        disabled={!isActiveStatus || !isOriginalActive}
+                                                        onChange={(e) => handleRowChange(index, 'subject_id', e.target.value)}
+                                                        className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                                            subjectError
+                                                                ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
+                                                                : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                        }`}
+                                                    >
+                                                        <option value="">-- Chọn Môn Học --</option>
+                                                        {availableSubjects.map((s) => (
+                                                            <option key={s.id} value={s.id}>
+                                                                {s.name} {s.tuition_fee ? `(${formatCurrency(Number(s.tuition_fee))})` : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {subjectError && (
+                                                        <p className="mt-1 text-xs font-medium text-red-600">
+                                                            {subjectError}
+                                                        </p>
+                                                    )}
+                                                    {availableSubjects.length === 0 && (
+                                                        <p className="mt-1 text-xs text-amber-600">
+                                                            Chưa có môn học.{' '}
+                                                            <Link href="/subjects/create" className="font-semibold text-emerald-700 underline">
+                                                                Tạo môn học mới
+                                                            </Link>
+                                                        </p>
+                                                    )}
+                                                </div>
 
-                                        {/* Teacher Select */}
-                                        <div className="flex-1 min-w-[180px]">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Giáo Viên Phụ Trách <span className="text-red-500">*</span>
-                                            </label>
-                                            <select
-                                                value={row.teacher_id}
-                                                disabled={!isActiveStatus || !isOriginalActive}
-                                                onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
-                                                className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                                                    teacherError
-                                                        ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
-                                                        : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                                                }`}
-                                            >
-                                                <option value="">-- Chọn Giáo Viên --</option>
-                                                {availableTeachers.map((t) => (
-                                                    <option key={t.id} value={t.id}>
-                                                        {t.full_name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {teacherError && (
-                                                <p className="mt-1 text-xs font-medium text-red-600">
-                                                    {teacherError}
-                                                </p>
-                                            )}
-                                            {availableTeachers.length === 0 && (
-                                                <p className="mt-1 text-xs text-amber-600">
-                                                    Chưa có giáo viên.{' '}
-                                                    <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
-                                                        Tạo giáo viên mới
-                                                    </Link>
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Subject Tuition Fee */}
-                                        <div className="w-full sm:w-36">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Học Phí Gốc (VNĐ)
-                                            </label>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                step="1000"
-                                                disabled={!isActiveStatus || !isOriginalActive}
-                                                value={row.tuition_fee}
-                                                onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
-                                                placeholder="0"
-                                                error={tuitionError}
-                                                className="!py-2.5 !text-sm"
-                                            />
-                                        </div>
-
-                                        {/* Discount Type */}
-                                        <div className="w-full sm:w-36">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Kiểu Giảm Giá
-                                            </label>
-                                            <select
-                                                value={row.discount_type}
-                                                disabled={!isActiveStatus || !isOriginalActive}
-                                                onChange={(e) => handleRowChange(index, 'discount_type', e.target.value)}
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-xs font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                            >
-                                                <option value="">Không giảm</option>
-                                                <option value={DISCOUNT_TYPE_DIRECT}>Giảm tiền (VNĐ)</option>
-                                                <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo %</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Discount Value */}
-                                        <div className="w-full sm:w-32">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Mức Giảm {Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'}
-                                            </label>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                max={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '100' : undefined}
-                                                step={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
-                                                disabled={!isActiveStatus || !isOriginalActive || !row.discount_type}
-                                                value={row.discount_value}
-                                                onChange={(e) => handleRowChange(index, 'discount_value', e.target.value)}
-                                                placeholder="0"
-                                                error={discountValueError}
-                                                className="!py-2.5 !text-sm"
-                                            />
-                                        </div>
-
-                                        {/* Final Fee Column */}
-                                        <div className="w-full sm:w-32 flex flex-col justify-between">
-                                            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                                                Thành Tiền
-                                            </label>
-                                            <div className="flex h-[42px] items-center px-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs font-bold text-emerald-800 truncate">
-                                                {formatCurrency(finalFee)}
+                                                {/* Teacher Select */}
+                                                <div>
+                                                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                        Giáo Viên Phụ Trách <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={row.teacher_id}
+                                                        disabled={!isActiveStatus || !isOriginalActive}
+                                                        onChange={(e) => handleRowChange(index, 'teacher_id', e.target.value)}
+                                                        className={`w-full rounded-lg bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                                            teacherError
+                                                                ? 'border-2 border-red-500 bg-red-50/20 ring-1 ring-red-500'
+                                                                : 'border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                                                        }`}
+                                                    >
+                                                        <option value="">-- Chọn Giáo Viên --</option>
+                                                        {availableTeachers.map((t) => (
+                                                            <option key={t.id} value={t.id}>
+                                                                {t.full_name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {teacherError && (
+                                                        <p className="mt-1 text-xs font-medium text-red-600">
+                                                            {teacherError}
+                                                        </p>
+                                                    )}
+                                                    {availableTeachers.length === 0 && (
+                                                        <p className="mt-1 text-xs text-amber-600">
+                                                            Chưa có giáo viên.{' '}
+                                                            <Link href="/teachers/create" className="font-semibold text-emerald-700 underline">
+                                                                Tạo giáo viên mới
+                                                            </Link>
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
+
+                                            {/* Remove Row Button */}
+                                            {subjectRows.length > 1 && (
+                                                <div className="mt-7">
+                                                    <Button
+                                                        type="button"
+                                                        variant="danger"
+                                                        size="sm"
+                                                        disabled={!isActiveStatus || !isOriginalActive}
+                                                        icon={<Trash2 className="h-4 w-4" />}
+                                                        onClick={() => handleRemoveSubjectRow(index)}
+                                                        title="Xóa môn học này"
+                                                        className="!h-[42px] !w-[42px] !p-0"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* Remove Row Button */}
-                                        <div className="flex flex-col">
-                                            <span className="mb-1.5 hidden text-xs font-semibold text-transparent select-none sm:block">
-                                                &nbsp;
-                                            </span>
-                                            <Button
-                                                type="button"
-                                                variant="danger"
-                                                size="sm"
-                                                disabled={!isActiveStatus || !isOriginalActive}
-                                                icon={<Trash2 className="h-4 w-4" />}
-                                                onClick={() => handleRemoveSubjectRow(index)}
-                                                title="Xóa dòng môn học này"
-                                                className="!h-[42px]"
-                                            />
+                                        {/* Financial & Discount Breakdown Sub-grid */}
+                                        <div className="grid grid-cols-1 gap-3.5 rounded-xl border border-gray-200/90 bg-white p-3.5 sm:grid-cols-4 sm:items-end">
+                                            {/* Subject Tuition Fee */}
+                                            <div>
+                                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                    Học Phí Gốc (VNĐ)
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="1000"
+                                                    disabled={!isActiveStatus || !isOriginalActive}
+                                                    value={row.tuition_fee}
+                                                    onChange={(e) => handleRowChange(index, 'tuition_fee', e.target.value)}
+                                                    placeholder="0"
+                                                    error={tuitionError}
+                                                    className="!py-2.5 !text-sm"
+                                                />
+                                            </div>
+
+                                            {/* Discount Type */}
+                                            <div>
+                                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                    Kiểu Giảm Giá
+                                                </label>
+                                                <select
+                                                    value={row.discount_type}
+                                                    disabled={!isActiveStatus || !isOriginalActive}
+                                                    onChange={(e) => handleRowChange(index, 'discount_type', e.target.value)}
+                                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="">Không giảm</option>
+                                                    <option value={DISCOUNT_TYPE_DIRECT}>Giảm tiền (VNĐ)</option>
+                                                    <option value={DISCOUNT_TYPE_PERCENTAGE}>Giảm theo %</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Discount Value */}
+                                            <div>
+                                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                    Mức Giảm {Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '(%)' : '(VNĐ)'}
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    max={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '100' : undefined}
+                                                    step={Number(row.discount_type) === DISCOUNT_TYPE_PERCENTAGE ? '1' : '1000'}
+                                                    disabled={!isActiveStatus || !isOriginalActive || !row.discount_type}
+                                                    value={row.discount_value}
+                                                    onChange={(e) => handleRowChange(index, 'discount_value', e.target.value)}
+                                                    placeholder="0"
+                                                    error={discountValueError}
+                                                    className="!py-2.5 !text-sm disabled:bg-gray-100"
+                                                />
+                                            </div>
+
+                                            {/* Final Fee Column */}
+                                            <div>
+                                                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                                                    Thành Tiền
+                                                </label>
+                                                <div className="flex h-[42px] items-center justify-between px-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-sm font-bold text-emerald-800">
+                                                    <span className="truncate">{formatCurrency(finalFee)}</span>
+                                                    {row.discount_type && (
+                                                        <span className="text-[11px] font-medium text-emerald-600">
+                                                            (Đã giảm)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
