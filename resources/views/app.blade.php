@@ -8,6 +8,15 @@
             $rawOgImage = $seoData['og_image'] ?? null;
             $seoOgImage = (!empty($rawOgImage) && !str_starts_with($rawOgImage, 'blob:')) ? $rawOgImage : asset('og-banner.png');
             $seoCanonical = !empty($seoData['canonical_url']) ? $seoData['canonical_url'] : url()->current();
+            $imagePath = parse_url($seoOgImage, PHP_URL_PATH);
+            $ext = strtolower(pathinfo($imagePath ?? '', PATHINFO_EXTENSION));
+            $seoOgImageType = match ($ext) {
+                'webp' => 'image/webp',
+                'png' => 'image/png',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                default => null,
+            };
         @endphp
 
         <meta charset="utf-8">
@@ -33,6 +42,9 @@
         <meta property="og:url" content="{{ $seoCanonical }}">
         <meta property="og:image" content="{{ $seoOgImage }}">
         <meta property="og:image:secure_url" content="{{ $seoOgImage }}">
+        @if (!empty($seoOgImageType))
+        <meta property="og:image:type" content="{{ $seoOgImageType }}">
+        @endif
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:site_name" content="SAM EDU">
