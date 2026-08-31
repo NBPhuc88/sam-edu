@@ -136,3 +136,166 @@ test('teacher deletion is prevented when teacher has future sessions or active c
     expect($pastSession->teacher)->not->toBeNull();
     expect($pastSession->teacher->full_name)->toBe('Đang Dạy Giáo Viên');
 });
+
+test('teacher can be soft deleted when assigned class is completed, closed, or soft deleted', function () {
+    $center = Center::create([
+        'code'   => 'CTR000000002',
+        'name'   => 'Trung Tâm Test 2',
+        'email'  => 'centertest2@test.com',
+        'status' => Constant::STATUS_ACTIVE,
+    ]);
+
+    $superAdmin = Admin::create([
+        'username'   => 'super_admin_del_val2',
+        'full_name'  => 'Super Admin Test 2',
+        'email'      => 'superadmin_del_val2@test.com',
+        'password'   => 'password123',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM000000096',
+    ]);
+
+    $subject = Subject::create([
+        'center_id' => $center->id,
+        'code'      => 'SUB006',
+        'name'      => 'Hóa 12',
+    ]);
+
+    $room = Room::create([
+        'center_id' => $center->id,
+        'name'      => 'Phòng 202',
+        'code'      => 'R006',
+    ]);
+
+    // Scenario 1: Class is COMPLETED
+    $teacherCompleted = Teacher::create([
+        'username'     => 'teacher_completed',
+        'first_name'   => 'GV',
+        'last_name'    => 'Hoàn Thành',
+        'full_name'    => 'Hoàn Thành GV',
+        'email'        => 'teacher_completed@test.com',
+        'password'     => 'password123',
+        'teacher_code' => 'GV000000011',
+        'center_id'    => $center->id,
+        'status'       => Constant::STATUS_ACTIVE,
+    ]);
+
+    $classCompleted = SchoolClass::create([
+        'center_id' => $center->id,
+        'code'      => 'CLS006_COMPLETED',
+        'name'      => 'Lớp Đã Hoàn Thành',
+        'status'    => Constant::CLASS_STATUS_COMPLETED,
+    ]);
+
+    $cs1 = ClassSubject::create([
+        'class_id'   => $classCompleted->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacherCompleted->id,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+    ]);
+
+    ClassSession::create([
+        'class_subject_id' => $cs1->id,
+        'teacher_id'       => $teacherCompleted->id,
+        'room_id'          => $room->id,
+        'session_date'     => now()->addDays(5)->toDateString(),
+        'start_time'       => '08:00',
+        'end_time'         => '10:00',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($superAdmin, 'admin')
+        ->delete(route('teachers.destroy', $teacherCompleted->id))
+        ->assertRedirect();
+    expect(Teacher::find($teacherCompleted->id))->toBeNull();
+    expect(Teacher::withTrashed()->find($teacherCompleted->id))->not->toBeNull();
+
+    // Scenario 2: Class is CLOSED
+    $teacherClosed = Teacher::create([
+        'username'     => 'teacher_closed',
+        'first_name'   => 'GV',
+        'last_name'    => 'Đã Đóng',
+        'full_name'    => 'Đã Đóng GV',
+        'email'        => 'teacher_closed@test.com',
+        'password'     => 'password123',
+        'teacher_code' => 'GV000000012',
+        'center_id'    => $center->id,
+        'status'       => Constant::STATUS_ACTIVE,
+    ]);
+
+    $classClosed = SchoolClass::create([
+        'center_id' => $center->id,
+        'code'      => 'CLS006_CLOSED',
+        'name'      => 'Lớp Đã Đóng',
+        'status'    => Constant::CLASS_STATUS_CLOSED,
+    ]);
+
+    $cs2 = ClassSubject::create([
+        'class_id'   => $classClosed->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacherClosed->id,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+    ]);
+
+    ClassSession::create([
+        'class_subject_id' => $cs2->id,
+        'teacher_id'       => $teacherClosed->id,
+        'room_id'          => $room->id,
+        'session_date'     => now()->addDays(5)->toDateString(),
+        'start_time'       => '08:00',
+        'end_time'         => '10:00',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
+    ]);
+
+    $this->actingAs($superAdmin, 'admin')
+        ->delete(route('teachers.destroy', $teacherClosed->id))
+        ->assertRedirect();
+    expect(Teacher::find($teacherClosed->id))->toBeNull();
+    expect(Teacher::withTrashed()->find($teacherClosed->id))->not->toBeNull();
+
+    // Scenario 3: Class was SOFT DELETED
+    $teacherDeletedClass = Teacher::create([
+        'username'     => 'teacher_deleted_cls',
+        'first_name'   => 'GV',
+        'last_name'    => 'Lớp Bị Xóa',
+        'full_name'    => 'Lớp Bị Xóa GV',
+        'email'        => 'teacher_deleted_cls@test.com',
+        'password'     => 'password123',
+        'teacher_code' => 'GV000000013',
+        'center_id'    => $center->id,
+        'status'       => Constant::STATUS_ACTIVE,
+    ]);
+
+    $classDeleted = SchoolClass::create([
+        'center_id' => $center->id,
+        'code'      => 'CLS006_DELETED',
+        'name'      => 'Lớp Bị Xóa',
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
+    ]);
+
+    $cs3 = ClassSubject::create([
+        'class_id'   => $classDeleted->id,
+        'subject_id' => $subject->id,
+        'teacher_id' => $teacherDeletedClass->id,
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+    ]);
+
+    ClassSession::create([
+        'class_subject_id' => $cs3->id,
+        'teacher_id'       => $teacherDeletedClass->id,
+        'room_id'          => $room->id,
+        'session_date'     => now()->addDays(5)->toDateString(),
+        'start_time'       => '08:00',
+        'end_time'         => '10:00',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
+    ]);
+
+    // Soft delete the class
+    $classDeleted->delete();
+
+    $this->actingAs($superAdmin, 'admin')
+        ->delete(route('teachers.destroy', $teacherDeletedClass->id))
+        ->assertRedirect();
+    expect(Teacher::find($teacherDeletedClass->id))->toBeNull();
+    expect(Teacher::withTrashed()->find($teacherDeletedClass->id))->not->toBeNull();
+});

@@ -48,13 +48,19 @@ class DeleteImpactService implements DeleteImpactServiceInterface
                 }
                 $title = "Lớp học: {$class->name} ({$class->code})";
 
-                $studentCount  = DB::table('class_students')->where('class_id', $id)->whereNull('deleted_at')->count();
-                $examCount     = DB::table('class_exams')->where('class_id', $id)->whereNull('deleted_at')->count();
-                $sessionCount  = DB::table('class_sessions')->where('class_id', $id)->whereNull('deleted_at')->count();
-                $scheduleCount = DB::table('class_schedules')->where('class_id', $id)->count();
-                $subjectCount  = DB::table('class_subjects')->where('class_id', $id)->count();
-                $tuitionCount  = DB::table('student_tuitions')->where('class_id', $id)->whereNull('deleted_at')->count();
-                $chatCount     = DB::table('class_chat_messages')->where('class_id', $id)->count();
+                $studentCount = DB::table('class_students')->where('class_id', $id)->whereNull('deleted_at')->count();
+                $examCount    = DB::table('class_exams')->where('class_id', $id)->whereNull('deleted_at')->count();
+                $sessionCount = DB::table('class_sessions')
+                    ->join('class_subjects', 'class_sessions.class_subject_id', '=', 'class_subjects.id')
+                    ->where('class_subjects.class_id', $id)
+                    ->count();
+                $scheduleCount = DB::table('class_schedules')
+                    ->join('class_subjects', 'class_schedules.class_subject_id', '=', 'class_subjects.id')
+                    ->where('class_subjects.class_id', $id)
+                    ->count();
+                $subjectCount = DB::table('class_subjects')->where('class_id', $id)->count();
+                $tuitionCount = DB::table('student_tuitions')->where('class_id', $id)->whereNull('deleted_at')->count();
+                $chatCount    = DB::table('class_chat_messages')->where('class_id', $id)->count();
 
                 if ($studentCount > 0) {
                     $impacts[] = "Ngắt liên kết {$studentCount} học sinh khỏi lớp";
@@ -163,10 +169,14 @@ class DeleteImpactService implements DeleteImpactServiceInterface
 
                 $today              = now()->toDateString();
                 $futureSessionCount = DB::table('class_sessions')
-                    ->where('teacher_id', $id)
-                    ->where('session_date', '>=', $today)
-                    ->where('status', Constant::SESSION_STATUS_SCHEDULED)
-                    ->whereNull('deleted_at')
+                    ->join('class_subjects', 'class_sessions.class_subject_id', '=', 'class_subjects.id')
+                    ->join('classes', 'class_subjects.class_id', '=', 'classes.id')
+                    ->where('class_sessions.teacher_id', $id)
+                    ->where('class_sessions.session_date', '>=', $today)
+                    ->where('class_sessions.status', Constant::SESSION_STATUS_SCHEDULED)
+                    ->where('class_subjects.status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+                    ->where('classes.status', Constant::CLASS_STATUS_ACTIVE)
+                    ->whereNull('classes.deleted_at')
                     ->count();
 
                 $activeClassCount = DB::table('class_subjects')

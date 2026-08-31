@@ -325,22 +325,32 @@ class TeacherService implements TeacherServiceInterface
 
         $today = now()->toDateString();
 
-        // 1. Kiểm tra ca học dự kiến trong tương lai
+        // 1. Kiểm tra ca học dự kiến trong tương lai (chỉ tính ca học thuộc các lớp đang hoạt động và môn đang phân công)
         $hasFutureSessions = ClassSession::where('teacher_id', $teacher->id)
             ->where('session_date', '>=', $today)
             ->where('status', Constant::SESSION_STATUS_SCHEDULED)
+            ->whereHas('classSubject', function ($query) {
+                $query->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
+                    ->whereHas('schoolClass', function ($classQuery) {
+                        $classQuery->whereNull('classes.deleted_at')
+                            ->where('classes.status', Constant::CLASS_STATUS_ACTIVE);
+                    });
+            })
             ->exists();
 
         if ($hasFutureSessions) {
             throw ValidationException::withMessages([
-                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì vẫn còn ca học chưa hoàn thành. Vui lòng đổi giáo viên hoặc điều chỉnh lịch dạy của giáo viên trước khi xóa.",
+                'teacher' => "Không thể xóa giáo viên '{$teacher->full_name}' vì vẫn còn ca học chưa hoàn thành ở lớp đang hoạt động. Vui lòng đổi giáo viên hoặc điều chỉnh lịch dạy của giáo viên trước khi xóa.",
             ]);
         }
 
         // 2. Kiểm tra lớp học đang hoạt động do giáo viên phụ trách
         $hasActiveClasses = ClassSubject::where('teacher_id', $teacher->id)
             ->where('status', Constant::CLASS_SUBJECT_STATUS_ACTIVE)
-            ->whereHas('schoolClass', fn ($q) => $q->where('status', Constant::CLASS_STATUS_ACTIVE))
+            ->whereHas('schoolClass', function ($classQuery) {
+                $classQuery->whereNull('classes.deleted_at')
+                    ->where('classes.status', Constant::CLASS_STATUS_ACTIVE);
+            })
             ->exists();
 
         if ($hasActiveClasses) {
