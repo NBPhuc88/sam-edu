@@ -47,6 +47,8 @@ use App\Services\Student\StudentExportImportService;
 use App\Services\Student\StudentExportImportServiceInterface;
 use App\Services\Student\StudentService;
 use App\Services\Student\StudentServiceInterface;
+use App\Services\Subscription\UpgradePlanService;
+use App\Services\Subscription\UpgradePlanServiceInterface;
 use App\Services\Teacher\TeacherExportImportService;
 use App\Services\Teacher\TeacherExportImportServiceInterface;
 use App\Services\Teacher\TeacherService;
@@ -104,6 +106,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\Attendance\AttendanceServiceInterface::class, \App\Services\Attendance\AttendanceService::class);
         $this->app->bind(\App\Services\Session\ClassSessionServiceInterface::class, \App\Services\Session\ClassSessionService::class);
         $this->app->bind(\App\Services\Subscription\SubscriptionPlanServiceInterface::class, \App\Services\Subscription\SubscriptionPlanService::class);
+        $this->app->bind(UpgradePlanServiceInterface::class, UpgradePlanService::class);
         $this->app->bind(\App\Services\Exam\ExamServiceInterface::class, \App\Services\Exam\ExamService::class);
         $this->app->bind(\App\Services\Exam\PracticeExamServiceInterface::class, \App\Services\Exam\PracticeExamService::class);
         $this->app->bind(\App\Services\ClassExam\ClassExamServiceInterface::class, \App\Services\ClassExam\ClassExamService::class);

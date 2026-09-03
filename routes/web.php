@@ -36,6 +36,7 @@ use App\Http\Controllers\StudentTuitionController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\UpgradePlanController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -97,31 +98,7 @@ Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.
     Route::get('/student/transcript/print', [StudentTranscriptController::class, 'print'])->name('student.transcript.print');
 
     // SaaS Upgrade Plan Page (Trang thông báo nâng cấp gói)
-    Route::get('/upgrade-plan', function (\Illuminate\Http\Request $request) {
-        $user   = $request->user();
-        $center = null;
-
-        if ($user instanceof \App\Models\Admin) {
-            $center = $user->centers()->first();
-        } elseif ($user && isset($user->center_id)) {
-            $center = \App\Models\Center::find($user->center_id);
-        }
-
-        $featureKey = $request->query('feature', 'general');
-        $featureDef = config("plan_features.features.{$featureKey}");
-
-        return Inertia::render('UpgradePlan', [
-            'status'       => 403,
-            'reason'       => 'feature_locked',
-            'title'        => 'Tính Năng Thuộc Gói Nâng Cao',
-            'feature'      => $featureKey,
-            'featureName'  => $featureDef['name'] ?? 'Tính Năng Nâng Cao',
-            'message'      => $featureDef ? "Tính năng '{$featureDef['name']}' ({$featureDef['description']}) chỉ có trong Gói Nâng Cao. Vui lòng liên hệ Quản trị viên hệ thống để nâng cấp gói cho trung tâm của bạn." : 'Tính năng này yêu cầu nâng cấp lên gói Nâng Cao để sử dụng.',
-            'currentPlan'  => $center?->subscription_plan ?? 'basic_5',
-            'planType'     => $center?->plan_type ?? 'basic',
-            'requiredPlan' => 'advanced',
-        ]);
-    })->name('upgrade-plan');
+    Route::get('/upgrade-plan', [UpgradePlanController::class, 'index'])->name('upgrade-plan');
 
     // System Notifications Management Routes
     Route::prefix('notifications')->name('notifications.')->group(function () {
