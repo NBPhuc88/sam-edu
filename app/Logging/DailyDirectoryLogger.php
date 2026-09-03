@@ -30,6 +30,8 @@ class DailyDirectoryLogger
             @chmod($dir, 0777);
         }
 
+        $logPath = "{$dir}/{$day}.log";
+
         $filePermission = $config['permission'] ?? 0666;
 
         $handler = new StreamHandler(
