@@ -481,7 +481,7 @@ class StudentRepository implements StudentRepositoryInterface
     public function countActiveAndInactiveByCenterId(int $centerId, ?int $excludeId = null): int
     {
         $query = Student::where('center_id', $centerId)
-            ->whereIn('status', [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE]);
+            ->whereIn('status', [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_PAUSED]);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);

@@ -232,8 +232,8 @@ class StudentService implements StudentServiceInterface
             $statusInt = Constant::STUDENT_STATUS_ACTIVE;
         }
 
-        // Kiểm tra giới hạn số học sinh đang học và tạm nghỉ không vượt quá max_students
-        if (in_array($statusInt, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
+        // Kiểm tra giới hạn số học sinh đang hoạt động và tạm dừng không vượt quá max_students
+        if (in_array($statusInt, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_PAUSED], true)) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
@@ -241,7 +241,7 @@ class StudentService implements StudentServiceInterface
 
                 if ($activeAndInactiveStudentsCount >= $center->max_students) {
                     throw ValidationException::withMessages([
-                        'full_name' => "Số học sinh đang theo học và tạm nghỉ ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc hoàn tất/chuyển trạng thái tốt nghiệp cho học sinh cũ.",
+                        'full_name' => "Số học sinh đang hoạt động và tạm dừng ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói hoặc chuyển trạng thái hoàn thành/nghỉ học cho học sinh cũ.",
                     ]);
                 }
             }
@@ -279,7 +279,10 @@ class StudentService implements StudentServiceInterface
             $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $data['class_ids']);
 
             if (! empty($validClassIds)) {
-                $this->studentRepository->syncClasses($student, $validClassIds);
+                $pivotStatus = (int) $student->status === Constant::STUDENT_STATUS_DROPPED
+                    ? Constant::CLASS_STUDENT_STATUS_LEFT
+                    : Constant::CLASS_STUDENT_STATUS_ACTIVE;
+                $this->studentRepository->syncClasses($student, $validClassIds, ['status' => $pivotStatus]);
 
                 $createTuition = ! empty($data['create_tuition']);
 
@@ -293,6 +296,17 @@ class StudentService implements StudentServiceInterface
                     }
                 }
             }
+        }
+
+        if ((int) $student->status === Constant::STUDENT_STATUS_DROPPED) {
+            DB::table('class_students')
+                ->where('student_id', $student->id)
+                ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                ->update([
+                    'status'     => Constant::CLASS_STUDENT_STATUS_LEFT,
+                    'left_at'    => now(),
+                    'updated_at' => now(),
+                ]);
         }
 
         if (! empty($student->email) && ! empty($student->username)) {
@@ -339,17 +353,20 @@ class StudentService implements StudentServiceInterface
             $newStatus = $currentStatusInt;
         }
 
-        // Học sinh đã tốt nghiệp không thể chuyển sang trạng thái khác (trừ Super Admin)
-        if ($currentStatusInt === Constant::STUDENT_STATUS_GRADUATED && $newStatus !== $currentStatusInt) {
+        // Học sinh đã hoàn thành khóa học không thể chuyển sang trạng thái khác (trừ Super Admin)
+        if ($currentStatusInt === Constant::STUDENT_STATUS_COMPLETED && $newStatus !== $currentStatusInt) {
             if (! ($admin && $admin->isSuperAdmin())) {
-                throw new AccessDeniedHttpException('Học sinh đã tốt nghiệp chỉ có Admin hệ thống mới có quyền thay đổi trạng thái.');
+                throw new AccessDeniedHttpException('Học sinh đã hoàn thành khóa học chỉ có Admin hệ thống mới có quyền thay đổi trạng thái.');
             }
         }
 
         $centerId = (int) ($data['center_id'] ?? $student->center_id);
 
-        // Nếu chuyển từ Đã tốt nghiệp sang Đang học/Tạm nghỉ, kiểm tra giới hạn max_students
-        if ($currentStatusInt === Constant::STUDENT_STATUS_GRADUATED && in_array($newStatus, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_INACTIVE], true)) {
+        // Nếu chuyển từ Hoàn thành hoặc Nghỉ học sang Đang hoạt động/Tạm dừng, kiểm tra giới hạn max_students
+        $wasNotCounted = in_array($currentStatusInt, [Constant::STUDENT_STATUS_COMPLETED, Constant::STUDENT_STATUS_DROPPED], true);
+        $willBeCounted = in_array($newStatus, [Constant::STUDENT_STATUS_ACTIVE, Constant::STUDENT_STATUS_PAUSED], true);
+
+        if ($wasNotCounted && $willBeCounted) {
             $center = $this->centerRepository->find($centerId);
 
             if ($center && $center->max_students !== null) {
@@ -357,7 +374,7 @@ class StudentService implements StudentServiceInterface
 
                 if ($activeAndInactiveStudentsCount >= $center->max_students) {
                     throw ValidationException::withMessages([
-                        'status' => "Số học sinh đang theo học và tạm nghỉ ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói trước khi mở lại học sinh này.",
+                        'status' => "Số học sinh đang hoạt động và tạm dừng ({$activeAndInactiveStudentsCount}) đã đạt tối đa giới hạn ({$center->max_students}) của gói dịch vụ. Vui lòng nâng cấp gói trước khi mở lại học sinh này.",
                     ]);
                 }
             }
@@ -421,7 +438,10 @@ class StudentService implements StudentServiceInterface
 
         if (array_key_exists('class_ids', $data) && is_array($data['class_ids'])) {
             $validClassIds = $this->studentRepository->filterValidClassIds($centerId, $data['class_ids']);
-            $this->studentRepository->syncClasses($updatedStudent, $validClassIds);
+            $pivotStatus   = (int) $updatedStudent->status === Constant::STUDENT_STATUS_DROPPED
+                ? Constant::CLASS_STUDENT_STATUS_LEFT
+                : Constant::CLASS_STUDENT_STATUS_ACTIVE;
+            $this->studentRepository->syncClasses($updatedStudent, $validClassIds, ['status' => $pivotStatus]);
 
             $createTuition = ! empty($data['create_tuition']);
 
@@ -434,6 +454,18 @@ class StudentService implements StudentServiceInterface
                     $this->bulkCreateTuitionsForStudent((int) $updatedStudent->id, (int) $updatedStudent->center_id, $tuitionClassIds, $admin?->id);
                 }
             }
+        }
+
+        // Khi trạng thái học sinh chuyển sang Nghỉ học, tất cả lớp học đang tham gia cũng chuyển sang Nghỉ học
+        if ((int) $updatedStudent->status === Constant::STUDENT_STATUS_DROPPED) {
+            DB::table('class_students')
+                ->where('student_id', $updatedStudent->id)
+                ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                ->update([
+                    'status'     => Constant::CLASS_STUDENT_STATUS_LEFT,
+                    'left_at'    => now(),
+                    'updated_at' => now(),
+                ]);
         }
 
         if ($isPassChanged && ! empty($updatedStudent->email)) {

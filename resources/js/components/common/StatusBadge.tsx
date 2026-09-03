@@ -65,7 +65,7 @@ export default function StatusBadge({
         if (numericStatus === 3) {
             return <Badge variant="info" className={className}>{customLabel || 'Đã chuyển lớp'}</Badge>;
         }
-        return <Badge variant="danger" className={className}>{customLabel || 'Đã thôi học'}</Badge>;
+        return <Badge variant="danger" className={className}>{customLabel || 'Nghỉ học'}</Badge>;
     }
 
     // 4. Teachers & Admins: 0: Tạm ngưng/Tạm nghỉ, 1: Đang làm việc/Hoạt động, 2: Đã khóa

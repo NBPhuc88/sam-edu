@@ -7,8 +7,9 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import {
     STUDENT_STATUS_ACTIVE,
-    STUDENT_STATUS_GRADUATED,
-    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_PAUSED,
+    STUDENT_STATUS_COMPLETED,
+    STUDENT_STATUS_DROPPED,
     STUDENT_STATUS_LABELS,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
@@ -64,11 +65,11 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isStatusDisabledClasses = status === STUDENT_STATUS_INACTIVE || status === STUDENT_STATUS_GRADUATED;
+    const isStatusDisabledClasses = status !== STUDENT_STATUS_ACTIVE;
 
     const handleStatusChange = (newStatus: number) => {
         setStatus(newStatus);
-        if (newStatus === STUDENT_STATUS_INACTIVE || newStatus === STUDENT_STATUS_GRADUATED) {
+        if (newStatus !== STUDENT_STATUS_ACTIVE) {
             setSelectedClassIds([]);
         }
     };
@@ -485,9 +486,10 @@ export default function StudentCreate({ centers = [], classes = [], errors = {} 
                                     onChange={(e) => handleStatusChange(Number(e.target.value))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                                 >
-                                    <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang theo học'}</option>
-                                    <option value={STUDENT_STATUS_INACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] || 'Tạm ngưng / Nghỉ học'}</option>
-                                    <option value={STUDENT_STATUS_GRADUATED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] || 'Đã tốt nghiệp'}</option>
+                                    <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang hoạt động'}</option>
+                                    <option value={STUDENT_STATUS_PAUSED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_PAUSED] || 'Tạm dừng'}</option>
+                                    <option value={STUDENT_STATUS_COMPLETED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_COMPLETED] || 'Hoàn thành'}</option>
+                                    <option value={STUDENT_STATUS_DROPPED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_DROPPED] || 'Nghỉ học'}</option>
                                 </select>
                             </div>
 

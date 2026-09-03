@@ -27,7 +27,7 @@ Tài liệu này tổng hợp và quy định chi tiết tất cả các giá tr
 | | `status` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `ADMIN_STATUS_ACTIVE`<br>`ADMIN_STATUS_INACTIVE`<br>`ADMIN_STATUS_LOCKED` | Đang hoạt động<br>Tạm ngưng<br>Đã khóa |
 | **`teachers`** | `status` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `TEACHER_STATUS_ACTIVE`<br>`TEACHER_STATUS_INACTIVE`<br>`TEACHER_STATUS_LOCKED` | Đang làm việc<br>Tạm nghỉ<br>Đã khóa |
 | | `gender` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `GENDER_MALE`<br>`GENDER_FEMALE`<br>`GENDER_OTHER` | Nam<br>Nữ<br>Khác |
-| **`students`** | `status` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `STUDENT_STATUS_ACTIVE`<br>`STUDENT_STATUS_INACTIVE`<br>`STUDENT_STATUS_GRADUATED` | Đang theo học<br>Nghỉ học / Khóa<br>Đã tốt nghiệp |
+| **`students`** | `status` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`**<br>**`4`** | `STUDENT_STATUS_ACTIVE`<br>`STUDENT_STATUS_PAUSED`<br>`STUDENT_STATUS_COMPLETED`<br>`STUDENT_STATUS_DROPPED` | Đang hoạt động<br>Tạm dừng<br>Hoàn thành<br>Nghỉ học |
 | | `gender` | `TINYINT UNSIGNED` | **`1`**<br>**`2`**<br>**`3`** | `GENDER_MALE`<br>`GENDER_FEMALE`<br>`GENDER_OTHER` | Nam<br>Nữ<br>Khác |
 
 ---

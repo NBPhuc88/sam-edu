@@ -250,7 +250,7 @@ export default function ClassStudentsPage({
                     >
                         {pivotStatus === CLASS_STUDENT_STATUS_LEFT ? (
                             <Badge variant="danger" className="transition-opacity group-hover:opacity-80">
-                                Đã thôi học
+                                Nghỉ học
                             </Badge>
                         ) : pivotStatus === CLASS_STUDENT_STATUS_TRANSFERRED ? (
                             <Badge variant="info" className="transition-opacity group-hover:opacity-80">
@@ -628,7 +628,7 @@ export default function ClassStudentsPage({
                             <option value={CLASS_STUDENT_STATUS_ACTIVE}>🟢 Đang học lớp này</option>
                             <option value={CLASS_STUDENT_STATUS_COMPLETED}>🟡 Đã hoàn thành khóa học</option>
                             <option value={CLASS_STUDENT_STATUS_TRANSFERRED}>🔵 Đã chuyển sang lớp khác</option>
-                            <option value={CLASS_STUDENT_STATUS_LEFT}>🔴 Đã thôi học / Nghỉ học</option>
+                            <option value={CLASS_STUDENT_STATUS_LEFT}>🔴 Nghỉ học</option>
                         </select>
                     </div>
 

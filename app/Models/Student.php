@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -55,6 +55,21 @@ class Student extends Authenticatable
             'created_at'     => 'datetime:d-m-Y H:i',
             'updated_at'     => 'datetime:d-m-Y H:i',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (Student $student) {
+            if ($student->wasChanged('status') && (int) $student->status === Constant::STUDENT_STATUS_DROPPED) {
+                $student->classStudents()
+                    ->where('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                    ->update([
+                        'status'     => Constant::CLASS_STUDENT_STATUS_LEFT,
+                        'left_at'    => now(),
+                        'updated_at' => now(),
+                    ]);
+            }
+        });
     }
 
     /**

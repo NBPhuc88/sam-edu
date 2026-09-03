@@ -79,20 +79,25 @@ export const TEACHER_STATUS_LABELS: Record<number, string> = {
 };
 
 // Bảng students
-export const STUDENT_STATUS_ACTIVE = 1; // Đang theo học
-export const STUDENT_STATUS_INACTIVE = 2; // Tạm ngưng / Nghỉ học
-export const STUDENT_STATUS_GRADUATED = 3; // Đã tốt nghiệp
+export const STUDENT_STATUS_ACTIVE = 1; // Đang hoạt động
+export const STUDENT_STATUS_PAUSED = 2; // Tạm dừng
+export const STUDENT_STATUS_INACTIVE = 2; // Alias backward-compatibility
+export const STUDENT_STATUS_COMPLETED = 3; // Hoàn thành
+export const STUDENT_STATUS_GRADUATED = 3; // Alias backward-compatibility
+export const STUDENT_STATUS_DROPPED = 4; // Nghỉ học
 
 export const STUDENT_STATUS_LABELS: Record<number, string> = {
-    [STUDENT_STATUS_ACTIVE]: 'Đang học',
-    [STUDENT_STATUS_INACTIVE]: 'Nghỉ học',
-    [STUDENT_STATUS_GRADUATED]: 'Đã tốt nghiệp',
+    [STUDENT_STATUS_ACTIVE]: 'Đang hoạt động',
+    [STUDENT_STATUS_PAUSED]: 'Tạm dừng',
+    [STUDENT_STATUS_COMPLETED]: 'Hoàn thành',
+    [STUDENT_STATUS_DROPPED]: 'Nghỉ học',
 };
 
 export const STUDENT_STATUS_OPTIONS = [
-    { value: STUDENT_STATUS_ACTIVE, label: 'Đang học' },
-    { value: STUDENT_STATUS_INACTIVE, label: 'Nghỉ học' },
-    { value: STUDENT_STATUS_GRADUATED, label: 'Đã tốt nghiệp' },
+    { value: STUDENT_STATUS_ACTIVE, label: 'Đang hoạt động' },
+    { value: STUDENT_STATUS_PAUSED, label: 'Tạm dừng' },
+    { value: STUDENT_STATUS_COMPLETED, label: 'Hoàn thành' },
+    { value: STUDENT_STATUS_DROPPED, label: 'Nghỉ học' },
 ];
 
 // ==========================================
@@ -166,7 +171,7 @@ export const CLASS_STUDENT_STATUS_LABELS: Record<number, string> = {
     [CLASS_STUDENT_STATUS_ACTIVE]: 'Đang học',
     [CLASS_STUDENT_STATUS_COMPLETED]: 'Đã hoàn thành',
     [CLASS_STUDENT_STATUS_TRANSFERRED]: 'Đã chuyển lớp',
-    [CLASS_STUDENT_STATUS_LEFT]: 'Đã thôi học',
+    [CLASS_STUDENT_STATUS_LEFT]: 'Nghỉ học',
 };
 
 // Bảng class_subjects

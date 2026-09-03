@@ -136,26 +136,32 @@ class Constant
     ];
 
     // Bảng students
-    public const int STUDENT_STATUS_ACTIVE    = 1; // Đang theo học
-    public const int STUDENT_STATUS_INACTIVE  = 2; // Tạm ngưng / Khóa / Nghỉ học
-    public const int STUDENT_STATUS_GRADUATED = 3; // Đã tốt nghiệp
+    public const int STUDENT_STATUS_ACTIVE    = 1; // Đang hoạt động
+    public const int STUDENT_STATUS_PAUSED    = 2; // Tạm dừng
+    public const int STUDENT_STATUS_INACTIVE  = 2; // Alias backward-compatibility
+    public const int STUDENT_STATUS_COMPLETED = 3; // Hoàn thành
+    public const int STUDENT_STATUS_GRADUATED = 3; // Alias backward-compatibility
+    public const int STUDENT_STATUS_DROPPED   = 4; // Nghỉ học
 
     public const array STUDENT_STATUSES = [
         self::STUDENT_STATUS_ACTIVE,
-        self::STUDENT_STATUS_INACTIVE,
-        self::STUDENT_STATUS_GRADUATED,
+        self::STUDENT_STATUS_PAUSED,
+        self::STUDENT_STATUS_COMPLETED,
+        self::STUDENT_STATUS_DROPPED,
     ];
 
     public const array STUDENT_STATUS_LABELS = [
-        self::STUDENT_STATUS_ACTIVE    => 'Đang học',
-        self::STUDENT_STATUS_INACTIVE  => 'Nghỉ học',
-        self::STUDENT_STATUS_GRADUATED => 'Đã tốt nghiệp',
+        self::STUDENT_STATUS_ACTIVE    => 'Đang hoạt động',
+        self::STUDENT_STATUS_PAUSED    => 'Tạm dừng',
+        self::STUDENT_STATUS_COMPLETED => 'Hoàn thành',
+        self::STUDENT_STATUS_DROPPED   => 'Nghỉ học',
     ];
 
     public const array STUDENT_STATUS_OPTIONS = [
-        ['value' => self::STUDENT_STATUS_ACTIVE, 'label' => 'Đang học'],
-        ['value' => self::STUDENT_STATUS_INACTIVE, 'label' => 'Nghỉ học'],
-        ['value' => self::STUDENT_STATUS_GRADUATED, 'label' => 'Đã tốt nghiệp'],
+        ['value' => self::STUDENT_STATUS_ACTIVE, 'label' => 'Đang hoạt động'],
+        ['value' => self::STUDENT_STATUS_PAUSED, 'label' => 'Tạm dừng'],
+        ['value' => self::STUDENT_STATUS_COMPLETED, 'label' => 'Hoàn thành'],
+        ['value' => self::STUDENT_STATUS_DROPPED, 'label' => 'Nghỉ học'],
     ];
 
     // ==========================================
@@ -260,7 +266,7 @@ class Constant
         self::CLASS_STUDENT_STATUS_ACTIVE      => 'Đang học',
         self::CLASS_STUDENT_STATUS_COMPLETED   => 'Đã hoàn thành',
         self::CLASS_STUDENT_STATUS_TRANSFERRED => 'Đã chuyển lớp',
-        self::CLASS_STUDENT_STATUS_LEFT        => 'Đã thôi học',
+        self::CLASS_STUDENT_STATUS_LEFT        => 'Nghỉ học',
     ];
 
     // Bảng class_subjects

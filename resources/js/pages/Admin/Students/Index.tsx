@@ -28,8 +28,9 @@ import BulkAssignClassModal from './components/BulkAssignClassModal';
 import {
     GENDER_LABELS,
     STUDENT_STATUS_ACTIVE,
-    STUDENT_STATUS_GRADUATED,
-    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_PAUSED,
+    STUDENT_STATUS_COMPLETED,
+    STUDENT_STATUS_DROPPED,
     STUDENT_STATUS_LABELS,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
@@ -272,11 +273,15 @@ return;
             return <Badge variant="active">{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE]}</Badge>;
         }
 
-        if (status === STUDENT_STATUS_GRADUATED) {
-            return <Badge variant="pending">{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED]}</Badge>;
+        if (status === STUDENT_STATUS_PAUSED) {
+            return <Badge variant="expired">{STUDENT_STATUS_LABELS[STUDENT_STATUS_PAUSED]}</Badge>;
         }
 
-        return <Badge variant="expired">{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE]}</Badge>;
+        if (status === STUDENT_STATUS_COMPLETED) {
+            return <Badge variant="pending">{STUDENT_STATUS_LABELS[STUDENT_STATUS_COMPLETED]}</Badge>;
+        }
+
+        return <Badge variant="danger">{STUDENT_STATUS_LABELS[STUDENT_STATUS_DROPPED] || 'Nghỉ học'}</Badge>;
     };
 
     const getGenderLabel = (gender: number | null) => {
@@ -435,8 +440,9 @@ return;
                                     options={[
                                         { value: 0, label: 'Tất cả Trạng thái' },
                                         { value: STUDENT_STATUS_ACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] },
-                                        { value: STUDENT_STATUS_INACTIVE, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] },
-                                        { value: STUDENT_STATUS_GRADUATED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] },
+                                        { value: STUDENT_STATUS_PAUSED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_PAUSED] },
+                                        { value: STUDENT_STATUS_COMPLETED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_COMPLETED] },
+                                        { value: STUDENT_STATUS_DROPPED, label: STUDENT_STATUS_LABELS[STUDENT_STATUS_DROPPED] },
                                     ]}
                                 />
                             </div>

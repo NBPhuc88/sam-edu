@@ -342,3 +342,53 @@ test('student can view printable transcript PDF page', function () {
             ->has('gpa')
         );
 });
+
+test('student status change to dropped automatically updates their class_students status to left', function () {
+    $classService   = app(\App\Services\Class\SchoolClassServiceInterface::class);
+    $studentService = app(\App\Services\Student\StudentServiceInterface::class);
+
+    $class1 = $classService->createClass([
+        'center_id' => $this->center->id,
+        'name'      => 'Lớp 1 Cascade Dropped',
+        'code'      => 'CLS' . random_int(1000000, 9999999),
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
+    ], $this->superAdmin);
+
+    $class2 = $classService->createClass([
+        'center_id' => $this->center->id,
+        'name'      => 'Lớp 2 Cascade Dropped',
+        'code'      => 'CLS' . random_int(1000000, 9999999),
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
+    ], $this->superAdmin);
+
+    $student = Student::create([
+        'center_id'    => $this->center->id,
+        'student_code' => 'HS' . random_int(1000000, 9999999),
+        'first_name'   => 'Nghỉ',
+        'last_name'    => 'Học',
+        'full_name'    => 'Học Sinh Nghỉ Học',
+        'username'     => 'hs_dropped_' . random_int(1000, 9999),
+        'email'        => 'hsdropped' . random_int(1000, 9999) . '@gmail.com',
+        'password'     => bcrypt('password123'),
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
+    ]);
+
+    // Ghi danh học sinh vào cả 2 lớp với status ACTIVE
+    $class1->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
+    $class2->students()->attach($student->id, ['status' => Constant::CLASS_STUDENT_STATUS_ACTIVE, 'enrolled_at' => now()]);
+
+    // Đổi trạng thái học sinh sang Nghỉ học (Constant::STUDENT_STATUS_DROPPED = 4)
+    $studentService->updateStudent($student->id, [
+        'status' => Constant::STUDENT_STATUS_DROPPED,
+    ], $this->superAdmin);
+
+    // Kiểm tra: Trạng thái trong cả 2 lớp phải tự động chuyển sang Nghỉ học (CLASS_STUDENT_STATUS_LEFT = 4)
+    $pivot1 = DB::table('class_students')->where('class_id', $class1->id)->where('student_id', $student->id)->first();
+    $pivot2 = DB::table('class_students')->where('class_id', $class2->id)->where('student_id', $student->id)->first();
+
+    expect((int) $pivot1->status)->toBe(Constant::CLASS_STUDENT_STATUS_LEFT);
+    expect($pivot1->left_at)->not->toBeNull();
+
+    expect((int) $pivot2->status)->toBe(Constant::CLASS_STUDENT_STATUS_LEFT);
+    expect($pivot2->left_at)->not->toBeNull();
+});

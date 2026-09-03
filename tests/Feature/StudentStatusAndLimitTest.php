@@ -105,7 +105,7 @@ test('regular admin cannot change status of graduated student but super admin ca
     expect((int) $updated->status)->toBe(Constant::STUDENT_STATUS_ACTIVE);
 });
 
-test('regular admin can freely change status between active and inactive or graduate an active student', function () {
+test('regular admin can freely change status between active, paused, dropped or complete an active student', function () {
     $student = Student::create([
         'center_id'    => $this->center->id,
         'username'     => 'regular_std_' . random_int(1000, 9999),
@@ -117,26 +117,32 @@ test('regular admin can freely change status between active and inactive or grad
         'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
-    // Change from active (1) to inactive (2)
+    // Change from active (1) to paused (2)
     $updated1 = $this->studentService->updateStudent($student->id, [
-        'status' => Constant::STUDENT_STATUS_INACTIVE,
+        'status' => Constant::STUDENT_STATUS_PAUSED,
     ], $this->branchAdmin);
-    expect((int) $updated1->status)->toBe(Constant::STUDENT_STATUS_INACTIVE);
+    expect((int) $updated1->status)->toBe(Constant::STUDENT_STATUS_PAUSED);
 
-    // Change from inactive (2) back to active (1)
+    // Change from paused (2) to dropped (4)
     $updated2 = $this->studentService->updateStudent($student->id, [
+        'status' => Constant::STUDENT_STATUS_DROPPED,
+    ], $this->branchAdmin);
+    expect((int) $updated2->status)->toBe(Constant::STUDENT_STATUS_DROPPED);
+
+    // Change from dropped (4) back to active (1)
+    $updated3 = $this->studentService->updateStudent($student->id, [
         'status' => Constant::STUDENT_STATUS_ACTIVE,
     ], $this->branchAdmin);
-    expect((int) $updated2->status)->toBe(Constant::STUDENT_STATUS_ACTIVE);
+    expect((int) $updated3->status)->toBe(Constant::STUDENT_STATUS_ACTIVE);
 
-    // Graduate an active student (1 -> 3)
-    $updated3 = $this->studentService->updateStudent($student->id, [
-        'status' => Constant::STUDENT_STATUS_GRADUATED,
+    // Complete an active student (1 -> 3)
+    $updated4 = $this->studentService->updateStudent($student->id, [
+        'status' => Constant::STUDENT_STATUS_COMPLETED,
     ], $this->branchAdmin);
-    expect((int) $updated3->status)->toBe(Constant::STUDENT_STATUS_GRADUATED);
+    expect((int) $updated4->status)->toBe(Constant::STUDENT_STATUS_COMPLETED);
 });
 
-test('inactive or graduated student cannot login while active student can login', function () {
+test('paused, dropped or completed student cannot login while active student can login', function () {
     $authService = app(\App\Services\Auth\AuthServiceInterface::class);
 
     $activeStudent = Student::create([
@@ -150,39 +156,55 @@ test('inactive or graduated student cannot login while active student can login'
         'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 
-    $inactiveStudent = Student::create([
+    $pausedStudent = Student::create([
         'center_id'    => $this->center->id,
-        'username'     => 'std_auth_inact_' . random_int(1000, 9999),
+        'username'     => 'std_auth_paused_' . random_int(1000, 9999),
         'first_name'   => 'Auth',
-        'last_name'    => 'Inactive',
-        'full_name'    => 'Auth Inactive',
+        'last_name'    => 'Paused',
+        'full_name'    => 'Auth Paused',
         'student_code' => 'HS' . random_int(1000000, 9999999),
         'password'     => Hash::make('password123'),
-        'status'       => Constant::STUDENT_STATUS_INACTIVE,
+        'status'       => Constant::STUDENT_STATUS_PAUSED,
     ]);
 
-    $graduatedStudent = Student::create([
+    $completedStudent = Student::create([
         'center_id'    => $this->center->id,
-        'username'     => 'std_auth_grad_' . random_int(1000, 9999),
+        'username'     => 'std_auth_comp_' . random_int(1000, 9999),
         'first_name'   => 'Auth',
-        'last_name'    => 'Graduated',
-        'full_name'    => 'Auth Graduated',
+        'last_name'    => 'Completed',
+        'full_name'    => 'Auth Completed',
         'student_code' => 'HS' . random_int(1000000, 9999999),
         'password'     => Hash::make('password123'),
-        'status'       => Constant::STUDENT_STATUS_GRADUATED,
+        'status'       => Constant::STUDENT_STATUS_COMPLETED,
+    ]);
+
+    $droppedStudent = Student::create([
+        'center_id'    => $this->center->id,
+        'username'     => 'std_auth_drop_' . random_int(1000, 9999),
+        'first_name'   => 'Auth',
+        'last_name'    => 'Dropped',
+        'full_name'    => 'Auth Dropped',
+        'student_code' => 'HS' . random_int(1000000, 9999999),
+        'password'     => Hash::make('password123'),
+        'status'       => Constant::STUDENT_STATUS_DROPPED,
     ]);
 
     // Active student login succeeds
     $resActive = $authService->authenticate('student', $activeStudent->username, 'password123');
     expect($resActive['success'])->toBeTrue();
 
-    // Inactive student login fails
-    $resInactive = $authService->authenticate('student', $inactiveStudent->username, 'password123');
-    expect($resInactive['success'])->toBeFalse();
-    expect($resInactive['error'])->toContain('nghỉ học');
+    // Paused student login fails
+    $resPaused = $authService->authenticate('student', $pausedStudent->username, 'password123');
+    expect($resPaused['success'])->toBeFalse();
+    expect($resPaused['error'])->toContain('tạm dừng');
 
-    // Graduated student login fails
-    $resGrad = $authService->authenticate('student', $graduatedStudent->username, 'password123');
-    expect($resGrad['success'])->toBeFalse();
-    expect($resGrad['error'])->toContain('tốt nghiệp');
+    // Completed student login fails
+    $resComp = $authService->authenticate('student', $completedStudent->username, 'password123');
+    expect($resComp['success'])->toBeFalse();
+    expect($resComp['error'])->toContain('hoàn thành');
+
+    // Dropped student login fails
+    $resDrop = $authService->authenticate('student', $droppedStudent->username, 'password123');
+    expect($resDrop['success'])->toBeFalse();
+    expect($resDrop['error'])->toContain('nghỉ học');
 });

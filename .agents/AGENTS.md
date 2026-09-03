@@ -70,7 +70,7 @@ Tài liệu quy định kiến trúc, quy chuẩn mã nguồn và quy trình ph�
 >
 > - **Tất cả giá trị enum / status / role / type / gender / method lưu DB BẮT BUỘC là số nguyên bắt đầu từ 1 (`>= 1`)**:
 >   - **`classes.status`**: `1` = Đang học (`active`), `2` = Tạm ngưng (`inactive`), `3` = Đã hoàn thành (`completed`), `4` = Đã đóng (`closed`).
->   - **`students.status`**: `1` = Đang học (`active`), `2` = Tạm ngưng/Khóa (`inactive`), `3` = Đã tốt nghiệp (`graduated`).
+>   - **`students.status`**: `1` = Đang hoạt động (`active`), `2` = Tạm dừng (`paused`), `3` = Hoàn thành (`completed`), `4` = Nghỉ học (`dropped`).
 >   - **`centers.status`**: `1` = Đang hoạt động (`active`), `2` = Tạm ngưng (`paused`), `3` = Đã hết hạn (`expired`).
 >   - **`admins.role`**: `1` = `super_admin`, `2` = `admin`.
 > - **Quy ước giá trị `0` dành riêng cho Filter "Tất cả"**: Tuyệt đối không dùng `all` hoặc `''` cho filter. Khi filter gửi `0` (hoặc rỗng), backend kiểm tra `if (! empty($status))` sẽ nhận `empty(0)` là `true` và bỏ qua điều kiện lọc.

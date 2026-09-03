@@ -69,8 +69,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 (string) $student->address,
                 (string) $student->parent_name,
                 (string) $student->parent_phone,
-                (string) $student->parent_relationship,
-                (string) (Constant::STUDENT_STATUS_LABELS[$student->status] ?? 'Đang học'),
+                (string) (Constant::STUDENT_STATUS_LABELS[$student->status] ?? 'Đang hoạt động'),
             ];
 
             if ($isSuperAdmin) {
@@ -173,12 +172,17 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                     }
 
                     if (! empty($item['class_ids']) && $studentObj) {
+                        $isDropped   = (int) $data['status'] === Constant::STUDENT_STATUS_DROPPED;
+                        $pivotStatus = $isDropped ? Constant::CLASS_STUDENT_STATUS_LEFT : Constant::CLASS_STUDENT_STATUS_ACTIVE;
+                        $leftAt      = $isDropped ? $now : null;
+
                         foreach ($item['class_ids'] as $classId) {
                             $classStudentBuffer[] = [
                                 'class_id'    => $classId,
                                 'student_id'  => $studentObj->id,
-                                'status'      => Constant::CLASS_STUDENT_STATUS_ACTIVE,
+                                'status'      => $pivotStatus,
                                 'enrolled_at' => $now,
+                                'left_at'     => $leftAt,
                                 'note'        => "Import từ CSV dòng {$item['line_index']}",
                                 'created_at'  => $now,
                                 'updated_at'  => $now,
@@ -191,7 +195,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                     ClassStudent::upsert(
                         $classStudentBuffer,
                         ['class_id', 'student_id'],
-                        ['status', 'enrolled_at', 'note', 'updated_at']
+                        ['status', 'enrolled_at', 'left_at', 'note', 'updated_at']
                     );
                 }
             });
@@ -377,7 +381,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             'Nguyễn Văn B',
             '0909876543',
             'Bố',
-            'active',
+            'Đang hoạt động',
         ];
 
         $row2 = [
@@ -395,7 +399,7 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             'Trần Văn C',
             '0908765432',
             'Mẹ',
-            'active',
+            'Đang hoạt động',
         ];
 
         if ($isSuperAdmin) {
@@ -429,9 +433,10 @@ class StudentExportImportService implements StudentExportImportServiceInterface
         $str = mb_strtolower(trim((string) $status));
 
         return match ($str) {
-            'tạm nghỉ', 'nghỉ học', 'inactive', 'paused', 'khóa' => Constant::STUDENT_STATUS_INACTIVE,
-            'đã tốt nghiệp', 'tốt nghiệp', 'graduated'           => Constant::STUDENT_STATUS_GRADUATED,
-            default                                              => Constant::STUDENT_STATUS_ACTIVE,
+            'tạm dừng', 'tạm nghỉ', 'paused', 'inactive', 'khóa'                                   => Constant::STUDENT_STATUS_PAUSED,
+            'hoàn thành', 'đã hoàn thành', 'đã tốt nghiệp', 'tốt nghiệp', 'completed', 'graduated' => Constant::STUDENT_STATUS_COMPLETED,
+            'nghỉ học', 'thôi học', 'dropped', 'left'                                              => Constant::STUDENT_STATUS_DROPPED,
+            default                                                                                => Constant::STUDENT_STATUS_ACTIVE,
         };
     }
 

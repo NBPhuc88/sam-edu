@@ -7,8 +7,9 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import {
     STUDENT_STATUS_ACTIVE,
-    STUDENT_STATUS_GRADUATED,
-    STUDENT_STATUS_INACTIVE,
+    STUDENT_STATUS_PAUSED,
+    STUDENT_STATUS_COMPLETED,
+    STUDENT_STATUS_DROPPED,
     STUDENT_STATUS_LABELS,
 } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
@@ -72,8 +73,8 @@ interface EditProps {
 
 export default function StudentEdit({ student, centers = [], classes = [], errors = {} }: EditProps) {
     const { isSuperAdmin } = usePermission();
-    const isGraduated = Number(student.status) === STUDENT_STATUS_GRADUATED;
-    const canEditStatus = isSuperAdmin || !isGraduated;
+    const isCompleted = Number(student.status) === STUDENT_STATUS_COMPLETED;
+    const canEditStatus = isSuperAdmin || !isCompleted;
 
     const [centerId, setCenterId] = useState<string>(String(student.center_id));
     const [fullName, setFullName] = useState<string>(student.full_name || '');
@@ -98,11 +99,11 @@ export default function StudentEdit({ student, centers = [], classes = [], error
     const [status, setStatus] = useState<number>(Number(student.status ?? STUDENT_STATUS_ACTIVE));
     const [note, setNote] = useState<string>(student.note || '');
 
-    const isStatusDisabledClasses = status === STUDENT_STATUS_INACTIVE || status === STUDENT_STATUS_GRADUATED;
+    const isStatusDisabledClasses = status !== STUDENT_STATUS_ACTIVE;
 
     const handleStatusChange = (newStatus: number) => {
         setStatus(newStatus);
-        if (newStatus === STUDENT_STATUS_INACTIVE || newStatus === STUDENT_STATUS_GRADUATED) {
+        if (newStatus !== STUDENT_STATUS_ACTIVE) {
             setSelectedClassIds(initialClassIds);
         }
     };
@@ -525,13 +526,14 @@ export default function StudentEdit({ student, centers = [], classes = [], error
                                         !canEditStatus ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
                                     }`}
                                 >
-                                    <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang theo học'}</option>
-                                    <option value={STUDENT_STATUS_INACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_INACTIVE] || 'Tạm ngưng / Nghỉ học'}</option>
-                                    <option value={STUDENT_STATUS_GRADUATED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_GRADUATED] || 'Đã tốt nghiệp'}</option>
+                                    <option value={STUDENT_STATUS_ACTIVE}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_ACTIVE] || 'Đang hoạt động'}</option>
+                                    <option value={STUDENT_STATUS_PAUSED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_PAUSED] || 'Tạm dừng'}</option>
+                                    <option value={STUDENT_STATUS_COMPLETED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_COMPLETED] || 'Hoàn thành'}</option>
+                                    <option value={STUDENT_STATUS_DROPPED}>{STUDENT_STATUS_LABELS[STUDENT_STATUS_DROPPED] || 'Nghỉ học'}</option>
                                 </select>
                                 {!canEditStatus && (
                                     <p className="mt-1.5 text-xs font-medium text-amber-700">
-                                        * Học sinh đã tốt nghiệp. Chỉ Admin hệ thống mới có quyền thay đổi trạng thái này.
+                                        * Học sinh đã hoàn thành khóa học. Chỉ Admin hệ thống mới có quyền thay đổi trạng thái này.
                                     </p>
                                 )}
                             </div>

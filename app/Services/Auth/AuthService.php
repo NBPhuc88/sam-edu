@@ -75,10 +75,17 @@ class AuthService implements AuthServiceInterface
         }
 
         if ($account instanceof Student && (int) $account->status !== Constant::STUDENT_STATUS_ACTIVE) {
+            $msg = match ((int) $account->status) {
+                Constant::STUDENT_STATUS_PAUSED    => 'Tài khoản Học sinh đang trong trạng thái tạm dừng. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+                Constant::STUDENT_STATUS_COMPLETED => 'Tài khoản Học sinh đã hoàn thành khóa học. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+                Constant::STUDENT_STATUS_DROPPED   => 'Tài khoản Học sinh đã nghỉ học. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+                default                            => 'Tài khoản Học sinh hiện không hoạt động. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+            };
+
             return [
                 'success' => false,
                 'account' => null,
-                'error'   => 'Tài khoản Học sinh đã nghỉ học hoặc đã tốt nghiệp. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+                'error'   => $msg,
             ];
         }
 
