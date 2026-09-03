@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -86,7 +87,7 @@ class Center extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return \App\Enums\Constant::CENTER_STATUS_LABELS[(int) $this->status] ?? 'Đang hoạt động';
+        return Constant::CENTER_STATUS_LABELS[(int) $this->status] ?? 'Đang hoạt động';
     }
 
     public function getPlanNameAttribute(): string
@@ -94,9 +95,25 @@ class Center extends Model
         return $this->currentPlan()?->name ?? 'Gói Dùng Thử';
     }
 
+    /**
+     * Kiểm tra trung tâm đã hết hạn gói cước chưa.
+     * Quy tắc: Trong ngày hết hạn vẫn cho phép hoạt động và đăng nhập bình thường,
+     * chỉ bắt đầu tính hết hạn sau 23:00 của ngày hết hạn đó.
+     */
+    public function isExpired(): bool
+    {
+        if (! $this->expires_at) {
+            return false;
+        }
+
+        $cutoff = $this->expires_at->copy()->setTime(23, 0, 0);
+
+        return now()->greaterThan($cutoff);
+    }
+
     public function hasFeature(string $featureCode): bool
     {
-        if ((int) $this->plan_type === \App\Enums\Constant::PLAN_TYPE_FREE) {
+        if ((int) $this->plan_type === Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

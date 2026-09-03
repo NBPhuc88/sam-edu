@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\Auth\AuthServiceInterface;
 use App\Services\Auth\PasswordResetServiceInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -237,4 +238,65 @@ test('password reset OTP is denied for accounts belonging to paused or expired c
     $otpResult = $this->passwordResetService->sendOtp('teacher', $teacherPaused->email);
     expect($otpResult['success'])->toBeFalse();
     expect($otpResult['error'])->toContain('tạm dừng');
+});
+
+test('center with expires_at today can login normally during the day before 23h', function () {
+    Carbon::setTestNow('2026-09-03 14:00:00');
+
+    $centerExpiringToday = Center::create([
+        'code'       => 'CTR' . random_int(1000000, 9999999),
+        'name'       => 'Trung Tâm Hết Hạn Hôm Nay',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => '2026-09-03 00:00:00',
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'subadmin_today_' . random_int(1000, 9999),
+        'full_name'  => 'Sub Admin Today',
+        'email'      => 'subadmin_today_' . random_int(1000, 9999) . '@example.com',
+        'password'   => Hash::make('password123'),
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM' . random_int(1000000, 9999999),
+    ]);
+    $admin->centers()->attach($centerExpiringToday->id);
+
+    $result = $this->authService->authenticate('admin', $admin->username, 'password123');
+    expect($result['success'])->toBeTrue();
+
+    $centerExpiringToday->refresh();
+    expect((int) $centerExpiringToday->status)->toBe(Constant::CENTER_STATUS_ACTIVE);
+
+    Carbon::setTestNow();
+});
+
+test('center with expires_at today is blocked and marked expired after 23h', function () {
+    Carbon::setTestNow('2026-09-03 23:15:00');
+
+    $centerExpiringToday = Center::create([
+        'code'       => 'CTR' . random_int(1000000, 9999999),
+        'name'       => 'Trung Tâm Hết Hạn Hôm Nay Sau 23h',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
+        'expires_at' => '2026-09-03 00:00:00',
+    ]);
+
+    $admin = Admin::create([
+        'username'   => 'subadmin_after23_' . random_int(1000, 9999),
+        'full_name'  => 'Sub Admin After 23',
+        'email'      => 'subadmin_after23_' . random_int(1000, 9999) . '@example.com',
+        'password'   => Hash::make('password123'),
+        'role'       => Constant::ROLE_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+        'admin_code' => 'ADM' . random_int(1000000, 9999999),
+    ]);
+    $admin->centers()->attach($centerExpiringToday->id);
+
+    $result = $this->authService->authenticate('admin', $admin->username, 'password123');
+    expect($result['success'])->toBeFalse();
+    expect($result['error'])->toContain('hết hạn');
+
+    $centerExpiringToday->refresh();
+    expect((int) $centerExpiringToday->status)->toBe(Constant::CENTER_STATUS_EXPIRED);
+
+    Carbon::setTestNow();
 });

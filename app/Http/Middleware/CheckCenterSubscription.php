@@ -50,9 +50,18 @@ class CheckCenterSubscription
             return $this->handleForbidden($request, 'Tài khoản chưa được liên kết hoặc phân công quản lý trung tâm nào.');
         }
 
-        // Tự động chuyển trạng thái nếu đã quá ngày hết hạn
-        if ($center->expires_at && $center->expires_at->isPast() && (int) $center->status === Constant::CENTER_STATUS_ACTIVE) {
-            $center->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+        // Tự động đồng bộ trạng thái: chỉ tính hết hạn sau 23h của ngày hết hạn
+        if ($center->expires_at) {
+            if ($center->isExpired()) {
+                if ((int) $center->status === Constant::CENTER_STATUS_ACTIVE) {
+                    $center->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
+                }
+            } else {
+                // Trong ngày hết hạn (trước 23h) hoặc còn hạn, tự động khôi phục active nếu trước đó bị đánh dấu expired
+                if ((int) $center->status === Constant::CENTER_STATUS_EXPIRED) {
+                    $center->update(['status' => Constant::CENTER_STATUS_ACTIVE]);
+                }
+            }
         }
 
         // Nếu Trung tâm không ở trạng thái Đang hoạt động -> Chặn truy cập

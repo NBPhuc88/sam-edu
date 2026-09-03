@@ -106,7 +106,8 @@ class CenterService implements CenterServiceInterface
                 $data['expires_at'] = $exp;
 
                 if (! isset($data['status'])) {
-                    $data['status'] = $exp->isPast() ? Constant::CENTER_STATUS_EXPIRED : Constant::CENTER_STATUS_ACTIVE;
+                    $cutoff         = $exp->copy()->setTime(23, 0, 0);
+                    $data['status'] = now()->greaterThan($cutoff) ? Constant::CENTER_STATUS_EXPIRED : Constant::CENTER_STATUS_ACTIVE;
                 }
             } else {
                 $data['expires_at'] = null;
@@ -312,7 +313,8 @@ class CenterService implements CenterServiceInterface
 
             $plan = $this->subscriptionPlanRepository->findById((int) $targetSub->plan_id);
 
-            $isExpired = $endsAt && $endsAt->isPast();
+            $cutoff    = $endsAt ? $endsAt->copy()->setTime(23, 0, 0) : null;
+            $isExpired = $cutoff && now()->greaterThan($cutoff);
 
             $updateData = [
                 'subscription_plan_id' => (int) $targetSub->plan_id,

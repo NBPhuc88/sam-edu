@@ -311,7 +311,7 @@ class CenterRepository implements CenterRepositoryInterface
     {
         return Center::where('status', Constant::CENTER_STATUS_ACTIVE)
             ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
+            ->whereRaw('DATE_ADD(DATE(expires_at), INTERVAL 23 HOUR) <= NOW()')
             ->update(['status' => Constant::CENTER_STATUS_EXPIRED]);
     }
 }
