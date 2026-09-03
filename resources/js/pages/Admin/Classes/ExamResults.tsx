@@ -50,7 +50,7 @@ interface ClassExamOption {
 interface SubmissionItem {
     id: number;
     score: number | string | null;
-    status: string;
+    status: number;
     submitted_at?: string | null;
     student?: {
         id: number;

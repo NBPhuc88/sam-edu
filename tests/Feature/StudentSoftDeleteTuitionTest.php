@@ -60,7 +60,7 @@ test('soft deleted student preserves tuition records and is displayed in tuition
         'total_amount'     => 1500000,
         'paid_amount'      => 500000,
         'remaining_amount' => 1000000,
-        'status'           => 'partial',
+        'status'           => Constant::TUITION_STATUS_PARTIAL,
         'due_date'         => '2026-09-15',
     ]);
 

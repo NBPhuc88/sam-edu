@@ -65,12 +65,12 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 (string) $student->email,
                 (string) $student->phone,
                 (string) ($student->date_of_birth ?? ''),
-                (string) $student->gender,
+                (string) (Constant::GENDER_LABELS[$student->gender] ?? 'Nam'),
                 (string) $student->address,
                 (string) $student->parent_name,
                 (string) $student->parent_phone,
                 (string) $student->parent_relationship,
-                (string) (is_object($student->status) ? $student->status->value : $student->status),
+                (string) (Constant::STUDENT_STATUS_LABELS[$student->status] ?? 'Đang học'),
             ];
 
             if ($isSuperAdmin) {
@@ -260,9 +260,6 @@ class StudentExportImportService implements StudentExportImportServiceInterface
 
             $dob = $row['ngày sinh'] ?? $row['date_of_birth'] ?? null;
 
-            $statusRaw = $row['trạng thái'] ?? $row['status'] ?? 1;
-            $statusVal = is_numeric($statusRaw) ? (int) $statusRaw : ($statusRaw === 'active' || $statusRaw === 'hoạt động' ? Constant::STUDENT_STATUS_ACTIVE : Constant::STUDENT_STATUS_INACTIVE);
-
             $data = [
                 'student_code'        => $studentCode,
                 'username'            => $username,
@@ -272,12 +269,12 @@ class StudentExportImportService implements StudentExportImportServiceInterface
                 'full_name'           => $fullName,
                 'phone'               => $row['số điện thoại'] ?? $row['phone'] ?? null,
                 'date_of_birth'       => ! empty($dob) ? $dob : null,
-                'gender'              => $row['giới tính'] ?? $row['gender'] ?? 'male',
+                'gender'              => $this->parseGender($row['giới tính'] ?? $row['gender'] ?? null),
                 'address'             => $row['địa chỉ'] ?? $row['address'] ?? null,
                 'parent_name'         => $row['tên phụ huynh'] ?? $row['parent_name'] ?? null,
                 'parent_phone'        => $row['sđt phụ huynh'] ?? $row['parent_phone'] ?? null,
                 'parent_relationship' => $row['mối quan hệ phụ huynh'] ?? $row['parent_relationship'] ?? 'bố',
-                'status'              => $statusVal,
+                'status'              => $this->parseStatus($row['trạng thái'] ?? $row['status'] ?? null),
                 'center_id'           => $targetCenterId,
             ];
 
@@ -413,5 +410,51 @@ class StudentExportImportService implements StudentExportImportServiceInterface
             $row1,
             $row2,
         ];
+    }
+
+    /**
+     * Parse giá trị trạng thái học sinh từ CSV sang hằng số integer Constant::STUDENT_STATUS_*.
+     * @param mixed $status
+     */
+    private function parseStatus(mixed $status): int
+    {
+        if (is_numeric($status)) {
+            $val = (int) $status;
+
+            if (in_array($val, Constant::STUDENT_STATUSES, true)) {
+                return $val;
+            }
+        }
+
+        $str = mb_strtolower(trim((string) $status));
+
+        return match ($str) {
+            'tạm nghỉ', 'nghỉ học', 'inactive', 'paused', 'khóa' => Constant::STUDENT_STATUS_INACTIVE,
+            'đã tốt nghiệp', 'tốt nghiệp', 'graduated'           => Constant::STUDENT_STATUS_GRADUATED,
+            default                                              => Constant::STUDENT_STATUS_ACTIVE,
+        };
+    }
+
+    /**
+     * Parse giá trị giới tính từ CSV sang hằng số integer Constant::GENDER_*.
+     * @param mixed $gender
+     */
+    private function parseGender(mixed $gender): int
+    {
+        if (is_numeric($gender)) {
+            $val = (int) $gender;
+
+            if (in_array($val, Constant::GENDERS, true)) {
+                return $val;
+            }
+        }
+
+        $str = mb_strtolower(trim((string) $gender));
+
+        return match ($str) {
+            'nữ', 'nu', 'female', 'gái' => Constant::GENDER_FEMALE,
+            'khác', 'other'             => Constant::GENDER_OTHER,
+            default                     => Constant::GENDER_MALE,
+        };
     }
 }

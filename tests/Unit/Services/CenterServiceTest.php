@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Constant;
+use App\Mail\CenterUpdatedMail;
 use App\Models\Center;
 use App\Services\Center\CenterService;
 use Illuminate\Support\Facades\Mail;
@@ -28,7 +30,7 @@ test('updateCenter updates center details and queues notification email', functi
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Old Name',
         'email'  => 'center.old@example.com',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $updated = $this->service->updateCenter($center->id, [
@@ -39,14 +41,14 @@ test('updateCenter updates center details and queues notification email', functi
     expect($updated->name)->toBe('Center New Name')
         ->and($updated->phone)->toBe('0988776655');
 
-    Mail::assertQueued(\App\Mail\CenterUpdatedMail::class);
+    Mail::assertQueued(CenterUpdatedMail::class);
 });
 
 test('deleteCenter soft deletes center record', function () {
     $center = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center To Delete',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $result = $this->service->deleteCenter($center->id);

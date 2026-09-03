@@ -2,6 +2,7 @@
 
 namespace App\Services\Teacher;
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Generator;
@@ -55,11 +56,11 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 (string) $teacher->email,
                 (string) $teacher->phone,
                 (string) ($teacher->date_of_birth ?? ''),
-                (string) $teacher->gender,
-                (string) ($teacher->hire_date ?? ''),
+                (string) (Constant::GENDER_LABELS[$teacher->gender] ?? 'Nam'),
+                (string) $teacher->hire_date,
                 (string) $teacher->specialization,
                 (string) $teacher->note,
-                (string) $teacher->status,
+                (string) (Constant::TEACHER_STATUS_LABELS[$teacher->status] ?? 'Đang làm việc'),
             ];
 
             if ($isSuperAdmin) {
@@ -229,11 +230,11 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
                 'full_name'      => $fullName,
                 'phone'          => $row['số điện thoại'] ?? $row['phone'] ?? null,
                 'date_of_birth'  => ! empty($dob) ? $dob : null,
-                'gender'         => $row['giới tính'] ?? $row['gender'] ?? 'male',
+                'gender'         => $this->parseGender($row['giới tính'] ?? $row['gender'] ?? null),
                 'hire_date'      => ! empty($hireDate) ? $hireDate : null,
                 'specialization' => $row['chuyên môn'] ?? $row['specialization'] ?? null,
                 'note'           => $row['ghi chú'] ?? $row['note'] ?? null,
-                'status'         => $row['trạng thái'] ?? $row['status'] ?? 'active',
+                'status'         => $this->parseStatus($row['trạng thái'] ?? $row['status'] ?? null),
                 'center_id'      => $targetCenterId,
             ];
 
@@ -325,5 +326,51 @@ class TeacherExportImportService implements TeacherExportImportServiceInterface
             $row1,
             $row2,
         ];
+    }
+
+    /**
+     * Parse giá trị giới tính từ CSV sang hằng số integer Constant::GENDER_*.
+     * @param mixed $gender
+     */
+    private function parseGender(mixed $gender): int
+    {
+        if (is_numeric($gender)) {
+            $val = (int) $gender;
+
+            if (in_array($val, Constant::GENDERS, true)) {
+                return $val;
+            }
+        }
+
+        $str = mb_strtolower(trim((string) $gender));
+
+        return match ($str) {
+            'nữ', 'nu', 'female', 'gái' => Constant::GENDER_FEMALE,
+            'khác', 'other'             => Constant::GENDER_OTHER,
+            default                     => Constant::GENDER_MALE,
+        };
+    }
+
+    /**
+     * Parse giá trị trạng thái giáo viên từ CSV sang hằng số integer Constant::TEACHER_STATUS_*.
+     * @param mixed $status
+     */
+    private function parseStatus(mixed $status): int
+    {
+        if (is_numeric($status)) {
+            $val = (int) $status;
+
+            if (in_array($val, Constant::TEACHER_STATUSES, true)) {
+                return $val;
+            }
+        }
+
+        $str = mb_strtolower(trim((string) $status));
+
+        return match ($str) {
+            'tạm nghỉ', 'inactive', 'paused' => Constant::TEACHER_STATUS_INACTIVE,
+            'đã khóa', 'locked', 'khóa'      => Constant::TEACHER_STATUS_LOCKED,
+            default                          => Constant::TEACHER_STATUS_ACTIVE,
+        };
     }
 }

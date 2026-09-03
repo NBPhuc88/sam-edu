@@ -226,15 +226,10 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $status    = $data['status'] ?? Constant::STUDENT_STATUS_ACTIVE;
-        $statusInt = Constant::STUDENT_STATUS_ACTIVE;
+        $statusInt = isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : Constant::STUDENT_STATUS_ACTIVE;
 
-        if (is_numeric($status)) {
-            $statusInt = (int) $status;
-        } elseif ($status === 'inactive' || $status === 'paused') {
-            $statusInt = Constant::STUDENT_STATUS_INACTIVE;
-        } elseif ($status === 'graduated' || $status === 'completed') {
-            $statusInt = Constant::STUDENT_STATUS_GRADUATED;
+        if (! in_array($statusInt, Constant::STUDENT_STATUSES, true)) {
+            $statusInt = Constant::STUDENT_STATUS_ACTIVE;
         }
 
         // Kiểm tra giới hạn số học sinh đang học và tạm nghỉ không vượt quá max_students
@@ -337,19 +332,11 @@ class StudentService implements StudentServiceInterface
             }
         }
 
-        $currentStatusInt = is_object($student->status) ? $student->status->value : (int) $student->status;
-        $newStatus        = $currentStatusInt;
+        $currentStatusInt = (int) $student->status;
+        $newStatus        = isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : $currentStatusInt;
 
-        if (isset($data['status'])) {
-            if (is_numeric($data['status'])) {
-                $newStatus = (int) $data['status'];
-            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = Constant::STUDENT_STATUS_INACTIVE;
-            } elseif ($data['status'] === 'graduated' || $data['status'] === 'completed') {
-                $newStatus = Constant::STUDENT_STATUS_GRADUATED;
-            } else {
-                $newStatus = Constant::STUDENT_STATUS_ACTIVE;
-            }
+        if (! in_array($newStatus, Constant::STUDENT_STATUSES, true)) {
+            $newStatus = $currentStatusInt;
         }
 
         // Học sinh đã tốt nghiệp không thể chuyển sang trạng thái khác (trừ Super Admin)

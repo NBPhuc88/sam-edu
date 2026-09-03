@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->center = Center::create([
         'name'       => 'Trung Tâm Test Exam Status',
         'code'       => 'CTR_EXAM_STATUS_01',
-        'status'     => 'active',
+        'status'     => Constant::CENTER_STATUS_ACTIVE,
         'expires_at' => now()->addYear(),
     ]);
 
@@ -27,7 +27,7 @@ beforeEach(function () {
         'email'        => 'teacher_exam_cmd@example.com',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'T_EX_CMD_001',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $this->subject = Subject::create([
@@ -37,7 +37,7 @@ beforeEach(function () {
         'total_sessions'   => 10,
         'duration_minutes' => 90,
         'tuition_fee'      => 1000000,
-        'status'           => 'active',
+        'status'           => Constant::SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->class = SchoolClass::create([
@@ -47,7 +47,7 @@ beforeEach(function () {
         'max_capacity' => 30,
         'start_date'   => now()->subMonths(1)->toDateString(),
         'end_date'     => now()->addMonths(2)->toDateString(),
-        'status'       => 1,
+        'status'       => Constant::CLASS_STATUS_ACTIVE,
     ]);
 
     $this->exam = Exam::create([
@@ -58,7 +58,7 @@ beforeEach(function () {
         'duration_minutes'      => 45,
         'max_score'             => 10,
         'pass_score'            => 5,
-        'status'                => 'published',
+        'status'                => Constant::EXAM_STATUS_PUBLISHED,
         'created_by_teacher_id' => $this->teacher->id,
     ]);
 });

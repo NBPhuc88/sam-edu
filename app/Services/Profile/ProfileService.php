@@ -28,9 +28,10 @@ class ProfileService implements ProfileServiceInterface
      */
     public function getProfileData(object $user, string $role): array
     {
-        $userCode  = $user->student_code ?? $user->teacher_code ?? $user->admin_code ?? 'ADM' . str_pad((string) $user->id, Constant::CODE_PAD_LENGTH, '0', STR_PAD_LEFT);
-        $roleLabel = match ($role) {
-            'admin'   => ($user->role ?? 'admin') === 'super_admin' ? 'Quản trị viên tối cao (Super Admin)' : 'Quản trị viên',
+        $userCode     = $user->student_code ?? $user->teacher_code ?? $user->admin_code ?? 'ADM' . str_pad((string) $user->id, Constant::CODE_PAD_LENGTH, '0', STR_PAD_LEFT);
+        $isAdminSuper = ($user instanceof Admin && $user->isSuperAdmin()) || (int) ($user->role ?? 0) === Constant::ROLE_SUPER_ADMIN;
+        $roleLabel    = match ($role) {
+            'admin'   => $isAdminSuper ? 'Quản trị viên tối cao (Super Admin)' : 'Quản trị viên',
             'teacher' => 'Giáo viên',
             'student' => 'Học sinh',
             default   => 'Thành viên',
@@ -166,8 +167,9 @@ class ProfileService implements ProfileServiceInterface
 
         $this->profileRepository->deleteVerificationOtp($role, (int) $user->id, 'change_password');
 
-        $roleLabel = match ($role) {
-            'admin'   => ($user->role ?? 'admin') === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên',
+        $isAdminSuper = ($user instanceof Admin && $user->isSuperAdmin()) || (int) ($user->role ?? 0) === Constant::ROLE_SUPER_ADMIN;
+        $roleLabel    = match ($role) {
+            'admin'   => $isAdminSuper ? 'Quản trị viên tối cao' : 'Quản trị viên',
             'teacher' => 'Giáo viên',
             'student' => 'Học sinh',
             default   => 'Tài khoản',
@@ -438,8 +440,9 @@ class ProfileService implements ProfileServiceInterface
         $this->profileRepository->deleteVerificationOtp($role, (int) $user->id, 'change_email_old');
         $this->profileRepository->deleteVerificationOtp($role, (int) $user->id, 'change_email_new');
 
-        $roleLabel = match ($role) {
-            'admin'   => ($user->role ?? 'admin') === 'super_admin' ? 'Quản trị viên tối cao' : 'Quản trị viên',
+        $isAdminSuper = ($user instanceof Admin && $user->isSuperAdmin()) || (int) ($user->role ?? 0) === Constant::ROLE_SUPER_ADMIN;
+        $roleLabel    = match ($role) {
+            'admin'   => $isAdminSuper ? 'Quản trị viên tối cao' : 'Quản trị viên',
             'teacher' => 'Giáo viên',
             'student' => 'Học sinh',
             default   => 'Tài khoản',

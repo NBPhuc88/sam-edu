@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
@@ -12,7 +13,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test PracticeExamService',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 });
 

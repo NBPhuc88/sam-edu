@@ -54,7 +54,7 @@ interface Student {
     parent_phone: string | null;
     pivot?: {
         enrolled_at: string;
-        status: string;
+        status: number;
         note: string | null;
     };
 }

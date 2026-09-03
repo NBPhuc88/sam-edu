@@ -248,20 +248,10 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
-        $status = Constant::CLASS_STATUS_ACTIVE;
+        $status = isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : Constant::CLASS_STATUS_ACTIVE;
 
-        if (isset($data['status'])) {
-            if (is_numeric($data['status'])) {
-                $status = (int) $data['status'];
-            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $status = Constant::CLASS_STATUS_INACTIVE;
-            } elseif ($data['status'] === 'completed') {
-                $status = Constant::CLASS_STATUS_COMPLETED;
-            } elseif ($data['status'] === 'closed') {
-                $status = Constant::CLASS_STATUS_CLOSED;
-            } else {
-                $status = Constant::CLASS_STATUS_ACTIVE;
-            }
+        if (! in_array($status, Constant::CLASS_STATUSES, true)) {
+            $status = Constant::CLASS_STATUS_ACTIVE;
         }
 
         // Kiểm tra giới hạn số lớp đang hoạt động và tạm dừng không vượt quá max_classes
@@ -337,21 +327,11 @@ class SchoolClassService implements SchoolClassServiceInterface
             }
         }
 
-        $currentStatusInt = is_object($schoolClass->status) ? $schoolClass->status->value : (int) $schoolClass->status;
-        $newStatus        = $currentStatusInt;
+        $currentStatusInt = (int) $schoolClass->status;
+        $newStatus        = isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : $currentStatusInt;
 
-        if (isset($data['status'])) {
-            if (is_numeric($data['status'])) {
-                $newStatus = (int) $data['status'];
-            } elseif ($data['status'] === 'inactive' || $data['status'] === 'paused') {
-                $newStatus = Constant::CLASS_STATUS_INACTIVE;
-            } elseif ($data['status'] === 'completed') {
-                $newStatus = Constant::CLASS_STATUS_COMPLETED;
-            } elseif ($data['status'] === 'closed') {
-                $newStatus = Constant::CLASS_STATUS_CLOSED;
-            } else {
-                $newStatus = Constant::CLASS_STATUS_ACTIVE;
-            }
+        if (! in_array($newStatus, Constant::CLASS_STATUSES, true)) {
+            $newStatus = $currentStatusInt;
         }
 
         // Kiểm tra không cho sửa môn khi lớp không ở trạng thái hoạt động

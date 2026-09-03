@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassExam;
@@ -15,14 +16,14 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test ClassExamService',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->superAdmin = Admin::create([
         'username'   => 'super_admin_cexam_' . random_int(1000, 9999),
         'full_name'  => 'Super Admin ClassExam',
         'password'   => Hash::make('password123'),
-        'role'       => \App\Enums\Constant::ROLE_SUPER_ADMIN,
-        'status'     => \App\Enums\Constant::STATUS_ACTIVE,
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
         'admin_code' => 'ADM' . random_int(1000000, 9999999),
     ]);
     $this->schoolClass = SchoolClass::create([

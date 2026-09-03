@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Teacher;
 use App\Services\Teacher\TeacherExportImportService;
@@ -10,7 +11,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test TeacherCSV',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 });
 
@@ -24,7 +25,7 @@ test('exportTeachersCsv generates headers and teacher data rows without center c
         'teacher_code' => 'GV9990001',
         'email'        => 'mai.export@example.com',
         'password'     => Hash::make('password123'),
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $generator = $this->service->exportTeachersCsv($this->center->id, false);
@@ -46,7 +47,7 @@ test('exportTeachersCsv includes center column for super admin', function () {
         'teacher_code' => 'GV9990002',
         'email'        => 'hoa.export@example.com',
         'password'     => Hash::make('password123'),
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     $generator = $this->service->exportTeachersCsv($this->center->id, true);
@@ -81,7 +82,7 @@ test('importTeachersCsv by super admin resolves center from center code column',
     $anotherCenter = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Another Center',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
 
     $tmpFile = tempnam(sys_get_temp_dir(), 'tch_import_sa_') . '.csv';

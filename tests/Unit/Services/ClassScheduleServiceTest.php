@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassSubject;
@@ -16,7 +17,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test ScheduleService',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->teacher = Teacher::create([
         'center_id'    => $this->center->id,
@@ -26,7 +27,7 @@ beforeEach(function () {
         'full_name'    => 'Teacher Sched',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => \App\Enums\Constant::TEACHER_STATUS_ACTIVE,
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
     $this->schoolClass = SchoolClass::create([
         'center_id'  => $this->center->id,

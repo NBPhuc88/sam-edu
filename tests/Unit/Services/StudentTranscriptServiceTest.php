@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\Student;
 use App\Services\Transcript\StudentTranscriptService;
@@ -10,7 +11,7 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test StudentTranscript',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->student = Student::create([
         'center_id'    => $this->center->id,
@@ -20,7 +21,7 @@ beforeEach(function () {
         'full_name'    => 'Student Transcript Test',
         'student_code' => 'HS' . random_int(1000000, 9999999),
         'password'     => Hash::make('password123'),
-        'status'       => 1,
+        'status'       => Constant::STUDENT_STATUS_ACTIVE,
     ]);
 });
 

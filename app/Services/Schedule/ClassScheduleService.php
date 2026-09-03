@@ -892,7 +892,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                     'off_days'             => $normalizedOffDays,
                     'extra_days'           => $normalizedExtraDays,
                     'room_id'              => ! empty($data['room_id']) ? (int) $data['room_id'] : null,
-                    'status'               => isset($data['status']) ? (is_numeric($data['status']) ? (int) $data['status'] : ($data['status'] === 'inactive' ? Constant::SCHEDULE_STATUS_INACTIVE : Constant::SCHEDULE_STATUS_ACTIVE)) : Constant::SCHEDULE_STATUS_ACTIVE,
+                    'status'               => isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : Constant::SCHEDULE_STATUS_ACTIVE,
                 ]
             );
 
@@ -1217,7 +1217,7 @@ class ClassScheduleService implements ClassScheduleServiceInterface
                 'teacher_id' => $teacherId,
                 'start_date' => $startDate,
                 'end_date'   => $finalEndDate,
-                'status'     => isset($data['status']) ? (is_numeric($data['status']) ? (int) $data['status'] : ($data['status'] === 'inactive' ? Constant::CLASS_SUBJECT_STATUS_INACTIVE : Constant::CLASS_SUBJECT_STATUS_ACTIVE)) : Constant::CLASS_SUBJECT_STATUS_ACTIVE,
+                'status'     => isset($data['status']) && is_numeric($data['status']) ? (int) $data['status'] : Constant::CLASS_SUBJECT_STATUS_ACTIVE,
             ]);
 
             if ($classSubject->schoolClass) {

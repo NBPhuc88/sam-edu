@@ -140,16 +140,8 @@ class StudentRepository implements StudentRepositoryInterface
             });
         }
 
-        if ($status !== null && $status !== '' && $status !== '') {
-            if (is_numeric($status)) {
-                $query->where('status', (int) $status);
-            } elseif ($status === 'active') {
-                $query->where('status', Constant::STUDENT_STATUS_ACTIVE);
-            } elseif ($status === 'inactive' || $status === 'locked' || $status === 'suspended') {
-                $query->where('status', Constant::STUDENT_STATUS_INACTIVE);
-            } elseif ($status === 'graduated') {
-                $query->where('status', Constant::STUDENT_STATUS_GRADUATED);
-            }
+        if (! empty($status) && is_numeric($status)) {
+            $query->where('status', (int) $status);
         }
 
         if ($search !== null && trim($search) !== '') {

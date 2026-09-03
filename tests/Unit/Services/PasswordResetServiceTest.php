@@ -67,12 +67,12 @@ test('verifyOtpAndLogin succeeds with valid and non-expired OTP', function () {
         'password'     => Hash::make('password'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
         'email'        => 'teacher_verify@example.com',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     DB::table('password_reset_otps')->insert([
         'email'        => 'teacher_verify@example.com',
-        'account_type' => 'teacher',
+        'account_type' => Constant::ACCOUNT_TYPE_TEACHER,
         'otp_hash'     => Hash::make('123456'),
         'expires_at'   => now()->addMinutes(15),
         'created_at'   => now(),
@@ -98,12 +98,12 @@ test('verifyOtpAndLogin fails with wrong OTP', function () {
         'password'     => Hash::make('password'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
         'email'        => 'teacher_wrong_otp@example.com',
-        'status'       => 'active',
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
 
     DB::table('password_reset_otps')->insert([
         'email'        => 'teacher_wrong_otp@example.com',
-        'account_type' => 'teacher',
+        'account_type' => Constant::ACCOUNT_TYPE_TEACHER,
         'otp_hash'     => Hash::make('123456'),
         'expires_at'   => now()->addMinutes(15),
         'created_at'   => now(),

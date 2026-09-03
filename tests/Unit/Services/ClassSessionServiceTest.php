@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Constant;
 use App\Models\Center;
 use App\Models\ClassSession;
 use App\Models\ClassSubject;
@@ -15,13 +16,13 @@ beforeEach(function () {
     $this->center  = Center::create([
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test SessionService',
-        'status' => 'active',
+        'status' => Constant::CENTER_STATUS_ACTIVE,
     ]);
     $this->schoolClass = SchoolClass::create([
         'center_id' => $this->center->id,
         'code'      => 'CLS' . random_int(1000000, 9999999),
         'name'      => 'Lop Session Test',
-        'status'    => 1,
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
     ]);
     $this->subject = Subject::create([
         'center_id' => $this->center->id,
@@ -36,7 +37,7 @@ beforeEach(function () {
         'full_name'    => 'Teacher Sess Test',
         'password'     => Hash::make('password123'),
         'teacher_code' => 'GV' . random_int(1000000, 9999999),
-        'status'       => \App\Enums\Constant::TEACHER_STATUS_ACTIVE,
+        'status'       => Constant::TEACHER_STATUS_ACTIVE,
     ]);
     $this->room = Room::create([
         'center_id' => $this->center->id,
@@ -48,7 +49,7 @@ beforeEach(function () {
         'class_id'   => $this->schoolClass->id,
         'subject_id' => $this->subject->id,
         'teacher_id' => $this->teacher->id,
-        'status'     => 'active',
+        'status'     => Constant::CLASS_SUBJECT_STATUS_ACTIVE,
     ]);
 
     $this->session = ClassSession::create([
@@ -58,7 +59,7 @@ beforeEach(function () {
         'session_date'     => now()->addDays(5)->toDateString(),
         'start_time'       => '08:00:00',
         'end_time'         => '10:00:00',
-        'status'           => 'scheduled',
+        'status'           => Constant::SESSION_STATUS_SCHEDULED,
     ]);
 });
 
