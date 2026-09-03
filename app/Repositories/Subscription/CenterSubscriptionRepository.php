@@ -31,4 +31,24 @@ class CenterSubscriptionRepository implements CenterSubscriptionRepositoryInterf
             ->orderBy('created_at', 'desc')
             ->get();
     }
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function update(int $id, array $data): CenterSubscription
+    {
+        $subscription = CenterSubscription::findOrFail($id);
+        $subscription->update($data);
+
+        return $subscription->fresh();
+    }
+
+    public function delete(int $id): bool
+    {
+        $subscription = CenterSubscription::findOrFail($id);
+
+        return (bool) $subscription->delete();
+    }
 }

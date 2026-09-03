@@ -67,6 +67,33 @@ interface CenterServiceInterface
     public function getCenterSubscriptions(int $centerId): Collection;
 
     /**
+     * Update an existing subscription record and recalculate center capacity and expiration.
+     *
+     * @param  int                  $centerId
+     * @param  int                  $subscriptionId
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function updateCenterSubscription(int $centerId, int $subscriptionId, array $data): CenterSubscription;
+
+    /**
+     * Delete a subscription record and recalculate center capacity and expiration.
+     *
+     * @param  int  $centerId
+     * @param  int  $subscriptionId
+     * @return bool
+     */
+    public function deleteCenterSubscription(int $centerId, int $subscriptionId): bool;
+
+    /**
+     * Recalculate center's expires_at, subscription_plan_id, max_students, max_classes based on remaining subscriptions.
+     *
+     * @param  int    $centerId
+     * @return Center
+     */
+    public function recalculateCenterSubscription(int $centerId): Center;
+
+    /**
      * Tự động chuyển trạng thái các trung tâm hết hạn sang expired.
      *
      * @return int Số trung tâm đã cập nhật

@@ -6,6 +6,7 @@ use App\Http\Requests\Center\FilterCenterRequest;
 use App\Http\Requests\Center\RenewCenterSubscriptionRequest;
 use App\Http\Requests\Center\StoreCenterRequest;
 use App\Http\Requests\Center\UpdateCenterRequest;
+use App\Http\Requests\Center\UpdateCenterSubscriptionRequest;
 use App\Models\Admin;
 use App\Services\Center\CenterServiceInterface;
 use Illuminate\Http\RedirectResponse;
@@ -185,5 +186,46 @@ class CenterController extends Controller
         $this->centerService->deleteCenter($id);
 
         return back()->with('success', 'Xóa trung tâm thành công!');
+    }
+
+    /**
+     * Chỉnh sửa một bản ghi lịch sử gói cước của trung tâm (Super Admin only).
+     *
+     * @param UpdateCenterSubscriptionRequest $request
+     * @param int                             $id
+     * @param int                             $subscriptionId
+     */
+    public function updateSubscription(UpdateCenterSubscriptionRequest $request, int $id, int $subscriptionId): RedirectResponse
+    {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Chỉ Admin hệ thống mới có quyền chỉnh sửa lịch sử gói cước của trung tâm.');
+        }
+
+        $this->centerService->updateCenterSubscription($id, $subscriptionId, $request->validated());
+
+        return back()->with('success', 'Cập nhật lịch sử gói cước và đồng bộ trung tâm thành công!');
+    }
+
+    /**
+     * Xóa một bản ghi lịch sử gói cước của trung tâm (Super Admin only).
+     *
+     * @param int $id
+     * @param int $subscriptionId
+     */
+    public function destroySubscription(int $id, int $subscriptionId): RedirectResponse
+    {
+        /** @var Admin|null $currentAdmin */
+        $currentAdmin = Auth::guard('admin')->user();
+
+        if ($currentAdmin && ! $currentAdmin->isSuperAdmin()) {
+            abort(403, 'Chỉ Admin hệ thống mới có quyền xóa lịch sử gói cước của trung tâm.');
+        }
+
+        $this->centerService->deleteCenterSubscription($id, $subscriptionId);
+
+        return back()->with('success', 'Đã xóa bản ghi lịch sử gói cước và tính toán lại thông số trung tâm!');
     }
 }

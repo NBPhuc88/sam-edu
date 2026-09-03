@@ -94,8 +94,22 @@ class CenterService implements CenterServiceInterface
             if ($plan) {
                 $data['subscription_plan_id'] = (int) $plan->id;
                 $data['plan_type']            = $plan->plan_type;
-                $data['max_classes']          = $plan->max_classes;
-                $data['max_students']         = $plan->max_students;
+                $data['max_classes']          = $data['max_classes'] ?? $plan->max_classes;
+                $data['max_students']         = $data['max_students'] ?? $plan->max_students;
+            }
+        }
+
+        // Tự động đồng bộ trạng thái khi Super Admin sửa trực tiếp ngày hết hạn
+        if (array_key_exists('expires_at', $data)) {
+            if (! empty($data['expires_at'])) {
+                $exp                = Carbon::parse($data['expires_at']);
+                $data['expires_at'] = $exp;
+
+                if (! isset($data['status'])) {
+                    $data['status'] = $exp->isPast() ? Constant::CENTER_STATUS_EXPIRED : Constant::CENTER_STATUS_ACTIVE;
+                }
+            } else {
+                $data['expires_at'] = null;
             }
         }
 
@@ -205,6 +219,114 @@ class CenterService implements CenterServiceInterface
     public function getCenterSubscriptions(int $centerId): Collection
     {
         return $this->centerSubscriptionRepository->getByCenterId($centerId);
+    }
+
+    /**
+     * Update an existing subscription record and recalculate center capacity and expiration.
+     *
+     * @param  int                  $centerId
+     * @param  int                  $subscriptionId
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function updateCenterSubscription(int $centerId, int $subscriptionId, array $data): CenterSubscription
+    {
+        return DB::transaction(function () use ($centerId, $subscriptionId, $data) {
+            $subscription = $this->centerSubscriptionRepository->find($subscriptionId);
+
+            if (! $subscription || (int) $subscription->center_id !== $centerId) {
+                throw ValidationException::withMessages([
+                    'subscription' => 'Bản ghi gói cước không tồn tại hoặc không thuộc trung tâm này.',
+                ]);
+            }
+
+            if (! empty($data['plan_id'])) {
+                $plan = $this->subscriptionPlanRepository->findById((int) $data['plan_id']);
+
+                if ($plan) {
+                    $data['plan_name'] = $plan->name;
+                }
+            }
+
+            if (! empty($data['starts_at'])) {
+                $data['starts_at'] = Carbon::parse($data['starts_at']);
+            }
+
+            if (! empty($data['ends_at'])) {
+                $data['ends_at'] = Carbon::parse($data['ends_at']);
+            }
+
+            $updatedSubscription = $this->centerSubscriptionRepository->update($subscriptionId, $data);
+
+            $this->recalculateCenterSubscription($centerId);
+
+            return $updatedSubscription;
+        });
+    }
+
+    /**
+     * Delete a subscription record and recalculate center capacity and expiration.
+     *
+     * @param  int  $centerId
+     * @param  int  $subscriptionId
+     * @return bool
+     */
+    public function deleteCenterSubscription(int $centerId, int $subscriptionId): bool
+    {
+        return DB::transaction(function () use ($centerId, $subscriptionId) {
+            $subscription = $this->centerSubscriptionRepository->find($subscriptionId);
+
+            if (! $subscription || (int) $subscription->center_id !== $centerId) {
+                throw ValidationException::withMessages([
+                    'subscription' => 'Bản ghi gói cước không tồn tại hoặc không thuộc trung tâm này.',
+                ]);
+            }
+
+            $deleted = $this->centerSubscriptionRepository->delete($subscriptionId);
+
+            $this->recalculateCenterSubscription($centerId);
+
+            return $deleted;
+        });
+    }
+
+    /**
+     * Recalculate center's expires_at, subscription_plan_id, max_students, max_classes based on remaining subscriptions.
+     *
+     * @param  int    $centerId
+     * @return Center
+     */
+    public function recalculateCenterSubscription(int $centerId): Center
+    {
+        $center        = $this->centerRepository->find($centerId);
+        $subscriptions = $this->centerSubscriptionRepository->getByCenterId($centerId);
+
+        if ($subscriptions->isNotEmpty()) {
+            // Ưu tiên bản ghi active có ends_at xa nhất, nếu không có thì lấy bản ghi có ends_at xa nhất
+            $activeSubs = $subscriptions->filter(fn ($sub) => (int) $sub->status === Constant::SUBSCRIPTION_STATUS_ACTIVE);
+            /** @var CenterSubscription $targetSub */
+            $targetSub = $activeSubs->sortByDesc('ends_at')->first() ?? $subscriptions->sortByDesc('ends_at')->first();
+
+            $maxEndsAt = $subscriptions->filter(fn ($sub) => (int) $sub->status !== Constant::SUBSCRIPTION_STATUS_CANCELLED)->max('ends_at');
+            $endsAt    = $maxEndsAt ? Carbon::parse($maxEndsAt) : null;
+
+            $plan = $this->subscriptionPlanRepository->findById((int) $targetSub->plan_id);
+
+            $isExpired = $endsAt && $endsAt->isPast();
+
+            $updateData = [
+                'subscription_plan_id' => (int) $targetSub->plan_id,
+                'plan_type'            => $plan?->plan_type ?? Constant::PLAN_TYPE_FREE,
+                'max_students'         => $plan?->max_students ?? $center->max_students,
+                'max_classes'          => $plan?->max_classes ?? $center->max_classes,
+                'expires_at'           => $endsAt,
+                'status'               => $isExpired ? Constant::CENTER_STATUS_EXPIRED : Constant::CENTER_STATUS_ACTIVE,
+            ];
+
+            return $this->centerRepository->update($centerId, $updateData);
+        }
+
+        return $center;
     }
 
     public function deactivateExpiredCenters(): int

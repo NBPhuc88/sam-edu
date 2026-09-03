@@ -21,4 +21,13 @@ interface CenterSubscriptionRepositoryInterface
      * @return Collection<int, CenterSubscription>
      */
     public function getByCenterId(int $centerId): Collection;
+
+    /**
+     * @param  int                  $id
+     * @param  array<string, mixed> $data
+     * @return CenterSubscription
+     */
+    public function update(int $id, array $data): CenterSubscription;
+
+    public function delete(int $id): bool;
 }

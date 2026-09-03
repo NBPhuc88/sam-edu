@@ -418,12 +418,12 @@ export const CenterForm: React.FC<CenterFormProps> = ({
                         <DatePicker
                             value={formData.expires_at}
                             onChange={(val) => setFormData((prev) => ({ ...prev, expires_at: val }))}
-                            disabled={!isSuperAdmin || mode === 'edit'}
+                            disabled={!isSuperAdmin}
                             className="!py-3 !text-sm w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
-                        {mode === 'edit' && (
+                        {isSuperAdmin && (
                             <p className="mt-1.5 text-xs text-gray-500">
-                                💡 Ngày hết hạn được tự động cập nhật khi Gia hạn hoặc Đổi gói cước.
+                                💡 Super Admin có thể tùy ý điều chỉnh ngày hết hạn trực tiếp hoặc thông qua chức năng Gia hạn / Đổi gói cước.
                             </p>
                         )}
                     </div>

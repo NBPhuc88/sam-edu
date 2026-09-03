@@ -149,6 +149,8 @@ Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.
         Route::patch('/{id}', [CenterController::class, 'update'])->name('update');
         Route::delete('/{id}', [CenterController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/renew-subscription', [CenterController::class, 'renewSubscription'])->name('renew-subscription');
+        Route::patch('/{id}/subscriptions/{subscriptionId}', [CenterController::class, 'updateSubscription'])->name('subscriptions.update');
+        Route::delete('/{id}/subscriptions/{subscriptionId}', [CenterController::class, 'destroySubscription'])->name('subscriptions.destroy');
     });
 
     // Student Management Routes (CRUD, Export & Import)
