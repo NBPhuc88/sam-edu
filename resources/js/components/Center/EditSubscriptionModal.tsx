@@ -167,7 +167,7 @@ export const EditSubscriptionModal: React.FC<EditSubscriptionModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Chỉnh Sửa Bản Ghi Lịch Sử Gói Cước" size="md">
+        <Modal isOpen={isOpen} onClose={onClose} title="Chỉnh Sửa Bản Ghi Lịch Sử Gói Cước" maxWidth="md">
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Plan Selection */}
                 <div>

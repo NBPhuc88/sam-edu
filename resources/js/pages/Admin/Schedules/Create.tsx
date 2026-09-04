@@ -399,12 +399,8 @@ export default function ScheduleCreate({
     const classStartDate = currentClass?.start_date ? toISODateString(currentClass.start_date) : '';
     const centerId = currentClass ? Number(currentClass.center_id) : null;
 
-    const classSubjects = React.useMemo(() => {
-        return (currentClass?.class_subjects || (currentClass as any)?.classSubjects || []) as {
-            id: number;
-            subject?: Subject;
-            teacher?: Teacher;
-        }[];
+    const classSubjects = React.useMemo<ClassSubjectItem[]>(() => {
+        return currentClass?.class_subjects || currentClass?.classSubjects || [];
     }, [currentClass]);
 
     const displaySubjects = React.useMemo(() => {
@@ -1991,4 +1987,3 @@ export default function ScheduleCreate({
         </AppLayout>
     );
 }
-

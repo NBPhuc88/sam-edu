@@ -66,7 +66,7 @@ class AttendanceService implements AttendanceServiceInterface
                 'email'                => $student->email,
                 'parent_phone'         => $student->parent_phone,
                 'gender'               => $student->gender,
-                'status'               => $att ? $att->status : 'present',
+                'status'               => $att ? (int) $att->status : Constant::ATTENDANCE_STATUS_PRESENT,
                 'note'                 => $att ? $att->note : '',
                 'check_in_at'          => $att?->check_in_at?->format('d-m-Y H:i'),
                 'marked_by_teacher_id' => $att?->marked_by_teacher_id,
@@ -82,11 +82,11 @@ class AttendanceService implements AttendanceServiceInterface
             $session->start_time
         );
 
-        $sessionDate              = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date?->toDateString());
-        $sessionStart             = Carbon::parse($sessionDate . ' ' . $session->start_time);
-        $isStartedOrPast          = ! $sessionStart->isFuture();
-        $isCancelledOrRescheduled = in_array((int) $session->status, [Constant::SESSION_STATUS_CANCELLED, Constant::SESSION_STATUS_RESCHEDULED], true);
-        $canTakeAttendance        = $isStartedOrPast && ! $isCancelledOrRescheduled;
+        $sessionDate       = $session->getRawOriginal('session_date') ?? (is_string($session->session_date) ? $session->session_date : $session->session_date?->toDateString());
+        $sessionStart      = Carbon::parse($sessionDate . ' ' . $session->start_time);
+        $isStartedOrPast   = ! $sessionStart->isFuture();
+        $isCancelled       = (int) $session->status === Constant::SESSION_STATUS_CANCELLED;
+        $canTakeAttendance = $isStartedOrPast && ! $isCancelled;
 
         return [
             'session'           => $session,

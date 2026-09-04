@@ -66,6 +66,7 @@ interface SchoolClass {
     name: string;
     code: string;
     center_id: number;
+    status: number;
     start_date?: string | null;
     end_date?: string | null;
     class_subjects?: ClassSubjectItem[];
@@ -414,7 +415,7 @@ export default function ScheduleEdit({
     const hasOtherActiveScheduleForSubject = React.useMemo(() => {
         if (!currentClass) return false;
         const currentClassSubjects = currentClass.class_subjects || currentClass.classSubjects || [];
-        const currentSubjectId = schedule.class_subject?.subject_id || schedule.classSubject?.subject_id;
+        const currentSubjectId = schedule.class_subject?.subject_id;
         const matchedCs = currentClassSubjects.find((cs) => Number(cs.subject_id || cs.subject?.id) === Number(currentSubjectId));
         if (!matchedCs) return false;
         const schedules = matchedCs.class_schedules || matchedCs.classSchedules || [];

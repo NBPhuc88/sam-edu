@@ -2,6 +2,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SESSION_STATUS_CANCELLED } from '@/constants/enums';
 import { usePermission } from '@/hooks/usePermission';
 import AppLayout from '@/layouts/AppLayout';
 import { toISODateString } from '@/lib/date';
@@ -238,9 +239,8 @@ export default function AttendanceShowPage({
         return false;
     }, [initialIsStartedOrPast, session.session_date, session.start_time]);
 
-    const isCancelled = Number(session.status) === 4;
-    const isRescheduled = Number(session.status) === 5;
-    const isAttendanceAllowed = canTakeAttendance ?? (!isCancelled && !isRescheduled && (isSessionStarted || [2, 3].includes(Number(session.status))));
+    const isCancelled = Number(session.status) === SESSION_STATUS_CANCELLED;
+    const isAttendanceAllowed = canTakeAttendance ?? (!isCancelled && isSessionStarted);
 
     return (
         <AppLayout title={`Điểm Danh: ${subject?.name || 'Môn học'} - ${schoolClass?.name || 'Lớp học'}`}>
@@ -254,10 +254,6 @@ export default function AttendanceShowPage({
                             {isCancelled ? (
                                 <>
                                     <strong className="font-semibold">Buổi học đã bị hủy:</strong> Không thể thực hiện điểm danh cho buổi học đã hủy.
-                                </>
-                            ) : isRescheduled ? (
-                                <>
-                                    <strong className="font-semibold">Buổi học đã đổi lịch:</strong> Không thể thực hiện điểm danh cho buổi học đã đổi lịch.
                                 </>
                             ) : (
                                 <>

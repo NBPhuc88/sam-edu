@@ -4,6 +4,9 @@ import Card from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
 import {
     CLASS_STATUS_ACTIVE,
+    CLASS_STATUS_INACTIVE,
+    CLASS_STATUS_COMPLETED,
+    CLASS_STATUS_CLOSED,
     SESSION_STATUS_CANCELLED,
     SESSION_STATUS_COMPLETED,
     SESSION_STATUS_IN_PROGRESS,
@@ -190,13 +193,13 @@ export default function ClassSchedulePage({
 
     const getStatusBadge = (status: number) => {
         switch (status) {
-            case 1:
+            case CLASS_STATUS_ACTIVE:
                 return <Badge variant="active">Đang mở lớp</Badge>;
-            case 2:
+            case CLASS_STATUS_COMPLETED:
                 return <Badge variant="pending">Đã hoàn thành</Badge>;
-            case 3:
+            case CLASS_STATUS_CLOSED:
                 return <Badge variant="danger">Đã đóng</Badge>;
-            case 0:
+            case CLASS_STATUS_INACTIVE:
                 return <Badge variant="expired">Tạm dừng</Badge>;
             default:
                 return <Badge variant="info">Chưa rõ</Badge>;

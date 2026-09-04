@@ -3,6 +3,7 @@
 use App\Enums\Constant;
 use App\Models\Admin;
 use App\Models\Center;
+use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Services\Dashboard\DashboardService;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,27 @@ beforeEach(function () {
         'code'   => 'CTR' . random_int(1000000, 9999999),
         'name'   => 'Center Test DashboardService',
         'status' => Constant::STATUS_ACTIVE,
+    ]);
+});
+
+test('class status chart uses current numeric constants', function () {
+    foreach (Constant::CLASS_STATUSES as $status) {
+        SchoolClass::create([
+            'center_id' => $this->center->id,
+            'code'      => 'CHART-' . $status,
+            'name'      => 'Chart class ' . $status,
+            'status'    => $status,
+        ]);
+    }
+
+    $method = new ReflectionMethod(DashboardService::class, 'getClassStatusPieChart');
+    $chart  = collect($method->invoke($this->service, [$this->center->id]))->pluck('value', 'name')->all();
+
+    expect($chart)->toBe([
+        'Đang hoạt động' => 1,
+        'Tạm dừng'       => 1,
+        'Đã hoàn thành'  => 1,
+        'Đã đóng'        => 1,
     ]);
 });
 

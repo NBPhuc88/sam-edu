@@ -70,6 +70,30 @@ beforeEach(function () {
     ]);
 });
 
+test('attendance data uses numeric defaults and respects session status', function (int $status, bool $allowed) {
+    $this->session->update(['status' => $status]);
+
+    $data = $this->service->getSessionAttendanceData($this->session->id, $this->teacher);
+
+    expect($data['canTakeAttendance'])->toBe($allowed)
+        ->and($data['students']->first()['status'])->toBe(Constant::ATTENDANCE_STATUS_PRESENT)
+        ->and($data['presentCount'])->toBe(1);
+})->with([
+    'scheduled'   => [Constant::SESSION_STATUS_SCHEDULED, true],
+    'in progress' => [Constant::SESSION_STATUS_IN_PROGRESS, true],
+    'completed'   => [Constant::SESSION_STATUS_COMPLETED, true],
+    'cancelled'   => [Constant::SESSION_STATUS_CANCELLED, false],
+    'unattended'  => [Constant::SESSION_STATUS_UNATTENDED, true],
+]);
+
+test('attendance data disallows sessions that have not started', function () {
+    $this->session->update(['session_date' => now()->addDay()->toDateString()]);
+
+    $data = $this->service->getSessionAttendanceData($this->session->id, $this->teacher);
+
+    expect($data['canTakeAttendance'])->toBeFalse();
+});
+
 test('saveAttendance saves attendance status and marks session completed', function () {
     $attendances = [
         [

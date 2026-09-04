@@ -193,8 +193,8 @@ export const Edit: React.FC<EditProps> = ({
                                                             : sub.status === SUBSCRIPTION_STATUS_EXPIRED
                                                               ? 'danger'
                                                               : sub.status === SUBSCRIPTION_STATUS_CANCELLED
-                                                                ? 'secondary'
-                                                                : 'warning'
+                                                                ? 'info'
+                                                                : 'expired'
                                                     }
                                                 >
                                                     {SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status}
@@ -261,7 +261,7 @@ export const Edit: React.FC<EditProps> = ({
                 isOpen={!!deletingSub}
                 onClose={() => setDeletingSub(null)}
                 title="Xác Nhận Xóa Bản Ghi Lịch Sử Gói Cước"
-                size="sm"
+                maxWidth="sm"
             >
                 <div className="space-y-4 text-sm text-gray-700">
                     <p>
@@ -294,5 +294,4 @@ export const Edit: React.FC<EditProps> = ({
 };
 
 export default Edit;
-
 

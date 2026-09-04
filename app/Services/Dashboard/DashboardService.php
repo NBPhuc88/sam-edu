@@ -866,11 +866,12 @@ class DashboardService implements DashboardServiceInterface
             ->select('status')
             ->get();
 
-        $activeCount    = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 1)->count();
-        $inactiveCount  = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 0)->count();
-        $completedCount = $classes->filter(fn ($c) => (int) ($c->getRawOriginal('status') ?? ($c->status->value ?? $c->status)) === 2)->count();
+        $activeCount    = $classes->where('status', Constant::CLASS_STATUS_ACTIVE)->count();
+        $inactiveCount  = $classes->where('status', Constant::CLASS_STATUS_INACTIVE)->count();
+        $completedCount = $classes->where('status', Constant::CLASS_STATUS_COMPLETED)->count();
+        $closedCount    = $classes->where('status', Constant::CLASS_STATUS_CLOSED)->count();
 
-        if ($activeCount === 0 && $inactiveCount === 0 && $completedCount === 0) {
+        if ($activeCount === 0 && $inactiveCount === 0 && $completedCount === 0 && $closedCount === 0) {
             return [
                 ['name' => 'Đang hoạt động', 'value' => 1, 'color' => '#10b981'],
             ];
@@ -888,6 +889,10 @@ class DashboardService implements DashboardServiceInterface
 
         if ($completedCount > 0) {
             $result[] = ['name' => 'Đã hoàn thành', 'value' => $completedCount, 'color' => '#3b82f6'];
+        }
+
+        if ($closedCount > 0) {
+            $result[] = ['name' => 'Đã đóng', 'value' => $closedCount, 'color' => '#6b7280'];
         }
 
         return $result;
