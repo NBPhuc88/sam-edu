@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\Constant;
 use App\Models\Center;
+use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use App\Models\SeoMetadata;
 use App\Models\SubscriptionPlan;
@@ -155,9 +156,13 @@ class HandleInertiaRequests extends Middleware
                 default   => 1,
             };
 
-            $recipients = NotificationRecipient::where('recipient_type', $numericRecipientType)
+            $notificationsTable = (new Notification())->getTable();
+            $recipientsTable    = (new NotificationRecipient())->getTable();
+            $recipients         = NotificationRecipient::where('recipient_type', $numericRecipientType)
                 ->where('recipient_id', $user->id)
                 ->with(['notification.center'])
+                ->orderByDesc(Notification::select('updated_at')
+                    ->whereColumn("{$notificationsTable}.id", "{$recipientsTable}.notification_id"))
                 ->latest('id')
                 ->limit(10)
                 ->get();
@@ -168,10 +173,11 @@ class HandleInertiaRequests extends Middleware
                 ->count();
 
             $userNotifications = $recipients->map(function (NotificationRecipient $recipient) {
-                $notif   = $recipient->notification;
-                $rawType = (int) ($notif?->type ?? Constant::NOTIFICATION_TYPE_GENERAL);
+                $notif       = $recipient->notification;
+                $rawType     = (int) ($notif?->type ?? Constant::NOTIFICATION_TYPE_GENERAL);
+                $displayedAt = $notif?->chat_class_id !== null ? $notif->updated_at : $notif?->created_at;
 
-                if ($rawType === Constant::NOTIFICATION_TYPE_GENERAL) {
+                if ($notif?->chat_class_id === null && $rawType === Constant::NOTIFICATION_TYPE_GENERAL) {
                     $title   = mb_strtolower($notif?->title ?? '');
                     $content = mb_strtolower($notif?->content ?? '');
 
@@ -185,14 +191,16 @@ class HandleInertiaRequests extends Middleware
                 return [
                     'id'              => $recipient->id,
                     'notification_id' => $recipient->notification_id,
+                    'is_chat'         => $notif?->chat_class_id !== null,
                     'title'           => $notif?->title ?? 'Thông báo',
                     'content'         => $notif?->content ?? '',
                     'type'            => $rawType,
                     'center_id'       => $notif?->center_id ?? null,
+                    'chat_class_id'   => $notif?->chat_class_id,
                     'center_name'     => $notif?->center?->name ?? null,
                     'is_read'         => $recipient->read_at !== null,
                     'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
-                    'created_at'      => $notif?->created_at ? $notif->created_at->diffForHumans() : $recipient->created_at->diffForHumans(),
+                    'created_at'      => $displayedAt ? $displayedAt->diffForHumans() : $recipient->created_at->diffForHumans(),
                 ];
             })->toArray();
         }

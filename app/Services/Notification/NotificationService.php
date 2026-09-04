@@ -28,10 +28,11 @@ class NotificationService implements NotificationServiceInterface
         $unreadCount   = $this->notificationRepository->countUnreadForRecipient($recipientType, $user->getAuthIdentifier());
 
         $paginator->through(function (NotificationRecipient $recipient) {
-            $notif   = $recipient->notification;
-            $rawType = (int) ($notif?->type ?? Constant::NOTIFICATION_TYPE_GENERAL);
+            $notif       = $recipient->notification;
+            $rawType     = (int) ($notif?->type ?? Constant::NOTIFICATION_TYPE_GENERAL);
+            $displayedAt = $notif?->chat_class_id !== null ? $notif->updated_at : $notif?->created_at;
 
-            if ($rawType === Constant::NOTIFICATION_TYPE_GENERAL) {
+            if ($notif?->chat_class_id === null && $rawType === Constant::NOTIFICATION_TYPE_GENERAL) {
                 $title   = mb_strtolower($notif?->title ?? '');
                 $content = mb_strtolower($notif?->content ?? '');
 
@@ -45,15 +46,17 @@ class NotificationService implements NotificationServiceInterface
             return [
                 'id'              => $recipient->id,
                 'notification_id' => $recipient->notification_id,
+                'is_chat'         => $notif?->chat_class_id !== null,
                 'title'           => $notif?->title ?? 'Thông báo',
                 'content'         => $notif?->content ?? '',
                 'type'            => $rawType,
                 'center_id'       => $notif?->center_id ?? null,
+                'chat_class_id'   => $notif?->chat_class_id,
                 'center_name'     => $notif?->center?->name ?? null,
                 'is_read'         => $recipient->read_at !== null,
                 'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
-                'created_at'      => $notif?->created_at ? $notif->created_at->diffForHumans() : $recipient->created_at->diffForHumans(),
-                'full_created_at' => $notif?->created_at ? $notif->created_at->format('d/m/Y H:i') : $recipient->created_at->format('d/m/Y H:i'),
+                'created_at'      => $displayedAt ? $displayedAt->diffForHumans() : $recipient->created_at->diffForHumans(),
+                'full_created_at' => $displayedAt ? $displayedAt->format('d/m/Y H:i') : $recipient->created_at->format('d/m/Y H:i'),
             ];
         });
 

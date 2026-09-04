@@ -60,16 +60,15 @@ class ChatController extends Controller
 
     public function index(Request $request, int $classId): InertiaResponse
     {
-        $schoolClass   = $this->chatService->authorizeAccess($classId);
-        $currentUser   = $this->getCurrentUserSenderInfo();
-        $messages      = $this->chatService->getRecentMessages($classId);
-        $pinnedMessage = $this->chatService->getPinnedMessage($classId);
+        $currentUser = $this->getCurrentUserSenderInfo();
+        $chatRoom    = $this->chatService->getOpeningChatData($classId, $currentUser);
 
         return Inertia::render('Admin/Classes/Chat', [
-            'schoolClass'          => $schoolClass,
+            'lastReadMessageId'    => $chatRoom['lastReadMessageId'],
+            'schoolClass'          => $chatRoom['schoolClass'],
             'currentUser'          => $currentUser,
-            'initialMessages'      => $messages,
-            'initialPinnedMessage' => $pinnedMessage,
+            'initialMessages'      => $chatRoom['messages'],
+            'initialPinnedMessage' => $chatRoom['pinnedMessage'],
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\Constant;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -37,9 +38,13 @@ class NotificationController extends Controller
             ], 401);
         }
 
-        $recipients = NotificationRecipient::where('recipient_type', $recipientType)
+        $notificationsTable = (new Notification())->getTable();
+        $recipientsTable    = (new NotificationRecipient())->getTable();
+        $recipients         = NotificationRecipient::where('recipient_type', $recipientType)
             ->where('recipient_id', $recipientId)
             ->with(['notification.center'])
+            ->orderByDesc(Notification::select('updated_at')
+                ->whereColumn("{$notificationsTable}.id", "{$recipientsTable}.notification_id"))
             ->latest('id')
             ->limit(20)
             ->get();
@@ -50,19 +55,22 @@ class NotificationController extends Controller
             ->count();
 
         $items = $recipients->map(function (NotificationRecipient $recipient) {
-            $notif = $recipient->notification;
+            $notif       = $recipient->notification;
+            $displayedAt = $notif?->chat_class_id !== null ? $notif->updated_at : $notif?->created_at;
 
             return [
                 'id'              => $recipient->id,
                 'notification_id' => $recipient->notification_id,
+                'is_chat'         => $notif?->chat_class_id !== null,
                 'title'           => $notif?->title ?? 'Thông báo',
                 'content'         => $notif?->content ?? '',
                 'type'            => $notif?->type ?? 'general',
                 'center_id'       => $notif?->center_id ?? null,
+                'chat_class_id'   => $notif?->chat_class_id,
                 'center_name'     => $notif?->center?->name ?? null,
                 'is_read'         => $recipient->read_at !== null,
                 'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
-                'created_at'      => $notif?->created_at ? $notif->created_at->diffForHumans() : $recipient->created_at->diffForHumans(),
+                'created_at'      => $displayedAt ? $displayedAt->diffForHumans() : $recipient->created_at->diffForHumans(),
             ];
         });
 

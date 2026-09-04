@@ -13,6 +13,7 @@ class Notification extends Model
 
     protected $fillable = [
         'center_id',
+        'chat_class_id',
         'title',
         'content',
         'type',

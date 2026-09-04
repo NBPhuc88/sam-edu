@@ -16,7 +16,7 @@ import {
     Search,
     Smile,
     Sparkles,
-    Users
+    Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -76,6 +76,7 @@ interface SchoolClassChatGroup {
     status: number;
     students_count?: number;
     chat_messages_count?: number;
+    unread_messages_count?: number;
     center?: Center;
     class_subjects?: ClassSubject[];
     latest_chat_message?: LatestChatMessage | null;
@@ -122,7 +123,9 @@ export default function ChatGroupIndex({
         filters.class_id ? Number(filters.class_id) : 0,
     );
     const [selectedStatus, setSelectedStatus] = useState<number>(
-        filters.status !== undefined && filters.status !== null ? Number(filters.status) : 1,
+        filters.status !== undefined && filters.status !== null
+            ? Number(filters.status)
+            : 1,
     );
 
     const handleSearch = (e: React.FormEvent) => {
@@ -131,7 +134,9 @@ export default function ChatGroupIndex({
             '/chats',
             {
                 search: search || undefined,
-                center_id: selectedCenterId ? Number(selectedCenterId) : undefined,
+                center_id: selectedCenterId
+                    ? Number(selectedCenterId)
+                    : undefined,
                 class_id: selectedClassId ? Number(selectedClassId) : undefined,
                 status: selectedStatus ? Number(selectedStatus) : undefined,
             },
@@ -218,7 +223,8 @@ export default function ChatGroupIndex({
                                     Nhóm Chat Lớp Học
                                 </h1>
                                 <p className="text-xs text-gray-500 sm:text-sm">
-                                    Trao đổi, giải đáp bài tập và cập nhật thông tin học tập theo từng lớp học
+                                    Trao đổi, giải đáp bài tập và cập nhật thông
+                                    tin học tập theo từng lớp học
                                 </p>
                             </div>
                         </div>
@@ -230,12 +236,20 @@ export default function ChatGroupIndex({
                     <form onSubmit={handleSearch} className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             {/* Search Keyword */}
-                            <div className={isSuperAdmin && centers.length > 1 ? 'lg:col-span-1' : 'lg:col-span-2'}>
+                            <div
+                                className={
+                                    isSuperAdmin && centers.length > 1
+                                        ? 'lg:col-span-1'
+                                        : 'lg:col-span-2'
+                                }
+                            >
                                 <Input
                                     placeholder="Tìm theo tên lớp, mã lớp, môn học, giáo viên..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    icon={<Search className="h-4.5 w-4.5 text-gray-400" />}
+                                    icon={
+                                        <Search className="h-4.5 w-4.5 text-gray-400" />
+                                    }
                                     className="!py-2.5 !text-sm"
                                 />
                             </div>
@@ -244,8 +258,12 @@ export default function ChatGroupIndex({
                             <div>
                                 <select
                                     value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    onChange={(e) =>
+                                        setSelectedClassId(
+                                            Number(e.target.value),
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                                 >
                                     <option value="0">Tất cả Lớp học</option>
                                     {classes.map((c) => (
@@ -261,10 +279,16 @@ export default function ChatGroupIndex({
                                 <div>
                                     <select
                                         value={selectedCenterId}
-                                        onChange={(e) => setSelectedCenterId(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                        onChange={(e) =>
+                                            setSelectedCenterId(
+                                                Number(e.target.value),
+                                            )
+                                        }
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                                     >
-                                        <option value="0">Tất cả Trung tâm</option>
+                                        <option value="0">
+                                            Tất cả Trung tâm
+                                        </option>
                                         {centers.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name} ({c.code})
@@ -278,8 +302,12 @@ export default function ChatGroupIndex({
                             <div>
                                 <select
                                     value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    onChange={(e) =>
+                                        setSelectedStatus(
+                                            Number(e.target.value),
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                                 >
                                     <option value="0">Tất cả Trạng thái</option>
                                     <option value="1">Đang học</option>
@@ -292,7 +320,11 @@ export default function ChatGroupIndex({
 
                         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                             <span className="text-xs text-gray-500">
-                                Tìm thấy <strong className="text-gray-900">{chatGroups.total}</strong> nhóm chat lớp học
+                                Tìm thấy{' '}
+                                <strong className="text-gray-900">
+                                    {chatGroups.total}
+                                </strong>{' '}
+                                nhóm chat lớp học
                             </span>
                             <div className="flex gap-2">
                                 <Button
@@ -319,14 +351,16 @@ export default function ChatGroupIndex({
                 {/* Chat Groups Grid */}
                 {chatGroups.data.length === 0 ? (
                     <Card className="border-dashed border-gray-300 bg-white p-12 text-center shadow-xs">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-4">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                             <Smile className="h-8 w-8" />
                         </div>
                         <h3 className="text-base font-bold text-gray-900">
                             Không tìm thấy nhóm chat nào
                         </h3>
-                        <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
-                            Không có nhóm chat lớp học nào phù hợp với điều kiện tìm kiếm của bạn hoặc bạn chưa được phân công vào lớp học nào.
+                        <p className="mx-auto mt-1 max-w-md text-xs text-gray-500 sm:text-sm">
+                            Không có nhóm chat lớp học nào phù hợp với điều kiện
+                            tìm kiếm của bạn hoặc bạn chưa được phân công vào
+                            lớp học nào.
                         </p>
                         <div className="mt-5">
                             <Button
@@ -356,29 +390,33 @@ export default function ChatGroupIndex({
                             return (
                                 <Card
                                     key={group.id}
-                                    className="group relative flex flex-col justify-between overflow-hidden border border-gray-200/90 bg-white shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md rounded-2xl"
+                                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md"
                                 >
                                     {/* Top Accent Stripe */}
                                     <div className="h-1.5 w-full bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-600" />
 
-                                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                    <div className="flex flex-1 flex-col justify-between space-y-4 p-5">
                                         {/* Header: Class Name, Code & Status */}
                                         <div>
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200/70">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="inline-flex items-center rounded-md border border-emerald-200/70 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
                                                             {group.code}
                                                         </span>
-                                                        {renderStatusBadge(group.status)}
+                                                        {renderStatusBadge(
+                                                            group.status,
+                                                        )}
                                                     </div>
-                                                    <h3 className="mt-2 text-base font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
+                                                    <h3 className="mt-2 line-clamp-1 text-base font-bold text-gray-900 transition-colors group-hover:text-emerald-700">
                                                         {group.name}
                                                     </h3>
                                                 </div>
 
                                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-tr from-emerald-600 to-teal-500 font-bold text-white shadow-2xs">
-                                                    {group.name.charAt(0).toUpperCase()}
+                                                    {group.name
+                                                        .charAt(0)
+                                                        .toUpperCase()}
                                                 </div>
                                             </div>
 
@@ -386,52 +424,85 @@ export default function ChatGroupIndex({
                                             {isSuperAdmin && group.center && (
                                                 <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
                                                     <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                                                    <span className="truncate">{group.center.name}</span>
+                                                    <span className="truncate">
+                                                        {group.center.name}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Meta info tags */}
-                                        <div className="space-y-2 text-xs text-gray-600 bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                                        <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50/70 p-3 text-xs text-gray-600">
                                             {subjectNames && (
                                                 <div className="flex items-center gap-2">
                                                     <BookOpen className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                                                    <span className="font-semibold text-gray-700">Môn học:</span>
-                                                    <span className="truncate text-gray-900">{subjectNames}</span>
+                                                    <span className="font-semibold text-gray-700">
+                                                        Môn học:
+                                                    </span>
+                                                    <span className="truncate text-gray-900">
+                                                        {subjectNames}
+                                                    </span>
                                                 </div>
                                             )}
 
                                             {teacherNames && (
                                                 <div className="flex items-center gap-2">
                                                     <GraduationCap className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                                                    <span className="font-semibold text-gray-700">Giáo viên:</span>
-                                                    <span className="truncate text-gray-900">{teacherNames}</span>
+                                                    <span className="font-semibold text-gray-700">
+                                                        Giáo viên:
+                                                    </span>
+                                                    <span className="truncate text-gray-900">
+                                                        {teacherNames}
+                                                    </span>
                                                 </div>
                                             )}
 
-                                            <div className="flex items-center justify-between pt-1 border-t border-gray-200/60 text-2xs text-gray-500">
+                                            <div className="text-2xs flex items-center justify-between border-t border-gray-200/60 pt-1 text-gray-500">
                                                 <div className="flex items-center gap-1">
                                                     <Users className="h-3.5 w-3.5 text-gray-400" />
-                                                    <span><strong>{group.students_count ?? 0}</strong> học sinh</span>
+                                                    <span>
+                                                        <strong>
+                                                            {group.students_count ??
+                                                                0}
+                                                        </strong>{' '}
+                                                        học sinh
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
-                                                    <span><strong>{group.chat_messages_count ?? 0}</strong> tin nhắn</span>
+                                                    {(group.unread_messages_count ??
+                                                        0) > 0 && (
+                                                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-600 motion-safe:animate-pulse">
+                                                            {
+                                                                group.unread_messages_count
+                                                            }{' '}
+                                                            tin mới
+                                                        </span>
+                                                    )}
+                                                    <span>
+                                                        <strong>
+                                                            {group.chat_messages_count ??
+                                                                0}
+                                                        </strong>{' '}
+                                                        tin nhắn
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Latest Message Preview Bubble */}
                                         <div className="rounded-xl border border-gray-200/80 bg-white p-3 shadow-2xs">
-                                            <div className="flex items-center justify-between text-2xs text-gray-400 mb-1">
-                                                <span className="font-semibold text-gray-600 flex items-center gap-1">
+                                            <div className="text-2xs mb-1 flex items-center justify-between text-gray-400">
+                                                <span className="flex items-center gap-1 font-semibold text-gray-600">
                                                     <Sparkles className="h-3 w-3 text-amber-500" />
                                                     Tin nhắn gần nhất
                                                 </span>
                                                 {lastMsg?.created_at && (
                                                     <span className="flex items-center gap-1">
                                                         <Clock className="h-3 w-3" />
-                                                        {formatMessageTime(lastMsg.created_at)}
+                                                        {formatMessageTime(
+                                                            lastMsg.created_at,
+                                                        )}
                                                     </span>
                                                 )}
                                             </div>
@@ -441,13 +512,15 @@ export default function ChatGroupIndex({
                                                     <span className="font-bold text-gray-800">
                                                         {lastMsg.sender_name}:
                                                     </span>{' '}
-                                                    <span className="text-gray-600 line-clamp-2">
+                                                    <span className="line-clamp-2 text-gray-600">
                                                         {lastMsg.message}
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <p className="text-xs italic text-gray-400">
-                                                    Chưa có tin nhắn nào. Bấm vào để bắt đầu cuộc trò chuyện!
+                                                <p className="text-xs text-gray-400 italic">
+                                                    Chưa có tin nhắn nào. Bấm
+                                                    vào để bắt đầu cuộc trò
+                                                    chuyện!
                                                 </p>
                                             )}
                                         </div>
@@ -465,7 +538,7 @@ export default function ChatGroupIndex({
                                                 className="w-full justify-center shadow-xs group-hover:bg-emerald-700"
                                             >
                                                 <span>Vào Trò Chuyện</span>
-                                                <ArrowRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
+                                                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                             </Button>
                                         </Link>
                                     </div>

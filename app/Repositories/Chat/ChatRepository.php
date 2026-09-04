@@ -5,18 +5,34 @@ namespace App\Repositories\Chat;
 use App\Enums\Constant;
 use App\Models\ClassChatMessage;
 use App\Models\ClassChatMessageReaction;
+use App\Models\ClassChatReadStatus;
 use App\Models\SchoolClass;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class ChatRepository implements ChatRepositoryInterface
 {
+    public function getLastReadMessageId(int $classId, int $userType, int $userId): ?int
+    {
+        return ClassChatReadStatus::where('class_id', $classId)->where('user_type', $userType)
+            ->where('user_id', $userId)->value('last_read_message_id');
+    }
+
+    public function markMessagesRead(int $classId, int $userType, int $userId, int $messageId): void
+    {
+        $status = ClassChatReadStatus::firstOrCreate(['class_id' => $classId, 'user_type' => $userType, 'user_id' => $userId]);
+        ClassChatReadStatus::whereKey($status->id)->where(function ($query) use ($messageId) {
+            $query->whereNull('last_read_message_id')->orWhere('last_read_message_id', '<', $messageId);
+        })->update(['last_read_message_id' => $messageId, 'last_read_at' => now()]);
+    }
+
     /**
      * @param  int                               $classId
      * @param  int                               $limit
+     * @param  ?int                              $sinceMessageId
      * @return Collection<int, ClassChatMessage>
      */
-    public function getRecentMessages(int $classId, int $limit = 50): Collection
+    public function getRecentMessages(int $classId, int $limit = 50, ?int $sinceMessageId = null): Collection
     {
         /** @var Collection<int, ClassChatMessage> $messages */
         $messages = ClassChatMessage::query()
@@ -39,7 +55,8 @@ class ChatRepository implements ChatRepositoryInterface
             ])
             ->where('class_id', $classId)
             ->orderBy('id', 'desc')
-            ->limit($limit)
+            ->when($sinceMessageId !== null, fn ($query) => $query->where('id', '>=', $sinceMessageId))
+            ->when($sinceMessageId === null, fn ($query) => $query->limit($limit))
             ->get()
             ->reverse()
             ->values();
@@ -213,6 +230,8 @@ class ChatRepository implements ChatRepositoryInterface
      * @param  int                                                   $page
      * @param  ?int                                                  $teacherId
      * @param  ?int                                                  $studentId
+     * @param  ?int                                                  $userType
+     * @param  ?int                                                  $userId
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function getPaginatedClassChatGroups(
@@ -223,7 +242,9 @@ class ChatRepository implements ChatRepositoryInterface
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
-        ?int $studentId = null
+        ?int $studentId = null,
+        ?int $userType = null,
+        ?int $userId = null
     ): LengthAwarePaginator {
         $query = SchoolClass::query()
             ->select(
@@ -249,13 +270,22 @@ class ChatRepository implements ChatRepositoryInterface
             ->withCount('students')
             ->withCount('chatMessages');
 
+        if ($userType !== null && $userId !== null) {
+            $query->withCount(['chatMessages as unread_messages_count' => function ($messages) use ($userType, $userId) {
+                $messages->where(function ($sender) use ($userType, $userId) {
+                    $sender->where('sender_type', '!=', $userType)->orWhere('sender_id', '!=', $userId);
+                })->where('id', '>', ClassChatReadStatus::selectRaw('COALESCE(MAX(last_read_message_id), 0)')
+                    ->whereColumn('class_id', 'classes.id')->where('user_type', $userType)->where('user_id', $userId));
+            }]);
+        }
+
         if ($classId !== null) {
             $query->where('id', $classId);
         }
 
         if ($studentId !== null) {
             $query->whereHas('students', function ($q) use ($studentId) {
-                $q->where('students.id', $studentId);
+                $q->where('students.id', $studentId)->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
             });
         }
 
@@ -335,7 +365,7 @@ class ChatRepository implements ChatRepositoryInterface
 
         if ($studentId !== null) {
             $query->whereHas('students', function ($q) use ($studentId) {
-                $q->where('students.id', $studentId);
+                $q->where('students.id', $studentId)->where('class_students.status', Constant::CLASS_STUDENT_STATUS_ACTIVE);
             });
         }
 

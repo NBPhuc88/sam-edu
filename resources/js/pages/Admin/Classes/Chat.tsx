@@ -1,4 +1,8 @@
-import { CLASS_STATUS_ACTIVE, SENDER_TYPE_ADMIN, SENDER_TYPE_TEACHER } from '@/constants/enums';
+import {
+    CLASS_STATUS_ACTIVE,
+    SENDER_TYPE_ADMIN,
+    SENDER_TYPE_TEACHER,
+} from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import { getEcho } from '@/lib/echo';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -68,6 +72,7 @@ interface Props {
     schoolClass: SchoolClass;
     currentUser: CurrentUser;
     initialMessages: ChatMessageData[];
+    lastReadMessageId: number | null;
     initialPinnedMessage: ChatMessageData | null;
 }
 
@@ -228,6 +233,7 @@ export default function ClassChatPage({
     currentUser,
     initialMessages,
     initialPinnedMessage,
+    lastReadMessageId,
 }: Props) {
     const { auth } = usePage<any>().props;
     const isTeacherInactive =
@@ -239,10 +245,10 @@ export default function ClassChatPage({
         Number(schoolClass.status) === CLASS_STATUS_ACTIVE;
 
     const [messages, setMessages] = useState<ChatMessageData[]>(
-        initialMessages || []
+        initialMessages || [],
     );
     const [pinnedMessage, setPinnedMessage] = useState<ChatMessageData | null>(
-        initialPinnedMessage
+        initialPinnedMessage,
     );
     const [inputMessage, setInputMessage] = useState('');
     const [replyingTo, setReplyingTo] = useState<ChatMessageData | null>(null);
@@ -265,6 +271,17 @@ export default function ClassChatPage({
     const activeTheme =
         CHAT_THEMES.find((t) => t.id === selectedThemeId) || CHAT_THEMES[0];
 
+    const unreadDividerRef = useRef<HTMLDivElement | null>(null);
+    const firstUnreadId = initialMessages.find(
+        (message) =>
+            message.id > (lastReadMessageId ?? 0) &&
+            (Number(message.sender_type) !== Number(currentUser.sender_type) ||
+                Number(message.sender_id) !== Number(currentUser.sender_id)),
+    )?.id;
+    const [showScrollToLatest, setShowScrollToLatest] = useState(
+        firstUnreadId !== undefined,
+    );
+    const preserveUnreadPosition = useRef(firstUnreadId !== undefined);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const messageRefs = useRef<Record<number, HTMLDivElement | null>>({});
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -282,7 +299,11 @@ export default function ClassChatPage({
     };
 
     useEffect(() => {
-        scrollToBottom('auto');
+        if (unreadDividerRef.current) {
+            unreadDividerRef.current.scrollIntoView({ block: 'center' });
+        } else {
+            scrollToBottom('auto');
+        }
     }, []);
 
     // Focus input when reply is triggered
@@ -296,7 +317,7 @@ export default function ClassChatPage({
     useEffect(() => {
         const echo = getEcho();
         const channelName = `class-chat.${schoolClass.id}`;
-        const channel = echo.channel(channelName);
+        const channel = echo.private(channelName);
 
         // 1. New Message Sent
         channel.listen('.message.sent', (newMsg: ChatMessageData) => {
@@ -306,7 +327,9 @@ export default function ClassChatPage({
                 }
                 return [...prev, newMsg];
             });
-            setTimeout(() => scrollToBottom('smooth'), 100);
+            if (!preserveUnreadPosition.current) {
+                setTimeout(() => scrollToBottom('smooth'), 100);
+            }
         });
 
         // 2. Message Pinned / Unpinned
@@ -322,9 +345,9 @@ export default function ClassChatPage({
                     prev.map((msg) => ({
                         ...msg,
                         is_pinned: newPinned ? msg.id === newPinned.id : false,
-                    }))
+                    })),
                 );
-            }
+            },
         );
 
         // 3. Message Reacted
@@ -339,10 +362,10 @@ export default function ClassChatPage({
                     prev.map((msg) =>
                         msg.id === data.message_id
                             ? { ...msg, reactions: data.reactions }
-                            : msg
-                    )
+                            : msg,
+                    ),
                 );
-            }
+            },
         );
 
         return () => {
@@ -412,7 +435,7 @@ export default function ClassChatPage({
                     prev.map((msg) => ({
                         ...msg,
                         is_pinned: newPinned ? msg.id === newPinned.id : false,
-                    }))
+                    })),
                 );
             }
         } catch (error) {
@@ -430,7 +453,7 @@ export default function ClassChatPage({
                 `/classes/${schoolClass.id}/chat/messages/${messageId}/reactions`,
                 {
                     emoji,
-                }
+                },
             );
 
             if (response.data?.success) {
@@ -439,8 +462,8 @@ export default function ClassChatPage({
                     prev.map((msg) =>
                         msg.id === messageId
                             ? { ...msg, reactions: updatedReactions }
-                            : msg
-                    )
+                            : msg,
+                    ),
                 );
             }
         } catch (error) {
@@ -480,7 +503,7 @@ export default function ClassChatPage({
                 inputRef.current.focus();
                 inputRef.current.setSelectionRange(
                     start + emoji.length,
-                    start + emoji.length
+                    start + emoji.length,
                 );
             }
         }, 10);
@@ -507,7 +530,7 @@ export default function ClassChatPage({
 
     // SVG Doodle Pattern dynamic background generator
     const getTelegramWallpaperStyle = (
-        theme: ChatTheme
+        theme: ChatTheme,
     ): React.CSSProperties => {
         return {
             backgroundColor: theme.bgColor,
@@ -521,7 +544,7 @@ export default function ClassChatPage({
 
             <div className="mx-auto max-w-4xl space-y-3">
                 {/* Back Navigation, Theme Picker & Status */}
-                <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <Link
                         href="/classes"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 transition-colors hover:text-emerald-700"
@@ -535,11 +558,11 @@ export default function ClassChatPage({
                         <button
                             type="button"
                             onClick={() => setShowThemeModal(true)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-emerald-700 transition-colors cursor-pointer"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-700 shadow-2xs transition-colors hover:bg-gray-50 hover:text-emerald-700"
                             title="Đổi hình nền trò chuyện"
                         >
                             <span
-                                className="h-3.5 w-3.5 rounded-full border border-black/20 shadow-2xs shrink-0"
+                                className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/20 shadow-2xs"
                                 style={{
                                     backgroundColor: activeTheme.previewColor,
                                 }}
@@ -552,28 +575,28 @@ export default function ClassChatPage({
                         </button>
 
                         {/* Realtime Status Indicator */}
-                        <div className="flex items-center gap-1.5 text-2xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        <div className="text-2xs flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                             </span>
                         </div>
                     </div>
                 </div>
 
                 {/* Main Chat Container - Telegram Canvas */}
-                <div className="flex h-[calc(100vh-175px)] min-h-[540px] flex-col rounded-2xl border border-gray-300/80 shadow-md overflow-hidden bg-slate-900">
+                <div className="flex h-[calc(100vh-175px)] min-h-[540px] flex-col overflow-hidden rounded-2xl border border-gray-300/80 bg-slate-900 shadow-md">
                     {/* Telegram Style Top Header */}
-                    <div className="shrink-0 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-5">
-                        <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-5">
+                        <div className="flex min-w-0 items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-tr from-emerald-600 to-teal-500 font-bold text-white shadow-xs">
                                 {schoolClass.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                                <h2 className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                                <h2 className="truncate text-sm font-bold text-gray-900 sm:text-base">
                                     {schoolClass.name}
                                 </h2>
-                                <p className="text-2xs sm:text-xs text-gray-500 truncate">
+                                <p className="text-2xs truncate text-gray-500 sm:text-xs">
                                     Mã lớp: {schoolClass.code} •{' '}
                                     {schoolClass.center?.name ||
                                         'Trung tâm SAM Digital'}
@@ -581,8 +604,8 @@ export default function ClassChatPage({
                             </div>
                         </div>
 
-                        <div className="text-right shrink-0 pl-2">
-                            <span className="block text-2xs text-gray-400">
+                        <div className="shrink-0 pl-2 text-right">
+                            <span className="text-2xs block text-gray-400">
                                 Đang là:
                             </span>
                             <span className="text-xs font-bold text-emerald-600">
@@ -593,15 +616,15 @@ export default function ClassChatPage({
 
                     {/* Pinned Message Banner */}
                     {pinnedMessage && (
-                        <div className="shrink-0 flex items-center justify-between gap-3 border-b border-amber-200/80 bg-white/95 backdrop-blur-xs px-4 py-2 sm:px-5 text-gray-900 shadow-2xs border-l-4 border-l-amber-500">
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-l-4 border-amber-200/80 border-l-amber-500 bg-white/95 px-4 py-2 text-gray-900 shadow-2xs backdrop-blur-xs sm:px-5">
                             <div
                                 onClick={() =>
                                     scrollToMessage(pinnedMessage.id)
                                 }
-                                className="flex min-w-0 flex-1 items-center gap-2.5 cursor-pointer group"
+                                className="group flex min-w-0 flex-1 cursor-pointer items-center gap-2.5"
                                 title="Nhấp để cuộn tới tin nhắn này"
                             >
-                                <Pin className="h-4 w-4 shrink-0 fill-amber-500 text-amber-600 group-hover:scale-110 transition-transform" />
+                                <Pin className="h-4 w-4 shrink-0 fill-amber-500 text-amber-600 transition-transform group-hover:scale-110" />
                                 <div className="min-w-0 text-xs">
                                     <div className="flex items-center gap-1.5 font-bold text-amber-900">
                                         <span>Tin nhắn đã ghim</span>
@@ -625,7 +648,7 @@ export default function ClassChatPage({
                                         handleTogglePin(pinnedMessage.id)
                                     }
                                     title="Bỏ ghim tin nhắn này"
-                                    className="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                                    className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
                                 >
                                     <PinOff className="h-4 w-4" />
                                 </button>
@@ -636,17 +659,17 @@ export default function ClassChatPage({
                     {/* Telegram Messages Canvas with Dynamic Wallpaper Theme */}
                     <div
                         style={getTelegramWallpaperStyle(activeTheme)}
-                        className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5 space-y-1.5"
+                        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5"
                     >
                         {messages.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center text-center text-white/90 py-12">
-                                <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center mb-3 shadow-inner">
-                                    <Smile className="h-8 w-8 text-white stroke-2" />
+                            <div className="flex h-full flex-col items-center justify-center py-12 text-center text-white/90">
+                                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 shadow-inner backdrop-blur-xs">
+                                    <Smile className="h-8 w-8 stroke-2 text-white" />
                                 </div>
-                                <p className="text-sm sm:text-base font-bold text-white drop-shadow-xs">
+                                <p className="text-sm font-bold text-white drop-shadow-xs sm:text-base">
                                     Chưa có tin nhắn nào trong nhóm chat này
                                 </p>
-                                <p className="mt-1 text-xs text-white/80 max-w-xs drop-shadow-xs">
+                                <p className="mt-1 max-w-xs text-xs text-white/80 drop-shadow-xs">
                                     Hãy là người đầu tiên gửi tin nhắn để cùng
                                     trao đổi học tập với lớp!
                                 </p>
@@ -689,25 +712,23 @@ export default function ClassChatPage({
 
                                 const senderColorClass = getSenderColor(
                                     msg.sender_name,
-                                    msg.sender_id
+                                    msg.sender_id,
                                 );
                                 const avatarBgColor = getAvatarBgColor(
                                     msg.sender_name,
-                                    msg.sender_id
+                                    msg.sender_id,
                                 );
                                 const initials = getInitials(msg.sender_name);
                                 const isSticker = isImageOrSticker(msg.message);
 
                                 const actionButtons = (
-                                    <div className="flex items-center gap-1 shrink-0 self-center">
+                                    <div className="flex shrink-0 items-center gap-1 self-center">
                                         {/* Reply Button */}
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setReplyingTo(msg)
-                                            }
+                                            onClick={() => setReplyingTo(msg)}
                                             title="Trả lời tin nhắn này"
-                                            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:text-emerald-700 bg-white/80 hover:bg-emerald-50 border border-gray-200/90 shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer"
+                                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-gray-200/90 bg-white/80 text-gray-500 shadow-2xs backdrop-blur-xs transition-all hover:bg-emerald-50 hover:text-emerald-700 active:scale-95"
                                         >
                                             <Reply className="h-3.5 w-3.5" />
                                         </button>
@@ -724,10 +745,10 @@ export default function ClassChatPage({
                                                         ? 'Bỏ ghim tin nhắn'
                                                         : 'Ghim tin nhắn'
                                                 }
-                                                className={`flex h-7 w-7 items-center justify-center rounded-full border shadow-2xs backdrop-blur-xs transition-all active:scale-95 cursor-pointer ${
+                                                className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border shadow-2xs backdrop-blur-xs transition-all active:scale-95 ${
                                                     msg.is_pinned
-                                                        ? 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-amber-100'
-                                                        : 'bg-white/80 border-gray-200/90 text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+                                                        ? 'border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100'
+                                                        : 'border-gray-200/90 bg-white/80 text-gray-400 hover:bg-amber-50 hover:text-amber-600'
                                                 }`}
                                             >
                                                 <Pin
@@ -743,38 +764,102 @@ export default function ClassChatPage({
                                 );
 
                                 return (
-                                    <div
-                                        key={msg.id}
-                                        ref={(el) => {
-                                            messageRefs.current[msg.id] = el;
-                                        }}
-                                        onMouseEnter={() =>
-                                            setActiveHoverMessageId(msg.id)
-                                        }
-                                        onMouseLeave={() =>
-                                            setActiveHoverMessageId(null)
-                                        }
-                                        className={`flex items-end gap-2 transition-all duration-300 ${
-                                            isFirstInGroup ? 'mt-3' : 'mt-0.5'
-                                        } ${
-                                            isSelf
-                                                ? 'justify-end'
-                                                : 'justify-start'
-                                        }`}
-                                    >
-                                        {/* Avatar on Left (for other senders) */}
-                                        {!isSelf && (
-                                            <div className="w-8.5 shrink-0 flex items-end">
-                                                {isLastInGroup ? (
-                                                    msg.sender_avatar ? (
+                                    <React.Fragment key={msg.id}>
+                                        {msg.id === firstUnreadId && (
+                                            <div
+                                                ref={unreadDividerRef}
+                                                className="my-4 rounded-full bg-white/90 py-2 text-center text-xs font-semibold text-rose-600"
+                                            >
+                                                — Tin nhắn chưa đọc —
+                                            </div>
+                                        )}
+                                        <div
+                                            ref={(el) => {
+                                                messageRefs.current[msg.id] =
+                                                    el;
+                                            }}
+                                            onMouseEnter={() =>
+                                                setActiveHoverMessageId(msg.id)
+                                            }
+                                            onMouseLeave={() =>
+                                                setActiveHoverMessageId(null)
+                                            }
+                                            className={`flex items-end gap-2 transition-all duration-300 ${
+                                                isFirstInGroup
+                                                    ? 'mt-3'
+                                                    : 'mt-0.5'
+                                            } ${
+                                                isSelf
+                                                    ? 'justify-end'
+                                                    : 'justify-start'
+                                            }`}
+                                        >
+                                            {/* Avatar on Left (for other senders) */}
+                                            {!isSelf && (
+                                                <div className="flex w-8.5 shrink-0 items-end">
+                                                    {isLastInGroup ? (
+                                                        msg.sender_avatar ? (
+                                                            <img
+                                                                src={
+                                                                    msg.sender_avatar
+                                                                }
+                                                                alt={
+                                                                    msg.sender_name
+                                                                }
+                                                                className="h-8.5 w-8.5 rounded-full border border-white/40 object-cover shadow-xs"
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    (
+                                                                        e.target as HTMLElement
+                                                                    ).style.display =
+                                                                        'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                className={`flex h-8.5 w-8.5 items-center justify-center rounded-full border border-white/40 text-xs font-bold text-white shadow-xs ${avatarBgColor}`}
+                                                            >
+                                                                {initials}
+                                                            </div>
+                                                        )
+                                                    ) : (
+                                                        <div className="h-8.5 w-8.5" />
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Action buttons on left for self messages */}
+                                            {isSelf && actionButtons}
+
+                                            {/* Message Bubble Container */}
+                                            <div
+                                                className={`group relative flex max-w-[85%] flex-col sm:max-w-[70%] ${
+                                                    isSelf
+                                                        ? 'items-end'
+                                                        : 'items-start'
+                                                }`}
+                                            >
+                                                {/* Quick Reaction Floating Bar on Hover (Displayed below the message) */}
+                                                {isHovered && (
+                                                    <MessageReactionBar
+                                                        isSelf={isSelf}
+                                                        onReact={(emoji) =>
+                                                            handleToggleReaction(
+                                                                msg.id,
+                                                                emoji,
+                                                            )
+                                                        }
+                                                    />
+                                                )}
+
+                                                {/* Sticker / Image Message */}
+                                                {isSticker ? (
+                                                    <div className="backdrop-blur-2xs relative overflow-hidden rounded-2xl bg-white/10 shadow-sm">
                                                         <img
-                                                            src={
-                                                                msg.sender_avatar
-                                                            }
-                                                            alt={
-                                                                msg.sender_name
-                                                            }
-                                                            className="h-8.5 w-8.5 rounded-full object-cover shadow-xs border border-white/40"
+                                                            src={msg.message.trim()}
+                                                            alt="sticker"
+                                                            className="max-h-56 max-w-56 rounded-2xl object-contain"
                                                             onError={(e) => {
                                                                 (
                                                                     e.target as HTMLElement
@@ -782,185 +867,140 @@ export default function ClassChatPage({
                                                                     'none';
                                                             }}
                                                         />
-                                                    ) : (
-                                                        <div
-                                                            className={`h-8.5 w-8.5 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-xs border border-white/40 ${avatarBgColor}`}
-                                                        >
-                                                            {initials}
-                                                        </div>
-                                                    )
-                                                ) : (
-                                                    <div className="w-8.5 h-8.5" />
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Action buttons on left for self messages */}
-                                        {isSelf && actionButtons}
-
-                                        {/* Message Bubble Container */}
-                                        <div
-                                            className={`relative max-w-[85%] sm:max-w-[70%] group flex flex-col ${
-                                                isSelf
-                                                    ? 'items-end'
-                                                    : 'items-start'
-                                            }`}
-                                        >
-                                            {/* Quick Reaction Floating Bar on Hover (Displayed below the message) */}
-                                            {isHovered && (
-                                                <MessageReactionBar
-                                                    isSelf={isSelf}
-                                                    onReact={(emoji) =>
-                                                        handleToggleReaction(
-                                                            msg.id,
-                                                            emoji
-                                                        )
-                                                    }
-                                                />
-                                            )}
-
-                                            {/* Sticker / Image Message */}
-                                            {isSticker ? (
-                                                <div className="relative overflow-hidden rounded-2xl shadow-sm bg-white/10 backdrop-blur-2xs">
-                                                    <img
-                                                        src={msg.message.trim()}
-                                                        alt="sticker"
-                                                        className="max-h-56 max-w-56 object-contain rounded-2xl"
-                                                        onError={(e) => {
-                                                            (
-                                                                e.target as HTMLElement
-                                                            ).style.display =
-                                                                'none';
-                                                        }}
-                                                    />
-                                                    <span className="absolute bottom-1.5 right-2 rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
-                                                        {msg.time_formatted}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                /* Standard Telegram Text Bubble */
-                                                <div
-                                                    className={`relative px-3.5 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.12)] break-words text-[13.5px] leading-[1.35] transition-shadow ${
-                                                        isSelf
-                                                            ? `${activeTheme.selfBubbleClass} ${
-                                                                  activeTheme.selfTextClass
-                                                              } rounded-2xl ${
-                                                                  isLastInGroup
-                                                                      ? 'rounded-br-xs'
-                                                                      : ''
-                                                              }`
-                                                            : `bg-white text-gray-900 rounded-2xl ${
-                                                                  isLastInGroup
-                                                                      ? 'rounded-bl-xs'
-                                                                      : ''
-                                                              }`
-                                                    } ${
-                                                        msg.is_pinned
-                                                            ? 'ring-2 ring-amber-400 bg-amber-50/90'
-                                                            : ''
-                                                    }`}
-                                                >
-                                                    {/* Sender Name & Role Badge (Only on first message of cluster for non-self) */}
-                                                    {!isSelf &&
-                                                        isFirstInGroup && (
-                                                            <div className="flex items-center justify-between gap-2.5 mb-1 select-none">
-                                                                <span
-                                                                    className={`font-bold text-[13px] tracking-tight ${senderColorClass}`}
-                                                                >
-                                                                    {
-                                                                        msg.sender_name
-                                                                    }
-                                                                </span>
-                                                                {renderRoleBadge(
-                                                                    msg.sender_type
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                    {/* Telegram Style Quoted Message (Reply) */}
-                                                    {msg.reply_to && (
-                                                        <div
-                                                            onClick={() =>
-                                                                scrollToMessage(
-                                                                    msg.reply_to!
-                                                                        .id
-                                                                )
-                                                            }
-                                                            className={`mb-1.5 cursor-pointer rounded-lg border-l-3 px-2.5 py-1 text-xs transition-all hover:opacity-90 select-none ${
-                                                                isSelf
-                                                                    ? 'border-emerald-600 bg-black/5 text-gray-800'
-                                                                    : 'border-emerald-500 bg-emerald-50/70 text-gray-800'
-                                                            }`}
-                                                            title="Nhấp để xem tin nhắn gốc"
-                                                        >
-                                                            <div className="font-bold text-emerald-800 text-[11px] truncate flex items-center gap-1">
-                                                                <Reply className="h-3 w-3 inline" />
-                                                                <span>
-                                                                    {
-                                                                        msg
-                                                                            .reply_to
-                                                                            .sender_name
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                            <div className="truncate text-gray-600 text-2xs italic">
-                                                                {
-                                                                    msg.reply_to
-                                                                        .message
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Text Message Content + Telegram Inline Timestamp */}
-                                                    <div>
-                                                        <span>
-                                                            {msg.message}
-                                                        </span>
-                                                        <span
-                                                            className={`float-right ml-3 mt-1 inline-block text-[11px] font-normal select-none leading-none ${
-                                                                isSelf &&
-                                                                activeTheme.id ===
-                                                                    'midnight_dark'
-                                                                    ? 'text-slate-300'
-                                                                    : 'text-gray-400'
-                                                            }`}
-                                                        >
+                                                        <span className="absolute right-2 bottom-1.5 rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
                                                             {msg.time_formatted}
                                                         </span>
                                                     </div>
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    /* Standard Telegram Text Bubble */
+                                                    <div
+                                                        className={`relative px-3.5 py-1.5 text-[13.5px] leading-[1.35] break-words shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-shadow ${
+                                                            isSelf
+                                                                ? `${activeTheme.selfBubbleClass} ${
+                                                                      activeTheme.selfTextClass
+                                                                  } rounded-2xl ${
+                                                                      isLastInGroup
+                                                                          ? 'rounded-br-xs'
+                                                                          : ''
+                                                                  }`
+                                                                : `rounded-2xl bg-white text-gray-900 ${
+                                                                      isLastInGroup
+                                                                          ? 'rounded-bl-xs'
+                                                                          : ''
+                                                                  }`
+                                                        } ${
+                                                            msg.is_pinned
+                                                                ? 'bg-amber-50/90 ring-2 ring-amber-400'
+                                                                : ''
+                                                        }`}
+                                                    >
+                                                        {/* Sender Name & Role Badge (Only on first message of cluster for non-self) */}
+                                                        {!isSelf &&
+                                                            isFirstInGroup && (
+                                                                <div className="mb-1 flex items-center justify-between gap-2.5 select-none">
+                                                                    <span
+                                                                        className={`text-[13px] font-bold tracking-tight ${senderColorClass}`}
+                                                                    >
+                                                                        {
+                                                                            msg.sender_name
+                                                                        }
+                                                                    </span>
+                                                                    {renderRoleBadge(
+                                                                        msg.sender_type,
+                                                                    )}
+                                                                </div>
+                                                            )}
 
-                                            {/* Reactions Badges below Message Bubble */}
-                                            {msg.reactions &&
-                                                msg.reactions.length > 0 && (
-                                                    <MessageReactionsDisplay
-                                                        reactions={
-                                                            msg.reactions
-                                                        }
-                                                        currentUserId={
-                                                            currentUser.sender_id
-                                                        }
-                                                        currentUserType={
-                                                            currentUser.sender_type
-                                                        }
-                                                        onToggleReaction={(
-                                                            emoji
-                                                        ) =>
-                                                            handleToggleReaction(
-                                                                msg.id,
-                                                                emoji
-                                                            )
-                                                        }
-                                                        isSelf={isSelf}
-                                                    />
+                                                        {/* Telegram Style Quoted Message (Reply) */}
+                                                        {msg.reply_to && (
+                                                            <div
+                                                                onClick={() =>
+                                                                    scrollToMessage(
+                                                                        msg
+                                                                            .reply_to!
+                                                                            .id,
+                                                                    )
+                                                                }
+                                                                className={`mb-1.5 cursor-pointer rounded-lg border-l-3 px-2.5 py-1 text-xs transition-all select-none hover:opacity-90 ${
+                                                                    isSelf
+                                                                        ? 'border-emerald-600 bg-black/5 text-gray-800'
+                                                                        : 'border-emerald-500 bg-emerald-50/70 text-gray-800'
+                                                                }`}
+                                                                title="Nhấp để xem tin nhắn gốc"
+                                                            >
+                                                                <div className="flex items-center gap-1 truncate text-[11px] font-bold text-emerald-800">
+                                                                    <Reply className="inline h-3 w-3" />
+                                                                    <span>
+                                                                        {
+                                                                            msg
+                                                                                .reply_to
+                                                                                .sender_name
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-2xs truncate text-gray-600 italic">
+                                                                    {
+                                                                        msg
+                                                                            .reply_to
+                                                                            .message
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Text Message Content + Telegram Inline Timestamp */}
+                                                        <div>
+                                                            <span>
+                                                                {msg.message}
+                                                            </span>
+                                                            <span
+                                                                className={`float-right mt-1 ml-3 inline-block text-[11px] leading-none font-normal select-none ${
+                                                                    isSelf &&
+                                                                    activeTheme.id ===
+                                                                        'midnight_dark'
+                                                                        ? 'text-slate-300'
+                                                                        : 'text-gray-400'
+                                                                }`}
+                                                            >
+                                                                {
+                                                                    msg.time_formatted
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 )}
-                                        </div>
 
-                                        {/* Action buttons on right for other senders' messages */}
-                                        {!isSelf && actionButtons}
-                                    </div>
+                                                {/* Reactions Badges below Message Bubble */}
+                                                {msg.reactions &&
+                                                    msg.reactions.length >
+                                                        0 && (
+                                                        <MessageReactionsDisplay
+                                                            reactions={
+                                                                msg.reactions
+                                                            }
+                                                            currentUserId={
+                                                                currentUser.sender_id
+                                                            }
+                                                            currentUserType={
+                                                                currentUser.sender_type
+                                                            }
+                                                            onToggleReaction={(
+                                                                emoji,
+                                                            ) =>
+                                                                handleToggleReaction(
+                                                                    msg.id,
+                                                                    emoji,
+                                                                )
+                                                            }
+                                                            isSelf={isSelf}
+                                                        />
+                                                    )}
+                                            </div>
+
+                                            {/* Action buttons on right for other senders' messages */}
+                                            {!isSelf && actionButtons}
+                                        </div>
+                                    </React.Fragment>
                                 );
                             })
                         )}
@@ -968,18 +1008,31 @@ export default function ClassChatPage({
                     </div>
 
                     {/* Telegram Style Chat Input Footer with Active Reply Banner */}
-                    <div className="shrink-0 border-t border-gray-200 bg-white relative">
+                    <div className="relative shrink-0 border-t border-gray-200 bg-white">
+                        {showScrollToLatest && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    scrollToBottom();
+                                    setShowScrollToLatest(false);
+                                    preserveUnreadPosition.current = false;
+                                }}
+                                className="absolute right-3 bottom-full mb-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-emerald-700 shadow-lg"
+                            >
+                                Cuộn xuống tin mới nhất ↓
+                            </button>
+                        )}
                         {/* Active Reply Banner */}
                         {replyingTo && (
-                            <div className="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/90 px-4 py-2 text-xs animate-in slide-in-from-bottom-2 duration-150">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <Reply className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <div className="animate-in slide-in-from-bottom-2 flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/90 px-4 py-2 text-xs duration-150">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Reply className="h-4 w-4 shrink-0 text-emerald-600" />
                                     <div className="min-w-0">
                                         <span className="font-bold text-emerald-950">
-                                            Đang trả lời {replyingTo.sender_name}
-                                            :
+                                            Đang trả lời{' '}
+                                            {replyingTo.sender_name}:
                                         </span>{' '}
-                                        <span className="text-gray-600 truncate inline-block max-w-xs sm:max-w-md align-bottom">
+                                        <span className="inline-block max-w-xs truncate align-bottom text-gray-600 sm:max-w-md">
                                             {replyingTo.message}
                                         </span>
                                     </div>
@@ -988,7 +1041,7 @@ export default function ClassChatPage({
                                     type="button"
                                     onClick={() => setReplyingTo(null)}
                                     title="Hủy trả lời"
-                                    className="rounded-full p-1 text-gray-400 hover:bg-emerald-100 hover:text-gray-700 transition-colors"
+                                    className="rounded-full p-1 text-gray-400 transition-colors hover:bg-emerald-100 hover:text-gray-700"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -1004,12 +1057,14 @@ export default function ClassChatPage({
 
                         {/* Input Controls */}
                         {!isClassActive ? (
-                            <div className="flex items-center justify-center p-3 text-xs sm:text-sm font-medium text-amber-800 bg-amber-50/90 border border-amber-200 rounded-xl text-center m-2">
-                                Lớp học đã tạm ngưng, hoàn thành hoặc đã đóng. Bạn chỉ có thể xem lại lịch sử trò chuyện.
+                            <div className="m-2 flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-center text-xs font-medium text-amber-800 sm:text-sm">
+                                Lớp học đã tạm ngưng, hoàn thành hoặc đã đóng.
+                                Bạn chỉ có thể xem lại lịch sử trò chuyện.
                             </div>
                         ) : isTeacherInactive ? (
-                            <div className="flex items-center justify-center p-3 text-xs sm:text-sm font-medium text-amber-800 bg-amber-50/90 border border-amber-200 rounded-xl text-center m-2">
-                                Tài khoản giáo viên đang ở trạng thái Tạm nghỉ (Chỉ xem). Bạn không thể gửi tin nhắn.
+                            <div className="m-2 flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-center text-xs font-medium text-amber-800 sm:text-sm">
+                                Tài khoản giáo viên đang ở trạng thái Tạm nghỉ
+                                (Chỉ xem). Bạn không thể gửi tin nhắn.
                             </div>
                         ) : (
                             <form
@@ -1023,10 +1078,10 @@ export default function ClassChatPage({
                                         setShowEmojiPicker((prev) => !prev)
                                     }
                                     title="Bảng chọn biểu tượng cảm xúc (Emoji)"
-                                    className={`p-2 rounded-full transition-colors shrink-0 cursor-pointer ${
+                                    className={`shrink-0 cursor-pointer rounded-full p-2 transition-colors ${
                                         showEmojiPicker
                                             ? 'bg-emerald-100 text-emerald-700'
-                                            : 'text-gray-500 hover:text-emerald-700 hover:bg-gray-100'
+                                            : 'text-gray-500 hover:bg-gray-100 hover:text-emerald-700'
                                     }`}
                                 >
                                     <Smile className="h-5 w-5" />
@@ -1045,16 +1100,16 @@ export default function ClassChatPage({
                                         setInputMessage(e.target.value)
                                     }
                                     disabled={isSending}
-                                    className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                                    className="flex-1 rounded-full border border-gray-300/80 bg-gray-50/80 px-4 py-2 text-xs text-gray-900 transition-all placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30 focus:outline-hidden sm:text-sm"
                                 />
 
                                 <button
                                     type="submit"
                                     disabled={isSending || !inputMessage.trim()}
-                                    className="h-9.5 w-9.5 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 shrink-0 cursor-pointer"
+                                    className="flex h-9.5 w-9.5 shrink-0 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs transition-transform hover:bg-emerald-700 active:scale-95 disabled:opacity-50 disabled:hover:bg-emerald-600"
                                     title="Gửi tin nhắn"
                                 >
-                                    <Send className="h-4 w-4 ml-0.5" />
+                                    <Send className="ml-0.5 h-4 w-4" />
                                 </button>
                             </form>
                         )}
@@ -1064,9 +1119,9 @@ export default function ClassChatPage({
 
             {/* Modal: Wallpaper Theme Picker */}
             {showThemeModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between border-b border-gray-100 pb-3.5 mb-4">
+                <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs duration-200">
+                    <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl sm:p-6">
+                        <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3.5">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 shadow-2xs">
                                     <Palette className="h-5 w-5" />
@@ -1084,14 +1139,14 @@ export default function ClassChatPage({
                             <button
                                 type="button"
                                 onClick={() => setShowThemeModal(false)}
-                                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
                             >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
                         {/* Themes Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
                             {CHAT_THEMES.map((theme) => {
                                 const isSelected = theme.id === activeTheme.id;
                                 return (
@@ -1101,7 +1156,7 @@ export default function ClassChatPage({
                                         onClick={() =>
                                             handleSelectTheme(theme.id)
                                         }
-                                        className={`group relative flex flex-col items-center rounded-xl p-2.5 text-left border-2 transition-all cursor-pointer ${
+                                        className={`group relative flex cursor-pointer flex-col items-center rounded-xl border-2 p-2.5 text-left transition-all ${
                                             isSelected
                                                 ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-2xs'
@@ -1110,11 +1165,11 @@ export default function ClassChatPage({
                                         {/* Preview Wallpaper Tile with Doodle Pattern */}
                                         <div
                                             style={getTelegramWallpaperStyle(
-                                                theme
+                                                theme,
                                             )}
-                                            className="relative h-24 w-full rounded-lg shadow-inner overflow-hidden border border-black/10 flex items-center justify-center transition-transform group-hover:scale-102"
+                                            className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-lg border border-black/10 shadow-inner transition-transform group-hover:scale-102"
                                         >
-                                            <div className="rounded-md bg-white/90 px-2 py-0.5 text-2xs font-bold text-gray-800 shadow-2xs backdrop-blur-xs">
+                                            <div className="text-2xs rounded-md bg-white/90 px-2 py-0.5 font-bold text-gray-800 shadow-2xs backdrop-blur-xs">
                                                 {theme.badge}
                                             </div>
                                             {isSelected && (
@@ -1124,7 +1179,7 @@ export default function ClassChatPage({
                                             )}
                                         </div>
 
-                                        <span className="mt-2 text-xs font-bold text-gray-800 text-center line-clamp-1">
+                                        <span className="mt-2 line-clamp-1 text-center text-xs font-bold text-gray-800">
                                             {theme.name.split(' (')[0]}
                                         </span>
                                     </button>
@@ -1140,7 +1195,7 @@ export default function ClassChatPage({
                             <button
                                 type="button"
                                 onClick={() => setShowThemeModal(false)}
-                                className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                                className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50"
                             >
                                 Đóng
                             </button>

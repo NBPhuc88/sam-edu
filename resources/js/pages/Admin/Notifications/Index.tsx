@@ -1,3 +1,19 @@
+import { Head, router } from '@inertiajs/react';
+import {
+    Bell,
+    Building2,
+    CheckCheck,
+    CheckCircle2,
+    Clock,
+    CreditCard,
+    ExternalLink,
+    Filter,
+    MessageSquare,
+    RotateCcw,
+    Search,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { markAsRead as markNotificationRead } from '@/actions/App/Http/Controllers/Api/NotificationController';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -9,24 +25,14 @@ import {
 } from '@/constants/enums';
 import AppLayout from '@/layouts/AppLayout';
 import apiClient from '@/lib/axios';
-import { Head, router } from '@inertiajs/react';
-import {
-    Bell,
-    Building2,
-    CheckCheck,
-    CheckCircle2,
-    Clock,
-    CreditCard,
-    ExternalLink,
-    Filter,
-    RotateCcw,
-    Search,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import { index as chatGroupsIndex } from '@/routes/chats';
+import { index as classChatIndex } from '@/routes/classes/chat';
 
 export interface NotificationItem {
     id: number;
     notification_id: number;
+    is_chat?: boolean;
+    chat_class_id?: number | null;
     title: string;
     content: string;
     type: number | string;
@@ -65,17 +71,23 @@ export default function NotificationsIndex({
 }: Props) {
     const [keyword, setKeyword] = useState(filters.keyword || '');
     const [selectedStatus, setSelectedStatus] = useState<string>(
-        filters.is_read !== undefined && filters.is_read !== null && filters.is_read !== ''
+        filters.is_read !== undefined &&
+            filters.is_read !== null &&
+            filters.is_read !== ''
             ? String(filters.is_read)
             : '',
     );
     const [selectedType, setSelectedType] = useState<string>(
-        filters.type !== undefined && filters.type !== null && filters.type !== ''
+        filters.type !== undefined &&
+            filters.type !== null &&
+            filters.type !== ''
             ? String(filters.type)
             : '',
     );
     const [markingAll, setMarkingAll] = useState(false);
-    const [selectedNotif, setSelectedNotif] = useState<NotificationItem | null>(null);
+    const [selectedNotif, setSelectedNotif] = useState<NotificationItem | null>(
+        null,
+    );
 
     // Apply Filter Function
     const handleFilter = (overrideParams: Record<string, any> = {}) => {
@@ -108,14 +120,21 @@ export default function NotificationsIndex({
         setKeyword('');
         setSelectedStatus('');
         setSelectedType('');
-        router.get('/notifications', {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            '/notifications',
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Mark single notification as read
-    const handleMarkAsRead = async (item: NotificationItem, e?: React.MouseEvent) => {
+    const handleMarkAsRead = async (
+        item: NotificationItem,
+        e?: React.MouseEvent,
+    ) => {
         if (e) {
             e.stopPropagation();
         }
@@ -151,6 +170,25 @@ export default function NotificationsIndex({
 
     // Notification item click action (matching Bell Popover behavior)
     const handleNotificationClick = async (item: NotificationItem) => {
+        if (item.is_chat) {
+            try {
+                if (!item.is_read) {
+                    const response = await apiClient.patch(
+                        markNotificationRead.url(item.id),
+                    );
+                    if (!response.data.success) return;
+                }
+                router.visit(
+                    item.chat_class_id
+                        ? classChatIndex(item.chat_class_id)
+                        : chatGroupsIndex(),
+                );
+            } catch {
+                return;
+            }
+            return;
+        }
+
         if (!item.is_read) {
             await handleMarkAsRead(item);
         }
@@ -162,7 +200,9 @@ export default function NotificationsIndex({
 
         if (isCenterReg) {
             if (item.center_id) {
-                router.visit(`/admins?action=create&center_id=${item.center_id}`);
+                router.visit(
+                    `/admins?action=create&center_id=${item.center_id}`,
+                );
             } else {
                 router.visit('/admins?action=create');
             }
@@ -174,16 +214,31 @@ export default function NotificationsIndex({
     };
 
     // Helper: Notification Icon & Badge by Type
-    const getNotificationTypeInfo = (type: number | string) => {
+    const getNotificationTypeInfo = (type: number | string, isChat = false) => {
         const numType = Number(type);
-        if (numType === NOTIFICATION_TYPE_CENTER_REGISTRATION || type === 'center_registration') {
+        if (isChat) {
+            return {
+                label: 'Tin nhắn lớp học',
+                icon: <MessageSquare className="h-4 w-4 text-emerald-600" />,
+                badgeColor:
+                    'bg-emerald-100 text-emerald-800 border-emerald-200',
+            };
+        }
+        if (
+            numType === NOTIFICATION_TYPE_CENTER_REGISTRATION ||
+            type === 'center_registration'
+        ) {
             return {
                 label: 'Đăng ký trung tâm mới',
                 icon: <Building2 className="h-4 w-4 text-emerald-600" />,
-                badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                badgeColor:
+                    'bg-emerald-100 text-emerald-800 border-emerald-200',
             };
         }
-        if (numType === NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL || type === 'subscription_renewal') {
+        if (
+            numType === NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL ||
+            type === 'subscription_renewal'
+        ) {
             return {
                 label: 'Yêu cầu gia hạn gói',
                 icon: <CreditCard className="h-4 w-4 text-amber-600" />,
@@ -215,7 +270,8 @@ export default function NotificationsIndex({
                                     Thông Báo Hệ Thống
                                 </h1>
                                 <p className="text-xs text-gray-500">
-                                    Theo dõi các thông báo đăng ký trung tâm mới và yêu cầu gia hạn gói dịch vụ
+                                    Theo dõi các thông báo đăng ký trung tâm mới
+                                    và yêu cầu gia hạn gói dịch vụ
                                 </p>
                             </div>
                         </div>
@@ -228,7 +284,9 @@ export default function NotificationsIndex({
                                 size="sm"
                                 onClick={handleMarkAllAsRead}
                                 isLoading={markingAll}
-                                icon={<CheckCheck className="h-4 w-4 text-emerald-600" />}
+                                icon={
+                                    <CheckCheck className="h-4 w-4 text-emerald-600" />
+                                }
                                 className="!border-emerald-200 !text-emerald-700 hover:!bg-emerald-50"
                             >
                                 Đã đọc tất cả ({unread_count})
@@ -250,7 +308,9 @@ export default function NotificationsIndex({
                                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                     <Input
                                         value={keyword}
-                                        onChange={(e) => setKeyword(e.target.value)}
+                                        onChange={(e) =>
+                                            setKeyword(e.target.value)
+                                        }
                                         placeholder="Tìm theo tên trung tâm, email, SĐT, nội dung..."
                                         className="!pl-9 !text-sm"
                                     />
@@ -268,10 +328,12 @@ export default function NotificationsIndex({
                                         const val = e.target.value;
                                         setSelectedStatus(val);
                                         handleFilter({
-                                            is_read: val ? Number(val) : undefined,
+                                            is_read: val
+                                                ? Number(val)
+                                                : undefined,
                                         });
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                                 >
                                     <option value="">Tất cả trạng thái</option>
                                     <option value="2">Chưa đọc</option>
@@ -293,13 +355,23 @@ export default function NotificationsIndex({
                                             type: val || undefined,
                                         });
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
                                 >
-                                    <option value="">Tất cả loại thông báo</option>
-                                    <option value={String(NOTIFICATION_TYPE_CENTER_REGISTRATION)}>
+                                    <option value="">
+                                        Tất cả loại thông báo
+                                    </option>
+                                    <option
+                                        value={String(
+                                            NOTIFICATION_TYPE_CENTER_REGISTRATION,
+                                        )}
+                                    >
                                         Đăng ký trung tâm mới
                                     </option>
-                                    <option value={String(NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL)}>
+                                    <option
+                                        value={String(
+                                            NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+                                        )}
+                                    >
                                         Yêu cầu gia hạn gói dịch vụ
                                     </option>
                                 </select>
@@ -334,7 +406,8 @@ export default function NotificationsIndex({
                                             : 'bg-slate-100 text-gray-600 hover:bg-slate-200'
                                     }`}
                                 >
-                                    Chưa đọc {unread_count > 0 && `(${unread_count})`}
+                                    Chưa đọc{' '}
+                                    {unread_count > 0 && `(${unread_count})`}
                                 </button>
                                 <button
                                     type="button"
@@ -353,13 +426,17 @@ export default function NotificationsIndex({
                             </div>
 
                             <div className="flex items-center gap-2">
-                                {(keyword || selectedStatus || selectedType) && (
+                                {(keyword ||
+                                    selectedStatus ||
+                                    selectedType) && (
                                     <Button
                                         type="button"
                                         variant="secondary"
                                         size="sm"
                                         onClick={handleResetFilter}
-                                        icon={<RotateCcw className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <RotateCcw className="h-3.5 w-3.5" />
+                                        }
                                     >
                                         Đặt lại
                                     </Button>
@@ -406,16 +483,21 @@ export default function NotificationsIndex({
                 ) : (
                     <div className="space-y-3">
                         {notifications.data.map((item) => {
-                            const typeInfo = getNotificationTypeInfo(item.type);
+                            const typeInfo = getNotificationTypeInfo(
+                                item.type,
+                                item.is_chat,
+                            );
 
                             return (
                                 <div
                                     key={item.id}
-                                    onClick={() => handleNotificationClick(item)}
+                                    onClick={() =>
+                                        handleNotificationClick(item)
+                                    }
                                     className={`group relative cursor-pointer rounded-2xl border p-4 transition-all duration-150 ${
                                         item.is_read
                                             ? 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-xs'
-                                            : 'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300 hover:bg-emerald-50/80 shadow-xs'
+                                            : 'border-emerald-200 bg-emerald-50/50 shadow-xs hover:border-emerald-300 hover:bg-emerald-50/80'
                                     }`}
                                 >
                                     <div className="flex items-start gap-3.5">
@@ -438,7 +520,7 @@ export default function NotificationsIndex({
                                                         className={`text-sm font-bold ${
                                                             item.is_read
                                                                 ? 'text-gray-900'
-                                                                : 'text-emerald-950 font-extrabold'
+                                                                : 'font-extrabold text-emerald-950'
                                                         }`}
                                                     >
                                                         {item.title}
@@ -446,7 +528,7 @@ export default function NotificationsIndex({
 
                                                     {/* Unread indicator */}
                                                     {!item.is_read && (
-                                                        <span className="h-2 w-2 rounded-full bg-emerald-600 shadow-xs ring-2 ring-emerald-300 animate-pulse" />
+                                                        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600 shadow-xs ring-2 ring-emerald-300" />
                                                     )}
                                                 </div>
 
@@ -462,7 +544,7 @@ export default function NotificationsIndex({
                                                 </div>
                                             </div>
 
-                                            <p className="mt-1.5 text-xs leading-relaxed text-gray-600 line-clamp-2">
+                                            <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-gray-600">
                                                 {item.content}
                                             </p>
 
@@ -478,7 +560,9 @@ export default function NotificationsIndex({
                                                     {item.full_created_at && (
                                                         <span className="flex items-center gap-1">
                                                             <Clock className="h-3 w-3" />
-                                                            {item.full_created_at}
+                                                            {
+                                                                item.full_created_at
+                                                            }
                                                         </span>
                                                     )}
                                                 </div>
@@ -488,7 +572,10 @@ export default function NotificationsIndex({
                                                         <button
                                                             type="button"
                                                             onClick={(e) =>
-                                                                handleMarkAsRead(item, e)
+                                                                handleMarkAsRead(
+                                                                    item,
+                                                                    e,
+                                                                )
                                                             }
                                                             className="flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
                                                         >
@@ -496,9 +583,9 @@ export default function NotificationsIndex({
                                                             Đánh dấu đã đọc
                                                         </button>
                                                     )}
-                                                    <span className="flex items-center gap-0.5 text-emerald-700 font-semibold group-hover:translate-x-0.5 transition-transform">
+                                                    <span className="flex items-center gap-0.5 font-semibold text-emerald-700 transition-transform group-hover:translate-x-0.5">
                                                         Xem chi tiết
-                                                        <ExternalLink className="h-3 w-3 ml-0.5" />
+                                                        <ExternalLink className="ml-0.5 h-3 w-3" />
                                                     </span>
                                                 </div>
                                             </div>
@@ -530,11 +617,12 @@ export default function NotificationsIndex({
                     <div className="space-y-4 py-2">
                         <div className="rounded-xl border border-gray-100 bg-slate-50 p-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                                     Tiêu đề
                                 </span>
                                 <span className="text-[11px] text-gray-400">
-                                    {selectedNotif.full_created_at || selectedNotif.created_at}
+                                    {selectedNotif.full_created_at ||
+                                        selectedNotif.created_at}
                                 </span>
                             </div>
                             <h3 className="mt-1 text-sm font-bold text-gray-900">
@@ -543,18 +631,22 @@ export default function NotificationsIndex({
                         </div>
 
                         <div>
-                            <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                            <span className="mb-1 block text-xs font-bold tracking-wider text-gray-500 uppercase">
                                 Nội dung chi tiết
                             </span>
-                            <div className="rounded-xl border border-gray-200 bg-white p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-line shadow-xs">
+                            <div className="rounded-xl border border-gray-200 bg-white p-4 text-xs leading-relaxed whitespace-pre-line text-gray-700 shadow-xs">
                                 {selectedNotif.content}
                             </div>
                         </div>
 
                         {selectedNotif.center_name && (
                             <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-slate-50 px-3 py-2 text-xs text-gray-600">
-                                <span className="font-medium">Trung tâm liên quan:</span>
-                                <strong className="text-gray-900">{selectedNotif.center_name}</strong>
+                                <span className="font-medium">
+                                    Trung tâm liên quan:
+                                </span>
+                                <strong className="text-gray-900">
+                                    {selectedNotif.center_name}
+                                </strong>
                             </div>
                         )}
 
@@ -575,7 +667,9 @@ export default function NotificationsIndex({
                                         setSelectedNotif(null);
                                         router.visit(`/centers/${cId}/edit`);
                                     }}
-                                    icon={<ExternalLink className="h-3.5 w-3.5" />}
+                                    icon={
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                    }
                                 >
                                     Đến trung tâm
                                 </Button>

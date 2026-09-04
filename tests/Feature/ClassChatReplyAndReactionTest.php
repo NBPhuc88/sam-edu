@@ -67,6 +67,9 @@ beforeEach(function () {
         'status'       => 1,
     ]);
 
+    $subject = \App\Models\Subject::create(['center_id' => $this->center->id, 'code' => 'SUB-CHAT', 'name' => 'Chat subject']);
+    $this->schoolClass->classSubjects()->create(['subject_id' => $subject->id, 'teacher_id' => $this->teacher->id, 'status' => Constant::CLASS_SUBJECT_STATUS_ACTIVE]);
+
     $this->schoolClass->students()->attach($this->student->id, ['enrolled_at' => now(), 'status' => Constant::CLASS_STUDENT_STATUS_ACTIVE]);
 });
 

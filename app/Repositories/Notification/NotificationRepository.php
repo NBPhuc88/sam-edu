@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Notification;
 
+use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -67,7 +68,15 @@ class NotificationRepository implements NotificationRepositoryInterface
             });
         }
 
-        return $query->latest('id')->paginate($perPage)->withQueryString();
+        $notificationsTable = (new Notification())->getTable();
+        $recipientsTable    = (new NotificationRecipient())->getTable();
+
+        return $query
+            ->orderByDesc(Notification::select('updated_at')
+                ->whereColumn("{$notificationsTable}.id", "{$recipientsTable}.notification_id"))
+            ->latest('id')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**

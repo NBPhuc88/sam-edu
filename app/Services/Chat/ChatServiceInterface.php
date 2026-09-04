@@ -10,7 +10,21 @@ interface ChatServiceInterface
 {
     /**
      * @param  int                              $classId
+     * @param  ?int                             $lastReadMessageId
      * @return array<int, array<string, mixed>>
+     */
+    public function getOpeningMessages(int $classId, ?int $lastReadMessageId): array;
+
+    /**
+     * @param  int                  $classId
+     * @param  array<string, mixed> $senderInfo
+     * @return array<string, mixed>
+     */
+    public function getOpeningChatData(int $classId, array $senderInfo): array;
+
+    /**
+     * @return array<int, array<string, mixed>>
+     * @param  int                              $classId
      */
     public function getRecentMessages(int $classId): array;
 

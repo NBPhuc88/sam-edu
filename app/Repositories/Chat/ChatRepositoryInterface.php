@@ -9,12 +9,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface ChatRepositoryInterface
 {
+    public function getLastReadMessageId(int $classId, int $userType, int $userId): ?int;
+
+    public function markMessagesRead(int $classId, int $userType, int $userId, int $messageId): void;
+
     /**
      * @param  int                               $classId
      * @param  int                               $limit
+     * @param  ?int                              $sinceMessageId
      * @return Collection<int, ClassChatMessage>
      */
-    public function getRecentMessages(int $classId, int $limit = 50): Collection;
+    public function getRecentMessages(int $classId, int $limit = 50, ?int $sinceMessageId = null): Collection;
 
     public function getPinnedMessage(int $classId): ?ClassChatMessage;
 
@@ -49,6 +54,8 @@ interface ChatRepositoryInterface
      * @param  int                  $page
      * @param  ?int                 $teacherId
      * @param  ?int                 $studentId
+     * @param  ?int                 $userType
+     * @param  ?int                 $userId
      * @return LengthAwarePaginator
      */
     public function getPaginatedClassChatGroups(
@@ -59,7 +66,9 @@ interface ChatRepositoryInterface
         int $perPage = Constant::DEFAULT_PER_PAGE,
         int $page = Constant::DEFAULT_PAGE,
         ?int $teacherId = null,
-        ?int $studentId = null
+        ?int $studentId = null,
+        ?int $userType = null,
+        ?int $userId = null
     ): LengthAwarePaginator;
 
     /**

@@ -1,11 +1,11 @@
+import { markAsRead as markNotificationRead } from '@/actions/App/Http/Controllers/Api/NotificationController';
+import { index as notificationsIndex } from '@/actions/App/Http/Controllers/Api/NotificationController';
 import AppLogo from '@/components/common/AppLogo';
-import {
-    NOTIFICATION_TYPE_CENTER_REGISTRATION,
-    NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
-    ROLE_SUPER_ADMIN,
-} from '@/constants/enums';
+import { ROLE_SUPER_ADMIN } from '@/constants/enums';
 import apiClient from '@/lib/axios';
 import getEcho from '@/lib/echo';
+import { index as chatGroupsIndex } from '@/routes/chats';
+import { index as classChatIndex } from '@/routes/classes/chat';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, Building2, CreditCard, LogOut, Menu, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -36,6 +36,8 @@ interface CenterData {
 interface NotificationItem {
     id: number;
     notification_id: number;
+    is_chat?: boolean;
+    chat_class_id?: number | null;
     title: string;
     content: string;
     type?: number | string | null;
@@ -68,17 +70,44 @@ export const Header: React.FC<HeaderProps> = ({
     headerExtra,
 }) => {
     const pageProps = usePage<any>().props;
-    const initialNotifs: NotificationItem[] = pageProps.auth?.notifications ?? [];
-    const initialUnreadCount: number = pageProps.auth?.unread_notifications_count ?? 0;
+    const initialNotifs: NotificationItem[] =
+        pageProps.auth?.notifications ?? [];
+    const initialUnreadCount: number =
+        pageProps.auth?.unread_notifications_count ?? 0;
 
-    const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifs);
+    const [notifications, setNotifications] =
+        useState<NotificationItem[]>(initialNotifs);
     const [unreadCount, setUnreadCount] = useState<number>(initialUnreadCount);
     const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
     useEffect(() => {
         setNotifications(pageProps.auth?.notifications ?? []);
         setUnreadCount(pageProps.auth?.unread_notifications_count ?? 0);
-    }, [pageProps.auth?.notifications, pageProps.auth?.unread_notifications_count]);
+    }, [
+        pageProps.auth?.notifications,
+        pageProps.auth?.unread_notifications_count,
+    ]);
+
+    useEffect(() => {
+        if (!user) return;
+        let active = true;
+        const timer = window.setInterval(async () => {
+            if (document.visibilityState !== 'visible') return;
+            try {
+                const response = await apiClient.get(notificationsIndex.url());
+                if (active && response.data.success) {
+                    setNotifications(response.data.notifications);
+                    setUnreadCount(response.data.unread_count);
+                }
+            } catch {
+                // Keep the last successful notification state until the next refresh.
+            }
+        }, 15000);
+        return () => {
+            active = false;
+            window.clearInterval(timer);
+        };
+    }, [user?.id, role]);
 
     // WebSocket Real-time Notification Listener (Reverb/Pusher)
     useEffect(() => {
@@ -86,7 +115,8 @@ export const Header: React.FC<HeaderProps> = ({
             return;
         }
 
-        const isSuper = (role === 'admin' || user.role === 'admin') &&
+        const isSuper =
+            (role === 'admin' || user.role === 'admin') &&
             user.admin_role === ROLE_SUPER_ADMIN;
 
         if (isSuper) {
@@ -142,7 +172,9 @@ export const Header: React.FC<HeaderProps> = ({
             const res = await apiClient.patch(`/api/notifications/${id}/read`);
             if (res.data?.success) {
                 setNotifications((prev) =>
-                    prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+                    prev.map((n) =>
+                        n.id === id ? { ...n, is_read: true } : n,
+                    ),
                 );
                 setUnreadCount((prev) => Math.max(0, prev - 1));
             }
@@ -155,6 +187,26 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     const handleNotificationClick = async (item: NotificationItem) => {
+        if (item.is_chat) {
+            try {
+                if (!item.is_read) {
+                    const response = await apiClient.patch(
+                        markNotificationRead.url(item.id),
+                    );
+                    if (!response.data.success) return;
+                }
+                setIsPopoverOpen(false);
+                router.visit(
+                    item.chat_class_id
+                        ? classChatIndex(item.chat_class_id)
+                        : chatGroupsIndex(),
+                );
+            } catch {
+                return;
+            }
+            return;
+        }
+
         if (!item.is_read) {
             await handleMarkAsRead(item.id);
         }
@@ -162,7 +214,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         if (item.type === 'center_registration') {
             if (item.center_id) {
-                router.visit(`/admins?action=create&center_id=${item.center_id}`);
+                router.visit(
+                    `/admins?action=create&center_id=${item.center_id}`,
+                );
             } else {
                 router.visit('/admins?action=create');
             }
@@ -191,15 +245,17 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     // Hiển thị logo và tên Trung tâm ở chính giữa header cho: Admin phụ, Giáo viên, Học sinh
-    const isSuperAdmin = (role === 'admin' || user?.role === 'admin') &&
+    const isSuperAdmin =
+        (role === 'admin' || user?.role === 'admin') &&
         user?.admin_role === ROLE_SUPER_ADMIN;
     const isSubAdmin = role === 'admin' && !isSuperAdmin;
     const isTeacher = role === 'teacher';
     const isStudent = role === 'student';
-    const showCenterBrand = (isSubAdmin || isTeacher || isStudent) && !!center?.name;
+    const showCenterBrand =
+        (isSubAdmin || isTeacher || isStudent) && !!center?.name;
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 backdrop-blur-md px-4 shadow-xs">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 px-4 shadow-xs backdrop-blur-md">
             {/* Left — Sidebar Toggle */}
             <div className="flex items-center gap-3">
                 <button
@@ -227,13 +283,13 @@ export const Header: React.FC<HeaderProps> = ({
                     {headerExtra}
                 </div>
             ) : showCenterBrand && center ? (
-                <div className="flex max-w-[45%] sm:max-w-[55%] md:max-w-[60%] items-center gap-2 sm:gap-2.5 rounded-full bg-emerald-50/80 py-1 px-2.5 sm:px-3.5 border border-emerald-200/70 shadow-2xs">
+                <div className="flex max-w-[45%] items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-2.5 py-1 shadow-2xs sm:max-w-[55%] sm:gap-2.5 sm:px-3.5 md:max-w-[60%]">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
                         <Building2 className="h-4 w-4" />
                     </div>
                     <div className="flex items-center overflow-hidden">
                         <span
-                            className="truncate text-xs sm:text-sm font-bold text-gray-900"
+                            className="truncate text-xs font-bold text-gray-900 sm:text-sm"
                             title={center.name}
                         >
                             {center.name}
@@ -254,7 +310,9 @@ export const Header: React.FC<HeaderProps> = ({
                         icon={<CreditCard className="h-3.5 w-3.5" />}
                         onClick={onOpenPayment}
                     >
-                        <span className="hidden sm:inline">Gia hạn dịch vụ</span>
+                        <span className="hidden sm:inline">
+                            Gia hạn dịch vụ
+                        </span>
                     </Button>
                 )}
 
@@ -264,12 +322,12 @@ export const Header: React.FC<HeaderProps> = ({
                         <button
                             type="button"
                             onClick={() => setIsPopoverOpen((prev) => !prev)}
-                            className="relative rounded-full p-2 text-gray-600 hover:bg-slate-100 hover:text-gray-900 transition-colors focus:outline-none"
+                            className="relative rounded-full p-2 text-gray-600 transition-colors hover:bg-slate-100 hover:text-gray-900 focus:outline-none"
                             title="Thông báo hệ thống"
                         >
                             <Bell className="h-5 w-5" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-pulse">
+                                <span className="absolute top-1 right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
                             )}
@@ -277,11 +335,13 @@ export const Header: React.FC<HeaderProps> = ({
 
                         {/* Dropdown Popover */}
                         {isPopoverOpen && (
-                            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 px-1">
+                            <div className="animate-in fade-in slide-in-from-top-2 absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl duration-150 sm:w-96">
+                                <div className="flex items-center justify-between border-b border-gray-100 px-1 pb-2.5">
                                     <div className="flex items-center gap-2">
                                         <Bell className="h-4 w-4 text-emerald-600" />
-                                        <span className="text-xs font-bold text-gray-900">Thông báo</span>
+                                        <span className="text-xs font-bold text-gray-900">
+                                            Thông báo
+                                        </span>
                                         {unreadCount > 0 && (
                                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                                                 {unreadCount} chưa đọc
@@ -299,7 +359,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     )}
                                 </div>
 
-                                <div className="mt-2 max-h-80 overflow-y-auto space-y-1.5 pr-0.5">
+                                <div className="mt-2 max-h-80 space-y-1.5 overflow-y-auto pr-0.5">
                                     {notifications.length === 0 ? (
                                         <div className="py-8 text-center text-xs text-gray-400">
                                             Chưa có thông báo nào
@@ -308,27 +368,36 @@ export const Header: React.FC<HeaderProps> = ({
                                         notifications.map((item) => (
                                             <div
                                                 key={item.id}
-                                                onClick={() => handleNotificationClick(item)}
-                                                className={`cursor-pointer rounded-xl p-2.5 transition-all text-left ${
+                                                onClick={() =>
+                                                    handleNotificationClick(
+                                                        item,
+                                                    )
+                                                }
+                                                className={`cursor-pointer rounded-xl p-2.5 text-left transition-all ${
                                                     item.is_read
-                                                        ? 'bg-white hover:bg-slate-50 text-gray-600'
-                                                        : 'bg-emerald-50/70 border border-emerald-100 hover:bg-emerald-50 text-gray-900 font-medium'
+                                                        ? 'bg-white text-gray-600 hover:bg-slate-50'
+                                                        : 'border border-emerald-100 bg-emerald-50/70 font-medium text-gray-900 hover:bg-emerald-50'
                                                 }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <span className="text-xs font-bold text-gray-900 leading-snug">
+                                                    <span className="text-xs leading-snug font-bold text-gray-900">
                                                         {item.title}
                                                     </span>
                                                     {!item.is_read && (
                                                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
                                                     )}
                                                 </div>
-                                                <p className="mt-1 text-[11px] text-gray-600 leading-relaxed">
+                                                <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
                                                     {item.content}
                                                 </p>
                                                 <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
-                                                    <span>{item.center_name ?? 'Hệ thống'}</span>
-                                                    <span>{item.created_at}</span>
+                                                    <span>
+                                                        {item.center_name ??
+                                                            'Hệ thống'}
+                                                    </span>
+                                                    <span>
+                                                        {item.created_at}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))
@@ -354,18 +423,24 @@ export const Header: React.FC<HeaderProps> = ({
                     <Link
                         href="/profile"
                         title="Xem và quản lý Thông Tin Tài Khoản"
-                        className="flex items-center gap-2.5 py-1 px-2 rounded-xl transition-all hover:bg-slate-100 group"
+                        className="group flex items-center gap-2.5 rounded-xl px-2 py-1 transition-all hover:bg-slate-100"
                     >
                         {/* Avatar */}
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 ring-2 ring-emerald-500/20 shadow-xs group-hover:scale-105 transition-transform">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 shadow-xs ring-2 ring-emerald-500/20 transition-transform group-hover:scale-105">
                             {user.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
                         </div>
-                        <div className="hidden sm:flex flex-col text-left">
-                            <span className="text-xs font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                        <div className="hidden flex-col text-left sm:flex">
+                            <span className="text-xs font-bold text-gray-900 transition-colors group-hover:text-emerald-700">
                                 {user.full_name ?? user.username}
                             </span>
                             <span className="text-2xs text-gray-400 capitalize">
-                                {role === 'admin' ? (isSuperAdmin ? 'Super Admin' : 'Admin') : role === 'teacher' ? 'Giáo viên' : 'Học sinh'}
+                                {role === 'admin'
+                                    ? isSuperAdmin
+                                        ? 'Super Admin'
+                                        : 'Admin'
+                                    : role === 'teacher'
+                                      ? 'Giáo viên'
+                                      : 'Học sinh'}
                             </span>
                         </div>
                     </Link>

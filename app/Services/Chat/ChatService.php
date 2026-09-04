@@ -8,6 +8,8 @@ use App\Events\ClassChatMessageReacted;
 use App\Events\ClassChatMessageSent;
 use App\Models\Admin;
 use App\Models\ClassChatMessage;
+use App\Models\Notification;
+use App\Models\NotificationRecipient;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -16,7 +18,9 @@ use App\Repositories\Chat\ChatRepositoryInterface;
 use App\Repositories\Class\SchoolClassRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 class ChatService implements ChatServiceInterface
 {
@@ -25,6 +29,147 @@ class ChatService implements ChatServiceInterface
         protected SchoolClassRepositoryInterface $schoolClassRepository,
         protected CenterRepositoryInterface $centerRepository
     ) {
+    }
+
+    protected function notifyClassMembers(SchoolClass $schoolClass, ClassChatMessage $message): void
+    {
+        $members = [
+            Constant::RECIPIENT_TYPE_ADMIN => Admin::where('role', Constant::ROLE_ADMIN)
+                ->whereHas('centers', fn ($query) => $query->where('centers.id', $schoolClass->center_id))->pluck('id'),
+            Constant::RECIPIENT_TYPE_TEACHER => Teacher::whereIn('id', $schoolClass->classSubjects()->select('teacher_id'))->pluck('id'),
+            Constant::RECIPIENT_TYPE_STUDENT => $schoolClass->students()->wherePivot('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)
+                ->where('students.status', Constant::STUDENT_STATUS_ACTIVE)->pluck('students.id'),
+        ];
+        $chatNotifications = Notification::query()
+            ->where('chat_class_id', $schoolClass->id)
+            ->latest('id')
+            ->lockForUpdate()
+            ->get();
+        $notificationData = [
+            'center_id'     => $schoolClass->center_id,
+            'chat_class_id' => $schoolClass->id,
+            'title'         => "Tin nhắn mới trong lớp {$schoolClass->name}",
+            'content'       => $message->sender_name . ': ' . Str::limit($message->message, 160),
+            'type'          => Constant::NOTIFICATION_TYPE_GENERAL,
+        ];
+
+        $now                 = now();
+        $existingRecipients  = collect();
+        $chatNotificationIds = $chatNotifications->pluck('id');
+
+        if ($chatNotificationIds->isNotEmpty()) {
+            $duplicateRecipientIds = [];
+
+            foreach (NotificationRecipient::query()
+                ->whereIn('notification_id', $chatNotificationIds)
+                ->with('notification')
+                ->latest('id')
+                ->lockForUpdate()
+                ->get() as $recipient) {
+                $key = $recipient->recipient_type . ':' . $recipient->recipient_id;
+
+                if ($existingRecipients->has($key)) {
+                    $duplicateRecipientIds[] = $recipient->id;
+
+                    continue;
+                }
+
+                $existingRecipients->put($key, $recipient);
+            }
+
+            if ($duplicateRecipientIds !== []) {
+                NotificationRecipient::whereKey($duplicateRecipientIds)->delete();
+            }
+
+            $recipientCounts = $existingRecipients->countBy(
+                fn (NotificationRecipient $recipient): int => (int) $recipient->notification_id
+            );
+
+            foreach ($existingRecipients as $key => $recipient) {
+                if (($recipientCounts[(int) $recipient->notification_id] ?? 0) < 2) {
+                    continue;
+                }
+
+                $dedicatedNotification = $recipient->notification->replicate();
+                $dedicatedNotification->save();
+                $recipient->update([
+                    'notification_id' => $dedicatedNotification->id,
+                    'updated_at'      => $now,
+                ]);
+                $existingRecipients->put($key, $recipient);
+            }
+        }
+
+        $recipientIdsToUnread    = [];
+        $senderRecipientIds      = [];
+        $notificationIdsToUpdate = [];
+        $newRecipients           = [];
+        $usedNotificationIds     = $existingRecipients->pluck('notification_id')->all();
+
+        foreach ($members as $type => $ids) {
+            foreach ($ids->unique() as $id) {
+                $key      = $type . ':' . $id;
+                $isSender = $type === (int) $message->sender_type && (int) $id === (int) $message->sender_id;
+
+                if ($existingRecipients->has($key)) {
+                    $recipient = $existingRecipients->get($key);
+
+                    if ($isSender) {
+                        $senderRecipientIds[] = $recipient->id;
+                    } else {
+                        $recipientIdsToUnread[]    = $recipient->id;
+                        $notificationIdsToUpdate[] = (int) $recipient->notification_id;
+                    }
+
+                    continue;
+                }
+
+                if ($isSender) {
+                    continue;
+                }
+
+                $notification          = Notification::create($notificationData);
+                $usedNotificationIds[] = $notification->id;
+                $newRecipients[]       = [
+                    'notification_id' => $notification->id,
+                    'recipient_type'  => $type,
+                    'recipient_id'    => $id,
+                    'read_at'         => null,
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
+            }
+        }
+
+        $notificationIdsToUpdate = array_values(array_unique($notificationIdsToUpdate));
+
+        if ($notificationIdsToUpdate !== []) {
+            Notification::whereKey($notificationIdsToUpdate)->update($notificationData + ['updated_at' => $now]);
+        }
+
+        if ($recipientIdsToUnread !== []) {
+            NotificationRecipient::whereKey($recipientIdsToUnread)->update([
+                'read_at'    => null,
+                'updated_at' => $now,
+            ]);
+        }
+
+        if ($senderRecipientIds !== []) {
+            NotificationRecipient::whereKey($senderRecipientIds)->update([
+                'read_at'    => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        foreach (array_chunk($newRecipients, 500) as $chunk) {
+            NotificationRecipient::insert($chunk);
+        }
+
+        $orphanNotificationIds = $chatNotificationIds->diff(array_unique($usedNotificationIds));
+
+        if ($orphanNotificationIds->isNotEmpty()) {
+            Notification::whereKey($orphanNotificationIds)->delete();
+        }
     }
 
     public function authorizeAccess(int $classId, mixed $user = null): SchoolClass
@@ -56,9 +201,7 @@ class ChatService implements ChatServiceInterface
         }
 
         if ($user instanceof Teacher) {
-            $isAssigned = ($user->center_id === $schoolClass->center_id)
-                || $schoolClass->classSubjects()->where('teacher_id', $user->id)->exists()
-                || $schoolClass->classSessions()->where('teacher_id', $user->id)->exists();
+            $isAssigned = $schoolClass->classSubjects()->where('teacher_id', $user->id)->exists();
 
             if (! $isAssigned) {
                 abort(403, 'Bạn không có quyền truy cập nhóm chat của lớp học này.');
@@ -74,8 +217,8 @@ class ChatService implements ChatServiceInterface
                 abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
             }
 
-            $isEnrolled = ($user->center_id === $schoolClass->center_id)
-                && $schoolClass->students()->where('students.id', $user->id)->exists();
+            $isEnrolled = $schoolClass->students()->where('students.id', $user->id)
+                ->wherePivot('status', Constant::CLASS_STUDENT_STATUS_ACTIVE)->exists();
 
             if (! $isEnrolled) {
                 abort(403, 'Bạn không phải là học sinh của lớp học này.');
@@ -94,8 +237,60 @@ class ChatService implements ChatServiceInterface
 
     /**
      * @param  int                              $classId
+     * @param  ?int                             $lastReadMessageId
      * @return array<int, array<string, mixed>>
      */
+    public function getOpeningMessages(int $classId, ?int $lastReadMessageId): array
+    {
+        $messages = $this->chatRepository->getRecentMessages($classId);
+
+        if ($messages->isNotEmpty() && $messages->first()->id > ($lastReadMessageId ?? 0)) {
+            $messages = $this->chatRepository->getRecentMessages($classId, 50, $lastReadMessageId ?? 0);
+        }
+
+        return $messages->map(fn (ClassChatMessage $message): array => $this->formatMessageArray($message))->all();
+    }
+
+    /**
+     * Load a room and advance its read state for the current user.
+     *
+     * @param  int                  $classId
+     * @param  array<string, mixed> $senderInfo
+     * @return array<string, mixed>
+     */
+    public function getOpeningChatData(int $classId, array $senderInfo): array
+    {
+        $schoolClass       = $this->authorizeAccess($classId);
+        $userType          = (int) $senderInfo['sender_type'];
+        $userId            = (int) $senderInfo['sender_id'];
+        $lastReadMessageId = $this->chatRepository->getLastReadMessageId($classId, $userType, $userId);
+        $messages          = $this->getOpeningMessages($classId, $lastReadMessageId);
+        $pinnedMessage     = $this->getPinnedMessage($classId);
+
+        $this->markChatRoomRead(
+            $classId,
+            $userType,
+            $userId,
+            $messages === [] ? null : max(array_column($messages, 'id')),
+        );
+
+        return compact('schoolClass', 'lastReadMessageId', 'messages', 'pinnedMessage');
+    }
+
+    protected function markChatRoomRead(int $classId, int $userType, int $userId, ?int $lastMessageId): void
+    {
+        if ($lastMessageId !== null) {
+            $this->chatRepository->markMessagesRead($classId, $userType, $userId, $lastMessageId);
+        }
+
+        NotificationRecipient::query()
+            ->where('recipient_type', $userType)
+            ->where('recipient_id', $userId)
+            ->whereNull('read_at')
+            ->whereHas('notification', fn ($query) => $query->where('chat_class_id', $classId))
+            ->update(['read_at' => now()]);
+    }
+
     public function getRecentMessages(int $classId): array
     {
         $redisKey = "chat:class:{$classId}:messages";
@@ -202,6 +397,10 @@ class ChatService implements ChatServiceInterface
             abort(403, 'Lớp học đã tạm dừng, hoàn thành hoặc đã đóng. Không thể gửi thêm tin nhắn.');
         }
 
+        if ($replyToId !== null) {
+            abort_unless($schoolClass->chatMessages()->whereKey($replyToId)->exists(), 422, 'Tin nhắn trả lời không thuộc lớp này.');
+        }
+
         $senderType = (int) ($senderInfo['sender_type'] ?? 0);
 
         if ($senderType === Constant::SENDER_TYPE_TEACHER) {
@@ -212,16 +411,22 @@ class ChatService implements ChatServiceInterface
             }
         }
 
-        $created = $this->chatRepository->createMessage([
-            'class_id'      => $classId,
-            'reply_to_id'   => $replyToId,
-            'sender_type'   => $senderInfo['sender_type'] ?? Constant::SENDER_TYPE_STUDENT,
-            'sender_id'     => $senderInfo['sender_id'] ?? 0,
-            'sender_name'   => $senderInfo['sender_name'] ?? 'Thành viên',
-            'sender_avatar' => $senderInfo['sender_avatar'] ?? null,
-            'message'       => $message,
-            'is_pinned'     => false,
-        ]);
+        $created = DB::transaction(function () use ($classId, $senderInfo, $message, $replyToId, $schoolClass): ClassChatMessage {
+            $created = $this->chatRepository->createMessage([
+                'class_id'      => $classId,
+                'reply_to_id'   => $replyToId,
+                'sender_type'   => $senderInfo['sender_type'] ?? Constant::SENDER_TYPE_STUDENT,
+                'sender_id'     => $senderInfo['sender_id'] ?? 0,
+                'sender_name'   => $senderInfo['sender_name'] ?? 'Thành viên',
+                'sender_avatar' => $senderInfo['sender_avatar'] ?? null,
+                'message'       => $message,
+                'is_pinned'     => false,
+            ]);
+
+            $this->notifyClassMembers($schoolClass, $created);
+
+            return $created;
+        });
 
         $formatted = $this->formatMessageArray($created);
 
@@ -290,6 +495,8 @@ class ChatService implements ChatServiceInterface
     public function toggleReaction(int $classId, int $messageId, array $senderInfo, string $emoji): array
     {
         $this->authorizeAccess($classId);
+
+        abort_unless(ClassChatMessage::where('class_id', $classId)->whereKey($messageId)->exists(), 404);
 
         $reactions = $this->chatRepository->toggleReaction($classId, $messageId, $senderInfo, $emoji);
 
@@ -406,6 +613,8 @@ class ChatService implements ChatServiceInterface
                 ?? Auth::guard('student')->user();
         }
 
+        abort_unless($user instanceof Admin || $user instanceof Teacher || $user instanceof Student, 403);
+
         $centerIds = null;
         $teacherId = null;
         $studentId = null;
@@ -419,7 +628,7 @@ class ChatService implements ChatServiceInterface
             }
         } elseif ($user instanceof Teacher) {
             $teacherId = (int) $user->id;
-            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+            $centerIds = null;
         } elseif ($user instanceof Student) {
             $studentStatusInt = is_object($user->status) ? $user->status->value : (int) $user->status;
 
@@ -427,7 +636,7 @@ class ChatService implements ChatServiceInterface
                 abort(403, 'Tài khoản học sinh không ở trạng thái hoạt động.');
             }
             $studentId = (int) $user->id;
-            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+            $centerIds = null;
         }
 
         return $this->chatRepository->getPaginatedClassChatGroups(
@@ -438,7 +647,9 @@ class ChatService implements ChatServiceInterface
             $perPage,
             $page,
             $teacherId,
-            $studentId
+            $studentId,
+            $user instanceof Admin ? Constant::SENDER_TYPE_ADMIN : ($user instanceof Teacher ? Constant::SENDER_TYPE_TEACHER : Constant::SENDER_TYPE_STUDENT),
+            (int) $user->id
         );
     }
 
@@ -453,6 +664,8 @@ class ChatService implements ChatServiceInterface
                 ?? Auth::guard('teacher')->user()
                 ?? Auth::guard('student')->user();
         }
+
+        abort_unless($user instanceof Admin || $user instanceof Teacher || $user instanceof Student, 403);
 
         $isSuperAdmin = $user instanceof Admin && $user->isSuperAdmin();
         $centers      = [];
@@ -470,10 +683,10 @@ class ChatService implements ChatServiceInterface
             }
         } elseif ($user instanceof Teacher) {
             $teacherId = (int) $user->id;
-            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+            $centerIds = null;
         } elseif ($user instanceof Student) {
             $studentId = (int) $user->id;
-            $centerIds = $user->center_id ? [(int) $user->center_id] : null;
+            $centerIds = null;
         }
 
         $accessibleClasses = $this->chatRepository->getAccessibleClassesList(
