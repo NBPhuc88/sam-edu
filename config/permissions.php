@@ -223,5 +223,13 @@ return [
                 ['code' => 'settings.edit', 'action' => 'edit', 'name' => 'Cập nhật cài đặt', 'description' => 'Chỉnh sửa cấu hình hệ thống & thông tin liên hệ'],
             ],
         ],
+        [
+            'key'          => 'notifications',
+            'name'         => 'Thông Báo Hệ Thống',
+            'module_order' => 20,
+            'actions'      => [
+                ['code' => 'notifications.index', 'action' => 'index', 'name' => 'Xem thông báo', 'description' => 'Xem danh sách thông báo và đánh dấu đã đọc'],
+            ],
+        ],
     ],
 ];

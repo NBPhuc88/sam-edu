@@ -228,3 +228,41 @@ test('super admin receives full permissions and admin_role string super_admin in
             ->has('auth.permissions', $allPermissionsCount)
     );
 });
+
+test('notifications.index permission exists and protects notifications routes', function () {
+    expect(Permission::where('code', 'notifications.index')->exists())->toBeTrue();
+
+    $center = Center::create([
+        'code'   => 'CTR000000079',
+        'name'   => 'Trung Tâm Notif Perm Test',
+        'email'  => 'center79@test.com',
+        'phone'  => '0901234579',
+        'status' => Constant::STATUS_ACTIVE,
+    ]);
+
+    $teacher = Teacher::create([
+        'teacher_code' => 'GV000000079',
+        'first_name'   => 'Giáo Viên',
+        'last_name'    => 'Notif',
+        'full_name'    => 'Giáo Viên Test Notif Perm',
+        'username'     => 'teacher_notif_perm',
+        'password'     => 'password123',
+        'center_id'    => $center->id,
+        'status'       => Constant::STATUS_ACTIVE,
+    ]);
+
+    // Mặc định teacher có quyền notifications.index -> truy cập OK
+    $response = $this->actingAs($teacher, 'teacher')->get(route('notifications.index'));
+    $response->assertOk();
+
+    // Thu hồi quyền notifications.index của teacher -> truy cập nhận 404
+    $permissionService = app(PermissionServiceInterface::class);
+    $permissionService->updateRolePermissions(Constant::ROLE_TEACHER, ['dashboard.index', 'teachers.schedule']);
+
+    $blockedResponse = $this->actingAs($teacher, 'teacher')->get(route('notifications.index'));
+    $blockedResponse->assertStatus(404);
+
+    // Endpoint mark-all-read cũng bị chặn
+    $blockedMarkRead = $this->actingAs($teacher, 'teacher')->post(route('notifications.mark_all_read'));
+    $blockedMarkRead->assertStatus(404);
+});

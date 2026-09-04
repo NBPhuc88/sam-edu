@@ -39,6 +39,7 @@ class PermissionSeeder extends Seeder
                 'grading.index', 'grading.create', 'grading.grade',
                 'online-exam.enter', 'practice-exams.index',
                 'tuitions.index', 'tuitions.create', 'tuitions.edit', 'tuitions.delete', 'tuitions.export', 'tuitions.payments',
+                'notifications.index',
             ],
 
             Constant::ROLE_TEACHER => [
@@ -52,6 +53,7 @@ class PermissionSeeder extends Seeder
                 'class-exams.index', 'class-exams.create', 'class-exams.edit', 'class-exams.delete',
                 'grading.index', 'grading.create', 'grading.grade',
                 'online-exam.enter', 'practice-exams.index',
+                'notifications.index',
             ],
 
             Constant::ROLE_STUDENT => [
@@ -60,6 +62,7 @@ class PermissionSeeder extends Seeder
                 'schedules.index',
                 'tuitions.index',
                 'online-exam.enter', 'practice-exams.index',
+                'notifications.index',
             ],
         ];
 

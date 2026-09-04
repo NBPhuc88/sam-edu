@@ -119,6 +119,7 @@ export const masterNavigation: NavItem[] = [
         label: 'Thông Báo',
         path: '/notifications',
         icon: Bell,
+        permission: 'notifications.index',
     },
     {
         label: 'Cài Đặt',

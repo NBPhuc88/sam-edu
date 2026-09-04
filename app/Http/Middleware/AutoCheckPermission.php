@@ -64,6 +64,10 @@ class AutoCheckPermission
         'holidays.seed'     => 'holidays.create',
         'permissions.reset' => 'permissions.edit',
         'permissions.sync'  => 'permissions.edit',
+
+        // Notifications Sub-actions
+        'notifications.read'          => 'notifications.index',
+        'notifications.mark_all_read' => 'notifications.index',
     ];
 
     public function __construct(
