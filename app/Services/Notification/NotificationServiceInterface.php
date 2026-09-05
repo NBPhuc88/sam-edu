@@ -2,6 +2,7 @@
 
 namespace App\Services\Notification;
 
+use App\Models\Notification;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 interface NotificationServiceInterface
@@ -29,4 +30,13 @@ interface NotificationServiceInterface
      * @return int
      */
     public function markAllAsRead(Authenticatable $user, string $role): int;
+
+    /**
+     * Send in-app notification and broadcast via real-time WebSocket.
+     *
+     * @param  array<string, mixed>                  $notificationData
+     * @param  array<int, array{type: int, id: int}> $recipients
+     * @return Notification
+     */
+    public function send(array $notificationData, array $recipients): Notification;
 }

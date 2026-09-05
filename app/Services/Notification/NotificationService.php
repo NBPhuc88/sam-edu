@@ -3,6 +3,7 @@
 namespace App\Services\Notification;
 
 use App\Enums\Constant;
+use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use App\Repositories\Notification\NotificationRepositoryInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -24,8 +25,14 @@ class NotificationService implements NotificationServiceInterface
     public function getPaginatedNotifications(Authenticatable $user, string $role, array $filters = [], int $perPage = 15): array
     {
         $recipientType = $this->resolveRecipientType($role);
-        $paginator     = $this->notificationRepository->getPaginatedForRecipient($recipientType, $user->getAuthIdentifier(), $filters, $perPage);
-        $unreadCount   = $this->notificationRepository->countUnreadForRecipient($recipientType, $user->getAuthIdentifier());
+        $isSuperAdmin  = ($role === 'admin' && ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin())));
+
+        if ($isSuperAdmin) {
+            $filters['is_super_admin'] = true;
+        }
+
+        $paginator   = $this->notificationRepository->getPaginatedForRecipient($recipientType, $user->getAuthIdentifier(), $filters, $perPage);
+        $unreadCount = $this->notificationRepository->countUnreadForRecipient($recipientType, $user->getAuthIdentifier(), $isSuperAdmin);
 
         $paginator->through(function (NotificationRecipient $recipient) {
             $notif       = $recipient->notification;
@@ -92,7 +99,18 @@ class NotificationService implements NotificationServiceInterface
     }
 
     /**
+     * @param  array<string, mixed>                  $notificationData
+     * @param  array<int, array{type: int, id: int}> $recipients
+     * @return Notification
+     */
+    public function send(array $notificationData, array $recipients): Notification
+    {
+        return $this->notificationRepository->createAndBroadcast($notificationData, $recipients);
+    }
+
+    /**
      * Resolve numeric recipient type from role string.
+
      * @param string $role
      */
     protected function resolveRecipientType(string $role): int

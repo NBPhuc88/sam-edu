@@ -6,6 +6,7 @@ use App\Enums\Constant;
 use App\Events\ClassChatMessagePinned;
 use App\Events\ClassChatMessageReacted;
 use App\Events\ClassChatMessageSent;
+use App\Events\NotificationSentEvent;
 use App\Models\Admin;
 use App\Models\ClassChatMessage;
 use App\Models\Notification;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use Throwable;
 
 class ChatService implements ChatServiceInterface
 {
@@ -31,7 +33,12 @@ class ChatService implements ChatServiceInterface
     ) {
     }
 
-    protected function notifyClassMembers(SchoolClass $schoolClass, ClassChatMessage $message): void
+    /**
+     * @return array<int, array{role: string, user_id: int, payload: array<string, mixed>}>
+     * @param  SchoolClass                                                                  $schoolClass
+     * @param  ClassChatMessage                                                             $message
+     */
+    protected function notifyClassMembers(SchoolClass $schoolClass, ClassChatMessage $message): array
     {
         $members = [
             Constant::RECIPIENT_TYPE_ADMIN => Admin::where('role', Constant::ROLE_ADMIN)
@@ -170,6 +177,47 @@ class ChatService implements ChatServiceInterface
         if ($orphanNotificationIds->isNotEmpty()) {
             Notification::whereKey($orphanNotificationIds)->delete();
         }
+
+        $broadcastItems = [];
+        $centerName     = $schoolClass->center?->name;
+
+        $recipientsToBroadcast = NotificationRecipient::query()
+            ->whereIn('notification_id', $usedNotificationIds)
+            ->where(function ($q) use ($message) {
+                $q->where('recipient_type', '!=', (int) $message->sender_type)
+                    ->orWhere('recipient_id', '!=', (int) $message->sender_id);
+            })
+            ->get();
+
+        foreach ($recipientsToBroadcast as $item) {
+            $roleName = match ((int) $item->recipient_type) {
+                Constant::RECIPIENT_TYPE_ADMIN   => 'admin',
+                Constant::RECIPIENT_TYPE_TEACHER => 'teacher',
+                Constant::RECIPIENT_TYPE_STUDENT => 'student',
+                default                          => 'student',
+            };
+
+            $broadcastItems[] = [
+                'role'    => $roleName,
+                'user_id' => (int) $item->recipient_id,
+                'payload' => [
+                    'id'              => $item->id,
+                    'notification_id' => $item->notification_id,
+                    'is_chat'         => true,
+                    'chat_class_id'   => $schoolClass->id,
+                    'title'           => $notificationData['title'],
+                    'content'         => $notificationData['content'],
+                    'type'            => $notificationData['type'],
+                    'center_id'       => $schoolClass->center_id,
+                    'center_name'     => $centerName,
+                    'is_read'         => false,
+                    'read_at'         => null,
+                    'created_at'      => 'Vừa xong',
+                ],
+            ];
+        }
+
+        return $broadcastItems;
     }
 
     public function authorizeAccess(int $classId, mixed $user = null): SchoolClass
@@ -411,7 +459,7 @@ class ChatService implements ChatServiceInterface
             }
         }
 
-        $created = DB::transaction(function () use ($classId, $senderInfo, $message, $replyToId, $schoolClass): ClassChatMessage {
+        [$created, $broadcastItems] = DB::transaction(function () use ($classId, $senderInfo, $message, $replyToId, $schoolClass): array {
             $created = $this->chatRepository->createMessage([
                 'class_id'      => $classId,
                 'reply_to_id'   => $replyToId,
@@ -423,9 +471,9 @@ class ChatService implements ChatServiceInterface
                 'is_pinned'     => false,
             ]);
 
-            $this->notifyClassMembers($schoolClass, $created);
+            $broadcastItems = $this->notifyClassMembers($schoolClass, $created);
 
-            return $created;
+            return [$created, $broadcastItems];
         });
 
         $formatted = $this->formatMessageArray($created);
@@ -434,11 +482,19 @@ class ChatService implements ChatServiceInterface
             $redisKey = "chat:class:{$classId}:messages";
             Redis::rpush($redisKey, json_encode($formatted));
             Redis::ltrim($redisKey, -50, -1);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Fallback
         }
 
         event(new ClassChatMessageSent($classId, $formatted));
+
+        foreach ($broadcastItems as $bItem) {
+            try {
+                event(new NotificationSentEvent($bItem['role'], $bItem['user_id'], $bItem['payload']));
+            } catch (Throwable $e) {
+                // Ignore broadcast error to prevent breaking flow
+            }
+        }
 
         return $formatted;
     }

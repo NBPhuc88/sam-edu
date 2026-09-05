@@ -156,21 +156,52 @@ class HandleInertiaRequests extends Middleware
                 default   => 1,
             };
 
+            $isSuperAdmin = ($role === 'admin' && ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin())));
+
             $notificationsTable = (new Notification())->getTable();
             $recipientsTable    = (new NotificationRecipient())->getTable();
-            $recipients         = NotificationRecipient::where('recipient_type', $numericRecipientType)
+
+            $recipientsQuery = NotificationRecipient::where('recipient_type', $numericRecipientType)
                 ->where('recipient_id', $user->id)
-                ->with(['notification.center'])
+                ->with(['notification.center']);
+
+            $unreadQuery = NotificationRecipient::where('recipient_type', $numericRecipientType)
+                ->where('recipient_id', $user->id)
+                ->whereNull('read_at');
+
+            if ($isSuperAdmin) {
+                $filterSuperAdmin = function ($q) {
+                    $q->whereNull('chat_class_id')
+                        ->where(function ($sub) {
+                            $sub->whereIn('type', [
+                                Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
+                                Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+                                'center_registration',
+                                'subscription_renewal',
+                            ])->orWhere(function ($fallback) {
+                                $fallback->where('type', Constant::NOTIFICATION_TYPE_GENERAL)
+                                    ->where(function ($kw) {
+                                        $kw->where('title', 'like', '%đăng ký%')
+                                            ->orWhere('content', 'like', '%đăng ký%')
+                                            ->orWhere('title', 'like', '%gia hạn%')
+                                            ->orWhere('content', 'like', '%gia hạn%');
+                                    });
+                            });
+                        });
+                };
+
+                $recipientsQuery->whereHas('notification', $filterSuperAdmin);
+                $unreadQuery->whereHas('notification', $filterSuperAdmin);
+            }
+
+            $recipients = $recipientsQuery
                 ->orderByDesc(Notification::select('updated_at')
                     ->whereColumn("{$notificationsTable}.id", "{$recipientsTable}.notification_id"))
                 ->latest('id')
                 ->limit(10)
                 ->get();
 
-            $unreadNotificationsCount = NotificationRecipient::where('recipient_type', $numericRecipientType)
-                ->where('recipient_id', $user->id)
-                ->whereNull('read_at')
-                ->count();
+            $unreadNotificationsCount = $unreadQuery->count();
 
             $userNotifications = $recipients->map(function (NotificationRecipient $recipient) {
                 $notif       = $recipient->notification;

@@ -2,9 +2,13 @@
 
 namespace App\Repositories\Notification;
 
+use App\Enums\Constant;
+use App\Events\NotificationSentEvent;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class NotificationRepository implements NotificationRepositoryInterface
 {
@@ -68,6 +72,12 @@ class NotificationRepository implements NotificationRepositoryInterface
             });
         }
 
+        if (! empty($filters['is_super_admin'])) {
+            $query->whereHas('notification', function ($q) {
+                $q->whereNull('chat_class_id');
+            });
+        }
+
         $notificationsTable = (new Notification())->getTable();
         $recipientsTable    = (new NotificationRecipient())->getTable();
 
@@ -80,17 +90,25 @@ class NotificationRepository implements NotificationRepositoryInterface
     }
 
     /**
-     * @param  int $recipientType
-     * @param  int $recipientId
+     * @param  int  $recipientType
+     * @param  int  $recipientId
+     * @param  bool $isSuperAdmin
      * @return int
      */
-    public function countUnreadForRecipient(int $recipientType, int $recipientId): int
+    public function countUnreadForRecipient(int $recipientType, int $recipientId, bool $isSuperAdmin = false): int
     {
-        return NotificationRecipient::query()
+        $query = NotificationRecipient::query()
             ->where('recipient_type', $recipientType)
             ->where('recipient_id', $recipientId)
-            ->whereNull('read_at')
-            ->count();
+            ->whereNull('read_at');
+
+        if ($isSuperAdmin) {
+            $query->whereHas('notification', function ($q) {
+                $q->whereNull('chat_class_id');
+            });
+        }
+
+        return $query->count();
     }
 
     /**
@@ -130,5 +148,73 @@ class NotificationRepository implements NotificationRepositoryInterface
             ->where('recipient_id', $recipientId)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
+    }
+
+    /**
+     * @param  array<string, mixed>                  $notificationData
+     * @param  array<int, array{type: int, id: int}> $recipients
+     * @return Notification
+     */
+    public function createAndBroadcast(array $notificationData, array $recipients): Notification
+    {
+        $notification = Notification::create([
+            'center_id'           => $notificationData['center_id'] ?? null,
+            'title'               => $notificationData['title'],
+            'content'             => $notificationData['content'] ?? '',
+            'type'                => $notificationData['type'] ?? Constant::NOTIFICATION_TYPE_GENERAL,
+            'created_by_admin_id' => $notificationData['created_by_admin_id'] ?? null,
+            'chat_class_id'       => $notificationData['chat_class_id'] ?? null,
+        ]);
+
+        $now                = now();
+        $recipientsToInsert = [];
+
+        foreach ($recipients as $recipient) {
+            $recipientsToInsert[] = [
+                'notification_id' => $notification->id,
+                'recipient_type'  => (int) $recipient['type'],
+                'recipient_id'    => (int) $recipient['id'],
+                'read_at'         => null,
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ];
+        }
+
+        foreach (array_chunk($recipientsToInsert, 1000) as $chunk) {
+            NotificationRecipient::insert($chunk);
+        }
+
+        $createdRecipients = NotificationRecipient::where('notification_id', $notification->id)->get();
+        $centerName        = $notification->center?->name;
+
+        foreach ($createdRecipients as $item) {
+            $roleName = match ((int) $item->recipient_type) {
+                Constant::RECIPIENT_TYPE_ADMIN   => 'admin',
+                Constant::RECIPIENT_TYPE_TEACHER => 'teacher',
+                Constant::RECIPIENT_TYPE_STUDENT => 'student',
+                default                          => 'admin',
+            };
+
+            try {
+                event(new NotificationSentEvent($roleName, (int) $item->recipient_id, [
+                    'id'              => $item->id,
+                    'notification_id' => $notification->id,
+                    'is_chat'         => $notification->chat_class_id !== null,
+                    'title'           => $notification->title,
+                    'content'         => $notification->content,
+                    'type'            => $notification->type,
+                    'center_id'       => $notification->center_id,
+                    'chat_class_id'   => $notification->chat_class_id,
+                    'center_name'     => $centerName,
+                    'is_read'         => false,
+                    'read_at'         => null,
+                    'created_at'      => 'Vừa xong',
+                ]));
+            } catch (Throwable $e) {
+                Log::error("Lỗi khi broadcast WebSocket NotificationSentEvent cho {$roleName} #{$item->recipient_id}: " . $e->getMessage());
+            }
+        }
+
+        return $notification;
     }
 }

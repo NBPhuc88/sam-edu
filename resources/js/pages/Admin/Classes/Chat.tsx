@@ -278,6 +278,9 @@ export default function ClassChatPage({
             (Number(message.sender_type) !== Number(currentUser.sender_type) ||
                 Number(message.sender_id) !== Number(currentUser.sender_id)),
     )?.id;
+    const [showUnreadDivider, setShowUnreadDivider] = useState<boolean>(
+        firstUnreadId !== undefined,
+    );
     const [showScrollToLatest, setShowScrollToLatest] = useState(
         firstUnreadId !== undefined,
     );
@@ -388,6 +391,9 @@ export default function ClassChatPage({
         setReplyingTo(null);
         setShowEmojiPicker(false);
         setIsSending(true);
+        setShowUnreadDivider(false);
+        setShowScrollToLatest(false);
+        preserveUnreadPosition.current = false;
 
         try {
             const response = await axios.post<{
@@ -765,7 +771,7 @@ export default function ClassChatPage({
 
                                 return (
                                     <React.Fragment key={msg.id}>
-                                        {msg.id === firstUnreadId && (
+                                        {showUnreadDivider && msg.id === firstUnreadId && (
                                             <div
                                                 ref={unreadDividerRef}
                                                 className="my-4 rounded-full bg-white/90 py-2 text-center text-xs font-semibold text-rose-600"
@@ -1015,6 +1021,7 @@ export default function ClassChatPage({
                                 onClick={() => {
                                     scrollToBottom();
                                     setShowScrollToLatest(false);
+                                    setShowUnreadDivider(false);
                                     preserveUnreadPosition.current = false;
                                 }}
                                 className="absolute right-3 bottom-full mb-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-emerald-700 shadow-lg"

@@ -5,7 +5,9 @@ use App\Models\Admin;
 use App\Models\Center;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
+use App\Models\SchoolClass;
 use App\Models\SubscriptionPlan;
+
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -243,4 +245,99 @@ test('user can mark all notifications as read via web endpoint', function () {
         ->count();
 
     expect($unreadCount)->toBe(0);
+});
+
+test('super admin does not receive chat notifications via api', function () {
+    $superAdmin = Admin::create([
+        'admin_code' => 'ADM-SUP-93',
+        'username'   => 'super_admin_chat_filter_test',
+        'email'      => 'superadmin.filter@test.com',
+        'password'   => Hash::make('password'),
+        'full_name'  => 'Super Admin Chat Filter Test',
+        'role'       => Constant::ROLE_SUPER_ADMIN,
+        'status'     => Constant::STATUS_ACTIVE,
+    ]);
+
+    $center = Center::create([
+        'code'   => 'CTR' . random_int(1000000, 9999999),
+        'name'   => 'Test Center Filter',
+        'status' => Constant::STATUS_ACTIVE,
+    ]);
+
+    $schoolClass = SchoolClass::create([
+        'center_id' => $center->id,
+        'code'      => 'CLS' . random_int(1000000, 9999999),
+        'name'      => 'Lớp 10A1',
+        'status'    => Constant::CLASS_STATUS_ACTIVE,
+    ]);
+
+    // 1. Chat notification (should be excluded)
+    $chatNotif = Notification::create([
+        'title'         => 'Tin nhắn mới từ Lớp 10A1',
+        'content'       => 'Chào các bạn học sinh',
+        'type'          => Constant::NOTIFICATION_TYPE_GENERAL,
+        'chat_class_id' => $schoolClass->id,
+    ]);
+    NotificationRecipient::create([
+        'notification_id' => $chatNotif->id,
+        'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
+        'recipient_id'    => $superAdmin->id,
+        'read_at'         => null,
+    ]);
+
+    // 2. Registration notification (should be included)
+    $regNotif = Notification::create([
+        'title'   => 'Trung tâm mới đăng ký: Math Center',
+        'content' => 'Trung tâm Math Center vừa đăng ký gói',
+        'type'    => Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
+    ]);
+    NotificationRecipient::create([
+        'notification_id' => $regNotif->id,
+        'recipient_type'  => Constant::RECIPIENT_TYPE_ADMIN,
+        'recipient_id'    => $superAdmin->id,
+        'read_at'         => null,
+    ]);
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->getJson('/api/notifications');
+
+    $response->assertStatus(200);
+    $data = $response->json();
+
+    expect($data['success'])->toBeTrue();
+    expect($data['unread_count'])->toBe(1);
+    expect($data['notifications'])->toHaveCount(1);
+    expect($data['notifications'][0]['title'])->toBe('Trung tâm mới đăng ký: Math Center');
+});
+
+test('createAndBroadcast dispatches NotificationSentEvent to user private channel', function () {
+    Event::fake();
+
+    $repository = app(\App\Repositories\Notification\NotificationRepositoryInterface::class);
+
+    $notif = $repository->createAndBroadcast([
+        'title'   => 'Thông báo lịch thi mới',
+        'content' => 'Lớp có lịch thi cuối kỳ vào ngày mai',
+        'type'    => Constant::NOTIFICATION_TYPE_EXAM,
+    ], [
+        ['type' => Constant::RECIPIENT_TYPE_TEACHER, 'id' => 10],
+        ['type' => Constant::RECIPIENT_TYPE_STUDENT, 'id' => 20],
+    ]);
+
+    expect($notif)->not->toBeNull();
+    expect($notif->title)->toBe('Thông báo lịch thi mới');
+
+    $this->assertDatabaseHas('notification_recipients', [
+        'notification_id' => $notif->id,
+        'recipient_type'  => Constant::RECIPIENT_TYPE_TEACHER,
+        'recipient_id'    => 10,
+    ]);
+
+    $this->assertDatabaseHas('notification_recipients', [
+        'notification_id' => $notif->id,
+        'recipient_type'  => Constant::RECIPIENT_TYPE_STUDENT,
+        'recipient_id'    => 20,
+    ]);
+
+    Event::assertDispatched(\App\Events\NotificationSentEvent::class, 2);
 });
