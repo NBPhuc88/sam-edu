@@ -330,6 +330,19 @@ Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.
         Route::post('/submissions/{id}', [GradingController::class, 'grade'])->name('grade');
     });
 
+    Route::prefix('game-rooms')->name('game-rooms.')->controller(\App\Http\Controllers\GameRoomController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store')->middleware('throttle:10,1');
+        Route::post('/join', 'join')->name('join')->middleware('throttle:15,1');
+        Route::get('/{gameRoom}', 'show')->name('show');
+        Route::get('/{gameRoom}/sync', 'sync')->name('sync')->middleware('throttle:120,1');
+        Route::post('/{gameRoom}/start', 'start')->name('start');
+        Route::post('/{gameRoom}/cancel', 'cancel')->name('cancel');
+        Route::post('/{gameRoom}/answer', 'answer')->name('answer')->middleware('throttle:60,1');
+        Route::post('/{gameRoom}/react', 'react')->name('react')->middleware('throttle:20,1');
+    });
+
     // Online Exam Taking & Review Routes (Student & Teacher)
     Route::get('/exam-room', [OnlineExamController::class, 'enterCode'])->name('online-exam.enter');
     Route::post('/exam-room/join', [OnlineExamController::class, 'joinRoom'])->name('online-exam.join');

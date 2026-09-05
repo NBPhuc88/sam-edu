@@ -19,7 +19,8 @@ SKILL_LISTENING,
 SKILL_SPEAKING,
 SKILL_WRITING
 } from '@/constants/enums';
-import { parseDate } from '@/lib/date';
+import { observeExamClock, parseExamTimestamp, remainingExamSeconds } from '@/lib/exam-clock';
+import { autosave, submit } from '@/routes/online-exam';
 import { Head,router } from '@inertiajs/react';
 import {
 AlertTriangle,
@@ -33,7 +34,7 @@ Send,
 Volume2,
 X,
 } from 'lucide-react';
-import { useCallback,useEffect,useRef,useState } from 'react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import AudioRecorder from './components/AudioRecorder';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
@@ -98,18 +99,16 @@ export default function TakeExam({
     const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
     const totalSecondsAllocated = durationMinutes * 60;
 
-    const startedAtTimestamp = submission.started_at
-        ? parseDate(submission.started_at)?.getTime() || new Date(submission.started_at).getTime()
-        : Date.now();
+    const startedAtTimestamp = useMemo(() => submission.started_at
+        ? parseExamTimestamp(submission.started_at)
+        : Date.now(), [submission.started_at]);
 
-    const serverOffsetMs = serverTime
-        ? (parseDate(serverTime)?.getTime() || new Date(serverTime).getTime()) - Date.now()
-        : 0;
+    const serverOffsetMs = useMemo(() => serverTime
+        ? parseExamTimestamp(serverTime) - Date.now()
+        : 0, [serverTime]);
 
     const calculateRemainingSeconds = useCallback(() => {
-        const effectiveNow = Date.now() + serverOffsetMs;
-        const elapsedSeconds = Math.max(0, Math.floor((effectiveNow - startedAtTimestamp) / 1000));
-        return Math.max(0, totalSecondsAllocated - elapsedSeconds);
+        return remainingExamSeconds(startedAtTimestamp, totalSecondsAllocated, serverOffsetMs);
     }, [serverOffsetMs, startedAtTimestamp, totalSecondsAllocated]);
 
     const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingSeconds);
@@ -120,7 +119,7 @@ export default function TakeExam({
         setAutoSaveStatus('saving');
         try {
             const token = getCsrfToken();
-            const res = await fetch(`/class-exams/${classExam.id}/autosave/${submission.id}`, {
+            const res = await fetch(autosave.url([classExam.id, submission.id]), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -165,36 +164,40 @@ export default function TakeExam({
         };
     }, [answers, syncToServer]);
 
-    // ─── Timer Interval ───
-    useEffect(() => {
-        const interval = window.setInterval(() => {
-            const rem = calculateRemainingSeconds();
-            setRemainingSeconds(rem);
-
-            if (rem <= 0 && !hasAutoSubmittedRef.current) {
-                hasAutoSubmittedRef.current = true;
-                clearInterval(interval);
-                handleAutoSubmitTimeout();
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [calculateRemainingSeconds]);
-
-    const handleAutoSubmitTimeout = () => {
+    const handleAutoSubmitTimeout = useCallback(() => {
         setIsSubmitting(true);
-        router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
+        router.post(submit.url([classExam.id, submission.id]), {
             answers,
             is_timeout: true,
+        }, {
+            onError: () => {
+                hasAutoSubmittedRef.current = false;
+                setIsSubmitting(false);
+            },
         });
-    };
+    }, [answers, classExam.id, submission.id]);
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const remaining = calculateRemainingSeconds();
+            setRemainingSeconds(remaining);
+            if (remaining <= 0 && !hasAutoSubmittedRef.current) {
+                hasAutoSubmittedRef.current = true;
+                handleAutoSubmitTimeout();
+            }
+        };
+        return observeExamClock(updateTimer);
+    }, [calculateRemainingSeconds, handleAutoSubmitTimeout]);
 
     const handleManualSubmit = () => {
+        if (hasAutoSubmittedRef.current) return;
+        hasAutoSubmittedRef.current = true;
         setIsSubmitting(true);
-        router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
+        router.post(submit.url([classExam.id, submission.id]), {
             answers,
             is_timeout: false,
         }, {
+            onError: () => { hasAutoSubmittedRef.current = false; },
             onFinish: () => {
                 setIsSubmitting(false);
                 setSubmitConfirmOpen(false);

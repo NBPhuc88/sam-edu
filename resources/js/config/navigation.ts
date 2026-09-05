@@ -1,3 +1,4 @@
+import { index as gameRoomsIndex } from '@/routes/game-rooms';
 /**
  * Dynamic Navigation Configuration
  *
@@ -41,6 +42,7 @@ export interface NavItem {
 
 // ─── Master Navigation Tree (Cây Menu Toàn Cục Duy Nhất) ───────────────────
 export const masterNavigation: NavItem[] = [
+    { label: 'Đấu Trường Trực Tiếp', path: gameRoomsIndex.url(), icon: Zap },
     {
         label: 'Bảng Điều Khiển',
         path: '/dashboard',
