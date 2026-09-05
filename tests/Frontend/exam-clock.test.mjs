@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import test from 'node:test';
+import ts from 'typescript';
+const source = readFileSync(new URL('../../resources/js/lib/exam-clock.ts', import.meta.url), 'utf8');
+const exports = {};
+vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports, Date, Math, Number });
+const { parseExamTimestamp, remainingExamSeconds, observeExamClock } = exports;
+test('server offset stays fixed as time passes and ISO timestamps retain seconds and timezone', () => {
+    const server = parseExamTimestamp('2026-09-05T12:00:37.500Z');
+    const local = server - 120000;
+    const offset = server - local;
+    assert.equal(server, Date.parse('2026-09-05T12:00:37.500Z'));
+    assert.equal(remainingExamSeconds(server, 60, offset, local), 60);
+    assert.equal(remainingExamSeconds(server, 60, offset, local + 21000), 39);
+    assert.equal(remainingExamSeconds(server, 60, offset, local + 90000), 0);
+});
+test('resumes immediately without an interval tick after focus, visibility and page restoration; cleans listeners', () => {
+    const page = new EventTarget(); page.visibilityState = 'visible';
+    const browser = new EventTarget(); let interval; let cleared = false;
+    browser.setInterval = callback => { interval = callback; return 1; };
+    browser.clearInterval = () => { cleared = true; };
+    let now = 0; let remaining = 60; let submitted = false; let submits = 0; let calls = 0;
+    const cleanup = observeExamClock(() => { calls++; remaining = remainingExamSeconds(0, 60, 0, now); if (!remaining && !submitted) { submitted = true; submits++; } }, page, browser);
+    now = 20000; page.visibilityState = 'hidden'; page.dispatchEvent(new Event('visibilitychange'));
+    assert.equal(remaining, 60);
+    page.visibilityState = 'visible'; page.dispatchEvent(new Event('visibilitychange'));
+    assert.equal(remaining, 40);
+    now = 35000; browser.dispatchEvent(new Event('focus')); assert.equal(remaining, 25);
+    now = 90000; browser.dispatchEvent(new Event('pageshow')); assert.equal(remaining, 0); assert.equal(submits, 1);
+    browser.dispatchEvent(new Event('focus')); interval(); assert.equal(submits, 1);
+    cleanup(); assert.equal(cleared, true); const previous = calls;
+    page.dispatchEvent(new Event('visibilitychange')); browser.dispatchEvent(new Event('focus')); assert.equal(calls, previous);
+});

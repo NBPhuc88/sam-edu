@@ -25,16 +25,17 @@ class SubscriptionPlanSeeder extends Seeder
             'subjects',
             'rooms',
             'tuitions',
-            'exams',
-            'class-exams',
-            'grading',
         ];
 
         $advancedFeatures = array_merge($basicFeatures, [
             'export_csv',
+            'exams',
+            'class-exams',
+            'grading',
             'online-exam',
             'practice-exams',
             'chat',
+            'game-rooms',
         ]);
 
         $plans = [
@@ -69,7 +70,6 @@ class SubscriptionPlanSeeder extends Seeder
                 'features'      => [
                     'Quản lý 5 lớp học & 150 học sinh',
                     'Quản lý giáo viên, môn học & phòng học',
-                    'Kho đề thi, kỳ thi lớp học & chấm bài thi',
                     'Thời khóa biểu thông minh & điểm danh từng ca',
                     'Quản lý học phí & đợt đóng tiền',
                     'Tiết kiệm 20% khi thanh toán theo năm (2.400.000đ/năm)',
@@ -90,7 +90,6 @@ class SubscriptionPlanSeeder extends Seeder
                 'features'      => [
                     'Quản lý 20 lớp học & 600 học sinh',
                     'Quản lý giáo viên, môn học & phòng học',
-                    'Kho đề thi, kỳ thi lớp học & chấm bài thi',
                     'Thời khóa biểu thông minh & điểm danh từng ca',
                     'Quản lý học phí & đợt đóng tiền',
                     'Tiết kiệm 20% khi thanh toán theo năm (4.800.000đ/năm)',
@@ -110,7 +109,9 @@ class SubscriptionPlanSeeder extends Seeder
                 'max_classes'   => 5,
                 'features'      => [
                     'Bao gồm toàn bộ tính năng Gói Cơ Bản',
+                    'Kho đề thi, kỳ thi lớp học & chấm bài thi',
                     'Phòng thi trực tuyến & thi thử cho học sinh',
+                    'Đấu trường thi đấu trực tiếp thời gian thực',
                     'Chat nhóm lớp học thời gian thực',
                     'Xuất/nhập dữ liệu giáo viên, học sinh định dạng Excel/CSV',
                     'Tối đa 5 lớp học & 150 học sinh',
@@ -131,7 +132,9 @@ class SubscriptionPlanSeeder extends Seeder
                 'max_classes'   => 20,
                 'features'      => [
                     'Bao gồm toàn bộ tính năng Gói Cơ Bản',
+                    'Kho đề thi, kỳ thi lớp học & chấm bài thi',
                     'Phòng thi trực tuyến & thi thử cho học sinh',
+                    'Đấu trường thi đấu trực tiếp thời gian thực',
                     'Chat nhóm lớp học thời gian thực',
                     'Xuất/nhập dữ liệu giáo viên, học sinh định dạng Excel/CSV',
                     'Tối đa 20 lớp học & 600 học sinh',

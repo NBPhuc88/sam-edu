@@ -58,7 +58,10 @@ export default function UpgradePlan({
         if (featureName?.includes('Chat')) {
             return MessageSquare;
         }
-        if (featureName?.includes('Thi') || featureName?.includes('Đề')) {
+        if (featureName?.includes('Đấu trường') || featureName?.includes('Game')) {
+            return Zap;
+        }
+        if (featureName?.includes('Thi') || featureName?.includes('Đề') || featureName?.includes('Chấm')) {
             return GraduationCap;
         }
         return Lock;
@@ -67,6 +70,16 @@ export default function UpgradePlan({
     const FeatureIcon = getFeatureIcon();
 
     const advancedFeatures = [
+        {
+            title: 'Kho đề thi, kỳ thi lớp học & chấm điểm',
+            desc: 'Quản lý ngân hàng đề thi mẫu, giao đề thi cho lớp học và chấm điểm bài thi tự luận, âm thanh và bài thi giấy.',
+            icon: GraduationCap,
+        },
+        {
+            title: 'Đấu trường trực tiếp thời gian thực',
+            desc: 'Tổ chức các trận đấu câu hỏi tương tác trực tiếp với hiệu ứng đỉnh cao, bảng xếp hạng và tính điểm tốc độ.',
+            icon: Zap,
+        },
         {
             title: 'Phòng thi trực tuyến & Thi thử',
             desc: 'Tham gia phòng thi thời gian thực với 9 dạng câu hỏi, đếm ngược thời gian, tự động lưu bài và luyện tập thi thử công khai.',

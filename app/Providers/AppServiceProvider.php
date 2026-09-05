@@ -79,6 +79,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(\App\Services\GameRoom\GameRoomServiceInterface::class, \App\Services\GameRoom\GameRoomService::class);
+        $this->app->bind(\App\Repositories\GameRoom\GameRoomRepositoryInterface::class, \App\Repositories\GameRoom\GameRoomRepository::class);
         $this->app->bind(PasswordResetServiceInterface::class, PasswordResetService::class);
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
         $this->app->bind(PaymentGatewayInterface::class, ZaloPayGateway::class);

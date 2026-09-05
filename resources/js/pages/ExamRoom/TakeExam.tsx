@@ -19,7 +19,8 @@ SKILL_LISTENING,
 SKILL_SPEAKING,
 SKILL_WRITING
 } from '@/constants/enums';
-import { parseDate } from '@/lib/date';
+import { observeExamClock, parseExamTimestamp, remainingExamSeconds } from '@/lib/exam-clock';
+import { autosave, submit } from '@/routes/online-exam';
 import { Head,router } from '@inertiajs/react';
 import {
 AlertTriangle,
@@ -33,7 +34,7 @@ Send,
 Volume2,
 X,
 } from 'lucide-react';
-import { useCallback,useEffect,useRef,useState } from 'react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import AudioRecorder from './components/AudioRecorder';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
@@ -80,8 +81,21 @@ export default function TakeExam({
         });
     });
 
-    // Answers State initialized directly from Redis Cache / Server Submission
+    const storageKey = `take_exam_answers_${classExam.id}_${submission.id}`;
+
+    // Answers State initialized directly from Redis Cache / Server Submission / SessionStorage fallback
     const [answers, setAnswers] = useState<Record<number | string, any>>(() => {
+        if (typeof window !== 'undefined') {
+            const local = sessionStorage.getItem(storageKey);
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                        return { ...(submission.answers || {}), ...parsed };
+                    }
+                } catch {}
+            }
+        }
         return submission.answers || {};
     });
 
@@ -98,18 +112,16 @@ export default function TakeExam({
     const durationMinutes = classExam.duration_minutes || exam?.duration_minutes || 45;
     const totalSecondsAllocated = durationMinutes * 60;
 
-    const startedAtTimestamp = submission.started_at
-        ? parseDate(submission.started_at)?.getTime() || new Date(submission.started_at).getTime()
-        : Date.now();
+    const startedAtTimestamp = useMemo(() => submission.started_at
+        ? parseExamTimestamp(submission.started_at)
+        : Date.now(), [submission.started_at]);
 
-    const serverOffsetMs = serverTime
-        ? (parseDate(serverTime)?.getTime() || new Date(serverTime).getTime()) - Date.now()
-        : 0;
+    const serverOffsetMs = useMemo(() => serverTime
+        ? parseExamTimestamp(serverTime) - Date.now()
+        : 0, [serverTime]);
 
     const calculateRemainingSeconds = useCallback(() => {
-        const effectiveNow = Date.now() + serverOffsetMs;
-        const elapsedSeconds = Math.max(0, Math.floor((effectiveNow - startedAtTimestamp) / 1000));
-        return Math.max(0, totalSecondsAllocated - elapsedSeconds);
+        return remainingExamSeconds(startedAtTimestamp, totalSecondsAllocated, serverOffsetMs);
     }, [serverOffsetMs, startedAtTimestamp, totalSecondsAllocated]);
 
     const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingSeconds);
@@ -120,7 +132,7 @@ export default function TakeExam({
         setAutoSaveStatus('saving');
         try {
             const token = getCsrfToken();
-            const res = await fetch(`/class-exams/${classExam.id}/autosave/${submission.id}`, {
+            const res = await fetch(autosave.url([classExam.id, submission.id]), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -165,36 +177,58 @@ export default function TakeExam({
         };
     }, [answers, syncToServer]);
 
-    // ─── Timer Interval ───
-    useEffect(() => {
-        const interval = window.setInterval(() => {
-            const rem = calculateRemainingSeconds();
-            setRemainingSeconds(rem);
-
-            if (rem <= 0 && !hasAutoSubmittedRef.current) {
-                hasAutoSubmittedRef.current = true;
-                clearInterval(interval);
-                handleAutoSubmitTimeout();
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [calculateRemainingSeconds]);
-
-    const handleAutoSubmitTimeout = () => {
+    const handleAutoSubmitTimeout = useCallback(() => {
         setIsSubmitting(true);
-        router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
+        router.post(submit.url([classExam.id, submission.id]), {
             answers,
             is_timeout: true,
+        }, {
+            onError: () => {
+                hasAutoSubmittedRef.current = false;
+                setIsSubmitting(false);
+            },
         });
-    };
+    }, [answers, classExam.id, submission.id]);
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const remaining = calculateRemainingSeconds();
+            setRemainingSeconds(remaining);
+            if (remaining <= 0 && !hasAutoSubmittedRef.current) {
+                hasAutoSubmittedRef.current = true;
+                handleAutoSubmitTimeout();
+            }
+        };
+        return observeExamClock(updateTimer);
+    }, [calculateRemainingSeconds, handleAutoSubmitTimeout]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            try {
+                const token = getCsrfToken();
+                const data = JSON.stringify({ answers });
+                navigator.sendBeacon?.(autosave.url([classExam.id, submission.id]), new Blob([data], { type: 'application/json' }));
+            } catch {}
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [answers, classExam.id, submission.id]);
 
     const handleManualSubmit = () => {
+        if (hasAutoSubmittedRef.current) return;
+        hasAutoSubmittedRef.current = true;
         setIsSubmitting(true);
-        router.post(`/class-exams/${classExam.id}/submit/${submission.id}`, {
+        router.post(submit.url([classExam.id, submission.id]), {
             answers,
             is_timeout: false,
         }, {
+            onSuccess: () => {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem(storageKey);
+                }
+            },
+            onError: () => { hasAutoSubmittedRef.current = false; },
             onFinish: () => {
                 setIsSubmitting(false);
                 setSubmitConfirmOpen(false);
@@ -203,10 +237,18 @@ export default function TakeExam({
     };
 
     const handleAnswerChange = (questionId: number | string, val: any) => {
-        setAnswers((prev) => ({
-            ...prev,
-            [questionId]: val,
-        }));
+        setAnswers((prev) => {
+            const next = {
+                ...prev,
+                [questionId]: val,
+            };
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.setItem(storageKey, JSON.stringify(next));
+                } catch {}
+            }
+            return next;
+        });
     };
 
     const scrollToQuestion = (qNum: number) => {
@@ -456,7 +498,7 @@ export default function TakeExam({
                                                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {optId}.
+                                                                        {String.fromCharCode(65 + idx)}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
                                                                         {optText}
@@ -500,7 +542,7 @@ export default function TakeExam({
                                                                         className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {optId}.
+                                                                        {String.fromCharCode(65 + idx)}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
                                                                         {optText}

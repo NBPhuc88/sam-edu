@@ -10,6 +10,23 @@ namespace App\Enums;
  */
 class Constant
 {
+    public const int GAME_ROOM_STATUS_WAITING              = 1;
+    public const int GAME_ROOM_STATUS_PLAYING              = 2;
+    public const int GAME_ROOM_STATUS_COUNTDOWN            = 3;
+    public const int GAME_ROOM_STATUS_COMPLETED            = 4;
+    public const int GAME_ROOM_STATUS_CANCELLED            = 5;
+    public const string PREFIX_GAME_ROOM                   = 'GR';
+    public const array GAME_ROOM_DISALLOWED_QUESTION_TYPES = [
+        self::QUESTION_TYPE_FILL_IN_BLANK, self::QUESTION_TYPE_ESSAY,
+        self::QUESTION_TYPE_AUDIO_RECORD, self::QUESTION_TYPE_SHORT_ANSWER, self::QUESTION_TYPE_ORAL,
+    ];
+    public const array DEFAULT_GAME_ROOM_SCORING_RULES = [
+        ['seconds' => 1, 'points' => 1000],
+        ['seconds' => 3, 'points' => 800],
+        ['seconds' => 5, 'points' => 600],
+        ['seconds' => 30, 'points' => 400],
+    ];
+
     // ==========================================
     // 0. TRẠNG THÁI TOÀN CỤC CHUNG (GENERIC STATUSES)
     // ==========================================

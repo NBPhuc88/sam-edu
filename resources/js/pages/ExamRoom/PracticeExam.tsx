@@ -20,7 +20,7 @@ SKILL_READING,
 SKILL_SPEAKING,
 SKILL_WRITING,
 } from '@/constants/enums';
-import { Head,Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import {
 AlertCircle,
@@ -39,7 +39,7 @@ Send,
 Volume2,
 XCircle
 } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExamSkill,QuestionType } from '../Admin/Exams/types';
 import DiagramLabellingQuestion from './components/DiagramLabellingQuestion';
 import DragDropClozeQuestion from './components/DragDropClozeQuestion';
@@ -296,7 +296,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
                                     />
                                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-xs font-bold text-gray-700">
-                                        {optId}
+                                        {String.fromCharCode(65 + idx)}
                                     </span>
                                     <span className="text-sm font-medium">{optText}</span>
                                 </label>
@@ -340,7 +340,7 @@ export default function PracticeExam({ exam, serverTime, user }: Props) {
                                         className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
                                     />
                                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-xs font-bold text-gray-700">
-                                        {optId}
+                                        {String.fromCharCode(65 + idx)}
                                     </span>
                                     <span className="text-sm font-medium">{optText}</span>
                                 </label>

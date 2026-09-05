@@ -179,6 +179,15 @@ return [
             ],
         ],
         [
+            'key'          => 'game-rooms',
+            'name'         => 'Đấu Trường Trực Tiếp',
+            'module_order' => 15,
+            'actions'      => [
+                ['code' => 'game-rooms.index', 'action' => 'index', 'name' => 'Xem & Tham gia đấu trường', 'description' => 'Truy cập danh sách và tham gia đấu trường trực tiếp'],
+                ['code' => 'game-rooms.create', 'action' => 'create', 'name' => 'Tạo phòng đấu trường', 'description' => 'Khởi tạo phòng đấu trường thi trực tiếp'],
+            ],
+        ],
+        [
             'key'          => 'class-exams',
             'name'         => 'Kỳ Thi Lớp & Chấm Điểm',
             'module_order' => 16,

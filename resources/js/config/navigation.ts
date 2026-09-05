@@ -1,3 +1,4 @@
+import { index as gameRoomsIndex } from '@/routes/game-rooms';
 /**
  * Dynamic Navigation Configuration
  *
@@ -16,18 +17,18 @@ import {
 } from '@/constants/enums';
 import type { LucideIcon } from 'lucide-react';
 import {
-BarChart3,
-Bell,
-BookOpen,
-DollarSign,
-FileCheck,
-LayoutDashboard,
-Lock,
-MessageSquare,
-Settings,
-Sliders,
-User,
-Zap,
+    BarChart3,
+    Bell,
+    BookOpen,
+    DollarSign,
+    FileCheck,
+    LayoutDashboard,
+    Lock,
+    MessageSquare,
+    Settings,
+    Sliders,
+    User,
+    Zap,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -36,6 +37,7 @@ export interface NavItem {
     icon?: LucideIcon;
     permission?: string;
     planFeature?: string;
+    isLocked?: boolean;
     children?: NavItem[];
 }
 
@@ -76,6 +78,7 @@ export const masterNavigation: NavItem[] = [
             { label: 'Ngày Lễ', path: '/holidays', permission: 'holidays.index' },
         ],
     },
+    { label: 'Đấu Trường Trực Tiếp', path: gameRoomsIndex.url(), icon: Zap, permission: 'game-rooms.index', planFeature: 'game-rooms' },
     {
         label: 'Kho Đề Thi',
         icon: Sliders,
@@ -157,27 +160,41 @@ function filterNavItemsByPermissionsAndPlan(
     for (const item of items) {
         // Item đơn không có children
         if (!item.children || item.children.length === 0) {
-            if (item.planFeature && !isTrial && !allowedFeatures.includes(item.planFeature)) {
+            // Lọc theo quyền vai trò (Role permissions)
+            if (item.permission && !permissions.includes(item.permission)) {
                 continue;
             }
-            if (!item.permission || permissions.includes(item.permission)) {
-                filtered.push(item);
-            }
+
+            // Tuyệt đối không ẩn theo gói dịch vụ: nếu chưa mở khóa thì đánh dấu isLocked và trỏ tới /upgrade-plan
+            const isLocked = Boolean(item.planFeature && !isTrial && !allowedFeatures.includes(item.planFeature));
+
+            filtered.push({
+                ...item,
+                isLocked,
+                path: isLocked && item.planFeature ? `/upgrade-plan?feature=${item.planFeature}` : item.path,
+                label: isLocked ? `${item.label} 🔒` : item.label,
+            });
             continue;
         }
 
-        // Item có children: lọc theo quyền permissions của role và tính năng gói
-        const validChildren = item.children.filter((child) => {
-            if (child.planFeature && !isTrial && !allowedFeatures.includes(child.planFeature)) {
-                return false;
+        // Item có children: lọc theo quyền permissions của role (không ẩn theo gói)
+        const validChildren: NavItem[] = [];
+        for (const child of item.children) {
+            if (child.permission && !permissions.includes(child.permission)) {
+                continue;
             }
-            if (!child.permission) {
-                return true;
-            }
-            return permissions.includes(child.permission);
-        });
 
-        // Chỉ hiển thị nhóm cha nếu có ít nhất 1 menu con được cấp quyền
+            const isLocked = Boolean(child.planFeature && !isTrial && !allowedFeatures.includes(child.planFeature));
+
+            validChildren.push({
+                ...child,
+                isLocked,
+                path: isLocked && child.planFeature ? `/upgrade-plan?feature=${child.planFeature}` : child.path,
+                label: isLocked ? `${child.label} 🔒` : child.label,
+            });
+        }
+
+        // Chỉ hiển thị nhóm cha nếu có ít nhất 1 menu con được cấp quyền vai trò
         if (validChildren.length > 0) {
             filtered.push({
                 ...item,

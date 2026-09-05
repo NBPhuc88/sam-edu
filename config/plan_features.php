@@ -56,5 +56,10 @@ return [
             ],
             'route_prefixes' => ['chats.', 'classes.chat.'],
         ],
+        'game-rooms' => [
+            'name'           => 'Đấu trường trực tiếp',
+            'description'    => 'Tạo và tham gia đấu trường thi trực tiếp thời gian thực',
+            'route_prefixes' => ['game-rooms.'],
+        ],
     ],
 ];

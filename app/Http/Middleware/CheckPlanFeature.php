@@ -80,17 +80,7 @@ class CheckPlanFeature
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            return Inertia::render('UpgradePlan', [
-                'status'       => 403,
-                'reason'       => 'feature_locked',
-                'title'        => 'Tính Năng Yêu Cầu Nâng Cấp Gói',
-                'feature'      => $blockedFeature['key'],
-                'featureName'  => $blockedFeature['name'],
-                'message'      => "Tính năng '{$blockedFeature['name']}' ({$blockedFeature['description']}) chỉ có trong Gói Nâng Cao. Vui lòng liên hệ Quản trị viên hệ thống để nâng cấp gói cho trung tâm của bạn.",
-                'currentPlan'  => $center->subscription_plan_id,
-                'planType'     => $center->plan_type,
-                'requiredPlan' => 'advanced',
-            ])->toResponse($request)->setStatusCode(Response::HTTP_FORBIDDEN);
+            return redirect()->route('upgrade-plan', ['feature' => $blockedFeature['key']]);
         }
 
         return $next($request);
