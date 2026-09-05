@@ -1,3 +1,5 @@
+import { index as upgradePlan } from '@/actions/App/Http/Controllers/UpgradePlanController';
+import TeacherAttendanceExportModal from './components/TeacherAttendanceExportModal';
 import DeleteConfirmModal from '@/components/common/DeleteConfirmModal';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -10,6 +12,7 @@ import AppLayout from '@/layouts/AppLayout';
 import { Head,Link,router,usePage } from '@inertiajs/react';
 import {
 Calendar,
+CalendarCheck,
 Download,
 Edit2,
 Eye,
@@ -76,6 +79,7 @@ interface Props {
 export default function TeacherIndex({ teachers, centers = [], filters }: Props) {
     const { can, isSuperAdmin } = usePermission();
     const canExportCsv = useCanExportCsv();
+    const [attendanceExportOpen, setAttendanceExportOpen] = useState(false);
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCenterId, setSelectedCenterId] = useState<number>(
@@ -257,6 +261,18 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                                 }}
                             >
                                 Import CSV {!canExportCsv && '🔒'}
+                            </Button>
+                        )}
+                        {can('teachers.index') && (
+                            <Button variant="export" icon={<CalendarCheck className="h-4 w-4" />} title={!canExportCsv ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất báo cáo chấm công'}
+                                onClick={() => {
+                                    if (!canExportCsv) {
+                                        router.visit(upgradePlan.url({ query: { feature: 'export_csv' } }));
+                                    } else {
+                                        setAttendanceExportOpen(true);
+                                    }
+                                }}>
+                                Báo cáo chấm công {!canExportCsv && '🔒'}
                             </Button>
                         )}
                         <Button
@@ -522,6 +538,7 @@ export default function TeacherIndex({ teachers, centers = [], filters }: Props)
                 </Card>
             </div>
 
+            <TeacherAttendanceExportModal isOpen={attendanceExportOpen} onClose={() => setAttendanceExportOpen(false)} centers={centers} isSuperAdmin={isSuperAdmin} />
             {/* Import CSV Modal */}
             <Modal
                 isOpen={isImportModalOpen}

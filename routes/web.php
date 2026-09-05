@@ -184,6 +184,7 @@ Route::middleware(['auth.any', 'check.center.status', 'auto.permission', 'check.
         Route::patch('/{id}', [TeacherController::class, 'update'])->name('update');
         Route::delete('/{id}', [TeacherController::class, 'destroy'])->name('destroy');
         Route::get('/export', [TeacherController::class, 'export'])->name('export');
+        Route::get('/export-attendance-zip', [TeacherController::class, 'exportAttendanceZip'])->name('export-attendance-zip');
         Route::get('/{id}/export-sessions', [TeacherController::class, 'exportSessions'])->name('export-sessions');
         Route::post('/import', [TeacherController::class, 'import'])->name('import');
         Route::get('/sample-csv', [TeacherController::class, 'downloadSample'])->name('sample-csv');

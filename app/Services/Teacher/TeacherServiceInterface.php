@@ -105,4 +105,21 @@ interface TeacherServiceInterface
         ?int $filterYear = null,
         ?Admin $admin = null
     ): \Generator;
+    /**
+     * @return \Generator<int, string>
+     * @param  int                     $teacherId
+     * @param  int                     $month
+     * @param  int                     $year
+     * @param  ?Admin                  $admin
+     */
+    public function exportTeacherSessionsExcel(int $teacherId, int $month, int $year, ?Admin $admin): \Generator;
+
+    /**
+     * @return array{path: string, filename: string}
+     * @param  int                                   $month
+     * @param  int                                   $year
+     * @param  ?int                                  $centerId
+     * @param  ?Admin                                $admin
+     */
+    public function exportAttendanceZip(int $month, int $year, ?int $centerId, ?Admin $admin): array;
 }

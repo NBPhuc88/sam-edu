@@ -13,8 +13,9 @@ return [
 
     'features' => [
         'export_csv' => [
-            'name'           => 'Công cụ Xuất/Nhập CSV',
-            'description'    => 'Xuất danh sách giáo viên, học sinh, nhập danh sách từ CSV và tải file mẫu',
+            'name'           => 'Công cụ Xuất/Nhập Excel/CSV',
+            'description'    => 'Xuất danh sách giáo viên, học sinh, báo cáo chấm công Excel/ZIP, nhập danh sách từ CSV và tải file mẫu',
+            'route_names'    => ['teachers.export-sessions', 'teachers.export-attendance-zip'],
             'route_actions'  => ['export', 'import', 'sample-csv', 'download-sample'],
             'route_suffixes' => ['.export', '.import', '.sample-csv', '.download-sample'],
         ],

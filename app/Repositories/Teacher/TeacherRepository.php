@@ -6,6 +6,7 @@ use App\Enums\Constant;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\Teacher;
+use Carbon\CarbonImmutable;
 use Generator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -446,5 +447,60 @@ class TeacherRepository implements TeacherRepositoryInterface
             'sessions' => $sessions,
             'stats'    => $stats,
         ];
+    }
+    /** @param array<int, int>|null $allowedCenterIds
+     * @return Generator<int, Teacher>
+     * @param  ?int                    $centerId
+     * @param  ?int                    $teacherId
+     */
+    public function getAttendanceTeachersCursor(?int $centerId = null, ?array $allowedCenterIds = null, ?int $teacherId = null): Generator
+    {
+        $query = Teacher::query()
+            ->leftJoin('centers', function ($join): void {
+                $join->on('centers.id', '=', 'teachers.center_id')->whereNull('centers.deleted_at');
+            })
+            ->select('teachers.*', 'centers.name as report_center_name')
+            ->when($centerId !== null, fn ($query) => $query->where('teachers.center_id', $centerId))
+            ->when($allowedCenterIds !== null, fn ($query) => $query->whereIn('teachers.center_id', $allowedCenterIds))
+            ->when($teacherId !== null, fn ($query) => $query->where('teachers.id', $teacherId))
+            ->orderBy('teachers.teacher_code');
+
+        foreach ($query->cursor() as $teacher) {
+            yield $teacher;
+        }
+    }
+
+    /** @param array<int, int>|null $allowedCenterIds
+     * @return Generator<int, ClassSession>
+     * @param  int                          $teacherId
+     * @param  int                          $month
+     * @param  int                          $year
+     * @param  ?int                         $centerId
+     */
+    public function getAttendanceSessionsCursor(int $teacherId, int $month, int $year, ?int $centerId = null, ?array $allowedCenterIds = null): Generator
+    {
+        $start = CarbonImmutable::create($year, $month, 1)->startOfMonth();
+        $query = ClassSession::query()
+            ->leftJoin('class_subjects', 'class_subjects.id', '=', 'class_sessions.class_subject_id')
+            ->leftJoin('classes', function ($join): void {
+                $join->on('classes.id', '=', 'class_subjects.class_id')->whereNull('classes.deleted_at');
+            })
+            ->leftJoin('subjects', function ($join): void {
+                $join->on('subjects.id', '=', 'class_subjects.subject_id')->whereNull('subjects.deleted_at');
+            })
+            ->select('class_sessions.*', 'classes.name as report_class_name', 'classes.code as report_class_code', 'subjects.name as report_subject_name')
+            ->where('class_sessions.teacher_id', $teacherId)
+            ->whereBetween('class_sessions.session_date', [$start->toDateString(), $start->endOfMonth()->toDateString()])
+            ->whereIn('class_sessions.status', [
+                Constant::SESSION_STATUS_COMPLETED, Constant::SESSION_STATUS_IN_PROGRESS,
+                Constant::SESSION_STATUS_CANCELLED, Constant::SESSION_STATUS_UNATTENDED,
+            ])
+            ->when($centerId !== null, fn ($query) => $query->where('classes.center_id', $centerId))
+            ->when($allowedCenterIds !== null, fn ($query) => $query->whereIn('classes.center_id', $allowedCenterIds))
+            ->orderBy('class_sessions.session_date')->orderBy('class_sessions.start_time')->orderBy('class_sessions.id');
+
+        foreach ($query->cursor() as $session) {
+            yield $session;
+        }
     }
 }

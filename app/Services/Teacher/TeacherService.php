@@ -17,9 +17,14 @@ use App\Repositories\Teacher\TeacherRepositoryInterface;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Generator;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
+use Throwable;
+use ZipArchive;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -780,5 +785,162 @@ class TeacherService implements TeacherServiceInterface
         $end   = $now->endOfMonth()->format('Y-m-d');
 
         return [$start, $end, (int) $now->format('n'), (int) $now->format('Y')];
+    }
+    /**
+     * @return Generator<int, string>
+     * @param  int                    $teacherId
+     * @param  int                    $month
+     * @param  int                    $year
+     * @param  ?Admin                 $admin
+     */
+    public function exportTeacherSessionsExcel(int $teacherId, int $month, int $year, ?Admin $admin): Generator
+    {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+        $teachers         = $this->teacherRepository->getAttendanceTeachersCursor(allowedCenterIds: $allowedCenterIds, teacherId: $teacherId);
+        $teacher          = $teachers->current();
+
+        if (! $teacher) {
+            throw new NotFoundHttpException('Giáo viên không tồn tại hoặc bạn không có quyền truy cập.');
+        }
+
+        return $this->renderAttendanceReport([$teacher], $month, $year, null, $allowedCenterIds, $teacher);
+    }
+
+    /**
+     * @return array{path: string, filename: string}
+     * @param  int                                   $month
+     * @param  int                                   $year
+     * @param  ?int                                  $centerId
+     * @param  ?Admin                                $admin
+     */
+    public function exportAttendanceZip(int $month, int $year, ?int $centerId, ?Admin $admin): array
+    {
+        $allowedCenterIds = $this->getAllowedCenterIds($admin);
+
+        if ($centerId !== null && $allowedCenterIds !== null && ! in_array($centerId, $allowedCenterIds, true)) {
+            throw new AccessDeniedHttpException('Bạn không có quyền truy cập trung tâm này.');
+        }
+        $path = tempnam(sys_get_temp_dir(), 'teacher_attendance_');
+
+        if ($path === false) {
+            throw new RuntimeException('Không thể tạo tệp báo cáo tạm.');
+        }
+        $zip         = new ZipArchive();
+        $reportPaths = [];
+        $centerNames = [];
+
+        try {
+            if ($zip->open($path, ZipArchive::OVERWRITE) !== true) {
+                throw new RuntimeException('Không thể tạo tệp ZIP.');
+            }
+
+            foreach ($this->teacherRepository->getAttendanceTeachersCursor($centerId, $allowedCenterIds) as $teacher) {
+                if ($teacher->report_center_name) {
+                    $centerNames[$teacher->center_id] = $teacher->report_center_name;
+                }
+                $filename      = sprintf('ChamCong_%s_%s_%02d_%d.xls', Str::slug($teacher->teacher_code, '_'), Str::slug($teacher->full_name, '_'), $month, $year);
+                $reportPath    = $this->writeAttendanceReport($this->renderAttendanceReport([$teacher], $month, $year, $centerId, $allowedCenterIds, $teacher));
+                $reportPaths[] = $reportPath;
+
+                if (! $zip->addFile($reportPath, $filename)) {
+                    throw new RuntimeException('Không thể thêm báo cáo vào ZIP.');
+                }
+            }
+            $reportPath = $this->writeAttendanceReport($this->renderAttendanceReport(
+                $this->teacherRepository->getAttendanceTeachersCursor($centerId, $allowedCenterIds),
+                $month,
+                $year,
+                $centerId,
+                $allowedCenterIds,
+                centerLabel: implode(', ', $centerNames) ?: 'Không có dữ liệu'
+            ));
+            $reportPaths[] = $reportPath;
+
+            if (! $zip->addFile($reportPath, sprintf('00_TongHop_ChamCong_%02d_%d.xls', $month, $year))) {
+                throw new RuntimeException('Không thể thêm bảng tổng hợp.');
+            }
+
+            if (! $zip->close()) {
+                throw new RuntimeException('Không thể hoàn tất tệp ZIP.');
+            }
+        } catch (Throwable $exception) {
+            unset($zip);
+            @unlink($path);
+
+            throw $exception;
+        } finally {
+            foreach ($reportPaths as $reportPath) {
+                @unlink($reportPath);
+            }
+        }
+
+        return ['path' => $path, 'filename' => sprintf('ChamCong_%02d_%d.zip', $month, $year)];
+    }
+
+    /** @param iterable<int, Teacher> $teachers
+     * @param  array<int, int>|null   $allowedCenterIds
+     * @param  int                    $month
+     * @param  int                    $year
+     * @param  ?int                   $centerId
+     * @param  ?Teacher               $teacher
+     * @param  ?string                $centerLabel
+     * @return Generator<int, string>
+     */
+    protected function renderAttendanceReport(iterable $teachers, int $month, int $year, ?int $centerId, ?array $allowedCenterIds, ?Teacher $teacher = null, ?string $centerLabel = null): Generator
+    {
+        yield view('teacher-attendance', ['part' => 'header', 'teacher' => $teacher, 'centerLabel' => $centerLabel, 'month' => $month, 'year' => $year])->render();
+        $index     = 0;
+        $completed = 0;
+
+        foreach ($teachers as $teacher) {
+            foreach ($this->teacherRepository->getAttendanceSessionsCursor($teacher->id, $month, $year, $centerId, $allowedCenterIds) as $session) {
+                $index++;
+                $completed += $session->status === Constant::SESSION_STATUS_COMPLETED ? 1 : 0;
+                yield view('teacher-attendance', ['part' => 'row', 'teacher' => $teacher, 'session' => $session, 'index' => $index])->render();
+            }
+        }
+        yield view('teacher-attendance', ['part' => 'footer', 'index' => $index, 'completed' => $completed])->render();
+    }
+
+    /**
+     * @param iterable<int, string> $chunks
+     */
+    protected function writeAttendanceReport(iterable $chunks): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'teacher_excel_');
+
+        if ($path === false) {
+            throw new RuntimeException('Không thể tạo tệp Excel tạm.');
+        }
+        $handle = fopen($path, 'wb');
+
+        if ($handle === false) {
+            @unlink($path);
+
+            throw new RuntimeException('Không thể mở tệp Excel tạm.');
+        }
+
+        try {
+            foreach ($chunks as $chunk) {
+                $offset = 0;
+                $length = strlen($chunk);
+                while ($offset < $length) {
+                    $written = fwrite($handle, substr($chunk, $offset));
+
+                    if ($written === false || $written === 0) {
+                        throw new RuntimeException('Không thể ghi tệp Excel.');
+                    }
+                    $offset += $written;
+                }
+            }
+        } catch (Throwable $exception) {
+            fclose($handle);
+            @unlink($path);
+
+            throw $exception;
+        }
+        fclose($handle);
+
+        return $path;
     }
 }

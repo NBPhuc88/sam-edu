@@ -1,3 +1,5 @@
+import { index as upgradePlan } from '@/actions/App/Http/Controllers/UpgradePlanController';
+import { exportSessions } from '@/actions/App/Http/Controllers/TeacherController';
 import PageHeader from '@/components/common/PageHeader';
 import StatMetricCard from '@/components/common/StatMetricCard';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -126,7 +128,6 @@ export default function TeacherShow({
     const canEdit = can('teachers.edit');
     const canExportPermission = can('teachers.export-sessions');
     const canExportPlan = useCanExportCsv();
-    const canExport = canExportPermission && canExportPlan;
 
     const [filterType, setFilterType] = useState<string>(
         filters.type ?? 'month'
@@ -152,15 +153,14 @@ export default function TeacherShow({
     };
 
     const handleExport = () => {
-        const params = new URLSearchParams();
-        if (filterType) {
-            params.set('type', filterType);
+        if (!canExportPlan) {
+            router.visit(upgradePlan.url({ query: { feature: 'export_csv' } }));
+            return;
         }
-        if (filterType === 'select_month') {
-            params.set('month', String(selectedMonth));
-            params.set('year', String(selectedYear));
-        }
-        window.location.href = `/teachers/${teacher.id}/export-sessions?${params.toString()}`;
+        window.location.href = exportSessions.url(teacher.id, { query: {
+            month: filterType === 'select_month' ? selectedMonth : new Date().getMonth() + 1,
+            year: filterType === 'select_month' ? selectedYear : currentYear,
+        } });
     };
 
     const getSessionStatusBadge = (status: number, sessionDate?: string, startTime?: string) => {
@@ -414,14 +414,15 @@ export default function TeacherShow({
                         )}
                     </div>
 
-                    {canExport && (
+                    {canExportPermission && (
                         <Button
                             variant="export"
+                            title={!canExportPlan ? 'Tính năng thuộc Gói Nâng Cao' : 'Xuất chấm công giáo viên này'}
                             onClick={handleExport}
                             className="gap-1.5 shrink-0 text-xs"
                         >
                             <Download className="h-4 w-4" />
-                            Xuất CSV ({getFilterLabel()})
+                            Xuất chấm công giáo viên này {!canExportPlan && '🔒'}
                         </Button>
                     )}
                 </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Student\ImportCsvRequest;
+use App\Http\Requests\Teacher\ExportAttendanceRequest;
 use App\Http\Requests\Teacher\FilterTeacherRequest;
 use App\Http\Requests\Teacher\StoreTeacherRequest;
 use App\Http\Requests\Teacher\UpdateTeacherRequest;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeacherController extends Controller
@@ -256,40 +258,31 @@ class TeacherController extends Controller
         return Inertia::render('Admin/Teachers/Show', $detailData);
     }
 
-    public function exportSessions(Request $request, int $id): StreamedResponse
+    public function exportSessions(ExportAttendanceRequest $request, int $id): StreamedResponse
     {
-        $admin       = $this->getAuthAdmin();
-        $filterType  = $request->query('type', 'month');
-        $filterMonth = $request->query('month') ? (int) $request->query('month') : null;
-        $filterYear  = $request->query('year') ? (int) $request->query('year') : null;
+        $month   = $request->integer('month');
+        $year    = $request->integer('year');
+        $content = $this->teacherService->exportTeacherSessionsExcel($id, $month, $year, $this->getAuthAdmin());
 
-        $fileName = 'ca_day_giao_vien_' . $id . '_' . date('Y-m-d_H-i-s') . '.csv';
-
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ];
-
-        return response()->stream(function () use ($id, $filterType, $filterMonth, $filterYear, $admin) {
-            $handle = fopen('php://output', 'w');
-
-            if ($handle === false) {
-                return;
+        return response()->stream(function () use ($content): void {
+            foreach ($content as $chunk) {
+                echo $chunk;
             }
+        }, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="ChamCong_' . $id . '_' . $month . '_' . $year . '.xls"',
+        ]);
+    }
 
-            fwrite($handle, "\xEF\xBB\xBF");
+    public function exportAttendanceZip(ExportAttendanceRequest $request): BinaryFileResponse
+    {
+        $export = $this->teacherService->exportAttendanceZip(
+            $request->integer('month'),
+            $request->integer('year'),
+            $request->filled('center_id') ? $request->integer('center_id') : null,
+            $this->getAuthAdmin()
+        );
 
-            foreach ($this->teacherService->exportTeacherSessionsCsv(
-                $id,
-                is_string($filterType) ? $filterType : 'month',
-                $filterMonth,
-                $filterYear,
-                $admin
-            ) as $row) {
-                fputcsv($handle, $row);
-            }
-
-            fclose($handle);
-        }, 200, $headers);
+        return response()->download($export['path'], $export['filename'], ['Content-Type' => 'application/zip'])->deleteFileAfterSend(true);
     }
 }

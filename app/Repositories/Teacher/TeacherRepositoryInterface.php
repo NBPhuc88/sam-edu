@@ -124,4 +124,19 @@ interface TeacherRepositoryInterface
         ?int $perPage = null,
         int $page = 1
     ): array;
+    /** @param array<int, int>|null $allowedCenterIds
+     * @return Generator<int, Teacher>
+     * @param  ?int                    $centerId
+     * @param  ?int                    $teacherId
+     */
+    public function getAttendanceTeachersCursor(?int $centerId = null, ?array $allowedCenterIds = null, ?int $teacherId = null): Generator;
+
+    /** @param array<int, int>|null $allowedCenterIds
+     * @return Generator<int, ClassSession>
+     * @param  int                          $teacherId
+     * @param  int                          $month
+     * @param  int                          $year
+     * @param  ?int                         $centerId
+     */
+    public function getAttendanceSessionsCursor(int $teacherId, int $month, int $year, ?int $centerId = null, ?array $allowedCenterIds = null): Generator;
 }

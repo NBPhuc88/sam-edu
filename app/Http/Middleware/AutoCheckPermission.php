@@ -51,7 +51,8 @@ class AutoCheckPermission
         'students.remove-class'        => 'students.assign-classes',
 
         // Teachers Management Sub-actions
-        'teachers.sample-csv' => 'teachers.import',
+        'teachers.export-attendance-zip' => 'teachers.index',
+        'teachers.sample-csv'            => 'teachers.import',
 
         // Classes & Schedules Sub-actions
         'schedules.sessions' => 'schedules.index',
