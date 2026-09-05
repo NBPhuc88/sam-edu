@@ -113,7 +113,9 @@ class Center extends Model
 
     public function hasFeature(string $featureCode): bool
     {
-        if ((int) $this->plan_type === Constant::PLAN_TYPE_FREE) {
+        $planType = $this->plan_type ? (int) $this->plan_type : (int) ($this->currentPlan()?->plan_type ?? Constant::PLAN_TYPE_FREE);
+
+        if ($planType === Constant::PLAN_TYPE_FREE) {
             return true;
         }
 

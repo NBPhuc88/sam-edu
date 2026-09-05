@@ -330,13 +330,11 @@ test('user from basic plan center can access offline grading but is redirected t
     $gradingResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('grading.offline.create'));
     $gradingResponse->assertOk();
 
-    // Accessing /chats on basic plan -> Blocked (403 UpgradePlan)
+    // Accessing /chats on basic plan -> Blocked (redirect to UpgradePlan)
     $chatResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('chats.index'));
-    $chatResponse->assertForbidden();
-    $chatResponse->assertInertia(fn ($page) => $page->component('UpgradePlan'));
+    $chatResponse->assertRedirect(route('upgrade-plan', ['feature' => 'chat']));
 
-    // Accessing /exam-room on basic plan -> Blocked (403 UpgradePlan)
+    // Accessing /exam-room on basic plan -> Blocked (redirect to UpgradePlan)
     $onlineExamResponse = $this->actingAs($teacherBasic, 'teacher')->get(route('online-exam.enter'));
-    $onlineExamResponse->assertForbidden();
-    $onlineExamResponse->assertInertia(fn ($page) => $page->component('UpgradePlan'));
+    $onlineExamResponse->assertRedirect(route('upgrade-plan', ['feature' => 'online-exam']));
 });

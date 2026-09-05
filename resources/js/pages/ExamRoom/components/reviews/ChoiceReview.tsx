@@ -118,7 +118,7 @@ export default function ChoiceReview({ question }: Props) {
 
     return (
         <div className="space-y-2 pt-2">
-            {optsList.map((opt) => {
+            {optsList.map((opt, idx) => {
                 const isCorrectChoice = correctKeys.includes(opt.key);
                 const isUserChoice = userKeys.includes(opt.key);
 
@@ -163,7 +163,7 @@ export default function ChoiceReview({ question }: Props) {
                                         : 'bg-gray-200 text-gray-700'
                                 }`}
                             >
-                                {opt.key}
+                                {String.fromCharCode(65 + idx)}
                             </span>
                             <span className="text-xs sm:text-sm">{opt.text}</span>
                         </div>

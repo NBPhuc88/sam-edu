@@ -253,7 +253,10 @@ export default function Arena({ initialRoom }: { initialRoom: RoomState }) {
                     </button>
                     <ArenaSoundToggle
                         countdown={
-                            room.status === 3 ? Math.ceil(remaining) : null
+                            room.status === 3 &&
+                            room.question_index + 1 < room.question_count
+                                ? Math.ceil(remaining)
+                                : null
                         }
                     />
                 </header>
@@ -394,9 +397,10 @@ export default function Arena({ initialRoom }: { initialRoom: RoomState }) {
                     <LeaderboardSidebar entries={room.leaderboard} />
                 </div>
             </div>
-            {room.status === 3 && (
-                <CinematicWarpPortal5s remaining={remaining} />
-            )}
+            {room.status === 3 &&
+                room.question_index + 1 < room.question_count && (
+                    <CinematicWarpPortal5s remaining={remaining} />
+                )}
             <ConfirmDialog
                 isOpen={cancelOpen}
                 onClose={() => setCancelOpen(false)}

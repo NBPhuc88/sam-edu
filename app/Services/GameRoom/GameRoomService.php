@@ -240,9 +240,17 @@ class GameRoomService implements GameRoomServiceInterface
 
             if ($room->status === Constant::GAME_ROOM_STATUS_PLAYING) {
                 $endedQuestions[] = $room->question_index;
-                $room->fill(['status' => Constant::GAME_ROOM_STATUS_COUNTDOWN, 'expires_at' => $boundary->addSeconds(5)]);
-                $events[] = 'GameRoomQuestionEnded';
-                $events[] = 'GameRoomLeaderboardUpdated';
+
+                if ($room->question_index + 1 >= count($room->questions)) {
+                    $room->fill(['status' => Constant::GAME_ROOM_STATUS_COMPLETED, 'expires_at' => null]);
+                    $events[] = 'GameRoomQuestionEnded';
+                    $events[] = 'GameRoomLeaderboardUpdated';
+                    $events[] = 'GameRoomCompleted';
+                } else {
+                    $room->fill(['status' => Constant::GAME_ROOM_STATUS_COUNTDOWN, 'expires_at' => $boundary->addSeconds(5)]);
+                    $events[] = 'GameRoomQuestionEnded';
+                    $events[] = 'GameRoomLeaderboardUpdated';
+                }
             } elseif ($room->question_index + 1 >= count($room->questions)) {
                 $room->fill(['status' => Constant::GAME_ROOM_STATUS_COMPLETED, 'expires_at' => null]);
                 $events[] = 'GameRoomCompleted';

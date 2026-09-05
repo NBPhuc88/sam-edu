@@ -118,3 +118,10 @@ export function useCanTakePracticeExam(): boolean {
 export function useCanUseChat(): boolean {
     return usePlanFeature('chat');
 }
+
+/**
+ * Tiện ích kiểm tra nhanh quyền Đấu trường trực tiếp (game-rooms).
+ */
+export function useCanUseGameRooms(): boolean {
+    return usePlanFeature('game-rooms');
+}

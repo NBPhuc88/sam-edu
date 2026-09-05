@@ -81,8 +81,21 @@ export default function TakeExam({
         });
     });
 
-    // Answers State initialized directly from Redis Cache / Server Submission
+    const storageKey = `take_exam_answers_${classExam.id}_${submission.id}`;
+
+    // Answers State initialized directly from Redis Cache / Server Submission / SessionStorage fallback
     const [answers, setAnswers] = useState<Record<number | string, any>>(() => {
+        if (typeof window !== 'undefined') {
+            const local = sessionStorage.getItem(storageKey);
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                        return { ...(submission.answers || {}), ...parsed };
+                    }
+                } catch {}
+            }
+        }
         return submission.answers || {};
     });
 
@@ -189,6 +202,19 @@ export default function TakeExam({
         return observeExamClock(updateTimer);
     }, [calculateRemainingSeconds, handleAutoSubmitTimeout]);
 
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            try {
+                const token = getCsrfToken();
+                const data = JSON.stringify({ answers });
+                navigator.sendBeacon?.(autosave.url([classExam.id, submission.id]), new Blob([data], { type: 'application/json' }));
+            } catch {}
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [answers, classExam.id, submission.id]);
+
     const handleManualSubmit = () => {
         if (hasAutoSubmittedRef.current) return;
         hasAutoSubmittedRef.current = true;
@@ -197,6 +223,11 @@ export default function TakeExam({
             answers,
             is_timeout: false,
         }, {
+            onSuccess: () => {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem(storageKey);
+                }
+            },
             onError: () => { hasAutoSubmittedRef.current = false; },
             onFinish: () => {
                 setIsSubmitting(false);
@@ -206,10 +237,18 @@ export default function TakeExam({
     };
 
     const handleAnswerChange = (questionId: number | string, val: any) => {
-        setAnswers((prev) => ({
-            ...prev,
-            [questionId]: val,
-        }));
+        setAnswers((prev) => {
+            const next = {
+                ...prev,
+                [questionId]: val,
+            };
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.setItem(storageKey, JSON.stringify(next));
+                } catch {}
+            }
+            return next;
+        });
     };
 
     const scrollToQuestion = (qNum: number) => {
@@ -459,7 +498,7 @@ export default function TakeExam({
                                                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {optId}.
+                                                                        {String.fromCharCode(65 + idx)}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
                                                                         {optText}
@@ -503,7 +542,7 @@ export default function TakeExam({
                                                                         className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
                                                                     />
                                                                     <span className="font-mono text-xs font-bold text-gray-700 shrink-0">
-                                                                        {optId}.
+                                                                        {String.fromCharCode(65 + idx)}.
                                                                     </span>
                                                                     <span className="text-xs font-medium text-gray-800">
                                                                         {optText}

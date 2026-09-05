@@ -1,7 +1,12 @@
 <?php
 
 use App\Enums\Constant;
-use App\Models\{Center, Teacher, Student, Exam, ExamQuestion};
+use App\Models\Center;
+use App\Models\Exam;
+use App\Models\ExamQuestion;
+use App\Models\Student;
+use App\Models\SubscriptionPlan;
+use App\Models\Teacher;
 use App\Services\GameRoom\GameRoomServiceInterface;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +68,7 @@ test('catches up across hidden tabs using absolute boundaries and completes the 
     $state = $this->service->sync($this->room, $this->student);
     expect($state['status'])->toBe(2)->and($state['question_index'])->toBe(2)
         ->and($state['expires_at'])->toBe(now()->addSeconds(19)->toISOString());
-    $this->travel(24)->seconds();
+    $this->travel(19)->seconds();
     expect($this->service->sync($this->room, $this->student)['status'])->toBe(4);
 });
 
@@ -100,6 +105,16 @@ test('grades all supported interactive answers', function (int $type, mixed $cor
 
 test('HTTP endpoints enforce role and input validation', function () {
     $this->actingAs($this->teacher, 'teacher')->postJson(route('game-rooms.store'), [...$this->data, 'question_time_limit' => 31])->assertUnprocessable();
+    $this->actingAs($this->teacher, 'teacher')->postJson(route('game-rooms.store'), [...$this->data, 'question_time_limit' => 4])->assertUnprocessable();
+    $this->actingAs($this->teacher, 'teacher')->postJson(route('game-rooms.store'), [...$this->data, 'question_time_limit' => 5])->assertRedirect();
+    $this->actingAs($this->teacher, 'teacher')->postJson(route('game-rooms.store'), [...$this->data, 'scoring_rules' => []])->assertUnprocessable();
+    $this->actingAs($this->teacher, 'teacher')->postJson(route('game-rooms.store'), [
+        ...$this->data,
+        'scoring_rules' => [
+            ['seconds' => 5, 'points' => 1000],
+            ['seconds' => 20, 'points' => 500],
+        ],
+    ])->assertRedirect();
     $this->actingAs($this->teacher, 'teacher')->getJson(route('game-rooms.sync', $this->room))->assertOk()->assertJsonPath('is_host', true);
     auth('teacher')->logout();
     $this->actingAs($this->student, 'student')->postJson(route('game-rooms.store'), $this->data)->assertForbidden();
@@ -130,4 +145,80 @@ test('game rooms preserve question and option order even when exam shuffle is en
     $room = $this->service->create($this->data, $this->teacher);
     expect(array_column($room->questions, 'id'))->toBe($this->exam->questions()->pluck('id')->all())
         ->and($room->questions[0]['options'])->toBe($this->exam->questions()->first()->options);
+});
+
+test('redirects basic plan users to upgrade plan page for any game room url', function () {
+    $basicCenter  = Center::factory()->create(['plan_type' => Constant::PLAN_TYPE_STANDARD]);
+    $basicTeacher = Teacher::factory()->create(['center_id' => $basicCenter->id]);
+    $basicStudent = Student::factory()->create(['center_id' => $basicCenter->id]);
+
+    // Teacher on basic plan visits game-rooms index
+    $this->actingAs($basicTeacher, 'teacher')
+        ->get(route('game-rooms.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'game-rooms']));
+
+    // Teacher on basic plan visits game-rooms create
+    $this->actingAs($basicTeacher, 'teacher')
+        ->get(route('game-rooms.create'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'game-rooms']));
+
+    // Student on basic plan visits game-rooms index
+    $this->actingAs($basicStudent, 'student')
+        ->get(route('game-rooms.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'game-rooms']));
+
+    // JSON requests from basic plan receive 403 Forbidden
+    $this->actingAs($basicTeacher, 'teacher')
+        ->postJson(route('game-rooms.store'), $this->data)
+        ->assertForbidden();
+
+    // Advanced plan center allows access
+    $advancedPlan = SubscriptionPlan::create([
+        'code'             => 'adv_gameroom_test',
+        'name'             => 'Gói Nâng Cao Test',
+        'plan_type'        => Constant::PLAN_TYPE_PREMIUM,
+        'allowed_features' => ['game-rooms'],
+        'duration_days'    => 30,
+        'price'            => 500000,
+    ]);
+    $advancedCenter = Center::factory()->create([
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'subscription_plan_id' => $advancedPlan->id,
+    ]);
+    $advancedTeacher = Teacher::factory()->create(['center_id' => $advancedCenter->id]);
+
+    $this->actingAs($advancedTeacher, 'teacher')
+        ->get(route('game-rooms.index'))
+        ->assertOk();
+});
+
+test('redirects basic plan users to upgrade plan page for exam and grading urls', function () {
+    $basicCenter  = Center::factory()->create(['plan_type' => Constant::PLAN_TYPE_STANDARD]);
+    $basicTeacher = Teacher::factory()->create(['center_id' => $basicCenter->id]);
+    $basicStudent = Student::factory()->create(['center_id' => $basicCenter->id]);
+
+    // Exams index
+    $this->actingAs($basicTeacher, 'teacher')
+        ->get(route('exams.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'exams']));
+
+    // Class exams index
+    $this->actingAs($basicTeacher, 'teacher')
+        ->get(route('class-exams.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'class-exams']));
+
+    // Grading index
+    $this->actingAs($basicTeacher, 'teacher')
+        ->get(route('grading.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'grading']));
+
+    // Online exam room
+    $this->actingAs($basicStudent, 'student')
+        ->get(route('online-exam.enter'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'online-exam']));
+
+    // Practice exams
+    $this->actingAs($basicStudent, 'student')
+        ->get(route('practice-exams.index'))
+        ->assertRedirect(route('upgrade-plan', ['feature' => 'practice-exams']));
 });

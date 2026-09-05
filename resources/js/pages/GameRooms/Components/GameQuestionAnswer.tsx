@@ -66,7 +66,6 @@ export default function GameQuestionAnswer({
 
         if (!multi) {
             setValue(key);
-            onSubmit(key);
 
             return;
         }
@@ -79,31 +78,49 @@ export default function GameQuestionAnswer({
         );
     };
 
+    const isAnswerEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (Array.isArray(value) && !value.length) ||
+        (typeof value === 'object' &&
+            !Array.isArray(value) &&
+            Object.keys(value as Record<string, unknown>).length === 0);
+
     return (
         <div>
             {choice ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {options.map((option, i) => (
-                        <button
-                            key={option.key}
-                            disabled={disabled}
-                            aria-pressed={
-                                multi
-                                    ? Array.isArray(value) &&
-                                      value.includes(option.key)
-                                    : value === option.key
-                            }
-                            onClick={() => select(option.key)}
-                            className={`${colors[i % 4]} flex min-h-28 items-center gap-4 rounded-2xl p-5 text-left font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-60 aria-pressed:ring-4 aria-pressed:ring-white`}
-                        >
-                            <span className="text-3xl" aria-hidden="true">
-                                {icons[i % 4]}
-                            </span>
-                            <span>
-                                {option.key}. {option.text}
-                            </span>
-                        </button>
-                    ))}
+                    {options.map((option, i) => {
+                        const isSelected = multi
+                            ? Array.isArray(value) && value.includes(option.key)
+                            : value === option.key;
+
+                        return (
+                            <button
+                                key={option.key}
+                                type="button"
+                                disabled={disabled}
+                                aria-pressed={isSelected}
+                                onClick={() => select(option.key)}
+                                className={`${colors[i % 4]} flex min-h-28 items-center justify-between gap-4 rounded-2xl p-5 text-left font-bold shadow-lg transition-all active:scale-95 disabled:opacity-60 aria-pressed:ring-4 aria-pressed:ring-white aria-pressed:scale-[1.02]`}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <span className="text-3xl" aria-hidden="true">
+                                        {icons[i % 4]}
+                                    </span>
+                                    <span>
+                                        {String.fromCharCode(65 + i)}. {option.text}
+                                    </span>
+                                </div>
+                                {isSelected && (
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/30 text-lg font-black text-white">
+                                        ✓
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             ) : (
                 <fieldset
@@ -125,19 +142,18 @@ export default function GameQuestionAnswer({
                     />
                 </fieldset>
             )}
-            {(!choice || multi) && (
-                <button
-                    disabled={
-                        disabled ||
-                        value === null ||
-                        (Array.isArray(value) && !value.length)
+            <button
+                type="button"
+                disabled={disabled || isAnswerEmpty}
+                onClick={() => {
+                    if (!disabled && !isAnswerEmpty) {
+                        onSubmit(value);
                     }
-                    onClick={() => onSubmit(value)}
-                    className="arena-button mt-5 w-full"
-                >
-                    Khóa đáp án ⚡
-                </button>
-            )}
+                }}
+                className="arena-button mt-5 w-full text-base sm:text-lg font-black tracking-wide transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {savedAnswer ? 'Đã chọn đáp án ✓' : 'Chọn đáp án ⚡'}
+            </button>
         </div>
     );
 }

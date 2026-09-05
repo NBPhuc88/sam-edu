@@ -104,7 +104,7 @@ export default function ChoiceRunner({
 
     return (
         <div className="space-y-2">
-            {optsList.map((opt) => {
+            {optsList.map((opt, idx) => {
                 const isSelected = selectedKeys.includes(opt.key);
 
                 return (
@@ -126,7 +126,7 @@ export default function ChoiceRunner({
                                         : 'bg-gray-100 text-gray-700'
                                 }`}
                             >
-                                {opt.key}
+                                {String.fromCharCode(65 + idx)}
                             </span>
                             <span className="text-xs sm:text-sm">{opt.text}</span>
                         </div>
