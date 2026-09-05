@@ -119,8 +119,9 @@ export const Header: React.FC<HeaderProps> = ({
             (role === 'admin' || user.role === 'admin') &&
             user.admin_role === ROLE_SUPER_ADMIN;
 
+        const echo = getEcho();
+
         if (isSuper) {
-            const echo = getEcho();
             const channel = echo.channel('super-admin-notifications');
 
             // 1. Nhận thông báo yêu cầu gia hạn dịch vụ từ Admin trung tâm
@@ -128,6 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
                 const newNotif: NotificationItem = {
                     id: e.id || Date.now(),
                     notification_id: e.notification_id || e.id,
+                    is_chat: false,
                     title: e.title || 'Yêu cầu gia hạn mới',
                     content: e.content || '',
                     type: e.type || 'subscription_renewal',
@@ -147,6 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
                 const newNotif: NotificationItem = {
                     id: e.id || Date.now(),
                     notification_id: e.notification_id || e.id,
+                    is_chat: false,
                     title: e.title || 'Trung tâm mới đăng ký',
                     content: e.content || '',
                     type: e.type || 'center_registration',
@@ -162,10 +165,38 @@ export const Header: React.FC<HeaderProps> = ({
             });
 
             return () => {
-                echo.leaveChannel('super-admin-notifications');
+                echo.leave('super-admin-notifications');
+            };
+        } else {
+            const roleKey = role === 'admin' ? 'admin' : role === 'teacher' ? 'teacher' : 'student';
+            const channelName = `notifications.${roleKey}.${user.id}`;
+            const privateChannel = echo.private(channelName);
+
+            privateChannel.listen('.notification.sent', (e: any) => {
+                const newNotif: NotificationItem = {
+                    id: e.id || Date.now(),
+                    notification_id: e.notification_id || e.id,
+                    is_chat: Boolean(e.is_chat),
+                    chat_class_id: e.chat_class_id ?? null,
+                    title: e.title || 'Thông báo mới',
+                    content: e.content || '',
+                    type: e.type ?? null,
+                    center_id: e.center_id ?? null,
+                    center_name: e.center_name ?? null,
+                    is_read: false,
+                    read_at: null,
+                    created_at: e.created_at || 'Vừa xong',
+                };
+
+                setNotifications((prev) => [newNotif, ...prev]);
+                setUnreadCount((prev) => prev + 1);
+            });
+
+            return () => {
+                echo.leave(channelName);
             };
         }
-    }, [user]);
+    }, [user?.id, role, user?.admin_role]);
 
     const handleMarkAsRead = async (id: number) => {
         try {
@@ -212,16 +243,22 @@ export const Header: React.FC<HeaderProps> = ({
         }
         setIsPopoverOpen(false);
 
-        if (item.type === 'center_registration') {
-            if (item.center_id) {
-                router.visit(
-                    `/admins?action=create&center_id=${item.center_id}`,
-                );
+        if (isSuperAdmin) {
+            if (item.type === 'center_registration' || item.type === 6) {
+                if (item.center_id) {
+                    router.visit(
+                        `/admins?action=create&center_id=${item.center_id}`,
+                    );
+                } else {
+                    router.visit('/admins?action=create');
+                }
+            } else if (item.center_id) {
+                router.visit(`/centers/${item.center_id}/edit`);
             } else {
-                router.visit('/admins?action=create');
+                router.visit('/notifications');
             }
-        } else if (item.center_id) {
-            router.visit(`/centers/${item.center_id}/edit`);
+        } else {
+            router.visit('/notifications');
         }
     };
 
@@ -253,6 +290,11 @@ export const Header: React.FC<HeaderProps> = ({
     const isStudent = role === 'student';
     const showCenterBrand =
         (isSubAdmin || isTeacher || isStudent) && !!center?.name;
+
+    const displayedNotifications = isSuperAdmin
+        ? notifications.filter((item) => !item.is_chat)
+        : notifications;
+
 
     return (
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white/95 px-4 shadow-xs backdrop-blur-md">
@@ -316,8 +358,8 @@ export const Header: React.FC<HeaderProps> = ({
                     </Button>
                 )}
 
-                {/* Bell Notification Icon — Chỉ hiển thị cho Super Admin */}
-                {user && isSuperAdmin && (
+                {/* Bell Notification Icon — Hiển thị cho tất cả người dùng */}
+                {user && (
                     <div className="relative">
                         <button
                             type="button"
@@ -340,7 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     <div className="flex items-center gap-2">
                                         <Bell className="h-4 w-4 text-emerald-600" />
                                         <span className="text-xs font-bold text-gray-900">
-                                            Thông báo
+                                             Thông báo
                                         </span>
                                         {unreadCount > 0 && (
                                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
@@ -360,12 +402,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 </div>
 
                                 <div className="mt-2 max-h-80 space-y-1.5 overflow-y-auto pr-0.5">
-                                    {notifications.length === 0 ? (
+                                    {displayedNotifications.length === 0 ? (
                                         <div className="py-8 text-center text-xs text-gray-400">
                                             Chưa có thông báo nào
                                         </div>
                                     ) : (
-                                        notifications.map((item) => (
+                                        displayedNotifications.map((item) => (
                                             <div
                                                 key={item.id}
                                                 onClick={() =>

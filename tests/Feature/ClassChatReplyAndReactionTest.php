@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Constant;
+use App\Events\NotificationSentEvent;
 use App\Models\Admin;
 use App\Models\Center;
 use App\Models\ClassChatMessage;
@@ -10,6 +11,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Teacher;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
@@ -292,4 +294,25 @@ test('giáo viên và admin có thể ghim và bỏ ghim tin nhắn chat', funct
         ]);
 
     expect($msg2->fresh()->is_pinned)->toBeFalse();
+});
+
+test('sending a chat message dispatches NotificationSentEvent to other members private channels', function () {
+    Event::fake([NotificationSentEvent::class]);
+
+    $response = $this->actingAs($this->teacher, 'teacher')
+        ->postJson("/classes/{$this->schoolClass->id}/chat/messages", [
+            'message' => 'Thông báo quan trọng gửi cả lớp!',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+        ]);
+
+    Event::assertDispatched(NotificationSentEvent::class, function (NotificationSentEvent $event) {
+        return $event->recipientType === 'student'
+            && (int) $event->recipientId === (int) $this->student->id
+            && $event->notificationData['is_chat'] === true
+            && (int) $event->notificationData['chat_class_id'] === (int) $this->schoolClass->id;
+    });
 });

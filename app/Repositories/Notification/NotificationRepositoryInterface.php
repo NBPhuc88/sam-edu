@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Notification;
 
+use App\Models\Notification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface NotificationRepositoryInterface
@@ -16,11 +17,12 @@ interface NotificationRepositoryInterface
     public function getPaginatedForRecipient(int $recipientType, int $recipientId, array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
-     * @param  int $recipientType
-     * @param  int $recipientId
+     * @param  int  $recipientType
+     * @param  int  $recipientId
+     * @param  bool $isSuperAdmin
      * @return int
      */
-    public function countUnreadForRecipient(int $recipientType, int $recipientId): int;
+    public function countUnreadForRecipient(int $recipientType, int $recipientId, bool $isSuperAdmin = false): int;
 
     /**
      * @param  int  $id
@@ -36,4 +38,11 @@ interface NotificationRepositoryInterface
      * @return int
      */
     public function markAllAsRead(int $recipientType, int $recipientId): int;
+
+    /**
+     * @param  array<string, mixed>                  $notificationData
+     * @param  array<int, array{type: int, id: int}> $recipients
+     * @return Notification
+     */
+    public function createAndBroadcast(array $notificationData, array $recipients): Notification;
 }

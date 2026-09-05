@@ -8,3 +8,15 @@ Broadcast::channel('class-chat.{classId}', function (mixed $user, int $classId):
 
     return true;
 }, ['guards' => ['admin', 'teacher', 'student']]);
+
+Broadcast::channel('notifications.admin.{adminId}', function (mixed $user, int $adminId): bool {
+    return (int) $user?->id === $adminId;
+}, ['guards' => ['admin']]);
+
+Broadcast::channel('notifications.teacher.{teacherId}', function (mixed $user, int $teacherId): bool {
+    return (int) $user?->id === $teacherId;
+}, ['guards' => ['teacher']]);
+
+Broadcast::channel('notifications.student.{studentId}', function (mixed $user, int $studentId): bool {
+    return (int) $user?->id === $studentId;
+}, ['guards' => ['student']]);
