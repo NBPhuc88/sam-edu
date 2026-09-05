@@ -2,35 +2,45 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\Constant;
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
-use App\Models\NotificationRecipient;
+use App\Services\Notification\NotificationServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    /**
-     * Get recent notifications and unread count for current user.
-     */
-    public function index(): JsonResponse
-    {
-        $recipientType = null;
-        $recipientId   = null;
+    public function __construct(
+        protected NotificationServiceInterface $notificationService
+    ) {
+    }
 
+    private function resolveAuth(): ?array
+    {
         if (Auth::guard('admin')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
-            $recipientId   = Auth::guard('admin')->id();
-        } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
-            $recipientId   = Auth::guard('teacher')->id();
-        } elseif (Auth::guard('student')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
-            $recipientId   = Auth::guard('student')->id();
+            return [Auth::guard('admin')->user(), 'admin'];
         }
 
-        if (! $recipientType || ! $recipientId) {
+        if (Auth::guard('teacher')->check()) {
+            return [Auth::guard('teacher')->user(), 'teacher'];
+        }
+
+        if (Auth::guard('student')->check()) {
+            return [Auth::guard('student')->user(), 'student'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get recent notifications and unread count for current user.
+     * @param Request $request
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $auth = $this->resolveAuth();
+
+        if (! $auth) {
             return response()->json([
                 'success'       => false,
                 'notifications' => [],
@@ -38,82 +48,17 @@ class NotificationController extends Controller
             ], 401);
         }
 
-        $isSuperAdmin = false;
+        [$user, $role] = $auth;
 
-        if (Auth::guard('admin')->check()) {
-            $adminUser    = Auth::guard('admin')->user();
-            $isSuperAdmin = ($adminUser?->role === Constant::ROLE_SUPER_ADMIN || $adminUser?->role === 'super_admin' || (method_exists($adminUser, 'isSuperAdmin') && $adminUser->isSuperAdmin()));
-        }
-
-        $notificationsTable = (new Notification())->getTable();
-        $recipientsTable    = (new NotificationRecipient())->getTable();
-
-        $recipientsQuery = NotificationRecipient::where('recipient_type', $recipientType)
-            ->where('recipient_id', $recipientId)
-            ->with(['notification.center']);
-
-        $unreadQuery = NotificationRecipient::where('recipient_type', $recipientType)
-            ->where('recipient_id', $recipientId)
-            ->whereNull('read_at');
-
-        if ($isSuperAdmin) {
-            $filterSuperAdmin = function ($q) {
-                $q->whereNull('chat_class_id')
-                    ->where(function ($sub) {
-                        $sub->whereIn('type', [
-                            Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
-                            Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
-                            'center_registration',
-                            'subscription_renewal',
-                        ])->orWhere(function ($fallback) {
-                            $fallback->where('type', Constant::NOTIFICATION_TYPE_GENERAL)
-                                ->where(function ($kw) {
-                                    $kw->where('title', 'like', '%đăng ký%')
-                                        ->orWhere('content', 'like', '%đăng ký%')
-                                        ->orWhere('title', 'like', '%gia hạn%')
-                                        ->orWhere('content', 'like', '%gia hạn%');
-                                });
-                        });
-                    });
-            };
-
-            $recipientsQuery->whereHas('notification', $filterSuperAdmin);
-            $unreadQuery->whereHas('notification', $filterSuperAdmin);
-        }
-
-        $recipients = $recipientsQuery
-            ->orderByDesc(Notification::select('updated_at')
-                ->whereColumn("{$notificationsTable}.id", "{$recipientsTable}.notification_id"))
-            ->latest('id')
-            ->limit(20)
-            ->get();
-
-        $unreadCount = $unreadQuery->count();
-
-        $items = $recipients->map(function (NotificationRecipient $recipient) {
-            $notif       = $recipient->notification;
-            $displayedAt = $notif?->chat_class_id !== null ? $notif->updated_at : $notif?->created_at;
-
-            return [
-                'id'              => $recipient->id,
-                'notification_id' => $recipient->notification_id,
-                'is_chat'         => $notif?->chat_class_id !== null,
-                'title'           => $notif?->title ?? 'Thông báo',
-                'content'         => $notif?->content ?? '',
-                'type'            => $notif?->type ?? 'general',
-                'center_id'       => $notif?->center_id ?? null,
-                'chat_class_id'   => $notif?->chat_class_id,
-                'center_name'     => $notif?->center?->name ?? null,
-                'is_read'         => $recipient->read_at !== null,
-                'read_at'         => $recipient->read_at?->format('d/m/Y H:i'),
-                'created_at'      => $displayedAt ? $displayedAt->diffForHumans() : $recipient->created_at->diffForHumans(),
-            ];
-        });
+        $filters   = array_merge($request->all(), ['for_dropdown' => true]);
+        $result    = $this->notificationService->getPaginatedNotifications($user, $role, $filters, 20);
+        $paginator = $result['notifications'];
+        $items     = $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator ? $paginator->items() : $paginator;
 
         return response()->json([
             'success'       => true,
             'notifications' => $items,
-            'unread_count'  => $unreadCount,
+            'unread_count'  => $result['unread_count'],
         ]);
     }
 
@@ -123,41 +68,20 @@ class NotificationController extends Controller
      */
     public function markAsRead(int $id): JsonResponse
     {
-        $recipientType = null;
-        $recipientId   = null;
+        $auth = $this->resolveAuth();
 
-        if (Auth::guard('admin')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
-            $recipientId   = Auth::guard('admin')->id();
-        } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
-            $recipientId   = Auth::guard('teacher')->id();
-        } elseif (Auth::guard('student')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
-            $recipientId   = Auth::guard('student')->id();
-        }
-
-        if (! $recipientType || ! $recipientId) {
+        if (! $auth) {
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $recipient = NotificationRecipient::where('id', $id)
-            ->where('recipient_type', $recipientType)
-            ->where('recipient_id', $recipientId)
-            ->first();
+        [$user, $role] = $auth;
 
-        if ($recipient) {
-            $recipient->update(['read_at' => now()]);
-        }
-
-        $unreadCount = NotificationRecipient::where('recipient_type', $recipientType)
-            ->where('recipient_id', $recipientId)
-            ->whereNull('read_at')
-            ->count();
+        $this->notificationService->markAsRead($id, $user, $role);
+        $result = $this->notificationService->getPaginatedNotifications($user, $role, ['for_dropdown' => true], 1);
 
         return response()->json([
             'success'      => true,
-            'unread_count' => $unreadCount,
+            'unread_count' => $result['unread_count'],
         ]);
     }
 
@@ -166,28 +90,15 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(): JsonResponse
     {
-        $recipientType = null;
-        $recipientId   = null;
+        $auth = $this->resolveAuth();
 
-        if (Auth::guard('admin')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_ADMIN;
-            $recipientId   = Auth::guard('admin')->id();
-        } elseif (Auth::guard('teacher')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_TEACHER;
-            $recipientId   = Auth::guard('teacher')->id();
-        } elseif (Auth::guard('student')->check()) {
-            $recipientType = Constant::RECIPIENT_TYPE_STUDENT;
-            $recipientId   = Auth::guard('student')->id();
-        }
-
-        if (! $recipientType || ! $recipientId) {
+        if (! $auth) {
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        NotificationRecipient::where('recipient_type', $recipientType)
-            ->where('recipient_id', $recipientId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        [$user, $role] = $auth;
+
+        $this->notificationService->markAllAsRead($user, $role);
 
         return response()->json([
             'success'      => true,

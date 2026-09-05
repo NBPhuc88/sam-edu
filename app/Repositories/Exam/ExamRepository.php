@@ -580,4 +580,26 @@ class ExamRepository implements ExamRepositoryInterface
 
         return $query->latest('id')->deferredPaginate($perPage, ['*'], 'page', $page)->withQueryString();
     }
+
+    /**
+     * @param  ?array<int>                                                     $allowedCenterIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Exam>
+     */
+    public function getExamsForGameRooms(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = Exam::query()->whereNotNull('center_id');
+
+        if ($allowedCenterIds !== null) {
+            $query->whereIn('center_id', $allowedCenterIds);
+        }
+
+        return $query->withCount('questions')->withCount([
+            'questions as disallowed_count' => fn ($q) => $q->whereIn('question_type', Constant::GAME_ROOM_DISALLOWED_QUESTION_TYPES),
+        ])->latest('id')->get(['id', 'name']);
+    }
+
+    public function findForGameRoom(int $id): ?Exam
+    {
+        return Exam::with(['questions', 'sections'])->find($id);
+    }
 }

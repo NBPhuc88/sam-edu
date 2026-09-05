@@ -4,10 +4,10 @@ namespace App\Services\GameRoom;
 
 use App\Enums\Constant;
 use App\Models\Admin;
-use App\Models\Exam;
 use App\Models\GameRoom;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Repositories\Exam\ExamRepositoryInterface;
 use App\Repositories\GameRoom\GameRoomRepositoryInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class GameRoomService implements GameRoomServiceInterface
 {
-    public function __construct(protected GameRoomRepositoryInterface $rooms)
-    {
+    public function __construct(
+        protected GameRoomRepositoryInterface $rooms,
+        protected ExamRepositoryInterface $exams
+    ) {
     }
 
     public function authorizeCenter(int $centerId, Admin|Teacher|Student $user): void
@@ -38,7 +40,7 @@ class GameRoomService implements GameRoomServiceInterface
         $this->authorizeCenter((int) $room->center_id, $user);
 
         if ($user instanceof Student) {
-            abort_unless($room->participants()->where('student_id', $user->id)->exists(), 403);
+            abort_unless($this->rooms->participantExists($room, $user->id), 403);
         }
     }
 
@@ -55,77 +57,76 @@ class GameRoomService implements GameRoomServiceInterface
         abort_if($user instanceof Teacher && $user->status === Constant::TEACHER_STATUS_INACTIVE, 403);
     }
 
-    public function indexData(Admin|Teacher|Student $user): array
+    public function indexData(Admin|Teacher|Student $user, array $filters = []): array
     {
-        $query = $this->rooms->query()->latest('id');
-
-        if ($user instanceof Student) {
-            $query->where(function ($q) use ($user) {
-                $q->whereHas('participants', fn ($sub) => $sub->where('student_id', $user->id))
-                    ->orWhere(function ($sub) use ($user) {
-                        $sub->where('center_id', $user->center_id)
-                            ->whereIn('status', [
-                                Constant::GAME_ROOM_STATUS_WAITING,
-                                Constant::GAME_ROOM_STATUS_PLAYING,
-                                Constant::GAME_ROOM_STATUS_COUNTDOWN,
-                            ]);
-                    });
-            });
-        } elseif ($user instanceof Admin && ! $user->isSuperAdmin()) {
-            $query->whereIn('center_id', $user->centers()->select('centers.id'));
-        } elseif ($user instanceof Teacher) {
-            $query->where('center_id', $user->center_id);
-        }
+        $tabCounts = $this->rooms->getTabCounts($user);
 
         $myParticipantRoomIds = $user instanceof Student
-            ? $this->rooms->query()->whereHas('participants', fn ($q) => $q->where('student_id', $user->id))->pluck('id')->all()
+            ? $this->rooms->getParticipantRoomIds($user->id)
             : [];
 
-        $rooms = $query->withCount('participants')
-            ->with(['hostAdmin:id,full_name', 'hostTeacher:id,full_name'])
-            ->limit(50)
-            ->get(['id', 'center_id', 'code', 'pin', 'name', 'status', 'question_index', 'questions', 'host_admin_id', 'host_teacher_id', 'created_at'])
-            ->map(function ($room) use ($user, $myParticipantRoomIds) {
-                $hostName       = $room->hostTeacher?->full_name ?? $room->hostAdmin?->full_name ?? 'Giáo viên';
-                $isParticipant  = in_array($room->id, $myParticipantRoomIds, true);
-                $isHost         = $this->isHost($room, $user);
-                $totalQuestions = is_array($room->questions) ? count($room->questions) : 0;
+        $mapRoom = function ($room) use ($user, $myParticipantRoomIds) {
+            $hostName       = $room->hostTeacher?->full_name ?? $room->hostAdmin?->full_name ?? 'Giáo viên';
+            $isParticipant  = in_array($room->id, $myParticipantRoomIds, true);
+            $isHost         = $this->isHost($room, $user);
+            $totalQuestions = is_array($room->questions) ? count($room->questions) : 0;
 
-                return [
-                    'id'                 => $room->id,
-                    'code'               => $room->code,
-                    'pin'                => $room->pin,
-                    'name'               => $room->name,
-                    'status'             => $room->status,
-                    'question_index'     => $room->question_index,
-                    'total_questions'    => $totalQuestions,
-                    'participants_count' => $room->participants_count,
-                    'host_name'          => $hostName,
-                    'is_host'            => $isHost,
-                    'is_participant'     => $isParticipant,
-                    'created_at'         => $room->created_at?->diffForHumans() ?? '',
-                ];
-            })->all();
+            return [
+                'id'                 => $room->id,
+                'code'               => $room->code,
+                'pin'                => $room->pin,
+                'name'               => $room->name,
+                'status'             => $room->status,
+                'question_index'     => $room->question_index,
+                'total_questions'    => $totalQuestions,
+                'participants_count' => $room->participants_count,
+                'host_name'          => $hostName,
+                'is_host'            => $isHost,
+                'is_participant'     => $isParticipant,
+                'created_at'         => $room->created_at?->diffForHumans() ?? '',
+            ];
+        };
+
+        $myActiveRooms = $this->rooms->getActiveRoomsForUser($user)->map($mapRoom)->all();
+
+        $perPage = (int) ($filters['per_page'] ?? 20);
+
+        if ($perPage <= 0 || $perPage > 100) {
+            $perPage = 20;
+        }
+
+        $paginated = $this->rooms->getPaginatedRooms($user, $filters, $perPage);
+        $paginated->through($mapRoom);
+
+        $tab    = $filters['tab'] ?? 'all';
+        $search = trim((string) ($filters['search'] ?? ''));
 
         return [
-            'rooms'     => $rooms,
-            'isStudent' => $user instanceof Student,
+            'rooms'   => $paginated,
+            'filters' => [
+                'tab'      => $tab !== 'all' ? $tab : null,
+                'search'   => $search !== '' ? $search : null,
+                'per_page' => $perPage,
+            ],
+            'tabCounts'     => $tabCounts,
+            'myActiveRooms' => $myActiveRooms,
+            'isStudent'     => $user instanceof Student,
         ];
     }
 
     public function createData(Admin|Teacher|Student $user): array
     {
         $this->authorizeActiveHost($user);
-        $query = Exam::query()->whereNotNull('center_id');
+
+        $allowedCenterIds = null;
 
         if ($user instanceof Teacher) {
-            $query->where('center_id', $user->center_id);
+            $allowedCenterIds = [$user->center_id];
         } elseif ($user instanceof Admin && ! $user->isSuperAdmin()) {
-            $query->whereIn('center_id', $user->centers()->select('centers.id'));
+            $allowedCenterIds = $user->centers()->pluck('centers.id')->all();
         }
-        $exams = $query->withCount('questions')->withCount([
-            'questions as disallowed_count' => fn ($query) => $query->whereIn('question_type', Constant::GAME_ROOM_DISALLOWED_QUESTION_TYPES),
-        ])->latest('id')->get(['id', 'name']);
+
+        $exams = $this->exams->getExamsForGameRooms($allowedCenterIds);
 
         return ['exams' => $exams, 'scoringRules' => Constant::DEFAULT_GAME_ROOM_SCORING_RULES];
     }
@@ -133,7 +134,10 @@ class GameRoomService implements GameRoomServiceInterface
     public function create(array $data, Admin|Teacher|Student $user): GameRoom
     {
         $this->authorizeActiveHost($user);
-        $exam = Exam::with(['questions', 'sections'])->findOrFail($data['exam_id']);
+
+        $exam = $this->exams->findForGameRoom((int) $data['exam_id']);
+        abort_unless($exam, 404);
+
         $this->authorizeCenter((int) $exam->center_id, $user);
 
         if ($exam->questions->isEmpty() || $exam->questions->contains(fn ($question) => in_array($question->question_type, Constant::GAME_ROOM_DISALLOWED_QUESTION_TYPES, true))) {
@@ -156,7 +160,8 @@ class GameRoomService implements GameRoomServiceInterface
         return DB::transaction(function () use ($exam, $data, $user, $rules) {
             do {
                 $pin = (string) random_int(100000, 999999);
-            } while ($this->rooms->query()->where('pin', $pin)->exists());
+            } while ($this->rooms->pinExists($pin));
+
             $questions = $exam->questions->map(function ($question) use ($exam) {
                 $snapshot                        = $question->only(['id', 'title', 'content', 'question_type', 'options', 'correct_answer', 'image_url', 'audio_url']);
                 $section                         = $exam->sections->firstWhere('id', $question->section_id);
@@ -166,12 +171,18 @@ class GameRoomService implements GameRoomServiceInterface
             })->values()->all();
 
             $room = $this->rooms->create([
-                'center_id'           => $exam->center_id, 'exam_id' => $exam->id,
+                'center_id'           => $exam->center_id,
+                'exam_id'             => $exam->id,
                 'host_admin_id'       => $user instanceof Admin ? $user->id : null,
                 'host_teacher_id'     => $user instanceof Teacher ? $user->id : null,
-                'name'                => $exam->name, 'pin' => $pin, 'questions' => $questions,
-                'question_time_limit' => $data['question_time_limit'], 'countdown_seconds' => 5,
-                'scoring_rules'       => $rules, 'status' => Constant::GAME_ROOM_STATUS_WAITING, 'question_index' => 0,
+                'name'                => $exam->name,
+                'pin'                 => $pin,
+                'questions'           => $questions,
+                'question_time_limit' => $data['question_time_limit'],
+                'countdown_seconds'   => 5,
+                'scoring_rules'       => $rules,
+                'status'              => Constant::GAME_ROOM_STATUS_WAITING,
+                'question_index'      => 0,
             ]);
             $room->update(['code' => Constant::PREFIX_GAME_ROOM . str_pad((string) $room->id, 7, '0', STR_PAD_LEFT)]);
 
@@ -184,21 +195,22 @@ class GameRoomService implements GameRoomServiceInterface
         abort_unless($user instanceof Student, 403);
 
         return DB::transaction(function () use ($pin, $user) {
-            $room = $this->rooms->query()->where('pin', $pin)->lockForUpdate()->first();
+            $room = $this->rooms->findByPin($pin, lockForUpdate: true);
 
             if (! $room) {
                 throw ValidationException::withMessages(['pin' => 'Mã PIN không hợp lệ.']);
             }
             $this->authorizeCenter((int) $room->center_id, $user);
 
-            if ($room->participants()->where('student_id', $user->id)->exists()) {
+            if ($this->rooms->participantExists($room, $user->id)) {
                 return $room;
             }
 
             if ($room->status !== Constant::GAME_ROOM_STATUS_WAITING) {
                 throw ValidationException::withMessages(['pin' => 'Phòng đã bắt đầu hoặc đã kết thúc.']);
             }
-            $room->participants()->create(['student_id' => $user->id, 'total_score' => 0, 'streak_count' => 0]);
+
+            $this->rooms->addParticipant($room, $user->id);
             $this->emit($room, 'GameRoomParticipantJoined');
 
             return $room;
@@ -212,7 +224,11 @@ class GameRoomService implements GameRoomServiceInterface
             $room = $this->rooms->lock($room->id);
             abort_unless($room->status === Constant::GAME_ROOM_STATUS_WAITING, 409);
             abort_unless($room->participants()->exists(), 422, 'Cần ít nhất một học sinh.');
-            $room->update(['status' => Constant::GAME_ROOM_STATUS_PLAYING, 'question_started_at' => now(), 'expires_at' => now()->addSeconds($room->question_time_limit)]);
+            $room->update([
+                'status'              => Constant::GAME_ROOM_STATUS_PLAYING,
+                'question_started_at' => now(),
+                'expires_at'          => now()->addSeconds($room->question_time_limit),
+            ]);
             $this->emit($room, 'GameRoomStarted');
             $this->emit($room, 'GameRoomQuestionStarted');
         });
@@ -223,7 +239,7 @@ class GameRoomService implements GameRoomServiceInterface
         $this->authorizeHost($room, $user);
         DB::transaction(function () use ($room) {
             $room = $this->rooms->lock($room->id);
-            abort_if(in_array($room->status, [4, 5], true), 409);
+            abort_if(in_array($room->status, [Constant::GAME_ROOM_STATUS_COMPLETED, Constant::GAME_ROOM_STATUS_CANCELLED], true), 409);
             $room->update(['status' => Constant::GAME_ROOM_STATUS_CANCELLED, 'expires_at' => null]);
             $this->emit($room, 'GameRoomCompleted');
         });
@@ -255,20 +271,18 @@ class GameRoomService implements GameRoomServiceInterface
                 $room->fill(['status' => Constant::GAME_ROOM_STATUS_COMPLETED, 'expires_at' => null]);
                 $events[] = 'GameRoomCompleted';
             } else {
-                $room->fill(['status' => Constant::GAME_ROOM_STATUS_PLAYING, 'question_index' => $room->question_index + 1, 'question_started_at' => $boundary, 'expires_at' => $boundary->addSeconds($room->question_time_limit)]);
+                $room->fill([
+                    'status'              => Constant::GAME_ROOM_STATUS_PLAYING,
+                    'question_index'      => $room->question_index + 1,
+                    'question_started_at' => $boundary,
+                    'expires_at'          => $boundary->addSeconds($room->question_time_limit),
+                ]);
                 $events[] = 'GameRoomQuestionStarted';
             }
         }
 
         if ($endedQuestions !== []) {
-            $participants = $room->participants();
-
-            if (count($endedQuestions) === 1) {
-                $answered = $room->answers()->where('question_index', $endedQuestions[0])->select('game_room_participant_id');
-                $participants->whereNotIn('id', $answered);
-            }
-
-            $participants->update(['streak_count' => 0]);
+            $this->rooms->resetStreakForUnanswered($room, $endedQuestions);
         }
 
         if ($room->isDirty()) {
@@ -287,21 +301,35 @@ class GameRoomService implements GameRoomServiceInterface
         return DB::transaction(function () use ($room, $user) {
             $room = $this->rooms->lock($room->id);
             $this->advance($room);
-            $participant = $user instanceof Student ? $room->participants()->where('student_id', $user->id)->first() : null;
-            $answer      = $participant ? $room->answers()->where('game_room_participant_id', $participant->id)->where('question_index', $room->question_index)->first() : null;
-            $question    = in_array($room->status, [2, 3], true) ? Arr::except($room->questions[$room->question_index], ['correct_answer']) : null;
-            $leaderboard = $room->participants()->with('student:id,full_name')->orderByDesc('total_score')->orderBy('id')->get()->map(fn ($entry, $index) => [
-                'id' => $entry->id, 'name' => $entry->student?->full_name ?? 'Học sinh', 'total_score' => $entry->total_score, 'streak_count' => $entry->streak_count, 'rank' => $index + 1,
+            $participant = $user instanceof Student ? $this->rooms->findParticipant($room, $user->id) : null;
+            $answer      = $participant ? $this->rooms->findAnswer($room, $participant->id, $room->question_index) : null;
+            $question    = in_array($room->status, [Constant::GAME_ROOM_STATUS_PLAYING, Constant::GAME_ROOM_STATUS_COUNTDOWN], true) ? Arr::except($room->questions[$room->question_index], ['correct_answer']) : null;
+            $leaderboard = $this->rooms->getLeaderboard($room)->map(fn ($entry, $index) => [
+                'id'           => $entry->id,
+                'name'         => $entry->student?->full_name ?? 'Học sinh',
+                'total_score'  => $entry->total_score,
+                'streak_count' => $entry->streak_count,
+                'rank'         => $index + 1,
             ])->all();
 
             return [
-                'id'                  => $room->id, 'name' => $room->name, 'code' => $room->code, 'pin' => $room->pin,
-                'status'              => $room->status, 'question_index' => $room->question_index, 'question_count' => count($room->questions),
-                'question_time_limit' => $room->question_time_limit, 'question' => $question,
-                'question_started_at' => $room->question_started_at?->toISOString(), 'expires_at' => $room->expires_at?->toISOString(),
-                'server_time'         => now()->toISOString(), 'is_host' => $this->isHost($room, $user), 'is_student' => $user instanceof Student,
-                'leaderboard'         => $leaderboard, 'participant_count' => count($leaderboard),
-                'answer_count'        => $room->answers()->where('question_index', $room->question_index)->count(),
+                'id'                  => $room->id,
+                'name'                => $room->name,
+                'code'                => $room->code,
+                'pin'                 => $room->pin,
+                'status'              => $room->status,
+                'question_index'      => $room->question_index,
+                'question_count'      => count($room->questions),
+                'question_time_limit' => $room->question_time_limit,
+                'question'            => $question,
+                'question_started_at' => $room->question_started_at?->toISOString(),
+                'expires_at'          => $room->expires_at?->toISOString(),
+                'server_time'         => now()->toISOString(),
+                'is_host'             => $this->isHost($room, $user),
+                'is_student'          => $user instanceof Student,
+                'leaderboard'         => $leaderboard,
+                'participant_count'   => count($leaderboard),
+                'answer_count'        => $this->rooms->getAnswerCount($room, $room->question_index),
                 'my_answer'           => $answer?->only(['answer', 'response_seconds', 'points', 'is_correct']),
             ];
         });
@@ -315,9 +343,10 @@ class GameRoomService implements GameRoomServiceInterface
             $room = $this->rooms->lock($room->id);
             $this->advance($room);
             abort_unless($room->status === Constant::GAME_ROOM_STATUS_PLAYING && $room->question_index === $data['question_index'], 409, 'Câu hỏi đã hết giờ.');
-            $participant = $room->participants()->where('student_id', $user->id)->firstOrFail();
+            $participant = $this->rooms->findParticipant($room, $user->id);
+            abort_unless($participant, 404);
 
-            if ($room->answers()->where('game_room_participant_id', $participant->id)->where('question_index', $room->question_index)->exists()) {
+            if ($this->rooms->answerExists($room, $participant->id, $room->question_index)) {
                 return;
             }
             $seconds = max(0, $room->question_started_at->diffInMilliseconds(now()) / 1000);
@@ -333,11 +362,18 @@ class GameRoomService implements GameRoomServiceInterface
                     }
                 }
             }
-            $room->answers()->create([
-                'game_room_participant_id' => $participant->id, 'question_index' => $room->question_index,
-                'answer'                   => $data['answer'], 'response_seconds' => $seconds, 'is_correct' => $correct, 'points' => $points,
+            $this->rooms->createAnswer($room, [
+                'game_room_participant_id' => $participant->id,
+                'question_index'           => $room->question_index,
+                'answer'                   => $data['answer'],
+                'response_seconds'         => $seconds,
+                'is_correct'               => $correct,
+                'points'                   => $points,
             ]);
-            $participant->update(['total_score' => $participant->total_score + $points, 'streak_count' => $correct ? $participant->streak_count + 1 : 0]);
+            $participant->update([
+                'total_score'  => $participant->total_score + $points,
+                'streak_count' => $correct ? $participant->streak_count + 1 : 0,
+            ]);
             $this->emit($room, 'GameRoomAnswerCountUpdated');
             $this->emit($room, 'GameRoomLeaderboardUpdated');
         });
@@ -351,7 +387,11 @@ class GameRoomService implements GameRoomServiceInterface
             return false;
         }
 
-        if (in_array($question['question_type'], [1, 3, 11], true)) {
+        if (in_array($question['question_type'], [
+            Constant::QUESTION_TYPE_SINGLE_CHOICE,
+            Constant::QUESTION_TYPE_TRUE_FALSE_NOT_GIVEN,
+            Constant::QUESTION_TYPE_FIND_MISTAKE,
+        ], true)) {
             return is_scalar($answer) && is_scalar($correct) && mb_strtoupper(trim((string) $answer)) === mb_strtoupper(trim((string) $correct));
         }
 

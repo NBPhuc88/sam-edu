@@ -106,4 +106,12 @@ interface ExamRepositoryInterface
      * @return LengthAwarePaginator
      */
     public function getPracticeExams(array $filters, array|int|null $centerIds = null, int $perPage = 12, int $page = 1): LengthAwarePaginator;
+
+    /**
+     * @param  ?array<int>                                                     $allowedCenterIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Exam>
+     */
+    public function getExamsForGameRooms(?array $allowedCenterIds = null): \Illuminate\Database\Eloquent\Collection;
+
+    public function findForGameRoom(int $id): ?Exam;
 }

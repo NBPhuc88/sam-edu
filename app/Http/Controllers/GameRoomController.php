@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GameRoom\{StoreGameRoomRequest, JoinGameRoomRequest, AnswerGameRoomRequest, ReactGameRoomRequest};
 use App\Models\{Admin, Teacher, Student, GameRoom};
 use App\Services\GameRoom\GameRoomServiceInterface;
-use Illuminate\Http\{JsonResponse, RedirectResponse};
+use Illuminate\Http\{JsonResponse, RedirectResponse, Request};
 use Illuminate\Support\Facades\Auth;
 use Inertia\{Inertia, Response};
 
@@ -21,9 +21,9 @@ class GameRoomController extends Controller
 
         return $user;
     }
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('GameRooms/Index', $this->service->indexData($this->actor()));
+        return Inertia::render('GameRooms/Index', $this->service->indexData($this->actor(), $request->all()));
     }
     public function create(): Response
     {

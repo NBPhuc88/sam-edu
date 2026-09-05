@@ -6,14 +6,16 @@ import {
     Play,
     Plus,
     Radio,
+    Search,
     Sparkles,
     Trophy,
     Users,
+    X,
     Zap,
-    RotateCcw,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
+import Pagination from '@/components/ui/Pagination';
 import { create, join, show } from '@/routes/game-rooms';
 
 interface RoomItem {
@@ -31,16 +33,56 @@ interface RoomItem {
     created_at: string;
 }
 
+interface PaginatedData<T> {
+    data: T[];
+    links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+    }[];
+    from?: number | null;
+    to?: number | null;
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+}
+
+interface TabCounts {
+    all: number;
+    live: number;
+    waiting: number;
+    completed: number;
+}
+
 export default function Index({
     rooms,
+    filters,
+    tabCounts,
+    myActiveRooms = [],
     isStudent,
 }: {
-    rooms: RoomItem[];
+    rooms: PaginatedData<RoomItem>;
+    filters?: {
+        tab?: 'all' | 'live' | 'waiting' | 'completed' | null;
+        search?: string | null;
+        per_page?: number | null;
+    };
+    tabCounts?: TabCounts;
+    myActiveRooms?: RoomItem[];
     isStudent: boolean;
 }) {
     const form = useForm({ pin: '' });
-    const [filterTab, setFilterTab] = useState<'all' | 'live' | 'waiting' | 'completed'>('all');
+    const activeTab = (filters?.tab as 'all' | 'live' | 'waiting' | 'completed') || 'all';
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [copiedPin, setCopiedPin] = useState<string | null>(null);
+
+    const counts = tabCounts ?? {
+        all: rooms.total,
+        live: 0,
+        waiting: 0,
+        completed: 0,
+    };
 
     const handleCopyPin = (e: React.MouseEvent, pin: string) => {
         e.preventDefault();
@@ -50,30 +92,59 @@ export default function Index({
         setTimeout(() => setCopiedPin(null), 2000);
     };
 
-    // Active rooms that the user is directly involved in (hosting or participating)
-    const myActiveRooms = useMemo(() => {
-        return rooms.filter(
-            (r) => (r.is_host || r.is_participant) && [1, 2, 3].includes(r.status),
-        );
-    }, [rooms]);
-
-    // Filtered rooms based on selected tab
-    const filteredRooms = useMemo(() => {
-        if (filterTab === 'live') {
-            return rooms.filter((r) => [2, 3].includes(r.status));
-        }
-        if (filterTab === 'waiting') {
-            return rooms.filter((r) => r.status === 1);
-        }
-        if (filterTab === 'completed') {
-            return rooms.filter((r) => [4, 5].includes(r.status));
-        }
-        return rooms;
-    }, [rooms, filterTab]);
-
     const handleQuickJoin = (pin: string) => {
         form.setData('pin', pin);
         router.post(join.url(), { pin });
+    };
+
+    const handleTabChange = (newTab: 'all' | 'live' | 'waiting' | 'completed') => {
+        const params: Record<string, any> = {};
+        if (newTab !== 'all') {
+            params.tab = newTab;
+        }
+        if (searchTerm.trim()) {
+            params.search = searchTerm.trim();
+        }
+        if (filters?.per_page && filters.per_page !== 20) {
+            params.per_page = filters.per_page;
+        }
+        router.get(window.location.pathname, params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const params: Record<string, any> = {};
+        if (activeTab !== 'all') {
+            params.tab = activeTab;
+        }
+        if (searchTerm.trim()) {
+            params.search = searchTerm.trim();
+        }
+        if (filters?.per_page && filters.per_page !== 20) {
+            params.per_page = filters.per_page;
+        }
+        router.get(window.location.pathname, params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        const params: Record<string, any> = {};
+        if (activeTab !== 'all') {
+            params.tab = activeTab;
+        }
+        if (filters?.per_page && filters.per_page !== 20) {
+            params.per_page = filters.per_page;
+        }
+        router.get(window.location.pathname, params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -197,66 +268,93 @@ export default function Index({
 
                 {/* ─── Danh Sách Phòng & Bộ Lọc ─── */}
                 <div className="space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                    <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2">
                             <h2 className="text-xl font-black text-slate-900">
                                 Danh Sách Phòng Trò Chơi
                             </h2>
                             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600">
-                                {filteredRooms.length}
+                                {rooms.total}
                             </span>
                         </div>
 
-                        {/* Filter Tabs */}
-                        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-slate-100 p-1 text-xs font-bold">
-                            <button
-                                onClick={() => setFilterTab('all')}
-                                className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
-                                    filterTab === 'all'
-                                        ? 'bg-white text-slate-950 shadow-sm'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Tất cả ({rooms.length})
-                            </button>
-                            <button
-                                onClick={() => setFilterTab('live')}
-                                className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 transition cursor-pointer ${
-                                    filterTab === 'live'
-                                        ? 'bg-white text-rose-600 shadow-sm font-black'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-                                Đang diễn ra ({rooms.filter((r) => [2, 3].includes(r.status)).length})
-                            </button>
-                            <button
-                                onClick={() => setFilterTab('waiting')}
-                                className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
-                                    filterTab === 'waiting'
-                                        ? 'bg-white text-amber-600 shadow-sm font-black'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Sảnh chờ ({rooms.filter((r) => r.status === 1).length})
-                            </button>
-                            <button
-                                onClick={() => setFilterTab('completed')}
-                                className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
-                                    filterTab === 'completed'
-                                        ? 'bg-white text-slate-950 shadow-sm'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Đã kết thúc ({rooms.filter((r) => [4, 5].includes(r.status)).length})
-                            </button>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            {/* Search input */}
+                            <form onSubmit={handleSearch} className="relative flex-1 sm:w-64">
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Tìm theo tên, mã, PIN..."
+                                    className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 shadow-2xs"
+                                />
+                                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearSearch}
+                                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </form>
+
+                            {/* Filter Tabs */}
+                            <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1 text-xs font-bold">
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('all')}
+                                    className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
+                                        activeTab === 'all'
+                                            ? 'bg-white text-slate-950 shadow-sm'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Tất cả ({counts.all})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('live')}
+                                    className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 transition cursor-pointer ${
+                                        activeTab === 'live'
+                                            ? 'bg-white text-rose-600 shadow-sm font-black'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                                    Đang diễn ra ({counts.live})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('waiting')}
+                                    className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
+                                        activeTab === 'waiting'
+                                            ? 'bg-white text-amber-600 shadow-sm font-black'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Sảnh chờ ({counts.waiting})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('completed')}
+                                    className={`rounded-lg px-3 py-1.5 transition cursor-pointer ${
+                                        activeTab === 'completed'
+                                            ? 'bg-white text-slate-950 shadow-sm'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Đã kết thúc ({counts.completed})
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Room Cards Grid */}
-                    {filteredRooms.length > 0 ? (
+                    {rooms.data.length > 0 ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {filteredRooms.map((room) => {
+                            {rooms.data.map((room) => {
                                 const isLive = [2, 3].includes(room.status);
                                 const isWaiting = room.status === 1;
                                 const isFinished = [4, 5].includes(room.status);
@@ -385,19 +483,47 @@ export default function Index({
                         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
                             <Sparkles className="h-10 w-10 text-slate-300 mb-3" />
                             <h3 className="text-base font-bold text-slate-700">
-                                {filterTab === 'live'
+                                {searchTerm
+                                    ? `Không tìm thấy phòng thi đấu nào khớp với "${searchTerm}"`
+                                    : activeTab === 'live'
                                     ? 'Hiện không có phòng nào đang thi đấu'
-                                    : filterTab === 'waiting'
+                                    : activeTab === 'waiting'
                                     ? 'Không có phòng nào đang trong sảnh chờ'
+                                    : activeTab === 'completed'
+                                    ? 'Chưa có phòng thi đấu nào đã kết thúc'
                                     : 'Chưa có phòng trò chơi nào'}
                             </h3>
                             <p className="mt-1 text-xs text-slate-500 max-w-sm">
-                                {isStudent
-                                    ? 'Nhập mã PIN của giáo viên cung cấp ở trên để tham gia phòng thi đấu ngay.'
-                                    : 'Bấm nút "Tạo phòng thi đấu mới" ở trên để khởi tạo một đấu trường trực tiếp cho lớp.'}
+                                {searchTerm ? (
+                                    <button
+                                        onClick={handleClearSearch}
+                                        className="text-cyan-600 hover:underline font-medium cursor-pointer"
+                                    >
+                                        Xóa từ khóa tìm kiếm
+                                    </button>
+                                ) : isStudent ? (
+                                    'Nhập mã PIN của giáo viên cung cấp ở trên để tham gia phòng thi đấu ngay.'
+                                ) : (
+                                    'Bấm nút "Tạo phòng thi đấu mới" ở trên để khởi tạo một đấu trường trực tiếp cho lớp.'
+                                )}
                             </p>
                         </div>
                     )}
+
+                    {/* Pagination Footer */}
+                    <div className="pt-2">
+                        <Pagination
+                            links={rooms.links}
+                            from={rooms.from}
+                            to={rooms.to}
+                            total={rooms.total}
+                            perPage={rooms.per_page}
+                            currentParams={{
+                                ...(activeTab !== 'all' ? { tab: activeTab } : {}),
+                                ...(filters?.search ? { search: filters.search } : {}),
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
         </AppLayout>

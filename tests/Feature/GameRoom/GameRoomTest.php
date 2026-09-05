@@ -10,6 +10,7 @@ use App\Models\Teacher;
 use App\Services\GameRoom\GameRoomServiceInterface;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 beforeEach(function () {
@@ -190,6 +191,58 @@ test('redirects basic plan users to upgrade plan page for any game room url', fu
     $this->actingAs($advancedTeacher, 'teacher')
         ->get(route('game-rooms.index'))
         ->assertOk();
+});
+
+test('returns paginated rooms with filters and tab counts', function () {
+    $advancedPlan = SubscriptionPlan::create([
+        'code'             => 'adv_gameroom_test_pagination',
+        'name'             => 'Gói Nâng Cao Test Pagination',
+        'plan_type'        => Constant::PLAN_TYPE_PREMIUM,
+        'allowed_features' => ['game-rooms'],
+        'duration_days'    => 30,
+        'price'            => 500000,
+    ]);
+    $advancedCenter = Center::factory()->create([
+        'plan_type'            => Constant::PLAN_TYPE_PREMIUM,
+        'subscription_plan_id' => $advancedPlan->id,
+    ]);
+    $teacher = Teacher::factory()->create(['center_id' => $advancedCenter->id]);
+    $exam    = Exam::factory()->create(['center_id' => $advancedCenter->id]);
+    ExamQuestion::factory()->count(2)->create(['exam_id' => $exam->id]);
+
+    for ($i = 1; $i <= 5; $i++) {
+        $this->service->create([
+            'exam_id'             => $exam->id,
+            'question_time_limit' => 20,
+            'scoring_rules'       => Constant::DEFAULT_GAME_ROOM_SCORING_RULES,
+        ], $teacher);
+    }
+
+    $this->actingAs($teacher, 'teacher')
+        ->get(route('game-rooms.index', ['per_page' => 2]))
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+            ->component('GameRooms/Index')
+            ->has('rooms.data', 2)
+            ->where('rooms.total', 5)
+            ->where('rooms.per_page', 2)
+            ->where('tabCounts.all', 5)
+            ->where('tabCounts.waiting', 5)
+            ->where('tabCounts.live', 0)
+            ->has('myActiveRooms', 5)
+        );
+
+    $this->actingAs($teacher, 'teacher')
+        ->get(route('game-rooms.index', ['per_page' => 10, 'tab' => 'waiting']))
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+            ->component('GameRooms/Index')
+            ->has('rooms.data', 5)
+            ->where('rooms.per_page', 10)
+            ->where('filters.tab', 'waiting')
+        );
 });
 
 test('redirects basic plan users to upgrade plan page for exam and grading urls', function () {

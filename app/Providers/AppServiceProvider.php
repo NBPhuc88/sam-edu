@@ -67,6 +67,8 @@ use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use App\Repositories\GameRoom\{GameRoomRepository, GameRoomRepositoryInterface};
+use App\Services\GameRoom\{GameRoomService, GameRoomServiceInterface};
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
@@ -79,8 +81,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(\App\Services\GameRoom\GameRoomServiceInterface::class, \App\Services\GameRoom\GameRoomService::class);
-        $this->app->bind(\App\Repositories\GameRoom\GameRoomRepositoryInterface::class, \App\Repositories\GameRoom\GameRoomRepository::class);
+        $this->app->bind(GameRoomServiceInterface::class, GameRoomService::class);
+        $this->app->bind(GameRoomRepositoryInterface::class, GameRoomRepository::class);
         $this->app->bind(PasswordResetServiceInterface::class, PasswordResetService::class);
         $this->app->bind(ZaloServiceInterface::class, ZaloService::class);
         $this->app->bind(PaymentGatewayInterface::class, ZaloPayGateway::class);
