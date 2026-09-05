@@ -165,9 +165,6 @@ class GameRoomService implements GameRoomServiceInterface
                 return $snapshot;
             })->values()->all();
 
-            if ($exam->shuffle_questions) {
-                shuffle($questions);
-            }
             $room = $this->rooms->create([
                 'center_id'           => $exam->center_id, 'exam_id' => $exam->id,
                 'host_admin_id'       => $user instanceof Admin ? $user->id : null,

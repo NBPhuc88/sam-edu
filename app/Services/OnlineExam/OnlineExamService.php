@@ -85,6 +85,33 @@ class OnlineExamService implements OnlineExamServiceInterface
             }
         }
 
+        if ($student && $classExam->exam) {
+            foreach ($classExam->exam->sections as $section) {
+                if ($submission && $classExam->exam->shuffle_questions) {
+                    $section->setRelation('questions', $section->questions->sortBy(
+                        fn ($question): string => $this->shuffleRank($submission->id, "section:{$section->id}:question:{$question->id}")
+                    )->values());
+                }
+
+                foreach ($section->questions as $question) {
+                    if ($submission && $classExam->exam->shuffle_options && in_array($question->question_type, [Constant::QUESTION_TYPE_SINGLE_CHOICE, Constant::QUESTION_TYPE_MULTIPLE_CHOICE], true) && is_array($question->options)) {
+                        $options = collect($question->options)->map(function (mixed $option, int $index): array {
+                            if (is_string($option)) {
+                                return ['id' => chr(65 + $index), 'text' => $option];
+                            }
+
+                            return ['id' => (string) ($option['id'] ?? $option['key'] ?? $option['value'] ?? chr(65 + $index))] + $option;
+                        });
+                        $question->options = $options->sortBy(
+                            fn (array $option): string => $this->shuffleRank($submission->id, "question:{$question->id}:option:{$option['id']}")
+                        )->values()->all();
+                    }
+
+                    $question->makeHidden(['correct_answer', 'explanation']);
+                }
+            }
+        }
+
         return [
             'classExam'     => $classExam,
             'submission'    => $submission,
@@ -93,6 +120,11 @@ class OnlineExamService implements OnlineExamServiceInterface
             'isValidTime'   => $isValidTime,
             'serverTime'    => $now->toIso8601String(),
         ];
+    }
+
+    private function shuffleRank(int $submissionId, string $item): string
+    {
+        return hash_hmac('sha256', "{$submissionId}:{$item}", (string) config('app.key'));
     }
 
     public function startExamAttempt(int $classExamId, Student $student): ClassExamSubmission

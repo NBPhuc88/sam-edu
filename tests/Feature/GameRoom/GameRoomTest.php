@@ -124,3 +124,10 @@ test('resuming after many questions uses bounded writes and resets a missed stre
     $updates = array_filter($queries, fn (array $query): bool => str_starts_with(strtolower($query['query']), 'update'));
     expect(count($updates))->toBe(2);
 });
+
+test('game rooms preserve question and option order even when exam shuffle is enabled', function () {
+    $this->exam->update(['shuffle_questions' => true, 'shuffle_options' => true]);
+    $room = $this->service->create($this->data, $this->teacher);
+    expect(array_column($room->questions, 'id'))->toBe($this->exam->questions()->pluck('id')->all())
+        ->and($room->questions[0]['options'])->toBe($this->exam->questions()->first()->options);
+});
