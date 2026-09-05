@@ -72,9 +72,25 @@ class NotificationRepository implements NotificationRepositoryInterface
             });
         }
 
-        if (! empty($filters['is_super_admin'])) {
+        if (! empty($filters['is_super_admin_dropdown'])) {
             $query->whereHas('notification', function ($q) {
-                $q->whereNull('chat_class_id');
+                $q->whereNull('chat_class_id')
+                    ->where(function ($sub) {
+                        $sub->whereIn('type', [
+                            Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
+                            Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+                            'center_registration',
+                            'subscription_renewal',
+                        ])->orWhere(function ($fallback) {
+                            $fallback->where('type', Constant::NOTIFICATION_TYPE_GENERAL)
+                                ->where(function ($kw) {
+                                    $kw->where('title', 'like', '%đăng ký%')
+                                        ->orWhere('content', 'like', '%đăng ký%')
+                                        ->orWhere('title', 'like', '%gia hạn%')
+                                        ->orWhere('content', 'like', '%gia hạn%');
+                                });
+                        });
+                    });
             });
         }
 
@@ -104,7 +120,23 @@ class NotificationRepository implements NotificationRepositoryInterface
 
         if ($isSuperAdmin) {
             $query->whereHas('notification', function ($q) {
-                $q->whereNull('chat_class_id');
+                $q->whereNull('chat_class_id')
+                    ->where(function ($sub) {
+                        $sub->whereIn('type', [
+                            Constant::NOTIFICATION_TYPE_CENTER_REGISTRATION,
+                            Constant::NOTIFICATION_TYPE_SUBSCRIPTION_RENEWAL,
+                            'center_registration',
+                            'subscription_renewal',
+                        ])->orWhere(function ($fallback) {
+                            $fallback->where('type', Constant::NOTIFICATION_TYPE_GENERAL)
+                                ->where(function ($kw) {
+                                    $kw->where('title', 'like', '%đăng ký%')
+                                        ->orWhere('content', 'like', '%đăng ký%')
+                                        ->orWhere('title', 'like', '%gia hạn%')
+                                        ->orWhere('content', 'like', '%gia hạn%');
+                                });
+                        });
+                    });
             });
         }
 

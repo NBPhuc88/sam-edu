@@ -27,12 +27,12 @@ class NotificationService implements NotificationServiceInterface
         $recipientType = $this->resolveRecipientType($role);
         $isSuperAdmin  = ($role === 'admin' && ($user->role === Constant::ROLE_SUPER_ADMIN || $user->role === 'super_admin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin())));
 
-        if ($isSuperAdmin) {
-            $filters['is_super_admin'] = true;
+        if ($isSuperAdmin && ! empty($filters['for_dropdown'])) {
+            $filters['is_super_admin_dropdown'] = true;
         }
 
         $paginator   = $this->notificationRepository->getPaginatedForRecipient($recipientType, $user->getAuthIdentifier(), $filters, $perPage);
-        $unreadCount = $this->notificationRepository->countUnreadForRecipient($recipientType, $user->getAuthIdentifier(), $isSuperAdmin);
+        $unreadCount = $this->notificationRepository->countUnreadForRecipient($recipientType, $user->getAuthIdentifier(), ! empty($filters['is_super_admin_dropdown']));
 
         $paginator->through(function (NotificationRecipient $recipient) {
             $notif       = $recipient->notification;
